@@ -54,7 +54,15 @@ import {
   User,
   ShieldCheck,
   ExternalLink,
-  Printer
+  Printer,
+  Upload,
+  Search,
+  FolderArchive,
+  FileUp,
+  Paperclip,
+  Loader2,
+  Highlighter,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +71,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { cn } from "@/lib/utils";
 import { StateComplaintFormView } from "@/components/complaint/StateComplaintFormView";
 import { BinderCoverPage } from "@/components/complaint/BinderCoverPage";
+import {
+  ExhibitPdfSheetsView,
+  type DocumentHighlight,
+  type HighlightColor,
+  HIGHLIGHT_COLOR_MAP,
+} from "@/components/complaint/ExhibitPdfSheetsView";
 import {
   SUPPORTED_STATE_FORMS,
   INITIAL_GADOE_FORM_STATE,
@@ -74,24 +88,135 @@ import { PDFDocument } from "pdf-lib";
 
 // ── Types & Constants ────────────────────────────────────────────────────────
 export const STATE_FORM_PAGE_COUNT = 4;
-export const PAGES_PER_BINDER = 2; // 1 Cover Page + 1 Content Sheet for every binder after Binder 01
+export const PAGES_PER_BINDER = 2; // Default 1 Cover Page + 1 Content Sheet for standard text binders
 
-// Helper to get total docket pages across all binders
-export function getDocketTotalPages(pagesList: { id: string }[]): number {
+// Helper to convert any PDF/Image file URL into crisp ImportedPdfPage[] objects
+export async function convertFileUrlToPageImages(
+  fileUrl: string,
+  fileName?: string
+): Promise<ImportedPdfPage[]> {
+  try {
+    const isImage = /\.(jpe?g|png|webp|gif)$/i.test(fileName || fileUrl) || fileUrl.startsWith("data:image/");
+    if (isImage) {
+      return [{
+        pageNumber: 1,
+        dataUrl: fileUrl,
+        width: 816,
+        height: 1056,
+      }];
+    }
+
+    let arrayBuffer: ArrayBuffer;
+    if (fileUrl.startsWith("data:")) {
+      const base64 = fileUrl.split(",")[1];
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      arrayBuffer = bytes.buffer;
+    } else {
+      const res = await fetch(fileUrl);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch file (${res.status})`);
+      }
+      arrayBuffer = await res.arrayBuffer();
+    }
+
+    return await convertPdfToPageImages(arrayBuffer, 1.8);
+  } catch (err) {
+    console.error("Failed to convert exhibit document to page images:", err);
+    return [];
+  }
+}
+
+// Helper to get total docket pages across all binders, dynamically accounting for multi-page exhibits
+export function getDocketTotalPages(pagesList: { id: string; category?: string; renderedPages?: ImportedPdfPage[]; pageCount?: number }[]): number {
   if (pagesList.length <= 1) return STATE_FORM_PAGE_COUNT;
-  return STATE_FORM_PAGE_COUNT + (pagesList.length - 1) * PAGES_PER_BINDER;
+  let total = STATE_FORM_PAGE_COUNT;
+  for (let i = 1; i < pagesList.length; i++) {
+    const p = pagesList[i];
+    if (p.category === "exhibit" && p.renderedPages && p.renderedPages.length > 0) {
+      total += 1 + p.renderedPages.length; // 1 Cover Sheet + N authentic PDF pages
+    } else {
+      total += PAGES_PER_BINDER;
+    }
+  }
+  return total;
 }
 
 // Helper to get continuous docket page range info for a binder by index
-export function getBinderPageRange(pageIndex: number): { coverPage: number; contentPage: number; start: number; end: number; badge: string } {
+export function getBinderPageRange(
+  pageIndex: number,
+  pagesList?: { id: string; category?: string; renderedPages?: ImportedPdfPage[]; pageCount?: number }[]
+): {
+  coverPage: number;
+  contentPage: number;
+  contentStart: number;
+  contentEnd: number;
+  start: number;
+  end: number;
+  badge: string;
+} {
   if (pageIndex <= 0) {
-    return { coverPage: 1, contentPage: 4, start: 1, end: 4, badge: "01–04" };
+    return {
+      coverPage: 1,
+      contentPage: 4,
+      contentStart: 1,
+      contentEnd: 4,
+      start: 1,
+      end: 4,
+      badge: "01–04",
+    };
   }
-  const coverPage = STATE_FORM_PAGE_COUNT + (pageIndex - 1) * PAGES_PER_BINDER + 1;
-  const contentPage = coverPage + 1;
+
+  if (!pagesList || pagesList.length === 0) {
+    const coverPage = STATE_FORM_PAGE_COUNT + (pageIndex - 1) * PAGES_PER_BINDER + 1;
+    const contentPage = coverPage + 1;
+    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    return {
+      coverPage,
+      contentPage,
+      contentStart: contentPage,
+      contentEnd: contentPage,
+      start: coverPage,
+      end: contentPage,
+      badge: `${pad(coverPage)}–${pad(contentPage)}`,
+    };
+  }
+
+  let currentStart = STATE_FORM_PAGE_COUNT + 1;
+  for (let i = 1; i < pageIndex; i++) {
+    const p = pagesList[i];
+    const count =
+      p?.category === "exhibit" && p?.renderedPages && p?.renderedPages.length > 0
+        ? 1 + p.renderedPages.length
+        : PAGES_PER_BINDER;
+    currentStart += count;
+  }
+
+  const currentP = pagesList[pageIndex];
+  const currentCount =
+    currentP?.category === "exhibit" && currentP?.renderedPages && currentP.renderedPages.length > 0
+      ? 1 + currentP.renderedPages.length
+      : PAGES_PER_BINDER;
+
+  const coverPage = currentStart;
+  const contentStart = currentStart + 1;
+  const contentEnd = currentStart + currentCount - 1;
+  const contentPage = contentStart;
   const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
-  const badge = `${pad(coverPage)}–${pad(contentPage)}`;
-  return { coverPage, contentPage, start: coverPage, end: contentPage, badge };
+  const badge = coverPage === contentEnd ? pad(coverPage) : `${pad(coverPage)}–${pad(contentEnd)}`;
+
+  return {
+    coverPage,
+    contentPage,
+    contentStart,
+    contentEnd,
+    start: coverPage,
+    end: contentEnd,
+    badge,
+  };
 }
 
 // Helper to get continuous docket page number for a given page index (defaults to content sheet)
@@ -113,6 +238,39 @@ interface DocumentPage {
   category: "cover" | "restatement" | "pleading" | "facts" | "violations" | "remedies" | "exhibit";
   content?: string;
   exhibitTag?: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  documentType?: string;
+  sourceVaultId?: number;
+  renderedPages?: ImportedPdfPage[];
+  pageCount?: number;
+  isRenderingPdf?: boolean;
+  highlights?: DocumentHighlight[];
+}
+
+export function getNextExhibitLetter(existingPages: DocumentPage[]): string {
+  const usedLetters = new Set<string>();
+  for (const p of existingPages) {
+    if (p.exhibitTag) {
+      const match = p.exhibitTag.match(/exhibit\s+([a-z])/i);
+      if (match) usedLetters.add(match[1].toUpperCase());
+    }
+    const titleMatch = p.title.match(/exhibit\s+([a-z])/i);
+    if (titleMatch) usedLetters.add(titleMatch[1].toUpperCase());
+    if (p.id.startsWith("exhibit_")) {
+      const idMatch = p.id.match(/exhibit_([a-z])/i);
+      if (idMatch) usedLetters.add(idMatch[1].toUpperCase());
+    }
+  }
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  for (let i = 0; i < alphabet.length; i++) {
+    const letter = alphabet[i];
+    if (!usedLetters.has(letter)) {
+      return letter;
+    }
+  }
+  return "Z";
 }
 
 const DEFAULT_PAGES: DocumentPage[] = [
@@ -152,9 +310,9 @@ This complaint is timely filed within the one-year statute of limitations provid
 
 II. CLARITY CONTROL RESTATEMENT OF CAUSES OF ACTION
 
-COUNT I: FAILURE TO IMPLEMENT OPERATIVE IEP SERVICES & DENIAL OF FAPE
+COUNT I: FAILURE TO IMPLEMENT MANDATED IEP SERVICES & DENIAL OF FAPE
 (34 C.F.R. § 300.323(c)(2) · Ga. Comp. R. & Regs. 160-4-7-.06)
-The District failed to implement Elijah's operative IEP as written by withholding mandated specialized instruction (240 minutes) and accommodations, depriving the student of a Free Appropriate Public Education. (Supported by Exhibit A & Exhibit C).
+The District failed to implement Elijah's mandated IEP as written by withholding mandated specialized instruction (240 minutes) and accommodations, depriving the student of a Free Appropriate Public Education. (Supported by Exhibit A & Exhibit C).
 
 COUNT II: FAILURE TO TIMELY RE-EVALUATE & AFFIRMATIVE CHILD FIND VIOLATION
 (34 C.F.R. § 300.111, § 300.301 · Ga. Comp. R. & Regs. 160-4-7-.03)
@@ -183,7 +341,7 @@ LOCAL EDUCATIONAL AGENCY: ATLANTA PUBLIC SCHOOLS
 A chronological summary of relevant events and factual milestones occurring within the one-year statutory filing period (October 2025 – October 2026):
 
 1. AUGUST 28, 2025 — ANNUAL IEP CONVENED (EXHIBIT A)
-The Atlanta Public Schools IEP team convened to develop Elijah's operative 10th grade IEP. The IEP committed the District to 150 minutes weekly of specialized instruction, accommodations, and related support services.
+The Atlanta Public Schools IEP team convened to develop Elijah's annual 10th grade IEP. The IEP committed the District to 150 minutes weekly of specialized instruction, accommodations, and related support services.
 
 2. OCTOBER 12, 2025 — FORMAL RE-EVALUATION REQUEST (EXHIBIT B)
 Documented academic regression and accommodations withholding prompted Parent to deliver a formal written request for comprehensive evaluations to the LEA Special Education Lead via timestamped email.
@@ -220,7 +378,7 @@ TABLE OF COMPLAINT FILING SECTIONS:
   2. CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims (Pages 5–6)
   3. CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones (Pages 7–8)
   4. EXHIBIT INDEX: Cover Page & Master Evidentiary Schedule (Pages 9–10)
-  5. EXHIBIT A: Cover Page & Student's Operative IEP (Pages 11–12)
+  5. EXHIBIT A: Cover Page & Student's IEP (Pages 11–12)
   6. EXHIBIT B: Cover Page & Evaluations & Parent Written Requests (Pages 13–14)
   7. EXHIBIT C: Cover Page & District Correspondence & Service Logs (Pages 15–16)
 
@@ -228,12 +386,12 @@ TABLE OF COMPLAINT FILING SECTIONS:
 MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:
 ================================================================================
 
-EXHIBIT A: STUDENT'S OPERATIVE IEP
-• Document: Operative Annual Individualized Education Program (IEP)
+EXHIBIT A: STUDENT'S IEP
+• Document: Annual Individualized Education Program (IEP)
 • Date: August 28, 2025 · Author: Cobb County School District IEP Team
 • Relevant Pages: Pages 4–8 (Service Delivery Schedule & Accommodations)
 • Evidentiary Purpose: Establishes binding baseline of 240 weekly reading minutes and 60 minutes speech therapy.
-• Supports: Count I (Failure to Implement Operative IEP Services / Denial of FAPE).
+• Supports: Count I (Failure to Implement IEP Services / Denial of FAPE).
 
 EXHIBIT B: EVALUATIONS & PARENT WRITTEN REQUESTS
 • Document: Psychoeducational Evaluation & Formal Parent Re-Evaluation Request Letter
@@ -255,18 +413,6 @@ Exhibit files are attached behind this index in labeled alphabetical order.`
     title: "Exhibit A (Student's IEP)", 
     category: "exhibit", 
     exhibitTag: "Exhibit A", 
-    content: `EXHIBIT A: OPERATIVE INDIVIDUALIZED EDUCATION PROGRAM (IEP)
-
-DOCUMENT DETAILS:
-• Student: Alexander, Shanderious Jr.
-• Document Date: August 28, 2025
-• Author: Cobb County School District IEP Team
-• Relevant Pages: Pages 4-8 (Service Delivery Schedule & Accommodations)
-
-SUMMARY OF EXHIBIT EVIDENCE:
-This document establishes the binding commitment made by Cobb County School District to provide 150 minutes weekly of specialized reading instruction and 60 minutes weekly of speech therapy.
-
-This exhibit substantiates the service standard against which the District's implementation failure is proven in the Chronological Summary and Clarity Control Restatement.`
   },
   { 
     id: "exhibit_b", 
@@ -274,15 +420,6 @@ This exhibit substantiates the service standard against which the District's imp
     title: "Exhibit B (Evaluations)", 
     category: "exhibit", 
     exhibitTag: "Exhibit B", 
-    content: `EXHIBIT B: PSYCHOEDUCATIONAL EVALUATION & PARENT REQUESTS
-
-DOCUMENT DETAILS:
-• Initial Evaluation Report: September 14, 2023
-• Formal Parent Re-evaluation Request Letter: October 12, 2025
-• Delivery Confirmation: Email timestamped 8:42 AM to Special Education Lead
-
-SUMMARY OF EXHIBIT EVIDENCE:
-Proves written notification to LEA of emerging sensory deficits and establishes the start of statutory timelines for evaluation consent.`
   },
   { 
     id: "exhibit_c", 
@@ -290,14 +427,6 @@ Proves written notification to LEA of emerging sensory deficits and establishes 
     title: "Exhibit C (Communications)", 
     category: "exhibit", 
     exhibitTag: "Exhibit C", 
-    content: `EXHIBIT C: DISTRICT CORRESPONDENCE & SERVICE LOGS
-
-DOCUMENT DETAILS:
-• Service Delivery Log: November 2025 – January 2026
-• Email Chain between Parent and Case Manager: November 18, 2025 – December 12, 2025
-
-SUMMARY OF EXHIBIT EVIDENCE:
-Documentary proof showing 18 missed sessions without compensatory make-up time and admission from case manager acknowledging staff shortages.`
   },
 ];
 
@@ -507,7 +636,7 @@ function MiniaturePagePreview({
           <div className="space-y-1 my-auto text-left text-[6px] text-[#2A1D0E]">
             <div className="bg-[#EFE8D6] p-0.5 rounded-xs flex items-center gap-1">
               <span className="font-bold text-[#8C6D2B]">EXH A:</span>
-              <span className="truncate">Operative IEP</span>
+              <span className="truncate">Student's IEP</span>
             </div>
             <div className="bg-[#EFE8D6] p-0.5 rounded-xs flex items-center gap-1">
               <span className="font-bold text-[#8C6D2B]">EXH B:</span>
@@ -533,7 +662,7 @@ function MiniaturePagePreview({
               </span>
             </div>
             <div className="text-[7px] font-bold text-[#1A1005] mt-1 uppercase">
-              Operative IEP
+              Student's IEP
             </div>
             <div className="text-[6px] text-[#5A4528] italic mt-0.5">
               Service Schedule & Accommodations
@@ -587,8 +716,49 @@ export default function ComplaintWorkspace() {
   const [location, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
 
+  const utils = trpc.useUtils();
   // CRM Contacts for Student Selection & Auto-fill
   const contactsQuery = trpc.contacts.list.useQuery();
+
+  // Active Student ID for Document Vault integration (PG-023-VAULT)
+  const [activeStudentId, setActiveStudentId] = useState<number | null>(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const sid = searchParams.get("studentId") || searchParams.get("contactId");
+      if (sid && !isNaN(Number(sid))) return Number(sid);
+      const sessId = sessionStorage.getItem("lastStudentProfileId");
+      if (sessId && !isNaN(Number(sessId))) return Number(sessId);
+    }
+    return null;
+  });
+
+  // Document Vault queries for active student (PG-023-VAULT)
+  const vaultQuery = trpc.clientFiles.listForAdmin.useQuery(
+    { clientId: activeStudentId! },
+    { enabled: !!activeStudentId }
+  );
+  const iepDocQuery = trpc.iep.get.useQuery(
+    { contactId: activeStudentId! },
+    { enabled: !!activeStudentId }
+  );
+  const draftHistoryQuery = trpc.iep.listDraftHistory.useQuery(
+    { contactId: activeStudentId! },
+    { enabled: !!activeStudentId }
+  );
+
+  const uploadToVaultMutation = trpc.iep.upload.useMutation({
+    onSuccess: () => {
+      toast.success("Document uploaded to Student Document Vault (PG-023-VAULT)");
+      if (activeStudentId) {
+        utils.clientFiles.listForAdmin.invalidate({ clientId: activeStudentId });
+        utils.iep.get.invalidate({ contactId: activeStudentId });
+        utils.iep.listDraftHistory.invalidate({ contactId: activeStudentId });
+      }
+    },
+    onError: (err) => {
+      toast.error(`Failed to upload to Document Vault: ${err.message}`);
+    },
+  });
 
   // State: Case Data (Defaults to primary student Elijah Santiago)
   const [caseDetails, setCaseDetails] = useState<ComplaintCaseDetails>({
@@ -617,6 +787,9 @@ export default function ComplaintWorkspace() {
 
   // Apply a CRM student record to the complaint workspace and official form
   const applyStudentToComplaint = (student: any) => {
+    if (student?.id) {
+      setActiveStudentId(student.id);
+    }
     const sName = `${student.firstName || ""} ${student.lastName || ""}`.trim();
     const stateCode = detectStateCode(student.state);
     const districtName =
@@ -683,6 +856,7 @@ export default function ComplaintWorkspace() {
       );
       if (matched) {
         isAutoLoaded.current = true;
+        setActiveStudentId(matched.id);
         applyStudentToComplaint(matched);
       }
     } else {
@@ -692,6 +866,7 @@ export default function ComplaintWorkspace() {
       );
       if (elijah) {
         isAutoLoaded.current = true;
+        setActiveStudentId(elijah.id);
         applyStudentToComplaint(elijah);
       }
     }
@@ -712,6 +887,56 @@ export default function ComplaintWorkspace() {
   const [lastSavedText, setLastSavedText] = useState<string>("Auto-saved just now");
   const [complaintTitle, setComplaintTitle] = useState<string>("State Complaint – Elijah Santiago");
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
+
+  // State: Document Highlighting on Uploaded Evidentiary Documents
+  const [isHighlighterActive, setIsHighlighterActive] = useState<boolean>(false);
+  const [activeHighlightColor, setActiveHighlightColor] = useState<HighlightColor>("yellow");
+
+  const handleAddHighlight = (highlight: DocumentHighlight) => {
+    setPages((prev) =>
+      prev.map((p) => {
+        if (p.id === activePageId) {
+          const currentHighlights = p.highlights || [];
+          return {
+            ...p,
+            highlights: [...currentHighlights, highlight],
+          };
+        }
+        return p;
+      })
+    );
+    toast.success("Highlight applied to evidentiary document");
+  };
+
+  const handleRemoveHighlight = (highlightId: string) => {
+    setPages((prev) =>
+      prev.map((p) => {
+        if (p.id === activePageId) {
+          return {
+            ...p,
+            highlights: (p.highlights || []).filter((h) => h.id !== highlightId),
+          };
+        }
+        return p;
+      })
+    );
+    toast.success("Highlight removed");
+  };
+
+  const handleClearHighlights = () => {
+    setPages((prev) =>
+      prev.map((p) => {
+        if (p.id === activePageId) {
+          return {
+            ...p,
+            highlights: [],
+          };
+        }
+        return p;
+      })
+    );
+    toast.success("Cleared all highlights from current exhibit");
+  };
 
   // Automatically collapse the global sidebar to maximize the legal document workspace
   useEffect(() => {
@@ -913,14 +1138,42 @@ export default function ComplaintWorkspace() {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState("");
   const [newPageCategory, setNewPageCategory] = useState<DocumentPage["category"]>("exhibit");
+  const [insertModalTab, setInsertModalTab] = useState<"vault" | "upload" | "custom">("vault");
+  const [vaultSearchQuery, setVaultSearchQuery] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadDocType, setUploadDocType] = useState<string>("Evaluation / Diagnostic Report");
+  const [uploadCustomTitle, setUploadCustomTitle] = useState<string>("");
+  const [isUploadingToVault, setIsUploadingToVault] = useState(false);
+  const vaultFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Target exhibit selection: "current" (attach to currently selected exhibit like Exhibit A) or "new" (append as new exhibit)
+  const [targetExhibitMode, setTargetExhibitMode] = useState<"current" | "new">("current");
 
   // Editable Content in State
   const activePage = pages.find((p) => p.id === activePageId) || pages[0];
   const activePageIndex = pages.findIndex((p) => p.id === activePageId);
 
-  // Total docket pages: 4 pages for binder 01 (State Form) + 2 pages (Cover Sheet + Content Sheet) for each subsequent binder
+  const isCurrentPageAnExhibit = activePage.category === "exhibit";
+  const currentExhibitLabel = activePage.exhibitTag || activePage.title || "Exhibit A";
+  const nextExhibitLetter = getNextExhibitLetter(pages);
+  const effectiveTargetLabel = isCurrentPageAnExhibit && targetExhibitMode === "current"
+    ? currentExhibitLabel
+    : `Exhibit ${nextExhibitLetter}`;
+
+  // Automatically default to current active exhibit if user is currently working on an exhibit page
+  useEffect(() => {
+    if (isAddPageModalOpen) {
+      if (activePage.category === "exhibit") {
+        setTargetExhibitMode("current");
+      } else {
+        setTargetExhibitMode("new");
+      }
+    }
+  }, [isAddPageModalOpen, activePageId]);
+
+  // Total docket pages: 4 pages for binder 01 (State Form) + dynamic pages for each subsequent binder
   const totalDocketPages = getDocketTotalPages(pages);
-  const activeBinderRange = getBinderPageRange(activePageIndex);
+  const activeBinderRange = getBinderPageRange(activePageIndex, pages);
   const currentDocketPageNumber = activeBinderRange.contentPage;
 
   // Ref & auto-resize effect for the editable legal drafting textarea
@@ -965,6 +1218,122 @@ export default function ComplaintWorkspace() {
     setLastSavedText("Draft saved just now");
   };
 
+  // Helper to load and convert any attached PDF into high-res page images
+  const loadAndConvertPdfForPage = async (pageId: string, fileUrl: string, fileName?: string) => {
+    try {
+      setPages((prev) =>
+        prev.map((p) => (p.id === pageId ? { ...p, isRenderingPdf: true } : p))
+      );
+      const convertedPages = await convertFileUrlToPageImages(fileUrl, fileName);
+      if (convertedPages.length > 0) {
+        setPages((prev) =>
+          prev.map((p) =>
+            p.id === pageId
+              ? {
+                  ...p,
+                  renderedPages: convertedPages,
+                  pageCount: convertedPages.length,
+                  isRenderingPdf: false,
+                }
+              : p
+          )
+        );
+      } else {
+        setPages((prev) =>
+          prev.map((p) => (p.id === pageId ? { ...p, isRenderingPdf: false } : p))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to convert exhibit PDF:", err);
+      setPages((prev) =>
+        prev.map((p) => (p.id === pageId ? { ...p, isRenderingPdf: false } : p))
+      );
+    }
+  };
+
+  // Auto-convert any exhibit page that has a fileUrl but no renderedPages yet
+  useEffect(() => {
+    pages.forEach((p) => {
+      if (
+        p.category === "exhibit" &&
+        p.fileUrl &&
+        (!p.renderedPages || p.renderedPages.length === 0) &&
+        !p.isRenderingPdf
+      ) {
+        loadAndConvertPdfForPage(p.id, p.fileUrl, p.fileName);
+      }
+    });
+  }, [pages]);
+
+  // Consolidated documents for active student from Document Vault (PG-023-VAULT)
+  const availableVaultDocs = useMemo(() => {
+    const list: Array<{
+      id?: number;
+      fileName: string;
+      fileUrl: string;
+      documentType: string;
+      category?: string;
+      date?: string;
+      source: string;
+    }> = [];
+
+    // 1. Official Current IEP
+    if (iepDocQuery.data?.currentIepFileUrl) {
+      list.push({
+        id: iepDocQuery.data.id,
+        fileName: iepDocQuery.data.currentIepFileName || "Official Current IEP.pdf",
+        fileUrl: iepDocQuery.data.currentIepFileUrl,
+        documentType: "Current IEP",
+        category: "iep",
+        date: iepDocQuery.data.updatedAt ? new Date(iepDocQuery.data.updatedAt).toLocaleDateString() : undefined,
+        source: "Current IEP Record",
+      });
+    }
+
+    // 2. Draft IEPs
+    if (draftHistoryQuery.data?.length) {
+      for (const d of draftHistoryQuery.data) {
+        if (d.fileUrl) {
+          list.push({
+            id: d.id,
+            fileName: d.fileName || `Draft IEP (${new Date(d.uploadedAt).toLocaleDateString()})`,
+            fileUrl: d.fileUrl,
+            documentType: "Draft IEP",
+            category: "iep-draft",
+            date: new Date(d.uploadedAt).toLocaleDateString(),
+            source: "Draft IEP History",
+          });
+        }
+      }
+    }
+
+    // 3. Vault Files from clientFiles table
+    if (vaultQuery.data?.length) {
+      for (const f of vaultQuery.data) {
+        if (f.fileUrl && !list.some((existing) => existing.fileUrl === f.fileUrl)) {
+          list.push({
+            id: f.id,
+            fileName: f.fileName,
+            fileUrl: f.fileUrl,
+            documentType: f.documentType || f.category || "Vault Record",
+            category: f.category || "vault",
+            date: f.uploadedAt ? new Date(f.uploadedAt).toLocaleDateString() : undefined,
+            source: "Document Vault",
+          });
+        }
+      }
+    }
+
+    if (!vaultSearchQuery.trim()) return list;
+    const q = vaultSearchQuery.toLowerCase();
+    return list.filter(
+      (item) =>
+        item.fileName.toLowerCase().includes(q) ||
+        item.documentType.toLowerCase().includes(q) ||
+        item.source.toLowerCase().includes(q)
+    );
+  }, [iepDocQuery.data, draftHistoryQuery.data, vaultQuery.data, vaultSearchQuery]);
+
   // Add Page handler
   const handleAddPage = () => {
     if (!newPageTitle.trim()) return;
@@ -982,6 +1351,188 @@ export default function ComplaintWorkspace() {
     setIsAddPageModalOpen(false);
     setNewPageTitle("");
     toast.success(`Binder "${newPageTitle}" (${nextNum}) added to state complaint packet`);
+  };
+
+  // Handler: Insert exhibit directly from Document Vault (PG-023-VAULT)
+  const handleInsertExhibitFromVault = (fileItem: {
+    fileName: string;
+    fileUrl: string;
+    documentType?: string;
+    id?: number;
+    renderedPages?: ImportedPdfPage[];
+  }) => {
+    const cleanName = fileItem.fileName.replace(/\.[^/.]+$/, "");
+
+    // Case 1: Attaching directly to currently active exhibit (e.g. Exhibit A)
+    if (isCurrentPageAnExhibit && targetExhibitMode === "current") {
+      const exhibitPrefix = activePage.exhibitTag || activePage.title.split("(")[0].trim() || "Exhibit A";
+      const updatedTitle = `${exhibitPrefix} (${cleanName})`;
+      const hasPreRendered = fileItem.renderedPages && fileItem.renderedPages.length > 0;
+
+      setPages((prev) =>
+        prev.map((p) => {
+          if (p.id === activePage.id) {
+            return {
+              ...p,
+              title: updatedTitle,
+              fileUrl: fileItem.fileUrl,
+              fileName: fileItem.fileName,
+              documentType: fileItem.documentType || "Evidentiary Record",
+              sourceVaultId: fileItem.id,
+              renderedPages: hasPreRendered ? fileItem.renderedPages : p.renderedPages,
+              pageCount: hasPreRendered ? fileItem.renderedPages!.length : p.pageCount,
+              isRenderingPdf: !hasPreRendered,
+              content: `${p.content ? `${p.content}\n\n` : ""}ATTACHED EXHIBIT RECORD (PG-023-VAULT):
+• Document Title: ${fileItem.fileName}
+• Classification: ${fileItem.documentType || "Evidentiary Record"}
+• Vault Source: PG-023-VAULT · Student Document Vault
+• Timestamp: ${new Date().toLocaleDateString()}
+
+STATEMENT OF EVIDENCE:
+This documentary record is incorporated into ${p.exhibitTag || p.title} in direct support of Complainant's allegations. The LEA was in possession of or statutorily responsible for this record during the relevant filing period.`,
+            };
+          }
+          if (p.id === "exhibit_index") {
+            const addition = `\n• ${exhibitPrefix}: ${cleanName.toUpperCase()} — Attached from Document Vault (PG-023-VAULT)`;
+            return {
+              ...p,
+              content: (p.content || "") + addition,
+            };
+          }
+          return p;
+        })
+      );
+
+      if (!hasPreRendered && fileItem.fileUrl) {
+        loadAndConvertPdfForPage(activePage.id, fileItem.fileUrl, fileItem.fileName);
+      }
+
+      setIsAddPageModalOpen(false);
+      toast.success(`Attached "${fileItem.fileName}" to ${exhibitPrefix} from Document Vault (PG-023-VAULT)`);
+      return;
+    }
+
+    // Case 2: Inserting as a brand-new exhibit
+    const nextLetter = nextExhibitLetter;
+    const nextIdx = pages.length;
+    const nextNum = nextIdx + 1 < 10 ? `0${nextIdx + 1}` : `${nextIdx + 1}`;
+    const docTitle = `Exhibit ${nextLetter} (${cleanName})`;
+    const hasPreRendered = fileItem.renderedPages && fileItem.renderedPages.length > 0;
+    const newPageId = `exhibit_${nextLetter.toLowerCase()}_${Date.now()}`;
+
+    const newPage: DocumentPage = {
+      id: newPageId,
+      number: nextNum,
+      title: docTitle,
+      category: "exhibit",
+      exhibitTag: `Exhibit ${nextLetter}`,
+      fileUrl: fileItem.fileUrl,
+      fileName: fileItem.fileName,
+      documentType: fileItem.documentType || "Evidentiary Record",
+      sourceVaultId: fileItem.id,
+      renderedPages: hasPreRendered ? fileItem.renderedPages : undefined,
+      pageCount: hasPreRendered ? fileItem.renderedPages!.length : undefined,
+      isRenderingPdf: !hasPreRendered,
+      content: `EXHIBIT ${nextLetter} · MASTER EVIDENTIARY RECORD
+Document Title: ${fileItem.fileName}
+Classification: ${fileItem.documentType || "Evidentiary Record"}
+Source Repository: PG-023-VAULT · Student Document Vault
+Filing Docket Page: ${nextNum}
+
+EVIDENTIARY PROFFER & RELEVANCE:
+This document is incorporated herein and submitted in direct support of Complainant's allegations. The LEA was in possession of or statutorily responsible for this record during the relevant filing period.`,
+    };
+
+    // Update exhibit index page if it exists
+    setPages((prev) => {
+      const updated = prev.map((p) => {
+        if (p.id === "exhibit_index") {
+          const addition = `\n${nextLetter}. EXHIBIT ${nextLetter}: ${cleanName.toUpperCase()} — Attached from Document Vault (PG-023-VAULT)`;
+          return {
+            ...p,
+            content: (p.content || "") + addition,
+          };
+        }
+        return p;
+      });
+      return [...updated, newPage];
+    });
+
+    if (!hasPreRendered && fileItem.fileUrl) {
+      loadAndConvertPdfForPage(newPageId, fileItem.fileUrl, fileItem.fileName);
+    }
+
+    setActivePageId(newPage.id);
+    setIsAddPageModalOpen(false);
+    toast.success(`Attached Exhibit ${nextLetter} from Document Vault (PG-023-VAULT)`);
+  };
+
+  // Handler: Upload new document to vault then insert as exhibit
+  const handleUploadAndInsertExhibit = async () => {
+    if (!uploadFile) {
+      toast.error("Please select a file to upload");
+      return;
+    }
+    if (!activeStudentId) {
+      toast.error("No active student selected for Document Vault storage");
+      return;
+    }
+
+    try {
+      setIsUploadingToVault(true);
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const res = reader.result as string;
+          const base64Data = res.split(",")[1];
+          resolve(base64Data);
+        };
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(uploadFile);
+      const base64Data = await base64Promise;
+
+      // Pre-convert in memory for zero-lag insertion
+      const arrayBuffer = await uploadFile.arrayBuffer();
+      let initialPages: ImportedPdfPage[] = [];
+      try {
+        if (uploadFile.type === "application/pdf" || uploadFile.name.toLowerCase().endsWith(".pdf")) {
+          initialPages = await convertPdfToPageImages(arrayBuffer, 1.8);
+        } else if (uploadFile.type.startsWith("image/")) {
+          const dataUrl = `data:${uploadFile.type};base64,${base64Data}`;
+          initialPages = [{ pageNumber: 1, dataUrl, width: 816, height: 1056 }];
+        }
+      } catch (convErr) {
+        console.warn("Could not pre-render uploaded PDF in memory:", convErr);
+      }
+
+      const uploadRes = await uploadToVaultMutation.mutateAsync({
+        contactId: activeStudentId,
+        fileName: uploadFile.name,
+        fileKey: `iep-documents/${Date.now()}_${uploadFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`,
+        fileUrl: "",
+        fileData: base64Data,
+        fileSize: uploadFile.size,
+        mimeType: uploadFile.type || "application/pdf",
+      });
+
+      const fileUrl = uploadRes?.fileUrl || URL.createObjectURL(uploadFile);
+      handleInsertExhibitFromVault({
+        fileName: uploadCustomTitle.trim() || uploadFile.name,
+        fileUrl: fileUrl,
+        documentType: uploadDocType,
+        id: undefined,
+        renderedPages: initialPages.length > 0 ? initialPages : undefined,
+      });
+
+      setUploadFile(null);
+      setUploadCustomTitle("");
+      if (vaultFileInputRef.current) vaultFileInputRef.current.value = "";
+    } catch (e: any) {
+      toast.error(`Upload failed: ${e.message || "Unknown error"}`);
+    } finally {
+      setIsUploadingToVault(false);
+    }
   };
 
   // PDF Export
@@ -1287,7 +1838,7 @@ export default function ComplaintWorkspace() {
                           page={p}
                           caseDetails={caseDetails}
                           isActive={isActive}
-                          coverThumbnail={p.id === "cover" ? stateFormPages[0]?.dataUrl : undefined}
+                          coverThumbnail={p.id === "cover" ? stateFormPages[0]?.dataUrl : p.renderedPages?.[0]?.dataUrl}
                         />
                       </div>
                     </button>
@@ -1469,8 +2020,8 @@ export default function ComplaintWorkspace() {
               </div>
             )}
 
-            {/* If NOT on cover page, show compact single-line formatting toolbar */}
-            {activePage.id !== "cover" && (
+            {/* If NOT on cover page and NOT on exhibit page, show compact single-line formatting toolbar */}
+            {activePage.id !== "cover" && activePage.category !== "exhibit" && (
               <div 
                 style={{
                   backgroundColor: "#061833",
@@ -1571,6 +2122,113 @@ export default function ComplaintWorkspace() {
               </div>
             )}
 
+            {/* If on exhibit page, show Exhibit Evidentiary Document Info & Highlighting Bar */}
+            {activePage.category === "exhibit" && (
+              <div 
+                style={{
+                  backgroundColor: "#061833",
+                  background: "linear-gradient(90deg, #0A2244 0%, #061833 50%, #0A2244 100%)",
+                }}
+                className="px-4 sm:px-6 py-1.5 border-b border-[#3A2C18] flex flex-wrap items-center justify-between gap-2 text-xs relative z-20 shadow-xs"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-bold text-[#FFE394] font-serif shrink-0">
+                    {activePage.exhibitTag || activePage.number ? `Exhibit ${activePage.exhibitTag || activePage.number}:` : "Exhibit:"}
+                  </span>
+                  <span className="text-[#C6B697] text-[11px] truncate font-medium">
+                    {activePage.fileName || activePage.title}
+                  </span>
+                  {activePage.renderedPages && activePage.renderedPages.length > 0 ? (
+                    <span className="text-[10px] font-mono bg-[#031124] text-[#FFE394] border border-[#C5A059]/40 px-2 py-0.5 rounded shrink-0">
+                      {activePage.renderedPages.length} Pages Inserted · Continuous Docket Pages {activeBinderRange.contentStart}–{activeBinderRange.contentEnd}
+                    </span>
+                  ) : activePage.fileUrl ? (
+                    <span className="text-[10px] font-mono bg-[#031124] text-[#FFE394] border border-[#C5A059]/40 px-2 py-0.5 rounded shrink-0">
+                      Evidentiary PDF Inserted
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono bg-[#381E0B] text-[#FFC480] border border-[#FFC480]/40 px-2 py-0.5 rounded shrink-0">
+                      No Evidentiary File Attached
+                    </span>
+                  )}
+                </div>
+
+                {/* Highlighter Tools & Vault Action Buttons */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Highlighter Toggle */}
+                  <div className="flex items-center bg-[#05142B] border border-[#3A2C18] rounded-md p-0.5 gap-1 shadow-inner">
+                    <button
+                      type="button"
+                      onClick={() => setIsHighlighterActive(!isHighlighterActive)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-all cursor-pointer",
+                        isHighlighterActive
+                          ? "bg-gradient-to-r from-[#DFBE77] to-[#C5A059] text-[#07162B] font-bold shadow-xs"
+                          : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/[0.05]"
+                      )}
+                      title={isHighlighterActive ? "Highlighter Active: Click & drag on document to highlight" : "Click to activate document highlighter"}
+                    >
+                      <Highlighter className="w-3.5 h-3.5" />
+                      <span>{isHighlighterActive ? "Highlighter ON" : "Highlight Text"}</span>
+                    </button>
+
+                    {/* Color selection pills (only when active) */}
+                    {isHighlighterActive && (
+                      <div className="flex items-center gap-1 pl-1 pr-1 border-l border-[#3A2C18]">
+                        {(Object.keys(HIGHLIGHT_COLOR_MAP) as HighlightColor[]).map((cKey) => {
+                          const cVal = HIGHLIGHT_COLOR_MAP[cKey];
+                          const isSelected = activeHighlightColor === cKey;
+                          return (
+                            <button
+                              key={cKey}
+                              type="button"
+                              onClick={() => setActiveHighlightColor(cKey)}
+                              className={cn(
+                                "w-4 h-4 rounded-full border transition-all cursor-pointer",
+                                isSelected ? "scale-125 border-white ring-2 ring-[#DFBE77]" : "border-black/40 opacity-70 hover:opacity-100"
+                              )}
+                              style={{ backgroundColor: cVal.preview }}
+                              title={`Color: ${cVal.label}`}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Highlights Count & Clear button */}
+                  {(activePage.highlights || []).length > 0 && (
+                    <div className="flex items-center gap-1.5 bg-[#031124] border border-[#C5A059]/40 rounded-md px-2 py-0.5 text-xs text-[#FFE394]">
+                      <span className="font-mono text-[10px]">
+                        {activePage.highlights!.length} highlighted
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleClearHighlights}
+                        className="text-rose-400 hover:text-rose-200 ml-1 p-0.5 hover:bg-rose-950/40 rounded cursor-pointer"
+                        title="Clear all highlights on this exhibit"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      setTargetExhibitMode("current");
+                      setIsAddPageModalOpen(true);
+                    }}
+                    className="bg-[#031124] hover:bg-[#071C3A] text-[#DFBE77] hover:text-[#FFF4D4] border border-[#C5A059]/60 text-xs h-7 px-2.5 gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <FolderArchive className="w-3.5 h-3.5 text-[#DFBE77]" />
+                    <span>{activePage.fileUrl ? "Replace File from Vault" : "Insert File from Vault"}</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* ── Scrollable Document Canvas Viewport ───────────────────── */}
             {/* Consistent rich Admiralty Blue leather from top to bottom (no dark fade) */}
             <div 
@@ -1599,9 +2257,103 @@ export default function ComplaintWorkspace() {
                   isRendering={isRenderingStateForm}
                   totalPages={totalDocketPages}
                 />
+              ) : activePage.category === "exhibit" ? (
+                /* ── VIEW 2: EXHIBIT BINDER (COVER SHEET 1 + INSERTED REAL FILE PAGES DIRECTLY) ── */
+                /* Vertically stacked Letter sheets — zero inner scrollbars, zero copy input */
+                <div className="flex flex-col items-center w-full">
+                  {/* SHEET 1: OFFICIAL DOCKET BINDER COVER PAGE */}
+                  <BinderCoverPage
+                    pageId={activePage.id}
+                    title={activePage.title}
+                    category={activePage.category}
+                    sectionNumber={`Section ${activePageIndex + 1 < 10 ? `0${activePageIndex + 1}` : activePageIndex + 1}`}
+                    coverPageNumber={activeBinderRange.coverPage}
+                    totalDocketPages={totalDocketPages}
+                    studentName={caseDetails.studentName}
+                    studentDob={caseDetails.studentDob}
+                    grade={caseDetails.grade}
+                    school={caseDetails.school}
+                    district={caseDetails.district}
+                    preparedBy={caseDetails.preparedBy}
+                    submissionDate={caseDetails.submissionDate}
+                    agencyName={SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"}
+                    viewMode={viewMode}
+                    zoomLevel={zoomLevel}
+                  />
+
+                  {/* SHEET 2+ : ACTUAL FILE PAGES INSERTED DIRECTLY (NO COPY INPUT, NO SQUISHING, NO LABELS) */}
+                  {activePage.renderedPages?.length || activePage.fileUrl || activePage.isRenderingPdf ? (
+                    <ExhibitPdfSheetsView
+                      page={activePage}
+                      activeBinderRange={activeBinderRange}
+                      totalDocketPages={totalDocketPages}
+                      agencyName={SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"}
+                      viewMode={viewMode}
+                      zoomLevel={zoomLevel}
+                      isHighlighterActive={isHighlighterActive}
+                      activeHighlightColor={activeHighlightColor}
+                      onAddHighlight={handleAddHighlight}
+                      onRemoveHighlight={handleRemoveHighlight}
+                      onReplaceFile={() => {
+                        setTargetExhibitMode("current");
+                        setIsAddPageModalOpen(true);
+                      }}
+                      onRemoveFile={() => {
+                        setPages((prev) =>
+                          prev.map((p) =>
+                            p.id === activePage.id
+                              ? {
+                                  ...p,
+                                  fileUrl: undefined,
+                                  fileName: undefined,
+                                  documentType: undefined,
+                                  renderedPages: undefined,
+                                  pageCount: undefined,
+                                  isRenderingPdf: false,
+                                }
+                              : p
+                          )
+                        );
+                        toast.success(`Removed attachment from ${activePage.exhibitTag || activePage.title}`);
+                      }}
+                    />
+                  ) : (
+                    /* When no file attached yet: Clean Insert Exhibit File sheet (NO copy input on exhibit pages!) */
+                    <div
+                      style={{
+                        width: viewMode === "actual" ? "816px" : "100%",
+                        maxWidth: "816px",
+                        minHeight: "420px",
+                        transform: viewMode === "fit-page" ? "scale(0.78)" : zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
+                        transformOrigin: "top center",
+                      }}
+                      className="rounded-xs bg-[#031124] border border-[#C5A059]/60 shadow-2xl p-10 flex flex-col items-center justify-center text-center my-4"
+                    >
+                      <div className="w-14 h-14 rounded-full bg-[#051A36] border border-[#DFBE77]/60 flex items-center justify-center text-[#DFBE77] mb-4 shadow-lg">
+                        <FolderArchive className="w-7 h-7" />
+                      </div>
+                      <h3 className="font-serif text-xl font-bold text-[#FFF4D4] mb-2">
+                        Insert Evidentiary Exhibit File
+                      </h3>
+                      <p className="font-sans text-xs text-[#C6B697] max-w-md leading-relaxed mb-6">
+                        No copy input on exhibit pages. The actual evidentiary PDF will be inserted directly after this cover sheet in full fidelity with zero modifications for state investigator review.
+                      </p>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setTargetExhibitMode("current");
+                          setIsAddPageModalOpen(true);
+                        }}
+                        className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 shadow-md text-xs cursor-pointer gap-2 px-5 py-2.5 hover:brightness-110"
+                      >
+                        <FolderArchive className="w-4 h-4" />
+                        <span>Select File from Document Vault or Upload</span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
               ) : (
-                /* ── VIEW 2: COVER PAGE (SHEET 1) + EDITABLE DOCUMENT SHEET (SHEET 2) ── */
-                /* Vertically stacked Letter sheets — zero inner scrollbars, outer right scrollbar scrolls all sheets smoothly */
+                /* ── VIEW 3: DRAFTING SECTION (COVER PAGE SHEET 1 + EDITABLE DOCUMENT SHEET 2) ── */
                 <div className="flex flex-col items-center w-full">
                   {/* SHEET 1: OFFICIAL DOCKET BINDER COVER PAGE */}
                   <BinderCoverPage
@@ -2178,48 +2930,412 @@ export default function ComplaintWorkspace() {
           </DialogContent>
         </Dialog>
 
-        {/* 3. Add Custom Page / Exhibit Modal */}
+        {/* 3. Insert Document / Exhibit Modal with PG-023-VAULT Document Vault Access */}
         <Dialog open={isAddPageModalOpen} onOpenChange={setIsAddPageModalOpen}>
-          <DialogContent className="max-w-md bg-[#05142B] border border-[#3A2C18] text-white shadow-2xl">
-            <DialogHeader>
-              <DialogTitle className="font-serif text-lg text-[#FFF4D4]">
-                Add Document Page or Exhibit
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3 py-2 text-xs">
-              <div>
-                <Label className="text-[#C6B697]">Page Title</Label>
-                <Input
-                  placeholder="e.g. Exhibit D (Medical Evaluation)"
-                  value={newPageTitle}
-                  onChange={(e) => setNewPageTitle(e.target.value)}
-                  className="bg-[#020A17] border-[#3A2C18] text-white mt-1 h-8 text-xs"
-                />
+          <DialogContent className="max-w-2xl bg-[#05142B] border border-[#3A2C18] text-white shadow-2xl p-0 overflow-hidden">
+            {/* Header with Admiralty styling & PG-023-VAULT Badge */}
+            <div className="p-5 border-b border-[#3A2C18] bg-gradient-to-r from-[#041633] via-[#072147] to-[#041633] relative">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#0A2540] text-[#FFE394] border border-[#DFBE77]/40 flex items-center gap-1.5">
+                      <FolderArchive className="w-3 h-3 text-[#DFBE77]" />
+                      PG-023-VAULT · Document Vault
+                    </span>
+                    <span className="text-[10px] font-mono text-[#C6B697]">
+                      Target: <span className="text-[#FFE394] font-bold">{effectiveTargetLabel}</span>
+                    </span>
+                  </div>
+                  <DialogTitle className="font-serif text-lg sm:text-xl text-[#FFF4D4] font-bold">
+                    Insert Document into State Complaint
+                  </DialogTitle>
+                  <p className="text-xs text-[#C6B697] mt-0.5">
+                    Attach evidentiary records for <span className="text-[#FFF4D4] font-semibold">{caseDetails.studentName || "the student"}</span> from the official Document Vault or upload a new record.
+                  </p>
+                </div>
               </div>
-              <div>
-                <Label className="text-[#C6B697]">Page Type</Label>
-                <select
-                  value={newPageCategory}
-                  onChange={(e) => setNewPageCategory(e.target.value as any)}
-                  className="w-full bg-[#020A17] border border-[#3A2C18] text-white rounded-md mt-1 h-8 px-2 text-xs"
+
+              {/* 3 Tab Mode Switcher */}
+              <div className="flex items-center gap-1.5 mt-4 border-b border-[#3A2C18]/80 pb-0">
+                <button
+                  type="button"
+                  onClick={() => setInsertModalTab("vault")}
+                  className={cn(
+                    "flex items-center gap-2 px-3.5 py-2 text-xs font-serif font-bold rounded-t-md transition-all cursor-pointer border-b-2",
+                    insertModalTab === "vault"
+                      ? "bg-[#0B254A] text-[#FFE394] border-[#DFBE77]"
+                      : "text-[#C6B697] hover:text-white border-transparent hover:bg-white/[0.04]"
+                  )}
                 >
-                  <option value="exhibit">Exhibit Document</option>
-                  <option value="facts">Statement of Facts</option>
-                  <option value="violations">Legal Violations</option>
-                  <option value="remedies">Remedies & Compensatory Calculation</option>
-                  <option value="pleading">Formal Pleading Section</option>
-                </select>
+                  <FolderArchive className="w-3.5 h-3.5 text-[#DFBE77]" />
+                  <span>Retrieve from Document Vault</span>
+                  <span className="text-[10px] font-mono bg-[#03152E] px-1.5 py-0.2 rounded text-[#DFBE77] border border-[#3A2C18]">
+                    {availableVaultDocs.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setInsertModalTab("upload")}
+                  className={cn(
+                    "flex items-center gap-2 px-3.5 py-2 text-xs font-serif font-bold rounded-t-md transition-all cursor-pointer border-b-2",
+                    insertModalTab === "upload"
+                      ? "bg-[#0B254A] text-[#FFE394] border-[#DFBE77]"
+                      : "text-[#C6B697] hover:text-white border-transparent hover:bg-white/[0.04]"
+                  )}
+                >
+                  <Upload className="w-3.5 h-3.5 text-[#DFBE77]" />
+                  <span>Upload New Document</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setInsertModalTab("custom")}
+                  className={cn(
+                    "flex items-center gap-2 px-3.5 py-2 text-xs font-serif font-bold rounded-t-md transition-all cursor-pointer border-b-2",
+                    insertModalTab === "custom"
+                      ? "bg-[#0B254A] text-[#FFE394] border-[#DFBE77]"
+                      : "text-[#C6B697] hover:text-white border-transparent hover:bg-white/[0.04]"
+                  )}
+                >
+                  <FileText className="w-3.5 h-3.5 text-[#DFBE77]" />
+                  <span>Custom Narrative Page</span>
+                </button>
               </div>
             </div>
-            <DialogFooter>
+
+            {/* Modal Body */}
+            <div className="p-5 max-h-[60vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-[#3A2C18]">
+              {/* Exhibit Destination Selector (Shows when currently on an exhibit like Exhibit A) */}
+              {isCurrentPageAnExhibit && (
+                <div className="mb-4 p-3 rounded-lg bg-[#020A17] border border-[#3A2C18] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#A69371] block">
+                      Exhibit Attachment Destination
+                    </span>
+                    <span className="text-xs font-serif font-bold text-[#FFF4D4] truncate block">
+                      {targetExhibitMode === "current"
+                        ? `Attach directly to ${currentExhibitLabel}`
+                        : `Create New Exhibit (${nextExhibitLetter})`}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1 bg-[#05142B] p-1 rounded-md border border-[#3A2C18] shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setTargetExhibitMode("current")}
+                      className={cn(
+                        "px-2.5 py-1 text-xs rounded font-medium transition-all cursor-pointer",
+                        targetExhibitMode === "current"
+                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-xs"
+                          : "text-[#C6B697] hover:text-white"
+                      )}
+                    >
+                      Attach to {activePage.exhibitTag || "Exhibit A"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setTargetExhibitMode("new")}
+                      className={cn(
+                        "px-2.5 py-1 text-xs rounded font-medium transition-all cursor-pointer",
+                        targetExhibitMode === "new"
+                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-xs"
+                          : "text-[#C6B697] hover:text-white"
+                      )}
+                    >
+                      New Exhibit ({nextExhibitLetter})
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 1: RETRIEVE FROM DOCUMENT VAULT (PG-023-VAULT) */}
+              {insertModalTab === "vault" && (
+                <div className="space-y-4">
+                  {/* Search Bar */}
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-[#8C6D2B] absolute left-3 top-2.5 pointer-events-none" />
+                    <Input
+                      placeholder="Search vault documents by title, IEP date, or category..."
+                      value={vaultSearchQuery}
+                      onChange={(e) => setVaultSearchQuery(e.target.value)}
+                      className="bg-[#020A17] border-[#3A2C18] text-white pl-9 h-9 text-xs focus-visible:ring-[#DFBE77]/40 placeholder:text-[#8C6D2B]/70"
+                    />
+                  </div>
+
+                  {/* Documents List */}
+                  {vaultQuery.isLoading || iepDocQuery.isLoading ? (
+                    <div className="py-12 flex flex-col items-center justify-center text-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-[#DFBE77] mb-2" />
+                      <span className="text-xs text-[#C6B697]">Accessing PG-023-VAULT records...</span>
+                    </div>
+                  ) : availableVaultDocs.length === 0 ? (
+                    <div className="py-10 px-4 rounded-xl border border-dashed border-[#3A2C18] bg-[#020A17]/60 text-center">
+                      <FolderArchive className="w-8 h-8 text-[#8C6D2B] mx-auto mb-2 opacity-60" />
+                      <p className="font-serif text-sm font-semibold text-[#FFF4D4]">
+                        No Documents Found in Vault
+                      </p>
+                      <p className="text-xs text-[#C6B697] mt-1 max-w-sm mx-auto">
+                        {vaultSearchQuery 
+                          ? `No records matching "${vaultSearchQuery}". Try clearing search.`
+                          : `No stored documents found for ${caseDetails.studentName}. You can upload a new record directly to the vault below.`}
+                      </p>
+                      <Button
+                        type="button"
+                        onClick={() => setInsertModalTab("upload")}
+                        className="mt-4 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 gap-1.5"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        Upload Document to Vault
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between text-[11px] text-[#C6B697] px-1">
+                        <span>Showing {availableVaultDocs.length} vault records for {caseDetails.studentName}</span>
+                        <span className="text-[#DFBE77] font-mono">1-Click Exhibit Insertion</span>
+                      </div>
+
+                      <div className="grid gap-2">
+                        {availableVaultDocs.map((doc, idx) => (
+                          <div
+                            key={`${doc.fileUrl}_${idx}`}
+                            className="p-3.5 rounded-lg border border-[#3A2C18] bg-[#020A17] hover:bg-[#061833] hover:border-[#DFBE77]/60 transition-all flex items-center justify-between gap-3 group"
+                          >
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className="w-8 h-8 rounded-md bg-[#071C38] border border-[#3A2C18] flex items-center justify-center shrink-0 group-hover:border-[#DFBE77]/60">
+                                <FileText className="w-4 h-4 text-[#DFBE77]" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-serif font-semibold text-xs text-[#FFF4D4] truncate block">
+                                    {doc.fileName}
+                                  </span>
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#0A2540] text-[#FFE394] font-mono border border-[#DFBE77]/30">
+                                    {doc.documentType}
+                                  </span>
+                                  {doc.source === "Current IEP Record" && (
+                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-300 font-medium border border-emerald-500/40">
+                                      Primary Baseline
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3 text-[10px] text-[#A69371] mt-0.5">
+                                  <span>Source: {doc.source}</span>
+                                  {doc.date && <span>• Uploaded: {doc.date}</span>}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(doc.fileUrl, "_blank")}
+                                className="border-[#3A2C18] bg-[#03152E] text-[#C6B697] hover:text-white hover:bg-[#072147] text-[11px] h-7 px-2.5 gap-1"
+                                title="Preview document in new tab"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                Preview
+                              </Button>
+
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => handleInsertExhibitFromVault(doc)}
+                                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-[11px] h-7 px-3 gap-1 shadow-sm hover:brightness-110 cursor-pointer"
+                              >
+                                <Plus className="w-3 h-3" />
+                                Attach to {effectiveTargetLabel}
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 2: UPLOAD NEW DOCUMENT DIRECTLY TO VAULT */}
+              {insertModalTab === "upload" && (
+                <div className="space-y-4">
+                  <div className="p-3 rounded-lg border border-[#DFBE77]/30 bg-[#061C3B]/60 text-xs text-[#C6B697] flex items-start gap-2.5">
+                    <FolderArchive className="w-4 h-4 text-[#DFBE77] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold text-[#FFF4D4] block">Automatic PG-023-VAULT Synchronization</span>
+                      Any document uploaded here is saved permanently in the student's Document Vault and attached to <span className="font-mono text-[#FFE394] font-bold">{effectiveTargetLabel}</span> in this State Complaint packet.
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-[#C6B697] text-xs">Document File (PDF, DOCX, Images)</Label>
+                    <input
+                      ref={vaultFileInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setUploadFile(file);
+                          if (!uploadCustomTitle) {
+                            setUploadCustomTitle(file.name.replace(/\.[^/.]+$/, ""));
+                          }
+                        }
+                      }}
+                      className="hidden"
+                      id="state-complaint-vault-file-input"
+                    />
+                    <div
+                      onClick={() => vaultFileInputRef.current?.click()}
+                      className={cn(
+                        "mt-1.5 border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all",
+                        uploadFile
+                          ? "border-[#DFBE77] bg-[#0A2540]/80 text-[#FFF4D4]"
+                          : "border-[#3A2C18] bg-[#020A17] hover:border-[#DFBE77]/60 text-[#C6B697]"
+                      )}
+                    >
+                      {uploadFile ? (
+                        <div className="flex items-center justify-center gap-3">
+                          <FileText className="w-6 h-6 text-[#DFBE77]" />
+                          <div className="text-left">
+                            <span className="font-serif font-bold text-xs text-[#FFF4D4] block truncate max-w-sm">
+                              {uploadFile.name}
+                            </span>
+                            <span className="text-[10px] text-[#A69371]">
+                              {(uploadFile.size / 1024 / 1024).toFixed(2)} MB · Click to change file
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <FileUp className="w-8 h-8 text-[#8C6D2B] mb-1.5" />
+                          <span className="font-serif font-bold text-xs text-[#FFF4D4]">
+                            Click or drag file to upload
+                          </span>
+                          <span className="text-[10px] text-[#A69371] mt-0.5">
+                            PDF, Word documents, diagnostic reports, psychoeds, or service logs
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-[#C6B697] text-xs">Document Display Title</Label>
+                      <Input
+                        placeholder="e.g. Speech & Language Evaluation"
+                        value={uploadCustomTitle}
+                        onChange={(e) => setUploadCustomTitle(e.target.value)}
+                        className="bg-[#020A17] border-[#3A2C18] text-white mt-1 h-8 text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[#C6B697] text-xs">Document Classification</Label>
+                      <select
+                        value={uploadDocType}
+                        onChange={(e) => setUploadDocType(e.target.value)}
+                        className="w-full bg-[#020A17] border border-[#3A2C18] text-white rounded-md mt-1 h-8 px-2 text-xs"
+                      >
+                        <option value="Evaluation / Diagnostic Report">Evaluation / Diagnostic Report</option>
+                        <option value="IEP / Section 504 Plan">IEP / Section 504 Plan</option>
+                        <option value="Prior Written Notice (PWN)">Prior Written Notice (PWN)</option>
+                        <option value="Service Log / Provider Attendance">Service Log / Provider Attendance</option>
+                        <option value="Medical & Clinical Report">Medical & Clinical Report</option>
+                        <option value="LEA Correspondence / Dispute Notice">LEA Correspondence / Dispute Notice</option>
+                        <option value="General Evidentiary Record">General Evidentiary Record</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <Button
+                      type="button"
+                      disabled={!uploadFile || isUploadingToVault}
+                      onClick={handleUploadAndInsertExhibit}
+                      className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-9 px-5 gap-2 shadow-md hover:brightness-110 disabled:opacity-50 cursor-pointer"
+                    >
+                      {isUploadingToVault ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Uploading to Vault...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3.5 h-3.5" />
+                          Upload to Vault & Attach to {effectiveTargetLabel}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: CUSTOM NARRATIVE PLEADING PAGE */}
+              {insertModalTab === "custom" && (
+                <div className="space-y-4">
+                  <div className="p-3 rounded-lg border border-[#3A2C18] bg-[#020A17] text-xs text-[#C6B697]">
+                    <span className="font-semibold text-[#FFF4D4] block mb-0.5">Narrative Legal Section</span>
+                    Adds a drafting sheet into the complaint binder for drafting factual statements, legal violations, or requested remedies.
+                  </div>
+
+                  <div>
+                    <Label className="text-[#C6B697] text-xs">Section Title</Label>
+                    <Input
+                      placeholder="e.g. Statement of FAPE Deprivation & Make-Up Hours"
+                      value={newPageTitle}
+                      onChange={(e) => setNewPageTitle(e.target.value)}
+                      className="bg-[#020A17] border-[#3A2C18] text-white mt-1 h-8 text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-[#C6B697] text-xs">Section Category</Label>
+                    <select
+                      value={newPageCategory}
+                      onChange={(e) => setNewPageCategory(e.target.value as any)}
+                      className="w-full bg-[#020A17] border border-[#3A2C18] text-white rounded-md mt-1 h-8 px-2 text-xs"
+                    >
+                      <option value="facts">Statement of Facts</option>
+                      <option value="violations">Legal Violations</option>
+                      <option value="remedies">Remedies & Compensatory Calculation</option>
+                      <option value="pleading">Formal Pleading Section</option>
+                      <option value="exhibit">Custom Exhibit Placeholder</option>
+                    </select>
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <Button
+                      type="button"
+                      disabled={!newPageTitle.trim()}
+                      onClick={handleAddPage}
+                      className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-5 disabled:opacity-50"
+                    >
+                      Insert Narrative Page
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3.5 border-t border-[#3A2C18] bg-[#031124] flex items-center justify-between text-xs">
+              <span className="text-[11px] text-[#A69371] font-mono">
+                Admiralty Docket Engine · Waypoint Advocates
+              </span>
               <Button
                 type="button"
-                onClick={handleAddPage}
-                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8"
+                variant="ghost"
+                onClick={() => setIsAddPageModalOpen(false)}
+                className="text-xs h-7 text-[#C6B697] hover:text-white hover:bg-white/[0.08]"
               >
-                Insert Page
+                Close
               </Button>
-            </DialogFooter>
+            </div>
           </DialogContent>
         </Dialog>
 
@@ -2306,7 +3422,7 @@ export default function ComplaintWorkspace() {
             {/* Print Preview Desk Stage (Dark Desk Canvas with Authentic White 8.5x11 Sheets) */}
             <div className="space-y-10 py-6 px-1 sm:px-4 flex flex-col items-center">
               {pages.map((p, idx) => {
-                const range = getBinderPageRange(idx);
+                const range = getBinderPageRange(idx, pages);
                 if (p.id === "cover") {
                   return (
                     <div key={p.id} className="w-full flex flex-col items-center space-y-8">
@@ -2421,53 +3537,116 @@ export default function ComplaintWorkspace() {
                       />
                     </div>
 
-                    {/* SHEET 2: DOCUMENT CONTENT SHEET (WHITE PAPER) */}
-                    <div className="w-full flex flex-col items-center">
-                      <div className="w-full max-w-[816px] flex items-center justify-between text-[11px] font-mono text-[#D8C7A5] bg-[#020A17]/90 px-3.5 py-1.5 rounded-t border-t border-x border-[#3A2C18]">
-                        <span className="font-bold text-[#FFE394]">
-                          PAGE {range.contentPage} OF {totalDocketPages}
-                        </span>
-                        <span className="text-[#C6B697] truncate ml-2">
-                          Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} Content · Standard White Print Paper
-                        </span>
-                      </div>
-                      <div
-                        style={{
-                          width: "816px",
-                          maxWidth: "816px",
-                          minHeight: "1056px",
-                          aspectRatio: "8.5 / 11",
-                          backgroundColor: "#FFFFFF",
-                          color: "#111827",
-                          boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
-                          border: "1px solid #D1D5DB",
-                        }}
-                        className="relative rounded-b select-text flex flex-col justify-between px-10 sm:px-14 md:px-16 pt-12 pb-10 transition-all shrink-0 bg-white text-[#111827]"
-                      >
-                        {/* Running Top Header */}
-                        <div className="w-full shrink-0 pb-3 border-b border-black flex items-center justify-between text-xs font-sans text-slate-800">
-                          <span className="font-bold uppercase tracking-wider">
-                            Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Clarity Control Restatement" : p.title}
+                    {/* SHEET 2+ : EXHIBIT AUTHENTIC PDF PAGES OR STANDARD CONTENT SHEET */}
+                    {p.category === "exhibit" ? (
+                      p.renderedPages && p.renderedPages.length > 0 ? (
+                        p.renderedPages.map((pdfPage, pIdx) => {
+                          const continuousDocketPage = range.contentStart + pIdx;
+                          return (
+                            <div key={`preview-exhibit-${p.id}-p${pdfPage.pageNumber}`} className="w-full flex flex-col items-center">
+                              <div className="w-full max-w-[816px] flex items-center justify-between text-[11px] font-mono text-[#D8C7A5] bg-[#020A17]/90 px-3.5 py-1.5 rounded-t border-t border-x border-[#3A2C18]">
+                                <span className="font-bold text-[#FFE394]">
+                                  PAGE {continuousDocketPage} OF {totalDocketPages}
+                                </span>
+                                <span className="text-[#C6B697] truncate ml-2">
+                                  {p.exhibitTag || "Exhibit"} · Page {pdfPage.pageNumber} of {p.renderedPages!.length} · Evidentiary Document
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  width: "816px",
+                                  maxWidth: "816px",
+                                  aspectRatio:
+                                    pdfPage.width && pdfPage.height
+                                      ? `${pdfPage.width} / ${pdfPage.height}`
+                                      : "8.5 / 11",
+                                  backgroundColor: "#FFFFFF",
+                                  boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
+                                  border: "1px solid #D1D5DB",
+                                }}
+                                className="relative rounded-b select-text flex flex-col items-center justify-center p-0 transition-all shrink-0 bg-white overflow-hidden"
+                              >
+                                <img
+                                  src={pdfPage.dataUrl}
+                                  alt={`Exhibit Page ${pdfPage.pageNumber}`}
+                                  className="w-full h-auto block mx-auto bg-white select-none pointer-events-none m-0 p-0"
+                                />
+                                {(p.highlights || [])
+                                  .filter((h) => h.pageNumber === pdfPage.pageNumber)
+                                  .map((h) => {
+                                    const colorDef = HIGHLIGHT_COLOR_MAP[h.color] || HIGHLIGHT_COLOR_MAP.yellow;
+                                    return (
+                                      <div
+                                        key={`preview-hl-${h.id}`}
+                                        style={{
+                                          position: "absolute",
+                                          left: `${h.x}%`,
+                                          top: `${h.y}%`,
+                                          width: `${h.width}%`,
+                                          height: `${h.height}%`,
+                                          backgroundColor: colorDef.fill,
+                                          borderBottom: `1.5px solid ${colorDef.border}`,
+                                          mixBlendMode: "multiply",
+                                          pointerEvents: "none",
+                                          borderRadius: "2px",
+                                        }}
+                                      />
+                                    );
+                                  })}
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : null
+                    ) : (
+                      /* SHEET 2: DOCUMENT CONTENT SHEET (WHITE PAPER) */
+                      <div className="w-full flex flex-col items-center">
+                        <div className="w-full max-w-[816px] flex items-center justify-between text-[11px] font-mono text-[#D8C7A5] bg-[#020A17]/90 px-3.5 py-1.5 rounded-t border-t border-x border-[#3A2C18]">
+                          <span className="font-bold text-[#FFE394]">
+                            PAGE {range.contentPage} OF {totalDocketPages}
                           </span>
-                          <span className="font-mono font-bold">
-                            Page {range.contentPage} of {totalDocketPages}
+                          <span className="text-[#C6B697] truncate ml-2">
+                            Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} Content · Standard White Print Paper
                           </span>
                         </div>
+                        <div
+                          style={{
+                            width: "816px",
+                            maxWidth: "816px",
+                            minHeight: "1056px",
+                            aspectRatio: "8.5 / 11",
+                            backgroundColor: "#FFFFFF",
+                            color: "#111827",
+                            boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
+                            border: "1px solid #D1D5DB",
+                          }}
+                          className="relative rounded-b select-text flex flex-col justify-between px-10 sm:px-14 md:px-16 pt-12 pb-10 transition-all shrink-0 bg-white text-[#111827]"
+                        >
+                          {/* Running Top Header */}
+                          <div className="w-full shrink-0 pb-3 border-b border-black flex items-center justify-between text-xs font-sans text-slate-800">
+                            <span className="font-bold uppercase tracking-wider">
+                              Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Clarity Control Restatement" : p.title}
+                            </span>
+                            <span className="font-mono font-bold">
+                              Page {range.contentPage} of {totalDocketPages}
+                            </span>
+                          </div>
 
-                        {/* Content Body */}
-                        <div className="flex-1 py-8 font-serif text-[13px] leading-relaxed text-justify text-black whitespace-pre-wrap select-text">
-                          {p.content}
-                        </div>
+                          {/* Content Body */}
+                          <div className="flex-1 py-8 font-serif text-[13px] leading-relaxed text-justify text-black whitespace-pre-wrap select-text">
+                            {p.content}
+                          </div>
 
-                        {/* Running Bottom Footer */}
-                        <div className="w-full shrink-0 pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-slate-600">
-                          <span className="tracking-wide">
-                            {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint
-                          </span>
-                          <span className="font-serif">Page {range.contentPage} of {totalDocketPages}</span>
+                          {/* Running Bottom Footer */}
+                          <div className="w-full shrink-0 pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-slate-600">
+                            <span className="tracking-wide">
+                              {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint
+                            </span>
+                            <span className="font-serif">Page {range.contentPage} of {totalDocketPages}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
 
                   </div>
                 );
@@ -2632,7 +3811,7 @@ export default function ComplaintWorkspace() {
               );
             }
 
-            const range = getBinderPageRange(idx);
+            const range = getBinderPageRange(idx, pages);
             return (
               <React.Fragment key={`print-${p.id}`}>
                 {/* Print Sheet 1: Official Standardized Binder Cover Page on White Paper */}
@@ -2657,24 +3836,67 @@ export default function ComplaintWorkspace() {
                   />
                 </div>
 
-                {/* Print Sheet 2: Document Content Sheet on White Paper */}
-                <div className="print-packet-sheet font-serif px-12 py-10 flex flex-col justify-between" style={{ minHeight: "10.5in", pageBreakAfter: "always" }}>
-                  <div className="flex justify-between items-center border-b border-black pb-2 mb-4 text-xs font-sans">
-                    <span className="font-bold uppercase tracking-wider">
-                      Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}
-                    </span>
-                    <span className="font-mono font-bold">
-                      Page {range.contentPage} of {totalDocketPages}
-                    </span>
+                {/* Print Sheet 2+ : Clean Real Exhibit PDF Pages (No Stamped Headers, No Stamped Footers, No Padding) */}
+                {p.category === "exhibit" ? (
+                  p.renderedPages && p.renderedPages.length > 0 ? (
+                    p.renderedPages.map((pdfPage) => {
+                      return (
+                        <div
+                          key={`print-${p.id}-p${pdfPage.pageNumber}`}
+                          className="print-packet-sheet relative p-0 m-0 bg-white flex items-center justify-center"
+                          style={{ minHeight: "10.5in", pageBreakAfter: "always" }}
+                        >
+                          <img
+                            src={pdfPage.dataUrl}
+                            alt={`Exhibit Page ${pdfPage.pageNumber}`}
+                            className="w-full h-auto block mx-auto bg-white m-0 p-0"
+                          />
+                          {(p.highlights || [])
+                            .filter((h) => h.pageNumber === pdfPage.pageNumber)
+                            .map((h) => {
+                              const colorDef = HIGHLIGHT_COLOR_MAP[h.color] || HIGHLIGHT_COLOR_MAP.yellow;
+                              return (
+                                <div
+                                  key={`print-hl-${h.id}`}
+                                  style={{
+                                    position: "absolute",
+                                    left: `${h.x}%`,
+                                    top: `${h.y}%`,
+                                    width: `${h.width}%`,
+                                    height: `${h.height}%`,
+                                    backgroundColor: colorDef.fill,
+                                    borderBottom: `1.5px solid ${colorDef.border}`,
+                                    mixBlendMode: "multiply",
+                                    pointerEvents: "none",
+                                    borderRadius: "2px",
+                                  }}
+                                />
+                              );
+                            })}
+                        </div>
+                      );
+                    })
+                  ) : null
+                ) : (
+                  /* Print Sheet 2: Document Content Sheet on White Paper */
+                  <div className="print-packet-sheet font-serif px-12 py-10 flex flex-col justify-between" style={{ minHeight: "10.5in", pageBreakAfter: "always" }}>
+                    <div className="flex justify-between items-center border-b border-black pb-2 mb-4 text-xs font-sans">
+                      <span className="font-bold uppercase tracking-wider">
+                        Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}
+                      </span>
+                      <span className="font-mono font-bold">
+                        Page {range.contentPage} of {totalDocketPages}
+                      </span>
+                    </div>
+                    <div className="text-[13px] leading-relaxed whitespace-pre-wrap text-justify font-serif flex-1 text-black">
+                      {p.content}
+                    </div>
+                    <div className="border-t border-black pt-2 flex justify-between text-[11px] font-mono mt-4">
+                      <span>{SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint</span>
+                      <span>Page {range.contentPage} of {totalDocketPages}</span>
+                    </div>
                   </div>
-                  <div className="text-[13px] leading-relaxed whitespace-pre-wrap text-justify font-serif flex-1 text-black">
-                    {p.content}
-                  </div>
-                  <div className="border-t border-black pt-2 flex justify-between text-[11px] font-mono mt-4">
-                    <span>{SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint</span>
-                    <span>Page {range.contentPage} of {totalDocketPages}</span>
-                  </div>
-                </div>
+                )}
               </React.Fragment>
             );
           })}

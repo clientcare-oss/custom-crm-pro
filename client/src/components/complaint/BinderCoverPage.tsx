@@ -104,7 +104,7 @@ export function BinderCoverPage({
   if (isExhibit && title.includes("(") && title.includes(")")) {
     const inside = title.substring(title.indexOf("(") + 1, title.lastIndexOf(")")).trim();
     if (inside.toLowerCase().includes("iep")) {
-      cleanTitle = "Operative Individualized Education Program (IEP)";
+      cleanTitle = "Individualized Education Program (IEP)";
     } else if (inside.toLowerCase().includes("evaluation")) {
       cleanTitle = "Parent Request for Comprehensive Evaluation";
     } else if (inside.toLowerCase().includes("communication")) {
@@ -114,13 +114,16 @@ export function BinderCoverPage({
     }
   }
 
+  // Guarantee "Operative" is NEVER rendered on exhibit cover pages
+  cleanTitle = cleanTitle.replace(/\boperative\s*/gi, "").trim();
+
   // Tailored, authoritative purpose text matching user's legal specification
-  const purposeText = coverDetails?.evidentiaryPurpose || coverDetails?.summary || (() => {
+  const rawPurposeText = coverDetails?.evidentiaryPurpose || coverDetails?.summary || (() => {
     if (cleanTitle.toLowerCase().includes("evaluation") || cleanTitle.toLowerCase().includes("request")) {
       return "To document the parent's written request for a comprehensive evaluation and establish the date the District received notice of the request.";
     }
     if (cleanTitle.toLowerCase().includes("iep")) {
-      return "To document the operative Individualized Education Program (IEP) in effect, establishing mandated specialized instruction hours, accommodations, and service delivery commitments.";
+      return "To document the Individualized Education Program (IEP) in effect, establishing mandated specialized instruction hours, accommodations, and service delivery commitments.";
     }
     if (cleanTitle.toLowerCase().includes("communication") || cleanTitle.toLowerCase().includes("email")) {
       return "To document written communications and formal correspondence between parent, advocate, and District personnel establishing notice and timeline compliance.";
@@ -132,21 +135,22 @@ export function BinderCoverPage({
       return "To establish a chronological factual narrative of all relevant events, requests, and statutory milestones occurring within the applicable one-year statutory period.";
     }
     if (isIndex) {
-      return "To provide a comprehensive master evidentiary schedule indexing all attached documentary records, operative service logs, and evaluation reports.";
+      return "To provide a comprehensive master evidentiary schedule indexing all attached documentary records, service logs, and evaluation reports.";
     }
     if (isExhibit) {
       return "To document authenticated documentary evidence in support of Complainant's statement of statutory violations and factual allegations.";
     }
     return "To document official administrative filing records and factual allegations submitted on behalf of the student pursuant to IDEA dispute resolution procedures.";
   })();
+  const purposeText = rawPurposeText.replace(/\boperative\s*/gi, "");
 
   // Document Type / Sub-category in footer
-  const documentType = coverDetails?.documentType || (() => {
+  const rawDocumentType = coverDetails?.documentType || (() => {
     if (cleanTitle.toLowerCase().includes("evaluation") || cleanTitle.toLowerCase().includes("request")) {
       return "EMAIL CORRESPONDENCE";
     }
     if (cleanTitle.toLowerCase().includes("iep")) {
-      return "OPERATIVE IEP RECORD";
+      return "IEP RECORD";
     }
     if (cleanTitle.toLowerCase().includes("communication")) {
       return "WRITTEN CORRESPONDENCE";
@@ -157,6 +161,7 @@ export function BinderCoverPage({
     if (isExhibit) return "DOCUMENTARY EVIDENCE";
     return "FILING RECORD";
   })();
+  const documentType = rawDocumentType.replace(/\boperative\s*/gi, "").trim();
 
   // Formatted date (e.g., "MARCH 14, 2026")
   const formattedDate = submissionDate 

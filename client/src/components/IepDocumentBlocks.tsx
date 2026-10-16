@@ -7,6 +7,7 @@ import VoiceTextarea from "@/components/VoiceTextarea";
 import {
   FileText, Upload, GitCompare, CheckCircle2, Lock, Loader2,
   ExternalLink, FilePen, Trash2, Pencil, Clock, ChevronDown, ChevronUp,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -26,6 +27,7 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
   const [editingNotes, setEditingNotes] = useState<Record<number, string | null>>({});
   // Expand/collapse draft history
   const [draftHistoryExpanded, setDraftHistoryExpanded] = useState(true);
+  const [vaultExpanded, setVaultExpanded] = useState(true);
 
   // ── Official IEP (current + previous) ──────────────────────────────────────
   const { data: iepDoc, isLoading: iepLoading } = trpc.iep.get.useQuery(
@@ -39,11 +41,20 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
     { enabled: !!contactId }
   );
 
+  // ── Document Vault Records (evaluations, historical plans, correspondence) ───
+  const { data: vaultFiles = [], isLoading: vaultLoading } = trpc.clientFiles.listForAdmin.useQuery(
+    { clientId: contactId },
+    { enabled: !!contactId }
+  );
+
   // ── Mutations ───────────────────────────────────────────────────────────────
   const uploadMutation = trpc.iep.upload.useMutation({
     onSuccess: () => {
-      toast.success("IEP/504 uploaded successfully");
+      toast.success("Current IEP/504 uploaded and secured in Document Vault");
       utils.iep.get.invalidate({ contactId });
+      utils.clientFiles.listForAdmin.invalidate();
+      utils.clientFiles.listVault.invalidate();
+      utils.contacts.detail.invalidate({ id: contactId });
       setUploading(false);
     },
     onError: (e) => {
@@ -54,8 +65,10 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
 
   const uploadDraftMutation = trpc.iep.uploadDraft.useMutation({
     onSuccess: () => {
-      toast.success("Draft IEP saved to history");
+      toast.success("Draft IEP saved to history and Document Vault");
       utils.iep.listDraftHistory.invalidate({ contactId });
+      utils.clientFiles.listForAdmin.invalidate();
+      utils.clientFiles.listVault.invalidate();
       setUploadingDraft(false);
     },
     onError: (e) => {
@@ -85,58 +98,74 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(true);
-    try {
-      const presignRes = await fetch("/api/files/iep-presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: file.name, fileSize: file.size }),
-      });
-      if (!presignRes.ok) {
-        const err = await presignRes.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to get upload URL");
-      }
-      const { uploadUrl, fileKey, fileUrl } = await presignRes.json();
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type || "application/octet-stream" },
-        body: file,
-      });
-      if (!uploadRes.ok) throw new Error("Failed to upload file to storage");
-      uploadMutation.mutate({ contactId, fileKey, fileName: file.name, fileUrl });
-    } catch (err: any) {
-      toast.error("Upload failed: " + (err?.message ?? "Unknown error"));
-      setUploading(false);
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("File size exceeds 50MB limit");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
     }
+
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const result = reader.result as string;
+        const base64 = result.includes(",") ? result.split(",")[1] : result;
+        uploadMutation.mutate({
+          contactId,
+          fileName: file.name,
+          fileData: base64,
+          fileSize: file.size,
+          mimeType: file.type || "application/pdf",
+        });
+      } catch (err: any) {
+        toast.error("Failed to process file: " + (err?.message ?? "Unknown error"));
+        setUploading(false);
+      }
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read file from disk");
+      setUploading(false);
+    };
+    reader.readAsDataURL(file);
+
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleDraftFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadingDraft(true);
-    try {
-      const presignRes = await fetch("/api/files/iep-presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: file.name, fileSize: file.size }),
-      });
-      if (!presignRes.ok) {
-        const err = await presignRes.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to get upload URL");
-      }
-      const { uploadUrl, fileKey, fileUrl } = await presignRes.json();
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type || "application/octet-stream" },
-        body: file,
-      });
-      if (!uploadRes.ok) throw new Error("Failed to upload file to storage");
-      uploadDraftMutation.mutate({ contactId, fileKey, fileName: file.name, fileUrl });
-    } catch (err: any) {
-      toast.error("Upload failed: " + (err?.message ?? "Unknown error"));
-      setUploadingDraft(false);
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("File size exceeds 50MB limit");
+      if (draftFileInputRef.current) draftFileInputRef.current.value = "";
+      return;
     }
+
+    setUploadingDraft(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const result = reader.result as string;
+        const base64 = result.includes(",") ? result.split(",")[1] : result;
+        uploadDraftMutation.mutate({
+          contactId,
+          fileName: file.name,
+          fileData: base64,
+          fileSize: file.size,
+          mimeType: file.type || "application/pdf",
+        });
+      } catch (err: any) {
+        toast.error("Failed to process draft file: " + (err?.message ?? "Unknown error"));
+        setUploadingDraft(false);
+      }
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read draft file from disk");
+      setUploadingDraft(false);
+    };
+    reader.readAsDataURL(file);
+
     if (draftFileInputRef.current) draftFileInputRef.current.value = "";
   };
 
@@ -441,6 +470,101 @@ export function IepDocumentBlocks({ contactId }: IepDocumentBlocksProps) {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Document Vault Archive section ── */}
+      <div className="rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/15 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200 dark:border-blue-900/60">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-700 dark:text-blue-300">
+              Document Vault Archive
+            </span>
+            <span className="text-xs text-blue-600/70 dark:text-blue-400/70 font-normal normal-case tracking-normal">
+              — FERPA records, psychological evaluations, PWNs, and historical plans
+            </span>
+            {vaultFiles.length > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center rounded-full bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-[10px] font-bold w-5 h-5">
+                {vaultFiles.length}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => setVaultExpanded((v) => !v)}
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
+            title={vaultExpanded ? "Collapse" : "Expand"}
+          >
+            {vaultExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+        </div>
+
+        {/* Body */}
+        {vaultExpanded && (
+          <div className="px-4 py-3">
+            {vaultLoading ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading Document Vault records…
+              </div>
+            ) : vaultFiles.length === 0 ? (
+              <p className="text-sm text-blue-700/60 dark:text-blue-400/60 py-2">
+                No additional vault records on file. Official IEPs and drafts uploaded above are automatically linked and secured here.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {vaultFiles.map((file: any) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-blue-200/60 dark:border-blue-900/40 bg-white/60 dark:bg-blue-950/20 px-3 py-2.5"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-foreground truncate">
+                            {file.fileName}
+                          </span>
+                          {file.documentType && (
+                            <span className="text-[10px] font-medium uppercase px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
+                              {file.documentType}
+                            </span>
+                          )}
+                          {file.isCurrentPlan === 1 && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300">
+                              Current Plan
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                          {file.uploadedAt && (
+                            <span>
+                              Uploaded {new Date(file.uploadedAt).toLocaleDateString()}
+                            </span>
+                          )}
+                          {file.fileSize ? (
+                            <span>· {(file.fileSize / 1024).toFixed(0)} KB</span>
+                          ) : null}
+                          {file.uploadOrigin && (
+                            <span>· Source: {file.uploadOrigin}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <a
+                      href={file.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline font-semibold flex-shrink-0"
+                    >
+                      <ExternalLink className="h-3 w-3" /> View Record
+                    </a>
+                  </div>
+                ))}
               </div>
             )}
           </div>

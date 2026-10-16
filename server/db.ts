@@ -774,7 +774,7 @@ export async function getClientFilesByClient(clientId: number) {
   return await db
     .select()
     .from(clientFiles)
-    .where(eq(clientFiles.clientId, clientId))
+    .where(or(eq(clientFiles.clientId, clientId), eq(clientFiles.studentContactId, clientId)))
     .orderBy(desc(clientFiles.uploadedAt));
 }
 

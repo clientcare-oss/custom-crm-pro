@@ -7,7 +7,7 @@ import { users } from "../drizzle/schema";
 import { COOKIE_NAME, ONE_YEAR_MS } from "../shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { storagePut } from "./storage";
-import { getR2SignedDownloadUrl } from "./_core/r2Client";
+import { getR2SignedDownloadUrl, getR2SignedUploadUrl } from "./_core/r2Client";
 
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
@@ -159,6 +159,58 @@ export default {
           status: 500,
           headers: { "Content-Type": "application/json" }
         });
+      }
+    }
+
+    // 4b. Handle file presign endpoints for Cloudflare Worker
+    if (
+      (url.pathname === "/api/files/iep-presign" || url.pathname === "/api/files/presign") &&
+      request.method === "POST"
+    ) {
+      try {
+        const body = (await request.json().catch(() => ({}))) as any;
+        const fileName = body.fileName;
+        if (!fileName || typeof fileName !== "string") {
+          return new Response(JSON.stringify({ error: "fileName is required" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        const hash = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+        const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const prefix = url.pathname.includes("iep") ? "iep-documents" : "client-files";
+        const fileKey = `${prefix}/${Date.now()}_${hash}_${sanitizedName}`;
+        const ext = fileName.toLowerCase().split(".").pop() || "pdf";
+        const mimeMap: Record<string, string> = {
+          pdf: "application/pdf",
+          doc: "application/msword",
+          docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          png: "image/png",
+          jpg: "image/jpeg",
+          jpeg: "image/jpeg",
+        };
+        const mimeType = mimeMap[ext] || "application/octet-stream";
+        const uploadUrl = await getR2SignedUploadUrl(fileKey, mimeType);
+        return new Response(
+          JSON.stringify({
+            uploadUrl,
+            fileKey,
+            fileUrl: `/storage/${fileKey}`,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      } catch (err: any) {
+        console.error("[Worker Presign Error]", err);
+        return new Response(
+          JSON.stringify({ error: "Failed to generate upload URL", details: err?.message }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
     }
 

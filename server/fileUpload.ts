@@ -56,7 +56,16 @@ export function registerFileUploadRoutes(app: Express) {
       const hash = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
       const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
       const fileKey = `iep-documents/${Date.now()}_${hash}_${sanitizedName}`;
-      const uploadUrl = await getR2SignedUploadUrl(fileKey);
+      const mimeMap: Record<string, string> = {
+        pdf: "application/pdf",
+        doc: "application/msword",
+        docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        png: "image/png",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+      };
+      const contentType = mimeMap[ext] || "application/octet-stream";
+      const uploadUrl = await getR2SignedUploadUrl(fileKey, contentType);
       return res.json({
         uploadUrl,
         fileKey,

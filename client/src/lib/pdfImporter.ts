@@ -11,11 +11,20 @@ if (typeof window !== "undefined" && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 }
 
+export interface PdfTextItem {
+  str: string;
+  x: number; // percentage (0 - 100)
+  y: number; // percentage (0 - 100)
+  width: number; // percentage (0 - 100)
+  height: number; // percentage (0 - 100)
+}
+
 export interface ImportedPdfPage {
   pageNumber: number;
   dataUrl: string;
   width: number;
   height: number;
+  textItems?: PdfTextItem[];
 }
 
 /**
@@ -55,11 +64,39 @@ export async function convertPdfToPageImages(
     }).promise;
 
     const dataUrl = canvas.toDataURL("image/jpeg", 0.94);
+
+    // Extract text layout coordinates for selectable text layer and highlighting
+    let textItems: PdfTextItem[] = [];
+    try {
+      const textContent = await page.getTextContent();
+      const pageWidth = viewport.width;
+      const pageHeight = viewport.height;
+      for (const item of textContent.items as any[]) {
+        if (!item || typeof item.str !== "string" || !item.str.trim()) continue;
+        const tx = item.transform ? item.transform[4] : 0;
+        const ty = item.transform ? item.transform[5] : 0;
+        const [vx, vy] = viewport.convertToViewportPoint(tx, ty);
+        const itemWidth = Math.abs((item.width || 10) * scale);
+        const itemHeight = Math.abs((item.height || 12) * scale);
+        const topY = Math.max(0, vy - itemHeight);
+        textItems.push({
+          str: item.str,
+          x: Math.max(0, Math.min(100, (vx / pageWidth) * 100)),
+          y: Math.max(0, Math.min(100, (topY / pageHeight) * 100)),
+          width: Math.max(0.2, Math.min(100, (itemWidth / pageWidth) * 100)),
+          height: Math.max(0.5, Math.min(100, (itemHeight / pageHeight) * 100)),
+        });
+      }
+    } catch (e) {
+      // Non-fatal if text extraction fails for image scans
+    }
+
     pages.push({
       pageNumber: pageNum,
       dataUrl,
       width: canvas.width,
       height: canvas.height,
+      textItems: textItems.length > 0 ? textItems : undefined,
     });
   }
 
