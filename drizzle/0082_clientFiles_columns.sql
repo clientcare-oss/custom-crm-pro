@@ -1,0 +1,18 @@
+ALTER TABLE clientFiles ADD COLUMN category TEXT DEFAULT 'ieps-504s';
+ALTER TABLE clientFiles ADD COLUMN documentType TEXT DEFAULT 'Other';
+ALTER TABLE clientFiles ADD COLUMN documentDate TEXT;
+ALTER TABLE clientFiles ADD COLUMN uploadOrigin TEXT DEFAULT 'Client';
+ALTER TABLE clientFiles ADD COLUMN lifecycleStatusAtUpload TEXT;
+ALTER TABLE clientFiles ADD COLUMN studentContactId INTEGER;
+ALTER TABLE clientFiles ADD COLUMN isReviewed INTEGER DEFAULT 0;
+ALTER TABLE clientFiles ADD COLUMN reviewedAt TEXT;
+ALTER TABLE clientFiles ADD COLUMN reviewedBy INTEGER;
+ALTER TABLE clientFiles ADD COLUMN summary TEXT;
+ALTER TABLE clientFiles ADD COLUMN isCurrentPlan INTEGER DEFAULT 0;
+ALTER TABLE clientFiles ADD COLUMN uploadedBy INTEGER;
+ALTER TABLE clientFiles ADD COLUMN iepFamilyId INTEGER;
+ALTER TABLE clientFiles ADD COLUMN isCurrentVersion INTEGER DEFAULT 0;
+ALTER TABLE clientFiles ADD COLUMN isBaseIep INTEGER DEFAULT 0;
+ALTER TABLE clientFiles ADD COLUMN isAmendment INTEGER DEFAULT 0;
+ALTER TABLE clientFiles ADD COLUMN amendmentNumber INTEGER;
+ALTER TABLE clientFiles ADD COLUMN confirmationStatus TEXT DEFAULT 'System Identified';
