@@ -201,3 +201,63 @@ export function sanitizeComplaintText(text: string | null | undefined): string {
     .replace(/\b(?:an?|the|our|lead)\s+coach\b/gi, "$1 advocate")
     .replace(/\bcoaching\b/gi, "advocacy");
 }
+
+/**
+ * Format and sanitize person name to strictly first and last name for state complaint forms.
+ * Under state education agency rules (e.g. GaDOE Special Education Formal Complaint Form),
+ * the "Name of Complainant" area must contain ONLY the individual's legal first and last name.
+ * Professional titles, credentials, and organizational names are strictly prohibited in this field
+ * and must be placed in "Relationship to student".
+ */
+export function formatFirstLastName(name: string | null | undefined): string {
+  if (!name) return "";
+  let clean = name.trim();
+
+  // If agency name "Waypoint Advocates" was passed, substitute practice owner's name
+  if (/^waypoint\s+advocates?$/i.test(clean)) {
+    return "Byron Honea";
+  }
+
+  // If comma exists, take part before first comma (e.g. "Byron Honea, Lead Special Education Advocate" -> "Byron Honea")
+  if (clean.includes(",")) {
+    clean = clean.split(",")[0].trim();
+  }
+
+  // If hyphen separator with title exists (e.g. "Byron Honea - Advocate")
+  if (clean.includes(" - ")) {
+    clean = clean.split(" - ")[0].trim();
+  }
+
+  // Strip parenthetical roles (e.g. "Byron Honea (Advocate)")
+  clean = clean.replace(/\s*\([^)]*\)/g, "").trim();
+
+  // Strip common prefixes (Mr., Mrs., Ms., Dr.)
+  clean = clean.replace(/^(?:mr\.|mrs\.|ms\.|dr\.)\s+/i, "").trim();
+
+  // Strip common professional suffixes if attached (Esq., Ph.D., Ed.D., M.Ed., BCBA)
+  clean = clean.replace(/\s+(?:esq\.?|ph\.?d\.?|ed\.?d\.?|m\.?ed\.?|bcba)$/i, "").trim();
+
+  // Strip trailing role words if attached (e.g. "Byron Honea Advocate")
+  clean = clean.replace(/\s+(?:lead\s+special\s+education\s+advocate|special\s+education\s+advocate|advocate|representative)$/i, "").trim();
+
+  // Sanitize any stray prohibited coaching terms
+  clean = sanitizeComplaintText(clean);
+
+  return clean;
+}
+
+/**
+ * Validates whether a string contains only a person's first and last name (no titles/roles).
+ */
+export function isFirstLastNameOnly(name: string | null | undefined): boolean {
+  if (!name) return false;
+  const trimmed = name.trim();
+  // Disallow punctuation like commas, parentheses, colons, or dashes
+  if (/[,():;\/\-]/.test(trimmed)) return false;
+  // Disallow title, role, or credential words (including plurals and common role terms)
+  if (/\b(?:advocates?|coach(?:es)?|representatives?|directors?|attorneys?|lawyers?|counsels?|consultants?|services?|specialists?|officers?|esq|phd|med|parents?|guardians?)\b/i.test(trimmed)) {
+    return false;
+  }
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  return parts.length >= 2 && parts.length <= 4;
+}

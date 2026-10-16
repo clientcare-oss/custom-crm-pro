@@ -2,6 +2,7 @@ import {
   Receipt,
   Laptop,
   Briefcase,
+  Building2,
   GitBranch,
   Palette,
   ArrowRight,
@@ -14,7 +15,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export type SettingsSectionKey = "receipts" | "portal" | "admin" | "import" | "operations" | "integrations" | "ai" | "colors" | "archived";
+export type SettingsSectionKey = "business" | "admin" | "receipts" | "portal" | "import" | "operations" | "integrations" | "ai" | "colors" | "archived";
 
 interface SettingsBoxConfig {
   key: SettingsSectionKey;
@@ -32,6 +33,34 @@ interface SettingsBoxConfig {
 }
 
 export const SETTINGS_BOXES: SettingsBoxConfig[] = [
+  {
+    key: "business",
+    title: "Business Settings",
+    shortLabel: "Address, Email, Phone",
+    badge: "PG-024-BIZ",
+    badgeClass: "bg-[#DFBE77]/15 text-[#FFE394] border-[#FFE394]/30",
+    icon: Building2,
+    iconBg: "bg-[#DFBE77]/10",
+    iconColor: "text-[#FFE394]",
+    borderActive: "border-[#DFBE77] ring-2 ring-[#DFBE77]/20",
+    glowActive: "shadow-[0_0_24px_rgba(223,190,119,0.25)]",
+    description: "Consolidated practice headquarters: official mailing address, primary contact email, consolidated business phone, company logo, and website.",
+    highlights: ["Consolidated Phone & Email", "Physical & Mailing Address", "Logo & Web Presence"],
+  },
+  {
+    key: "admin",
+    title: "Admin CRM",
+    shortLabel: "What Staff See",
+    badge: "PG-024 Staff",
+    badgeClass: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+    icon: Briefcase,
+    iconBg: "bg-emerald-500/10",
+    iconColor: "text-emerald-400",
+    borderActive: "border-emerald-400 ring-2 ring-emerald-400/20",
+    glowActive: "shadow-[0_0_24px_rgba(16,185,129,0.22)]",
+    description: "Configure practice terminology (Student / Case / Project), company business phone, logo asset, and client referral credits.",
+    highlights: ["Custom Case Terminology", "Practice Phone & Logo Upload", "Referral Program ($25 Credit)"],
+  },
   {
     key: "receipts",
     title: "Payment Receipts",

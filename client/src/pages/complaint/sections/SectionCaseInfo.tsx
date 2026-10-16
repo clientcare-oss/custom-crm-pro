@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { useWorkspace } from "../workspaceContext";
 import { Field, SectionCard, inputCls } from "@/components/complaint/atoms";
 import { VoiceTextarea } from "@/components/complaint/VoiceTextarea";
-import { DISABILITY_CATEGORIES, calcAge } from "@shared/complaintEngine";
+import { DISABILITY_CATEGORIES, calcAge, formatFirstLastName } from "@shared/complaintEngine";
 import { toast } from "sonner";
 
 function d2s(d: Date | string | null | undefined): string {
@@ -72,7 +72,27 @@ export function SectionCaseInfo() {
 
       <SectionCard title="Complainant" subtitle="The person filing this complaint.">
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Full name" required><input {...txt("complainantName")} /></Field>
+          <Field
+            label="Name of Complainant (First and Last Name only)"
+            required
+            hint="State agency rule: only first and last name allowed. Enter professional titles in Relationship below."
+          >
+            <input
+              {...txt("complainantName")}
+              placeholder="e.g. Byron Honea"
+              onBlur={() => {
+                const current = (f.complainantName as string) ?? "";
+                const clean = formatFirstLastName(current);
+                if (clean !== current) {
+                  set("complainantName")(clean);
+                  update.mutate({ id: caseDbId, data: { complainantName: clean } });
+                  toast.info("State agency rule: Name of Complainant formatted to first and last name only.");
+                } else {
+                  save(["complainantName"])();
+                }
+              }}
+            />
+          </Field>
           <Field label="Relationship to student" required><input {...txt("complainantRelationship")} placeholder="Parent, guardian, advocate…" /></Field>
           <Field label="Telephone" required><input {...txt("complainantPhone")} /></Field>
           <Field label="Email" required><input {...txt("complainantEmail")} /></Field>

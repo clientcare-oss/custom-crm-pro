@@ -107,6 +107,7 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-023`: Client Portal (`/portal`, `/client-portal`, `/project-workspace/:id`)
   - `PG-023-TRN`: Plan Transition (`/portal?tab=plan-transition`)
   - `PG-024`: Settings (`/settings`)
+  - `PG-024-BIZ`: Company Settings → Business Profile & Contact Info (`/settings?section=business`, `/settings/business`)
   - `PG-024-REC`: Company Settings → Receipts (`/settings?section=receipts`)
   - `PG-024-IMP`: Settings → Client CRM Import (`/settings?section=import`, `/settings/import`)
   - `PG-025`: Case Compass Console (`/case-compass`, `/tools/case-compass`)

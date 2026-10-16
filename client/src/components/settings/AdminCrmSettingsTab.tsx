@@ -224,9 +224,14 @@ function ReferralProgramSettingsCard() {
 export interface AdminCrmSettingsTabProps {
   onPhoneUpdated?: (phone: string) => void;
   onOpenImport?: () => void;
+  onOpenBusinessSettings?: () => void;
 }
 
-export function AdminCrmSettingsTab({ onPhoneUpdated, onOpenImport }: AdminCrmSettingsTabProps = {}) {
+export function AdminCrmSettingsTab({
+  onPhoneUpdated,
+  onOpenImport,
+  onOpenBusinessSettings,
+}: AdminCrmSettingsTabProps = {}) {
   const { projectLabel, setProjectLabel, presetOptions, projectIconKey, setProjectIconKey } = useTerminology();
   const [customValue, setCustomValue] = useState(
     presetOptions.some((o) => o.value === projectLabel) ? "" : projectLabel
@@ -425,24 +430,39 @@ export function AdminCrmSettingsTab({ onPhoneUpdated, onOpenImport }: AdminCrmSe
         {/* Practice Phone Number Section */}
         <Card className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
           <CardHeader className="pb-4 border-b border-[#3A2C18]/60">
-            <CardTitle className="text-base font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
-              <Phone className="h-5 w-5 text-[#FFE394]" />
-              Practice Business Phone Number
-            </CardTitle>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <CardTitle className="text-base font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
+                <Phone className="h-5 w-5 text-emerald-400" />
+                Practice Business Phone Number
+              </CardTitle>
+              <Badge variant="outline" className="text-[10px] font-bold bg-[#020A17] text-[#FFE394] border-[#3A2C18]">
+                Consolidated (PG-024-BIZ)
+              </Badge>
+            </div>
             <CardDescription className="text-xs text-[#C6B697] mt-0.5">
-              Displayed on client confirmation receipts, call summaries, and the parent portal.
+              Consolidated with official address, emails, and branding in Business Settings. Displayed on public forms, receipts, call summaries, and client portal.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-5">
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#A69371]">
-                Phone Number
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#A69371]">
+                  Phone Number
+                </label>
+                {onOpenBusinessSettings && (
+                  <button
+                    onClick={onOpenBusinessSettings}
+                    className="text-[11px] text-[#DFBE77] hover:underline flex items-center gap-1 cursor-pointer font-medium"
+                  >
+                    Open Business Settings <ArrowRight className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
               <div className="flex gap-2">
                 <VoiceInput
                   value={phoneValue}
                   onChange={(e) => setPhoneValue(e.target.value)}
-                  placeholder="e.g. (404) 555-0199 or 1-800-555-0100"
+                  placeholder="e.g. (404) 919-8664 or (404) 555-0100"
                   className="flex-1 text-xs md:text-sm bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] focus:border-[#C5A059]"
                   type="tel"
                 />
@@ -455,9 +475,12 @@ export function AdminCrmSettingsTab({ onPhoneUpdated, onOpenImport }: AdminCrmSe
                 </Button>
               </div>
               {phoneData?.phone && (
-                <div className="text-xs text-emerald-400 bg-[#020A17] border border-emerald-500/30 p-2.5 rounded-lg flex items-center gap-1.5 font-medium mt-2">
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  Currently active: <span className="font-bold text-[#FFF4D4] font-mono">{phoneData.phone}</span>
+                <div className="text-xs text-emerald-400 bg-[#020A17] border border-emerald-500/30 p-2.5 rounded-lg flex items-center justify-between gap-1.5 font-medium mt-2">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Currently active: <span className="font-bold text-[#FFF4D4] font-mono">{phoneData.phone}</span>
+                  </div>
+                  <span className="text-[10px] text-[#A69371] font-mono">Consolidated</span>
                 </div>
               )}
             </div>

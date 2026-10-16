@@ -294,4 +294,230 @@ export const systemRouter = router({
         return { success: false, message: err?.message ?? 'Connection failed.' };
       }
     }),
+
+  // Consolidated business settings: address, email, phone, company name, website, and logo
+  getBusinessProfile: publicProcedure.query(async () => {
+    // 1. Resolve phone
+    let phone: string | null = cachedBusinessPhone;
+    if (!phone) {
+      const owner = await resolveOwner();
+      phone = owner?.phone || null;
+    }
+
+    // 2. Resolve logo
+    let logoUrl: string | null = cachedCompanyLogo;
+    if (!logoUrl) {
+      const owner = await resolveOwner();
+      logoUrl = owner?.logoUrl || null;
+    }
+
+    // 3. Resolve receiptSettings row (check in-memory store first for test/cache consistency, then DB)
+    let memoryRow: any = null;
+    try {
+      const { inMemoryReceiptSettings } = await import("../routers/receipts");
+      memoryRow = inMemoryReceiptSettings.get(1) || Array.from(inMemoryReceiptSettings.values())[0] || null;
+    } catch {}
+
+    let receiptRow: any = null;
+    try {
+      const { receiptSettings } = await import("../../drizzle/schema");
+      const dbConn = await db.getDb();
+      if (dbConn) {
+        const [row] = await dbConn.select().from(receiptSettings).limit(1);
+        if (row) receiptRow = row;
+      }
+    } catch (e) {
+      console.warn("[System] getBusinessProfile receiptSettings query error:", e);
+    }
+
+    const companyName = memoryRow?.companyName || receiptRow?.companyName || "Waypoint Advocates";
+    const receiptDisplayName = memoryRow?.receiptDisplayName || receiptRow?.receiptDisplayName || "WAYPOINT ADVOCATES";
+    const businessPhone = phone || memoryRow?.businessPhone || receiptRow?.businessPhone || "(404) 919-8664";
+    const businessEmail = memoryRow?.businessEmail || receiptRow?.businessEmail || "clientcare@waypointadvocates.com";
+    const replyToEmail = memoryRow?.replyToEmail || receiptRow?.replyToEmail || "billing@waypointadvocates.com";
+    const businessAddress = memoryRow?.businessAddress || receiptRow?.businessAddress || "PO Box 724944, Atlanta, GA 31139";
+    const website = memoryRow?.website || receiptRow?.website || "https://waypointadvocates.com";
+    const supportContactInfo = memoryRow?.supportContactInfo || receiptRow?.supportContactInfo || "Questions? Reach out to clientcare@waypointadvocates.com or call (404) 919-8664";
+    const showBusinessAddress = Boolean(memoryRow?.showBusinessAddress ?? receiptRow?.showBusinessAddress ?? 1);
+
+    // Parse address components for structured editing
+    let street = "PO Box 724944";
+    let city = "Atlanta";
+    let state = "GA";
+    let zip = "31139";
+    let country = "United States";
+
+    if (businessAddress && businessAddress.includes(",")) {
+      const parts = businessAddress.split(",").map((s: string) => s.trim());
+      if (parts.length >= 2) {
+        street = parts[0] || street;
+        city = parts[1] || city;
+        if (parts.length >= 3) {
+          const stateZip = parts[2].trim().split(/\s+/);
+          if (stateZip.length >= 2) {
+            state = stateZip[0] || state;
+            zip = stateZip.slice(1).join(" ") || zip;
+          } else {
+            state = parts[2] || state;
+          }
+        }
+        if (parts.length >= 4) {
+          country = parts[3] || country;
+        }
+      }
+    }
+
+    return {
+      companyName,
+      receiptDisplayName,
+      phone: businessPhone,
+      email: businessEmail,
+      replyToEmail,
+      address: businessAddress,
+      street,
+      city,
+      state,
+      zip,
+      country,
+      website,
+      supportContactInfo,
+      leadAdvocate: "Byron Honea",
+      practiceSpecialization: "Lead Special Education & IEP Advocacy Practice",
+      logoUrl,
+      showBusinessAddress,
+    };
+  }),
+
+  // Mutation to update consolidated business profile across users, receiptSettings, and memory caches
+  updateBusinessProfile: protectedProcedure
+    .input(
+      z.object({
+        companyName: z.string().max(255).optional(),
+        receiptDisplayName: z.string().max(255).optional(),
+        phone: z.string().max(50).optional(),
+        email: z.string().max(255).optional(),
+        replyToEmail: z.string().max(255).optional(),
+        address: z.string().max(500).optional(),
+        street: z.string().max(255).optional(),
+        city: z.string().max(100).optional(),
+        state: z.string().max(50).optional(),
+        zip: z.string().max(20).optional(),
+        country: z.string().max(100).optional(),
+        website: z.string().max(255).optional(),
+        supportContactInfo: z.string().max(1000).optional(),
+        logoUrl: z.string().max(2048).nullable().optional(),
+        showBusinessAddress: z.boolean().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // 1. Compute full consolidated address
+      let formattedAddress = input.address?.trim();
+      if (!formattedAddress && (input.street || input.city || input.state || input.zip)) {
+        const parts = [
+          input.street?.trim(),
+          input.city?.trim(),
+          [input.state?.trim(), input.zip?.trim()].filter(Boolean).join(" "),
+          input.country?.trim() && input.country?.trim() !== "United States" ? input.country?.trim() : null,
+        ].filter(Boolean);
+        formattedAddress = parts.join(", ");
+      }
+
+      // 2. Update phone if provided
+      if (input.phone !== undefined) {
+        const trimmedPhone = input.phone.trim();
+        cachedBusinessPhone = trimmedPhone;
+        try {
+          const dbConn = await db.getDb();
+          if (dbConn) {
+            const { users } = await import("../../drizzle/schema");
+            await dbConn
+              .update(users)
+              .set({ phone: trimmedPhone || null })
+              .where(eq(users.role, "admin"));
+          }
+        } catch (e) {
+          console.warn("[System] updateBusinessProfile users phone update failed:", e);
+        }
+        try {
+          const owner = await resolveOwner();
+          if (owner?.openId) {
+            await db.updateOwnerPhone(owner.openId, trimmedPhone);
+          }
+        } catch {}
+      }
+
+      // 3. Update logo if provided
+      if (input.logoUrl !== undefined) {
+        cachedCompanyLogo = input.logoUrl;
+        try {
+          await db.updateOwnerLogo(ctx.user.openId, input.logoUrl);
+          const owner = await resolveOwner();
+          if (owner?.openId && owner.openId !== ctx.user.openId) {
+            await db.updateOwnerLogo(owner.openId, input.logoUrl);
+          }
+        } catch (e) {
+          console.warn("[System] updateBusinessProfile logo update failed:", e);
+        }
+      }
+
+      // 4. Update receiptSettings table and in-memory cache
+      try {
+        const dbConn = await db.getDb();
+        if (dbConn) {
+          const { receiptSettings } = await import("../../drizzle/schema");
+          const [existingReceipt] = await dbConn.select().from(receiptSettings).limit(1);
+
+          const updateFields: any = {
+            updatedAt: new Date(),
+          };
+          if (input.companyName !== undefined) updateFields.companyName = input.companyName.trim();
+          if (input.receiptDisplayName !== undefined) updateFields.receiptDisplayName = input.receiptDisplayName.trim();
+          if (input.phone !== undefined) updateFields.businessPhone = input.phone.trim();
+          if (input.email !== undefined) updateFields.businessEmail = input.email.trim();
+          if (input.replyToEmail !== undefined) updateFields.replyToEmail = input.replyToEmail.trim();
+          if (formattedAddress !== undefined) updateFields.businessAddress = formattedAddress;
+          if (input.website !== undefined) updateFields.website = input.website.trim();
+          if (input.supportContactInfo !== undefined) updateFields.supportContactInfo = input.supportContactInfo.trim();
+          if (input.showBusinessAddress !== undefined) updateFields.showBusinessAddress = input.showBusinessAddress ? 1 : 0;
+
+          if (existingReceipt) {
+            await dbConn
+              .update(receiptSettings)
+              .set(updateFields)
+              .where(eq(receiptSettings.id, existingReceipt.id));
+          } else {
+            await dbConn.insert(receiptSettings).values({
+              ownerId: ctx.user.id,
+              ...updateFields,
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("[System] updateBusinessProfile receiptSettings update failed:", e);
+      }
+
+      // 5. Update in-memory receipts settings for immediate session consistency
+      try {
+        const { inMemoryReceiptSettings } = await import("../routers/receipts");
+        const existing = inMemoryReceiptSettings.get(ctx.user.id) || {};
+        inMemoryReceiptSettings.set(ctx.user.id, {
+          ...existing,
+          ...(input.companyName && { companyName: input.companyName.trim() }),
+          ...(input.phone && { businessPhone: input.phone.trim() }),
+          ...(input.email && { businessEmail: input.email.trim() }),
+          ...(input.replyToEmail && { replyToEmail: input.replyToEmail.trim() }),
+          ...(formattedAddress && { businessAddress: formattedAddress }),
+          ...(input.website && { website: input.website.trim() }),
+          ...(input.supportContactInfo && { supportContactInfo: input.supportContactInfo.trim() }),
+          ...(input.showBusinessAddress !== undefined && { showBusinessAddress: input.showBusinessAddress ? 1 : 0 }),
+        });
+      } catch {}
+
+      return {
+        success: true,
+        message: "Business profile and contact channels consolidated successfully.",
+        address: formattedAddress,
+        phone: input.phone?.trim() ?? cachedBusinessPhone,
+      };
+    }),
 });

@@ -110,6 +110,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   
   // Settings & System
   "/settings":                        { id: "PG-024", name: "Settings & Practice Profile", category: "Settings" },
+  "/settings/business":               { id: "PG-024-BIZ", name: "Company Settings → Business Profile", category: "Settings", description: "Consolidated business address, email, phone, and practice identity" },
   "/settings/receipts":               { id: "PG-024-REC", name: "Company Settings → Receipts", category: "Settings", description: "Administrative control center for Waypoint payment receipt experience" },
   "/settings/import":                 { id: "PG-024-IMP", name: "Settings → Client CRM Import", category: "Settings", description: "Import existing client rosters and case records from external CRMs or CSV spreadsheets" },
   "/receipt":                         { id: "PG-047", name: "Waypoint Payment Receipt", category: "Billing", description: "Official branded Waypoint payment confirmation terminal and receipt" },

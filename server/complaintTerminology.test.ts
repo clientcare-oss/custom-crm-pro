@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   containsProhibitedComplaintTerms,
   sanitizeComplaintText,
+  formatFirstLastName,
+  isFirstLastNameOnly,
   PROHIBITED_COMPLAINT_TERMS_REGEX,
 } from "../shared/complaintEngine";
 import { buildReadinessReport } from "./complaintValidation";
@@ -46,6 +48,63 @@ describe("State Complaint Terminology Guardrail (AGENTS.md Rule F & IDEA / GaDOE
     });
   });
 
+  describe("formatFirstLastName (Name of Complainant Area)", () => {
+    it("strips trailing comma-separated titles and roles", () => {
+      expect(formatFirstLastName("Byron Honea, Lead Special Education Advocate")).toBe("Byron Honea");
+      expect(formatFirstLastName("Byron Honea, Advocate")).toBe("Byron Honea");
+      expect(formatFirstLastName("Marcus Santiago, Parent")).toBe("Marcus Santiago");
+    });
+
+    it("strips hyphenated titles and parenthetical annotations", () => {
+      expect(formatFirstLastName("Byron Honea - Advocate")).toBe("Byron Honea");
+      expect(formatFirstLastName("Byron Honea (Special Education Advocate)")).toBe("Byron Honea");
+    });
+
+    it("replaces organizational name with practice owner name", () => {
+      expect(formatFirstLastName("Waypoint Advocates")).toBe("Byron Honea");
+      expect(formatFirstLastName("waypoint advocate")).toBe("Byron Honea");
+    });
+
+    it("strips honorific prefixes and credential suffixes", () => {
+      expect(formatFirstLastName("Mr. Byron Honea")).toBe("Byron Honea");
+      expect(formatFirstLastName("Dr. Jane Doe")).toBe("Jane Doe");
+      expect(formatFirstLastName("John Doe Esq.")).toBe("John Doe");
+      expect(formatFirstLastName("Jane Smith BCBA")).toBe("Jane Smith");
+    });
+
+    it("preserves clean first and last names", () => {
+      expect(formatFirstLastName("Byron Honea")).toBe("Byron Honea");
+      expect(formatFirstLastName("Marcus Santiago")).toBe("Marcus Santiago");
+      expect(formatFirstLastName("Mary Ann Higgins")).toBe("Mary Ann Higgins");
+    });
+
+    it("handles empty or null values gracefully", () => {
+      expect(formatFirstLastName("")).toBe("");
+      expect(formatFirstLastName(null)).toBe("");
+      expect(formatFirstLastName(undefined)).toBe("");
+    });
+  });
+
+  describe("isFirstLastNameOnly", () => {
+    it("returns true for clean first and last names", () => {
+      expect(isFirstLastNameOnly("Byron Honea")).toBe(true);
+      expect(isFirstLastNameOnly("Marcus Santiago")).toBe(true);
+      expect(isFirstLastNameOnly("Mary Jane Watson")).toBe(true);
+    });
+
+    it("returns false if title, role words, or punctuation are present", () => {
+      expect(isFirstLastNameOnly("Byron Honea, Lead Special Education Advocate")).toBe(false);
+      expect(isFirstLastNameOnly("Byron Honea - Advocate")).toBe(false);
+      expect(isFirstLastNameOnly("Byron Honea (Advocate)")).toBe(false);
+      expect(isFirstLastNameOnly("Byron Honea Advocate")).toBe(false);
+      expect(isFirstLastNameOnly("Coach Byron")).toBe(false);
+      expect(isFirstLastNameOnly("Waypoint Advocates")).toBe(false);
+      expect(isFirstLastNameOnly("Byron")).toBe(false);
+      expect(isFirstLastNameOnly("")).toBe(false);
+      expect(isFirstLastNameOnly(null)).toBe(false);
+    });
+  });
+
   describe("buildReadinessReport validation check", () => {
     const baseCase: any = {
       id: 1,
@@ -62,7 +121,7 @@ describe("State Complaint Terminology Guardrail (AGENTS.md Rule F & IDEA / GaDOE
       agencyName: "Atlanta Public Schools",
       studentGtid: "9001234567",
       parentDifferent: false,
-      signatureName: "Byron Honea, Lead Special Education Advocate",
+      signatureName: "Byron Honea",
       signatureDate: new Date(),
       mediationRequested: "yes",
       districtCopyDelivered: true,
@@ -84,7 +143,7 @@ describe("State Complaint Terminology Guardrail (AGENTS.md Rule F & IDEA / GaDOE
       draftFacts: "Between November and January, 18 sessions were missed without makeup.",
     };
 
-    it("passes readiness check when all titles are compliant", () => {
+    it("passes readiness check when all titles and complainant name are compliant", () => {
       const report = buildReadinessReport({
         c: baseCase,
         allegations: [baseAllegation],
@@ -101,6 +160,38 @@ describe("State Complaint Terminology Guardrail (AGENTS.md Rule F & IDEA / GaDOE
 
       expect(termCheck).toBeDefined();
       expect(termCheck?.status).toBe("ok");
+
+      const compNameCheck = report.categories
+        .find(c => c.key === "required_information")
+        ?.items.find(i => i.key === "complainant_name");
+
+      expect(compNameCheck).toBeDefined();
+      expect(compNameCheck?.status).toBe("ok");
+    });
+
+    it("issues a warning when complainant name contains title/suffix instead of first and last name only", () => {
+      const caseWithTitleInName = {
+        ...baseCase,
+        complainantName: "Byron Honea, Lead Special Education Advocate",
+      };
+
+      const report = buildReadinessReport({
+        c: caseWithTitleInName,
+        allegations: [baseAllegation],
+        timeline: [{ id: 1, eventDate: new Date(), title: "IEP meeting", details: "Convened", linkedAllegationIds: [101] } as any],
+        evidenceLinks: [{ id: 1, evidenceItemId: 1, targetType: "allegation", targetId: 101 } as any],
+        evidenceCount: 1,
+        remedies: [{ id: 1, accepted: true, title: "Compensatory tutoring" } as any],
+        draftSections: ["parties"],
+      });
+
+      const compNameCheck = report.categories
+        .find(c => c.key === "required_information")
+        ?.items.find(i => i.key === "complainant_name");
+
+      expect(compNameCheck).toBeDefined();
+      expect(compNameCheck?.status).toBe("warning");
+      expect(compNameCheck?.detail).toContain("State agency rule: Name of Complainant must only be first and last name");
     });
 
     it("flags an error when prohibited title 'Master IEP Coach' is used in case fields", () => {

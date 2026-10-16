@@ -3,7 +3,7 @@ import type { Express, Request, Response } from "express";
 import PDFDocument from "pdfkit";
 import * as cdb from "./complaintDb";
 import { buildReadinessReport } from "./complaintValidation";
-import { ISSUE_CATEGORIES, calcAge, sanitizeComplaintText } from "../shared/complaintEngine";
+import { ISSUE_CATEGORIES, calcAge, sanitizeComplaintText, formatFirstLastName } from "../shared/complaintEngine";
 
 const NAVY = "#07162B";
 const GOLD = "#B8860B";
@@ -58,7 +58,7 @@ export function registerComplaintExportRoute(app: Express) {
         ["Case ID", c.caseId],
         ["Student", c.studentName ?? "—"],
         ["District", c.studentDistrict ?? c.agencyName ?? "—"],
-        ["Complainant", sanitizeComplaintText(c.complainantName ?? "—")],
+        ["Complainant", formatFirstLastName(c.complainantName ?? "—")],
         ["Date Prepared", fmtDate(new Date())],
       ];
       for (const [k, v] of coverRows) {
@@ -91,7 +91,7 @@ export function registerComplaintExportRoute(app: Express) {
       doc.moveDown(1.2);
 
       heading("Parties");
-      para(`Complainant: ${c.complainantName ?? "—"} (${c.complainantRelationship ?? "—"}), ${c.complainantAddress ?? "—"}. Telephone: ${c.complainantPhone ?? "—"}. Email: ${c.complainantEmail ?? "—"}.`);
+      para(`Complainant: ${formatFirstLastName(c.complainantName ?? "—")} (${c.complainantRelationship ?? "—"}), ${c.complainantAddress ?? "—"}. Telephone: ${c.complainantPhone ?? "—"}. Email: ${c.complainantEmail ?? "—"}.`);
       const age = calcAge(c.studentDob);
       para(`Student: ${c.studentName ?? "—"}${c.studentDob ? `, born ${fmtDate(c.studentDob)}${age !== null ? ` (age ${age})` : ""}` : ""}${c.studentGrade ? `, grade ${c.studentGrade}` : ""}, residing at ${c.studentAddress ?? "—"}, attending ${c.studentSchool ?? "—"} in ${c.studentDistrict ?? "—"}.${c.studentGtid ? ` GTID: ${c.studentGtid}.` : ""}`);
       const cats = (c.disabilityCategories ?? []) as string[];
@@ -146,7 +146,7 @@ export function registerComplaintExportRoute(app: Express) {
       para("The complainant certifies that the information in this complaint is true and correct to the best of their knowledge and belief.");
       doc.moveDown(1.5);
       doc.moveTo(doc.x, doc.y).lineTo(doc.x + 260, doc.y).lineWidth(0.8).stroke(BODY);
-      para(`${c.signatureName ?? c.complainantName ?? "—"}    Date: ${fmtDate(c.signatureDate)}`);
+      para(`${formatFirstLastName(c.signatureName ?? c.complainantName ?? "—")}    Date: ${fmtDate(c.signatureDate)}`);
       if (c.advocateName && c.advocateName !== c.complainantName) para(`Prepared with the assistance of ${c.advocateName}, advocate.`, { color: MUTED });
 
       heading("District-Copy Certification");

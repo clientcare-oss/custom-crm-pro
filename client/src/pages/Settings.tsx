@@ -8,6 +8,7 @@ import {
   SettingsCommandBoxes,
   type SettingsSectionKey,
 } from "@/components/settings/SettingsCommandBoxes";
+import { BusinessSettingsTab } from "@/components/settings/BusinessSettingsTab";
 import { AdminCrmSettingsTab } from "@/components/settings/AdminCrmSettingsTab";
 import { ClientPortalSettingsTab } from "@/components/settings/ClientPortalSettingsTab";
 import { ColorPaletteTokensTab } from "@/components/settings/ColorPaletteTokensTab";
@@ -40,9 +41,10 @@ export default function Settings() {
 
   // Resolve initial section from URL query parameter
   const resolveInitialSection = (): SettingsSectionKey => {
-    if (typeof window === "undefined") return "admin";
+    if (typeof window === "undefined") return "business";
     const params = new URLSearchParams(window.location.search);
     const raw = params.get("section") || params.get("tab");
+    if (raw === "business" || raw === "business-settings" || raw === "company" || raw === "profile" || raw === "contact") return "business";
     if (raw === "receipts" || raw === "receipt") return "receipts";
     if (raw === "portal" || raw === "client-portal") return "portal";
     if (raw === "operations" || raw === "workflows" || raw === "workflow-designer") return "operations";
@@ -52,8 +54,7 @@ export default function Settings() {
     if (raw === "archived" || raw === "archived-pages" || raw === "legacy") return "archived";
     if (raw === "import" || raw === "crm-import" || raw === "clients-import" || raw === "import-clients") return "import";
     if (raw === "admin" || raw === "crm") return "admin";
-    // Default to clean Admin CRM / Company Profile base rather than raw color dump
-    return "admin";
+    return "business";
   };
 
   const [activeSection, setActiveSection] = useState<SettingsSectionKey>(resolveInitialSection);
@@ -109,19 +110,27 @@ export default function Settings() {
           {/* Live Practice Telemetry Pill Bar */}
           <div className="rounded-xl border border-[#3A2C18] bg-[#05142B]/90 p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
             <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handleSectionChange("business")}
+                className="flex items-center gap-1.5 hover:text-[#FFE394] transition-colors cursor-pointer text-left"
+                title="Manage practice profile in Business Settings"
+              >
                 <Building className="w-3.5 h-3.5 text-[#DFBE77]" />
                 <span className="text-[#A69371]">Advocacy Practice:</span>
-                <span className="font-bold text-[#FFF4D4]">Waypoint Advocates</span>
-              </div>
+                <span className="font-bold text-[#FFF4D4] hover:underline">Waypoint Advocates</span>
+              </button>
 
               <span className="text-[#3A2C18] hidden sm:inline">•</span>
 
-              <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handleSectionChange("business")}
+                className="flex items-center gap-1.5 hover:text-[#FFE394] transition-colors cursor-pointer text-left"
+                title="Manage consolidated business phone in Business Settings"
+              >
                 <Phone className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="text-[#A69371]">Phone:</span>
-                <span className="font-bold text-[#FFF4D4] font-mono">{displayPhone}</span>
-              </div>
+                <span className="font-bold text-[#FFF4D4] font-mono hover:underline">{displayPhone}</span>
+              </button>
 
               <span className="text-[#3A2C18] hidden sm:inline">•</span>
 
@@ -141,7 +150,7 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* ── 8 EXECUTIVE COMMAND BOXES ACROSS THE TOP ──────────────────────── */}
+        {/* ── EXECUTIVE COMMAND BOXES ACROSS THE TOP ──────────────────────── */}
         <SettingsCommandBoxes
           activeSection={activeSection}
           onSelectSection={handleSectionChange}
@@ -149,6 +158,17 @@ export default function Settings() {
 
       {/* ── ACTIVE SECTION WORKSPACE ──────────────────────────────────────── */}
       <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
+        {/* SECTION: Business Settings (PG-024-BIZ) */}
+        {activeSection === "business" && (
+          <div className="space-y-4">
+            <BusinessSettingsTab
+              onPhoneUpdated={handlePhoneUpdated}
+              onOpenReceipts={() => handleSectionChange("receipts")}
+              onOpenPortal={() => handleSectionChange("portal")}
+            />
+          </div>
+        )}
+
         {/* SECTION 1: Payment Receipts (PG-024-REC) */}
         {activeSection === "receipts" && (
           <div className="space-y-4">
@@ -168,6 +188,7 @@ export default function Settings() {
           <AdminCrmSettingsTab
             onPhoneUpdated={handlePhoneUpdated}
             onOpenImport={() => handleSectionChange("import")}
+            onOpenBusinessSettings={() => handleSectionChange("business")}
           />
         )}
 

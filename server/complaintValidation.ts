@@ -1,4 +1,4 @@
-import { isWithinLookback, containsProhibitedComplaintTerms } from "../shared/complaintEngine";
+import { isWithinLookback, containsProhibitedComplaintTerms, formatFirstLastName, isFirstLastNameOnly } from "../shared/complaintEngine";
 import type { Allegation, ComplaintCase, EvidenceLink, RequestedRemedy, TimelineEvent } from "../drizzle/schema";
 
 export type ReadinessItem = {
@@ -56,7 +56,19 @@ export function buildReadinessReport(input: {
       detail: value ? "Provided" : `${label} is required by the Georgia complaint form.`,
     });
   };
-  reqField("complainant_name", "Complainant name", c.complainantName);
+  const cleanCompName = formatFirstLastName(c.complainantName);
+  const isNameOnly = isFirstLastNameOnly(c.complainantName);
+  req.push({
+    key: "complainant_name",
+    label: "Complainant name (First and last name only)",
+    sectionKey: "case-information",
+    status: !c.complainantName ? "error" : !isNameOnly ? "warning" : "ok",
+    detail: !c.complainantName
+      ? "Complainant name is required by the Georgia complaint form."
+      : !isNameOnly
+        ? `State agency rule: Name of Complainant must only be first and last name (e.g. "${cleanCompName || "Byron Honea"}"). Professional titles belong in Relationship to student.`
+        : `Provided (${c.complainantName})`,
+  });
   reqField("complainant_relationship", "Relationship to student", c.complainantRelationship);
   reqField("complainant_address", "Complainant address", c.complainantAddress);
   reqField("complainant_phone", "Complainant telephone", c.complainantPhone);

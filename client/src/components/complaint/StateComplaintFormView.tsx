@@ -6,7 +6,7 @@ import {
 } from "./stateFormsData";
 import { cn } from "@/lib/utils";
 import { type ImportedPdfPage } from "@/lib/pdfImporter";
-import { sanitizeComplaintText } from "@shared/complaintEngine";
+import { sanitizeComplaintText, formatFirstLastName } from "@shared/complaintEngine";
 
 interface StateComplaintFormViewProps {
   formState: OfficialComplaintFormState;
@@ -74,8 +74,8 @@ export function StateComplaintFormView({
       // Page 1: Public Agency
       setIfField("Public agency filing complaint against", formState.publicAgency);
 
-      // Page 1: Complainant
-      setIfField("Name of Complainant", formState.complainantName);
+      // Page 1: Complainant (strictly first and last name only per state agency regulations)
+      setIfField("Name of Complainant", formatFirstLastName(formState.complainantName));
       setIfField("Relationship to student", formState.complainantRelationship);
       setIfField("Complainant Address", formState.complainantAddress);
       setIfField("City", formState.complainantCity);

@@ -85,7 +85,7 @@ import {
 } from "@/components/complaint/stateFormsData";
 import { convertPdfToPageImages, type ImportedPdfPage } from "@/lib/pdfImporter";
 import { PDFDocument } from "pdf-lib";
-import { sanitizeComplaintText, containsProhibitedComplaintTerms } from "@shared/complaintEngine";
+import { sanitizeComplaintText, containsProhibitedComplaintTerms, formatFirstLastName } from "@shared/complaintEngine";
 
 // ── Types & Constants ────────────────────────────────────────────────────────
 export const STATE_FORM_PAGE_COUNT = 4;
@@ -784,11 +784,11 @@ export default function ComplaintWorkspace() {
           const parsed = JSON.parse(saved);
           return {
             ...parsed,
-            complainantName: sanitizeComplaintText(parsed.complainantName),
+            complainantName: formatFirstLastName(parsed.complainantName) || "Byron Honea",
             complainantRelationship: sanitizeComplaintText(parsed.complainantRelationship),
             statementOfViolations: sanitizeComplaintText(parsed.statementOfViolations),
             factsRelatingToViolations: sanitizeComplaintText(parsed.factsRelatingToViolations),
-            signatureName: sanitizeComplaintText(parsed.signatureName),
+            signatureName: formatFirstLastName(parsed.signatureName) || "Byron Honea",
           };
         }
       } catch (e) {}
@@ -983,7 +983,7 @@ export default function ComplaintWorkspace() {
 
         // Page 1: Public Agency & Complainant & Student
         setIfField("Public agency filing complaint against", formStateToFill.publicAgency || caseDetails.district);
-        setIfField("Name of Complainant", formStateToFill.complainantName || caseDetails.preparedBy);
+        setIfField("Name of Complainant", formatFirstLastName(formStateToFill.complainantName || "Byron Honea"));
         setIfField("Relationship to student", formStateToFill.complainantRelationship || "Advocate on behalf of Parent");
         setIfField("Complainant Address", formStateToFill.complainantAddress);
         setIfField("City", formStateToFill.complainantCity);
@@ -1015,7 +1015,7 @@ export default function ComplaintWorkspace() {
         // Page 3: Verification of Service
         setIfField("On", formStateToFill.serviceDate || caseDetails.submissionDate);
         setIfField("name or title of recipient", formStateToFill.serviceRecipient || caseDetails.district);
-        setIfField("Signature of Person Filing Complaint", formStateToFill.signatureName || formStateToFill.complainantName || caseDetails.preparedBy);
+        setIfField("Signature of Person Filing Complaint", formatFirstLastName(formStateToFill.signatureName || formStateToFill.complainantName || "Byron Honea"));
         setIfField("Date", formStateToFill.signatureDate || caseDetails.submissionDate);
 
         const filledBytes = await pdfDoc.save();

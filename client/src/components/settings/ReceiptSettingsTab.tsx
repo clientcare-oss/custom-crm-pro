@@ -154,6 +154,7 @@ export const ReceiptSettingsTab: React.FC<ReceiptSettingsTabProps> = ({ onPhoneU
         utils.system.getBusinessPhone.invalidate();
         onPhoneUpdated?.(variables.businessPhone || "");
       }
+      utils.system.getBusinessProfile.invalidate();
     },
     onError: (err) => {
       toast.error(err.message || "Failed to save receipt settings");

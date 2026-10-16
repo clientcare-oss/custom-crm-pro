@@ -101,13 +101,14 @@ export function AiBadge() {
   );
 }
 
-export function Field({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
+export function Field({ label, children, required, hint }: { label: string; children: ReactNode; required?: boolean; hint?: string }) {
   return (
     <label className="block">
       <span className="mb-1 block text-sm font-medium text-slate-300">
         {label} {required && <span className="text-[#D9A441]">*</span>}
       </span>
       {children}
+      {hint && <span className="mt-1 block text-xs text-amber-300/80 leading-tight">{hint}</span>}
     </label>
   );
 }
