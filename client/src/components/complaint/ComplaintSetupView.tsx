@@ -104,10 +104,38 @@ export function ComplaintSetupView({
   // tRPC mutation for AI statutory refinement
   const refineMutation = trpc.stateComplaint.refineIssues.useMutation({
     onSuccess: (data) => {
-      if (data.refinedStatementOfViolations) setStatement(data.refinedStatementOfViolations);
-      if (data.refinedFactsRelatingToViolations) setFacts(data.refinedFactsRelatingToViolations);
-      if (data.refinedProposedResolution) setResolutionText(data.refinedProposedResolution);
-      toast.success("AI refined your issues, facts, and proposed remedies!");
+      if (data.refinedStatementOfViolations) {
+        setStatement(data.refinedStatementOfViolations);
+      }
+      if (data.refinedFactsRelatingToViolations) {
+        setFacts(data.refinedFactsRelatingToViolations);
+      }
+      if (data.refinedProposedResolution) {
+        setResolutionText(data.refinedProposedResolution);
+      }
+
+      // Immediately sync to parent form state
+      onChange((prev) => ({
+        ...prev,
+        statementOfViolations: data.refinedStatementOfViolations || prev.statementOfViolations,
+        factsRelatingToViolations: data.refinedFactsRelatingToViolations || prev.factsRelatingToViolations,
+        proposedResolution: data.refinedProposedResolution || prev.proposedResolution,
+      }));
+
+      // Update docket sections if handler provided
+      if (onApplyToDocketSections) {
+        onApplyToDocketSections({
+          statementOfViolations: data.refinedStatementOfViolations || statement,
+          factsRelatingToViolations: data.refinedFactsRelatingToViolations || facts,
+          proposedResolution: data.refinedProposedResolution || resolutionText,
+        });
+      }
+
+      toast.success("AI synthesized your story into formal statutory counts & facts below!");
+
+      setTimeout(() => {
+        document.getElementById("prong-1-statement")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
     },
     onError: (err) => {
       toast.error(`Refinement failed: ${err.message}`);
@@ -183,7 +211,7 @@ export function ComplaintSetupView({
 
     refineMutation.mutate({
       statementOfViolations: rawStory,
-      factsRelatingToViolations: facts || rawStory,
+      factsRelatingToViolations: rawStory,
       proposedResolution: resolutionText,
       selectedResolutions: selectedItemTexts,
       stateCode: formState.stateCode || "GA",
@@ -520,7 +548,7 @@ export function ComplaintSetupView({
         </div>
 
         {/* ── PRONG #1: Statement of Alleged Violation(s) ──────────────────── */}
-        <div className="rounded-xl border border-[#3A2C18] bg-[#05142B]/95 p-5 shadow-lg relative">
+        <div id="prong-1-statement" className="rounded-xl border border-[#3A2C18] bg-[#05142B]/95 p-5 shadow-lg relative scroll-mt-24">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-start gap-2.5">
               <span className="w-7 h-7 rounded-full bg-[#DFBE77]/20 border border-[#DFBE77]/50 text-[#FFE394] font-serif font-bold text-sm flex items-center justify-center shrink-0">

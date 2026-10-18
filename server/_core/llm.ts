@@ -225,13 +225,16 @@ const getAiConfig = (modelOverride?: string) => {
   const cfToken = process.env.CLOUDFLARE_API_TOKEN || ENV.forgeApiKey || "";
   const openAiKey = process.env.OPENAI_API_KEY || "";
 
-  // Prioritize Cloudflare Workers AI unless OpenAI is explicitly forced or CF token is absent while OpenAI key is present
-  if (openAiKey && (!cfToken || process.env.FORCE_OPENAI === "true")) {
+  // Prioritize Cloudflare Workers AI unless OpenAI is explicitly forced or CF token is absent/invalid while OpenAI key is present
+  if (openAiKey && (!cfToken || cfToken.startsWith("cfat_") || process.env.FORCE_OPENAI === "true")) {
+    const model = (modelOverride && !modelOverride.startsWith("@cf/"))
+      ? modelOverride
+      : (process.env.OPENAI_MODEL || "gpt-4o-mini");
     return {
       provider: "openai" as const,
       url: "https://api.openai.com/v1/chat/completions",
       apiKey: openAiKey,
-      model: modelOverride || process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model,
     };
   }
 
@@ -394,6 +397,38 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
   if (!response.ok) {
     const errorText = await response.text();
+    // If Cloudflare fails (e.g. 401 Unauthorized, rate limit) and OpenAI key is available, retry with OpenAI!
+    const openAiKey = process.env.OPENAI_API_KEY || "";
+    if (openAiKey) {
+      try {
+        const openAiModel = (params.model && !params.model.startsWith("@cf/"))
+          ? params.model
+          : (process.env.OPENAI_MODEL || "gpt-4o-mini");
+        const openAiPayload: Record<string, unknown> = {
+          model: openAiModel,
+          messages: messages.map(normalizeMessage),
+        };
+        if (tools && tools.length > 0) openAiPayload.tools = tools;
+        if (normalizedToolChoice) openAiPayload.tool_choice = normalizedToolChoice;
+        if (normalizedResponseFormat) openAiPayload.response_format = normalizedResponseFormat;
+
+        const openAiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${openAiKey}`,
+          },
+          body: JSON.stringify(openAiPayload),
+        });
+
+        if (openAiResponse.ok) {
+          return (await openAiResponse.json()) as InvokeResult;
+        }
+      } catch (fallbackErr: any) {
+        console.warn("[invokeLLM] OpenAI fallback attempt encountered error:", fallbackErr?.message);
+      }
+    }
+
     throw new Error(
       `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
     );

@@ -189,10 +189,35 @@ Return only JSON matching the schema.`;
           const content = typeof raw === "string" ? raw : Array.isArray(raw) ? raw.map((p: any) => p.text ?? "").join("") : "{}";
           const parsed = JSON.parse(content);
 
+          let statementOut = sanitizeComplaintText(parsed.refinedStatementOfViolations || "");
+          // Normalize count headings to formal Roman numerals
+          statementOut = statementOut
+            .replace(/^Count\s+1[:\-]/i, "COUNT I:")
+            .replace(/\bCount\s+1[:\-]/gi, "COUNT I:")
+            .replace(/\bCount\s+2[:\-]/gi, "COUNT II:")
+            .replace(/\bCount\s+3[:\-]/gi, "COUNT III:")
+            .replace(/\bCount\s+4[:\-]/gi, "COUNT IV:");
+
+          if (statementOut && !statementOut.includes("COUNT I")) {
+            statementOut = `COUNT I: ${statementOut}`;
+          }
+
+          if (statementOut && !statementOut.includes(stateInfo.ruleCitation) && !statementOut.includes("Ga. Comp. R. & Regs.")) {
+            statementOut = `${statementOut}\n(Governing State Rule: ${stateInfo.ruleCitation})`;
+          }
+
+          let factsOut = sanitizeComplaintText(parsed.refinedFactsRelatingToViolations || "");
+          if (factsOut && !factsOut.includes("1-YEAR")) {
+            factsOut = `CHRONOLOGICAL SUMMARY OF RELEVANT FACTS (WITHIN 1-YEAR STATUTORY PERIOD · 34 C.F.R. § 300.153(c)):\n\n${factsOut}`;
+          }
+          if (factsOut && !factsOut.includes("34 C.F.R.")) {
+            factsOut = `${factsOut}\n\n(Jurisdiction & Timeliness: 34 C.F.R. § 300.153(c) · ${stateInfo.ruleCitation})`;
+          }
+
           return {
             success: true,
-            refinedStatementOfViolations: sanitizeComplaintText(parsed.refinedStatementOfViolations || ""),
-            refinedFactsRelatingToViolations: sanitizeComplaintText(parsed.refinedFactsRelatingToViolations || ""),
+            refinedStatementOfViolations: statementOut,
+            refinedFactsRelatingToViolations: factsOut,
             refinedProposedResolution: sanitizeComplaintText(parsed.refinedProposedResolution || ""),
             applicableAuthorities: (parsed.applicableAuthorities || []).map((a: any) => ({
               citation: sanitizeComplaintText(a.citation || ""),
@@ -200,40 +225,80 @@ Return only JSON matching the schema.`;
               explanation: sanitizeComplaintText(a.explanation || ""),
               federalOrState: a.federalOrState === "state" ? "state" : "federal",
             })),
-            oneYearComplianceNotes: sanitizeComplaintText(parsed.oneYearComplianceNotes || "All alleged violations occurred within the preceding 12-month period."),
+            oneYearComplianceNotes: sanitizeComplaintText(
+              parsed.oneYearComplianceNotes
+                ? `${parsed.oneYearComplianceNotes} (Within 1 year statutory limitation)`
+                : "All alleged violations occurred within the preceding 1 year statutory period under 34 C.F.R. § 300.153(c)."
+            ),
           };
         } catch (err: any) {
           console.warn("[stateComplaint.refineIssues] LLM failed, using intelligent heuristic fallback:", err?.message);
+
+          const narrative = (input.statementOfViolations || input.factsRelatingToViolations || "").toLowerCase();
+          const dynamicCounts: string[] = [];
+
+          if (narrative.includes("speech") || narrative.includes("ot") || narrative.includes("occupational") || narrative.includes("therapy") || narrative.includes("implement") || narrative.includes("reading") || narrative.includes("minute")) {
+            dynamicCounts.push(
+              `COUNT ${dynamicCounts.length + 1}: FAILURE TO IMPLEMENT MANDATED IEP SERVICES & DENIAL OF FAPE\n` +
+              `(34 C.F.R. § 300.323(c)(2) · ${stateInfo.iepRule})\n` +
+              `The public agency failed to implement the student's individualized education program as written by withholding mandated specialized instruction, related therapeutic services, and designated accommodations without lawful justification within the statutory filing period.`
+            );
+          }
+
+          if (narrative.includes("eval") || narrative.includes("testing") || narrative.includes("test") || narrative.includes("psych") || narrative.includes("child find") || narrative.includes("assess") || narrative.includes("diagnos")) {
+            dynamicCounts.push(
+              `COUNT ${dynamicCounts.length + 1}: FAILURE TO TIMELY EVALUATE & CHILD FIND VIOLATION\n` +
+              `(34 C.F.R. § 300.111, § 300.301 · ${stateInfo.evalRule})\n` +
+              `The public agency failed in its affirmative statutory duty to timely evaluate the student in all areas of suspected disability following documented educational need and parental notice.`
+            );
+          }
+
+          if (narrative.includes("suspend") || narrative.includes("suspension") || narrative.includes("expel") || narrative.includes("discipline") || narrative.includes("mdr") || narrative.includes("sent home") || narrative.includes("behavior")) {
+            dynamicCounts.push(
+              `COUNT ${dynamicCounts.length + 1}: UNLAWFUL DISCIPLINARY REMOVAL WITHOUT MANIFESTATION DETERMINATION REVIEW (MDR)\n` +
+              `(34 C.F.R. § 300.530(e) · ${stateInfo.ruleCitation})\n` +
+              `The public agency subjected the student to cumulative disciplinary removals altering educational placement without convening a timely Manifestation Determination Review team meeting as required under federal law.`
+            );
+          }
+
+          if (narrative.includes("pwn") || narrative.includes("written notice") || narrative.includes("refuse") || narrative.includes("refusal") || narrative.includes("ignore") || narrative.includes("email") || dynamicCounts.length === 0) {
+            dynamicCounts.push(
+              `COUNT ${dynamicCounts.length + 1}: UNLAWFUL REFUSAL TO ISSUE TIMELY PRIOR WRITTEN NOTICE (PWN)\n` +
+              `(34 C.F.R. § 300.503 · ${stateInfo.pwnRule})\n` +
+              `The public agency altered educational programming, denied services, or refused requested evaluations without issuing mandatory Prior Written Notice explaining the legal and factual basis for its actions.`
+            );
+          }
+
+          if (dynamicCounts.length === 0) {
+            dynamicCounts.push(
+              `COUNT I: DENIAL OF A FREE APPROPRIATE PUBLIC EDUCATION (FAPE)\n` +
+              `(34 C.F.R. § 300.101 · ${stateInfo.ruleCitation})\n` +
+              `The public agency failed to provide educational programming reasonably calculated to enable the student to make progress appropriate in light of the child's circumstances.`
+            );
+          }
 
           // Deterministic statutory fallback matching AGENTS.md Rule 7 & Rule F
           const formattedResolutions = (input.selectedResolutions && input.selectedResolutions.length > 0)
             ? input.selectedResolutions.map((r, i) => `${i + 1}. ${r}`).join("\n")
             : input.proposedResolution || "1. Award certified 1-on-1 academic instruction as compensatory education.\n2. Fund an Independent Educational Evaluation (IEE) at public expense.\n3. Reconvene the IEP team within 15 school days to amend the operative IEP.\n4. Mandate district administrative training on Prior Written Notice (PWN) timelines.";
 
+          const userProvidedFacts = input.factsRelatingToViolations?.trim() || input.statementOfViolations?.trim();
+
           return {
             success: true,
             refinedStatementOfViolations: sanitizeComplaintText(
-              `BEFORE THE ${stateInfo.agency.toUpperCase()}\n\n` +
-              `COUNT I: FAILURE TO IMPLEMENT MANDATED IEP SERVICES & DENIAL OF FAPE\n` +
-              `(34 C.F.R. § 300.323(c)(2) · ${stateInfo.iepRule})\n` +
-              `The public agency failed to implement the student's individualized education program as written by withholding mandated specialized instruction, related therapeutic services, and designated accommodations without lawful justification.\n\n` +
-              `COUNT II: FAILURE TO TIMELY EVALUATE & CHILD FIND VIOLATION\n` +
-              `(34 C.F.R. § 300.111, § 300.301 · ${stateInfo.evalRule})\n` +
-              `The public agency failed in its affirmative statutory duty to timely evaluate the student in all areas of suspected disability following documented educational need and parental notice.\n\n` +
-              `COUNT III: UNLAWFUL REFUSAL TO ISSUE TIMELY PRIOR WRITTEN NOTICE (PWN)\n` +
-              `(34 C.F.R. § 300.503 · ${stateInfo.pwnRule})\n` +
-              `The public agency altered educational programming and refused requested assessments without issuing mandatory Prior Written Notice explaining the legal and factual basis for its actions.`
+              `BEFORE THE ${stateInfo.agency.toUpperCase()}\n\n` + dynamicCounts.join("\n\n")
             ),
             refinedFactsRelatingToViolations: sanitizeComplaintText(
               `CHRONOLOGICAL SUMMARY OF RELEVANT FACTS (WITHIN 1-YEAR STATUTORY PERIOD):\n\n` +
               `1. JURISDICTION & TIMELINESS (34 C.F.R. § 300.153(c) · ${stateInfo.ruleCitation}):\n` +
               `All events, omissions, and violations alleged herein occurred within one year prior to the date this formal state complaint is received by ${stateInfo.agency}.\n\n` +
               `2. OPERATIVE EDUCATIONAL PROGRAM:\n` +
-              `The student was enrolled in ${district} and eligible for special education and related services under IDEA. An operative IEP mandated specialized instruction and targeted support.\n\n` +
-              `3. DISTRICT SERVICE WITHHOLDING & DELAYS:\n` +
-              (input.factsRelatingToViolations?.trim() || "During the relevant statutory period, the public agency missed scheduled instructional minutes, failed to timely conduct requested assessments, and omitted mandatory written notices.") + "\n\n" +
+              `The student (${student}) was enrolled in ${district} and eligible for special education and related services under IDEA.\n\n` +
+              `3. DISTRICT VIOLATIONS & FACTUAL TIMELINE:\n` +
+              (userProvidedFacts || "During the relevant statutory period, the public agency missed scheduled instructional minutes, failed to timely conduct requested assessments, and omitted mandatory written notices.") + "\n\n" +
               `4. LACK OF COMPENSATORY MAKE-UP SESSIONS:\n` +
-              `Service delivery logs and attendance records confirm missed service minutes were not made up, causing educational deficit and denial of a Free Appropriate Public Education (FAPE).`
+              `Service delivery logs and records confirm missed services were not made up, resulting in educational deficit and denial of a Free Appropriate Public Education (FAPE).`
             ),
             refinedProposedResolution: sanitizeComplaintText(
               `PROPOSED RESOLUTION & CORRECTIVE ACTIONS SOUGHT:\n\n` +
