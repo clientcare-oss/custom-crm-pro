@@ -73,6 +73,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { ComplaintSetupView } from "@/components/complaint/ComplaintSetupView";
 import { StateComplaintFormView } from "@/components/complaint/StateComplaintFormView";
 import { BinderCoverPage } from "@/components/complaint/BinderCoverPage";
 import {
@@ -1223,7 +1224,7 @@ export default function ComplaintWorkspace() {
   // State: Pages and Active Navigation
   const [pages, setPages] = useState<DocumentPage[]>(DEFAULT_PAGES);
   const [activePageId, setActivePageId] = useState<string>("cover");
-  const [activeToolbarTab, setActiveToolbarTab] = useState<"edit" | "arrange" | "cover" | "insert" | "compile">("cover");
+  const [activeToolbarTab, setActiveToolbarTab] = useState<"setup" | "edit" | "arrange" | "cover" | "insert" | "compile">("setup");
 
   // State: Viewport, Proportional View Mode, Zoom, and Collapsible Panels
   // Default to "actual" (100% Letter view: 8.5" x 11" @ 816px) for true WYSIWYG parity with print preview & paper
@@ -2226,6 +2227,61 @@ This document is incorporated herein and submitted in direct support of Complain
 
               {/* Tightly stacked index cards with realistic shingled depth pulled snug against the scrollbar */}
               <div className="flex-1 overflow-y-auto space-y-1.5 pt-1.5 pb-3 pl-3 pr-0.5 custom-scrollbar bg-transparent [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#4A3718] [&::-webkit-scrollbar-thumb]:rounded-sm">
+                {/* Pinned Setup Tab button in Packet Index */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveToolbarTab("setup");
+                    setActivePageId("setup");
+                  }}
+                  style={
+                    activeToolbarTab === "setup"
+                      ? { background: "linear-gradient(135deg, #FFF4D2 0%, #F5D588 45%, #E2AE48 100%)" }
+                      : {
+                          backgroundImage: "url('/decor/fine-parchment.jpg')",
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                  }
+                  className={cn(
+                    "w-full flex items-center justify-between py-2 px-2 pl-3 rounded-[3px] transition-all text-left group cursor-pointer relative border select-none min-h-[46px] mb-2",
+                    activeToolbarTab === "setup"
+                      ? "z-10 border-[#FFE599] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_1.5px_rgba(140,80,10,0.3)] translate-x-0.5"
+                      : "z-0 border-[#BCA16B]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),inset_0_-1px_1px_rgba(0,0,0,0.15)] hover:brightness-105 hover:translate-x-0.5"
+                  )}
+                >
+                  <div className="flex items-center gap-2 min-w-0 pr-1 z-10">
+                    <span
+                      style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                      className={cn(
+                        "w-5 h-5 rounded-[2px] flex items-center justify-center text-[10px] font-bold border shrink-0",
+                        activeToolbarTab === "setup"
+                          ? "bg-[#041530] text-[#FFE394] border-[#8C6D2B]"
+                          : "bg-[#07162B] text-[#DFBE77] border-[#8C6D2B]"
+                      )}
+                    >
+                      ★
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div
+                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        className={cn(
+                          "text-xs font-bold truncate leading-tight tracking-tight",
+                          activeToolbarTab === "setup" ? "text-[#05142B]" : "text-[#05142B]"
+                        )}
+                      >
+                        Complaint Setup
+                      </div>
+                      <div
+                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        className="text-[9.5px] italic text-[#4A3B22] truncate leading-none mt-0.5"
+                      >
+                        Issues, Facts & Remedies
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
                 {pages.map((p, index) => {
                   const isActive = p.id === activePageId;
                   return (
@@ -2361,6 +2417,7 @@ This document is incorporated herein and submitted in direct support of Complain
                 )}
 
                 {[
+                  { id: "setup", label: "Complaint Setup", icon: Sparkles },
                   { id: "cover", label: "State Form", icon: FileText },
                   { id: "edit", label: "Edit", icon: Pencil },
                   { id: "arrange", label: "Exhibit Index", icon: Layers },
@@ -2383,11 +2440,14 @@ This document is incorporated herein and submitted in direct support of Complain
                         } else if (tab.id === "arrange") {
                           setActiveToolbarTab("arrange");
                           setActivePageId("exhibit_index");
+                        } else if (tab.id === "setup") {
+                          setActiveToolbarTab("setup");
+                          setActivePageId("setup");
                         } else {
                           setActiveToolbarTab(tab.id as any);
                           if (tab.id === "cover") {
                             setActivePageId("cover");
-                          } else if (activePageId === "cover") {
+                          } else if (activePageId === "cover" || activePageId === "setup") {
                             setActivePageId("clarity_control");
                           }
                         }
@@ -2417,7 +2477,7 @@ This document is incorporated herein and submitted in direct support of Complain
             </div>
 
             {/* If on cover page, show Official State Complaint Form status banner */}
-            {activePage.id === "cover" && (
+            {activeToolbarTab === "cover" && activePage.id === "cover" && (
               <div 
                 style={{
                   backgroundColor: "#061833",
@@ -2473,7 +2533,7 @@ This document is incorporated herein and submitted in direct support of Complain
             )}
 
             {/* If NOT on cover page and NOT on exhibit page, show compact single-line formatting toolbar */}
-            {activePage.id !== "cover" && activePage.category !== "exhibit" && (
+            {activeToolbarTab !== "setup" && activePage.id !== "cover" && activePage.category !== "exhibit" && (
               <div 
                 style={{
                   backgroundColor: "#061833",
@@ -2693,7 +2753,41 @@ This document is incorporated herein and submitted in direct support of Complain
               }}
             >
               {/* ── DOCUMENT SHEET DISPLAY ───────────────────────────────── */}
-              {activePage.id === "cover" ? (
+              {activeToolbarTab === "setup" || activePageId === "setup" ? (
+                /* ── VIEW 0: PRE-FILING COMPLAINT SETUP & STATUTORY REFINEMENT STUDIO ── */
+                <ComplaintSetupView
+                  formState={officialFormState}
+                  onChange={setOfficialFormState}
+                  caseDetails={caseDetails}
+                  onApplyToDocketSections={(updates) => {
+                    setPages((prev) =>
+                      prev.map((p) => {
+                        if (p.id === "clarity_control") {
+                          return {
+                            ...p,
+                            content: updates.statementOfViolations,
+                          };
+                        }
+                        if (p.id === "chronological_summary") {
+                          return {
+                            ...p,
+                            content: updates.factsRelatingToViolations,
+                          };
+                        }
+                        return p;
+                      })
+                    );
+                  }}
+                  onNavigateToStateForm={() => {
+                    setActiveToolbarTab("cover");
+                    setActivePageId("cover");
+                  }}
+                  onNavigateToRestatement={() => {
+                    setActiveToolbarTab("edit");
+                    setActivePageId("clarity_control");
+                  }}
+                />
+              ) : activePage.id === "cover" ? (
                 /* ── VIEW 1: AUTHENTIC OFFICIAL STATE COMPLAINT FORM (4 Standard 8.5x11 Sheets) ── */
                 /* Cleanly stacked Letter sheets — zero iframes, zero inner scrollbars! Only the outer scrollbar on the right scrolls */
                 <StateComplaintFormView
