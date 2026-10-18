@@ -10,11 +10,20 @@ type Props = {
   placeholder?: string;
   rows?: number;
   className?: string;
+  textareaClassName?: string;
   onBlur?: () => void;
 };
 
 /** Long-text field with voice-to-text mic per Waypoint CRM convention. */
-export function VoiceTextarea({ value, onChange, placeholder, rows = 4, className, onBlur }: Props) {
+export function VoiceTextarea({
+  value,
+  onChange,
+  placeholder,
+  rows = 4,
+  className,
+  textareaClassName,
+  onBlur,
+}: Props) {
   const [recording, setRecording] = useState(false);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -61,15 +70,20 @@ export function VoiceTextarea({ value, onChange, placeholder, rows = 4, classNam
         onBlur={onBlur}
         placeholder={placeholder}
         rows={rows}
-        className="w-full rounded-md border border-[#22355499] bg-[#0B1F3A] px-3 py-2 pr-10 text-base text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#D9A441]/60"
+        className={cn(
+          "w-full rounded-md border border-[#22355499] bg-[#0B1F3A] px-3 py-2 pr-10 text-base text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#D9A441]/60",
+          textareaClassName
+        )}
       />
       <button
         type="button"
         onClick={toggleRecording}
         title={recording ? "Stop recording" : "Speak instead of typing"}
         className={cn(
-          "absolute right-2 top-2 rounded-full p-1.5 transition-colors",
-          recording ? "bg-red-500/20 text-red-400 animate-pulse" : "text-slate-400 hover:text-[#D9A441]",
+          "absolute right-2.5 top-2.5 rounded-md p-1.5 transition-all shadow-xs cursor-pointer",
+          recording
+            ? "bg-red-500 text-white animate-pulse shadow-md"
+            : "bg-[#031124]/90 border border-[#C5A059]/50 text-[#DFBE77] hover:text-[#FFF4D4] hover:border-[#FFE394] hover:bg-[#071C3A]",
         )}
       >
         {transcribe.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}

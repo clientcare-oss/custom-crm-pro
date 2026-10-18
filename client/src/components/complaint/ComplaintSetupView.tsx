@@ -25,6 +25,7 @@ import {
   Lightbulb,
   ChevronDown,
   ChevronUp,
+  PenTool,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -459,14 +460,32 @@ export function ComplaintSetupView({
             </div>
           </div>
 
-          {/* Voice-Enabled Story Textarea */}
-          <VoiceTextarea
-            value={rawStory}
-            onChange={setRawStory}
-            rows={5}
-            placeholder="Tell what happened in your own words... (e.g., 'In October we asked for an evaluation in writing because he was failing reading, but the school never responded. Then in November they cut his speech therapy in half without telling us, and last week they suspended him for 3 days without an MDR...')"
-            className="w-full text-sm"
-          />
+          {/* Main Story Typing Box Container with Admiralty Brass Header */}
+          <div className="rounded-xl border border-[#3A2C18] bg-[#031124]/90 p-4 sm:p-5 shadow-lg">
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#DFBE77]/15 border border-[#DFBE77]/40 text-[#FFE394] font-serif text-xs font-bold shadow-xs">
+                  <PenTool className="w-3.5 h-3.5 text-[#DFBE77]" />
+                  Main Dispute Narrative Input Box
+                </span>
+                <span className="text-[#C6B697] text-xs font-sans">
+                  Type what happened or click the microphone to speak
+                </span>
+              </div>
+              <span className="text-xs text-[#A69371] font-mono hidden sm:inline">
+                Plain English · No Legal Citations Needed
+              </span>
+            </div>
+
+            <VoiceTextarea
+              value={rawStory}
+              onChange={setRawStory}
+              rows={6}
+              placeholder="Start typing your dispute story here... (e.g., 'In October we asked for an evaluation in writing because he was failing reading, but the school never responded. Then in November they cut his speech therapy in half without telling us, and last week they suspended him for 3 days without an MDR...')"
+              className="w-full"
+              textareaClassName="bg-[#0D2B52] border-2 border-[#C5A059] hover:border-[#DFBE77] focus:border-[#FFE394] focus:ring-2 focus:ring-[#DFBE77]/40 focus:bg-[#103362] text-[#FFFDF5] text-base font-medium placeholder:text-[#8EA6C5] shadow-inner rounded-lg p-3.5 leading-relaxed transition-all"
+            />
+          </div>
 
           {/* Bottom Bar: Action Trigger to Build 3 Prongs */}
           <div className="flex flex-wrap items-center justify-between gap-3 mt-3 pt-3 border-t border-[#3A2C18]/60">
@@ -564,7 +583,8 @@ export function ComplaintSetupView({
             onChange={setStatement}
             rows={5}
             placeholder="Describe the legal requirements or special education obligations the public agency failed to follow (e.g., failure to implement IEP accommodations, Child Find evaluation delays, unilateral removal, or missing PWN)..."
-            className="w-full text-sm"
+            className="w-full"
+            textareaClassName="bg-[#092244] border border-[#3A5D8A] focus:border-[#C5A059] focus:ring-2 focus:ring-[#DFBE77]/30 focus:bg-[#0C2A54] text-white text-sm font-medium placeholder:text-[#8EA6C5] shadow-inner rounded-lg p-3 leading-relaxed transition-all"
           />
 
           <div className="flex items-center justify-between text-[11px] text-[#A69371] mt-2">
@@ -641,7 +661,8 @@ export function ComplaintSetupView({
             onChange={setFacts}
             rows={6}
             placeholder="Chronologically state the factual events that demonstrate the district's failure (include dates within the 1-year window, IEP commitments, service logs, missed hours, and parent communications)..."
-            className="w-full text-sm"
+            className="w-full"
+            textareaClassName="bg-[#092244] border border-[#3A5D8A] focus:border-[#C5A059] focus:ring-2 focus:ring-[#DFBE77]/30 focus:bg-[#0C2A54] text-white text-sm font-medium placeholder:text-[#8EA6C5] shadow-inner rounded-lg p-3 leading-relaxed transition-all"
           />
 
           <div className="flex items-center justify-between text-[11px] text-[#A69371] mt-2">
@@ -694,7 +715,8 @@ export function ComplaintSetupView({
               onChange={setResolutionText}
               rows={5}
               placeholder="State the requested remedies (e.g., compensatory tutoring hours, independent educational evaluation funding, IEP team reconvene, staff training, or reimbursement)..."
-              className="w-full text-sm"
+              className="w-full"
+              textareaClassName="bg-[#092244] border border-[#3A5D8A] focus:border-[#C5A059] focus:ring-2 focus:ring-[#DFBE77]/30 focus:bg-[#0C2A54] text-white text-sm font-medium placeholder:text-[#8EA6C5] shadow-inner rounded-lg p-3 leading-relaxed transition-all"
             />
           </div>
 
