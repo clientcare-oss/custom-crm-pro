@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sparkles,
   Scale,
@@ -72,19 +72,79 @@ export function ComplaintSetupView({
   onNavigateToStateForm,
   onNavigateToRestatement,
 }: ComplaintSetupViewProps) {
-  // Working draft states
+  // Working draft states — initialized from parent formState without erasing empty strings
   const [statement, setStatement] = useState<string>(
-    formState.statementOfViolations ||
-      "The public agency failed to provide mandated specialized instruction and missed related services specified in the student's IEP."
+    formState.statementOfViolations !== undefined
+      ? formState.statementOfViolations
+      : "The public agency failed to provide mandated specialized instruction and missed related services specified in the student's IEP."
   );
   const [facts, setFacts] = useState<string>(
-    formState.factsRelatingToViolations ||
-      "The operative IEP required 150 minutes weekly of specialized instruction. Starting in October 2025, scheduled sessions were canceled without compensatory make-up time. Requests for assessment and written notice went unanswered."
+    formState.factsRelatingToViolations !== undefined
+      ? formState.factsRelatingToViolations
+      : "The operative IEP required 150 minutes weekly of specialized instruction. Starting in October 2025, scheduled sessions were canceled without compensatory make-up time. Requests for assessment and written notice went unanswered."
   );
   const [resolutionText, setResolutionText] = useState<string>(
-    formState.proposedResolution ||
-      "1. Award 60 hours of certified 1-on-1 academic compensatory instruction.\n2. Fund an Independent Educational Evaluation (IEE) at public expense.\n3. Reconvene the IEP team within 15 school days to amend the operative IEP.\n4. Mandate administrative training on Prior Written Notice (PWN) timelines."
+    formState.proposedResolution !== undefined
+      ? formState.proposedResolution
+      : "1. Award 60 hours of certified 1-on-1 academic compensatory instruction.\n2. Fund an Independent Educational Evaluation (IEE) at public expense.\n3. Reconvene the IEP team within 15 school days to amend the operative IEP.\n4. Mandate administrative training on Prior Written Notice (PWN) timelines."
   );
+
+  // Ref to track last synced values and prevent feedback loops
+  const lastSyncedRef = useRef({ statement, facts, resolutionText });
+
+  // Sync external changes (e.g. from draft loading or Quick Text Editor) into local fields
+  useEffect(() => {
+    if (
+      formState.statementOfViolations !== undefined &&
+      formState.statementOfViolations !== lastSyncedRef.current.statement
+    ) {
+      lastSyncedRef.current.statement = formState.statementOfViolations;
+      setStatement(formState.statementOfViolations);
+    }
+    if (
+      formState.factsRelatingToViolations !== undefined &&
+      formState.factsRelatingToViolations !== lastSyncedRef.current.facts
+    ) {
+      lastSyncedRef.current.facts = formState.factsRelatingToViolations;
+      setFacts(formState.factsRelatingToViolations);
+    }
+    if (
+      formState.proposedResolution !== undefined &&
+      formState.proposedResolution !== lastSyncedRef.current.resolutionText
+    ) {
+      lastSyncedRef.current.resolutionText = formState.proposedResolution;
+      setResolutionText(formState.proposedResolution);
+    }
+  }, [
+    formState.statementOfViolations,
+    formState.factsRelatingToViolations,
+    formState.proposedResolution,
+  ]);
+
+  // Real-time automatic two-way sync to parent officialFormState on every keystroke
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    lastSyncedRef.current = { statement, facts, resolutionText };
+    onChange((prev) => {
+      if (
+        prev.statementOfViolations === statement &&
+        prev.factsRelatingToViolations === facts &&
+        prev.proposedResolution === resolutionText
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        statementOfViolations: statement,
+        factsRelatingToViolations: facts,
+        proposedResolution: resolutionText,
+      };
+    });
+  }, [statement, facts, resolutionText, onChange]);
 
   // Resolution library selection states
   const [selectedResolutions, setSelectedResolutions] = useState<string[]>([
@@ -97,8 +157,24 @@ export function ComplaintSetupView({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [customResolutionInput, setCustomResolutionInput] = useState<string>("");
 
-  // Dispute Storyboard & Educational Guidance States
-  const [rawStory, setRawStory] = useState<string>("");
+  // Dispute Storyboard & Educational Guidance States (persists across binder navigation)
+  const [rawStory, setRawStory] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return localStorage.getItem(`complaint_raw_story_${caseDetails.studentName || "active"}`) || "";
+      } catch (e) {}
+    }
+    return "";
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(`complaint_raw_story_${caseDetails.studentName || "active"}`, rawStory);
+      } catch (e) {}
+    }
+  }, [rawStory, caseDetails.studentName]);
+
   const [showGuidance, setShowGuidance] = useState<boolean>(true);
 
   // tRPC mutation for AI statutory refinement

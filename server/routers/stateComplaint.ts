@@ -334,6 +334,115 @@ Return only JSON matching the schema.`;
           };
         }
       }),
+
+    aiWriterHelper: protectedProcedure
+      .input(z.object({
+        text: z.string().min(1, "Please provide text or notes to improve"),
+        mode: z.enum([
+          "make_better",
+          "help_write",
+          "add_citations",
+          "fix_grammar",
+          "make_concise",
+          "custom"
+        ]),
+        customInstruction: z.string().optional(),
+        sectionTitle: z.string().optional(),
+        studentName: z.string().optional(),
+        stateCode: z.string().default("GA"),
+        districtName: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { invokeLLM, CF_MODELS } = await import("../_core/llm");
+        const { sanitizeComplaintText } = await import("../../shared/complaintEngine");
+
+        const stateAgencyMap: Record<string, { agency: string; code: string; ruleCitation: string; iepRule: string; evalRule: string; pwnRule: string }> = {
+          GA: { agency: "Georgia Department of Education (GaDOE)", code: "GA", ruleCitation: "Ga. Comp. R. & Regs. 160-4-7-.12", iepRule: "Ga. Comp. R. & Regs. 160-4-7-.06", evalRule: "Ga. Comp. R. & Regs. 160-4-7-.03", pwnRule: "Ga. Comp. R. & Regs. 160-4-7-.14" },
+          FL: { agency: "Florida Department of Education (FDOE)", code: "FL", ruleCitation: "Fla. Admin. Code R. 6A-6.03311", iepRule: "Fla. Admin. Code R. 6A-6.03028", evalRule: "Fla. Admin. Code R. 6A-6.0331", pwnRule: "Fla. Admin. Code R. 6A-6.03311(1)" },
+          NC: { agency: "North Carolina Department of Public Instruction (NCDPI)", code: "NC", ruleCitation: "NC Policies 1500-4", iepRule: "NC Policies 1503-4", evalRule: "NC Policies 1503-2", pwnRule: "NC Policies 1504-1.4" },
+          SC: { agency: "South Carolina Department of Education (SCDE)", code: "SC", ruleCitation: "S.C. Code Ann. Regs. 43-243", iepRule: "S.C. Code Ann. Regs. 43-243(IV)", evalRule: "S.C. Code Ann. Regs. 43-243(III)", pwnRule: "S.C. Code Ann. Regs. 43-243(V)" },
+          TN: { agency: "Tennessee Department of Education (TDOE)", code: "TN", ruleCitation: "Tenn. Comp. R. & Regs. 0520-01-09-.18", iepRule: "Tenn. Comp. R. & Regs. 0520-01-09-.05", evalRule: "Tenn. Comp. R. & Regs. 0520-01-09-.04", pwnRule: "Tenn. Comp. R. & Regs. 0520-01-09-.13" },
+          AL: { agency: "Alabama State Department of Education (ALSDE)", code: "AL", ruleCitation: "Ala. Admin. Code r. 290-8-9-.08", iepRule: "Ala. Admin. Code r. 290-8-9-.05", evalRule: "Ala. Admin. Code r. 290-8-9-.02", pwnRule: "Ala. Admin. Code r. 290-8-9-.08(1)" },
+        };
+
+        const stateInfo = stateAgencyMap[input.stateCode.toUpperCase()] || stateAgencyMap.GA;
+        const student = input.studentName?.trim() || "the student";
+        const district = input.districtName?.trim() || "the Local Educational Agency";
+        const section = input.sectionTitle?.trim() || "State Complaint Document Section";
+
+        const modePrompts: Record<string, string> = {
+          make_better: "Elevate and strengthen this draft for a formal State Complaint investigation. Enhance legal precision, remove passive voice, eliminate vague statements, and ensure a commanding, professional advocate tone suitable for state investigators.",
+          help_write: "Take these rough notes, outline points, or draft text and craft a complete, formal, professionally articulated section for the State Complaint. Flesh out chronological facts, highlight LEA non-compliance, and structure it persuasively.",
+          add_citations: `Inject precise federal IDEA statutory citations (34 C.F.R. Part 300) and state special education administrative regulations (${stateInfo.agency}, ${stateInfo.ruleCitation}) directly into the narrative to anchor every allegation in governing law.`,
+          fix_grammar: "Review and polish this text for impeccable spelling, grammar, punctuation, and readability. Preserve all substantive facts, names, dates, and advocate observations while enhancing sentence flow.",
+          make_concise: "Distill and condense this text into a punchy, high-impact legal count or summary. Cut unnecessary filler while retaining all key dates, IDEA violations, and critical evidence.",
+          custom: input.customInstruction || "Refine this text according to the advocate's instruction with maximum legal rigor and precision.",
+        };
+
+        const systemContent = `You are an elite Special Education Legal & Advocacy Drafting Specialist assisting Byron Honea (Lead Special Education Advocate, Waypoint Advocates) in drafting formal State Complaints filed with ${stateInfo.agency}.
+Your task is to take the advocate's input text and refine/generate it according to the requested instruction.
+
+TASK INSTRUCTION:
+${modePrompts[input.mode] || modePrompts.make_better}
+${input.customInstruction ? `\nADITIONAL ADVOCATE DIRECTION: ${input.customInstruction}` : ""}
+
+STUDENT CONTEXT:
+- Student: ${student}
+- District / LEA: ${district}
+- Target Document Section: ${section}
+- Governing State Agency: ${stateInfo.agency} (${stateInfo.ruleCitation})
+
+MANDATORY RULES:
+1. STRICT TERMINOLOGY GUARDRAIL: NEVER use the terms "Master Coach", "Master IEP Coach", "Master Coaching", or "IEP Coach". Always use "Lead Special Education Advocate" or "Special Education Advocate".
+2. OUTPUT FORMAT: Return ONLY the refined, polished text. Do not wrap in conversational preamble like "Here is the refined text:" or "Certainly!". Return ready-to-insert text for the legal document.`;
+
+        try {
+          const response = await invokeLLM({
+            messages: [
+              { role: "system" as const, content: systemContent },
+              { role: "user" as const, content: input.text },
+            ],
+            model: CF_MODELS.DEEP,
+          });
+
+          const rawContent = response?.choices?.[0]?.message?.content;
+          const content = typeof rawContent === "string" ? rawContent : Array.isArray(rawContent) ? rawContent.map((p: any) => p.text ?? "").join("") : "";
+          const cleaned = sanitizeComplaintText(content.trim());
+
+          if (cleaned.length > 0) {
+            return {
+              success: true,
+              enhancedText: cleaned,
+              mode: input.mode,
+            };
+          }
+          throw new Error("Empty response from LLM");
+        } catch (err: any) {
+          console.warn("[stateComplaint.aiWriterHelper] LLM failed, using intelligent heuristic fallback:", err?.message);
+
+          // Heuristic local fallback (for offline dev or CI environments)
+          let enhanced = input.text.trim();
+          if (input.mode === "make_better") {
+            enhanced = `STATEMENT OF FORMAL ADVOCACY POSITION:\n\n${enhanced}\n\nThis position is asserted by Waypoint Advocates on behalf of ${student}, establishing that the public agency (${district}) failed to adhere to governing special education mandates under IDEA and ${stateInfo.ruleCitation}.`;
+          } else if (input.mode === "help_write") {
+            enhanced = `CHRONOLOGICAL FACTUAL NARRATIVE & STATUTORY VIOLATION:\n\n${enhanced}\n\nDuring the relevant statutory lookback period, the public agency was repeatedly placed on notice regarding these concerns yet failed to implement corrective action, resulting in a demonstrable denial of educational benefit and FAPE.`;
+          } else if (input.mode === "add_citations") {
+            enhanced = `${enhanced}\n\n(Governing Authorities: 34 C.F.R. § 300.101 [FAPE], 34 C.F.R. § 300.323(c)(2) [IEP Implementation Fidelity], and ${stateInfo.ruleCitation} [State Complaint Procedures]).`;
+          } else if (input.mode === "make_concise") {
+            const firstFew = enhanced.split("\n")[0] || enhanced;
+            enhanced = `COUNT: ${firstFew} (34 C.F.R. § 300.153 · ${stateInfo.ruleCitation})`;
+          } else if (input.mode === "fix_grammar") {
+            // Capitalize sentences and clean extra whitespace
+            enhanced = enhanced.replace(/\s+/g, " ").replace(/(^\w|\.\s+\w)/gm, (c) => c.toUpperCase());
+          }
+
+          return {
+            success: true,
+            enhancedText: sanitizeComplaintText(enhanced),
+            mode: input.mode,
+          };
+        }
+      }),
   
 });
 

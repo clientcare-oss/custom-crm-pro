@@ -136,6 +136,9 @@ export function StudentWorkspaceMoreTab({
         if (studentId) {
           sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}`);
           sessionStorage.setItem("lastStudentProfileId", String(studentId));
+          if (studentName) {
+            sessionStorage.setItem("lastStudentProfileName", studentName);
+          }
         }
         window.dispatchEvent(new CustomEvent("waypoint:collapse-sidebar"));
         setLocation(studentId ? `/state-complaint-builder?studentId=${studentId}` : `/state-complaint-builder`);

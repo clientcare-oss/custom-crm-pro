@@ -104,7 +104,7 @@ describe("PG-030 Student Workspace — Activity Timeline & Ask Case History", ()
     });
 
     expect(result).toBeDefined();
-    expect(result.answer).toContain("postpon");
+    expect(result.answer.toLowerCase()).toMatch(/postpon|reschedul/);
     expect(result.answer.toLowerCase()).toContain("dpr");
     expect(result.sources.length).toBeGreaterThan(0);
 

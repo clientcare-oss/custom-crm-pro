@@ -1,17 +1,1054 @@
-import React, { useState, useEffect, useRef } from "react";
-import { PDFDocument } from "pdf-lib";
+import React, { useState, useEffect } from "react";
 import {
   type OfficialComplaintFormState,
   SUPPORTED_STATE_FORMS,
 } from "./stateFormsData";
 import { cn } from "@/lib/utils";
-import { type ImportedPdfPage } from "@/lib/pdfImporter";
-import { sanitizeComplaintText, formatFirstLastName } from "@shared/complaintEngine";
+import { convertPdfToPageImages, type ImportedPdfPage } from "@/lib/pdfImporter";
+import { Check, PenTool } from "lucide-react";
+import { AdoptAndSignModal, type AdoptedSignatureData } from "./AdoptAndSignModal";
 
-interface StateComplaintFormViewProps {
+export interface StateComplaintFormPageProps {
+  page: ImportedPdfPage;
+  pageIdx: number;
+  formState: OfficialComplaintFormState;
+  onChange?: (updater: (prev: OfficialComplaintFormState) => OfficialComplaintFormState) => void;
+  onOpenAdoptSign?: () => void;
+  readOnly?: boolean;
+  isPrint?: boolean;
+  viewMode?: "fit-width" | "fit-page" | "actual";
+  zoomLevel?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+const GADOE_PDF_URL = "/forms/gadoe-formal-complaint-form.pdf";
+
+// Clear, transparent styles for print preview and physical print output
+const READONLY_INPUT_CLASS =
+  "bg-transparent border-0 rounded-none px-1.5 pt-0.5 pb-[2px] text-xs sm:text-[13px] font-sans text-slate-900 leading-none flex items-end overflow-hidden z-20 select-text";
+
+const READONLY_TEXTAREA_CLASS =
+  "bg-transparent border-0 rounded-none p-2.5 text-xs sm:text-[13px] font-sans text-slate-900 leading-relaxed overflow-hidden whitespace-pre-wrap select-text z-20";
+
+const READONLY_CHECK_CLASS =
+  "flex items-center justify-center bg-transparent border-0 z-20";
+
+// Interactive input fields with no extra border lines — text raised 2px above the printed form line
+const INTERACTIVE_INPUT_CLASS =
+  "bg-[#EBF4FE]/30 hover:bg-[#EBF4FE]/55 focus:bg-white/80 text-slate-900 border-0 rounded-none px-1.5 pt-0.5 pb-[2px] text-xs sm:text-[13px] font-sans leading-none focus:outline-none focus:ring-1 focus:ring-[#3B82F6]/40 z-20 transition-all placeholder:text-slate-400 placeholder:italic";
+
+/**
+ * Single Letter Sheet (Pages 1-4) of the Official State Complaint Form
+ * Supports both interactive editing (light blue boxes + Adopt & Sign) and high-fidelity print/preview (clear/transparent boxes)
+ */
+export function StateComplaintFormPage({
+  page,
+  pageIdx,
+  formState,
+  onChange,
+  onOpenAdoptSign,
+  readOnly = false,
+  isPrint = false,
+  viewMode = "fit-width",
+  zoomLevel = 100,
+  className,
+  style,
+}: StateComplaintFormPageProps) {
+  const isInteractive = !readOnly && !!onChange;
+
+  // Standard delivery method fallback
+  const resolvedServiceMethod =
+    !formState.serviceMethod || formState.serviceMethod.includes("Certified Mail")
+      ? "Electronic Delivery"
+      : formState.serviceMethod;
+
+  // Resolved signature font family and letter spacing
+  const resolvedSignatureFont =
+    formState.signatureStyle === "great-vibes"
+      ? "'Great Vibes', cursive"
+      : formState.signatureStyle === "caveat"
+      ? "'Caveat', cursive"
+      : formState.signatureStyle === "alex-brush"
+      ? "'Alex Brush', cursive"
+      : "'Dancing Script', cursive";
+
+  const resolvedSignatureLetterSpacing =
+    formState.signatureStyle === "alex-brush"
+      ? "0.05em"
+      : formState.signatureStyle === "great-vibes"
+      ? "0.04em"
+      : formState.signatureStyle === "caveat"
+      ? "0.01em"
+      : "0.02em";
+
+  return (
+    <div
+      style={{
+        width: viewMode === "actual" || isPrint ? "816px" : "100%",
+        maxWidth: isPrint ? "816px" : "840px",
+        aspectRatio: "612 / 792",
+        transform:
+          !isPrint && viewMode === "fit-page"
+            ? "scale(0.85)"
+            : !isPrint && zoomLevel !== 100
+            ? `scale(${zoomLevel / 100})`
+            : undefined,
+        transformOrigin: "top center",
+        ...style,
+      }}
+      className={cn(
+        "relative select-text bg-white text-[#1A120A] shrink-0 overflow-hidden",
+        isPrint
+          ? "border-0 shadow-none m-0 p-0"
+          : "rounded-xs border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)]",
+        viewMode === "fit-width" && !isPrint && "w-full max-w-[840px]",
+        viewMode === "fit-page" && !isPrint && "w-[calc((100vh-175px)*(8.5/11))] max-w-full my-auto",
+        viewMode === "actual" && !isPrint && "w-[816px]",
+        className
+      )}
+    >
+      {/* Corner Registration Tick Marks */}
+      <div className="absolute top-6 left-6 w-3 h-3 border-t border-l border-[#8C7A60]/40 pointer-events-none z-10" />
+      <div className="absolute top-6 right-6 w-3 h-3 border-t border-r border-[#8C7A60]/40 pointer-events-none z-10" />
+      <div className="absolute bottom-6 left-6 w-3 h-3 border-b border-l border-[#8C7A60]/40 pointer-events-none z-10" />
+      <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#8C7A60]/40 pointer-events-none z-10" />
+
+      {/* Base High-Resolution Official GaDOE Form Sheet Image */}
+      <img
+        src={page.dataUrl}
+        alt={`Official State Form Page ${pageIdx + 1}`}
+        className="w-full h-full object-contain pointer-events-none select-none block"
+      />
+
+      {/* ── PAGE 1: PUBLIC AGENCY, COMPLAINANT, STUDENT & PARENT FIELDS ── */}
+      {pageIdx === 0 && (
+        <>
+          {/* Public agency */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.publicAgency || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, publicAgency: e.target.value }))}
+              placeholder="Local School District / Public Agency"
+              style={{ position: "absolute", top: "21.35%", left: "44.73%", width: "45.78%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Public agency filing complaint against"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "21.35%", left: "44.73%", width: "45.78%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+              title="Public agency filing complaint against"
+            >
+              <span className="truncate font-medium">{formState.publicAgency || ""}</span>
+            </div>
+          )}
+
+          {/* Name of Complainant */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.complainantName || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, complainantName: e.target.value }))}
+              placeholder="Name of Complainant"
+              style={{ position: "absolute", top: "28.30%", left: "30.82%", width: "61.08%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Name of Complainant"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "28.30%", left: "30.82%", width: "61.08%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+              title="Name of Complainant"
+            >
+              <span className="truncate font-medium">{formState.complainantName || ""}</span>
+            </div>
+          )}
+
+          {/* Relationship to student */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.complainantRelationship || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, complainantRelationship: e.target.value }))}
+              placeholder="Relationship to student"
+              style={{ position: "absolute", top: "30.95%", left: "29.31%", width: "63.25%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Relationship to student"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "30.95%", left: "29.31%", width: "63.25%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+              title="Relationship to student"
+            >
+              <span className="truncate">{formState.complainantRelationship || ""}</span>
+            </div>
+          )}
+
+          {/* Complainant Address */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.complainantAddress || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, complainantAddress: e.target.value }))}
+              placeholder="Complainant Street Address"
+              style={{ position: "absolute", top: "33.65%", left: "30.41%", width: "61.06%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Complainant Address"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "33.65%", left: "30.41%", width: "61.06%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+              title="Complainant Address"
+            >
+              <span className="truncate">{formState.complainantAddress || ""}</span>
+            </div>
+          )}
+
+          {/* Complainant City */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.complainantCity || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, complainantCity: e.target.value }))}
+              placeholder="City"
+              style={{ position: "absolute", top: "36.35%", left: "14.39%", width: "31.63%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Complainant City"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "36.35%", left: "14.39%", width: "31.63%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.complainantCity || ""}</span>
+            </div>
+          )}
+
+          {/* Complainant State */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.complainantState || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, complainantState: e.target.value }))}
+              placeholder="State"
+              style={{ position: "absolute", top: "36.35%", left: "52.65%", width: "13.10%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Complainant State"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "36.35%", left: "52.65%", width: "13.10%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.complainantState || ""}</span>
+            </div>
+          )}
+
+          {/* Complainant Zip */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.complainantZip || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, complainantZip: e.target.value }))}
+              placeholder="Zip Code"
+              style={{ position: "absolute", top: "36.35%", left: "75.98%", width: "16.35%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Complainant Zip Code"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "36.35%", left: "75.98%", width: "16.35%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.complainantZip || ""}</span>
+            </div>
+          )}
+
+          {/* Complainant Phone */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.complainantPhone || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, complainantPhone: e.target.value }))}
+              placeholder="Phone Numbers"
+              style={{ position: "absolute", top: "39.05%", left: "39.45%", width: "52.33%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Complainant Phone Numbers"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "39.05%", left: "39.45%", width: "52.33%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.complainantPhone || ""}</span>
+            </div>
+          )}
+
+          {/* Complainant Email */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.complainantEmail || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, complainantEmail: e.target.value }))}
+              placeholder="Email Address"
+              style={{ position: "absolute", top: "41.70%", left: "33.57%", width: "57.78%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Complainant Email Address"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "41.70%", left: "33.57%", width: "57.78%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.complainantEmail || ""}</span>
+            </div>
+          )}
+
+          {/* Name of Student */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.studentName || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, studentName: e.target.value }))}
+              placeholder="Student Name"
+              style={{ position: "absolute", top: "48.65%", left: "25.71%", width: "35.98%", height: "2.30%" }}
+              className={cn(INTERACTIVE_INPUT_CLASS, "font-semibold")}
+              title="Name of Student"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "48.65%", left: "25.71%", width: "35.98%", height: "2.30%" }}
+              className={cn(READONLY_INPUT_CLASS, "font-bold")}
+            >
+              <span className="truncate">{formState.studentName || ""}</span>
+            </div>
+          )}
+
+          {/* Student Date of Birth */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.studentDob || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, studentDob: e.target.value }))}
+              placeholder="MM/DD/YYYY"
+              style={{ position: "absolute", top: "48.65%", left: "73.69%", width: "18.53%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Date of Birth"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "48.65%", left: "73.69%", width: "18.53%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.studentDob || ""}</span>
+            </div>
+          )}
+
+          {/* Student Address */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.studentAddress || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, studentAddress: e.target.value }))}
+              placeholder="Student Street Address"
+              style={{ position: "absolute", top: "51.35%", left: "25.82%", width: "66.51%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Student Address"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "51.35%", left: "25.82%", width: "66.51%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.studentAddress || ""}</span>
+            </div>
+          )}
+
+          {/* Student City */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.studentCity || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, studentCity: e.target.value }))}
+              placeholder="City"
+              style={{ position: "absolute", top: "54.05%", left: "14.37%", width: "31.63%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Student City"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "54.05%", left: "14.37%", width: "31.63%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.studentCity || ""}</span>
+            </div>
+          )}
+
+          {/* Student State */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.studentState || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, studentState: e.target.value }))}
+              placeholder="State"
+              style={{ position: "absolute", top: "54.05%", left: "52.63%", width: "13.10%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Student State"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "54.05%", left: "52.63%", width: "13.10%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.studentState || ""}</span>
+            </div>
+          )}
+
+          {/* Student Zip */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.studentZip || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, studentZip: e.target.value }))}
+              placeholder="Zip Code"
+              style={{ position: "absolute", top: "54.05%", left: "75.96%", width: "16.35%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Student Zip Code"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "54.05%", left: "75.96%", width: "16.35%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.studentZip || ""}</span>
+            </div>
+          )}
+
+          {/* Student GTID */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.studentGtid || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, studentGtid: e.target.value }))}
+              placeholder="GTID #"
+              style={{ position: "absolute", top: "56.70%", left: "15.69%", width: "29.43%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="GTID #"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "56.70%", left: "15.69%", width: "29.43%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.studentGtid || ""}</span>
+            </div>
+          )}
+
+          {/* Current School */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.currentSchool || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, currentSchool: e.target.value }))}
+              placeholder="Current School"
+              style={{ position: "absolute", top: "59.35%", left: "24.82%", width: "66.51%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Current School"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "59.35%", left: "24.82%", width: "66.51%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.currentSchool || ""}</span>
+            </div>
+          )}
+
+          {/* Parent Name */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.parentName || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, parentName: e.target.value }))}
+              placeholder="Parent Name (if not complainant)"
+              style={{ position: "absolute", top: "71.15%", left: "36.25%", width: "55.61%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Parent if not the complainant"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "71.15%", left: "36.25%", width: "55.61%", height: "2.30%" }}
+              className={cn(READONLY_INPUT_CLASS, "font-medium")}
+            >
+              <span className="truncate">{formState.parentName || ""}</span>
+            </div>
+          )}
+
+          {/* Parent Address */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.parentAddress || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, parentAddress: e.target.value }))}
+              placeholder="Parent Street Address"
+              style={{ position: "absolute", top: "73.80%", left: "22.96%", width: "69.78%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Parent Address"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "73.80%", left: "22.96%", width: "69.78%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.parentAddress || ""}</span>
+            </div>
+          )}
+
+          {/* Parent City */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.parentCity || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, parentCity: e.target.value }))}
+              placeholder="City"
+              style={{ position: "absolute", top: "76.45%", left: "13.35%", width: "31.63%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Parent City"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "76.45%", left: "13.35%", width: "31.63%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.parentCity || ""}</span>
+            </div>
+          )}
+
+          {/* Parent State */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.parentState || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, parentState: e.target.value }))}
+              placeholder="State"
+              style={{ position: "absolute", top: "76.45%", left: "50.65%", width: "13.08%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Parent State"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "76.45%", left: "50.65%", width: "13.08%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.parentState || ""}</span>
+            </div>
+          )}
+
+          {/* Parent Zip */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.parentZip || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, parentZip: e.target.value }))}
+              placeholder="Zip Code"
+              style={{ position: "absolute", top: "76.45%", left: "72.78%", width: "20.73%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Parent Zip Code"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "76.45%", left: "72.78%", width: "20.73%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.parentZip || ""}</span>
+            </div>
+          )}
+
+          {/* Parent Phone */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.parentPhone || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, parentPhone: e.target.value }))}
+              placeholder="Parent Phone Number(s)"
+              style={{ position: "absolute", top: "79.10%", left: "31.76%", width: "61.08%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Parent Phone Numbers"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "79.10%", left: "31.76%", width: "61.08%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.parentPhone || ""}</span>
+            </div>
+          )}
+
+          {/* Parent Email */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.parentEmail || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, parentEmail: e.target.value }))}
+              placeholder="Parent Email Address"
+              style={{ position: "absolute", top: "81.70%", left: "28.41%", width: "64.33%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Parent Email Address"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "81.70%", left: "28.41%", width: "64.33%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.parentEmail || ""}</span>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── PAGE 2: PARAGRAPH BOXES ── */}
+      {pageIdx === 1 && (
+        <>
+          {/* Top Paragraph Box: Statement of Problem & Alleged Violations (Box 1) */}
+          {isInteractive ? (
+            <textarea
+              value={formState.statementOfViolations || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, statementOfViolations: e.target.value }))}
+              placeholder="Type or paste statement of the problem and the facts upon which the problem is based..."
+              style={{ position: "absolute", top: "21.14%", left: "6.10%", width: "87.96%", height: "20.18%" }}
+              className="bg-[#EBF4FE] hover:bg-[#E1EFFF] focus:bg-white text-slate-900 border border-[#96C2F7] focus:border-[#2563EB] focus:ring-1 focus:ring-[#3B82F6] rounded-xs p-2.5 text-xs sm:text-[13px] font-sans resize-none leading-relaxed focus:outline-none shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all placeholder:text-slate-400 placeholder:italic"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "21.14%", left: "6.10%", width: "87.96%", height: "20.18%" }}
+              className={READONLY_TEXTAREA_CLASS}
+            >
+              {formState.statementOfViolations || ""}
+            </div>
+          )}
+
+          {/* Bottom Paragraph Box: Continued Facts & Factual Chronology (Box 2) */}
+          {isInteractive ? (
+            <textarea
+              value={formState.factsRelatingToViolations || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, factsRelatingToViolations: e.target.value }))}
+              placeholder="Continue stating the facts relevant to the alleged violations that help explain or clarify how the LEA failed to follow rules..."
+              style={{ position: "absolute", top: "50.06%", left: "6.55%", width: "87.76%", height: "43.76%" }}
+              className="bg-[#EBF4FE] hover:bg-[#E1EFFF] focus:bg-white text-slate-900 border border-[#96C2F7] focus:border-[#2563EB] focus:ring-1 focus:ring-[#3B82F6] rounded-xs p-2.5 text-xs sm:text-[13px] font-sans resize-none leading-relaxed focus:outline-none shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all placeholder:text-slate-400 placeholder:italic"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "50.06%", left: "6.55%", width: "87.76%", height: "43.76%" }}
+              className={READONLY_TEXTAREA_CLASS}
+            >
+              {formState.factsRelatingToViolations || ""}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── PAGE 3: PROPOSED RESOLUTION, MEDIATION & SERVICE VERIFICATION ── */}
+      {pageIdx === 2 && (
+        <>
+          {/* Top Paragraph Box: Proposed Resolution of Problem (Box 3) */}
+          {isInteractive ? (
+            <textarea
+              value={formState.proposedResolution || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, proposedResolution: e.target.value }))}
+              placeholder="Type or paste proposed resolution of the problem..."
+              style={{ position: "absolute", top: "16.85%", left: "5.14%", width: "88.18%", height: "21.00%" }}
+              className="bg-[#EBF4FE] hover:bg-[#E1EFFF] focus:bg-white text-slate-900 border border-[#96C2F7] focus:border-[#2563EB] focus:ring-1 focus:ring-[#3B82F6] rounded-xs p-2.5 text-xs sm:text-[13px] font-sans resize-none leading-relaxed focus:outline-none shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all placeholder:text-slate-400 placeholder:italic"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "16.85%", left: "5.14%", width: "88.18%", height: "21.00%" }}
+              className={READONLY_TEXTAREA_CLASS}
+            >
+              {formState.proposedResolution || ""}
+            </div>
+          )}
+
+          {/* Mediation Check Box 1: YES */}
+          {isInteractive ? (
+            <button
+              type="button"
+              onClick={() => onChange((prev) => ({ ...prev, mediationWillingness: "yes" }))}
+              style={{ position: "absolute", top: "42.29%", left: "6.04%", width: "2.94%", height: "2.27%" }}
+              className="cursor-pointer flex items-center justify-center bg-[#EBF4FE] hover:bg-[#DCEBFE] border border-[#7AAEF4] rounded-[1px] shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all hover:scale-110"
+              title="Check YES for Mediation Willingness"
+            >
+              {formState.mediationWillingness === "yes" && (
+                <Check className="w-3.5 h-3.5 text-slate-900 stroke-[3]" />
+              )}
+            </button>
+          ) : (
+            <div
+              style={{ position: "absolute", top: "42.29%", left: "6.04%", width: "2.94%", height: "2.27%" }}
+              className={READONLY_CHECK_CLASS}
+            >
+              {formState.mediationWillingness === "yes" && (
+                <Check className="w-3.5 h-3.5 text-slate-900 stroke-[3]" />
+              )}
+            </div>
+          )}
+
+          {/* Mediation Check Box 2: NO */}
+          {isInteractive ? (
+            <button
+              type="button"
+              onClick={() => onChange((prev) => ({ ...prev, mediationWillingness: "no" }))}
+              style={{ position: "absolute", top: "42.29%", left: "17.85%", width: "2.94%", height: "2.27%" }}
+              className="cursor-pointer flex items-center justify-center bg-[#EBF4FE] hover:bg-[#DCEBFE] border border-[#7AAEF4] rounded-[1px] shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all hover:scale-110"
+              title="Check NO for Mediation Willingness"
+            >
+              {formState.mediationWillingness === "no" && (
+                <Check className="w-3.5 h-3.5 text-slate-900 stroke-[3]" />
+              )}
+            </button>
+          ) : (
+            <div
+              style={{ position: "absolute", top: "42.29%", left: "17.85%", width: "2.94%", height: "2.27%" }}
+              className={READONLY_CHECK_CLASS}
+            >
+              {formState.mediationWillingness === "no" && (
+                <Check className="w-3.5 h-3.5 text-slate-900 stroke-[3]" />
+              )}
+            </div>
+          )}
+
+          {/* Mediation Check Box 3: Not Applicable */}
+          {isInteractive ? (
+            <button
+              type="button"
+              onClick={() => onChange((prev) => ({ ...prev, mediationWillingness: "na" }))}
+              style={{ position: "absolute", top: "42.29%", left: "29.27%", width: "2.94%", height: "2.27%" }}
+              className="cursor-pointer flex items-center justify-center bg-[#EBF4FE] hover:bg-[#DCEBFE] border border-[#7AAEF4] rounded-[1px] shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all hover:scale-110"
+              title="Check Not Applicable for Mediation Willingness"
+            >
+              {formState.mediationWillingness === "na" && (
+                <Check className="w-3.5 h-3.5 text-slate-900 stroke-[3]" />
+              )}
+            </button>
+          ) : (
+            <div
+              style={{ position: "absolute", top: "42.29%", left: "29.27%", width: "2.94%", height: "2.27%" }}
+              className={READONLY_CHECK_CLASS}
+            >
+              {formState.mediationWillingness === "na" && (
+                <Check className="w-3.5 h-3.5 text-slate-900 stroke-[3]" />
+              )}
+            </div>
+          )}
+
+          {/* Verification of Service: Date ("On [date]") */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.serviceDate || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, serviceDate: e.target.value }))}
+              placeholder="Date provided"
+              style={{ position: "absolute", top: "62.15%", left: "10.04%", width: "23.98%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Date formal complaint was provided"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "62.15%", left: "10.04%", width: "23.98%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{formState.serviceDate || ""}</span>
+            </div>
+          )}
+
+          {/* Verification of Service: Recipient */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.serviceRecipient || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, serviceRecipient: e.target.value }))}
+              placeholder="Name or title of recipient"
+              style={{ position: "absolute", top: "67.45%", left: "6.86%", width: "40.35%", height: "2.30%" }}
+              className={cn(INTERACTIVE_INPUT_CLASS, "font-medium")}
+              title="Name or title of recipient"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "67.45%", left: "6.86%", width: "40.35%", height: "2.30%" }}
+              className={cn(READONLY_INPUT_CLASS, "font-medium")}
+            >
+              <span className="truncate">{formState.serviceRecipient || ""}</span>
+            </div>
+          )}
+
+          {/* Verification of Service: Delivery Method ("via [method]") */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={resolvedServiceMethod}
+              onChange={(e) => onChange((prev) => ({ ...prev, serviceMethod: e.target.value }))}
+              placeholder="Electronic Delivery"
+              style={{ position: "absolute", top: "67.45%", left: "50.82%", width: "37.06%", height: "2.30%" }}
+              className={INTERACTIVE_INPUT_CLASS}
+              title="Method of delivery"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "67.45%", left: "50.82%", width: "37.06%", height: "2.30%" }}
+              className={READONLY_INPUT_CLASS}
+            >
+              <span className="truncate">{resolvedServiceMethod}</span>
+            </div>
+          )}
+
+          {/* ── SIGNATURE OF COMPLAINANT (WITH ADOPT & SIGN INTEGRATION, SIZE ADJUSTMENT & MOVABLE NUDGING) ── */}
+          {(() => {
+            const sigScale = formState.signatureScale || 1.35;
+            const sigOffsetY = formState.signatureOffsetY || 0;
+            const sigOffsetX = formState.signatureOffsetX || 0;
+
+            const handleSignatureMouseDown = (e: React.MouseEvent) => {
+              e.stopPropagation();
+              e.preventDefault();
+              const startX = e.clientX;
+              const startY = e.clientY;
+              const initOffsetX = formState.signatureOffsetX || 0;
+              const initOffsetY = formState.signatureOffsetY || 0;
+
+              const onMouseMove = (moveEvent: MouseEvent) => {
+                const dx = moveEvent.clientX - startX;
+                const dy = moveEvent.clientY - startY;
+                onChange?.((prev) => ({
+                  ...prev,
+                  signatureOffsetX: Math.round(initOffsetX + dx),
+                  signatureOffsetY: Math.round(initOffsetY + dy),
+                }));
+              };
+
+              const onMouseUp = () => {
+                window.removeEventListener("mousemove", onMouseMove);
+                window.removeEventListener("mouseup", onMouseUp);
+              };
+
+              window.addEventListener("mousemove", onMouseMove);
+              window.addEventListener("mouseup", onMouseUp);
+            };
+
+            const isHandDrawn = formState.signatureType === "draw" && Boolean(formState.signatureDataUrl);
+            const hasSignature = Boolean(isHandDrawn || formState.signatureName);
+
+            return isInteractive ? (
+              <div
+                style={{ position: "absolute", top: "74.20%", left: "28.50%", width: "50.50%", height: "7.80%" }}
+                className="z-20 flex items-center"
+              >
+                {hasSignature ? (
+                  <div
+                    className="w-full h-full bg-transparent border-0 rounded-none px-2.5 flex items-center justify-between group overflow-visible relative"
+                    title="Drag signature to move on line, or click Change"
+                  >
+                    {/* Draggable Movable Signature Element */}
+                    <div
+                      onMouseDown={handleSignatureMouseDown}
+                      className="flex items-center overflow-visible flex-1 h-full py-0.5 cursor-grab active:cursor-grabbing select-none"
+                      title="Click and drag signature to align with printed line"
+                    >
+                      <div
+                        style={{
+                          transform: `translate(${sigOffsetX}px, ${sigOffsetY}px) scale(${sigScale})`,
+                          transformOrigin: "left center",
+                        }}
+                        className="h-full flex items-center transition-transform duration-75 origin-left"
+                      >
+                        {isHandDrawn ? (
+                          <img
+                            src={formState.signatureDataUrl}
+                            alt="Signature of Complainant"
+                            className="h-full max-h-[85px] w-auto object-contain object-left pointer-events-none select-none"
+                          />
+                        ) : (
+                          <span
+                            style={{
+                              fontFamily: resolvedSignatureFont,
+                              letterSpacing: resolvedSignatureLetterSpacing,
+                            }}
+                            className="text-4xl sm:text-5xl md:text-[54px] text-blue-950 font-bold tracking-wide whitespace-nowrap overflow-visible leading-none drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)] pointer-events-none select-none"
+                          >
+                            {formState.signatureName || "Byron Honea"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Controls Stacked: Steppers Placed ABOVE Change Button */}
+                    <div
+                      className="flex flex-col items-end gap-1 shrink-0 ml-2 z-30"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* TOP ROW: Line Nudge (▲ ▼) and Size Stepper (– +) ABOVE Change */}
+                      <div className="flex items-center gap-1">
+                        {/* Position Nudge: Up / Down onto Line */}
+                        <div
+                          className="flex items-center bg-white/95 border border-slate-300 rounded px-1 py-0.5 shadow-xs gap-0.5"
+                          title="Move signature up or down onto the line"
+                        >
+                          <span className="text-[9px] font-mono text-slate-500 uppercase font-bold mr-0.5">Line</span>
+                          <button
+                            type="button"
+                            onClick={() => onChange?.((prev) => ({ ...prev, signatureOffsetY: (prev.signatureOffsetY || 0) - 2 }))}
+                            title="Move UP onto line (–2px)"
+                            className="w-4 h-4 rounded hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center cursor-pointer transition-colors"
+                          >
+                            ▲
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onChange?.((prev) => ({ ...prev, signatureOffsetY: (prev.signatureOffsetY || 0) + 2 }))}
+                            title="Move DOWN onto line (+2px)"
+                            className="w-4 h-4 rounded hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center cursor-pointer transition-colors"
+                          >
+                            ▼
+                          </button>
+                        </div>
+
+                        {/* Size Stepper: – and + */}
+                        <div
+                          className="flex items-center bg-white/95 border border-blue-200 rounded px-1 py-0.5 shadow-xs gap-0.5"
+                          title="Signature scale size"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = Math.max(0.25, Math.round((sigScale - 0.10) * 100) / 100);
+                              onChange?.((prev) => ({ ...prev, signatureScale: next }));
+                            }}
+                            title="Make signature smaller"
+                            className="w-4 h-4 rounded hover:bg-blue-100 text-blue-950 font-bold text-xs flex items-center justify-center cursor-pointer transition-colors"
+                          >
+                            –
+                          </button>
+                          <span className="text-[10px] font-mono font-bold text-blue-900 min-w-[30px] text-center select-none">
+                            {Math.round(sigScale * 100)}%
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = Math.min(2.5, Math.round((sigScale + 0.10) * 100) / 100);
+                              onChange?.((prev) => ({ ...prev, signatureScale: next }));
+                            }}
+                            title="Make signature larger"
+                            className="w-4 h-4 rounded hover:bg-blue-100 text-blue-950 font-bold text-xs flex items-center justify-center cursor-pointer transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* BOTTOM ROW: Change Button (Under Size Stepper) */}
+                      <button
+                        type="button"
+                        onClick={() => onOpenAdoptSign?.()}
+                        className="flex items-center gap-1 px-2.5 py-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-[9px] uppercase font-mono font-bold tracking-wider shadow-xs transition-colors cursor-pointer"
+                        title="Change signature style or re-adopt"
+                      >
+                        <span>Change</span>
+                        <PenTool className="w-2.5 h-2.5 text-white" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onOpenAdoptSign?.()}
+                    className="w-full h-full flex items-center justify-between px-3.5 bg-transparent hover:bg-[#EBF4FE]/30 border border-[#96C2F7]/70 hover:border-[#2563EB] border-dashed rounded-xs text-xs text-blue-900 font-medium cursor-pointer transition-all group"
+                    title="Click to Adopt and Sign formal complaint"
+                  >
+                    <span className="flex items-center gap-2 font-sans">
+                      <PenTool className="w-4 h-4 text-blue-700 group-hover:scale-110 transition-transform" />
+                      <span className="font-semibold text-blue-950 text-sm sm:text-base">Click to Adopt & Sign</span>
+                    </span>
+                    <span className="text-[11px] uppercase font-mono px-2.5 py-1 rounded bg-blue-600 text-white font-bold tracking-wider shadow-xs group-hover:bg-blue-700 transition-colors">
+                      Adopt & Sign
+                    </span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div
+                style={{ position: "absolute", top: "74.20%", left: "28.50%", width: "50.50%", height: "7.80%" }}
+                className="z-20 flex items-center bg-transparent border-0"
+              >
+                <div className="w-full h-full bg-transparent border-0 rounded-none px-2.5 flex items-center overflow-visible relative">
+                  <div className="flex items-center overflow-visible flex-1 h-full py-0.5 select-none">
+                    <div
+                      style={{
+                        transform: `translate(${sigOffsetX}px, ${sigOffsetY}px) scale(${sigScale})`,
+                        transformOrigin: "left center",
+                      }}
+                      className="h-full flex items-center origin-left"
+                    >
+                      {isHandDrawn ? (
+                        <img
+                          src={formState.signatureDataUrl}
+                          alt="Signature of Complainant"
+                          className="h-full max-h-[85px] w-auto object-contain object-left pointer-events-none select-none"
+                        />
+                      ) : (
+                        <span
+                          style={{
+                            fontFamily: resolvedSignatureFont,
+                            letterSpacing: resolvedSignatureLetterSpacing,
+                          }}
+                          className="text-4xl sm:text-5xl md:text-[54px] text-blue-950 font-bold tracking-wide whitespace-nowrap overflow-visible leading-none drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)] pointer-events-none select-none"
+                        >
+                          {formState.signatureName || "Byron Honea"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Signature Date */}
+          {isInteractive ? (
+            <input
+              type="text"
+              value={formState.signatureDate || ""}
+              onChange={(e) => onChange((prev) => ({ ...prev, signatureDate: e.target.value }))}
+              placeholder="Date"
+              style={{ position: "absolute", top: "79.20%", left: "80.50%", width: "15.00%", height: "2.30%" }}
+              className={cn(INTERACTIVE_INPUT_CLASS, "font-medium")}
+              title="Signature Date"
+            />
+          ) : (
+            <div
+              style={{ position: "absolute", top: "79.20%", left: "80.50%", width: "15.00%", height: "2.30%" }}
+              className={cn(READONLY_INPUT_CLASS, "font-medium")}
+            >
+              <span className="truncate">{formState.signatureDate || ""}</span>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Sheet Page Tag at Bottom Right */}
+      <div className="absolute bottom-2 right-4 text-[9px] font-mono font-bold text-slate-400 pointer-events-none select-none">
+        Page {pageIdx + 1} of 4 · Official GaDOE Form
+      </div>
+    </div>
+  );
+}
+
+export interface StateComplaintFormViewProps {
   formState: OfficialComplaintFormState;
   onChange: (updater: (prev: OfficialComplaintFormState) => OfficialComplaintFormState) => void;
   onSelectState?: (stateCode: string) => void;
+  onPagesLoaded?: (pages: ImportedPdfPage[]) => void;
   readOnly?: boolean;
   viewMode?: "fit-width" | "fit-page" | "actual";
   zoomLevel?: number;
@@ -20,284 +1057,115 @@ interface StateComplaintFormViewProps {
   totalPages?: number;
 }
 
-const GADOE_PDF_URL = "/forms/gadoe-formal-complaint-form.pdf";
-
 export function StateComplaintFormView({
   formState,
   onChange,
-  onSelectState,
+  onPagesLoaded,
   readOnly = false,
   viewMode = "fit-width",
   zoomLevel = 100,
+  renderedPages,
   totalPages = 10,
 }: StateComplaintFormViewProps) {
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string>(GADOE_PDF_URL);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  // Local fallback pages if renderedPages is not yet loaded from parent
+  const [localPages, setLocalPages] = useState<ImportedPdfPage[]>([]);
+  const [isLoadingPages, setIsLoadingPages] = useState(false);
+  const [isAdoptSignOpen, setIsAdoptSignOpen] = useState(false);
 
-  // Measure dynamic height for all 4 pages of the official US Letter PDF
-  const [measuredHeight, setMeasuredHeight] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const estimatedWidth = Math.min(840, Math.max(500, window.innerWidth - 280));
-      return Math.round(estimatedWidth * (4235 / 838));
-    }
-    return 4235;
-  });
-
-  // Function to populate the authentic official Georgia GaDOE PDF with student & case data
-  // Keeps all AcroForm form fields interactive so the PDF remains 100% editable directly in the browser
-  const generateFilledPdf = async () => {
-    try {
-      setIsGenerating(true);
-      const response = await fetch(GADOE_PDF_URL);
-      if (!response.ok) {
-        throw new Error(`Failed to load official state form (${response.status})`);
-      }
-      const existingPdfBytes = await response.arrayBuffer();
-
-      // Load with pdf-lib and populate official AcroForm fields WITHOUT flattening
-      const pdfDoc = await PDFDocument.load(existingPdfBytes);
-      const form = pdfDoc.getForm();
-
-      const setIfField = (name: string, value: string | undefined | null) => {
-        try {
-          const field = form.getTextField(name);
-          if (field) {
-            const clean = value ? sanitizeComplaintText(String(value)) : "";
-            field.setText(clean);
-          }
-        } catch (e) {
-          // ignore if field name mismatch
-        }
-      };
-
-      // Page 1: Public Agency
-      setIfField("Public agency filing complaint against", formState.publicAgency);
-
-      // Page 1: Complainant (strictly first and last name only per state agency regulations)
-      setIfField("Name of Complainant", formatFirstLastName(formState.complainantName));
-      setIfField("Relationship to student", formState.complainantRelationship);
-      setIfField("Complainant Address", formState.complainantAddress);
-      setIfField("City", formState.complainantCity);
-      setIfField("State", formState.complainantState || "GA");
-      setIfField("Zip Code", formState.complainantZip);
-      setIfField("Complainant Phone Numbers", formState.complainantPhone);
-      setIfField("Complainant Email Address", formState.complainantEmail);
-
-      // Page 1: Student
-      setIfField("Name of Student", formState.studentName);
-      setIfField("Date of Birth", formState.studentDob);
-      setIfField("Student Address", formState.studentAddress);
-      setIfField("City_2", formState.studentCity);
-      setIfField("State_2", formState.studentState || "GA");
-      setIfField("Zip Code_2", formState.studentZip);
-      setIfField("GTID", formState.studentGtid);
-      setIfField("Current School", formState.currentSchool);
-
-      // Page 1: Parent (matches student address unless physically customized by user)
-      const parentHasCustomAddress =
-        Boolean(formState.parentAddress) &&
-        formState.parentAddress.trim() !== "" &&
-        !formState.parentAddress.includes("[Not Found");
-
-      const studentHasAddress =
-        Boolean(formState.studentAddress) &&
-        formState.studentAddress.trim() !== "" &&
-        !formState.studentAddress.includes("[Not Found");
-
-      const effectiveParentAddress = parentHasCustomAddress
-        ? formState.parentAddress
-        : studentHasAddress
-        ? formState.studentAddress
-        : (formState.parentAddress || "[Not Found on Record]");
-
-      const effectiveParentCity =
-        (parentHasCustomAddress ? formState.parentCity : null) ||
-        formState.studentCity ||
-        formState.parentCity ||
-        "";
-
-      const effectiveParentState =
-        (parentHasCustomAddress ? formState.parentState : null) ||
-        formState.studentState ||
-        formState.parentState ||
-        "GA";
-
-      const effectiveParentZip =
-        (parentHasCustomAddress ? formState.parentZip : null) ||
-        formState.studentZip ||
-        formState.parentZip ||
-        "";
-
-      setIfField("Parent if not the complainant", formState.parentName);
-      setIfField("Parent Address", effectiveParentAddress);
-      setIfField("City_3", effectiveParentCity);
-      setIfField("State_3", effectiveParentState);
-      setIfField("Zip Code_3", effectiveParentZip);
-      setIfField("Parent Phone Numbers", formState.parentPhone);
-      setIfField("Parent Email Address", formState.parentEmail);
-
-      // Page 1: Problem / Allegation Statement
-      setIfField(
-        "Please provide a statement of the problem and the facts upon which the problem is based Include the date and time when the violation occurred or the duration of the violation and supporting documentation",
-        formState.statementOfViolations || formState.factsRelatingToViolations
-      );
-
-      // Page 2: Proposed Resolution
-      setIfField(
-        "Please provide a proposed resolution of the problem to the extent known and available to the party at the time the complaint is filed",
-        formState.proposedResolution
-      );
-
-      // Page 2: Mediation Willingness Radio
-      try {
-        const radio = form.getRadioGroup("Are you willing to participate in the mediation process to try to resolve your concerns");
-        if (radio) {
-          if (formState.mediationWillingness === "yes") {
-            radio.select("YES");
-          } else if (formState.mediationWillingness === "no") {
-            radio.select("NO");
-          } else if (formState.mediationWillingness === "na") {
-            radio.select("Not Applicable");
-          }
-        }
-      } catch (e) {}
-
-      // Page 3: Service copy to LEA
-      setIfField("On", formState.serviceDate);
-      setIfField("name or title of recipient", formState.serviceRecipient);
-      setIfField("via", formState.serviceMethod);
-
-      // Save modified PDF bytes without flattening — keeps fields fully editable
-      const pdfBytes = await pdfDoc.save();
-
-      // Create new blob URL for the editable PDF
-      const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
-      const newUrl = URL.createObjectURL(blob);
-      setPdfBlobUrl(newUrl);
-    } catch (err: any) {
-      console.error("Error populating official PDF:", err);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  // Initial load auto-population with student data & business profile credentials
   useEffect(() => {
-    generateFilledPdf();
-  }, [
-    formState.studentName,
-    formState.studentDob,
-    formState.studentAddress,
-    formState.studentCity,
-    formState.studentState,
-    formState.studentZip,
-    formState.studentGtid,
-    formState.publicAgency,
-    formState.currentSchool,
-    formState.parentName,
-    formState.parentAddress,
-    formState.parentCity,
-    formState.parentState,
-    formState.parentZip,
-    formState.parentPhone,
-    formState.parentEmail,
-    formState.complainantName,
-    formState.complainantRelationship,
-    formState.complainantAddress,
-    formState.complainantCity,
-    formState.complainantState,
-    formState.complainantZip,
-    formState.complainantPhone,
-    formState.complainantEmail,
-    formState.statementOfViolations,
-    formState.proposedResolution,
-  ]);
+    if (renderedPages && renderedPages.length >= 4) {
+      setLocalPages(renderedPages);
+      return;
+    }
 
-  // Dynamically calculate exact PDF height based on rendered container width
-  // Eliminates dead grey space below the 4-page PDF form while preventing inner scrollbars
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    let isMounted = true;
+    setIsLoadingPages(true);
 
-    const calculateExactHeight = () => {
-      const width = el.clientWidth;
-      if (width > 0) {
-        // Exact 4-page US Letter PDF height inside browser PDF viewer:
-        // Chromium fits 826px doc width (816px page + 5px margins) to container width.
-        // The 4-page document terminates cleanly at height: width * (4235 / 838) ≈ width * 5.0537.
-        // This eliminates the trailing grey void below Page 4 so the plate scales precisely to the PDF.
-        const exactHeight = Math.round(width * (4235 / 838));
-        setMeasuredHeight(exactHeight);
-      }
-    };
-
-    calculateExactHeight();
-    const ro = new ResizeObserver(calculateExactHeight);
-    ro.observe(el);
-    window.addEventListener("resize", calculateExactHeight);
+    fetch(GADOE_PDF_URL)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load PDF");
+        return res.arrayBuffer();
+      })
+      .then((buffer) => convertPdfToPageImages(buffer, 1.8))
+      .then((pages) => {
+        if (isMounted && pages.length >= 4) {
+          setLocalPages(pages);
+          onPagesLoaded?.(pages);
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading state form template:", err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingPages(false);
+      });
 
     return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", calculateExactHeight);
+      isMounted = false;
     };
-  }, [viewMode]);
+  }, [renderedPages, onPagesLoaded]);
 
+  const activePages = renderedPages && renderedPages.length >= 4 ? renderedPages : localPages;
   const stateConfig = SUPPORTED_STATE_FORMS[formState.stateCode] || SUPPORTED_STATE_FORMS.GA;
 
+  const handleAdoptSignature = (data: AdoptedSignatureData) => {
+    onChange((prev) => ({
+      ...prev,
+      signatureName: data.signatureName,
+      signatureDate: data.signatureDate,
+      signatureDataUrl: data.signatureDataUrl,
+      signatureStyle: data.signatureStyle,
+      signatureScale: data.signatureScale,
+      signatureType: data.signatureType,
+    }));
+  };
+
   return (
-    <div className="w-full flex flex-col items-center select-none pb-6">
-
-      {/* ── Exact Official Fillable PDF Document Sheet ──────────────────────── */}
-      {/* Dynamically sized so all 4 pages terminate cleanly with zero trailing void */}
-      {/* AcroForm interactive fields remain directly editable right inside the PDF */}
-      <div
-        ref={containerRef}
-        style={{
-          width: viewMode === "actual" ? "816px" : "100%",
-          maxWidth: "840px",
-          height: viewMode === "fit-page" 
-            ? "calc(100vh - 180px)" 
-            : measuredHeight ? `${measuredHeight}px` : "4235px",
-          transform: viewMode === "fit-page"
-            ? "scale(0.85)"
-            : zoomLevel !== 100
-              ? `scale(${zoomLevel / 100})`
-              : undefined,
-          transformOrigin: "top center",
-          marginBottom: (viewMode !== "fit-page" && zoomLevel > 100)
-            ? `${(zoomLevel - 100) * 11}px`
-            : undefined,
-        }}
-        className={cn(
-          "relative rounded-xs select-text flex flex-col items-center transition-all bg-white text-[#1A120A] border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)] my-2 shrink-0 overflow-hidden",
-          viewMode === "fit-width" && "w-full max-w-[840px]",
-          viewMode === "fit-page" && "w-[calc((100vh-175px)*(8.5/11))] max-w-full my-auto",
-          viewMode === "actual" && "w-[816px] my-2"
-        )}
-      >
-        {/* Printable Corner Margin Registration Tick Marks matching other pages */}
-        <div className="absolute top-6 left-6 w-3 h-3 border-t border-l border-[#8C7A60]/40 pointer-events-none z-10" />
-        <div className="absolute top-6 right-6 w-3 h-3 border-t border-r border-[#8C7A60]/40 pointer-events-none z-10" />
-        <div className="absolute bottom-6 left-6 w-3 h-3 border-b border-l border-[#8C7A60]/40 pointer-events-none z-10" />
-        <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#8C7A60]/40 pointer-events-none z-10" />
-
-        {/* Live Fillable Official GaDOE Form Iframe with Interactive Form Fields */}
-        <iframe
-          ref={iframeRef}
-          src={`${pdfBlobUrl}#toolbar=0&navpanes=0&view=FitH`}
-          className="w-full h-full border-0 bg-white"
-          title="Georgia Department of Education (GaDOE) Special Education Formal Complaint Form"
-        />
-      </div>
+    <div className="w-full flex flex-col items-center select-none pb-12">
+      {/* ── 4 Authentic Official State Complaint Form Letter Sheets ─────────────── */}
+      {/* Zero iframes! Paragraph boxes are directly interactive textareas overlaid
+          at exact PDF coordinates so whatever is typed stays permanently in React state & auto-saves */}
+      {activePages.length > 0 ? (
+        <div className="w-full max-w-[840px] flex flex-col items-center gap-6">
+          {activePages.slice(0, 4).map((page, pageIdx) => (
+            <StateComplaintFormPage
+              key={page.pageNumber || pageIdx}
+              page={page}
+              pageIdx={pageIdx}
+              formState={formState}
+              onChange={onChange}
+              onOpenAdoptSign={() => setIsAdoptSignOpen(true)}
+              readOnly={readOnly}
+              isPrint={false}
+              viewMode={viewMode}
+              zoomLevel={zoomLevel}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="w-full max-w-[840px] aspect-[612/792] bg-white rounded-xs border border-[#C5A059]/60 shadow-xl flex flex-col items-center justify-center text-slate-500 font-serif my-4">
+          <div className="animate-spin w-8 h-8 border-2 border-[#C5A059] border-t-transparent rounded-full mb-3" />
+          <span className="text-sm">Loading Official State Complaint Form Sheets...</span>
+        </div>
+      )}
 
       {/* Bottom Docket Page Indicator */}
-      <div className="w-full max-w-[840px] px-3 py-1.5 flex items-center justify-between text-[11px] font-serif text-[#C6B697] border-t border-[#3A2C18]/60 mt-1">
+      <div className="w-full max-w-[840px] px-3 py-2 flex items-center justify-between text-[11px] font-serif text-[#C6B697] border-t border-[#3A2C18]/60 mt-4">
         <span className="tracking-wide">{stateConfig.agencyName} · Special Education Formal Complaint</span>
         <span className="font-mono text-[#FFE394] font-bold">Pages 1–4 of {totalPages}</span>
       </div>
 
+      {/* ── ADOPT AND SIGN MODAL DIALOG ────────────────────────────────────── */}
+      <AdoptAndSignModal
+        isOpen={isAdoptSignOpen}
+        onClose={() => setIsAdoptSignOpen(false)}
+        onAdopt={handleAdoptSignature}
+        initialName={formState.signatureName || formState.complainantName || "Byron Honea"}
+        initialDate={formState.signatureDate}
+        initialScale={formState.signatureScale || 1.35}
+        initialStyle={formState.signatureStyle}
+        initialType={formState.signatureType}
+      />
     </div>
   );
 }

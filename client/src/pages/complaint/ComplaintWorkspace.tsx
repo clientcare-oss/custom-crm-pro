@@ -67,6 +67,8 @@ import {
   GraduationCap,
   FileSearch,
   Users,
+  Wand2,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,7 +76,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { ComplaintSetupView } from "@/components/complaint/ComplaintSetupView";
-import { StateComplaintFormView } from "@/components/complaint/StateComplaintFormView";
+import { StateComplaintFormView, StateComplaintFormPage } from "@/components/complaint/StateComplaintFormView";
 import { BinderCoverPage } from "@/components/complaint/BinderCoverPage";
 import {
   ExhibitPdfSheetsView,
@@ -91,6 +93,15 @@ import {
 import { convertPdfToPageImages, type ImportedPdfPage } from "@/lib/pdfImporter";
 import { PDFDocument } from "pdf-lib";
 import { sanitizeComplaintText, containsProhibitedComplaintTerms, formatFirstLastName } from "@shared/complaintEngine";
+import { OpenRecentModal } from "@/components/complaint/OpenRecentModal";
+import { ComplaintAiWriterHelper } from "@/components/complaint/ComplaintAiWriterHelper";
+import { ManagePacketBindersModal } from "@/components/complaint/ManagePacketBindersModal";
+import {
+  loadComplaintDraft,
+  saveComplaintDraft,
+  listRecentComplaintDrafts,
+  type StoredComplaintDraft,
+} from "@/lib/complaintDraftStorage";
 
 // ── Types & Constants ────────────────────────────────────────────────────────
 export const STATE_FORM_PAGE_COUNT = 4;
@@ -237,7 +248,7 @@ export function getPageDisplayBadge(p: { id: string; number?: string }, pageInde
   return num < 10 ? `0${num}` : `${num}`;
 }
 
-interface DocumentPage {
+export interface DocumentPage {
   id: string;
   number: string;
   title: string;
@@ -292,47 +303,26 @@ const DEFAULT_PAGES: DocumentPage[] = [
     number: "02", 
     title: "Clarity Control Restatement", 
     category: "restatement", 
-    content: `BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
-DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
+    content: `#1. STATEMENT OF ALLEGED VIOLATIONS
+See attached Clarity Control Restatement of Issues & Statutory Violations (Section 02) and accompanying Exhibit Index for complete itemized counts under 34 C.F.R. § 300.153 and Ga. Comp. R. & Regs. 160-4-7-.12.
 
-ELIJAH SANTIAGO
-STUDENT WITH A DISABILITY,
-BY AND THROUGH PARENT / GUARDIAN,
-    Complainant,
+1. Count I: Failure to Implement Operative IEP Services (34 C.F.R. § 300.323(c)(2) · Ga. Comp. R. & Regs. 160-4-7-.06).
+2. Count II: Failure to Timely Re-Evaluate and Affirmative Child Find Violation (34 C.F.R. § 300.111, § 300.301 · Ga. Comp. R. & Regs. 160-4-7-.03).
+3. Count III: Unlawful Refusal to Issue Timely Prior Written Notice (PWN) (34 C.F.R. § 300.503 · Ga. Comp. R. & Regs. 160-4-7-.14).
 
-v.
+#2. FACTS RELATING TO ALLEGED VIOLATIONS
+See attached Chronological Summary of Facts & Timeline (Section 03) detailing all incidents, IEP team meetings, service withholding, and evaluation requests occurring within the one-year statutory period (October 2025 – October 2026).
 
-ATLANTA PUBLIC SCHOOLS,
-    Local Educational Agency.
-____________________________________________/
+Key Facts:
+• Operative IEP mandated specialized instruction and related services.
+• Formal written parental re-evaluation request submitted for assessment.
+• Service delivery logs establish missed sessions without compensatory make-up time.
 
-CLARITY CONTROL RESTATEMENT OF ISSUES & STATUTORY VIOLATIONS
-UNDER 34 C.F.R. § 300.153 AND GA. COMP. R. & REGS. 160-4-7-.12
-
-I. RESTATEMENT OF JURISDICTION & FILING TIMELINESS
-Complainant files this Clarity Control Restatement on behalf of Elijah Santiago, a 10th grade student eligible for special education and related services under the Individuals with Disabilities Education Act (IDEA), 20 U.S.C. § 1400 et seq.
-
-This complaint is timely filed within the one-year statute of limitations provided by 34 C.F.R. § 300.153(c) and Ga. Comp. R. & Regs. 160-4-7-.12(2)(c). All violations alleged herein occurred within the preceding twelve-month period.
-
-II. CLARITY CONTROL RESTATEMENT OF CAUSES OF ACTION
-
-COUNT I: FAILURE TO IMPLEMENT MANDATED IEP SERVICES & DENIAL OF FAPE
-(34 C.F.R. § 300.323(c)(2) · Ga. Comp. R. & Regs. 160-4-7-.06)
-The District failed to implement Elijah's mandated IEP as written by withholding mandated specialized instruction (240 minutes) and accommodations, depriving the student of a Free Appropriate Public Education. (Supported by Exhibit A & Exhibit C).
-
-COUNT II: FAILURE TO TIMELY RE-EVALUATE & AFFIRMATIVE CHILD FIND VIOLATION
-(34 C.F.R. § 300.111, § 300.301 · Ga. Comp. R. & Regs. 160-4-7-.03)
-The District ignored formal written parental requests for comprehensive functional and psychological evaluations, violating its affirmative statutory duty to evaluate in all suspected disability areas. (Supported by Exhibit B).
-
-COUNT III: UNLAWFUL REFUSAL TO ISSUE TIMELY PRIOR WRITTEN NOTICE (PWN)
-(34 C.F.R. § 300.503 · Ga. Comp. R. & Regs. 160-4-7-.14)
-The District altered service delivery schedules and refused evaluation requests without providing written explanation or mandatory statutory justifications. (Supported by Exhibit C).
-
-III. PROPOSED RESOLUTION & CORRECTIVE ACTIONS
-1. Award 60 hours of 1-on-1 certified academic instruction and compensatory support.
-2. Fund an Independent Educational Evaluation (IEE) at public expense.
-3. Order the IEP team to reconvene within 15 school days to integrate compensatory hours.
-4. Mandate administrative training for school-based special education personnel.`
+#3. PROPOSED RESOLUTION TO ALLEGED VIOLATIONS
+1. Award certified 1-on-1 academic instruction and related therapy as compensatory education.
+2. Fund an Independent Educational Evaluation (IEE) at public expense by an independent specialist.
+3. Order the IEP team to reconvene within 15 school days to integrate compensatory hours into an amended IEP.
+4. Mandate administrative training for school-based special education personnel regarding mandatory PWN and evaluation timelines.`
   },
   { 
     id: "chronological_summary", 
@@ -435,6 +425,69 @@ Exhibit files are attached behind this index in labeled alphabetical order.`
     exhibitTag: "Exhibit C", 
   },
 ];
+
+/**
+ * Ensures that mandatory binders (Cover / Official State Form and Clarity Control Restatement)
+ * are always present in the complaint packet in required order (Cover = 1, Clarity Control = 2).
+ */
+export const ensureRequiredBinders = (incomingPages: DocumentPage[]): DocumentPage[] => {
+  if (!incomingPages || incomingPages.length === 0) {
+    return DEFAULT_PAGES;
+  }
+
+  let pages = [...incomingPages];
+
+  // 1. Ensure cover page exists
+  const hasCover = pages.some((p) => p.id === "cover" || p.category === "cover");
+  if (!hasCover) {
+    const defaultCover = DEFAULT_PAGES[0];
+    pages = [defaultCover, ...pages];
+  }
+
+  // 2. Ensure clarity_control exists
+  const hasClarity = pages.some((p) => p.id === "clarity_control" || p.category === "restatement");
+  if (!hasClarity) {
+    const defaultClarity = DEFAULT_PAGES[1];
+    // Insert directly after cover page
+    const coverIdx = pages.findIndex((p) => p.id === "cover" || p.category === "cover");
+    if (coverIdx >= 0) {
+      pages.splice(coverIdx + 1, 0, defaultClarity);
+    } else {
+      pages.unshift(defaultClarity);
+    }
+  }
+
+  // 3. Ensure sequential numbering
+  return pages.map((p, idx) => ({
+    ...p,
+    number: idx + 1 < 10 ? `0${idx + 1}` : `${idx + 1}`,
+  }));
+};
+
+/**
+ * Builds Clarity Control Restatement document content:
+ * Auto-restates strictly the three paragraph boxes from the State Form:
+ * #1 Statement of Alleged Violations (Box 1)
+ * #2 Facts Relating to Alleged Violations (Box 2)
+ * #3 Proposed Resolution to Alleged Violations (Box 3)
+ * Strictly excludes legal caption / court headers per user requirement.
+ */
+export function buildClarityControlContent(
+  formState: OfficialComplaintFormState
+): string {
+  const box1 = (formState.statementOfViolations ?? "").trim();
+  const box2 = (formState.factsRelatingToViolations ?? "").trim();
+  const box3 = (formState.proposedResolution ?? "").trim();
+
+  return `#1. STATEMENT OF ALLEGED VIOLATIONS
+${box1}
+
+#2. FACTS RELATING TO ALLEGED VIOLATIONS
+${box2}
+
+#3. PROPOSED RESOLUTION TO ALLEGED VIOLATIONS
+${box3}`.trim();
+}
 
 interface ComplaintCaseDetails {
   studentName: string;
@@ -726,12 +779,17 @@ export default function ComplaintWorkspace() {
   // CRM Contacts for Student Selection & Auto-fill
   const contactsQuery = trpc.contacts.list.useQuery();
 
+  // Detect student ID and student name from URL parameters or session context
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const initialUrlStudentId = searchParams?.get("studentId") || searchParams?.get("contactId") || params?.id;
+  const initialStudentName = typeof window !== "undefined" ? sessionStorage.getItem("lastStudentProfileName") : null;
+
   // Active Student ID for Document Vault integration (PG-023-VAULT)
   const [activeStudentId, setActiveStudentId] = useState<number | null>(() => {
+    if (initialUrlStudentId && !isNaN(Number(initialUrlStudentId))) {
+      return Number(initialUrlStudentId);
+    }
     if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
-      const sid = searchParams.get("studentId") || searchParams.get("contactId");
-      if (sid && !isNaN(Number(sid))) return Number(sid);
       const sessId = sessionStorage.getItem("lastStudentProfileId");
       if (sessId && !isNaN(Number(sessId))) return Number(sessId);
     }
@@ -776,25 +834,81 @@ export default function ComplaintWorkspace() {
     },
   });
 
-  // State: Case Data (Defaults to primary student Elijah Santiago)
-  const [caseDetails, setCaseDetails] = useState<ComplaintCaseDetails>({
-    studentName: "Elijah Santiago",
-    studentDob: "05/18/2008",
-    grade: "10th Grade",
-    school: "Midtown High School",
-    district: "Atlanta Public Schools",
-    parentName: "Marcus Santiago",
-    preparedBy: "Waypoint Advocates",
-    submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-    showLogo: true,
-    state: "GA",
+  // Initial draft from storage (PG-020 Session Recovery) — strictly load for the requested student!
+  const initialDraft = typeof window !== "undefined" && initialUrlStudentId
+    ? loadComplaintDraft(initialUrlStudentId)
+    : null;
+
+  // State: Case Data (Defaults to loaded draft, or accessed student, or primary student Elijah Santiago)
+  const [caseDetails, setCaseDetails] = useState<ComplaintCaseDetails>(() => {
+    if (initialDraft?.caseDetails) {
+      return {
+        studentName: initialDraft.caseDetails.studentName || initialStudentName || "Student on Record",
+        studentDob: initialDraft.caseDetails.studentDob || "[Not Found on Record]",
+        grade: initialDraft.caseDetails.grade || "[Not Found on Record]",
+        school: initialDraft.caseDetails.school || "[Not Found on Record]",
+        district: initialDraft.caseDetails.district || "[District Not Found on Record]",
+        parentName: initialDraft.caseDetails.parentName || "[Not Found on Record]",
+        preparedBy: initialDraft.caseDetails.preparedBy || "Waypoint Advocates",
+        submissionDate: initialDraft.caseDetails.submissionDate || new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+        showLogo: initialDraft.caseDetails.showLogo ?? true,
+        state: initialDraft.caseDetails.state || "GA",
+      };
+    }
+    if (initialStudentName) {
+      return {
+        studentName: initialStudentName,
+        studentDob: "[Not Found on Record]",
+        grade: "[Not Found on Record]",
+        school: "[Not Found on Record]",
+        district: "[District Not Found on Record]",
+        parentName: "[Not Found on Record]",
+        preparedBy: "Waypoint Advocates",
+        submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+        showLogo: true,
+        state: "GA",
+      };
+    }
+    if (!initialUrlStudentId) {
+      return {
+        studentName: "Elijah Santiago",
+        studentDob: "05/18/2008",
+        grade: "10th Grade",
+        school: "Midtown High School",
+        district: "Atlanta Public Schools",
+        parentName: "Marcus Santiago",
+        preparedBy: "Waypoint Advocates",
+        submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+        showLogo: true,
+        state: "GA",
+      };
+    }
+    return {
+      studentName: "Student on Record",
+      studentDob: "[Not Found on Record]",
+      grade: "[Not Found on Record]",
+      school: "[Not Found on Record]",
+      district: "[District Not Found on Record]",
+      parentName: "[Not Found on Record]",
+      preparedBy: "Waypoint Advocates",
+      submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+      showLogo: true,
+      state: "GA",
+    };
   });
 
-  // State: Official State Complaint Form State (defaults to Georgia GaDOE)
+  // State: Official State Complaint Form State (defaults to Georgia GaDOE or loaded draft)
   const [officialFormState, setOfficialFormState] = useState<OfficialComplaintFormState>(() => {
+    if (initialDraft?.formState) {
+      return initialDraft.formState;
+    }
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem(`complaint_form_state_${params?.id || "active"}`);
+        const studentKey = initialUrlStudentId || params?.id || "active";
+        const saved =
+          localStorage.getItem(`complaint_form_state_${studentKey}`) ||
+          localStorage.getItem(`complaint_form_state_${params?.id || "active"}`) ||
+          localStorage.getItem("complaint_form_state_active");
         if (saved) {
           const parsed = JSON.parse(saved);
           const sanitizeMock = (v?: string) => {
@@ -813,6 +927,10 @@ export default function ComplaintWorkspace() {
 
           return {
             ...parsed,
+            serviceMethod:
+              !parsed.serviceMethod || parsed.serviceMethod.includes("Certified Mail")
+                ? "Electronic Delivery"
+                : parsed.serviceMethod,
             studentAddress: sanitizeMock(parsed.studentAddress),
             studentGtid: sanitizeMock(parsed.studentGtid),
             parentAddress: sanitizeMock(parsed.parentAddress),
@@ -1131,7 +1249,7 @@ export default function ComplaintWorkspace() {
     if (!pPhone) pPhone = "[Not Found on Record]";
     if (!pEmail) pEmail = "[Not Found on Record]";
 
-    setComplaintTitle(`State Complaint – ${student.lastName || sName || "Student"}`);
+    setComplaintTitle(`State Complaint – ${sName || student.lastName || "Student"}`);
 
     setCaseDetails((prev) => ({
       ...prev,
@@ -1193,36 +1311,126 @@ export default function ComplaintWorkspace() {
     toast.success(`Loaded ${sName}'s record into ${SUPPORTED_STATE_FORMS[stateCode]?.name || "Georgia"} State Complaint Form (Address: ${addressSource})`);
   };
 
+  // Draft selection and session recovery handlers
+  const handleSelectRecentDraft = (draft: StoredComplaintDraft) => {
+    if (draft.pages && Array.isArray(draft.pages) && draft.pages.length > 0) {
+      setPages(ensureRequiredBinders(draft.pages));
+    }
+    if (draft.caseDetails) {
+      setCaseDetails((prev) => ({ ...prev, ...draft.caseDetails }));
+    }
+    if (draft.formState) {
+      const cleanForm = { ...draft.formState };
+      if (!cleanForm.serviceMethod || cleanForm.serviceMethod.includes("Certified Mail")) {
+        cleanForm.serviceMethod = "Electronic Delivery";
+      }
+      setOfficialFormState((prev) => ({ ...prev, ...cleanForm }));
+    }
+    if (draft.title) {
+      setComplaintTitle(draft.title);
+    }
+    if (draft.studentId) {
+      setActiveStudentId(Number(draft.studentId));
+    }
+    setLastSavedText("Draft loaded just now");
+  };
+
+  const handleStartNewDraft = () => {
+    setPages(DEFAULT_PAGES);
+    setOfficialFormState(INITIAL_GADOE_FORM_STATE);
+    setComplaintTitle("State Complaint – New Filing");
+    setActivePageId("cover");
+    setActiveToolbarTab("setup");
+    toast.success("Started a new complaint filing draft");
+  };
+
+  const handleSaveCurrentNow = () => {
+    saveComplaintDraft(
+      {
+        id: `draft_${activeStudentId || params?.id || "active"}`,
+        studentId: activeStudentId || params?.id || null,
+        studentName: caseDetails.studentName || officialFormState.studentName || "Student on Record",
+        title: complaintTitle,
+        updatedAt: new Date().toISOString(),
+        stateCode: officialFormState.stateCode || "GA",
+        pageCount: pages.length,
+        formState: officialFormState,
+        caseDetails,
+        pages,
+      },
+      true // creates dedicated milestone checkpoint for this student
+    );
+    setRecentDraftsCount(listRecentComplaintDrafts().length);
+    setLastSavedText("Version saved just now");
+    toast.success(`✓ Saved new version checkpoint for ${caseDetails.studentName || "student"}`);
+  };
+
+
+
   // Auto-detect student from URL query (?studentId=... or ?contactId=... or params.id)
-  const isAutoLoaded = useRef(false);
+  const lastLoadedStudentIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (isAutoLoaded.current || !contactsQuery.data?.length) return;
-    const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-    const qId = searchParams?.get("studentId") || searchParams?.get("contactId") || params?.id;
+    if (!contactsQuery.data?.length) return;
+    const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const qId = urlParams?.get("studentId") || urlParams?.get("contactId") || params?.id;
+
     if (qId) {
+      if (lastLoadedStudentIdRef.current === String(qId)) {
+        return; // Already applied this student
+      }
       const matched = contactsQuery.data.find(
         (c) => String(c.id) === String(qId) || c.caseId === qId
       );
       if (matched) {
-        isAutoLoaded.current = true;
+        lastLoadedStudentIdRef.current = String(matched.id);
         setActiveStudentId(matched.id);
-        applyStudentToComplaint(matched);
+
+        const sFullName = `${matched.firstName || ""} ${matched.lastName || ""}`.trim();
+        const existingDraft = loadComplaintDraft(matched.id);
+
+        // Only restore draft if it genuinely belongs to this student (not an Elijah template artifact)
+        const draftBelongsToStudent =
+          existingDraft &&
+          String(existingDraft.studentId) === String(matched.id) &&
+          (!existingDraft.studentName ||
+            existingDraft.studentName.toLowerCase().includes(matched.lastName?.toLowerCase() || "") ||
+            existingDraft.studentName.toLowerCase().includes(matched.firstName?.toLowerCase() || ""));
+
+        if (draftBelongsToStudent && existingDraft) {
+          handleSelectRecentDraft(existingDraft);
+          if (sFullName) {
+            setComplaintTitle(`State Complaint – ${sFullName}`);
+          }
+        } else {
+          applyStudentToComplaint(matched);
+        }
       }
     } else {
-      // Default to Elijah Santiago if available in contacts
+      // Default to Elijah Santiago ONLY if NO student was requested in the URL and no student loaded
+      if (lastLoadedStudentIdRef.current) return;
       const elijah = contactsQuery.data.find(
         (c) => c.firstName?.toLowerCase().includes("elijah") || c.lastName?.toLowerCase().includes("santiago")
       );
       if (elijah) {
-        isAutoLoaded.current = true;
+        lastLoadedStudentIdRef.current = String(elijah.id);
         setActiveStudentId(elijah.id);
-        applyStudentToComplaint(elijah);
+        const existingDraft = loadComplaintDraft(elijah.id);
+        if (existingDraft) {
+          handleSelectRecentDraft(existingDraft);
+        } else {
+          applyStudentToComplaint(elijah);
+        }
       }
     }
-  }, [contactsQuery.data, params?.id]);
+  }, [contactsQuery.data, params?.id, location]);
 
-  // State: Pages and Active Navigation
-  const [pages, setPages] = useState<DocumentPage[]>(DEFAULT_PAGES);
+  // State: Pages and Active Navigation (restores from draft if available)
+  const [pages, setPages] = useState<DocumentPage[]>(() => {
+    if (initialDraft?.pages && Array.isArray(initialDraft.pages) && initialDraft.pages.length > 0) {
+      return ensureRequiredBinders(initialDraft.pages);
+    }
+    return DEFAULT_PAGES;
+  });
   const [activePageId, setActivePageId] = useState<string>("cover");
   const [activeToolbarTab, setActiveToolbarTab] = useState<"setup" | "edit" | "arrange" | "cover" | "insert" | "compile">("setup");
 
@@ -1234,8 +1442,65 @@ export default function ComplaintWorkspace() {
   const [isIndexCollapsed, setIsIndexCollapsed] = useState<boolean>(false);
   const [isToolsCollapsed, setIsToolsCollapsed] = useState<boolean>(true);
   const [lastSavedText, setLastSavedText] = useState<string>("Auto-saved just now");
-  const [complaintTitle, setComplaintTitle] = useState<string>("State Complaint – Elijah Santiago");
+  const [complaintTitle, setComplaintTitle] = useState<string>(() => {
+    if (initialDraft?.title) return initialDraft.title;
+    if (initialStudentName) return `State Complaint – ${initialStudentName}`;
+    if (initialUrlStudentId) return "State Complaint";
+    return "State Complaint – Elijah Santiago";
+  });
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
+  const [isOpenRecentModalOpen, setIsOpenRecentModalOpen] = useState(false);
+  const [recentDraftsCount, setRecentDraftsCount] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      return listRecentComplaintDrafts().length;
+    }
+    return 0;
+  });
+
+  // Count of recent drafts strictly for the currently active student
+  const studentRecentCount = useMemo(() => {
+    if (typeof window !== "undefined") return 0;
+    const all = listRecentComplaintDrafts();
+    return all.filter((d) => {
+      if (activeStudentId && d.studentId && String(d.studentId) === String(activeStudentId)) return true;
+      if (
+        caseDetails.studentName &&
+        d.studentName &&
+        d.studentName.toLowerCase().trim() === caseDetails.studentName.toLowerCase().trim()
+      ) {
+        return true;
+      }
+      return false;
+    }).length;
+  }, [activeStudentId, caseDetails.studentName, recentDraftsCount]);
+
+  // ── Auto-Synchronize State Form Boxes (#1, #2, #3) to Clarity Control Restatement ──
+  useEffect(() => {
+    setPages((prevPages) => {
+      const clarityIndex = prevPages.findIndex(
+        (p) => p.id === "clarity_control" || p.category === "restatement"
+      );
+      if (clarityIndex === -1) return prevPages;
+
+      const currentClarityPage = prevPages[clarityIndex];
+      const newContent = buildClarityControlContent(officialFormState);
+
+      if (currentClarityPage.content === newContent) {
+        return prevPages;
+      }
+
+      const nextPages = [...prevPages];
+      nextPages[clarityIndex] = {
+        ...currentClarityPage,
+        content: newContent,
+      };
+      return nextPages;
+    });
+  }, [
+    officialFormState.statementOfViolations,
+    officialFormState.factsRelatingToViolations,
+    officialFormState.proposedResolution,
+  ]);
 
   // State: Document Highlighting on Uploaded Evidentiary Documents
   const [isHighlighterActive, setIsHighlighterActive] = useState<boolean>(false);
@@ -1306,63 +1571,7 @@ export default function ComplaintWorkspace() {
       if (!res.ok) return;
       const existingPdfBytes = await res.arrayBuffer();
 
-      let pdfToConvert: ArrayBuffer = existingPdfBytes;
-      try {
-        const pdfDoc = await PDFDocument.load(existingPdfBytes);
-        const form = pdfDoc.getForm();
-
-        const setIfField = (name: string, value: string | undefined | null) => {
-          if (!value) return;
-          try {
-            const field = form.getTextField(name);
-            if (field) field.setText(String(value));
-          } catch (e) {}
-        };
-
-        // Page 1: Public Agency & Complainant & Student
-        setIfField("Public agency filing complaint against", formStateToFill.publicAgency || caseDetails.district);
-        setIfField("Name of Complainant", formatFirstLastName(formStateToFill.complainantName || "Byron Honea"));
-        setIfField("Relationship to student", formStateToFill.complainantRelationship || "Advocate on behalf of Parent");
-        setIfField("Complainant Address", formStateToFill.complainantAddress);
-        setIfField("City", formStateToFill.complainantCity);
-        setIfField("State", formStateToFill.complainantState || "GA");
-        setIfField("Zip Code", formStateToFill.complainantZip);
-        setIfField("Complainant Phone Numbers", formStateToFill.complainantPhone);
-        setIfField("Complainant Email Address", formStateToFill.complainantEmail);
-
-        setIfField("Name of Student", formStateToFill.studentName || caseDetails.studentName);
-        setIfField("Date of Birth", formStateToFill.studentDob || caseDetails.studentDob);
-        setIfField("Student Address", formStateToFill.studentAddress);
-        setIfField("Student City", formStateToFill.studentCity);
-        setIfField("Student State", formStateToFill.studentState || "GA");
-        setIfField("Student Zip", formStateToFill.studentZip);
-        setIfField("Current School", formStateToFill.currentSchool || caseDetails.school);
-        setIfField("Grade", formStateToFill.grade || caseDetails.grade);
-        setIfField("Student GTID", formStateToFill.studentGtid);
-
-        // Page 1 & 2: Statement of Problem & Resolution
-        setIfField(
-          "Please provide a statement of the problem and the facts upon which the problem is based Include the date and time when the violation occurred or the duration of the violation and supporting documentation",
-          formStateToFill.statementOfViolations || formStateToFill.factsRelatingToViolations
-        );
-        setIfField(
-          "Please provide a proposed resolution of the problem to the extent known and available to the party at the time the complaint is filed",
-          formStateToFill.proposedResolution
-        );
-
-        // Page 3: Verification of Service
-        setIfField("On", formStateToFill.serviceDate || caseDetails.submissionDate);
-        setIfField("name or title of recipient", formStateToFill.serviceRecipient || caseDetails.district);
-        setIfField("Signature of Person Filing Complaint", formatFirstLastName(formStateToFill.signatureName || formStateToFill.complainantName || "Byron Honea"));
-        setIfField("Date", formStateToFill.signatureDate || caseDetails.submissionDate);
-
-        const filledBytes = await pdfDoc.save();
-        pdfToConvert = filledBytes.buffer as ArrayBuffer;
-      } catch (fillErr) {
-        console.warn("Could not populate PDF fields prior to preview rendering, using raw form:", fillErr);
-      }
-
-      const imgs = await convertPdfToPageImages(pdfToConvert, 1.8);
+      const imgs = await convertPdfToPageImages(existingPdfBytes, 1.8);
       if (imgs.length > 0) {
         setStateFormPages(imgs);
       }
@@ -1375,20 +1584,7 @@ export default function ComplaintWorkspace() {
 
   useEffect(() => {
     renderFilledStateFormPages(officialFormState);
-  }, [
-    officialFormState.stateCode,
-    officialFormState.studentName,
-    officialFormState.studentDob,
-    officialFormState.publicAgency,
-    officialFormState.complainantName,
-    officialFormState.complainantAddress,
-    officialFormState.complainantPhone,
-    officialFormState.complainantEmail,
-    officialFormState.currentSchool,
-    officialFormState.grade,
-    officialFormState.statementOfViolations,
-    officialFormState.proposedResolution,
-  ]);
+  }, [officialFormState.stateCode]);
 
 
   // State: Resizable Packet Index Width with Draggable Right Edge
@@ -1456,28 +1652,49 @@ export default function ComplaintWorkspace() {
       return;
     }
     setLastSavedText("Saving changes...");
+    const studentKey = activeStudentId || initialUrlStudentId || params?.id || "active";
     const timer = setTimeout(() => {
       try {
+        saveComplaintDraft({
+          id: `draft_${studentKey}`,
+          studentId: activeStudentId || (initialUrlStudentId && !isNaN(Number(initialUrlStudentId)) ? Number(initialUrlStudentId) : null),
+          studentName: caseDetails.studentName || officialFormState.studentName || "Student on Record",
+          title: complaintTitle,
+          updatedAt: new Date().toISOString(),
+          stateCode: officialFormState.stateCode || "GA",
+          pageCount: pages.length,
+          formState: officialFormState,
+          caseDetails,
+          pages,
+        });
+
         localStorage.setItem(
-          `complaint_draft_${params?.id || "active"}`,
+          `complaint_draft_${studentKey}`,
           JSON.stringify({
             complaintTitle,
             caseDetails,
             pages,
+            formState: officialFormState,
             savedAt: new Date().toISOString(),
           })
         );
         localStorage.setItem(
-          `complaint_form_state_${params?.id || "active"}`,
+          `complaint_form_state_${studentKey}`,
           JSON.stringify(officialFormState)
         );
+        // Also keep fallback active key in sync
+        localStorage.setItem(
+          `complaint_form_state_active`,
+          JSON.stringify(officialFormState)
+        );
+        setRecentDraftsCount(listRecentComplaintDrafts().length);
       } catch (e) {
         // storage quota fallback
       }
       setLastSavedText("Auto-saved just now");
-    }, 1000);
+    }, 800);
     return () => clearTimeout(timer);
-  }, [pages, caseDetails, officialFormState, complaintTitle, params?.id]);
+  }, [pages, caseDetails, officialFormState, complaintTitle, params?.id, activeStudentId, initialUrlStudentId]);
 
   // State: Modals
   const [isEditCoverModalOpen, setIsEditCoverModalOpen] = useState(false);
@@ -1564,6 +1781,81 @@ export default function ComplaintWorkspace() {
     const updated = current ? `${current}\n\n${snippet}` : snippet;
     handleUpdatePageContent(updated);
     toast.success("Inserted citation into document");
+  };
+
+  // AI Writer Helper state & handlers
+  const [isAiWriterHelperOpen, setIsAiWriterHelperOpen] = useState(false);
+  const [selectedDocumentText, setSelectedDocumentText] = useState("");
+
+  const handleOpenAiWriter = () => {
+    if (textareaRef.current) {
+      const start = textareaRef.current.selectionStart;
+      const end = textareaRef.current.selectionEnd;
+      if (start !== end && start != null && end != null) {
+        setSelectedDocumentText(textareaRef.current.value.substring(start, end));
+      } else {
+        setSelectedDocumentText("");
+      }
+    } else {
+      setSelectedDocumentText("");
+    }
+    setIsAiWriterHelperOpen(true);
+  };
+
+  const handleApplyAiText = (newText: string, mode: "replace" | "append") => {
+    if (mode === "append") {
+      const current = activePage.content || "";
+      handleUpdatePageContent(current ? `${current}\n\n${newText}` : newText);
+    } else {
+      if (
+        selectedDocumentText &&
+        textareaRef.current &&
+        textareaRef.current.selectionStart !== textareaRef.current.selectionEnd
+      ) {
+        const current = activePage.content || "";
+        const start = textareaRef.current.selectionStart;
+        const end = textareaRef.current.selectionEnd;
+        const updated = current.substring(0, start) + newText + current.substring(end);
+        handleUpdatePageContent(updated);
+      } else {
+        handleUpdatePageContent(newText);
+      }
+    }
+  };
+
+  // State: Manage Packet Binders & Removal Confirmation
+  const [isManageBindersModalOpen, setIsManageBindersModalOpen] = useState(false);
+  const [binderPendingRemoval, setBinderPendingRemoval] = useState<{ page: DocumentPage; index: number } | null>(null);
+
+  const handleConfirmRemoveBinder = () => {
+    if (!binderPendingRemoval) return;
+    const { page, index } = binderPendingRemoval;
+
+    if (page.id === "cover") {
+      toast.error("Binder 01 (Official State Form) is mandatory and cannot be removed.");
+      setBinderPendingRemoval(null);
+      return;
+    }
+
+    if (page.id === "clarity_control" || page.category === "restatement") {
+      toast.error("The Clarity Control Restatement is a required pleading and cannot be removed from this complaint packet.");
+      setBinderPendingRemoval(null);
+      return;
+    }
+
+    const updatedPages = pages.filter((p) => p.id !== page.id);
+    setPages(updatedPages);
+
+    if (activePageId === page.id) {
+      const fallbackIdx = Math.max(0, index - 1);
+      const fallbackPage = updatedPages[fallbackIdx] || updatedPages[0];
+      if (fallbackPage) {
+        setActivePageId(fallbackPage.id);
+      }
+    }
+
+    toast.success(`Removed "${page.title}" from packet index. Continuous page numbers updated.`);
+    setBinderPendingRemoval(null);
   };
 
   // Quick field updates on Cover & State Form
@@ -1980,6 +2272,10 @@ This document is incorporated herein and submitted in direct support of Complain
     toast.success("Compiling official Georgia State Complaint PDF with exhibits...");
     if (stateFormPages.length === 0) {
       renderFilledStateFormPages(officialFormState);
+      setTimeout(() => {
+        window.print();
+      }, 800);
+      return;
     }
     setTimeout(() => {
       window.print();
@@ -2124,14 +2420,20 @@ This document is incorporated herein and submitted in direct support of Complain
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => syncFromBusinessProfile(true)}
+              onClick={() => setIsOpenRecentModalOpen(true)}
               className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(0,0,0,0.5)]"
-              title="Connect & sync official practice address, phone, and email from Business Settings (PG-024-BIZ)"
+              title="Open recent complaint drafts and resume work"
             >
-              <Building2 className="w-3.5 h-3.5 text-[#FFE394]" />
-              <span className="hidden sm:inline">Sync PG-024-BIZ</span>
-              <span className="sm:hidden">PG-024</span>
+              <FolderOpen className="w-3.5 h-3.5 text-[#FFE394]" />
+              <span className="hidden sm:inline">Open Recent</span>
+              <span className="sm:hidden">Recent</span>
+              {studentRecentCount > 0 && (
+                <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] bg-[#C5A059] text-[#07162B] font-bold">
+                  {studentRecentCount}
+                </span>
+              )}
             </Button>
+
 
             <Button
               type="button"
@@ -2214,7 +2516,17 @@ This document is incorporated herein and submitted in direct support of Complain
               </div>
 
               <div className="flex items-center justify-between pl-2 pr-2 pt-6 pb-2 border-b border-[#3A2C18]/60 relative z-20 bg-transparent">
-                <span className="text-[11px] font-serif font-bold text-[#C6B697] tracking-wider uppercase">Packet Index</span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[11px] font-serif font-bold text-[#C6B697] tracking-wider uppercase">Packet Index</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsManageBindersModalOpen(true)}
+                    className="p-1 rounded text-[#DFBE77] hover:text-[#FFF4D4] hover:bg-white/[0.08] transition-colors cursor-pointer"
+                    title="Manage Packet Binders: Choose what to include or remove"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </div>
                 <button
                   type="button"
                   onClick={() => setIsIndexCollapsed(true)}
@@ -2340,8 +2652,22 @@ This document is incorporated herein and submitted in direct support of Complain
                         </span>
                       </div>
 
-                      {/* Right: Miniature document facsimile */}
-                      <div className="flex items-center shrink-0">
+                      {/* Right: Quick Remove Trigger & Miniature document facsimile */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {p.id !== "cover" && p.id !== "clarity_control" && p.category !== "restatement" && (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBinderPendingRemoval({ page: p, index });
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-950/40 text-rose-400 hover:text-rose-200 transition-opacity cursor-pointer"
+                            title={`Remove "${p.title}" from packet`}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </span>
+                        )}
                         <MiniaturePagePreview
                           page={p}
                           caseDetails={caseDetails}
@@ -2354,15 +2680,25 @@ This document is incorporated herein and submitted in direct support of Complain
                 })}
               </div>
 
-              <div className="pt-2 border-t border-[#3A2C18]/80 mt-2 relative z-20">
+              <div className="pt-2 border-t border-[#3A2C18]/80 mt-2 relative z-20 flex flex-col gap-1.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsManageBindersModalOpen(true)}
+                  className="w-full border-[#DFBE77]/60 bg-[#071C3A] text-[#FFE394] hover:text-[#FFF4D4] hover:bg-[#0A264D] text-xs h-8 font-serif font-bold gap-1.5 cursor-pointer shadow-xs rounded-lg"
+                >
+                  <Pencil className="w-3 h-3 text-[#DFBE77]" />
+                  <span>Manage Packet Binders</span>
+                </Button>
+
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsAddPageModalOpen(true)}
-                  className="w-full border-[#3A2C18] bg-[#05142B] text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#081F3E] text-xs h-9 font-medium gap-2 cursor-pointer shadow-sm rounded-lg"
+                  className="w-full border-[#3A2C18] bg-[#05142B] text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#081F3E] text-xs h-8 font-medium gap-1.5 cursor-pointer shadow-xs rounded-lg"
                 >
-                  <Plus className="w-3.5 h-3.5 text-[#DFBE77]" />
-                  Add Page
+                  <Plus className="w-3.5 h-3.5 text-[#C6B697]" />
+                  <span>Insert Exhibit / Page</span>
                 </Button>
               </div>
 
@@ -2624,6 +2960,20 @@ This document is incorporated herein and submitted in direct support of Complain
                       <AlignJustify className="w-3 h-3" />
                     </button>
                   </div>
+
+                  <div className="w-[1px] h-4 bg-[#3A2C18] mx-0.5" />
+
+                  {/* AI Writer Helper Toolbar Button */}
+                  <button
+                    type="button"
+                    onClick={handleOpenAiWriter}
+                    className="flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-serif font-bold transition-all cursor-pointer bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] hover:brightness-110 border border-[#FFE394]/80 shadow-[0_2px_8px_rgba(0,0,0,0.4)] active:scale-95 group"
+                    title="AI Writer Helper: Help me write, polish legal arguments, add citations, or make it better"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#07162B] animate-pulse" />
+                    <span>AI Writer</span>
+                    <Wand2 className="w-3 h-3 text-[#07162B]/80 group-hover:rotate-12 transition-transform" />
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
@@ -2760,6 +3110,12 @@ This document is incorporated herein and submitted in direct support of Complain
                   onChange={setOfficialFormState}
                   caseDetails={caseDetails}
                   onApplyToDocketSections={(updates) => {
+                    setOfficialFormState((prev) => ({
+                      ...prev,
+                      statementOfViolations: updates.statementOfViolations,
+                      factsRelatingToViolations: updates.factsRelatingToViolations,
+                      proposedResolution: updates.proposedResolution,
+                    }));
                     setPages((prev) =>
                       prev.map((p) => {
                         if (p.id === "clarity_control") {
@@ -2796,6 +3152,11 @@ This document is incorporated herein and submitted in direct support of Complain
                   onSelectState={(code) => {
                     setOfficialFormState((prev) => ({ ...prev, stateCode: code }));
                     setCaseDetails((prev) => ({ ...prev, state: code }));
+                  }}
+                  onPagesLoaded={(loadedPages) => {
+                    if (stateFormPages.length === 0) {
+                      setStateFormPages(loadedPages);
+                    }
                   }}
                   viewMode={viewMode}
                   zoomLevel={zoomLevel}
@@ -2977,6 +3338,32 @@ This document is incorporated herein and submitted in direct support of Complain
                           </div>
                         )}
                       </div>
+
+                      {/* Live Auto-Restatement Banner on Clarity Control Restatement sheet */}
+                      {(activePage.id === "clarity_control" || activePage.category === "restatement") && (
+                        <div className="mt-3 mb-1 p-2.5 rounded-md bg-[#0A264D]/10 border border-[#8C7A60]/40 flex items-center justify-between gap-3 text-xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse shrink-0" />
+                            <span className="font-serif font-bold text-[#1A120A] shrink-0">
+                              Auto-Restatement Active:
+                            </span>
+                            <span className="text-[#5C4A32] text-[11.5px] truncate">
+                              Restating Box 1 (#1 Violations), Box 2 (#2 Facts), & Box 3 (#3 Proposed Resolution) from State Form
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveToolbarTab("cover");
+                              setActivePageId("cover");
+                            }}
+                            className="text-[11px] font-sans font-bold px-2.5 py-1 rounded bg-[#082245] text-[#FFE394] hover:bg-[#0B2C58] hover:text-[#FFF4D4] border border-[#C5A059]/60 shrink-0 cursor-pointer shadow-xs transition-colors flex items-center gap-1"
+                          >
+                            <span>Edit on State Form</span>
+                            <span className="text-xs">↗</span>
+                          </button>
+                        </div>
+                      )}
 
                       <div className="py-4 flex flex-col w-full flex-1">
                         <textarea
@@ -4215,7 +4602,15 @@ This document is incorporated herein and submitted in direct support of Complain
         </Dialog>
 
         {/* 5. Real Print Preview Modal (Authentic 8.5" x 11" Standard White Paper, No Parchment) */}
-        <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
+        <Dialog
+          open={isPreviewModalOpen}
+          onOpenChange={(open) => {
+            if (open && stateFormPages.length === 0) {
+              renderFilledStateFormPages(officialFormState);
+            }
+            setIsPreviewModalOpen(open);
+          }}
+        >
           <DialogContent className="w-[96vw] max-w-[96vw] sm:max-w-[94vw] md:max-w-[92vw] lg:max-w-5xl xl:max-w-6xl max-h-[94vh] overflow-y-auto bg-[#071322] border border-[#3A2C18] text-white shadow-2xl custom-scrollbar p-3 sm:p-5">
             <DialogHeader className="space-y-0">
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#3A2C18]">
@@ -4300,7 +4695,7 @@ This document is incorporated herein and submitted in direct support of Complain
                                     PAGE {sIdx + 1} OF {totalDocketPages}
                                   </span>
                                   <span className="text-[#C6B697] truncate ml-2">
-                                    {pageTitles[sIdx]} · Official White Print Form
+                                    {pageTitles[sIdx]} · Official State Complaint Form (Filled)
                                   </span>
                                 </div>
                                 <div 
@@ -4311,12 +4706,16 @@ This document is incorporated herein and submitted in direct support of Complain
                                     boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
                                     border: "1px solid #D1D5DB",
                                   }}
-                                  className="relative rounded-b overflow-hidden bg-white p-2 sm:p-4 flex items-center justify-center shrink-0"
+                                  className="relative rounded-b overflow-hidden bg-white shrink-0"
                                 >
-                                  <img
-                                    src={sPage.dataUrl}
-                                    alt={`State Complaint Form Page ${sIdx + 1}`}
-                                    className="w-full h-auto object-contain block mx-auto bg-white"
+                                  <StateComplaintFormPage
+                                    page={sPage}
+                                    pageIdx={sIdx}
+                                    formState={officialFormState}
+                                    readOnly={true}
+                                    isPrint={false}
+                                    viewMode="actual"
+                                    className="border-0 shadow-none"
                                   />
                                 </div>
                               </div>
@@ -4324,12 +4723,14 @@ This document is incorporated herein and submitted in direct support of Complain
                           })}
                         </div>
                       ) : (
-                        <div className="w-full max-w-[816px] bg-white rounded border border-[#C5A059]/60 overflow-hidden shadow-sm">
-                          <iframe
-                            src="/forms/gadoe-formal-complaint-form.pdf#toolbar=0&navpanes=0&view=FitH"
-                            className="w-full h-[880px] border-0 bg-white"
-                            title="Official GaDOE State Complaint Form"
-                          />
+                        <div className="w-full max-w-[816px] aspect-[612/792] bg-white rounded border border-[#C5A059]/60 overflow-hidden shadow-sm flex flex-col items-center justify-center p-8 text-center text-slate-700">
+                          <div className="w-10 h-10 border-3 border-[#C5A059] border-t-transparent rounded-full animate-spin mb-4" />
+                          <p className="font-serif text-base font-bold text-slate-900 mb-1">
+                            Rendering Filled State Complaint Sheets...
+                          </p>
+                          <p className="text-xs text-slate-500 font-mono">
+                            Preparing high-resolution print pages with your custom adopted signature and verified LEA details.
+                          </p>
                         </div>
                       )}
                     </div>
@@ -4515,6 +4916,115 @@ This document is incorporated herein and submitted in direct support of Complain
           </DialogContent>
         </Dialog>
 
+        {/* Open Recent Drafts Modal (PG-020 Session Recovery) */}
+        <OpenRecentModal
+          open={isOpenRecentModalOpen}
+          onOpenChange={setIsOpenRecentModalOpen}
+          onSelectDraft={handleSelectRecentDraft}
+          onStartNewDraft={handleStartNewDraft}
+          onSaveCurrentNow={handleSaveCurrentNow}
+          currentStudentId={activeStudentId}
+          currentStudentName={caseDetails.studentName}
+        />
+
+        {/* AI Writer Helper Modal (PG-020 Legal Drafting Assistant) */}
+        <ComplaintAiWriterHelper
+          isOpen={isAiWriterHelperOpen}
+          onClose={() => setIsAiWriterHelperOpen(false)}
+          currentText={activePage.content || ""}
+          selectedText={selectedDocumentText}
+          onApplyText={handleApplyAiText}
+          sectionTitle={activePage.title}
+          studentName={caseDetails.studentName}
+          districtName={caseDetails.district}
+          stateCode={officialFormState.stateCode || "GA"}
+        />
+
+        {/* Manage Packet Binders Modal (PG-020 Binder Manager) */}
+        <ManagePacketBindersModal
+          isOpen={isManageBindersModalOpen}
+          onClose={() => setIsManageBindersModalOpen(false)}
+          pages={pages}
+          onUpdatePages={(newPages) => setPages(ensureRequiredBinders(newPages))}
+          activePageId={activePageId}
+          onSelectPage={(pageId) => {
+            setActivePageId(pageId);
+            if (pageId === "cover") {
+              setActiveToolbarTab("cover");
+            } else {
+              setActiveToolbarTab("edit");
+            }
+          }}
+          stateCode={officialFormState.stateCode || "GA"}
+          studentName={caseDetails.studentName}
+        />
+
+        {/* Explicit Yes / No Removal Confirmation Dialog from Packet Index Cards */}
+        <Dialog
+          open={!!binderPendingRemoval}
+          onOpenChange={(open) => !open && setBinderPendingRemoval(null)}
+        >
+          <DialogContent
+            className={cn(
+              "w-full max-w-md p-5 rounded-xl border shadow-2xl",
+              "bg-[#07162B] border-[#C5A059]/80 text-slate-100"
+            )}
+            style={{
+              backgroundImage:
+                "linear-gradient(180deg, rgba(14, 42, 82, 0.98) 0%, rgba(7, 22, 43, 0.98) 100%), url('/decor/folio-leather-texture.png')",
+              backgroundRepeat: "repeat",
+              backgroundSize: "220px",
+            }}
+          >
+            <DialogHeader className="flex flex-row items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-950/80 border border-rose-600/60 flex items-center justify-center text-rose-400 shrink-0 shadow-lg">
+                <AlertTriangle className="w-5 h-5 text-rose-400" />
+              </div>
+
+              <div className="text-left flex-1">
+                <DialogTitle className="font-serif font-bold text-base text-[#FFF4D4]">
+                  Remove Binder from Packet?
+                </DialogTitle>
+                <p className="text-xs text-[#C6B697] mt-1.5 leading-relaxed">
+                  Are you sure you want to remove{" "}
+                  <span className="text-[#FFE394] font-bold">
+                    "{binderPendingRemoval?.page.title}"
+                  </span>{" "}
+                  from the state complaint packet?
+                </p>
+              </div>
+            </DialogHeader>
+
+            <div className="p-3 my-2 rounded-lg bg-[#020A17]/80 border border-[#3A2C18] text-xs text-[#A69371] leading-relaxed">
+              <span className="text-[#FFE394] font-medium block mb-1">
+                ✓ Automatic Page Renumbering Guarantee:
+              </span>
+              All remaining binders and continuous docket page numbers will automatically shift up and recalculate without gaps. You can re-add this binder anytime from the packet manager.
+            </div>
+
+            <DialogFooter className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#3A2C18]">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setBinderPendingRemoval(null)}
+                className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] text-xs h-8"
+              >
+                No, Keep Binder
+              </Button>
+
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleConfirmRemoveBinder}
+                className="bg-rose-600 hover:bg-rose-500 text-white font-serif font-bold text-xs h-8 px-4 shadow-md transition-all cursor-pointer"
+              >
+                Yes, Remove Binder
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* ── PRINT MEDIA STYLES & PRINT DOCKET ───────────────────────────────── */}
         <style>{`
           @media print {
@@ -4566,18 +5076,36 @@ This document is incorporated herein and submitted in direct support of Complain
               box-sizing: border-box !important;
               transform: none !important;
             }
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
             .print-state-form-page {
-              padding: 0.15in 0.2in !important;
-              min-height: auto !important;
+              padding: 0 !important;
+              margin: 0 !important;
+              width: 8.5in !important;
+              height: 11in !important;
               display: flex !important;
               flex-direction: column !important;
               align-items: center !important;
               justify-content: center !important;
+              page-break-after: always !important;
+              break-after: page !important;
+              background: #ffffff !important;
+              box-sizing: border-box !important;
+            }
+            .print-state-form-page > div {
+              width: 8.16in !important;
+              height: 10.56in !important;
+              max-width: 8.16in !important;
+              border: none !important;
+              box-shadow: none !important;
+              margin: 0 !important;
             }
             .print-state-form-page img {
               width: 100% !important;
-              max-width: 8.2in !important;
-              height: auto !important;
+              height: 100% !important;
+              object-fit: contain !important;
               display: block !important;
             }
           }
@@ -4594,10 +5122,14 @@ This document is incorporated herein and submitted in direct support of Complain
                         key={`print-state-form-p${sIdx + 1}`}
                         className="print-packet-sheet print-state-form-page font-serif"
                       >
-                        <img
-                          src={sPage.dataUrl}
-                          alt={`Official Georgia State Complaint Form Page ${sIdx + 1}`}
-                          className="w-full h-auto object-contain block mx-auto"
+                        <StateComplaintFormPage
+                          page={sPage}
+                          pageIdx={sIdx}
+                          formState={officialFormState}
+                          readOnly={true}
+                          isPrint={true}
+                          viewMode="actual"
+                          className="border-0 shadow-none"
                         />
                       </div>
                     ))}

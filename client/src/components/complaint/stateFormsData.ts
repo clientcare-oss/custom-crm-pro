@@ -162,10 +162,21 @@ export interface OfficialComplaintFormState {
   serviceMethod: string;
   signatureName: string;
   signatureDate: string;
+  signatureDataUrl?: string;
+  signatureStyle?: string;
+  signatureScale?: number;
+  signatureOffsetY?: number;
+  signatureOffsetX?: number;
+  signatureType?: "type" | "draw";
 }
 
 export const INITIAL_GADOE_FORM_STATE: OfficialComplaintFormState = {
   stateCode: "GA",
+  signatureScale: 1.35,
+  signatureOffsetY: 0,
+  signatureOffsetX: 0,
+  signatureType: "type",
+  signatureStyle: "dancing-script",
   publicAgency: "[District Not Found on Record]",
   complainantName: "Byron Honea",
   complainantRelationship: "Authorized Special Education Advocate / Representative",
@@ -202,7 +213,7 @@ export const INITIAL_GADOE_FORM_STATE: OfficialComplaintFormState = {
   mediationWillingness: "yes",
   serviceDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }),
   serviceRecipient: "Special Education Director & Superintendent",
-  serviceMethod: "Certified Mail & Electronic Delivery",
+  serviceMethod: "Electronic Delivery",
   signatureName: "Byron Honea",
   signatureDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }),
 };
