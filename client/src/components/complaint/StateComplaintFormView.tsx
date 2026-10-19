@@ -85,10 +85,10 @@ export function StateComplaintFormPage({
   return (
     <div
       style={{
-        width: isPrint ? "100%" : viewMode === "actual" ? "816px" : "100%",
-        maxWidth: isPrint ? "100%" : "840px",
-        height: isPrint ? "100%" : undefined,
-        aspectRatio: isPrint ? undefined : "612 / 792",
+        width: isPrint ? "8.5in" : viewMode === "actual" ? "816px" : "100%",
+        maxWidth: isPrint ? "8.5in" : "840px",
+        height: isPrint ? "11in" : undefined,
+        aspectRatio: isPrint ? "8.5 / 11" : "612 / 792",
         transform:
           !isPrint && viewMode === "fit-page"
             ? "scale(0.85)"
@@ -99,9 +99,9 @@ export function StateComplaintFormPage({
         ...style,
       }}
       className={cn(
-        "relative select-text bg-white text-black shrink-0 overflow-hidden",
+        "state-form-sheet-root relative select-text bg-white text-black shrink-0 overflow-hidden",
         isPrint
-          ? "border-0 shadow-none m-0 p-0 w-full h-full"
+          ? "border-0 shadow-none m-0 p-0"
           : "rounded-xs border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)]",
         viewMode === "fit-width" && !isPrint && "w-full max-w-[840px]",
         viewMode === "fit-page" && !isPrint && "w-[calc((100vh-175px)*(8.5/11))] max-w-full my-auto",

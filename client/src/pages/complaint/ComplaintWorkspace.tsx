@@ -2267,19 +2267,42 @@ This document is incorporated herein and submitted in direct support of Complain
     }
   };
 
-  // PDF Export
-  const handleExportPdf = async () => {
-    toast.success("Compiling official Georgia State Complaint PDF with exhibits...");
+  // Print Scope state: "all" for complete docket packet (14 pages), "form-only" for 4-page official state form
+  const [printScope, setPrintScope] = useState<"all" | "form-only">("all");
+
+  const handlePrintFormOnly = async () => {
+    setPrintScope("form-only");
+    toast.success("Preparing 4-page Official Georgia State Complaint Form for print...");
     if (stateFormPages.length === 0) {
       await renderFilledStateFormPages(officialFormState);
       setTimeout(() => {
         window.print();
-      }, 600);
+      }, 500);
       return;
     }
     setTimeout(() => {
       window.print();
-    }, 200);
+    }, 150);
+  };
+
+  const handlePrintAll = async () => {
+    setPrintScope("all");
+    toast.success("Preparing complete 14-page State Complaint Filing Packet for print...");
+    if (stateFormPages.length === 0) {
+      await renderFilledStateFormPages(officialFormState);
+      setTimeout(() => {
+        window.print();
+      }, 500);
+      return;
+    }
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  // PDF Export
+  const handleExportPdf = async () => {
+    await handlePrintAll();
   };
 
   // Save Draft
@@ -2464,11 +2487,26 @@ This document is incorporated herein and submitted in direct support of Complain
               <span>Compile</span>
             </Button>
 
+            {activePageId === "cover" && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handlePrintFormOnly}
+                className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] gap-1.5 text-xs h-8 px-2.5 cursor-pointer rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(0,0,0,0.5)] hidden md:flex"
+                title="Print strictly the 4 pages of the Official GaDOE State Complaint Form"
+              >
+                <FileText className="w-3.5 h-3.5 text-[#FFE394]" />
+                <span>Form (4 Pgs)</span>
+              </Button>
+            )}
+
             <Button
               type="button"
               size="sm"
               onClick={handleExportPdf}
               className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-3 sm:px-4 gap-1.5 rounded-md border border-[#FFE394]/70 shadow-[0_3px_12px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.7)] hover:brightness-105 cursor-pointer"
+              title="Print Complete Complaint Filing Packet (14 Pages)"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export PDF</span>
@@ -4637,12 +4675,25 @@ This document is incorporated herein and submitted in direct support of Complain
 
                   <Button
                     type="button"
+                    variant="outline"
                     size="sm"
-                    onClick={handleExportPdf}
-                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-7.5 px-3 gap-1.5 cursor-pointer"
+                    onClick={handlePrintFormOnly}
+                    className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] text-xs h-7.5 px-3 gap-1.5 cursor-pointer rounded-md shadow-sm"
+                    title="Print strictly the 4 pages of the Official GaDOE State Complaint Form"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-[#FFE394]" />
+                    <span>State Form (4 Pgs)</span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handlePrintAll}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-7.5 px-3 gap-1.5 cursor-pointer rounded-md shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                    title="Print complete filing packet with all sections and exhibits"
                   >
                     <Printer className="w-3.5 h-3.5" />
-                    <span>Print / Save as PDF</span>
+                    <span>Print Full Packet ({totalDocketPages} Pgs)</span>
                   </Button>
                 </div>
               </div>
@@ -5036,21 +5087,31 @@ This document is incorporated herein and submitted in direct support of Complain
               background: #ffffff !important;
               color: #000000 !important;
               width: 8.5in !important;
-              height: auto !important;
-              min-height: 100% !important;
+              min-width: 8.5in !important;
+              max-width: 8.5in !important;
               margin: 0 !important;
               padding: 0 !important;
               overflow: visible !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
-            #root, #root > div, div[class*="overflow-hidden"], div[class*="h-"] {
+            header, nav, aside, dialog, [role="dialog"], button, .no-print {
+              display: none !important;
+            }
+            #root,
+            #root > div {
               height: auto !important;
               min-height: 0 !important;
               max-height: none !important;
               overflow: visible !important;
               position: static !important;
+              background: #ffffff !important;
+              padding: 0 !important;
+              margin: 0 !important;
+              border: none !important;
             }
             body * {
-              visibility: hidden !important;
+              visibility: hidden;
             }
             #state-complaint-print-docket,
             #state-complaint-print-docket * {
@@ -5058,27 +5119,32 @@ This document is incorporated herein and submitted in direct support of Complain
             }
             #state-complaint-print-docket {
               display: block !important;
-              position: static !important;
+              position: absolute !important;
+              top: 0 !important;
+              left: 0 !important;
               width: 8.5in !important;
               max-width: 8.5in !important;
-              margin: 0 auto !important;
+              min-width: 8.5in !important;
+              margin: 0 !important;
               padding: 0 !important;
               background: #ffffff !important;
               color: #000000 !important;
               overflow: visible !important;
+              z-index: 999999 !important;
             }
             .print-packet-sheet {
               display: block !important;
               width: 8.5in !important;
+              min-width: 8.5in !important;
               max-width: 8.5in !important;
               height: 11in !important;
-              max-height: 11in !important;
               min-height: 11in !important;
+              max-height: 11in !important;
               margin: 0 !important;
               padding: 0 !important;
               page-break-after: always !important;
-              page-break-inside: avoid !important;
               break-after: page !important;
+              page-break-inside: avoid !important;
               break-inside: avoid !important;
               background: #ffffff !important;
               color: #000000 !important;
@@ -5086,10 +5152,62 @@ This document is incorporated herein and submitted in direct support of Complain
               position: relative !important;
               overflow: hidden !important;
             }
+            .print-state-form-page {
+              padding: 0 !important;
+              margin: 0 !important;
+              width: 8.5in !important;
+              height: 11in !important;
+              max-width: 8.5in !important;
+              max-height: 11in !important;
+              min-height: 11in !important;
+              display: block !important;
+              background: #ffffff !important;
+              box-sizing: border-box !important;
+              position: relative !important;
+              overflow: hidden !important;
+            }
+            .print-state-form-page .state-form-sheet-root,
+            .print-state-form-page > div {
+              width: 8.5in !important;
+              height: 11in !important;
+              max-width: 8.5in !important;
+              max-height: 11in !important;
+              border: none !important;
+              box-shadow: none !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              position: relative !important;
+              overflow: hidden !important;
+              background: #ffffff !important;
+              transform: none !important;
+            }
+            .print-state-form-page img {
+              position: absolute !important;
+              top: 0 !important;
+              left: 0 !important;
+              width: 8.5in !important;
+              height: 11in !important;
+              max-width: 8.5in !important;
+              max-height: 11in !important;
+              object-fit: fill !important;
+              display: block !important;
+              z-index: 1 !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            .print-state-form-page [style*="position: absolute"],
+            .print-state-form-page .absolute {
+              position: absolute !important;
+              z-index: 20 !important;
+            }
             .print-cover-page-wrapper {
               padding: 0 !important;
               margin: 0 !important;
               background: #ffffff !important;
+              width: 8.5in !important;
+              height: 11in !important;
+              max-height: 11in !important;
+              overflow: hidden !important;
             }
             .print-cover-page-wrapper .binder-cover-page-sheet {
               background-color: #ffffff !important;
@@ -5102,52 +5220,52 @@ This document is incorporated herein and submitted in direct support of Complain
               height: 11in !important;
               max-height: 11in !important;
               margin: 0 !important;
-              padding: 0.75in !important;
+              padding: 0.65in 0.75in !important;
               box-sizing: border-box !important;
               transform: none !important;
               overflow: hidden !important;
             }
+            .print-content-sheet {
+              width: 8.5in !important;
+              max-width: 8.5in !important;
+              height: 11in !important;
+              max-height: 11in !important;
+              margin: 0 !important;
+              padding: 0.65in 0.75in !important;
+              box-sizing: border-box !important;
+              overflow: hidden !important;
+              display: flex !important;
+              flex-direction: column !important;
+              justify-content: space-between !important;
+              background: #ffffff !important;
+            }
+            .print-exhibit-page-sheet {
+              width: 8.5in !important;
+              max-width: 8.5in !important;
+              height: 11in !important;
+              max-height: 11in !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              box-sizing: border-box !important;
+              overflow: hidden !important;
+              position: relative !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              background: #ffffff !important;
+            }
+            .print-exhibit-page-sheet img {
+              max-width: 8.5in !important;
+              max-height: 11in !important;
+              width: auto !important;
+              height: auto !important;
+              object-fit: contain !important;
+              display: block !important;
+              margin: auto !important;
+            }
             * {
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
-            }
-            .print-state-form-page {
-              padding: 0 !important;
-              margin: 0 !important;
-              width: 8.5in !important;
-              height: 11in !important;
-              max-width: 8.5in !important;
-              max-height: 11in !important;
-              min-height: 11in !important;
-              display: block !important;
-              page-break-after: always !important;
-              page-break-inside: avoid !important;
-              break-after: page !important;
-              break-inside: avoid !important;
-              background: #ffffff !important;
-              box-sizing: border-box !important;
-              position: relative !important;
-              overflow: hidden !important;
-            }
-            .print-state-form-page > div {
-              width: 100% !important;
-              height: 100% !important;
-              max-width: 100% !important;
-              max-height: 100% !important;
-              border: none !important;
-              box-shadow: none !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              position: relative !important;
-              overflow: hidden !important;
-            }
-            .print-state-form-page img {
-              width: 100% !important;
-              height: 100% !important;
-              max-width: 100% !important;
-              max-height: 100% !important;
-              object-fit: fill !important;
-              display: block !important;
             }
             #state-complaint-print-docket input,
             #state-complaint-print-docket textarea,
@@ -5167,160 +5285,180 @@ This document is incorporated herein and submitted in direct support of Complain
         `}</style>
 
         <div id="state-complaint-print-docket" className="hidden print:block">
-          {pages.map((p, idx) => {
-            if (p.id === "cover") {
-              if (stateFormPages.length > 0) {
+          {printScope === "form-only" ? (
+            /* Print strictly the 4 State Form pages */
+            stateFormPages.map((sPage, sIdx) => (
+              <div
+                key={`print-state-form-only-p${sIdx + 1}`}
+                className="print-packet-sheet print-state-form-page font-serif"
+              >
+                <StateComplaintFormPage
+                  page={sPage}
+                  pageIdx={sIdx}
+                  formState={officialFormState}
+                  readOnly={true}
+                  isPrint={true}
+                  viewMode="actual"
+                  className="border-0 shadow-none"
+                />
+              </div>
+            ))
+          ) : (
+            /* Print the complete filing packet (14 pages) in exact 1-to-14 order */
+            pages.map((p, idx) => {
+              if (p.id === "cover") {
+                if (stateFormPages.length > 0) {
+                  return (
+                    <React.Fragment key={`print-state-forms`}>
+                      {stateFormPages.map((sPage, sIdx) => (
+                        <div
+                          key={`print-state-form-p${sIdx + 1}`}
+                          className="print-packet-sheet print-state-form-page font-serif"
+                        >
+                          <StateComplaintFormPage
+                            page={sPage}
+                            pageIdx={sIdx}
+                            formState={officialFormState}
+                            readOnly={true}
+                            isPrint={true}
+                            viewMode="actual"
+                            className="border-0 shadow-none"
+                          />
+                        </div>
+                      ))}
+                    </React.Fragment>
+                  );
+                }
                 return (
-                  <React.Fragment key={`print-state-forms`}>
-                    {stateFormPages.map((sPage, sIdx) => (
-                      <div
-                        key={`print-state-form-p${sIdx + 1}`}
-                        className="print-packet-sheet print-state-form-page font-serif"
-                      >
-                        <StateComplaintFormPage
-                          page={sPage}
-                          pageIdx={sIdx}
-                          formState={officialFormState}
-                          readOnly={true}
-                          isPrint={true}
-                          viewMode="actual"
-                          className="border-0 shadow-none"
-                        />
+                  <div key={`print-${p.id}`} className="print-packet-sheet font-serif p-10">
+                    <div className="text-center border-b-2 border-black pb-3 mb-6">
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-800">
+                        GEORGIA DEPARTMENT OF EDUCATION
+                      </h3>
+                      <h4 className="text-xs font-bold text-slate-600 mt-1">
+                        DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
+                      </h4>
+                      <h2 className="text-xl font-black uppercase mt-3 tracking-wide">
+                        SPECIAL EDUCATION FORMAL COMPLAINT FILING DOCKET
+                      </h2>
+                      <p className="text-xs italic mt-1 text-slate-600">
+                        Filed pursuant to 34 C.F.R. §§ 300.151–300.153 and Ga. Comp. R. & Regs. 160-4-7-.12
+                      </p>
+                    </div>
+
+                    <div className="border border-slate-700 p-4 rounded mb-6 text-xs">
+                      <div className="grid grid-cols-[180px_1fr] gap-y-2 text-left">
+                        <div className="font-bold">STUDENT:</div>
+                        <div>{caseDetails.studentName?.replace(/^IN\s+RE:\s*/i, "")} (DOB: {caseDetails.studentDob || "N/A"})</div>
+                        <div className="font-bold">PUBLIC AGENCY / LEA:</div>
+                        <div>{caseDetails.district}</div>
+                        <div className="font-bold">ASSIGNED SCHOOL:</div>
+                        <div>{caseDetails.school} (Grade: {caseDetails.grade})</div>
+                        <div className="font-bold">COMPLAINANT / ADVOCATE:</div>
+                        <div>{caseDetails.preparedBy} on behalf of Parent / Guardian</div>
+                        <div className="font-bold">DATE OF FILING:</div>
+                        <div>{caseDetails.submissionDate}</div>
+                        <div className="font-bold">ATTACHED STATE FORM:</div>
+                        <div>Official GaDOE Formal Complaint Filing Form (4 Pages) attached as Section 01</div>
                       </div>
-                    ))}
-                  </React.Fragment>
+                    </div>
+
+                    <div className="text-xs leading-relaxed text-slate-800">
+                      <p><strong>FORMAL NOTICE OF FILING:</strong> This state complaint filing packet comprises Section 01 (Official Georgia Department of Education Formal Complaint Form), followed by Section 02 (Clarity Control Restatement of Issues & Statutory Violations), Section 03 (Chronological Summary of Facts), Section 04 (Master Evidentiary Exhibit Index), and attached documentary exhibits in indexed alphabetical order.</p>
+                    </div>
+                  </div>
                 );
               }
+
+              const range = getBinderPageRange(idx, pages);
               return (
-                <div key={`print-${p.id}`} className="print-packet-sheet font-serif p-10">
-                  <div className="text-center border-b-2 border-black pb-3 mb-6">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-800">
-                      GEORGIA DEPARTMENT OF EDUCATION
-                    </h3>
-                    <h4 className="text-xs font-bold text-slate-600 mt-1">
-                      DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
-                    </h4>
-                    <h2 className="text-xl font-black uppercase mt-3 tracking-wide">
-                      SPECIAL EDUCATION FORMAL COMPLAINT FILING DOCKET
-                    </h2>
-                    <p className="text-xs italic mt-1 text-slate-600">
-                      Filed pursuant to 34 C.F.R. §§ 300.151–300.153 and Ga. Comp. R. & Regs. 160-4-7-.12
-                    </p>
+                <React.Fragment key={`print-${p.id}`}>
+                  {/* Print Sheet 1: Official Standardized Binder Cover Page on White Paper */}
+                  <div className="print-packet-sheet print-cover-page-wrapper">
+                    <BinderCoverPage
+                      pageId={p.id}
+                      title={p.title}
+                      category={p.category}
+                      sectionNumber={`Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1}`}
+                      coverPageNumber={range.coverPage}
+                      totalDocketPages={totalDocketPages}
+                      studentName={caseDetails.studentName}
+                      studentDob={caseDetails.studentDob}
+                      grade={caseDetails.grade}
+                      school={caseDetails.school}
+                      district={caseDetails.district}
+                      preparedBy={caseDetails.preparedBy}
+                      submissionDate={caseDetails.submissionDate}
+                      agencyName={SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"}
+                      paperTheme="white"
+                      viewMode="actual"
+                    />
                   </div>
 
-                  <div className="border border-slate-700 p-4 rounded mb-6 text-xs">
-                    <div className="grid grid-cols-[180px_1fr] gap-y-2 text-left">
-                      <div className="font-bold">STUDENT:</div>
-                      <div>{caseDetails.studentName?.replace(/^IN\s+RE:\s*/i, "")} (DOB: {caseDetails.studentDob || "N/A"})</div>
-                      <div className="font-bold">PUBLIC AGENCY / LEA:</div>
-                      <div>{caseDetails.district}</div>
-                      <div className="font-bold">ASSIGNED SCHOOL:</div>
-                      <div>{caseDetails.school} (Grade: {caseDetails.grade})</div>
-                      <div className="font-bold">COMPLAINANT / ADVOCATE:</div>
-                      <div>{caseDetails.preparedBy} on behalf of Parent / Guardian</div>
-                      <div className="font-bold">DATE OF FILING:</div>
-                      <div>{caseDetails.submissionDate}</div>
-                      <div className="font-bold">ATTACHED STATE FORM:</div>
-                      <div>Official GaDOE Formal Complaint Filing Form (4 Pages) attached as Section 01</div>
+                  {/* Print Sheet 2+ : Clean Real Exhibit PDF Pages OR Document Content Sheet */}
+                  {p.category === "exhibit" ? (
+                    p.renderedPages && p.renderedPages.length > 0 ? (
+                      p.renderedPages.map((pdfPage) => {
+                        return (
+                          <div
+                            key={`print-${p.id}-p${pdfPage.pageNumber}`}
+                            className="print-packet-sheet print-exhibit-page-sheet"
+                          >
+                            <img
+                              src={pdfPage.dataUrl}
+                              alt={`Exhibit Page ${pdfPage.pageNumber}`}
+                              className="max-w-full max-h-full object-contain block mx-auto bg-white m-0 p-0"
+                            />
+                            {(p.highlights || [])
+                              .filter((h) => h.pageNumber === pdfPage.pageNumber)
+                              .map((h) => {
+                                const colorDef = HIGHLIGHT_COLOR_MAP[h.color] || HIGHLIGHT_COLOR_MAP.yellow;
+                                return (
+                                  <div
+                                    key={`print-hl-${h.id}`}
+                                    style={{
+                                      position: "absolute",
+                                      left: `${h.x}%`,
+                                      top: `${h.y}%`,
+                                      width: `${h.width}%`,
+                                      height: `${h.height}%`,
+                                      backgroundColor: colorDef.fill,
+                                      borderBottom: `1.5px solid ${colorDef.border}`,
+                                      mixBlendMode: "multiply",
+                                      pointerEvents: "none",
+                                      borderRadius: "2px",
+                                    }}
+                                  />
+                                );
+                              })}
+                          </div>
+                        );
+                      })
+                    ) : null
+                  ) : (
+                    /* Print Sheet 2: Document Content Sheet on White Paper */
+                    <div className="print-packet-sheet print-content-sheet font-serif">
+                      <div className="flex justify-between items-center border-b border-black pb-2 mb-3 text-xs font-sans shrink-0">
+                        <span className="font-bold uppercase tracking-wider">
+                          Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}
+                        </span>
+                        <span className="font-mono font-bold">
+                          Page {range.contentPage} of {totalDocketPages}
+                        </span>
+                      </div>
+                      <div className="text-[12px] leading-relaxed whitespace-pre-wrap text-justify font-serif flex-1 text-black overflow-hidden">
+                        {p.content}
+                      </div>
+                      <div className="border-t border-black pt-2 flex justify-between text-[11px] font-mono mt-3 shrink-0">
+                        <span>{SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint</span>
+                        <span>Page {range.contentPage} of {totalDocketPages}</span>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="text-xs leading-relaxed text-slate-800">
-                    <p><strong>FORMAL NOTICE OF FILING:</strong> This state complaint filing packet comprises Section 01 (Official Georgia Department of Education Formal Complaint Form), followed by Section 02 (Clarity Control Restatement of Issues & Statutory Violations), Section 03 (Chronological Summary of Facts), Section 04 (Master Evidentiary Exhibit Index), and attached documentary exhibits in indexed alphabetical order.</p>
-                  </div>
-                </div>
+                  )}
+                </React.Fragment>
               );
-            }
-
-            const range = getBinderPageRange(idx, pages);
-            return (
-              <React.Fragment key={`print-${p.id}`}>
-                {/* Print Sheet 1: Official Standardized Binder Cover Page on White Paper */}
-                <div className="print-packet-sheet print-cover-page-wrapper">
-                  <BinderCoverPage
-                    pageId={p.id}
-                    title={p.title}
-                    category={p.category}
-                    sectionNumber={`Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1}`}
-                    coverPageNumber={range.coverPage}
-                    totalDocketPages={totalDocketPages}
-                    studentName={caseDetails.studentName}
-                    studentDob={caseDetails.studentDob}
-                    grade={caseDetails.grade}
-                    school={caseDetails.school}
-                    district={caseDetails.district}
-                    preparedBy={caseDetails.preparedBy}
-                    submissionDate={caseDetails.submissionDate}
-                    agencyName={SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"}
-                    paperTheme="white"
-                    viewMode="actual"
-                  />
-                </div>
-
-                {/* Print Sheet 2+ : Clean Real Exhibit PDF Pages (No Stamped Headers, No Stamped Footers, No Padding) */}
-                {p.category === "exhibit" ? (
-                  p.renderedPages && p.renderedPages.length > 0 ? (
-                    p.renderedPages.map((pdfPage) => {
-                      return (
-                        <div
-                          key={`print-${p.id}-p${pdfPage.pageNumber}`}
-                          className="print-packet-sheet relative p-0 m-0 bg-white flex items-center justify-center"
-                          style={{ minHeight: "10.5in", pageBreakAfter: "always" }}
-                        >
-                          <img
-                            src={pdfPage.dataUrl}
-                            alt={`Exhibit Page ${pdfPage.pageNumber}`}
-                            className="w-full h-auto block mx-auto bg-white m-0 p-0"
-                          />
-                          {(p.highlights || [])
-                            .filter((h) => h.pageNumber === pdfPage.pageNumber)
-                            .map((h) => {
-                              const colorDef = HIGHLIGHT_COLOR_MAP[h.color] || HIGHLIGHT_COLOR_MAP.yellow;
-                              return (
-                                <div
-                                  key={`print-hl-${h.id}`}
-                                  style={{
-                                    position: "absolute",
-                                    left: `${h.x}%`,
-                                    top: `${h.y}%`,
-                                    width: `${h.width}%`,
-                                    height: `${h.height}%`,
-                                    backgroundColor: colorDef.fill,
-                                    borderBottom: `1.5px solid ${colorDef.border}`,
-                                    mixBlendMode: "multiply",
-                                    pointerEvents: "none",
-                                    borderRadius: "2px",
-                                  }}
-                                />
-                              );
-                            })}
-                        </div>
-                      );
-                    })
-                  ) : null
-                ) : (
-                  /* Print Sheet 2: Document Content Sheet on White Paper */
-                  <div className="print-packet-sheet font-serif px-12 py-10 flex flex-col justify-between" style={{ minHeight: "10.5in", pageBreakAfter: "always" }}>
-                    <div className="flex justify-between items-center border-b border-black pb-2 mb-4 text-xs font-sans">
-                      <span className="font-bold uppercase tracking-wider">
-                        Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}
-                      </span>
-                      <span className="font-mono font-bold">
-                        Page {range.contentPage} of {totalDocketPages}
-                      </span>
-                    </div>
-                    <div className="text-[13px] leading-relaxed whitespace-pre-wrap text-justify font-serif flex-1 text-black">
-                      {p.content}
-                    </div>
-                    <div className="border-t border-black pt-2 flex justify-between text-[11px] font-mono mt-4">
-                      <span>{SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint</span>
-                      <span>Page {range.contentPage} of {totalDocketPages}</span>
-                    </div>
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
+            })
+          )}
         </div>
 
       </div>
