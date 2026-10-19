@@ -2268,18 +2268,18 @@ This document is incorporated herein and submitted in direct support of Complain
   };
 
   // PDF Export
-  const handleExportPdf = () => {
+  const handleExportPdf = async () => {
     toast.success("Compiling official Georgia State Complaint PDF with exhibits...");
     if (stateFormPages.length === 0) {
-      renderFilledStateFormPages(officialFormState);
+      await renderFilledStateFormPages(officialFormState);
       setTimeout(() => {
         window.print();
-      }, 800);
+      }, 600);
       return;
     }
     setTimeout(() => {
       window.print();
-    }, 400);
+    }, 200);
   };
 
   // Save Draft
@@ -5027,10 +5027,27 @@ This document is incorporated herein and submitted in direct support of Complain
 
         {/* ── PRINT MEDIA STYLES & PRINT DOCKET ───────────────────────────────── */}
         <style>{`
+          @page {
+            size: letter portrait;
+            margin: 0;
+          }
           @media print {
-            body {
+            html, body {
               background: #ffffff !important;
               color: #000000 !important;
+              width: 8.5in !important;
+              height: auto !important;
+              min-height: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: visible !important;
+            }
+            #root, #root > div, div[class*="overflow-hidden"], div[class*="h-"] {
+              height: auto !important;
+              min-height: 0 !important;
+              max-height: none !important;
+              overflow: visible !important;
+              position: static !important;
             }
             body * {
               visibility: hidden !important;
@@ -5041,21 +5058,33 @@ This document is incorporated herein and submitted in direct support of Complain
             }
             #state-complaint-print-docket {
               display: block !important;
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              width: 100% !important;
+              position: static !important;
+              width: 8.5in !important;
+              max-width: 8.5in !important;
+              margin: 0 auto !important;
+              padding: 0 !important;
               background: #ffffff !important;
               color: #000000 !important;
-              margin: 0 !important;
-              padding: 0 !important;
+              overflow: visible !important;
             }
             .print-packet-sheet {
+              display: block !important;
+              width: 8.5in !important;
+              max-width: 8.5in !important;
+              height: 11in !important;
+              max-height: 11in !important;
+              min-height: 11in !important;
+              margin: 0 !important;
+              padding: 0 !important;
               page-break-after: always !important;
+              page-break-inside: avoid !important;
               break-after: page !important;
+              break-inside: avoid !important;
               background: #ffffff !important;
               color: #000000 !important;
               box-sizing: border-box !important;
+              position: relative !important;
+              overflow: hidden !important;
             }
             .print-cover-page-wrapper {
               padding: 0 !important;
@@ -5067,14 +5096,16 @@ This document is incorporated herein and submitted in direct support of Complain
               background-image: none !important;
               box-shadow: none !important;
               border: none !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              min-height: 10.5in !important;
-              height: 10.5in !important;
+              width: 8.5in !important;
+              max-width: 8.5in !important;
+              min-height: 11in !important;
+              height: 11in !important;
+              max-height: 11in !important;
               margin: 0 !important;
               padding: 0.75in !important;
               box-sizing: border-box !important;
               transform: none !important;
+              overflow: hidden !important;
             }
             * {
               -webkit-print-color-adjust: exact !important;
@@ -5085,33 +5116,57 @@ This document is incorporated herein and submitted in direct support of Complain
               margin: 0 !important;
               width: 8.5in !important;
               height: 11in !important;
-              display: flex !important;
-              flex-direction: column !important;
-              align-items: center !important;
-              justify-content: center !important;
+              max-width: 8.5in !important;
+              max-height: 11in !important;
+              min-height: 11in !important;
+              display: block !important;
               page-break-after: always !important;
+              page-break-inside: avoid !important;
               break-after: page !important;
+              break-inside: avoid !important;
               background: #ffffff !important;
               box-sizing: border-box !important;
+              position: relative !important;
+              overflow: hidden !important;
             }
             .print-state-form-page > div {
-              width: 8.16in !important;
-              height: 10.56in !important;
-              max-width: 8.16in !important;
+              width: 100% !important;
+              height: 100% !important;
+              max-width: 100% !important;
+              max-height: 100% !important;
               border: none !important;
               box-shadow: none !important;
               margin: 0 !important;
+              padding: 0 !important;
+              position: relative !important;
+              overflow: hidden !important;
             }
             .print-state-form-page img {
               width: 100% !important;
               height: 100% !important;
-              object-fit: contain !important;
+              max-width: 100% !important;
+              max-height: 100% !important;
+              object-fit: fill !important;
               display: block !important;
+            }
+            #state-complaint-print-docket input,
+            #state-complaint-print-docket textarea,
+            #state-complaint-print-docket span,
+            #state-complaint-print-docket div,
+            #state-complaint-print-docket a,
+            #state-complaint-print-docket p {
+              color: #000000 !important;
+              -webkit-text-fill-color: #000000 !important;
+              text-decoration: none !important;
+              border-bottom: none !important;
+              border: none !important;
+              outline: none !important;
+              box-shadow: none !important;
             }
           }
         `}</style>
 
-        <div id="state-complaint-print-docket" className="hidden">
+        <div id="state-complaint-print-docket" className="hidden print:block">
           {pages.map((p, idx) => {
             if (p.id === "cover") {
               if (stateFormPages.length > 0) {

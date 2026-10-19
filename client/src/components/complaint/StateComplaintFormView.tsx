@@ -26,10 +26,10 @@ const GADOE_PDF_URL = "/forms/gadoe-formal-complaint-form.pdf";
 
 // Clear, transparent styles for print preview and physical print output
 const READONLY_INPUT_CLASS =
-  "bg-transparent border-0 rounded-none px-1.5 pt-0.5 pb-[2px] text-xs sm:text-[13px] font-sans text-slate-900 leading-none flex items-end overflow-hidden z-20 select-text";
+  "bg-transparent border-0 border-b-0 rounded-none px-1.5 pt-0.5 pb-[2px] text-xs sm:text-[13px] font-sans text-black no-underline leading-none flex items-end overflow-hidden z-20 select-text";
 
 const READONLY_TEXTAREA_CLASS =
-  "bg-transparent border-0 rounded-none p-2.5 text-xs sm:text-[13px] font-sans text-slate-900 leading-relaxed overflow-hidden whitespace-pre-wrap select-text z-20";
+  "bg-transparent border-0 border-b-0 rounded-none p-2.5 text-xs sm:text-[13px] font-sans text-black no-underline leading-relaxed overflow-hidden whitespace-pre-wrap select-text z-20";
 
 const READONLY_CHECK_CLASS =
   "flex items-center justify-center bg-transparent border-0 z-20";
@@ -85,9 +85,10 @@ export function StateComplaintFormPage({
   return (
     <div
       style={{
-        width: viewMode === "actual" || isPrint ? "816px" : "100%",
-        maxWidth: isPrint ? "816px" : "840px",
-        aspectRatio: "612 / 792",
+        width: isPrint ? "100%" : viewMode === "actual" ? "816px" : "100%",
+        maxWidth: isPrint ? "100%" : "840px",
+        height: isPrint ? "100%" : undefined,
+        aspectRatio: isPrint ? undefined : "612 / 792",
         transform:
           !isPrint && viewMode === "fit-page"
             ? "scale(0.85)"
@@ -98,9 +99,9 @@ export function StateComplaintFormPage({
         ...style,
       }}
       className={cn(
-        "relative select-text bg-white text-[#1A120A] shrink-0 overflow-hidden",
+        "relative select-text bg-white text-black shrink-0 overflow-hidden",
         isPrint
-          ? "border-0 shadow-none m-0 p-0"
+          ? "border-0 shadow-none m-0 p-0 w-full h-full"
           : "rounded-xs border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)]",
         viewMode === "fit-width" && !isPrint && "w-full max-w-[840px]",
         viewMode === "fit-page" && !isPrint && "w-[calc((100vh-175px)*(8.5/11))] max-w-full my-auto",
@@ -108,17 +109,21 @@ export function StateComplaintFormPage({
         className
       )}
     >
-      {/* Corner Registration Tick Marks */}
-      <div className="absolute top-6 left-6 w-3 h-3 border-t border-l border-[#8C7A60]/40 pointer-events-none z-10" />
-      <div className="absolute top-6 right-6 w-3 h-3 border-t border-r border-[#8C7A60]/40 pointer-events-none z-10" />
-      <div className="absolute bottom-6 left-6 w-3 h-3 border-b border-l border-[#8C7A60]/40 pointer-events-none z-10" />
-      <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#8C7A60]/40 pointer-events-none z-10" />
+      {/* Corner Registration Tick Marks (Hidden during print) */}
+      {!isPrint && (
+        <>
+          <div className="absolute top-6 left-6 w-3 h-3 border-t border-l border-[#8C7A60]/40 pointer-events-none z-10" />
+          <div className="absolute top-6 right-6 w-3 h-3 border-t border-r border-[#8C7A60]/40 pointer-events-none z-10" />
+          <div className="absolute bottom-6 left-6 w-3 h-3 border-b border-l border-[#8C7A60]/40 pointer-events-none z-10" />
+          <div className="absolute bottom-6 right-6 w-3 h-3 border-b border-r border-[#8C7A60]/40 pointer-events-none z-10" />
+        </>
+      )}
 
       {/* Base High-Resolution Official GaDOE Form Sheet Image */}
       <img
         src={page.dataUrl}
         alt={`Official State Form Page ${pageIdx + 1}`}
-        className="w-full h-full object-contain pointer-events-none select-none block"
+        className="w-full h-full object-fill pointer-events-none select-none block"
       />
 
       {/* ── PAGE 1: PUBLIC AGENCY, COMPLAINANT, STUDENT & PARENT FIELDS ── */}
