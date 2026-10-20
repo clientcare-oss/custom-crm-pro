@@ -6,6 +6,9 @@ import {
   paginateTextContent,
   getBinderContentPageCount,
   syncExhibitIndexTableOfSections,
+  formatExhibitIndexHighlights,
+  extractCleanExhibitTitle,
+  generateMasterExhibitIndexContent,
   STATE_FORM_PAGE_COUNT,
   PAGES_PER_BINDER,
 } from "../client/src/pages/complaint/ComplaintWorkspace";
@@ -249,39 +252,73 @@ describe("Clarity Control Restatement Auto-Restate & Mandatory Pleading (PG-020)
     expect(chronoRange.contentStart).toBe(chronoRange.coverPage + 1);
   });
 
-  it("synchronizes the Table of Sections in the Exhibit Index with dynamic multi-page ranges", () => {
-    const rawExhibitIndexContent = `FORMAL STATE COMPLAINT — EXHIBIT INDEX & DOCUMENT SCHEDULE
+  it("formats exhibit index highlight ranges according to formal Georgia filing standards", () => {
+    // Single page
+    expect(formatExhibitIndexHighlights([14])).toBe("Highlighted section: Page 14");
+    // Contiguous range
+    expect(formatExhibitIndexHighlights([14, 15, 16])).toBe("Highlighted sections: Pages 14–16");
+    // Multiple ranges / nonconsecutive pages
+    expect(formatExhibitIndexHighlights([14, 15, 16, 22, 23])).toBe("Highlighted sections: Pages 14–16, 22–23");
+    // Deduplication and sorting
+    expect(formatExhibitIndexHighlights([23, 14, 15, 14, 22, 16])).toBe("Highlighted sections: Pages 14–16, 22–23");
+    // Empty array returns null (no highlighted line rendered)
+    expect(formatExhibitIndexHighlights([])).toBeNull();
+  });
 
-================================================================================
-TABLE OF COMPLAINT FILING SECTIONS:
-================================================================================
-  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document (Pages 1–4)
-  2. CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims (Pages 5–6)
-  3. CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones (Pages 7–8)
-  4. EXHIBIT INDEX: Cover Page & Master Evidentiary Schedule (Pages 9–10)
-  5. EXHIBIT A: Cover Page & Student's IEP (Pages 11–12)
+  it("extracts clean professional legal exhibit titles without redundant prefixes or vault metadata", () => {
+    expect(extractCleanExhibitTitle("Exhibit A (Student's IEP)")).toBe("Operative IEP & Specialized Instruction Schedule");
+    expect(extractCleanExhibitTitle("Exhibit B (Evaluations)")).toBe("Psychoeducational Evaluations & Parent Written Requests");
+    expect(extractCleanExhibitTitle("Exhibit C (Communications)")).toBe("District Correspondence & Service Logs");
+    expect(extractCleanExhibitTitle("Exhibit D — Physical Therapy Evaluation")).toBe("Physical Therapy Evaluation");
+    expect(extractCleanExhibitTitle("Exhibit E: 2025_09_Speech_Therapy_Logs.pdf")).toBe("Speech Therapy Logs");
+  });
 
-================================================================================
-MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:
-================================================================================`;
-
+  it("synchronizes Master Exhibit Index as a clean formal Table of Contents with dynamic page ranges and highlights", () => {
+    const rawExhibitIndexContent = "Legacy filler text";
     const longStatement = "Paragraph text detailing ongoing statutory non-compliance and service omissions. ".repeat(40);
     const pages = [
       { id: "cover", number: "01", title: "State Form", category: "cover" },
       { id: "clarity_control", number: "02", title: "Clarity Control Restatement", category: "restatement", content: longStatement },
       { id: "chronological_summary", number: "03", title: "Chronological Summary", category: "facts", content: "Short facts." },
-      { id: "exhibit_index", number: "04", title: "Exhibit Index", category: "pleading", content: rawExhibitIndexContent },
-      { id: "exhibit_a", number: "05", title: "Exhibit A (Student's IEP)", category: "exhibit" },
+      { id: "exhibit_index", number: "04", title: "Master Exhibit Index", category: "pleading", content: rawExhibitIndexContent },
+      {
+        id: "exhibit_a",
+        number: "05",
+        title: "Exhibit A — Operative IEP & Specialized Instruction Schedule",
+        category: "exhibit",
+        exhibitTag: "Exhibit A",
+        highlights: [
+          { id: "h1", pageNumber: 3 },
+          { id: "h2", pageNumber: 4 },
+          { id: "h3", pageNumber: 5 },
+          { id: "h4", pageNumber: 11 },
+          { id: "h5", pageNumber: 12 },
+        ],
+      },
     ];
 
     const synced = syncExhibitIndexTableOfSections(rawExhibitIndexContent, pages as any);
 
-    // Verify Section 2 (Clarity Control) reflects multi-page range (Pages 5–7)
-    expect(synced).toContain("2. CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims (Pages 5–7)");
-    // Verify Section 3 (Chronological Summary) shifts to Pages 8–9
-    expect(synced).toContain("3. CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones (Pages 8–9)");
-    // Master index section at the bottom remains intact
-    expect(synced).toContain("MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:");
+    // 1. Heading verification
+    expect(synced).toContain("MASTER EXHIBIT INDEX");
+    expect(synced).toContain("Formal State Complaint");
+
+    // 2. Exhibit letter and continuous page range (dynamically shifted by long Clarity Control statement)
+    expect(synced).toContain("Exhibit A");
+    // Verify Exhibit A reflects starting docket page range
+    expect(synced).toMatch(/Exhibit A\s+Pages \d+–\d+/);
+
+    // 3. Clean full exhibit title
+    expect(synced).toContain("Operative IEP & Specialized Instruction Schedule");
+
+    // 4. Highlighted sections line with continuous compiled complaint page numbers
+    expect(synced).toMatch(/Highlighted sections: Pages \d+–\d+, \d+–\d+/);
+
+    // 5. Verifies removal of internal metadata and filler
+    expect(synced).not.toContain("PG-023-VAULT");
+    expect(synced).not.toContain("Attached from Document Vault");
+    expect(synced).not.toContain("TABLE OF COMPLAINT FILING SECTIONS");
+    expect(synced).not.toContain("All exhibits are sequentially tabbed and incorporated");
   });
 
   it("defaults state mediation willingness to 'no' unless explicitly changed by user", () => {

@@ -234,12 +234,19 @@ export function paginateTextContent(
  * (1 for normal length text, N for multi-page statements, or N for multi-page PDFs).
  */
 export function getBinderContentPageCount(
-  page?: { id?: string; category?: string; renderedPages?: ImportedPdfPage[]; pageCount?: number; content?: string } | null,
+  page?: { id?: string; category?: string; renderedPages?: ImportedPdfPage[]; pageCount?: number; content?: string; highlights?: DocumentHighlight[] } | null,
   caseDetails?: Partial<ComplaintCaseDetails>
 ): number {
   if (!page) return 1;
   if (page.category === "exhibit" && page.renderedPages && page.renderedPages.length > 0) {
     return page.renderedPages.length;
+  }
+  if (page.category === "exhibit" && typeof page.pageCount === "number" && page.pageCount > 0) {
+    return page.pageCount;
+  }
+  if (page.category === "exhibit" && page.highlights && page.highlights.length > 0) {
+    const maxHlPage = Math.max(...page.highlights.map((h) => (typeof h.pageNumber === "number" ? h.pageNumber : 1)));
+    if (maxHlPage > 1) return maxHlPage;
   }
   if (page.content && page.content.trim().length > 0) {
     const pages = paginateTextContent(page.content);
@@ -372,7 +379,7 @@ export interface DocumentPage {
 export function getNextExhibitLetter(existingPages: DocumentPage[]): string {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const exhibitPages = (existingPages || []).filter(
-    (p) => p.category === "exhibit" || Boolean(p.exhibitTag) || p.id.startsWith("exhibit_")
+    (p) => (p.category === "exhibit" || Boolean(p.exhibitTag) || p.id.startsWith("exhibit_")) && p.id !== "exhibit_index"
   );
   const nextIdx = exhibitPages.length;
   if (nextIdx < alphabet.length) {
@@ -448,56 +455,30 @@ Parent notified district administration of ongoing service deprivation and reque
   { 
     id: "exhibit_index", 
     number: "04", 
-    title: "Exhibit Index", 
+    title: "Master Exhibit Index", 
     category: "pleading", 
-    content: `FORMAL STATE COMPLAINT — EXHIBIT INDEX & DOCUMENT SCHEDULE
+    content: `MASTER EXHIBIT INDEX
+Formal State Complaint
 
-BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
-DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
+Exhibit A                                                          Pages 11–28
+Operative IEP & Specialized Instruction Schedule
+Highlighted sections: Pages 14–16, 22–23
 
-STUDENT: Brooklyn Smith
-AGENCY: PAULDING COUNTY SCHOOL DISTRICT
+────────────────────────────────────────────────────────────────────────────────
 
-================================================================================
-TABLE OF COMPLAINT FILING SECTIONS:
-================================================================================
-  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document (Pages 1–4)
-  2. CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims (Pages 5–6)
-  3. CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones (Pages 7–8)
-  4. EXHIBIT INDEX: Cover Page & Master Evidentiary Schedule (Pages 9–10)
-  5. EXHIBIT A: Cover Page & Student's IEP (Pages 11–12)
-  6. EXHIBIT B: Cover Page & Evaluations & Parent Written Requests (Pages 13–14)
-  7. EXHIBIT C: Cover Page & District Correspondence & Service Logs (Pages 15–16)
+Exhibit B                                                          Pages 29–45
+Psychoeducational Evaluations & Parent Written Requests
+Highlighted sections: Pages 32–34
 
-================================================================================
-MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:
-================================================================================
+────────────────────────────────────────────────────────────────────────────────
 
-EXHIBIT A: STUDENT'S IEP
-• Document: Annual Individualized Education Program (IEP)
-• Date: August 28, 2025 · Author: PAULDING COUNTY SCHOOL DISTRICT IEP Team
-• Relevant Pages: Pages 4–8 (Service Delivery Schedule & Accommodations)
-• Evidentiary Purpose: Establishes binding baseline of 240 weekly reading minutes and 60 minutes speech therapy.
-• Supports: Count I (Failure to Implement IEP Services / Denial of FAPE).
-
-EXHIBIT B: EVALUATIONS & PARENT WRITTEN REQUESTS
-• Document: Psychoeducational Evaluation & Formal Parent Re-Evaluation Request Letter
-• Date: October 12, 2025 (timestamped delivery 8:42 AM)
-• Evidentiary Purpose: Verifies written notice of emerging sensory deficits and triggers 60-day statutory timeline.
-• Supports: Count II (Failure to Timely Evaluate & Child Find Violation).
-
-EXHIBIT C: DISTRICT CORRESPONDENCE, PWN & SERVICE LOGS
-• Document: Special Education Service Delivery Logs & Email Correspondence
-• Date: November 1, 2025 – January 15, 2026
-• Evidentiary Purpose: Documentary proof of 18 missed sessions and written admission of staff shortages.
-• Supports: Count I & Count III (Prior Written Notice Omission).
-
-Exhibit files are attached behind this index in labeled alphabetical order.`
+Exhibit C                                                          Pages 46–58
+District Correspondence & Service Logs`
   },
   { 
     id: "exhibit_a", 
     number: "05", 
-    title: "Exhibit A (Student's IEP)", 
+    title: "Exhibit A — Operative IEP & Specialized Instruction Schedule", 
     category: "exhibit", 
     exhibitTag: "Exhibit A", 
     content: `EXHIBIT A: INDIVIDUALIZED EDUCATION PROGRAM (IEP)
@@ -518,7 +499,7 @@ EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
   { 
     id: "exhibit_b", 
     number: "06", 
-    title: "Exhibit B (Evaluations)", 
+    title: "Exhibit B — Psychoeducational Evaluations & Parent Written Requests", 
     category: "exhibit", 
     exhibitTag: "Exhibit B", 
     content: `EXHIBIT B: EVALUATIONS & PARENT WRITTEN REQUESTS
@@ -539,7 +520,7 @@ EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
   { 
     id: "exhibit_c", 
     number: "07", 
-    title: "Exhibit C (Communications)", 
+    title: "Exhibit C — District Correspondence & Service Logs", 
     category: "exhibit", 
     exhibitTag: "Exhibit C", 
     content: `EXHIBIT C: DISTRICT CORRESPONDENCE & SERVICE LOGS
@@ -639,49 +620,7 @@ export function getDefaultExhibitContent(
   const district = caseDetails?.district?.trim() || "PAULDING COUNTY SCHOOL DISTRICT";
 
   if (p.id === "exhibit_index") {
-    return `FORMAL STATE COMPLAINT — EXHIBIT INDEX & DOCUMENT SCHEDULE
-
-BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
-DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
-
-STUDENT: ${student}
-AGENCY: ${district.toUpperCase()}
-
-================================================================================
-TABLE OF COMPLAINT FILING SECTIONS:
-================================================================================
-  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document (Pages 1–4)
-  2. CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims (Pages 5–6)
-  3. CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones (Pages 7–8)
-  4. EXHIBIT INDEX: Cover Page & Master Evidentiary Schedule (Pages 9–10)
-  5. EXHIBIT A: Cover Page & Student's IEP (Pages 11–12)
-  6. EXHIBIT B: Cover Page & Evaluations & Parent Written Requests (Pages 13–14)
-  7. EXHIBIT C: Cover Page & District Correspondence & Service Logs (Pages 15–16)
-
-================================================================================
-MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:
-================================================================================
-
-EXHIBIT A: STUDENT'S IEP
-• Document: Annual Individualized Education Program (IEP)
-• Date: August 28, 2025 · Author: ${district.toUpperCase()} IEP Team
-• Relevant Pages: Pages 4–8 (Service Delivery Schedule & Accommodations)
-• Evidentiary Purpose: Establishes binding baseline of 240 weekly reading minutes and 60 minutes speech therapy.
-• Supports: Count I (Failure to Implement IEP Services / Denial of FAPE).
-
-EXHIBIT B: EVALUATIONS & PARENT WRITTEN REQUESTS
-• Document: Psychoeducational Evaluation & Formal Parent Re-Evaluation Request Letter
-• Date: October 12, 2025 (timestamped delivery 8:42 AM)
-• Evidentiary Purpose: Verifies written notice of emerging sensory deficits and triggers 60-day statutory timeline.
-• Supports: Count II (Failure to Timely Evaluate & Child Find Violation).
-
-EXHIBIT C: DISTRICT CORRESPONDENCE, PWN & SERVICE LOGS
-• Document: Special Education Service Delivery Logs & Email Correspondence
-• Date: November 1, 2025 – January 15, 2026
-• Evidentiary Purpose: Documentary proof of 18 missed sessions and written admission of staff shortages.
-• Supports: Count I & Count III (Prior Written Notice Omission).
-
-Exhibit files are attached behind this index in labeled alphabetical order.`;
+    return generateMasterExhibitIndexContent(DEFAULT_PAGES, caseDetails);
   }
 
   if (p.id === "exhibit_a" || p.title?.toLowerCase().includes("iep")) {
@@ -781,11 +720,11 @@ interface ComplaintCaseDetails {
 
 /**
  * Formats an array of highlighted docket page numbers into required legal reference phrasing:
- * - Single page: "See highlighted section, page 14."
- * - Contiguous range: "See highlighted section, pages 14–16."
- * - Multiple nonconsecutive ranges: "See highlighted sections, pages 14–16, 19, and 21–22."
+ * - Single page: "Highlighted section: Page 14"
+ * - Contiguous range: "Highlighted sections: Pages 14–16"
+ * - Multiple nonconsecutive ranges: "Highlighted sections: Pages 14–16, 22–23"
  */
-export function formatHighlightedPagesText(docketPages: number[]): string | null {
+export function formatExhibitIndexHighlights(docketPages: number[]): string | null {
   if (!docketPages || docketPages.length === 0) return null;
 
   const sorted = Array.from(new Set(docketPages))
@@ -813,21 +752,92 @@ export function formatHighlightedPagesText(docketPages: number[]): string | null
     r.start === r.end ? `${r.start}` : `${r.start}–${r.end}`
   );
 
-  if (rangeStrings.length === 1) {
-    if (ranges[0].start === ranges[0].end) {
-      return `See highlighted section, page ${ranges[0].start}.`;
-    } else {
-      return `See highlighted section, pages ${ranges[0].start}–${ranges[0].end}.`;
+  const isPlural = ranges.length > 1 || (ranges.length === 1 && ranges[0].start !== ranges[0].end);
+  const prefix = isPlural ? "Highlighted sections: Pages " : "Highlighted section: Page ";
+  return `${prefix}${rangeStrings.join(", ")}`;
+}
+
+// Backwards-compatibility alias
+export const formatHighlightedPagesText = formatExhibitIndexHighlights;
+
+/**
+ * Extracts a clean, professional legal exhibit title without redundant prefixes
+ * ("Exhibit A —", "Exhibit B:", etc.) or internal Document Vault metadata.
+ */
+export function extractCleanExhibitTitle(
+  title?: string,
+  exhibitTag?: string,
+  fallbackDocName?: string
+): string {
+  let raw = (title || "").trim();
+  if (!raw && fallbackDocName) raw = fallbackDocName.trim();
+  if (!raw) return "Evidentiary Document Record";
+
+  const lower = raw.toLowerCase();
+  if (
+    lower === "student's iep" ||
+    lower === "operative iep" ||
+    lower.includes("student's iep") ||
+    lower.includes("operative iep")
+  ) {
+    return "Operative IEP & Specialized Instruction Schedule";
+  }
+  if (
+    lower.includes("psychoed") ||
+    lower.includes("evaluations") ||
+    lower.includes("parent written request")
+  ) {
+    return "Psychoeducational Evaluations & Parent Written Requests";
+  }
+  if (
+    lower.includes("correspondence") ||
+    lower.includes("service log") ||
+    lower.includes("communications")
+  ) {
+    return "District Correspondence & Service Logs";
+  }
+
+  // Strip exhibit prefixes
+  raw = raw.replace(/^Exhibit\s+[A-Z0-9]+\s*[—–-]\s*/i, "");
+  raw = raw.replace(/^Exhibit\s+[A-Z0-9]+\s*:\s*/i, "");
+  const parenMatch = raw.match(/^Exhibit\s+[A-Z0-9]+\s*\(([^)]+)\)$/i);
+  if (parenMatch) {
+    raw = parenMatch[1].trim();
+  } else {
+    raw = raw.replace(/^Exhibit\s+[A-Z0-9]+\s*/i, "");
+  }
+
+  // Strip file extension if any
+  raw = raw.replace(/\.[a-zA-Z0-9]{2,4}$/, "").replace(/[_-]+/g, " ").trim();
+
+  // Strip leading date patterns like "2025 09 " or "2025 09 12 "
+  raw = raw.replace(/^\d{4}\s+\d{2}(\s+\d{2})?\s*/, "").trim();
+
+  return raw || "Evidentiary Document Record";
+}
+
+/**
+ * Calculates continuous docket page numbers for highlights on a specific exhibit binder.
+ */
+export function getExhibitHighlightDocketPages(
+  page: DocumentPage,
+  pageIndex: number,
+  pagesList: DocumentPage[],
+  caseDetails?: Partial<ComplaintCaseDetails>
+): number[] {
+  if (!page.highlights || page.highlights.length === 0) return [];
+
+  const range = getBinderPageRange(pageIndex, pagesList, caseDetails);
+  const docketPages: number[] = [];
+
+  for (const h of page.highlights) {
+    if (typeof h.pageNumber === "number" && h.pageNumber >= 1) {
+      const docPage = range.contentStart + (h.pageNumber - 1);
+      docketPages.push(docPage);
     }
   }
 
-  if (rangeStrings.length === 2) {
-    return `See highlighted sections, pages ${rangeStrings[0]} and ${rangeStrings[1]}.`;
-  }
-
-  const allExceptLast = rangeStrings.slice(0, -1).join(", ");
-  const last = rangeStrings[rangeStrings.length - 1];
-  return `See highlighted sections, pages ${allExceptLast}, and ${last}.`;
+  return docketPages;
 }
 
 /**
@@ -840,104 +850,183 @@ export function getExhibitHighlightReference(
   pagesList: DocumentPage[],
   caseDetails?: Partial<ComplaintCaseDetails>
 ): string | null {
-  if (!page.highlights || page.highlights.length === 0) return null;
-
-  const range = getBinderPageRange(pageIndex, pagesList, caseDetails);
-  const docketPages: number[] = [];
-
-  for (const h of page.highlights) {
-    if (typeof h.pageNumber === "number" && h.pageNumber >= 1) {
-      const docPage = range.contentStart + (h.pageNumber - 1);
-      if (docPage <= range.contentEnd) {
-        docketPages.push(docPage);
-      }
-    }
-  }
-
-  return formatHighlightedPagesText(docketPages);
+  const docketPages = getExhibitHighlightDocketPages(page, pageIndex, pagesList, caseDetails);
+  return formatExhibitIndexHighlights(docketPages);
 }
 
 /**
- * Synchronizes the Table of Complaint Filing Sections in the Exhibit Index
- * to reflect dynamic multi-page statement and exhibit docket page ranges,
- * as well as IEP highlight references under corresponding exhibits.
+ * Generates the clean Master Exhibit Index Table of Contents plain text.
+ */
+export function generateMasterExhibitIndexContent(
+  pagesList: DocumentPage[],
+  caseDetails?: Partial<ComplaintCaseDetails>
+): string {
+  const lines: string[] = [];
+  lines.push("MASTER EXHIBIT INDEX");
+  lines.push("Formal State Complaint");
+  lines.push("");
+
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let exhCount = 0;
+
+  for (let i = 0; i < pagesList.length; i++) {
+    const p = pagesList[i];
+    if (p.id === "exhibit_index") continue;
+    const isExh = p.category === "exhibit" || Boolean(p.exhibitTag) || p.id.startsWith("exhibit_");
+    if (!isExh) continue;
+
+    const letter = exhCount < alphabet.length ? alphabet[exhCount] : `Z${exhCount}`;
+    exhCount++;
+
+    const range = getBinderPageRange(i, pagesList, caseDetails);
+    const pageRangeStr = range.start === range.end ? `Page ${range.start}` : `Pages ${range.start}–${range.end}`;
+    const cleanTitle = extractCleanExhibitTitle(p.title, p.exhibitTag, p.fileName);
+    const hlRef = getExhibitHighlightReference(p, i, pagesList, caseDetails);
+
+    const left = `Exhibit ${letter}`;
+    const right = pageRangeStr;
+    const padCount = Math.max(4, 78 - left.length - right.length);
+    lines.push(`${left}${" ".repeat(padCount)}${right}`);
+    lines.push(cleanTitle);
+    if (hlRef) {
+      lines.push(hlRef);
+    }
+    lines.push("");
+    lines.push("────────────────────────────────────────────────────────────────────────────────");
+    lines.push("");
+  }
+
+  return lines.join("\n").trim();
+}
+
+/**
+ * Synchronizes the Master Exhibit Index to maintain continuous docket page numbers,
+ * updated exhibit designations, and highlighted section references.
  */
 export function syncExhibitIndexTableOfSections(
   content: string,
   pagesList: DocumentPage[],
   caseDetails?: Partial<ComplaintCaseDetails>
 ): string {
-  if (!content) return content;
+  return generateMasterExhibitIndexContent(pagesList, caseDetails);
+}
 
-  let updatedContent = content;
+/**
+ * Formally styled Master Exhibit Index Table of Contents component.
+ * Appropriate for submission to the Georgia Department of Education.
+ */
+export function MasterExhibitIndexToc({
+  pagesList,
+  caseDetails,
+  theme = "light",
+  pageSubIdx,
+  itemsPerPage = 8,
+}: {
+  pagesList: DocumentPage[];
+  caseDetails?: Partial<ComplaintCaseDetails>;
+  theme?: "light" | "dark";
+  pageSubIdx?: number;
+  itemsPerPage?: number;
+}) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const isDark = theme === "dark";
 
-  // 1. Sync student and district if caseDetails provided
-  const student = caseDetails?.studentName?.replace(/^IN\s+RE:\s*/i, "").trim() || "Brooklyn Smith";
-  const district = (caseDetails?.district?.trim() || "PAULDING COUNTY SCHOOL DISTRICT").toUpperCase();
+  const exhibitEntries: Array<{
+    page: DocumentPage;
+    letter: string;
+    range: ReturnType<typeof getBinderPageRange>;
+    cleanTitle: string;
+    highlightText: string | null;
+  }> = [];
 
-  if (student && student !== "Student on Record") {
-    updatedContent = updatedContent.replace(/STUDENT:\s*[^\n]+/i, `STUDENT: ${student}`);
-  }
-  if (district && district !== "[REQUIRED — PLEASE FILL OUT (DISTRICT)]") {
-    updatedContent = updatedContent.replace(/AGENCY:\s*[^\n]+/i, `AGENCY: ${district}`);
-    updatedContent = updatedContent.replace(/Author:\s*[^·\n]+IEP Team/i, `Author: ${district} IEP Team`);
-  }
-
-  // 2. Sync Table of Complaint Filing Sections with highlight references
-  if (updatedContent.includes("TABLE OF COMPLAINT FILING SECTIONS:")) {
-    const lines: string[] = [];
-    lines.push("TABLE OF COMPLAINT FILING SECTIONS:");
-    lines.push("================================================================================");
-    lines.push("  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document (Pages 1–4)");
-
-    for (let i = 1; i < pagesList.length; i++) {
-      const p = pagesList[i];
-      const range = getBinderPageRange(i, pagesList, caseDetails);
-      const rangeStr = range.start === range.end ? `Page ${range.start}` : `Pages ${range.start}–${range.end}`;
-      const num = i + 1;
-      let label = p.title.toUpperCase();
-      if (p.id === "clarity_control" || p.category === "restatement") {
-        label = "CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims";
-      } else if (p.id === "chrono_summary" || p.title.toLowerCase().includes("chronological")) {
-        label = "CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones";
-      } else if (p.id === "exhibit_index") {
-        label = "EXHIBIT INDEX: Cover Page & Master Evidentiary Schedule";
-      } else {
-        label = `${p.exhibitTag ? `${p.exhibitTag.toUpperCase()}: ` : ""}${p.title.toUpperCase()}`;
-      }
-      lines.push(`  ${num}. ${label} (${rangeStr})`);
-
-      // Automatically append highlight reference if present on this exhibit
-      const hlRef = getExhibitHighlightReference(p, i, pagesList, caseDetails);
-      if (hlRef) {
-        lines.push(`     ${hlRef}`);
-      }
-    }
-
-    const newTableBlock = lines.join("\n");
-    const tableRegex = /TABLE OF COMPLAINT FILING SECTIONS:[\s\S]*?(?================================================================================\s*MASTER INDEX|$)/;
-    if (tableRegex.test(updatedContent)) {
-      updatedContent = updatedContent.replace(tableRegex, newTableBlock + "\n\n");
-    }
-  }
-
-  // 3. Sync highlight references in Master Index Exhibit blocks
+  let count = 0;
   for (let i = 0; i < pagesList.length; i++) {
     const p = pagesList[i];
-    if (p.category === "exhibit" || p.exhibitTag) {
-      const letter = p.exhibitTag?.match(/exhibit\s+([a-z0-9]+)/i)?.[1]?.toUpperCase() || "";
-      if (letter) {
-        const hlRef = getExhibitHighlightReference(p, i, pagesList, caseDetails);
-        const exhRegex = new RegExp(`(EXHIBIT\\s+${letter}[^\\n]*\\n)(?:See highlighted sections?[^\\n]*\\n)?`, "i");
-        if (exhRegex.test(updatedContent)) {
-          const repl = hlRef ? `$1${hlRef}\n` : `$1`;
-          updatedContent = updatedContent.replace(exhRegex, repl);
-        }
-      }
+    if (p.id === "exhibit_index") continue;
+    const isExh = p.category === "exhibit" || Boolean(p.exhibitTag) || p.id.startsWith("exhibit_");
+    if (isExh) {
+      const letter = count < alphabet.length ? alphabet[count] : `Z${count}`;
+      count++;
+      const range = getBinderPageRange(i, pagesList, caseDetails);
+      const cleanTitle = extractCleanExhibitTitle(p.title, p.exhibitTag, p.fileName);
+      const highlightText = getExhibitHighlightReference(p, i, pagesList, caseDetails);
+      exhibitEntries.push({
+        page: p,
+        letter,
+        range,
+        cleanTitle,
+        highlightText,
+      });
     }
   }
 
-  return updatedContent;
+  const displayExhibits =
+    pageSubIdx !== undefined
+      ? exhibitEntries.slice(pageSubIdx * itemsPerPage, (pageSubIdx + 1) * itemsPerPage)
+      : exhibitEntries;
+
+  return (
+    <div className={cn("w-full py-4 flex flex-col font-serif select-text", isDark ? "text-slate-100" : "text-[#111827]")}>
+      {/* Title Header: Clean and professional */}
+      <div className="text-center pb-6 mb-2">
+        <h2 className={cn("text-base font-bold tracking-wider uppercase font-sans", isDark ? "text-white" : "text-[#0B1E38]")}>
+          MASTER EXHIBIT INDEX
+        </h2>
+        <p className={cn("text-xs font-serif italic mt-0.5", isDark ? "text-slate-300" : "text-[#5A4A32]")}>
+          Formal State Complaint
+        </p>
+      </div>
+
+      {/* Exhibit List */}
+      <div className="space-y-4">
+        {displayExhibits.length === 0 ? (
+          <div className={cn("text-center py-8 text-xs italic", isDark ? "text-slate-400" : "text-slate-500")}>
+            No exhibits currently attached. Add or link documents to populate the Master Exhibit Index.
+          </div>
+        ) : (
+          displayExhibits.map((item, idx) => {
+            const pageRangeStr =
+              item.range.start === item.range.end
+                ? `Page ${item.range.start}`
+                : `Pages ${item.range.start}–${item.range.end}`;
+
+            return (
+              <div
+                key={item.page.id}
+                className={cn(
+                  "pb-4",
+                  idx < displayExhibits.length - 1 &&
+                    (isDark ? "border-b border-slate-800" : "border-b border-[#E5E7EB]")
+                )}
+              >
+                {/* Top Row: Exhibit Letter and Page Numbers */}
+                <div className="flex items-baseline justify-between font-sans">
+                  <span className={cn("font-bold text-sm tracking-wide", isDark ? "text-white" : "text-[#0B1E38]")}>
+                    Exhibit {item.letter}
+                  </span>
+                  <span className={cn("font-mono text-xs font-medium", isDark ? "text-slate-300" : "text-[#374151]")}>
+                    {pageRangeStr}
+                  </span>
+                </div>
+
+                {/* Exhibit Title */}
+                <div className={cn("font-serif text-sm font-semibold mt-1", isDark ? "text-slate-200" : "text-[#1F2937]")}>
+                  {item.cleanTitle}
+                </div>
+
+                {/* Highlighted sections subtitle (omitted if no highlights) */}
+                {item.highlightText && (
+                  <div className={cn("text-xs mt-1 font-sans", isDark ? "text-amber-300/90" : "text-[#6B7280]")}>
+                    {item.highlightText}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -959,7 +1048,7 @@ export function resequenceExhibits(
 
   const resequenced = pagesList.map((p, idx) => {
     const num = idx + 1 < 10 ? `0${idx + 1}` : `${idx + 1}`;
-    const isExhibit = p.category === "exhibit" || Boolean(p.exhibitTag) || p.id.startsWith("exhibit_");
+    const isExhibit = (p.category === "exhibit" || Boolean(p.exhibitTag) || p.id.startsWith("exhibit_")) && p.id !== "exhibit_index";
 
     if (!isExhibit) {
       return {
@@ -2988,21 +3077,13 @@ export default function ComplaintWorkspace() {
               renderedPages: hasPreRendered ? fileItem.renderedPages : p.renderedPages,
               pageCount: hasPreRendered ? fileItem.renderedPages!.length : p.pageCount,
               isRenderingPdf: !hasPreRendered,
-              content: `${p.content ? `${p.content}\n\n` : ""}ATTACHED EXHIBIT RECORD (PG-023-VAULT):
+              content: `${p.content ? `${p.content}\n\n` : ""}ATTACHED EXHIBIT RECORD:
 • Document Title: ${fileItem.fileName}
 • Classification: ${fileItem.documentType || "Evidentiary Record"}
-• Vault Source: PG-023-VAULT · Student Document Vault
 • Timestamp: ${new Date().toLocaleDateString()}
 
 STATEMENT OF EVIDENCE:
 This documentary record is incorporated into ${p.exhibitTag || p.title} in direct support of Complainant's allegations. The LEA was in possession of or statutorily responsible for this record during the relevant filing period.`,
-            };
-          }
-          if (p.id === "exhibit_index") {
-            const addition = `\n• ${exhibitPrefix}: ${cleanName.toUpperCase()} — Attached from Document Vault (PG-023-VAULT)`;
-            return {
-              ...p,
-              content: (p.content || "") + addition,
             };
           }
           return p;
@@ -3015,7 +3096,7 @@ This documentary record is incorporated into ${p.exhibitTag || p.title} in direc
       }
 
       setIsAddPageModalOpen(false);
-      toast.success(`Attached "${fileItem.fileName}" to ${exhibitPrefix} from Document Vault (PG-023-VAULT)`);
+      toast.success(`Attached "${fileItem.fileName}" to ${exhibitPrefix}`);
       return;
     }
 
@@ -3054,7 +3135,6 @@ This documentary record is incorporated into ${p.exhibitTag || p.title} in direc
       content: `EXHIBIT ${nextLetter} · MASTER EVIDENTIARY RECORD
 Document Title: ${fileItem.fileName}
 Classification: ${fileItem.documentType || "Evidentiary Record"}
-Source Repository: PG-023-VAULT · Student Document Vault
 Filing Docket Page: ${nextNum}
 
 EVIDENTIARY PROFFER & RELEVANCE:
@@ -3062,19 +3142,7 @@ This document is incorporated herein and submitted in direct support of Complain
     };
 
     // Resequence pages including new exhibit
-    setPages((prev) => {
-      const updated = prev.map((p) => {
-        if (p.id === "exhibit_index") {
-          const addition = `\n${nextLetter}. EXHIBIT ${nextLetter}: ${cleanName.toUpperCase()} — Attached from Document Vault (PG-023-VAULT)`;
-          return {
-            ...p,
-            content: (p.content || "") + addition,
-          };
-        }
-        return p;
-      });
-      return resequenceExhibits([...updated, newPage], caseDetails);
-    });
+    setPages((prev) => resequenceExhibits([...prev, newPage], caseDetails));
 
     if (!hasPreRendered && fileItem.fileUrl) {
       loadAndConvertPdfForPage(newPageId, fileItem.fileUrl, fileItem.fileName);
@@ -3082,7 +3150,7 @@ This document is incorporated herein and submitted in direct support of Complain
 
     setActivePageId(newPage.id);
     setIsAddPageModalOpen(false);
-    toast.success(`Attached Exhibit ${nextLetter} from Document Vault (PG-023-VAULT)`);
+    toast.success(`Attached Exhibit ${nextLetter}`);
   };
 
   // Handler: Upload new document to vault then insert as exhibit
@@ -4488,33 +4556,39 @@ This document is incorporated herein and submitted in direct support of Complain
                       )}
 
                       <div className="py-4 flex flex-col w-full flex-1">
-                        <textarea
-                          ref={textareaRef}
-                          value={
-                            activePage.id === "exhibit_index"
-                              ? syncExhibitIndexTableOfSections(activePage.content || getDefaultExhibitContent(activePage, caseDetails), pages, caseDetails)
-                              : (activePage.content || "")
-                          }
-                          onChange={(e) => {
-                            handleUpdatePageContent(e.target.value);
-                            e.target.style.height = "auto";
-                            e.target.style.height = `${Math.max(680, e.target.scrollHeight)}px`;
-                          }}
-                          placeholder="Draft legal statement, factual narrative, or statutory citations here..."
-                          style={{
-                            lineHeight: lineSpacing === "2.0" ? "2.0" : lineSpacing === "1.5" ? "1.6" : "1.35",
-                            fontSize: `${fontSize}pt`,
-                            textAlign: textAlign,
-                            fontWeight: isBold ? "bold" : "normal",
-                            fontStyle: isItalic ? "italic" : "normal",
-                            textDecoration: isUnderline ? "underline" : "none",
-                            fontFamily: fontFamily === "serif" ? "Georgia, Cambria, 'Times New Roman', serif" :
-                                        fontFamily === "times" ? "'Times New Roman', Times, Georgia, serif" :
-                                        fontFamily === "garamond" ? "'EB Garamond', Garamond, Georgia, serif" :
-                                        "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-                          }}
-                          className="w-full bg-transparent text-[#1A120A] resize-none focus:outline-none placeholder:text-[#8C7A60]/50 tracking-normal leading-relaxed overflow-hidden"
-                        />
+                        {activePage.id === "exhibit_index" ? (
+                          <div className="w-full bg-[#FFFFFF]/80 p-6 rounded-md border border-[#8C7A60]/30 shadow-xs">
+                            <MasterExhibitIndexToc
+                              pagesList={pages}
+                              caseDetails={caseDetails}
+                              theme="light"
+                            />
+                          </div>
+                        ) : (
+                          <textarea
+                            ref={textareaRef}
+                            value={activePage.content || ""}
+                            onChange={(e) => {
+                              handleUpdatePageContent(e.target.value);
+                              e.target.style.height = "auto";
+                              e.target.style.height = `${Math.max(680, e.target.scrollHeight)}px`;
+                            }}
+                            placeholder="Draft legal statement, factual narrative, or statutory citations here..."
+                            style={{
+                              lineHeight: lineSpacing === "2.0" ? "2.0" : lineSpacing === "1.5" ? "1.6" : "1.35",
+                              fontSize: `${fontSize}pt`,
+                              textAlign: textAlign,
+                              fontWeight: isBold ? "bold" : "normal",
+                              fontStyle: isItalic ? "italic" : "normal",
+                              textDecoration: isUnderline ? "underline" : "none",
+                              fontFamily: fontFamily === "serif" ? "Georgia, Cambria, 'Times New Roman', serif" :
+                                          fontFamily === "times" ? "'Times New Roman', Times, Georgia, serif" :
+                                          fontFamily === "garamond" ? "'EB Garamond', Garamond, Georgia, serif" :
+                                          "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+                            }}
+                            className="w-full bg-transparent text-[#1A120A] resize-none focus:outline-none placeholder:text-[#8C7A60]/50 tracking-normal leading-relaxed overflow-hidden"
+                          />
+                        )}
                       </div>
 
                       <div className="pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-[#6E5D43] shrink-0">
@@ -6012,6 +6086,8 @@ This document is incorporated herein and submitted in direct support of Complain
                                   <span className="font-bold uppercase tracking-wider">
                                     {p.category === "exhibit"
                                       ? `${p.exhibitTag ? `${p.exhibitTag} · ` : ""}${p.title}`
+                                      : p.id === "exhibit_index"
+                                      ? "Master Exhibit Index · Formal Table of Contents"
                                       : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · ${p.id === "clarity_control" || p.category === "restatement" ? "Clarity Control Restatement" : p.title}`}
                                   </span>
                                   <span className="font-mono font-bold">
@@ -6020,9 +6096,20 @@ This document is incorporated herein and submitted in direct support of Complain
                                 </div>
 
                                 {/* Content Body */}
-                                <div className="flex-1 py-8 font-serif text-[13px] leading-relaxed text-justify text-black whitespace-pre-wrap select-text">
-                                  {pageText}
-                                </div>
+                                {p.id === "exhibit_index" ? (
+                                  <div className="flex-1 py-4 select-text">
+                                    <MasterExhibitIndexToc
+                                      pagesList={pages}
+                                      caseDetails={caseDetails}
+                                      theme="light"
+                                      pageSubIdx={pageSubIdx}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="flex-1 py-8 font-serif text-[13px] leading-relaxed text-justify text-black whitespace-pre-wrap select-text">
+                                    {pageText}
+                                  </div>
+                                )}
 
                                 {/* Running Bottom Footer */}
                                 <div className="w-full shrink-0 pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-slate-600">
@@ -6950,15 +7037,28 @@ This document is incorporated herein and submitted in direct support of Complain
                               <span className="font-bold uppercase tracking-wider">
                                 {p.category === "exhibit"
                                   ? `${p.exhibitTag ? `${p.exhibitTag} · ` : ""}${p.title}`
+                                  : p.id === "exhibit_index"
+                                  ? "Master Exhibit Index · Formal Table of Contents"
                                   : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · ${p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}`}
                               </span>
                               <span className="font-mono font-bold">
                                 Page {currentSheetNumber} of {totalDocketPages}
                               </span>
                             </div>
-                            <div className="text-[12px] leading-relaxed whitespace-pre-wrap text-justify font-serif flex-1 text-black overflow-hidden">
-                              {pageText}
-                            </div>
+                            {p.id === "exhibit_index" ? (
+                              <div className="flex-1 overflow-hidden">
+                                <MasterExhibitIndexToc
+                                  pagesList={pages}
+                                  caseDetails={caseDetails}
+                                  theme="light"
+                                  pageSubIdx={pageSubIdx}
+                                />
+                              </div>
+                            ) : (
+                              <div className="text-[12px] leading-relaxed whitespace-pre-wrap text-justify font-serif flex-1 text-black overflow-hidden">
+                                {pageText}
+                              </div>
+                            )}
                             <div className="border-t border-black pt-2 flex justify-between text-[11px] font-mono mt-3 shrink-0">
                               <span>{SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint</span>
                               <span>Page {currentSheetNumber} of {totalDocketPages}</span>

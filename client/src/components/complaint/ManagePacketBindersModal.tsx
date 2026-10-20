@@ -64,15 +64,20 @@ The LEA altered educational programming and refused evaluations without mandator
   },
   {
     id: "exhibit_index",
-    title: "Exhibit Index & Document Schedule",
+    title: "Master Exhibit Index",
     category: "pleading",
-    content: `MASTER EXHIBIT INDEX & DOCUMENT SCHEDULE
+    content: `MASTER EXHIBIT INDEX
+Formal State Complaint
 
-EXHIBIT A: OPERATIVE IEP & SPECIALIZED INSTRUCTION SCHEDULE
-EXHIBIT B: PSYCHOEDUCATIONAL EVALUATIONS & PARENT WRITTEN REQUESTS
-EXHIBIT C: DISTRICT CORRESPONDENCE, SERVICE DELIVERY LOGS & PWN
+Exhibit A                                                          Pages 11–28
+Operative IEP & Specialized Instruction Schedule
+Highlighted sections: Pages 14–16, 22–23
 
-All exhibits are sequentially tabbed and incorporated in direct support of Complainant's allegations.`,
+--------------------------------------------------------------------------------
+
+Exhibit B                                                          Pages 29–45
+Psychoeducational Evaluations & Parent Written Requests
+Highlighted sections: Pages 32–34`,
   },
   {
     id: "student_impact",
