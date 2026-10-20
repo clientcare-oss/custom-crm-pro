@@ -71,6 +71,9 @@ import {
   AlertTriangle,
   Copy,
   Lock,
+  ClipboardCheck,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -704,6 +707,24 @@ DOCUMENT SUMMARY & EVIDENTIARY RECORD:
 [Evidentiary Notice: Supporting documentary records and verified attachments are bound directly behind this summary sheet.]`;
 }
 
+export interface EvidenceChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+  category?: "iep" | "pwn" | "records" | "witness" | "general";
+}
+
+export const DEFAULT_EVIDENCE_CHECKLIST: EvidenceChecklistItem[] = [
+  { id: "ev_1", text: "Operative IEP & all relevant amendments", completed: false, category: "iep" },
+  { id: "ev_2", text: "Prior Written Notice (PWN) refusal / proposal letters", completed: false, category: "pwn" },
+  { id: "ev_3", text: "Specialized instruction delivery / service attendance logs", completed: false, category: "records" },
+  { id: "ev_4", text: "Related service therapy logs (Speech-Language, OT, PT, BCBA)", completed: false, category: "records" },
+  { id: "ev_5", text: "Psychological evaluations, FBA, and BIP documentation", completed: false, category: "records" },
+  { id: "ev_6", text: "Parent written requests, meeting notices & district email trail", completed: false, category: "witness" },
+  { id: "ev_7", text: "Progress reports and standardized work sample comparisons", completed: false, category: "records" },
+  { id: "ev_8", text: "Independent Educational Evaluation (IEE) reports (if applicable)", completed: false, category: "general" },
+];
+
 interface ComplaintCaseDetails {
   studentName: string;
   studentDob: string;
@@ -715,6 +736,8 @@ interface ComplaintCaseDetails {
   submissionDate: string;
   showLogo?: boolean;
   state?: string;
+  evidenceNotes?: string;
+  evidenceChecklist?: EvidenceChecklistItem[];
 }
 
 /**
@@ -2227,6 +2250,74 @@ export default function ComplaintWorkspace() {
     setBinderToRename(null);
   };
 
+  // State: Evidence Gathering Checklist & Complaint Scratchpad Notes Modal
+  const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
+  const [newChecklistText, setNewChecklistText] = useState("");
+  const [notesActiveTab, setNotesActiveTab] = useState<"checklist" | "notes">("checklist");
+
+  const checklistItems = useMemo<EvidenceChecklistItem[]>(() => {
+    return caseDetails.evidenceChecklist && caseDetails.evidenceChecklist.length > 0
+      ? caseDetails.evidenceChecklist
+      : DEFAULT_EVIDENCE_CHECKLIST;
+  }, [caseDetails.evidenceChecklist]);
+
+  const pendingChecklistCount = useMemo(() => {
+    return checklistItems.filter((i) => !i.completed).length;
+  }, [checklistItems]);
+
+  const handleToggleChecklistItem = (id: string) => {
+    const updated = checklistItems.map((item) =>
+      item.id === id ? { ...item, completed: !item.completed } : item
+    );
+    setCaseDetails((prev) => ({ ...prev, evidenceChecklist: updated }));
+    setLastSavedText("Draft saved just now");
+  };
+
+  const handleAddChecklistItem = () => {
+    if (!newChecklistText.trim()) return;
+    const newItem: EvidenceChecklistItem = {
+      id: `ev_${Date.now()}`,
+      text: newChecklistText.trim(),
+      completed: false,
+      category: "general",
+    };
+    const updated = [...checklistItems, newItem];
+    setCaseDetails((prev) => ({ ...prev, evidenceChecklist: updated }));
+    setNewChecklistText("");
+    setLastSavedText("Draft saved just now");
+    toast.success("Added evidence checklist item");
+  };
+
+  const handleDeleteChecklistItem = (id: string) => {
+    const updated = checklistItems.filter((item) => item.id !== id);
+    setCaseDetails((prev) => ({ ...prev, evidenceChecklist: updated }));
+    setLastSavedText("Draft saved just now");
+  };
+
+  const handleResetChecklist = () => {
+    setCaseDetails((prev) => ({ ...prev, evidenceChecklist: DEFAULT_EVIDENCE_CHECKLIST }));
+    setLastSavedText("Draft saved just now");
+    toast.info("Reset evidence checklist to standard advocacy items");
+  };
+
+  const handleUpdateEvidenceNotes = (text: string) => {
+    setCaseDetails((prev) => ({ ...prev, evidenceNotes: text }));
+    setLastSavedText("Draft saved just now");
+  };
+
+  const handleInsertNotesIntoActivePage = () => {
+    const notes = caseDetails.evidenceNotes || "";
+    if (!notes.trim()) {
+      toast.error("Notes are currently empty. Type some notes first.");
+      return;
+    }
+    const current = activePage.content || "";
+    const updated = current ? `${current}\n\n--- EVIDENCE NOTES ---\n${notes.trim()}` : notes.trim();
+    handleUpdatePageContent(updated);
+    toast.success(`Inserted notes into "${activePage.title}"`);
+    setIsNotesModalOpen(false);
+  };
+
   // Global Keyboard Shortcut: Ctrl+Shift+B / Cmd+Shift+B -> Quick Add Binder
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
@@ -2922,16 +3013,30 @@ This document is incorporated herein and submitted in direct support of Complain
               </div>
 
               <div className="flex items-center justify-between pl-2 pr-2 pt-6 pb-2 border-b border-[#3A2C18]/60 relative z-20 bg-transparent">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-[11px] font-serif font-bold text-[#C6B697] tracking-wider uppercase">Packet Index</span>
+                <div className="flex items-center gap-1.5 min-w-0 flex-wrap sm:flex-nowrap">
+                  <span className="text-[11px] font-serif font-bold text-[#C6B697] tracking-wider uppercase shrink-0">Packet Index</span>
                   <button
                     type="button"
                     onClick={() => setIsManageBindersModalOpen(true)}
-                    className="px-2 py-0.5 rounded text-[10px] font-serif font-bold bg-[#071C3A] text-[#FFE394] hover:text-[#FFF4D4] hover:bg-[#0A2E5C] border border-[#DFBE77]/60 hover:border-[#FFE394] transition-all cursor-pointer flex items-center gap-1 shadow-xs"
+                    className="px-2 py-0.5 rounded text-[10px] font-serif font-bold bg-[#071C3A] text-[#FFE394] hover:text-[#FFF4D4] hover:bg-[#0A2E5C] border border-[#DFBE77]/60 hover:border-[#FFE394] transition-all cursor-pointer flex items-center gap-1 shadow-xs shrink-0"
                     title="Add new binder or manage packet structure (Ctrl+Shift+B)"
                   >
                     <Plus className="w-3 h-3 text-[#FFE394]" />
                     <span>Add Binder</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsNotesModalOpen(true)}
+                    className="px-2 py-0.5 rounded text-[10px] font-serif font-bold bg-[#07162B] text-[#FFE394] hover:text-[#FFF4D4] hover:bg-[#0A264D] border border-[#DFBE77]/50 hover:border-[#FFE394] transition-all cursor-pointer flex items-center gap-1 shadow-xs shrink-0"
+                    title="Open Evidence Gathering Checklist & Complaint Scratchpad Notes"
+                  >
+                    <ClipboardCheck className="w-3 h-3 text-[#DFBE77]" />
+                    <span>Notes</span>
+                    {pendingChecklistCount > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-[#C5A059] text-[#07162B] font-bold leading-none ml-0.5">
+                        {pendingChecklistCount}
+                      </span>
+                    )}
                   </button>
                 </div>
                 <button
@@ -5802,6 +5907,269 @@ This document is incorporated herein and submitted in direct support of Complain
                 </Button>
               </DialogFooter>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* =========================================================================
+            SMALL WINDOW: EVIDENCE CHECKLIST & COMPLAINT SCRATCHPAD NOTES
+            ========================================================================= */}
+        <Dialog open={isNotesModalOpen} onOpenChange={setIsNotesModalOpen}>
+          <DialogContent
+            className={cn(
+              "w-full max-w-xl p-5 rounded-xl border shadow-2xl flex flex-col max-h-[88vh]",
+              "bg-[#07162B] border-[#C5A059]/80 text-slate-100"
+            )}
+            style={{
+              backgroundImage:
+                "linear-gradient(180deg, rgba(14, 42, 82, 0.98) 0%, rgba(7, 22, 43, 0.98) 100%), url('/decor/folio-leather-texture.png')",
+              backgroundRepeat: "repeat",
+              backgroundSize: "220px",
+            }}
+          >
+            {/* Header */}
+            <DialogHeader className="flex flex-row items-start gap-3 pb-2 border-b border-[#3A2C18]/80">
+              <div className="w-10 h-10 rounded-full bg-[#031124] border border-[#C5A059]/70 flex items-center justify-center text-[#FFE394] shrink-0 shadow-lg">
+                <ClipboardCheck className="w-5 h-5 text-[#DFBE77]" />
+              </div>
+
+              <div className="text-left flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <DialogTitle className="font-serif font-bold text-base text-[#FFF4D4]">
+                    Evidence Checklist & Complaint Notes
+                  </DialogTitle>
+                  <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-950/70 border border-emerald-700/50 px-2 py-0.5 rounded-full shrink-0 font-sans">
+                    <Cloud className="w-3 h-3 text-emerald-300" />
+                    Auto-saved
+                  </span>
+                </div>
+                <p className="text-xs text-[#C6B697] mt-1 leading-relaxed">
+                  Track records to gather, check off verified exhibits, and draft working notes. Auto-saves continuously with your complaint draft.
+                </p>
+              </div>
+            </DialogHeader>
+
+            {/* Segmented Control / Tabs */}
+            <div className="flex items-center gap-1 p-1 bg-[#020A17] rounded-lg border border-[#3A2C18] mt-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setNotesActiveTab("checklist")}
+                className={cn(
+                  "flex-1 py-1.5 px-3 rounded-md text-xs font-serif font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+                  notesActiveTab === "checklist"
+                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm"
+                    : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/[0.04]"
+                )}
+              >
+                <CheckSquare className="w-3.5 h-3.5" />
+                <span>Evidence Checklist</span>
+                <span className={cn(
+                  "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold leading-none ml-1",
+                  notesActiveTab === "checklist" ? "bg-[#07162B] text-[#FFE394]" : "bg-[#031124] text-[#DFBE77]"
+                )}>
+                  {checklistItems.filter((i) => i.completed).length}/{checklistItems.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setNotesActiveTab("notes")}
+                className={cn(
+                  "flex-1 py-1.5 px-3 rounded-md text-xs font-serif font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+                  notesActiveTab === "notes"
+                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm"
+                    : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/[0.04]"
+                )}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Complaint Scratchpad Notes</span>
+                {caseDetails.evidenceNotes && caseDetails.evidenceNotes.trim().length > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                )}
+              </button>
+            </div>
+
+            {/* TAB 1: EVIDENCE CHECKLIST */}
+            {notesActiveTab === "checklist" && (
+              <div className="flex-1 min-h-0 flex flex-col gap-3 mt-2 overflow-y-auto pr-1 custom-scrollbar">
+                {/* Progress bar */}
+                <div className="p-2.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18] shrink-0">
+                  <div className="flex items-center justify-between text-xs mb-1.5 font-sans">
+                    <span className="text-[#C6B697]">
+                      Evidence Gathering Progress:
+                    </span>
+                    <span className="font-mono font-bold text-[#FFE394]">
+                      {checklistItems.filter((i) => i.completed).length} of {checklistItems.length} Gathered ({Math.round((checklistItems.filter((i) => i.completed).length / Math.max(1, checklistItems.length)) * 100)}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-[#031124] rounded-full overflow-hidden border border-[#3A2C18]">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#C5A059] to-emerald-400 transition-all duration-300"
+                      style={{
+                        width: `${Math.round((checklistItems.filter((i) => i.completed).length / Math.max(1, checklistItems.length)) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Items List */}
+                <div className="space-y-1.5 flex-1 min-h-0 overflow-y-auto">
+                  {checklistItems.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleToggleChecklistItem(item.id)}
+                      className={cn(
+                        "flex items-center justify-between p-2.5 rounded-lg border transition-all cursor-pointer group text-xs select-none",
+                        item.completed
+                          ? "bg-emerald-950/20 border-emerald-800/40 text-emerald-200/80"
+                          : "bg-[#020A17]/85 border-[#3A2C18] hover:border-[#C5A059]/60 text-[#FFF4D4]"
+                      )}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
+                        <span className="shrink-0 text-[#DFBE77]">
+                          {item.completed ? (
+                            <CheckSquare className="w-4 h-4 text-emerald-400" />
+                          ) : (
+                            <Square className="w-4 h-4 text-[#8C6D2B] group-hover:text-[#DFBE77]" />
+                          )}
+                        </span>
+                        <span className={cn(
+                          "font-serif leading-snug break-words",
+                          item.completed && "line-through text-[#A69371]"
+                        )}>
+                          {item.text}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {item.category && (
+                          <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-[#031124] text-[#DFBE77] border border-[#3A2C18]">
+                            {item.category}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteChecklistItem(item.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-rose-400 hover:text-rose-200 transition-opacity cursor-pointer"
+                          title="Delete checklist item"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add Custom Checklist Item */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleAddChecklistItem();
+                  }}
+                  className="flex items-center gap-2 pt-2 border-t border-[#3A2C18] shrink-0"
+                >
+                  <Input
+                    value={newChecklistText}
+                    onChange={(e) => setNewChecklistText(e.target.value)}
+                    placeholder="Add custom evidence item (e.g., Attendance records from 10/12)..."
+                    className="flex-1 bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-xs h-8.5 text-[#FFF4D4] placeholder:text-[#5A4830]"
+                  />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!newChecklistText.trim()}
+                    className="bg-[#071C3A] hover:bg-[#0A2E5C] text-[#FFE394] border border-[#DFBE77]/60 text-xs h-8.5 px-3 font-serif font-bold cursor-pointer disabled:opacity-40"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Item</span>
+                  </Button>
+                </form>
+
+                {/* Reset button */}
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={handleResetChecklist}
+                    className="text-[10px] text-[#A69371] hover:text-[#DFBE77] underline cursor-pointer"
+                  >
+                    Reset to Standard Advocacy Evidence Checklist
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: COMPLAINT NOTES & SCRATCHPAD */}
+            {notesActiveTab === "notes" && (
+              <div className="flex-1 min-h-0 flex flex-col gap-2.5 mt-2">
+                <div className="flex items-center justify-between text-xs text-[#C6B697] shrink-0">
+                  <span>Jot rough notes, witness summaries, or things to weave into the complaint:</span>
+                  <span className="font-mono text-[11px] text-[#DFBE77]">
+                    {caseDetails.evidenceNotes?.trim() ? caseDetails.evidenceNotes.trim().split(/\s+/).length : 0} words
+                  </span>
+                </div>
+
+                <textarea
+                  value={caseDetails.evidenceNotes || ""}
+                  onChange={(e) => handleUpdateEvidenceNotes(e.target.value)}
+                  placeholder="e.g.,
+- Parent reports speech services canceled on 3 consecutive Mondays in November
+- Verify PWN dated Oct 14 matches what district actually implemented
+- Include quotation from Dr. Miller's neuropsych report regarding dyslexia diagnosis
+- Request compensatory tutoring at 1:1 certified instructor rate..."
+                  className="flex-1 min-h-[220px] p-3 rounded-lg bg-[#020A17] border border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-serif text-xs leading-relaxed focus:outline-hidden custom-scrollbar resize-none placeholder:text-[#5A4830]"
+                />
+
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#3A2C18] shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (!caseDetails.evidenceNotes?.trim()) {
+                        toast.error("No notes to copy");
+                        return;
+                      }
+                      navigator.clipboard.writeText(caseDetails.evidenceNotes);
+                      toast.success("Notes copied to clipboard");
+                    }}
+                    className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] text-xs h-8 gap-1.5 cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-[#FFE394]" />
+                    <span>Copy Notes</span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleInsertNotesIntoActivePage}
+                    disabled={!caseDetails.evidenceNotes?.trim()}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-3.5 hover:brightness-110 shadow-md cursor-pointer disabled:opacity-40 gap-1.5"
+                    title={`Insert these notes into active binder "${activePage.title}"`}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Insert into Active Binder ({activePage.title.slice(0, 18)}...)</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Footer */}
+            <DialogFooter className="flex items-center justify-between sm:justify-between pt-2 border-t border-[#3A2C18] mt-2 shrink-0">
+              <span className="text-[11px] text-[#A69371] italic">
+                ✓ All items auto-save with draft
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsNotesModalOpen(false)}
+                className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] text-xs h-8 cursor-pointer"
+              >
+                Close
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
