@@ -214,10 +214,51 @@ export default {
       }
     }
 
-    // 5. Handle Storage proxy requests
+    // 5. Handle Storage CORS preflight and proxy requests
     if (url.pathname.startsWith("/storage/")) {
+      if (request.method === "OPTIONS") {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+          },
+        });
+      }
+
       try {
-        const key = url.pathname.replace(/^\/storage\//, "");
+        const key = decodeURIComponent(url.pathname.replace(/^\/storage\//, ""));
+
+        // First: Check Cloudflare D1 file_blobs
+        if (env.DB) {
+          try {
+            const row = (await env.DB.prepare(
+              "SELECT mime_type, base64_data FROM file_blobs WHERE key = ?"
+            ).bind(key).first()) as { mime_type?: string; base64_data?: string } | null;
+
+            if (row && row.base64_data) {
+              const binStr = atob(row.base64_data);
+              const bytes = new Uint8Array(binStr.length);
+              for (let i = 0; i < binStr.length; i++) {
+                bytes[i] = binStr.charCodeAt(i);
+              }
+              return new Response(bytes, {
+                status: 200,
+                headers: {
+                  "Content-Type": row.mime_type || "application/pdf",
+                  "Access-Control-Allow-Origin": "*",
+                  "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+                  "Cache-Control": "public, max-age=86400",
+                },
+              });
+            }
+          } catch (d1Err) {
+            console.warn("[Worker Storage D1 Lookup Error]", d1Err);
+          }
+        }
+
+        // Second: Fall back to R2 signed URL
         const signedUrl = await getR2SignedDownloadUrl(key);
         return Response.redirect(signedUrl, 307);
       } catch (err: any) {

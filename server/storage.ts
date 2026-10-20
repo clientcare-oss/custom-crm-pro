@@ -21,6 +21,22 @@ export async function storagePut(
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
   const key = appendHashSuffix(normalizeKey(relKey));
+  
+  // 1. Save to Cloudflare D1 / SQLite file_blobs for guaranteed cross-device availability
+  try {
+    const base64Data = typeof data === "string"
+      ? Buffer.from(data).toString("base64")
+      : Buffer.from(data).toString("base64");
+    const { queryCloudflareD1 } = await import("./_core/d1Client");
+    await queryCloudflareD1(
+      "INSERT INTO file_blobs (key, mime_type, base64_data) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET base64_data = excluded.base64_data, mime_type = excluded.mime_type",
+      [key, contentType, base64Data]
+    );
+  } catch (d1Err) {
+    console.warn("[storagePut] Notice: could not persist to file_blobs in D1:", d1Err);
+  }
+
+  // 2. Also attempt upload to R2
   await uploadToR2(key, data, contentType);
   return { key, url: `/storage/${key}` };
 }
