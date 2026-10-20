@@ -7,6 +7,11 @@ import {
   Check,
   AlertTriangle,
   X,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
+  Lock,
+  FolderArchive,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -118,6 +123,7 @@ interface ManagePacketBindersModalProps {
   onSelectPage: (pageId: string) => void;
   stateCode?: string;
   studentName?: string;
+  onOpenVaultInsert?: () => void;
 }
 
 export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> = ({
@@ -129,6 +135,7 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
   onSelectPage,
   stateCode = "GA",
   studentName = "Student",
+  onOpenVaultInsert,
 }) => {
   // Binder marked for deletion with Yes/No confirmation dialog
   const [binderPendingRemoval, setBinderPendingRemoval] = useState<{
@@ -136,9 +143,33 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
     index: number;
   } | null>(null);
 
+  // Drag & drop reorder state
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [dragPos, setDragPos] = useState<"before" | "after" | null>(null);
+
   // New Custom Binder Name input
   const [customBinderTitle, setCustomBinderTitle] = useState("");
   const [isAddingCustom, setIsAddingCustom] = useState(false);
+
+  // Handler: Reorder binders
+  const handleReorder = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || fromIndex === 0 || toIndex === 0) {
+      if (fromIndex === 0 || toIndex === 0) {
+        toast.info("Binder 01 (Official State Form) is the required lead cover and remains at position 1.");
+      }
+      return;
+    }
+    const next = [...pages];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    const resequenced = next.map((p, idx) => ({
+      ...p,
+      number: idx + 1 < 10 ? `0${idx + 1}` : `${idx + 1}`,
+    }));
+    onUpdatePages(resequenced);
+    toast.success(`Moved "${moved.title}" to position ${toIndex + 1}`);
+  };
 
   // Keyboard shortcut: close on Escape
   useEffect(() => {
@@ -331,15 +362,90 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
                   return (
                     <div
                       key={p.id}
+                      draggable={!isCover}
+                      onDragStart={(e) => {
+                        if (isCover) {
+                          e.preventDefault();
+                          return;
+                        }
+                        e.dataTransfer.setData("text/plain", String(index));
+                        e.dataTransfer.effectAllowed = "move";
+                        setDraggedIdx(index);
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        if (draggedIdx === null || draggedIdx === index || isCover) return;
+                        e.dataTransfer.dropEffect = "move";
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const midpoint = rect.top + rect.height / 2;
+                        const pos = e.clientY < midpoint ? "before" : "after";
+                        if (dragOverIdx !== index || dragPos !== pos) {
+                          setDragOverIdx(index);
+                          setDragPos(pos);
+                        }
+                      }}
+                      onDragLeave={(e) => {
+                        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                        if (dragOverIdx === index) {
+                          setDragOverIdx(null);
+                          setDragPos(null);
+                        }
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedIdx !== null && draggedIdx !== index && !isCover) {
+                          let target = index;
+                          if (dragPos === "after" && draggedIdx < index) {
+                            target = index;
+                          } else if (dragPos === "before" && draggedIdx > index) {
+                            target = index;
+                          }
+                          handleReorder(draggedIdx, target);
+                        }
+                        setDraggedIdx(null);
+                        setDragOverIdx(null);
+                        setDragPos(null);
+                      }}
+                      onDragEnd={() => {
+                        setDraggedIdx(null);
+                        setDragOverIdx(null);
+                        setDragPos(null);
+                      }}
                       className={cn(
-                        "shrink-0 min-h-[56px] flex items-center justify-between p-3 rounded-lg border transition-all text-xs",
+                        "shrink-0 min-h-[56px] flex items-center justify-between p-3 rounded-lg border transition-all text-xs relative",
                         p.id === activePageId
                           ? "bg-[#0A264D]/90 border-[#DFBE77] shadow-[0_0_12px_rgba(223,190,119,0.25)]"
-                          : "bg-[#020A17]/85 border-[#3A2C18] hover:border-[#C5A059]/60"
+                          : "bg-[#020A17]/85 border-[#3A2C18] hover:border-[#C5A059]/60",
+                        draggedIdx === index && "opacity-40 scale-[0.98] ring-2 ring-[#DFBE77]/60",
+                        dragOverIdx === index && "border-[#DFBE77]"
                       )}
                     >
-                      {/* Left: Binder badge + title + category */}
-                      <div className="flex items-center gap-3 min-w-0 flex-1 pr-3">
+                      {/* Drag target indicator line */}
+                      {dragOverIdx === index && dragPos === "before" && (
+                        <div className="absolute -top-1 left-2 right-2 h-1 bg-gradient-to-r from-transparent via-[#FFE394] to-transparent rounded-full shadow-[0_0_10px_#FFE394] z-40 pointer-events-none" />
+                      )}
+                      {dragOverIdx === index && dragPos === "after" && (
+                        <div className="absolute -bottom-1 left-2 right-2 h-1 bg-gradient-to-r from-transparent via-[#FFE394] to-transparent rounded-full shadow-[0_0_10px_#FFE394] z-40 pointer-events-none" />
+                      )}
+
+                      {/* Left: Grip / Lock handle + Binder badge + title + category */}
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-3">
+                        {!isCover ? (
+                          <span
+                            className="cursor-grab active:cursor-grabbing p-1 text-[#8C6D2B] hover:text-[#DFBE77] transition-colors shrink-0"
+                            title="Drag to rearrange binder in filing sequence"
+                          >
+                            <GripVertical className="w-4 h-4" />
+                          </span>
+                        ) : (
+                          <span
+                            className="p-1 text-[#8C6D2B]/50 shrink-0"
+                            title="Binder 01 (Official State Form) is the fixed lead cover"
+                          >
+                            <Lock className="w-3.5 h-3.5" />
+                          </span>
+                        )}
+
                         <span className="font-mono text-xs font-bold text-[#FFE394] bg-[#031124] border border-[#C5A059]/50 w-8 h-7 rounded flex items-center justify-center shrink-0 shadow-inner">
                           {displayNum}
                         </span>
@@ -379,8 +485,32 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
                         </div>
                       </div>
 
-                      {/* Right: Actions */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      {/* Right: Reorder Up/Down + View + Remove */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Up/Down buttons for accessible one-click rearrangement */}
+                        {!isCover && (
+                          <div className="flex items-center gap-0.5 mr-1 bg-[#031124] p-0.5 rounded border border-[#3A2C18]">
+                            <button
+                              type="button"
+                              disabled={index <= 1}
+                              onClick={() => handleReorder(index, index - 1)}
+                              className="p-1 rounded text-[#C6B697] hover:text-[#FFE394] hover:bg-white/[0.08] disabled:opacity-20 disabled:pointer-events-none cursor-pointer transition-colors"
+                              title="Move binder up in docket"
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={index >= pages.length - 1}
+                              onClick={() => handleReorder(index, index + 1)}
+                              className="p-1 rounded text-[#C6B697] hover:text-[#FFE394] hover:bg-white/[0.08] disabled:opacity-20 disabled:pointer-events-none cursor-pointer transition-colors"
+                              title="Move binder down in docket"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+
                         <button
                           type="button"
                           onClick={() => {
@@ -503,7 +633,7 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
                 </div>
               ) : (
                 <div className="flex items-center gap-2 w-full justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Button
                       type="button"
                       size="sm"
@@ -511,8 +641,23 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
                       className="bg-[#051A38] text-[#DFBE77] hover:text-[#FFF4D4] hover:bg-[#07244D] border border-[#C5A059]/60 text-xs h-8 gap-1.5 cursor-pointer shadow-xs"
                     >
                       <Plus className="w-3.5 h-3.5 text-[#FFE394]" />
-                      <span>Add Exhibit Binder ({`Exhibit ${getNextExhibitLetter(pages)}`})</span>
+                      <span>Add Exhibit ({`Exhibit ${getNextExhibitLetter(pages)}`})</span>
                     </Button>
+
+                    {onOpenVaultInsert && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          onClose();
+                          onOpenVaultInsert();
+                        }}
+                        className="bg-[#071C3A] text-[#FFE394] hover:text-white hover:bg-[#0A264D] border border-[#DFBE77]/60 text-xs h-8 gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <FolderArchive className="w-3.5 h-3.5 text-[#DFBE77]" />
+                        <span>Vault / Upload PDF</span>
+                      </Button>
+                    )}
 
                     <Button
                       type="button"

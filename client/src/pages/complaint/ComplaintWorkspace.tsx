@@ -70,6 +70,7 @@ import {
   Wand2,
   AlertTriangle,
   Copy,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -2158,6 +2159,54 @@ export default function ComplaintWorkspace() {
     setBinderPendingRemoval(null);
   };
 
+  // State: Drag & Drop Binder Reordering on Left Sidebar
+  const [draggedBinderIndex, setDraggedBinderIndex] = useState<number | null>(null);
+  const [dragOverBinderIndex, setDragOverBinderIndex] = useState<number | null>(null);
+  const [dragDropPosition, setDragDropPosition] = useState<"before" | "after" | null>(null);
+
+  // Handler: Reorder Binders in Packet
+  const handleReorderBinders = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    if (fromIndex === 0 || toIndex === 0) {
+      toast.info("Binder 01 (Official State Form) is the required lead cover and remains at position 1.");
+      return;
+    }
+    if (fromIndex < 0 || fromIndex >= pages.length || toIndex < 0 || toIndex >= pages.length) return;
+
+    const movedTitle = pages[fromIndex]?.title || "Binder";
+
+    setPages((prevPages) => {
+      const next = [...prevPages];
+      const [movedItem] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, movedItem);
+      return ensureRequiredBinders(next);
+    });
+
+    toast.success(`Moved "${movedTitle}" to position ${toIndex + 1}`);
+  };
+
+  const handleMoveBinderUp = (index: number) => {
+    if (index <= 1) return;
+    handleReorderBinders(index, index - 1);
+  };
+
+  const handleMoveBinderDown = (index: number) => {
+    if (index === 0 || index >= pages.length - 1) return;
+    handleReorderBinders(index, index + 1);
+  };
+
+  // Global Keyboard Shortcut: Ctrl+Shift+B / Cmd+Shift+B -> Quick Add Binder
+  useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setIsManageBindersModalOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKey);
+    return () => window.removeEventListener("keydown", handleGlobalKey);
+  }, []);
+
   // Quick field updates on Cover & State Form
   const handleQuickFieldUpdate = (field: keyof ComplaintCaseDetails, value: string) => {
     const cleanValue = sanitizeComplaintText(value);
@@ -2739,6 +2788,18 @@ This document is incorporated herein and submitted in direct support of Complain
 
           {/* Right: Actions */}
           <div className="flex items-center justify-end gap-2 sm:gap-2.5 min-w-0 sm:min-w-[140px] md:min-w-[190px]">
+            {/* Quick Add Binder from Anywhere */}
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setIsManageBindersModalOpen(true)}
+              className="border-[#DFBE77] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-2.5 sm:px-3 gap-1.5 rounded-md border shadow-[0_2px_8px_rgba(0,0,0,0.7)] hover:brightness-110 cursor-pointer flex items-center transition-all select-none"
+              title="Add new exhibit, standard advocacy section, or custom binder to packet (Ctrl+Shift+B)"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>+ Add Binder</span>
+            </Button>
+
             <Button
               type="button"
               variant="outline"
@@ -2846,10 +2907,11 @@ This document is incorporated herein and submitted in direct support of Complain
                   <button
                     type="button"
                     onClick={() => setIsManageBindersModalOpen(true)}
-                    className="p-1 rounded text-[#DFBE77] hover:text-[#FFF4D4] hover:bg-white/[0.08] transition-colors cursor-pointer"
-                    title="Manage Packet Binders: Choose what to include or remove"
+                    className="px-2 py-0.5 rounded text-[10px] font-serif font-bold bg-[#071C3A] text-[#FFE394] hover:text-[#FFF4D4] hover:bg-[#0A2E5C] border border-[#DFBE77]/60 hover:border-[#FFE394] transition-all cursor-pointer flex items-center gap-1 shadow-xs"
+                    title="Add new binder or manage packet structure (Ctrl+Shift+B)"
                   >
-                    <Pencil className="w-3.5 h-3.5" />
+                    <Plus className="w-3 h-3 text-[#FFE394]" />
+                    <span>+ Add Binder</span>
                   </button>
                 </div>
                 <button
@@ -2919,18 +2981,91 @@ This document is incorporated herein and submitted in direct support of Complain
                   </div>
                 </button>
 
+                {/* Reorderable Binders Sub-Header */}
+                <div className="flex items-center justify-between px-1.5 py-1 text-[10px] border-b border-[#3A2C18]/40 mb-1 select-none">
+                  <span className="font-mono uppercase tracking-wider text-[9px] text-[#C6B697] flex items-center gap-1">
+                    <Layers className="w-3 h-3 text-[#DFBE77]" />
+                    <span>Docket Binders ({pages.length})</span>
+                  </span>
+                  <span className="text-[9px] text-[#A69371] italic">
+                    Drag to rearrange
+                  </span>
+                </div>
+
                 {pages.map((p, index) => {
                   const isActive = p.id === activePageId;
+                  const isCover = p.id === "cover" || index === 0;
+
                   return (
-                    <button
+                    <div
                       key={p.id}
-                      type="button"
+                      role="button"
+                      tabIndex={0}
+                      draggable={!isCover}
+                      onDragStart={(e) => {
+                        if (isCover) {
+                          e.preventDefault();
+                          return;
+                        }
+                        e.dataTransfer.setData("text/plain", String(index));
+                        e.dataTransfer.effectAllowed = "move";
+                        setDraggedBinderIndex(index);
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        if (draggedBinderIndex === null || draggedBinderIndex === index || isCover) return;
+                        e.dataTransfer.dropEffect = "move";
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const midpoint = rect.top + rect.height / 2;
+                        const pos = e.clientY < midpoint ? "before" : "after";
+                        if (dragOverBinderIndex !== index || dragDropPosition !== pos) {
+                          setDragOverBinderIndex(index);
+                          setDragDropPosition(pos);
+                        }
+                      }}
+                      onDragLeave={(e) => {
+                        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                        if (dragOverBinderIndex === index) {
+                          setDragOverBinderIndex(null);
+                          setDragDropPosition(null);
+                        }
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedBinderIndex !== null && draggedBinderIndex !== index && !isCover) {
+                          let target = index;
+                          if (dragDropPosition === "after" && draggedBinderIndex < index) {
+                            target = index;
+                          } else if (dragDropPosition === "before" && draggedBinderIndex > index) {
+                            target = index;
+                          }
+                          handleReorderBinders(draggedBinderIndex, target);
+                        }
+                        setDraggedBinderIndex(null);
+                        setDragOverBinderIndex(null);
+                        setDragDropPosition(null);
+                      }}
+                      onDragEnd={() => {
+                        setDraggedBinderIndex(null);
+                        setDragOverBinderIndex(null);
+                        setDragDropPosition(null);
+                      }}
                       onClick={() => {
                         setActivePageId(p.id);
                         if (p.id === "cover") {
                           setActiveToolbarTab("cover");
                         } else {
                           setActiveToolbarTab("edit");
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          setActivePageId(p.id);
+                          if (p.id === "cover") {
+                            setActiveToolbarTab("cover");
+                          } else {
+                            setActiveToolbarTab("edit");
+                          }
                         }
                       }}
                       style={
@@ -2943,17 +3078,43 @@ This document is incorporated herein and submitted in direct support of Complain
                             }
                       }
                       className={cn(
-                        "w-full flex items-center justify-between py-2 px-2 pl-3 rounded-[3px] transition-all text-left group cursor-pointer relative border select-none min-h-[46px]",
+                        "w-full flex items-center justify-between py-2 px-2 pl-2 rounded-[3px] transition-all text-left group cursor-pointer relative border select-none min-h-[48px]",
                         isActive
                           ? "z-10 border-[#FFE599] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_1.5px_rgba(140,80,10,0.3)] translate-x-0.5"
-                          : "z-0 border-[#BCA16B]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),inset_0_-1px_1px_rgba(0,0,0,0.15)] hover:brightness-105 hover:translate-x-0.5"
+                          : "z-0 border-[#BCA16B]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),inset_0_-1px_1px_rgba(0,0,0,0.15)] hover:brightness-105 hover:translate-x-0.5",
+                        draggedBinderIndex === index && "opacity-40 scale-[0.98] ring-2 ring-[#DFBE77]/70",
+                        dragOverBinderIndex === index && "border-[#DFBE77]"
                       )}
                     >
+                      {/* Drag target indicator line */}
+                      {dragOverBinderIndex === index && dragDropPosition === "before" && (
+                        <div className="absolute -top-1 left-1 right-1 h-1 bg-gradient-to-r from-transparent via-[#FFE394] to-transparent rounded-full shadow-[0_0_10px_#FFE394] z-40 pointer-events-none" />
+                      )}
+                      {dragOverBinderIndex === index && dragDropPosition === "after" && (
+                        <div className="absolute -bottom-1 left-1 right-1 h-1 bg-gradient-to-r from-transparent via-[#FFE394] to-transparent rounded-full shadow-[0_0_10px_#FFE394] z-40 pointer-events-none" />
+                      )}
+
                       {/* Authentic Ornate Brass & Navy Slip Bracket */}
                       <BrassSlipHandle isActive={isActive} />
 
-                      {/* Number + vertical line divider + full wrapped title (no dots/truncate) */}
-                      <div className="flex items-center min-w-0 flex-1 pl-1 pr-2 gap-2">
+                      {/* Left: Grip / Lock handle + Number + vertical divider + full wrapped title */}
+                      <div className="flex items-center min-w-0 flex-1 pl-1 pr-1.5 gap-1.5">
+                        {!isCover ? (
+                          <span
+                            className="cursor-grab active:cursor-grabbing p-0.5 text-[#8C6D2B]/70 group-hover:text-[#3D2C10] hover:scale-110 transition-all shrink-0"
+                            title="Drag to rearrange binder in left sidebar"
+                          >
+                            <GripVertical className="w-3.5 h-3.5" />
+                          </span>
+                        ) : (
+                          <span
+                            className="p-0.5 text-[#8C6D2B]/50 shrink-0"
+                            title="Binder 01 (Official State Form) is the fixed lead cover"
+                          >
+                            <Lock className="w-3 h-3" />
+                          </span>
+                        )}
+
                         <span className={cn(
                           "font-mono text-[11px] shrink-0 font-bold leading-none self-center",
                           isActive ? "text-[#3D2C10]" : "text-[#5C421B]"
@@ -2977,8 +3138,42 @@ This document is incorporated herein and submitted in direct support of Complain
                         </span>
                       </div>
 
-                      {/* Right: Quick Remove Trigger & Miniature document facsimile */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Right: Quick Reorder Buttons, Remove Trigger, & Miniature document facsimile */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {/* Micro Up/Down Move Arrows (on hover) */}
+                        {!isCover && (
+                          <div className="opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity -mr-0.5">
+                            {index > 1 && (
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMoveBinderUp(index);
+                                }}
+                                className="p-0.5 rounded hover:bg-black/15 text-[#3D2C10] hover:text-black transition-colors cursor-pointer"
+                                title="Move binder up in left sidebar"
+                              >
+                                <ChevronUp className="w-3 h-3 stroke-[2.5]" />
+                              </span>
+                            )}
+                            {index < pages.length - 1 && (
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMoveBinderDown(index);
+                                }}
+                                className="p-0.5 rounded hover:bg-black/15 text-[#3D2C10] hover:text-black transition-colors cursor-pointer"
+                                title="Move binder down in left sidebar"
+                              >
+                                <ChevronDown className="w-3 h-3 stroke-[2.5]" />
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         {p.id !== "cover" && p.id !== "clarity_control" && p.category !== "restatement" && (
                           <span
                             role="button"
@@ -2987,12 +3182,13 @@ This document is incorporated herein and submitted in direct support of Complain
                               e.stopPropagation();
                               setBinderPendingRemoval({ page: p, index });
                             }}
-                            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-950/40 text-rose-400 hover:text-rose-200 transition-opacity cursor-pointer"
+                            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-950/40 text-rose-600 hover:text-rose-800 transition-opacity cursor-pointer"
                             title={`Remove "${p.title}" from packet`}
                           >
                             <Trash2 className="w-3 h-3" />
                           </span>
                         )}
+
                         <MiniaturePagePreview
                           page={p}
                           caseDetails={caseDetails}
@@ -3000,7 +3196,7 @@ This document is incorporated herein and submitted in direct support of Complain
                           coverThumbnail={p.id === "cover" ? stateFormPages[0]?.dataUrl : p.renderedPages?.[0]?.dataUrl}
                         />
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -3082,7 +3278,7 @@ This document is incorporated herein and submitted in direct support of Complain
                   { id: "cover", label: "State Form", icon: FileText },
                   { id: "edit", label: "Edit", icon: Pencil },
                   { id: "arrange", label: "Exhibit Index", icon: Layers },
-                  { id: "insert", label: "Insert", icon: Plus },
+                  { id: "insert", label: "+ Add Binder", icon: Plus },
                   { id: "tools", label: "Tools", icon: PanelRight },
                 ]
                   .filter((tab) => !(tab.id === "tools" && !isToolsCollapsed))
@@ -3095,7 +3291,7 @@ This document is incorporated herein and submitted in direct support of Complain
                       type="button"
                       onClick={() => {
                         if (tab.id === "insert") {
-                          setIsAddPageModalOpen(true);
+                          setIsManageBindersModalOpen(true);
                         } else if (tab.id === "tools") {
                           setIsToolsCollapsed((prev) => !prev);
                         } else if (tab.id === "arrange") {
@@ -5374,6 +5570,10 @@ This document is incorporated herein and submitted in direct support of Complain
           }}
           stateCode={officialFormState.stateCode || "GA"}
           studentName={caseDetails.studentName}
+          onOpenVaultInsert={() => {
+            setIsManageBindersModalOpen(false);
+            setIsAddPageModalOpen(true);
+          }}
         />
 
         {/* Explicit Yes / No Removal Confirmation Dialog from Packet Index Cards */}
