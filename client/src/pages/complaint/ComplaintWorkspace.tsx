@@ -143,36 +143,11 @@ export async function convertFileUrlToPageImages(
       }
       arrayBuffer = bytes.buffer;
     } else {
-      let res: Response | null = null;
-      try {
-        res = await fetch(fileUrl);
-      } catch (fErr) {
-        console.warn(`[convertFileUrlToPageImages] Direct fetch failed for ${fileUrl}:`, fErr);
+      const res = await fetch(fileUrl);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch file (${res.status})`);
       }
-
-      if (!res || !res.ok) {
-        // Graceful fallback to verified authentic local asset
-        const candidateFallbacks = [
-          "/forms/brooklyn-smith-current-iep.pdf",
-          "/forms/gadoe-formal-complaint-form.pdf",
-        ];
-        let foundBuffer: ArrayBuffer | null = null;
-        for (const fb of candidateFallbacks) {
-          try {
-            const fbRes = await fetch(fb);
-            if (fbRes.ok) {
-              foundBuffer = await fbRes.arrayBuffer();
-              break;
-            }
-          } catch {}
-        }
-        if (!foundBuffer) {
-          throw new Error(`Failed to fetch file (${res?.status || "network failure"})`);
-        }
-        arrayBuffer = foundBuffer;
-      } else {
-        arrayBuffer = await res.arrayBuffer();
-      }
+      arrayBuffer = await res.arrayBuffer();
     }
 
     return await convertPdfToPageImages(arrayBuffer, 1.8);
@@ -822,23 +797,47 @@ export function extractCleanExhibitTitle(
     return "District Correspondence & Service Logs";
   }
 
-  // Strip exhibit prefixes
-  raw = raw.replace(/^Exhibit\s+[A-Z0-9]+\s*[—–-]\s*/i, "");
-  raw = raw.replace(/^Exhibit\s+[A-Z0-9]+\s*:\s*/i, "");
-  const parenMatch = raw.match(/^Exhibit\s+[A-Z0-9]+\s*\(([^)]+)\)$/i);
-  if (parenMatch) {
-    raw = parenMatch[1].trim();
-  } else {
-    raw = raw.replace(/^Exhibit\s+[A-Z0-9]+\s*/i, "");
-  }
+  // Strip all exhibit prefixes and nested letters
+  const cleaned = stripAllExhibitPrefixes(raw);
+  return cleaned || "Evidentiary Document Record";
+}
 
-  // Strip file extension if any
-  raw = raw.replace(/\.[a-zA-Z0-9]{2,4}$/, "").replace(/[_-]+/g, " ").trim();
+/**
+ * Rigorously removes any and all exhibit letter markers ("Exhibit A", "Exhibit C", "(Exhibit C)", etc.)
+ * from a title string or filename descriptor so that only a single authoritative letter designation
+ * can ever live on an exhibit binder.
+ */
+export function stripAllExhibitPrefixes(raw: string): string {
+  if (!raw) return "";
+  let s = raw.trim();
 
-  // Strip leading date patterns like "2025 09 " or "2025 09 12 "
-  raw = raw.replace(/^\d{4}\s+\d{2}(\s+\d{2})?\s*/, "").trim();
+  // 1. Strip file extension if any
+  s = s.replace(/\.[a-zA-Z0-9]{2,4}$/, "").replace(/[_-]+/g, " ").trim();
 
-  return raw || "Evidentiary Document Record";
+  // 2. Strip nested parenthetical exhibit mentions, e.g. "(Exhibit C)", "(Exhibit C - ...)"
+  s = s.replace(/\(\s*Exhibit\s+[A-Z0-9]+(?:\s*[—–\-:]\s*|\s*)([^)]*)\)/gi, (_, inner) => {
+    return inner ? `(${inner.trim()})` : "";
+  });
+
+  // 3. Strip leading exhibit prefixes: "Exhibit A —", "Exhibit B:", "Exhibit C - ", "Exhibit D "
+  s = s.replace(/^Exhibit\s+[A-Z0-9]+(?:\s*[—–\-:]\s*|\s*)/gi, "");
+
+  // 4. Strip any trailing or standalone "(Exhibit [A-Z0-9]+)"
+  s = s.replace(/\(\s*Exhibit\s+[A-Z0-9]+\s*\)/gi, "");
+
+  // 5. Strip any other "Exhibit [A-Z0-9]+" anywhere in the string
+  s = s.replace(/\bExhibit\s+[A-Z0-9]+\b/gi, "");
+
+  // 6. Strip leading date patterns like "2025 09 " or "2025 09 12 "
+  s = s.replace(/^\d{4}\s+\d{2}(\s+\d{2})?\s*/, "").trim();
+
+  // 7. Strip common leftover artifacts
+  s = s.replace(/\(\s*\)/g, "");
+  s = s.replace(/^[—–\-:\s]+/, "");
+  s = s.replace(/[—–\-:\s]+$/, "");
+  s = s.replace(/\s{2,}/g, " ").trim();
+
+  return s;
 }
 
 /**
@@ -1088,24 +1087,15 @@ export function resequenceExhibits(
     const newTag = `Exhibit ${letter}`;
 
     // Extract description from title (without destroying custom user typing)
-    let newTitle = p.title;
-    const parenMatch = p.title.match(/^Exhibit\s+[A-Z0-9]+\s*\(([^)]+)\)$/i);
-    const dashMatch = p.title.match(/^Exhibit\s+[A-Z0-9]+\s*[—–-]\s*(.+)$/i);
-    const colonMatch = p.title.match(/^Exhibit\s+[A-Z0-9]+\s*:\s*(.+)$/i);
-    const bareMatch = p.title.match(/^Exhibit\s+[A-Z0-9]+$/i);
-
-    if (parenMatch) {
-      newTitle = `Exhibit ${letter} (${parenMatch[1].trim()})`;
-    } else if (dashMatch) {
-      newTitle = `Exhibit ${letter} — ${dashMatch[1].trim()}`;
-    } else if (colonMatch) {
-      newTitle = `Exhibit ${letter}: ${colonMatch[1].trim()}`;
-    } else if (bareMatch) {
-      newTitle = `Exhibit ${letter}`;
-    } else if (!p.title.toLowerCase().startsWith("exhibit")) {
-      newTitle = `Exhibit ${letter} (${p.title.trim()})`;
-    } else {
-      newTitle = `Exhibit ${letter}`;
+    // Strictly strip all exhibit prefixes and redundant letter tags to ensure only ONE letter ever lives on a binder
+    const cleanDesc = stripAllExhibitPrefixes(p.title);
+    let newTitle = `Exhibit ${letter}`;
+    if (cleanDesc) {
+      if (p.title.includes("(") && p.title.includes(")")) {
+        newTitle = `Exhibit ${letter} (${cleanDesc})`;
+      } else {
+        newTitle = `Exhibit ${letter} — ${cleanDesc}`;
+      }
     }
 
     return {
@@ -2944,121 +2934,6 @@ export default function ComplaintWorkspace() {
     };
   }, []);
 
-  // ── Auto-pull Most Recent IEP from Document Vault into Exhibit A ──
-  const attemptedAutoPullRef = useRef<Record<string, boolean>>({});
-
-  useEffect(() => {
-    const studentIdToUse = activeStudentId || initialUrlStudentId || 120042;
-    const studentKey = String(studentIdToUse);
-
-    // Locate the Current IEP exhibit binder (exhibit_a or first exhibit tagged Exhibit A / IEP)
-    const iepBinder = pages.find(
-      (p) =>
-        p.id === "exhibit_a" ||
-        (p.category === "exhibit" &&
-          (p.title.toLowerCase().includes("iep") ||
-            p.exhibitTag?.toLowerCase().includes("exhibit a")))
-    );
-
-    if (!iepBinder) return;
-
-    // Resolve Most Recent IEP from Document Vault
-    let detectedFileUrl = "";
-    let detectedFileName = "";
-    let detectedDocType = "Current IEP";
-    let sourceVaultId: number | undefined;
-
-    // 1. Official Current IEP in iepDocuments table
-    const officialUrl =
-      iepDocQuery.data?.currentFileUrl || (iepDocQuery.data as any)?.currentIepFileUrl;
-    const officialName =
-      iepDocQuery.data?.currentFileName || (iepDocQuery.data as any)?.currentIepFileName;
-
-    if (officialUrl) {
-      detectedFileUrl = officialUrl;
-      detectedFileName = officialName || "current IEP.pdf";
-      detectedDocType = "Current IEP";
-      sourceVaultId = iepDocQuery.data?.id;
-    }
-
-    // 2. Document Vault clientFiles table
-    if (!detectedFileUrl && vaultQuery.data?.length) {
-      // Priority A: explicitly says "most recent iep"
-      const explicitRecent = vaultQuery.data.find((f) => {
-        const fn = (f.fileName || "").toLowerCase();
-        const dt = (f.documentType || "").toLowerCase();
-        return fn.includes("most recent iep") || dt.includes("most recent iep");
-      });
-
-      // Priority B: marked as isCurrentPlan or isCurrentVersion
-      const currentMarked = vaultQuery.data.find(
-        (f) => (f.isCurrentPlan === 1 || f.isCurrentVersion === 1) && f.fileUrl
-      );
-
-      // Priority C: any file in vault mentioning "iep"
-      const anyIep = vaultQuery.data.find((f) => {
-        const fn = (f.fileName || "").toLowerCase();
-        const dt = (f.documentType || "").toLowerCase();
-        const cat = (f.category || "").toLowerCase();
-        return (
-          f.fileUrl &&
-          (fn.includes("iep") || dt.includes("iep") || cat.includes("iep"))
-        );
-      });
-
-      const candidate = explicitRecent || currentMarked || anyIep;
-      if (candidate?.fileUrl) {
-        detectedFileUrl = candidate.fileUrl;
-        detectedFileName = candidate.fileName;
-        detectedDocType = candidate.documentType || "Current IEP";
-        sourceVaultId = candidate.id;
-      }
-    }
-
-    // 3. Verified authentic fallback asset for Brooklyn Smith / active student
-    if (!detectedFileUrl && (caseDetails.studentName?.toLowerCase().includes("brooklyn") || studentKey === "120042")) {
-      detectedFileUrl = "/forms/brooklyn-smith-current-iep.pdf";
-      detectedFileName = "Brooklyn_Smith_2026_Annual_IEP.pdf";
-      detectedDocType = "Current IEP";
-    }
-
-    if (detectedFileUrl) {
-      const hasValidPages =
-        iepBinder.fileUrl === detectedFileUrl &&
-        iepBinder.renderedPages &&
-        iepBinder.renderedPages.length > 0 &&
-        iepBinder.renderedPages.every((rp) => Boolean(rp.dataUrl));
-
-      if (hasValidPages) {
-        attemptedAutoPullRef.current[studentKey] = true;
-        return;
-      }
-
-      if (!attemptedAutoPullRef.current[studentKey] && !iepBinder.isRenderingPdf) {
-        attemptedAutoPullRef.current[studentKey] = true;
-
-        setPages((prev) =>
-          prev.map((p) => {
-            if (p.id === iepBinder.id) {
-              return {
-                ...p,
-                fileUrl: detectedFileUrl,
-                fileName: detectedFileName,
-                documentType: detectedDocType,
-                sourceVaultId,
-                isRenderingPdf: true,
-              };
-            }
-            return p;
-          })
-        );
-
-        loadAndConvertPdfForPage(iepBinder.id, detectedFileUrl, detectedFileName);
-        toast.success(`✓ Automatically linked Most Recent IEP ("${detectedFileName}") into ${iepBinder.exhibitTag || "Exhibit A"}`);
-      }
-    }
-  }, [activeStudentId, iepDocQuery.data, vaultQuery.data, caseDetails.studentName]);
-
   // Auto-convert any exhibit page that has a fileUrl but missing rendered page images or stripped dataUrls
   useEffect(() => {
     pages.forEach((p) => {
@@ -3192,12 +3067,12 @@ export default function ComplaintWorkspace() {
     renderedPages?: ImportedPdfPage[];
     fileBlob?: Blob;
   }) => {
-    const cleanName = fileItem.fileName.replace(/\.[^/.]+$/, "");
+    const cleanName = stripAllExhibitPrefixes(fileItem.fileName.replace(/\.[^/.]+$/, ""));
 
     // Case 1: Attaching directly to currently active exhibit (e.g. Exhibit A)
     if (isCurrentPageAnExhibit && targetExhibitMode === "current") {
-      const exhibitPrefix = activePage.exhibitTag || activePage.title.split("(")[0].trim() || "Exhibit A";
-      const updatedTitle = `${exhibitPrefix} (${cleanName})`;
+      const exhibitPrefix = activePage.exhibitTag || `Exhibit ${activePage.number || "A"}`;
+      const updatedTitle = cleanName ? `${exhibitPrefix} (${cleanName})` : exhibitPrefix;
       const hasPreRendered = fileItem.renderedPages && fileItem.renderedPages.length > 0;
 
       if (hasPreRendered) {
@@ -3251,7 +3126,7 @@ This documentary record is incorporated into ${p.exhibitTag || p.title} in direc
     const nextLetter = nextExhibitLetter;
     const nextIdx = pages.length;
     const nextNum = nextIdx + 1 < 10 ? `0${nextIdx + 1}` : `${nextIdx + 1}`;
-    const docTitle = `Exhibit ${nextLetter} (${cleanName})`;
+    const docTitle = cleanName ? `Exhibit ${nextLetter} (${cleanName})` : `Exhibit ${nextLetter}`;
     const hasPreRendered = fileItem.renderedPages && fileItem.renderedPages.length > 0;
     const newPageId = `exhibit_${nextLetter.toLowerCase()}_${Date.now()}`;
 

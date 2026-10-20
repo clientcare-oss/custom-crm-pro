@@ -529,7 +529,7 @@ export function ExhibitPdfSheetsView({
                 />
               ) : (
                 <PdfLivePageRenderer
-                  fileUrl={page.fileUrl || "/storage/iep-documents/1792527991296_4823fd75_current_IEP_ac7e4441.pdf"}
+                  fileUrl={page.fileUrl || ""}
                   pageNumber={pdfPage.pageNumber}
                   fallbackFileName={page.fileName}
                   totalPages={renderedPages.length}
