@@ -2820,18 +2820,6 @@ This document is incorporated herein and submitted in direct support of Complain
 
           {/* Right: Actions */}
           <div className="flex items-center justify-end gap-2 sm:gap-2.5 min-w-0 sm:min-w-[140px] md:min-w-[190px]">
-            {/* Quick Add Binder from Anywhere */}
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setIsManageBindersModalOpen(true)}
-              className="border-[#DFBE77] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-2.5 sm:px-3 gap-1.5 rounded-md border shadow-[0_2px_8px_rgba(0,0,0,0.7)] hover:brightness-110 cursor-pointer flex items-center transition-all select-none"
-              title="Add new exhibit, standard advocacy section, or custom binder to packet (Ctrl+Shift+B)"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Add Binder</span>
-            </Button>
-
             <Button
               type="button"
               variant="outline"
