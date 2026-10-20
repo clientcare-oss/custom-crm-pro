@@ -2443,19 +2443,17 @@ export default function ComplaintWorkspace() {
   const activePageIndex = pages.findIndex((p) => p.id === activePageId);
 
   const isCurrentPageAnExhibit = activePage.category === "exhibit";
-  const currentExhibitLabel = activePage.exhibitTag || activePage.title || "Exhibit A";
+  const currentExhibitLabel = activePage.exhibitTag || activePage.title || "Current Binder";
   const nextExhibitLetter = getNextExhibitLetter(pages);
-  const effectiveTargetLabel = isCurrentPageAnExhibit && targetExhibitMode === "current"
+  const effectiveTargetLabel = targetExhibitMode === "current" && activePage.id !== "cover"
     ? currentExhibitLabel
     : `Exhibit ${nextExhibitLetter}`;
 
-  // Automatically default to current active exhibit if user is currently working on an exhibit page,
+  // Automatically default to current active binder if user is on any binder (not the 4-page cover form),
   // and auto-populate next sequential exhibit letter (e.g. "Exhibit D — ")
   useEffect(() => {
     if (isAddPageModalOpen) {
-      if (activePage.category === "exhibit") {
-        setTargetExhibitMode("current");
-      } else {
+      if (activePage.id === "cover") {
         setTargetExhibitMode("new");
       }
       const nextLetter = getNextExhibitLetter(pages);
@@ -3069,10 +3067,12 @@ export default function ComplaintWorkspace() {
   }) => {
     const cleanName = stripAllExhibitPrefixes(fileItem.fileName.replace(/\.[^/.]+$/, ""));
 
-    // Case 1: Attaching directly to currently active exhibit (e.g. Exhibit A)
-    if (isCurrentPageAnExhibit && targetExhibitMode === "current") {
-      const exhibitPrefix = activePage.exhibitTag || `Exhibit ${activePage.number || "A"}`;
-      const updatedTitle = cleanName ? `${exhibitPrefix} (${cleanName})` : exhibitPrefix;
+    // Case 1: Attaching directly to currently active binder / exhibit
+    if (targetExhibitMode === "current" && activePage.id !== "cover") {
+      const exhibitPrefix = activePage.exhibitTag || activePage.title || `Exhibit ${activePage.number || "A"}`;
+      const updatedTitle = activePage.category === "exhibit"
+        ? (cleanName ? `${activePage.exhibitTag || `Exhibit ${activePage.number || "A"}`} (${cleanName})` : exhibitPrefix)
+        : activePage.title;
       const hasPreRendered = fileItem.renderedPages && fileItem.renderedPages.length > 0;
 
       if (hasPreRendered) {
@@ -3092,6 +3092,7 @@ export default function ComplaintWorkspace() {
             return {
               ...p,
               title: updatedTitle,
+              category: "exhibit" as const,
               fileUrl: fileItem.fileUrl,
               fileName: fileItem.fileName,
               documentType: fileItem.documentType || "Evidentiary Record",
@@ -4079,6 +4080,20 @@ This document is incorporated herein and submitted in direct support of Complain
                     <span>AI Writer</span>
                     <Wand2 className="w-3 h-3 text-[#07162B]/80 group-hover:rotate-12 transition-transform" />
                   </button>
+
+                  {/* Attach Document to Open Binder Paperclip Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTargetExhibitMode("current");
+                      setIsAddPageModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-serif font-bold transition-all cursor-pointer bg-[#051A36] text-[#FFE394] hover:text-[#FFF4D4] hover:bg-[#082852] border border-[#C5A059]/60 hover:border-[#FFE394] shadow-[0_2px_8px_rgba(0,0,0,0.4)] active:scale-95 group"
+                    title={`Attach document to open binder: "${activePage.title}"`}
+                  >
+                    <Paperclip className="w-3.5 h-3.5 text-[#DFBE77] group-hover:rotate-[-20deg] transition-transform" />
+                    <span>Attach</span>
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
@@ -4180,18 +4195,31 @@ This document is incorporated herein and submitted in direct support of Complain
                     </div>
                   )}
 
-                  <Button
+                  {/* AI Writer Helper Toolbar Button on Exhibit Bar */}
+                  <button
                     type="button"
-                    size="sm"
+                    onClick={handleOpenAiWriter}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-serif font-bold transition-all cursor-pointer bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] hover:brightness-110 border border-[#FFE394]/80 shadow-[0_2px_8px_rgba(0,0,0,0.4)] active:scale-95 group"
+                    title="AI Writer Helper: Help me write, polish legal arguments, add citations, or make it better"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#07162B] animate-pulse" />
+                    <span>AI Writer</span>
+                    <Wand2 className="w-3 h-3 text-[#07162B]/80 group-hover:rotate-12 transition-transform" />
+                  </button>
+
+                  {/* Attach Document to Open Binder Paperclip Button */}
+                  <button
+                    type="button"
                     onClick={() => {
                       setTargetExhibitMode("current");
                       setIsAddPageModalOpen(true);
                     }}
-                    className="bg-[#031124] hover:bg-[#071C3A] text-[#DFBE77] hover:text-[#FFF4D4] border border-[#C5A059]/60 text-xs h-7 px-2.5 gap-1.5 cursor-pointer shadow-xs"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-serif font-bold transition-all cursor-pointer bg-[#051A36] text-[#FFE394] hover:text-[#FFF4D4] hover:bg-[#082852] border border-[#C5A059]/60 hover:border-[#FFE394] shadow-[0_2px_8px_rgba(0,0,0,0.4)] active:scale-95 group"
+                    title={`Attach or replace document in open binder: "${activePage.title}"`}
                   >
-                    <FolderArchive className="w-3.5 h-3.5 text-[#DFBE77]" />
-                    <span>{activePage.fileUrl ? "Replace File from Vault" : "Insert File from Vault"}</span>
-                  </Button>
+                    <Paperclip className="w-3.5 h-3.5 text-[#DFBE77] group-hover:rotate-[-20deg] transition-transform" />
+                    <span>{activePage.fileUrl ? "Replace Attached Document" : "Attach Document"}</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -5427,16 +5455,16 @@ This document is incorporated herein and submitted in direct support of Complain
 
             {/* Modal Body */}
             <div className="p-5 max-h-[60vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-[#3A2C18]">
-              {/* Exhibit Destination Selector (Shows when currently on an exhibit like Exhibit A) */}
-              {isCurrentPageAnExhibit && (
+              {/* Exhibit Destination Selector (Shows when currently on an open binder) */}
+              {activePage.id !== "cover" && (
                 <div className="mb-4 p-3 rounded-lg bg-[#020A17] border border-[#3A2C18] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div className="min-w-0">
                     <span className="text-[10px] font-mono uppercase tracking-wider text-[#A69371] block">
-                      Exhibit Attachment Destination
+                      Attachment Destination
                     </span>
                     <span className="text-xs font-serif font-bold text-[#FFF4D4] truncate block">
                       {targetExhibitMode === "current"
-                        ? `Attach directly to ${currentExhibitLabel}`
+                        ? `Attach directly to open binder: ${currentExhibitLabel}`
                         : `Create New Exhibit (${nextExhibitLetter})`}
                     </span>
                   </div>
@@ -5452,7 +5480,7 @@ This document is incorporated herein and submitted in direct support of Complain
                           : "text-[#C6B697] hover:text-white"
                       )}
                     >
-                      Attach to {activePage.exhibitTag || "Exhibit A"}
+                      Attach to Open Binder ({activePage.exhibitTag || activePage.title})
                     </button>
 
                     <button
