@@ -147,17 +147,108 @@ export async function convertFileUrlToPageImages(
   }
 }
 
-// Helper to get total docket pages across all binders, dynamically accounting for multi-page exhibits
-export function getDocketTotalPages(pagesList: { id: string; category?: string; renderedPages?: ImportedPdfPage[]; pageCount?: number }[]): number {
-  if (pagesList.length <= 1) return STATE_FORM_PAGE_COUNT;
+/**
+ * Splits plain text content into proportional 8.5" x 11" pages
+ * for legal/formal advocacy sheets, ensuring paragraphs break cleanly
+ * without overflowing margins or footers.
+ */
+export function paginateTextContent(
+  text?: string | null,
+  targetCharsPerPage: number = 2400,
+  maxLinesPerPage: number = 38
+): string[] {
+  if (!text || text.trim().length === 0) {
+    return [""];
+  }
+
+  const rawParagraphs = text.split(/\n\n+/);
+  const pages: string[] = [];
+  let currentPageParts: string[] = [];
+  let currentChars = 0;
+  let currentLines = 0;
+
+  for (const para of rawParagraphs) {
+    const trimmed = para.trim();
+    if (!trimmed) continue;
+
+    // Estimate line count for this paragraph (including word wrap at ~80 chars/line)
+    const lineCount = Math.max(1, Math.ceil(trimmed.length / 80)) + (trimmed.split("\n").length - 1);
+    const paraCharLength = trimmed.length;
+
+    // Check if adding this paragraph exceeds page limits
+    const exceedsPage =
+      currentPageParts.length > 0 &&
+      (currentLines + lineCount > maxLinesPerPage || currentChars + paraCharLength > targetCharsPerPage);
+
+    if (exceedsPage) {
+      pages.push(currentPageParts.join("\n\n"));
+      currentPageParts = [];
+      currentChars = 0;
+      currentLines = 0;
+    }
+
+    // If the paragraph itself is longer than targetCharsPerPage, break it by sentences/chunks
+    if (paraCharLength > targetCharsPerPage) {
+      const sentences = trimmed.split(/(?<=[.!?])\s+/);
+      for (const sentence of sentences) {
+        const sentenceLines = Math.max(1, Math.ceil(sentence.length / 80));
+        if (
+          currentPageParts.length > 0 &&
+          (currentLines + sentenceLines > maxLinesPerPage || currentChars + sentence.length > targetCharsPerPage)
+        ) {
+          pages.push(currentPageParts.join("\n\n"));
+          currentPageParts = [];
+          currentChars = 0;
+          currentLines = 0;
+        }
+        currentPageParts.push(sentence);
+        currentChars += sentence.length;
+        currentLines += sentenceLines;
+      }
+    } else {
+      currentPageParts.push(trimmed);
+      currentChars += paraCharLength;
+      currentLines += lineCount;
+    }
+  }
+
+  if (currentPageParts.length > 0) {
+    pages.push(currentPageParts.join("\n\n"));
+  }
+
+  return pages.length > 0 ? pages : [""];
+}
+
+/**
+ * Returns the number of discrete content sheets a binder requires
+ * (1 for normal length text, N for multi-page statements, or N for multi-page PDFs).
+ */
+export function getBinderContentPageCount(
+  page?: { id?: string; category?: string; renderedPages?: ImportedPdfPage[]; pageCount?: number; content?: string } | null,
+  caseDetails?: Partial<ComplaintCaseDetails>
+): number {
+  if (!page) return 1;
+  if (page.category === "exhibit" && page.renderedPages && page.renderedPages.length > 0) {
+    return page.renderedPages.length;
+  }
+  if (page.content && page.content.trim().length > 0) {
+    const pages = paginateTextContent(page.content);
+    return Math.max(1, pages.length);
+  }
+  return 1;
+}
+
+// Helper to get total docket pages across all binders, dynamically accounting for multi-page exhibits & multi-page statements
+export function getDocketTotalPages(
+  pagesList?: { id: string; category?: string; renderedPages?: ImportedPdfPage[]; pageCount?: number; content?: string }[],
+  caseDetails?: Partial<ComplaintCaseDetails>
+): number {
+  if (!pagesList || pagesList.length <= 1) return STATE_FORM_PAGE_COUNT;
   let total = STATE_FORM_PAGE_COUNT;
   for (let i = 1; i < pagesList.length; i++) {
     const p = pagesList[i];
-    if (p.category === "exhibit" && p.renderedPages && p.renderedPages.length > 0) {
-      total += 1 + p.renderedPages.length; // 1 Cover Sheet + N authentic PDF pages
-    } else {
-      total += PAGES_PER_BINDER;
-    }
+    // 1 Cover Sheet + N content/PDF sheets
+    total += 1 + getBinderContentPageCount(p, caseDetails);
   }
   return total;
 }
@@ -165,12 +256,14 @@ export function getDocketTotalPages(pagesList: { id: string; category?: string; 
 // Helper to get continuous docket page range info for a binder by index
 export function getBinderPageRange(
   pageIndex: number,
-  pagesList?: { id: string; category?: string; renderedPages?: ImportedPdfPage[]; pageCount?: number }[]
+  pagesList?: { id: string; category?: string; renderedPages?: ImportedPdfPage[]; pageCount?: number; content?: string }[],
+  caseDetails?: Partial<ComplaintCaseDetails>
 ): {
   coverPage: number;
   contentPage: number;
   contentStart: number;
   contentEnd: number;
+  contentCount: number;
   start: number;
   end: number;
   badge: string;
@@ -181,6 +274,7 @@ export function getBinderPageRange(
       contentPage: 4,
       contentStart: 1,
       contentEnd: 4,
+      contentCount: 4,
       start: 1,
       end: 4,
       badge: "01–04",
@@ -196,6 +290,7 @@ export function getBinderPageRange(
       contentPage,
       contentStart: contentPage,
       contentEnd: contentPage,
+      contentCount: 1,
       start: coverPage,
       end: contentPage,
       badge: `${pad(coverPage)}–${pad(contentPage)}`,
@@ -205,22 +300,15 @@ export function getBinderPageRange(
   let currentStart = STATE_FORM_PAGE_COUNT + 1;
   for (let i = 1; i < pageIndex; i++) {
     const p = pagesList[i];
-    const count =
-      p?.category === "exhibit" && p?.renderedPages && p?.renderedPages.length > 0
-        ? 1 + p.renderedPages.length
-        : PAGES_PER_BINDER;
+    const count = 1 + getBinderContentPageCount(p, caseDetails);
     currentStart += count;
   }
 
   const currentP = pagesList[pageIndex];
-  const currentCount =
-    currentP?.category === "exhibit" && currentP?.renderedPages && currentP.renderedPages.length > 0
-      ? 1 + currentP.renderedPages.length
-      : PAGES_PER_BINDER;
-
+  const contentCount = getBinderContentPageCount(currentP, caseDetails);
   const coverPage = currentStart;
   const contentStart = currentStart + 1;
-  const contentEnd = currentStart + currentCount - 1;
+  const contentEnd = currentStart + contentCount;
   const contentPage = contentStart;
   const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
   const badge = coverPage === contentEnd ? pad(coverPage) : `${pad(coverPage)}–${pad(contentEnd)}`;
@@ -230,6 +318,7 @@ export function getBinderPageRange(
     contentPage,
     contentStart,
     contentEnd,
+    contentCount,
     start: coverPage,
     end: contentEnd,
     badge,
@@ -237,9 +326,13 @@ export function getBinderPageRange(
 }
 
 // Helper to get continuous docket page number for a given page index (defaults to content sheet)
-export function getDocketPageNumber(pageIndex: number): number {
+export function getDocketPageNumber(
+  pageIndex: number,
+  pagesList?: { id: string; category?: string; renderedPages?: ImportedPdfPage[]; pageCount?: number; content?: string }[],
+  caseDetails?: Partial<ComplaintCaseDetails>
+): number {
   if (pageIndex <= 0) return 1;
-  return STATE_FORM_PAGE_COUNT + (pageIndex - 1) * PAGES_PER_BINDER + 2;
+  return getBinderPageRange(pageIndex, pagesList, caseDetails).contentPage;
 }
 
 // Helper to get formatted 2-digit binder number for packet index cards (01, 02, 03, ...)
@@ -620,6 +713,48 @@ interface ComplaintCaseDetails {
   submissionDate: string;
   showLogo?: boolean;
   state?: string;
+}
+
+/**
+ * Synchronizes the Table of Complaint Filing Sections in the Exhibit Index
+ * to reflect dynamic multi-page statement and exhibit docket page ranges.
+ */
+export function syncExhibitIndexTableOfSections(
+  content: string,
+  pagesList: DocumentPage[],
+  caseDetails?: Partial<ComplaintCaseDetails>
+): string {
+  if (!content || !content.includes("TABLE OF COMPLAINT FILING SECTIONS:")) return content;
+
+  const lines: string[] = [];
+  lines.push("TABLE OF COMPLAINT FILING SECTIONS:");
+  lines.push("================================================================================");
+  lines.push("  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document (Pages 1–4)");
+
+  for (let i = 1; i < pagesList.length; i++) {
+    const p = pagesList[i];
+    const range = getBinderPageRange(i, pagesList, caseDetails);
+    const rangeStr = range.start === range.end ? `Page ${range.start}` : `Pages ${range.start}–${range.end}`;
+    const num = i + 1;
+    let label = p.title.toUpperCase();
+    if (p.id === "clarity_control" || p.category === "restatement") {
+      label = "CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims";
+    } else if (p.id === "chrono_summary" || p.title.toLowerCase().includes("chronological")) {
+      label = "CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones";
+    } else if (p.id === "exhibit_index") {
+      label = "EXHIBIT INDEX: Cover Page & Master Evidentiary Schedule";
+    } else {
+      label = `${p.exhibitTag ? `${p.exhibitTag.toUpperCase()}: ` : ""}${p.title.toUpperCase()}`;
+    }
+    lines.push(`  ${num}. ${label} (${rangeStr})`);
+  }
+
+  const newTableBlock = lines.join("\n");
+  const tableRegex = /TABLE OF COMPLAINT FILING SECTIONS:[\s\S]*?(?================================================================================\s*MASTER INDEX|$)/;
+  if (tableRegex.test(content)) {
+    return content.replace(tableRegex, newTableBlock + "\n\n");
+  }
+  return content;
 }
 
 // ── Authentic Transparent Photographic Brass Corner Bracket Asset ───────────
@@ -1895,8 +2030,8 @@ export default function ComplaintWorkspace() {
   }, [isAddPageModalOpen, activePageId]);
 
   // Total docket pages: 4 pages for binder 01 (State Form) + dynamic pages for each subsequent binder
-  const totalDocketPages = getDocketTotalPages(pages);
-  const activeBinderRange = getBinderPageRange(activePageIndex, pages);
+  const totalDocketPages = getDocketTotalPages(pages, caseDetails);
+  const activeBinderRange = getBinderPageRange(activePageIndex, pages, caseDetails);
   const currentDocketPageNumber = activeBinderRange.contentPage;
 
   // Ref & auto-resize effect for the editable legal drafting textarea
@@ -2444,7 +2579,7 @@ This document is incorporated herein and submitted in direct support of Complain
 
   const handlePrintAll = async () => {
     setPrintScope("all");
-    toast.success("Preparing complete 14-page State Complaint Filing Packet for print...");
+    toast.success(`Preparing complete ${totalDocketPages}-page State Complaint Filing Packet for print...`);
     if (stateFormPages.length === 0) {
       await renderFilledStateFormPages(officialFormState);
       setTimeout(() => {
@@ -2650,7 +2785,7 @@ This document is incorporated herein and submitted in direct support of Complain
               size="sm"
               onClick={handleExportPdf}
               className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-3 sm:px-4 gap-1.5 rounded-md border border-[#FFE394]/70 shadow-[0_3px_12px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.7)] hover:brightness-105 cursor-pointer"
-              title="Print Complete Complaint Filing Packet (14 Pages)"
+              title={`Print Complete Complaint Filing Packet (${totalDocketPages} Pages)`}
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export PDF</span>
@@ -3467,7 +3602,7 @@ This document is incorporated herein and submitted in direct support of Complain
                         <div className="flex items-center justify-between pb-3 border-b border-[#8C7A60]/40 shrink-0">
                           <div>
                             <span className="text-[10px] font-mono uppercase tracking-widest text-[#8C7A60] font-bold">
-                              Page {activeBinderRange.contentPage} of {totalDocketPages} · {activePage.exhibitTag || "EXHIBIT"}
+                              Page {activeBinderRange.contentStart === activeBinderRange.contentEnd ? activeBinderRange.contentStart : `${activeBinderRange.contentStart}–${activeBinderRange.contentEnd}`} of {totalDocketPages} · {activePage.exhibitTag || "EXHIBIT"}
                             </span>
                             <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5">
                               {activePage.title}
@@ -3493,7 +3628,7 @@ This document is incorporated herein and submitted in direct support of Complain
                           <span className="tracking-wide">
                             {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint
                           </span>
-                          <span className="font-mono">Page {activeBinderRange.contentPage} of {totalDocketPages}</span>
+                          <span className="font-mono">Page {activeBinderRange.contentStart === activeBinderRange.contentEnd ? activeBinderRange.contentStart : `${activeBinderRange.contentStart}–${activeBinderRange.contentEnd}`} of {totalDocketPages}</span>
                         </div>
                       </div>
                     </>
@@ -3560,7 +3695,7 @@ This document is incorporated herein and submitted in direct support of Complain
                       <div className="flex items-center justify-between pb-3 border-b border-[#8C7A60]/40 shrink-0">
                         <div>
                           <span className="text-[10px] font-mono uppercase tracking-widest text-[#8C7A60] font-bold">
-                            Page {activeBinderRange.contentPage} · {activePage.id === "clarity_control" || activePage.number === "02" || activePage.number === "05" || activePage.category === "pleading" || activePage.category === "restatement" ? "RESTATEMENT" : activePage.category.toUpperCase()}
+                            Page {activeBinderRange.contentStart === activeBinderRange.contentEnd ? activeBinderRange.contentStart : `${activeBinderRange.contentStart}–${activeBinderRange.contentEnd}`} · {activePage.id === "clarity_control" || activePage.number === "02" || activePage.number === "05" || activePage.category === "pleading" || activePage.category === "restatement" ? "RESTATEMENT" : activePage.category.toUpperCase()}
                           </span>
                           <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5">
                             {activePage.title}
@@ -3581,7 +3716,7 @@ This document is incorporated herein and submitted in direct support of Complain
 
                       {/* Live Auto-Restatement Banner on Clarity Control Restatement sheet */}
                       {(activePage.id === "clarity_control" || activePage.category === "restatement") && (
-                        <div className="mt-3 mb-1 p-2.5 rounded-md bg-[#0A264D]/10 border border-[#8C7A60]/40 flex items-center justify-between gap-3 text-xs">
+                        <div className="mt-3 mb-1 p-2.5 rounded-md bg-[#0A264D]/10 border border-[#8C7A60]/40 flex flex-wrap items-center justify-between gap-3 text-xs">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse shrink-0" />
                             <span className="font-serif font-bold text-[#1A120A] shrink-0">
@@ -3590,6 +3725,11 @@ This document is incorporated herein and submitted in direct support of Complain
                             <span className="text-[#5C4A32] text-[11.5px] truncate">
                               Restating Box 1 (#1 Violations), Box 2 (#2 Facts), & Box 3 (#3 Proposed Resolution) from State Form
                             </span>
+                            {activeBinderRange.contentCount > 1 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-mono font-bold bg-[#FFE394]/30 border border-[#C5A059]/60 text-[#73510C] shrink-0">
+                                📄 Multi-Page Statement · {activeBinderRange.contentCount} Sheets (Pgs {activeBinderRange.contentStart}–{activeBinderRange.contentEnd} of {totalDocketPages})
+                              </span>
+                            )}
                           </div>
                           <button
                             type="button"
@@ -3597,7 +3737,7 @@ This document is incorporated herein and submitted in direct support of Complain
                               setActiveToolbarTab("cover");
                               setActivePageId("cover");
                             }}
-                            className="text-[11px] font-sans font-bold px-2.5 py-1 rounded bg-[#082245] text-[#FFE394] hover:bg-[#0B2C58] hover:text-[#FFF4D4] border border-[#C5A059]/60 shrink-0 cursor-pointer shadow-xs transition-colors flex items-center gap-1"
+                            className="text-[11px] font-sans font-bold px-2.5 py-1 rounded bg-[#082245] text-[#FFE394] hover:bg-[#0B2C58] hover:text-[#FFF4D4] border border-[#C5A059]/60 shrink-0 cursor-pointer shadow-xs transition-colors flex items-center gap-1 ml-auto"
                           >
                             <span>Edit on State Form</span>
                             <span className="text-xs">↗</span>
@@ -3633,7 +3773,7 @@ This document is incorporated herein and submitted in direct support of Complain
 
                       <div className="pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-[#6E5D43] shrink-0">
                         <span className="tracking-wide">Georgia Department of Education IDEA Complaint</span>
-                        <span className="font-mono">Page {activeBinderRange.contentPage} of {totalDocketPages}</span>
+                        <span className="font-mono">Page {activeBinderRange.contentStart === activeBinderRange.contentEnd ? activeBinderRange.contentStart : `${activeBinderRange.contentStart}–${activeBinderRange.contentEnd}`} of {totalDocketPages}</span>
                       </div>
                     </div>
                   </div>
@@ -4893,7 +5033,7 @@ This document is incorporated herein and submitted in direct support of Complain
             {/* Print Preview Desk Stage (Dark Desk Canvas with Authentic White 8.5x11 Sheets) */}
             <div className="space-y-10 py-6 px-1 sm:px-4 flex flex-col items-center">
               {pages.map((p, idx) => {
-                const range = getBinderPageRange(idx, pages);
+                const range = getBinderPageRange(idx, pages, caseDetails);
                 if (p.id === "cover") {
                   return (
                     <div key={p.id} className="w-full flex flex-col items-center space-y-8">
@@ -5074,57 +5214,68 @@ This document is incorporated herein and submitted in direct support of Complain
                         );
                       })
                     ) : (
-                      /* SHEET 2: DOCUMENT CONTENT SHEET (WHITE PAPER) */
-                      <div className="w-full flex flex-col items-center">
-                        <div className="w-full max-w-[816px] flex items-center justify-between text-[11px] font-mono text-[#D8C7A5] bg-[#020A17]/90 px-3.5 py-1.5 rounded-t border-t border-x border-[#3A2C18]">
-                          <span className="font-bold text-[#FFE394]">
-                            PAGE {range.contentPage} OF {totalDocketPages}
-                          </span>
-                          <span className="text-[#C6B697] truncate ml-2">
-                            {p.category === "exhibit"
-                              ? `${p.exhibitTag || "Exhibit"} · Evidentiary Summary Sheet · Standard White Print Paper`
-                              : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} Content · Standard White Print Paper`}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            width: "816px",
-                            maxWidth: "816px",
-                            minHeight: "1056px",
-                            aspectRatio: "8.5 / 11",
-                            backgroundColor: "#FFFFFF",
-                            color: "#111827",
-                            boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
-                            border: "1px solid #D1D5DB",
-                          }}
-                          className="relative rounded-b select-text flex flex-col justify-between px-10 sm:px-14 md:px-16 pt-12 pb-10 transition-all shrink-0 bg-white text-[#111827]"
-                        >
-                          {/* Running Top Header */}
-                          <div className="w-full shrink-0 pb-3 border-b border-black flex items-center justify-between text-xs font-sans text-slate-800">
-                            <span className="font-bold uppercase tracking-wider">
-                              {p.category === "exhibit"
-                                ? `${p.exhibitTag ? `${p.exhibitTag} · ` : ""}${p.title}`
-                                : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · ${p.id === "clarity_control" || p.category === "restatement" ? "Clarity Control Restatement" : p.title}`}
-                            </span>
-                            <span className="font-mono font-bold">
-                              Page {range.contentPage} of {totalDocketPages}
-                            </span>
-                          </div>
+                      /* SHEET 2+: DOCUMENT CONTENT SHEET(S) (WHITE PAPER) */
+                      (() => {
+                        const rawContent = p.id === "exhibit_index"
+                          ? syncExhibitIndexTableOfSections(p.content || getDefaultExhibitContent(p, caseDetails), pages, caseDetails)
+                          : (p.content || getDefaultExhibitContent(p, caseDetails));
+                        const contentPages = paginateTextContent(rawContent);
+                        return contentPages.map((pageText, pageSubIdx) => {
+                          const currentSheetNumber = range.contentStart + pageSubIdx;
+                          return (
+                            <div key={`preview-content-${p.id}-${pageSubIdx}`} className="w-full flex flex-col items-center">
+                              <div className="w-full max-w-[816px] flex items-center justify-between text-[11px] font-mono text-[#D8C7A5] bg-[#020A17]/90 px-3.5 py-1.5 rounded-t border-t border-x border-[#3A2C18]">
+                                <span className="font-bold text-[#FFE394]">
+                                  PAGE {currentSheetNumber} OF {totalDocketPages}
+                                </span>
+                                <span className="text-[#C6B697] truncate ml-2">
+                                  {p.category === "exhibit"
+                                    ? `${p.exhibitTag || "Exhibit"} · Evidentiary Summary Sheet ${contentPages.length > 1 ? `(Sheet ${pageSubIdx + 1} of ${contentPages.length})` : ""} · Standard White Print Paper`
+                                    : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} Content ${contentPages.length > 1 ? `(Sheet ${pageSubIdx + 1} of ${contentPages.length})` : ""} · Standard White Print Paper`}
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  width: "816px",
+                                  maxWidth: "816px",
+                                  minHeight: "1056px",
+                                  aspectRatio: "8.5 / 11",
+                                  backgroundColor: "#FFFFFF",
+                                  color: "#111827",
+                                  boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
+                                  border: "1px solid #D1D5DB",
+                                }}
+                                className="relative rounded-b select-text flex flex-col justify-between px-10 sm:px-14 md:px-16 pt-12 pb-10 transition-all shrink-0 bg-white text-[#111827]"
+                              >
+                                {/* Running Top Header */}
+                                <div className="w-full shrink-0 pb-3 border-b border-black flex items-center justify-between text-xs font-sans text-slate-800">
+                                  <span className="font-bold uppercase tracking-wider">
+                                    {p.category === "exhibit"
+                                      ? `${p.exhibitTag ? `${p.exhibitTag} · ` : ""}${p.title}`
+                                      : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · ${p.id === "clarity_control" || p.category === "restatement" ? "Clarity Control Restatement" : p.title}`}
+                                  </span>
+                                  <span className="font-mono font-bold">
+                                    Page {currentSheetNumber} of {totalDocketPages}
+                                  </span>
+                                </div>
 
-                          {/* Content Body */}
-                          <div className="flex-1 py-8 font-serif text-[13px] leading-relaxed text-justify text-black whitespace-pre-wrap select-text">
-                            {p.content || getDefaultExhibitContent(p, caseDetails)}
-                          </div>
+                                {/* Content Body */}
+                                <div className="flex-1 py-8 font-serif text-[13px] leading-relaxed text-justify text-black whitespace-pre-wrap select-text">
+                                  {pageText}
+                                </div>
 
-                          {/* Running Bottom Footer */}
-                          <div className="w-full shrink-0 pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-slate-600">
-                            <span className="tracking-wide">
-                              {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint
-                            </span>
-                            <span className="font-serif">Page {range.contentPage} of {totalDocketPages}</span>
-                          </div>
-                        </div>
-                      </div>
+                                {/* Running Bottom Footer */}
+                                <div className="w-full shrink-0 pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-slate-600">
+                                  <span className="tracking-wide">
+                                    {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint
+                                  </span>
+                                  <span className="font-serif">Page {currentSheetNumber} of {totalDocketPages}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()
                     )}
 
                   </div>
@@ -5579,7 +5730,7 @@ This document is incorporated herein and submitted in direct support of Complain
                 );
               }
 
-              const range = getBinderPageRange(idx, pages);
+              const range = getBinderPageRange(idx, pages, caseDetails);
               return (
                 <React.Fragment key={`print-${p.id}`}>
                   {/* Print Sheet 1: Official Standardized Binder Cover Page on White Paper */}
@@ -5644,26 +5795,41 @@ This document is incorporated herein and submitted in direct support of Complain
                       );
                     })
                   ) : (
-                    /* Print Sheet 2: Document Content Sheet on White Paper */
-                    <div className={cn("print-packet-sheet print-content-sheet font-serif", isLastBinder && "is-last-sheet")}>
-                      <div className="flex justify-between items-center border-b border-black pb-2 mb-3 text-xs font-sans shrink-0">
-                        <span className="font-bold uppercase tracking-wider">
-                          {p.category === "exhibit"
-                            ? `${p.exhibitTag ? `${p.exhibitTag} · ` : ""}${p.title}`
-                            : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · ${p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}`}
-                        </span>
-                        <span className="font-mono font-bold">
-                          Page {range.contentPage} of {totalDocketPages}
-                        </span>
-                      </div>
-                      <div className="text-[12px] leading-relaxed whitespace-pre-wrap text-justify font-serif flex-1 text-black overflow-hidden">
-                        {p.content || getDefaultExhibitContent(p, caseDetails)}
-                      </div>
-                      <div className="border-t border-black pt-2 flex justify-between text-[11px] font-mono mt-3 shrink-0">
-                        <span>{SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint</span>
-                        <span>Page {range.contentPage} of {totalDocketPages}</span>
-                      </div>
-                    </div>
+                    /* Print Sheet 2+: Document Content Sheet(s) on White Paper */
+                    (() => {
+                      const rawContent = p.id === "exhibit_index"
+                        ? syncExhibitIndexTableOfSections(p.content || getDefaultExhibitContent(p, caseDetails), pages, caseDetails)
+                        : (p.content || getDefaultExhibitContent(p, caseDetails));
+                      const contentPages = paginateTextContent(rawContent);
+                      return contentPages.map((pageText, pageSubIdx) => {
+                        const currentSheetNumber = range.contentStart + pageSubIdx;
+                        const isFinalSheetOfPacket = isLastBinder && pageSubIdx === contentPages.length - 1;
+                        return (
+                          <div
+                            key={`print-content-${p.id}-${pageSubIdx}`}
+                            className={cn("print-packet-sheet print-content-sheet font-serif", isFinalSheetOfPacket && "is-last-sheet")}
+                          >
+                            <div className="flex justify-between items-center border-b border-black pb-2 mb-3 text-xs font-sans shrink-0">
+                              <span className="font-bold uppercase tracking-wider">
+                                {p.category === "exhibit"
+                                  ? `${p.exhibitTag ? `${p.exhibitTag} · ` : ""}${p.title}`
+                                  : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · ${p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}`}
+                              </span>
+                              <span className="font-mono font-bold">
+                                Page {currentSheetNumber} of {totalDocketPages}
+                              </span>
+                            </div>
+                            <div className="text-[12px] leading-relaxed whitespace-pre-wrap text-justify font-serif flex-1 text-black overflow-hidden">
+                              {pageText}
+                            </div>
+                            <div className="border-t border-black pt-2 flex justify-between text-[11px] font-mono mt-3 shrink-0">
+                              <span>{SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint</span>
+                              <span>Page {currentSheetNumber} of {totalDocketPages}</span>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()
                   )}
                 </React.Fragment>
               );

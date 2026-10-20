@@ -3,6 +3,9 @@ import {
   getDocketTotalPages,
   getBinderPageRange,
   getPageDisplayBadge,
+  paginateTextContent,
+  getBinderContentPageCount,
+  syncExhibitIndexTableOfSections,
   STATE_FORM_PAGE_COUNT,
   PAGES_PER_BINDER,
 } from "../client/src/pages/complaint/ComplaintWorkspace";
@@ -178,6 +181,106 @@ describe("Clarity Control Restatement Auto-Restate & Mandatory Pleading (PG-020)
     const updatedContent = buildClarityControlContent(formState);
     expect(updatedContent).toContain("Updated allegation: Complete failure to implement FBA/BIP.");
     expect(updatedContent).not.toContain("Initial statement of violation.");
+  });
+
+  it("paginates long legal text across multiple 8.5x11 sheets without truncation", () => {
+    // Generate a long legal narrative with 5 paragraphs totalling ~5,000 characters
+    const para1 = "Paragraph 1: Allegation of severe denial of FAPE. ".repeat(25);
+    const para2 = "Paragraph 2: Factual timeline of missed specialized instruction sessions. ".repeat(25);
+    const para3 = "Paragraph 3: Complete omission of Prior Written Notice under 34 CFR 300.503. ".repeat(25);
+
+    const longStatement = `${para1}\n\n${para2}\n\n${para3}`;
+    expect(longStatement.length).toBeGreaterThan(4500);
+
+    const sheets = paginateTextContent(longStatement);
+    expect(sheets.length).toBeGreaterThanOrEqual(2);
+    expect(sheets.every((s) => s.trim().length > 0)).toBe(true);
+
+    // Verify all content from the paragraphs is preserved across the sheets
+    const joined = sheets.join("\n\n");
+    expect(joined).toContain("Paragraph 1: Allegation of severe denial of FAPE.");
+    expect(joined).toContain("Paragraph 2: Factual timeline of missed specialized instruction sessions.");
+    expect(joined).toContain("Paragraph 3: Complete omission of Prior Written Notice");
+  });
+
+  it("dynamically increases total docket pages and shifts subsequent ranges when Clarity Control statement expands to multiple sheets", () => {
+    // Normal single-page statement
+    const pagesWithSinglePageClarity = [
+      { id: "cover", number: "01", title: "State Form", category: "cover" },
+      { id: "clarity_control", number: "02", title: "Clarity Control Restatement", category: "restatement", content: "Short statement." },
+      { id: "chronological_summary", number: "03", title: "Chronological Summary", category: "facts", content: "Short facts." },
+      { id: "exhibit_index", number: "04", title: "Exhibit Index", category: "pleading", content: "Index content." },
+      { id: "exhibit_a", number: "05", title: "Exhibit A (Student's IEP)", category: "exhibit" },
+    ];
+
+    // 4 (Form) + 1+1 (Clarity) + 1+1 (Chrono) + 1+1 (Index) + 1+1 (Exh A) = 12 total pages
+    expect(getDocketTotalPages(pagesWithSinglePageClarity as any)).toBe(12);
+    expect(getBinderPageRange(1, pagesWithSinglePageClarity as any).badge).toBe("05–06");
+    expect(getBinderPageRange(2, pagesWithSinglePageClarity as any).badge).toBe("07–08");
+
+    // Long statement that expands to 2 sheets (1 cover + 2 content sheets = 3 sheets for Clarity Control)
+    const longStatement = "Paragraph text detailing ongoing statutory non-compliance and service omissions. ".repeat(40);
+    const pagesWithMultiPageClarity = [
+      { id: "cover", number: "01", title: "State Form", category: "cover" },
+      { id: "clarity_control", number: "02", title: "Clarity Control Restatement", category: "restatement", content: longStatement },
+      { id: "chronological_summary", number: "03", title: "Chronological Summary", category: "facts", content: "Short facts." },
+      { id: "exhibit_index", number: "04", title: "Exhibit Index", category: "pleading", content: "Index content." },
+      { id: "exhibit_a", number: "05", title: "Exhibit A (Student's IEP)", category: "exhibit" },
+    ];
+
+    const claritySheetCount = getBinderContentPageCount(pagesWithMultiPageClarity[1] as any);
+    expect(claritySheetCount).toBeGreaterThanOrEqual(2);
+
+    // Total docket pages increases dynamically
+    const newTotal = getDocketTotalPages(pagesWithMultiPageClarity as any);
+    expect(newTotal).toBe(12 + (claritySheetCount - 1));
+
+    // Clarity Control range expands to Pages 05–07 (or 05–08 depending on sheet count)
+    const clarityRange = getBinderPageRange(1, pagesWithMultiPageClarity as any);
+    expect(clarityRange.coverPage).toBe(5);
+    expect(clarityRange.contentStart).toBe(6);
+    expect(clarityRange.contentEnd).toBe(5 + claritySheetCount);
+    expect(clarityRange.badge).toBe(`05–0${5 + claritySheetCount}`);
+
+    // Chronological Summary starts immediately on the next continuous page with zero overlap or gaps!
+    const chronoRange = getBinderPageRange(2, pagesWithMultiPageClarity as any);
+    expect(chronoRange.coverPage).toBe(5 + claritySheetCount + 1);
+    expect(chronoRange.contentStart).toBe(chronoRange.coverPage + 1);
+  });
+
+  it("synchronizes the Table of Sections in the Exhibit Index with dynamic multi-page ranges", () => {
+    const rawExhibitIndexContent = `FORMAL STATE COMPLAINT — EXHIBIT INDEX & DOCUMENT SCHEDULE
+
+================================================================================
+TABLE OF COMPLAINT FILING SECTIONS:
+================================================================================
+  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document (Pages 1–4)
+  2. CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims (Pages 5–6)
+  3. CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones (Pages 7–8)
+  4. EXHIBIT INDEX: Cover Page & Master Evidentiary Schedule (Pages 9–10)
+  5. EXHIBIT A: Cover Page & Student's IEP (Pages 11–12)
+
+================================================================================
+MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:
+================================================================================`;
+
+    const longStatement = "Paragraph text detailing ongoing statutory non-compliance and service omissions. ".repeat(40);
+    const pages = [
+      { id: "cover", number: "01", title: "State Form", category: "cover" },
+      { id: "clarity_control", number: "02", title: "Clarity Control Restatement", category: "restatement", content: longStatement },
+      { id: "chronological_summary", number: "03", title: "Chronological Summary", category: "facts", content: "Short facts." },
+      { id: "exhibit_index", number: "04", title: "Exhibit Index", category: "pleading", content: rawExhibitIndexContent },
+      { id: "exhibit_a", number: "05", title: "Exhibit A (Student's IEP)", category: "exhibit" },
+    ];
+
+    const synced = syncExhibitIndexTableOfSections(rawExhibitIndexContent, pages as any);
+
+    // Verify Section 2 (Clarity Control) reflects multi-page range (Pages 5–7)
+    expect(synced).toContain("2. CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims (Pages 5–7)");
+    // Verify Section 3 (Chronological Summary) shifts to Pages 8–9
+    expect(synced).toContain("3. CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones (Pages 8–9)");
+    // Master index section at the bottom remains intact
+    expect(synced).toContain("MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:");
   });
 });
 
