@@ -18,7 +18,6 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronLeft,
-  ChevronUp,
   PanelRight,
   Maximize2,
   Minimize2,
@@ -2208,15 +2207,6 @@ export default function ComplaintWorkspace() {
     toast.success(`Moved "${movedTitle}" to position ${toIndex + 1}`);
   };
 
-  const handleMoveBinderUp = (index: number) => {
-    if (index <= 1) return;
-    handleReorderBinders(index, index - 1);
-  };
-
-  const handleMoveBinderDown = (index: number) => {
-    if (index === 0 || index >= pages.length - 1) return;
-    handleReorderBinders(index, index + 1);
-  };
 
   // State: Rename Binder Modal ("small window" on double click or pencil trigger)
   const [binderToRename, setBinderToRename] = useState<DocumentPage | null>(null);
@@ -3268,45 +3258,9 @@ This document is incorporated herein and submitted in direct support of Complain
                           {p.title}
                         </span>
 
-                        {/* Edit options row BELOW the text (on hover) */}
-                        {(!isCover || (p.id !== "cover" && p.id !== "clarity_control" && p.category !== "restatement")) && (
-                          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-[10px] text-[#5C421B] transition-opacity">
-                            {/* Reorder Up / Down arrows */}
-                          {!isCover && (
-                            <div className="flex items-center gap-0.5">
-                              {index > 1 && (
-                                <span
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMoveBinderUp(index);
-                                  }}
-                                  className="p-0.5 rounded hover:bg-black/15 text-[#4A3718] hover:text-black transition-colors cursor-pointer"
-                                  title="Move binder up in left sidebar"
-                                >
-                                  <ChevronUp className="w-3 h-3 stroke-[2.5]" />
-                                </span>
-                              )}
-                              {index < pages.length - 1 && (
-                                <span
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMoveBinderDown(index);
-                                  }}
-                                  className="p-0.5 rounded hover:bg-black/15 text-[#4A3718] hover:text-black transition-colors cursor-pointer"
-                                  title="Move binder down in left sidebar"
-                                >
-                                  <ChevronDown className="w-3 h-3 stroke-[2.5]" />
-                                </span>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Remove button (when allowed) */}
-                          {p.id !== "cover" && p.id !== "clarity_control" && p.category !== "restatement" && (
+                        {/* Remove trigger (on hover, when allowed) */}
+                        {p.id !== "cover" && p.id !== "clarity_control" && p.category !== "restatement" && (
+                          <div className="opacity-0 group-hover:opacity-100 flex items-center justify-end text-[10px] text-[#5C421B] transition-opacity">
                             <span
                               role="button"
                               tabIndex={0}
@@ -3314,14 +3268,13 @@ This document is incorporated herein and submitted in direct support of Complain
                                 e.stopPropagation();
                                 setBinderPendingRemoval({ page: p, index });
                               }}
-                              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-rose-950/30 text-rose-700 hover:text-rose-900 transition-opacity cursor-pointer ml-auto"
+                              className="p-0.5 rounded hover:bg-rose-950/30 text-rose-700 hover:text-rose-900 transition-colors cursor-pointer ml-auto"
                               title={`Remove "${p.title}" from packet`}
                             >
                               <Trash2 className="w-3 h-3" />
                             </span>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Right: Miniature document facsimile thumbnail */}
