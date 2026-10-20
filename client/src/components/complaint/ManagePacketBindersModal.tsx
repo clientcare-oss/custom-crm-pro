@@ -22,6 +22,7 @@ import {
   getBinderPageRange,
   getPageDisplayBadge,
   getNextExhibitLetter,
+  resequenceExhibits,
   type DocumentPage,
 } from "@/pages/complaint/ComplaintWorkspace";
 
@@ -165,12 +166,9 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
     const next = [...pages];
     const [moved] = next.splice(fromIndex, 1);
     next.splice(toIndex, 0, moved);
-    const resequenced = next.map((p, idx) => ({
-      ...p,
-      number: idx + 1 < 10 ? `0${idx + 1}` : `${idx + 1}`,
-    }));
+    const resequenced = resequenceExhibits(next);
     onUpdatePages(resequenced);
-    toast.success(`Moved "${moved.title}" to position ${toIndex + 1}`);
+    toast.success(`Moved "${moved.title}" to position ${toIndex + 1}. Exhibit letters updated.`);
   };
 
   // Binder marked for renaming with small window
@@ -247,7 +245,8 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
     }
 
     const updatedPages = pages.filter((p) => p.id !== page.id);
-    onUpdatePages(updatedPages);
+    const resequenced = resequenceExhibits(updatedPages);
+    onUpdatePages(resequenced);
 
     // If the removed page was currently active, switch to the preceding page
     if (activePageId === page.id) {
@@ -287,13 +286,13 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
     const newExhibit: DocumentPage = {
       id: `exhibit_${nextLetter.toLowerCase()}_${Date.now()}`,
       number: nextNum,
-      title: `Exhibit ${nextLetter} (Evidentiary Record)`,
+      title: `Exhibit ${nextLetter}`,
       category: "exhibit",
       exhibitTag: `Exhibit ${nextLetter}`,
       content: `EXHIBIT ${nextLetter} · EVIDENTIARY RECORD\n\nThis evidentiary exhibit is incorporated in formal support of Complainant's state complaint claims.`,
     };
 
-    const updatedPages = [...pages, newExhibit];
+    const updatedPages = resequenceExhibits([...pages, newExhibit]);
     onUpdatePages(updatedPages);
     onSelectPage(newExhibit.id);
     toast.success(`Added Exhibit ${nextLetter} as Binder ${nextNum}. Page numbers updated.`);

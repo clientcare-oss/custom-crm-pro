@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { type ImportedPdfPage } from "@/lib/pdfImporter";
-import { Loader2, Highlighter, Trash2 } from "lucide-react";
+import { Loader2, Highlighter, Trash2, FileText, AlertCircle } from "lucide-react";
 
 export type HighlightColor = "yellow" | "green" | "orange" | "blue" | "pink";
 
@@ -101,6 +101,7 @@ export function ExhibitPdfSheetsView({
   const hasPages = renderedPages.length > 0;
   const isRendering = Boolean(page.isRenderingPdf);
   const highlights = page.highlights || [];
+  const [failedPageImages, setFailedPageImages] = useState<Record<number, boolean>>({});
 
   // Drag-to-highlight state
   const [isDragging, setIsDragging] = useState(false);
@@ -341,13 +342,33 @@ export function ExhibitPdfSheetsView({
                 isHighlighterActive ? "cursor-crosshair select-none" : "cursor-text select-text"
               )}
             >
-              {/* Actual File Page - 100% Full Bleed, Unmodified, Unsquished */}
-              <img
-                src={pdfPage.dataUrl}
-                alt={`Page ${pdfPage.pageNumber}`}
-                className="w-full h-full object-contain block bg-white select-none pointer-events-none m-0 p-0"
-                loading="lazy"
-              />
+              {/* Actual File Page - 100% Full Bleed, Unmodified, Unsquished (with graceful document placeholder) */}
+              {!pdfPage.dataUrl || failedPageImages[pdfPage.pageNumber] ? (
+                <div className="w-full h-full min-h-[520px] flex flex-col items-center justify-center bg-[#FAF8F5] text-slate-700 p-8 select-none text-center">
+                  <div className="w-14 h-14 rounded-xl bg-amber-50 border border-[#C5A059]/40 flex items-center justify-center text-[#8C6D2B] mb-3 shadow-sm">
+                    <FileText className="w-7 h-7 text-[#8C6D2B]" />
+                  </div>
+                  <span className="font-serif font-bold text-sm text-slate-800 max-w-md truncate block">
+                    {page.fileName || "Evidentiary Document Page"}
+                  </span>
+                  <span className="text-xs text-slate-500 font-mono mt-1 block">
+                    Document Page {pdfPage.pageNumber} of {renderedPages.length}
+                  </span>
+                  <span className="text-[11px] text-[#8C6D2B] mt-2 block font-serif italic">
+                    Evidentiary attachment active in complaint docket
+                  </span>
+                </div>
+              ) : (
+                <img
+                  src={pdfPage.dataUrl}
+                  alt={`Page ${pdfPage.pageNumber}`}
+                  onError={() => {
+                    setFailedPageImages((prev) => ({ ...prev, [pdfPage.pageNumber]: true }));
+                  }}
+                  className="w-full h-full object-contain block bg-white select-none pointer-events-none m-0 p-0"
+                  loading="lazy"
+                />
+              )}
 
               {/* Selectable Text Layer (Invisible overlays for native text selection) */}
               {pdfPage.textItems && pdfPage.textItems.length > 0 && (

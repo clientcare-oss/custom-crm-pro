@@ -106,6 +106,12 @@ import {
   listRecentComplaintDrafts,
   type StoredComplaintDraft,
 } from "@/lib/complaintDraftStorage";
+import {
+  saveExhibitToDb,
+  getExhibitFromDb,
+  getAllExhibitsFromDb,
+  deleteExhibitFromDb,
+} from "@/lib/exhibitStorage";
 
 // ── Types & Constants ────────────────────────────────────────────────────────
 export const STATE_FORM_PAGE_COUNT = 4;
@@ -364,25 +370,13 @@ export interface DocumentPage {
 }
 
 export function getNextExhibitLetter(existingPages: DocumentPage[]): string {
-  const usedLetters = new Set<string>();
-  for (const p of existingPages) {
-    if (p.exhibitTag) {
-      const match = p.exhibitTag.match(/exhibit\s+([a-z])/i);
-      if (match) usedLetters.add(match[1].toUpperCase());
-    }
-    const titleMatch = p.title.match(/exhibit\s+([a-z])/i);
-    if (titleMatch) usedLetters.add(titleMatch[1].toUpperCase());
-    if (p.id.startsWith("exhibit_")) {
-      const idMatch = p.id.match(/exhibit_([a-z])/i);
-      if (idMatch) usedLetters.add(idMatch[1].toUpperCase());
-    }
-  }
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  for (let i = 0; i < alphabet.length; i++) {
-    const letter = alphabet[i];
-    if (!usedLetters.has(letter)) {
-      return letter;
-    }
+  const exhibitPages = (existingPages || []).filter(
+    (p) => p.category === "exhibit" || Boolean(p.exhibitTag) || p.id.startsWith("exhibit_")
+  );
+  const nextIdx = exhibitPages.length;
+  if (nextIdx < alphabet.length) {
+    return alphabet[nextIdx];
   }
   return "Z";
 }
@@ -786,8 +780,87 @@ interface ComplaintCaseDetails {
 }
 
 /**
+ * Formats an array of highlighted docket page numbers into required legal reference phrasing:
+ * - Single page: "See highlighted section, page 14."
+ * - Contiguous range: "See highlighted section, pages 14–16."
+ * - Multiple nonconsecutive ranges: "See highlighted sections, pages 14–16, 19, and 21–22."
+ */
+export function formatHighlightedPagesText(docketPages: number[]): string | null {
+  if (!docketPages || docketPages.length === 0) return null;
+
+  const sorted = Array.from(new Set(docketPages))
+    .filter((n) => typeof n === "number" && !isNaN(n))
+    .sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+
+  const ranges: Array<{ start: number; end: number }> = [];
+  let curStart = sorted[0];
+  let curEnd = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const p = sorted[i];
+    if (p === curEnd + 1) {
+      curEnd = p;
+    } else {
+      ranges.push({ start: curStart, end: curEnd });
+      curStart = p;
+      curEnd = p;
+    }
+  }
+  ranges.push({ start: curStart, end: curEnd });
+
+  const rangeStrings = ranges.map((r) =>
+    r.start === r.end ? `${r.start}` : `${r.start}–${r.end}`
+  );
+
+  if (rangeStrings.length === 1) {
+    if (ranges[0].start === ranges[0].end) {
+      return `See highlighted section, page ${ranges[0].start}.`;
+    } else {
+      return `See highlighted section, pages ${ranges[0].start}–${ranges[0].end}.`;
+    }
+  }
+
+  if (rangeStrings.length === 2) {
+    return `See highlighted sections, pages ${rangeStrings[0]} and ${rangeStrings[1]}.`;
+  }
+
+  const allExceptLast = rangeStrings.slice(0, -1).join(", ");
+  const last = rangeStrings[rangeStrings.length - 1];
+  return `See highlighted sections, pages ${allExceptLast}, and ${last}.`;
+}
+
+/**
+ * Returns formatted highlight reference text for a specific exhibit binder,
+ * calculated strictly from its continuous docket pages in the finalized complaint packet.
+ */
+export function getExhibitHighlightReference(
+  page: DocumentPage,
+  pageIndex: number,
+  pagesList: DocumentPage[],
+  caseDetails?: Partial<ComplaintCaseDetails>
+): string | null {
+  if (!page.highlights || page.highlights.length === 0) return null;
+
+  const range = getBinderPageRange(pageIndex, pagesList, caseDetails);
+  const docketPages: number[] = [];
+
+  for (const h of page.highlights) {
+    if (typeof h.pageNumber === "number" && h.pageNumber >= 1) {
+      const docPage = range.contentStart + (h.pageNumber - 1);
+      if (docPage <= range.contentEnd) {
+        docketPages.push(docPage);
+      }
+    }
+  }
+
+  return formatHighlightedPagesText(docketPages);
+}
+
+/**
  * Synchronizes the Table of Complaint Filing Sections in the Exhibit Index
- * to reflect dynamic multi-page statement and exhibit docket page ranges.
+ * to reflect dynamic multi-page statement and exhibit docket page ranges,
+ * as well as IEP highlight references under corresponding exhibits.
  */
 export function syncExhibitIndexTableOfSections(
   content: string,
@@ -810,7 +883,7 @@ export function syncExhibitIndexTableOfSections(
     updatedContent = updatedContent.replace(/Author:\s*[^·\n]+IEP Team/i, `Author: ${district} IEP Team`);
   }
 
-  // 2. Sync Table of Complaint Filing Sections
+  // 2. Sync Table of Complaint Filing Sections with highlight references
   if (updatedContent.includes("TABLE OF COMPLAINT FILING SECTIONS:")) {
     const lines: string[] = [];
     lines.push("TABLE OF COMPLAINT FILING SECTIONS:");
@@ -833,6 +906,12 @@ export function syncExhibitIndexTableOfSections(
         label = `${p.exhibitTag ? `${p.exhibitTag.toUpperCase()}: ` : ""}${p.title.toUpperCase()}`;
       }
       lines.push(`  ${num}. ${label} (${rangeStr})`);
+
+      // Automatically append highlight reference if present on this exhibit
+      const hlRef = getExhibitHighlightReference(p, i, pagesList, caseDetails);
+      if (hlRef) {
+        lines.push(`     ${hlRef}`);
+      }
     }
 
     const newTableBlock = lines.join("\n");
@@ -842,7 +921,102 @@ export function syncExhibitIndexTableOfSections(
     }
   }
 
+  // 3. Sync highlight references in Master Index Exhibit blocks
+  for (let i = 0; i < pagesList.length; i++) {
+    const p = pagesList[i];
+    if (p.category === "exhibit" || p.exhibitTag) {
+      const letter = p.exhibitTag?.match(/exhibit\s+([a-z0-9]+)/i)?.[1]?.toUpperCase() || "";
+      if (letter) {
+        const hlRef = getExhibitHighlightReference(p, i, pagesList, caseDetails);
+        const exhRegex = new RegExp(`(EXHIBIT\\s+${letter}[^\\n]*\\n)(?:See highlighted sections?[^\\n]*\\n)?`, "i");
+        if (exhRegex.test(updatedContent)) {
+          const repl = hlRef ? `$1${hlRef}\n` : `$1`;
+          updatedContent = updatedContent.replace(exhRegex, repl);
+        }
+      }
+    }
+  }
+
   return updatedContent;
+}
+
+/**
+ * Centralized exhibit sequence synchronizer.
+ * Enforces sequential exhibit letters (A, B, C, D...) while preserving:
+ * - Permanent binder IDs (so file associations & highlights never break)
+ * - Custom descriptions (e.g. "Student's IEP", "Service Logs")
+ * - 2-digit continuous binder numbering (01, 02, 03, 04, 05...)
+ * - Automatic update of the Master Exhibit Index (exhibit_index)
+ */
+export function resequenceExhibits(
+  pagesList: DocumentPage[],
+  caseDetails?: Partial<ComplaintCaseDetails>
+): DocumentPage[] {
+  if (!pagesList || pagesList.length === 0) return pagesList;
+
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let exhibitCounter = 0;
+
+  const resequenced = pagesList.map((p, idx) => {
+    const num = idx + 1 < 10 ? `0${idx + 1}` : `${idx + 1}`;
+    const isExhibit = p.category === "exhibit" || Boolean(p.exhibitTag) || p.id.startsWith("exhibit_");
+
+    if (!isExhibit) {
+      return {
+        ...p,
+        number: num,
+      };
+    }
+
+    const letter = exhibitCounter < alphabet.length ? alphabet[exhibitCounter] : `Z${exhibitCounter}`;
+    exhibitCounter++;
+
+    const newTag = `Exhibit ${letter}`;
+
+    // Extract description from title (without destroying custom user typing)
+    let newTitle = p.title;
+    const parenMatch = p.title.match(/^Exhibit\s+[A-Z0-9]+\s*\(([^)]+)\)$/i);
+    const dashMatch = p.title.match(/^Exhibit\s+[A-Z0-9]+\s*[—–-]\s*(.+)$/i);
+    const colonMatch = p.title.match(/^Exhibit\s+[A-Z0-9]+\s*:\s*(.+)$/i);
+    const bareMatch = p.title.match(/^Exhibit\s+[A-Z0-9]+$/i);
+
+    if (parenMatch) {
+      newTitle = `Exhibit ${letter} (${parenMatch[1].trim()})`;
+    } else if (dashMatch) {
+      newTitle = `Exhibit ${letter} — ${dashMatch[1].trim()}`;
+    } else if (colonMatch) {
+      newTitle = `Exhibit ${letter}: ${colonMatch[1].trim()}`;
+    } else if (bareMatch) {
+      newTitle = `Exhibit ${letter}`;
+    } else if (!p.title.toLowerCase().startsWith("exhibit")) {
+      newTitle = `Exhibit ${letter} (${p.title.trim()})`;
+    } else {
+      newTitle = `Exhibit ${letter}`;
+    }
+
+    return {
+      ...p,
+      number: num,
+      exhibitTag: newTag,
+      title: newTitle,
+    };
+  });
+
+  // Now synchronize exhibit_index with the newly resequenced pages
+  return resequenced.map((p) => {
+    if (p.id === "exhibit_index") {
+      const synched = syncExhibitIndexTableOfSections(
+        p.content || getDefaultExhibitContent(p, caseDetails),
+        resequenced,
+        caseDetails
+      );
+      return {
+        ...p,
+        content: synched,
+      };
+    }
+    return p;
+  });
 }
 
 // ── Authentic Transparent Photographic Brass Corner Bracket Asset ───────────
@@ -902,6 +1076,11 @@ function MiniaturePagePreview({
   coverThumbnail?: string;
 }) {
   const isCover = page.category === "cover" || page.id === "cover";
+  const [hasThumbError, setHasThumbError] = useState(false);
+
+  useEffect(() => {
+    setHasThumbError(false);
+  }, [coverThumbnail]);
 
   return (
     <div
@@ -919,10 +1098,11 @@ function MiniaturePagePreview({
     >
       {/* Scaled-down real document facsimile content */}
       {isCover ? (
-        coverThumbnail ? (
+        coverThumbnail && !hasThumbError ? (
           <img
             src={coverThumbnail}
             alt="State Form Page 1"
+            onError={() => setHasThumbError(true)}
             className="w-full h-full object-cover object-top select-none pointer-events-none"
           />
         ) : (
@@ -1055,31 +1235,37 @@ function MiniaturePagePreview({
             <span className="font-mono font-bold">{page.number}</span>
           </div>
         </div>
-      ) : page.id === "exhibit_a" ? (
-        <div className="w-[190px] h-[252px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.23]">
-          <div className="text-center my-auto py-2">
-            <div className="inline-block border-2 border-[#8C6D2B] bg-[#FFFBF0] px-2 py-1 rounded shadow-xs mb-1">
-              <span className="text-[9px] font-black tracking-widest text-[#0B1E38] uppercase block">
-                EXHIBIT A
-              </span>
+      ) : page.category === "exhibit" ? (
+        coverThumbnail && !hasThumbError ? (
+          <img
+            src={coverThumbnail}
+            alt={page.title}
+            onError={() => setHasThumbError(true)}
+            className="w-full h-full object-cover object-top select-none pointer-events-none"
+          />
+        ) : (
+          <div className="w-[190px] h-[252px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.23]">
+            <div className="text-center my-auto py-2">
+              <div className="inline-block border-2 border-[#8C6D2B] bg-[#FFFBF0] px-2 py-1 rounded shadow-xs mb-1">
+                <span className="text-[9px] font-black tracking-widest text-[#0B1E38] uppercase block">
+                  {page.exhibitTag || "EXHIBIT"}
+                </span>
+              </div>
+              <div className="text-[7px] font-bold text-[#1A1005] mt-1 uppercase truncate max-w-[170px] mx-auto">
+                {page.title.replace(/^Exhibit\s+[A-Z0-9]+[\s—–:\-]*/i, "") || "Document"}
+              </div>
+              <div className="border-t border-[#8C6D2B]/40 w-16 mx-auto my-1.5" />
+              <div className="text-[5.5px] text-[#6A5230]">
+                Evidentiary Docket
+              </div>
             </div>
-            <div className="text-[7px] font-bold text-[#1A1005] mt-1 uppercase">
-              Student's IEP
-            </div>
-            <div className="text-[6px] text-[#5A4528] italic mt-0.5">
-              Service Schedule & Accommodations
-            </div>
-            <div className="border-t border-[#8C6D2B]/40 w-16 mx-auto my-1.5" />
-            <div className="text-[5.5px] text-[#6A5230]">
-              August 28, 2025 · Cobb County
-            </div>
-          </div>
 
-          <div className="flex justify-between items-center border-t border-[#3A2810]/30 pt-0.5 text-[6px] text-[#6A5230] font-sans">
-            <span>Primary Baseline</span>
-            <span className="font-mono font-bold">{page.number}</span>
+            <div className="flex justify-between items-center border-t border-[#3A2810]/30 pt-0.5 text-[6px] text-[#6A5230] font-sans">
+              <span>{page.exhibitTag || "Exhibit"}</span>
+              <span className="font-mono font-bold">{page.number}</span>
+            </div>
           </div>
-        </div>
+        )
       ) : (
         <div className="w-[190px] h-[252px] p-2 flex flex-col justify-between text-[#1A120A] font-serif select-none pointer-events-none origin-top-left scale-[0.23]">
           <div className="border-b border-[#3A2810]/40 pb-0.5">
@@ -1924,8 +2110,8 @@ export default function ComplaintWorkspace() {
   const [activeHighlightColor, setActiveHighlightColor] = useState<HighlightColor>("yellow");
 
   const handleAddHighlight = (highlight: DocumentHighlight) => {
-    setPages((prev) =>
-      prev.map((p) => {
+    setPages((prev) => {
+      const updated = prev.map((p) => {
         if (p.id === activePageId) {
           const currentHighlights = p.highlights || [];
           return {
@@ -1934,14 +2120,15 @@ export default function ComplaintWorkspace() {
           };
         }
         return p;
-      })
-    );
+      });
+      return resequenceExhibits(updated, caseDetails);
+    });
     toast.success("Highlight applied to evidentiary document");
   };
 
   const handleRemoveHighlight = (highlightId: string) => {
-    setPages((prev) =>
-      prev.map((p) => {
+    setPages((prev) => {
+      const updated = prev.map((p) => {
         if (p.id === activePageId) {
           return {
             ...p,
@@ -1949,14 +2136,15 @@ export default function ComplaintWorkspace() {
           };
         }
         return p;
-      })
-    );
+      });
+      return resequenceExhibits(updated, caseDetails);
+    });
     toast.success("Highlight removed");
   };
 
   const handleClearHighlights = () => {
-    setPages((prev) =>
-      prev.map((p) => {
+    setPages((prev) => {
+      const updated = prev.map((p) => {
         if (p.id === activePageId) {
           return {
             ...p,
@@ -1964,8 +2152,9 @@ export default function ComplaintWorkspace() {
           };
         }
         return p;
-      })
-    );
+      });
+      return resequenceExhibits(updated, caseDetails);
+    });
     toast.success("Cleared all highlights from current exhibit");
   };
 
@@ -2156,7 +2345,8 @@ export default function ComplaintWorkspace() {
     ? currentExhibitLabel
     : `Exhibit ${nextExhibitLetter}`;
 
-  // Automatically default to current active exhibit if user is currently working on an exhibit page
+  // Automatically default to current active exhibit if user is currently working on an exhibit page,
+  // and auto-populate next sequential exhibit letter (e.g. "Exhibit D — ")
   useEffect(() => {
     if (isAddPageModalOpen) {
       if (activePage.category === "exhibit") {
@@ -2164,8 +2354,11 @@ export default function ComplaintWorkspace() {
       } else {
         setTargetExhibitMode("new");
       }
+      const nextLetter = getNextExhibitLetter(pages);
+      setNewPageTitle(`Exhibit ${nextLetter} — `);
+      setUploadCustomTitle(`Exhibit ${nextLetter} — `);
     }
-  }, [isAddPageModalOpen, activePageId]);
+  }, [isAddPageModalOpen, activePageId, pages]);
 
   // Total docket pages: 4 pages for binder 01 (State Form) + dynamic pages for each subsequent binder
   const totalDocketPages = getDocketTotalPages(pages, caseDetails);
@@ -2273,18 +2466,22 @@ export default function ComplaintWorkspace() {
       return;
     }
 
+    // Clean up persistent exhibit cache in IndexedDB
+    deleteExhibitFromDb(page.id).catch((e) => console.warn("Failed to delete exhibit from db:", e));
+
     const updatedPages = pages.filter((p) => p.id !== page.id);
-    setPages(updatedPages);
+    const resequenced = resequenceExhibits(ensureRequiredBinders(updatedPages), caseDetails);
+    setPages(resequenced);
 
     if (activePageId === page.id) {
       const fallbackIdx = Math.max(0, index - 1);
-      const fallbackPage = updatedPages[fallbackIdx] || updatedPages[0];
+      const fallbackPage = resequenced[fallbackIdx] || resequenced[0];
       if (fallbackPage) {
         setActivePageId(fallbackPage.id);
       }
     }
 
-    toast.success(`Removed "${page.title}" from packet index. Continuous page numbers updated.`);
+    toast.success(`Removed "${page.title}" from packet index. Continuous exhibit letters and page numbers updated.`);
     setBinderPendingRemoval(null);
   };
 
@@ -2308,10 +2505,11 @@ export default function ComplaintWorkspace() {
       const next = [...prevPages];
       const [movedItem] = next.splice(fromIndex, 1);
       next.splice(toIndex, 0, movedItem);
-      return ensureRequiredBinders(next);
+      const guaranteed = ensureRequiredBinders(next);
+      return resequenceExhibits(guaranteed, caseDetails);
     });
 
-    toast.success(`Moved "${movedTitle}" to position ${toIndex + 1}`);
+    toast.success(`Moved "${movedTitle}" to position ${toIndex + 1}. Exhibit letters and Index synchronized.`);
   };
 
 
@@ -2519,14 +2717,48 @@ export default function ComplaintWorkspace() {
     toast.success("✓ Parent address synced to match Student address");
   };
 
-  // Helper to load and convert any attached PDF into high-res page images
+  // Helper to load and convert any attached PDF into high-res page images with IndexedDB caching
   const loadAndConvertPdfForPage = async (pageId: string, fileUrl: string, fileName?: string) => {
     try {
+      // 1. Check IndexedDB cache first to avoid re-converting and recover from localStorage drops
+      const cached = await getExhibitFromDb(pageId);
+      if (
+        cached &&
+        cached.renderedPages &&
+        cached.renderedPages.length > 0 &&
+        cached.renderedPages.every((rp) => Boolean(rp.dataUrl))
+      ) {
+        setPages((prev) =>
+          prev.map((p) =>
+            p.id === pageId
+              ? {
+                  ...p,
+                  renderedPages: cached.renderedPages,
+                  pageCount: cached.renderedPages!.length,
+                  isRenderingPdf: false,
+                  fileName: p.fileName || cached.fileName,
+                  fileUrl: p.fileUrl || cached.fileUrl,
+                }
+              : p
+          )
+        );
+        return;
+      }
+
       setPages((prev) =>
         prev.map((p) => (p.id === pageId ? { ...p, isRenderingPdf: true } : p))
       );
       const convertedPages = await convertFileUrlToPageImages(fileUrl, fileName);
       if (convertedPages.length > 0) {
+        // Persist to IndexedDB
+        await saveExhibitToDb({
+          pageId,
+          fileName,
+          fileUrl,
+          renderedPages: convertedPages,
+          updatedAt: Date.now(),
+        });
+
         setPages((prev) =>
           prev.map((p) =>
             p.id === pageId
@@ -2552,16 +2784,65 @@ export default function ComplaintWorkspace() {
     }
   };
 
-  // Auto-convert any exhibit page that has a fileUrl but no renderedPages yet
+  // Restore all cached exhibits from IndexedDB on page load / refresh
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function restoreCachedExhibits() {
+      try {
+        const recordMap = await getAllExhibitsFromDb();
+        if (isCancelled || !recordMap || Object.keys(recordMap).length === 0) return;
+
+        setPages((prev) =>
+          prev.map((p) => {
+            const cached = recordMap[p.id];
+            if (!cached) return p;
+
+            const hasValidCachedPages =
+              cached.renderedPages &&
+              cached.renderedPages.length > 0 &&
+              cached.renderedPages.some((rp) => Boolean(rp.dataUrl));
+
+            let resolvedFileUrl = p.fileUrl || cached.fileUrl;
+            if (cached.fileBlob && (!resolvedFileUrl || resolvedFileUrl.startsWith("blob:"))) {
+              try {
+                resolvedFileUrl = URL.createObjectURL(cached.fileBlob);
+              } catch (_) {}
+            }
+
+            return {
+              ...p,
+              fileName: p.fileName || cached.fileName,
+              fileUrl: resolvedFileUrl,
+              renderedPages: hasValidCachedPages ? cached.renderedPages : p.renderedPages,
+              pageCount: hasValidCachedPages ? cached.renderedPages!.length : p.pageCount,
+            };
+          })
+        );
+      } catch (err) {
+        console.warn("[ComplaintWorkspace] Error restoring exhibits from IndexedDB:", err);
+      }
+    }
+
+    restoreCachedExhibits();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  // Auto-convert any exhibit page that has a fileUrl but missing rendered page images or stripped dataUrls
   useEffect(() => {
     pages.forEach((p) => {
-      if (
+      const needsRendering =
         p.category === "exhibit" &&
         p.fileUrl &&
-        (!p.renderedPages || p.renderedPages.length === 0) &&
-        !p.isRenderingPdf
-      ) {
-        loadAndConvertPdfForPage(p.id, p.fileUrl, p.fileName);
+        (!p.renderedPages ||
+          p.renderedPages.length === 0 ||
+          p.renderedPages.some((rp) => !rp.dataUrl)) &&
+        !p.isRenderingPdf;
+
+      if (needsRendering) {
+        loadAndConvertPdfForPage(p.id, p.fileUrl!, p.fileName);
       }
     });
   }, [pages]);
@@ -2640,18 +2921,30 @@ export default function ComplaintWorkspace() {
     if (!newPageTitle.trim()) return;
     const nextIdx = pages.length;
     const nextNum = nextIdx + 1 < 10 ? `0${nextIdx + 1}` : `${nextIdx + 1}`;
+    const nextLetter = getNextExhibitLetter(pages);
+    const isExhibit = newPageCategory === "exhibit";
+
+    let finalTitle = newPageTitle.trim();
+    if (isExhibit && !finalTitle.toLowerCase().startsWith("exhibit")) {
+      finalTitle = `Exhibit ${nextLetter} — ${finalTitle}`;
+    }
+
     const newPage: DocumentPage = {
-      id: `custom_${Date.now()}`,
+      id: isExhibit ? `exhibit_${nextLetter.toLowerCase()}_${Date.now()}` : `custom_${Date.now()}`,
       number: nextNum,
-      title: newPageTitle.trim(),
+      title: finalTitle,
       category: newPageCategory,
-      content: `DOCUMENT SECTION: ${newPageTitle.toUpperCase()}\n\nEnter statement of legal argument, factual evidence, or supporting documentation here...`,
+      exhibitTag: isExhibit ? `Exhibit ${nextLetter}` : undefined,
+      content: isExhibit
+        ? `EXHIBIT ${nextLetter} · EVIDENTIARY RECORD\n\nThis evidentiary exhibit is incorporated in formal support of Complainant's state complaint claims.`
+        : `DOCUMENT SECTION: ${finalTitle.toUpperCase()}\n\nEnter statement of legal argument, factual evidence, or supporting documentation here...`,
     };
-    setPages((prev) => [...prev, newPage]);
+
+    setPages((prev) => resequenceExhibits([...prev, newPage], caseDetails));
     setActivePageId(newPage.id);
     setIsAddPageModalOpen(false);
     setNewPageTitle("");
-    toast.success(`Binder "${newPageTitle}" (${nextNum}) added to state complaint packet`);
+    toast.success(`Binder "${finalTitle}" (${nextNum}) added to state complaint packet`);
   };
 
   // Handler: Insert exhibit directly from Document Vault (PG-023-VAULT)
@@ -2661,6 +2954,7 @@ export default function ComplaintWorkspace() {
     documentType?: string;
     id?: number;
     renderedPages?: ImportedPdfPage[];
+    fileBlob?: Blob;
   }) => {
     const cleanName = fileItem.fileName.replace(/\.[^/.]+$/, "");
 
@@ -2670,8 +2964,19 @@ export default function ComplaintWorkspace() {
       const updatedTitle = `${exhibitPrefix} (${cleanName})`;
       const hasPreRendered = fileItem.renderedPages && fileItem.renderedPages.length > 0;
 
-      setPages((prev) =>
-        prev.map((p) => {
+      if (hasPreRendered) {
+        saveExhibitToDb({
+          pageId: activePage.id,
+          fileName: fileItem.fileName,
+          fileUrl: fileItem.fileUrl,
+          fileBlob: fileItem.fileBlob,
+          renderedPages: fileItem.renderedPages,
+          updatedAt: Date.now(),
+        }).catch((e) => console.warn("Failed to cache exhibit:", e));
+      }
+
+      setPages((prev) => {
+        const updated = prev.map((p) => {
           if (p.id === activePage.id) {
             return {
               ...p,
@@ -2701,8 +3006,9 @@ This documentary record is incorporated into ${p.exhibitTag || p.title} in direc
             };
           }
           return p;
-        })
-      );
+        });
+        return resequenceExhibits(updated, caseDetails);
+      });
 
       if (!hasPreRendered && fileItem.fileUrl) {
         loadAndConvertPdfForPage(activePage.id, fileItem.fileUrl, fileItem.fileName);
@@ -2720,6 +3026,17 @@ This documentary record is incorporated into ${p.exhibitTag || p.title} in direc
     const docTitle = `Exhibit ${nextLetter} (${cleanName})`;
     const hasPreRendered = fileItem.renderedPages && fileItem.renderedPages.length > 0;
     const newPageId = `exhibit_${nextLetter.toLowerCase()}_${Date.now()}`;
+
+    if (hasPreRendered) {
+      saveExhibitToDb({
+        pageId: newPageId,
+        fileName: fileItem.fileName,
+        fileUrl: fileItem.fileUrl,
+        fileBlob: fileItem.fileBlob,
+        renderedPages: fileItem.renderedPages,
+        updatedAt: Date.now(),
+      }).catch((e) => console.warn("Failed to cache exhibit:", e));
+    }
 
     const newPage: DocumentPage = {
       id: newPageId,
@@ -2744,7 +3061,7 @@ EVIDENTIARY PROFFER & RELEVANCE:
 This document is incorporated herein and submitted in direct support of Complainant's allegations. The LEA was in possession of or statutorily responsible for this record during the relevant filing period.`,
     };
 
-    // Update exhibit index page if it exists
+    // Resequence pages including new exhibit
     setPages((prev) => {
       const updated = prev.map((p) => {
         if (p.id === "exhibit_index") {
@@ -2756,7 +3073,7 @@ This document is incorporated herein and submitted in direct support of Complain
         }
         return p;
       });
-      return [...updated, newPage];
+      return resequenceExhibits([...updated, newPage], caseDetails);
     });
 
     if (!hasPreRendered && fileItem.fileUrl) {
@@ -2824,6 +3141,7 @@ This document is incorporated herein and submitted in direct support of Complain
         documentType: uploadDocType,
         id: undefined,
         renderedPages: initialPages.length > 0 ? initialPages : undefined,
+        fileBlob: uploadFile,
       });
 
       setUploadFile(null);
@@ -5782,7 +6100,7 @@ This document is incorporated herein and submitted in direct support of Complain
           isOpen={isManageBindersModalOpen}
           onClose={() => setIsManageBindersModalOpen(false)}
           pages={pages}
-          onUpdatePages={(newPages) => setPages(ensureRequiredBinders(newPages))}
+          onUpdatePages={(newPages) => setPages(resequenceExhibits(ensureRequiredBinders(newPages), caseDetails))}
           activePageId={activePageId}
           onSelectPage={(pageId) => {
             setActivePageId(pageId);
