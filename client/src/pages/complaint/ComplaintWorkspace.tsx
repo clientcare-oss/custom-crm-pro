@@ -2195,6 +2195,38 @@ export default function ComplaintWorkspace() {
     handleReorderBinders(index, index + 1);
   };
 
+  // State: Rename Binder Modal ("small window" on double click or pencil trigger)
+  const [binderToRename, setBinderToRename] = useState<DocumentPage | null>(null);
+  const [renameTitleInput, setRenameTitleInput] = useState("");
+  const [renameExhibitTagInput, setRenameExhibitTagInput] = useState("");
+
+  const handleOpenRenameModal = (page: DocumentPage) => {
+    setBinderToRename(page);
+    setRenameTitleInput(page.title);
+    setRenameExhibitTagInput(page.exhibitTag || "");
+  };
+
+  const handleSaveRename = () => {
+    if (!binderToRename || !renameTitleInput.trim()) return;
+    const newTitle = renameTitleInput.trim();
+    const newExhibitTag = renameExhibitTagInput.trim();
+
+    setPages((prevPages) =>
+      prevPages.map((p) =>
+        p.id === binderToRename.id
+          ? {
+              ...p,
+              title: newTitle,
+              ...(p.category === "exhibit" ? { exhibitTag: newExhibitTag || p.exhibitTag } : {}),
+            }
+          : p
+      )
+    );
+
+    toast.success(`Renamed binder to "${newTitle}"`);
+    setBinderToRename(null);
+  };
+
   // Global Keyboard Shortcut: Ctrl+Shift+B / Cmd+Shift+B -> Quick Add Binder
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
@@ -3058,6 +3090,10 @@ This document is incorporated herein and submitted in direct support of Complain
                           setActiveToolbarTab("edit");
                         }
                       }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenRenameModal(p);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           setActivePageId(p.id);
@@ -3129,8 +3165,13 @@ This document is incorporated herein and submitted in direct support of Complain
                         )} />
 
                         <span 
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenRenameModal(p);
+                          }}
+                          title="Double-click to rename binder"
                           className={cn(
-                            "text-[12px] font-serif font-bold leading-[1.25] flex-1 min-w-0 break-words whitespace-normal",
+                            "text-[12px] font-serif font-bold leading-[1.25] flex-1 min-w-0 break-words whitespace-normal cursor-pointer",
                             isActive ? "text-[#1C1003]" : "text-[#1A1005]"
                           )}
                         >
@@ -3138,7 +3179,7 @@ This document is incorporated herein and submitted in direct support of Complain
                         </span>
                       </div>
 
-                      {/* Right: Quick Reorder Buttons, Remove Trigger, & Miniature document facsimile */}
+                      {/* Right: Quick Reorder Buttons, Rename Trigger, Remove Trigger, & Miniature document facsimile */}
                       <div className="flex items-center gap-1 shrink-0">
                         {/* Micro Up/Down Move Arrows (on hover) */}
                         {!isCover && (
@@ -3173,6 +3214,20 @@ This document is incorporated herein and submitted in direct support of Complain
                             )}
                           </div>
                         )}
+
+                        {/* Rename Binder Pencil button (on hover) */}
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenRenameModal(p);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-black/15 text-[#3D2C10] hover:text-black transition-opacity cursor-pointer"
+                          title={`Rename "${p.title}" (or double-click binder name)`}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </span>
 
                         {p.id !== "cover" && p.id !== "clarity_control" && p.category !== "restatement" && (
                           <span
@@ -3808,8 +3863,13 @@ This document is incorporated herein and submitted in direct support of Complain
                             <span className="text-[10px] font-mono uppercase tracking-widest text-[#8C7A60] font-bold">
                               Page {activeBinderRange.contentStart === activeBinderRange.contentEnd ? activeBinderRange.contentStart : `${activeBinderRange.contentStart}–${activeBinderRange.contentEnd}`} of {totalDocketPages} · {activePage.exhibitTag || "EXHIBIT"}
                             </span>
-                            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5">
-                              {activePage.title}
+                            <h2
+                              onDoubleClick={() => handleOpenRenameModal(activePage)}
+                              title="Double-click to rename binder"
+                              className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5 cursor-pointer hover:underline decoration-[#8C7A60]/40 inline-flex items-center gap-1.5 group/header"
+                            >
+                              <span>{activePage.title}</span>
+                              <Pencil className="w-3.5 h-3.5 text-[#8C7A60] opacity-0 group-hover/header:opacity-100 transition-opacity" />
                             </h2>
                           </div>
                           <div className="text-right">
@@ -3901,8 +3961,13 @@ This document is incorporated herein and submitted in direct support of Complain
                           <span className="text-[10px] font-mono uppercase tracking-widest text-[#8C7A60] font-bold">
                             Page {activeBinderRange.contentStart === activeBinderRange.contentEnd ? activeBinderRange.contentStart : `${activeBinderRange.contentStart}–${activeBinderRange.contentEnd}`} · {activePage.id === "clarity_control" || activePage.number === "02" || activePage.number === "05" || activePage.category === "pleading" || activePage.category === "restatement" ? "RESTATEMENT" : activePage.category.toUpperCase()}
                           </span>
-                          <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5">
-                            {activePage.title}
+                          <h2
+                            onDoubleClick={() => handleOpenRenameModal(activePage)}
+                            title="Double-click to rename binder"
+                            className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5 cursor-pointer hover:underline decoration-[#8C7A60]/40 inline-flex items-center gap-1.5 group/header"
+                          >
+                            <span>{activePage.title}</span>
+                            <Pencil className="w-3.5 h-3.5 text-[#8C7A60] opacity-0 group-hover/header:opacity-100 transition-opacity" />
                           </h2>
                         </div>
                         {/* For Page Two / Restatement, remove gadoe sped and 34 cfr etc */}
@@ -5639,6 +5704,116 @@ This document is incorporated herein and submitted in direct support of Complain
                 Yes, Remove Binder
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* =========================================================================
+            SMALL WINDOW: RENAME BINDER MODAL (TRIGGERED BY DOUBLE-CLICK ON BINDER NAME)
+            ========================================================================= */}
+        <Dialog
+          open={!!binderToRename}
+          onOpenChange={(open) => {
+            if (!open) setBinderToRename(null);
+          }}
+        >
+          <DialogContent
+            className={cn(
+              "w-full max-w-md p-5 rounded-xl border shadow-2xl",
+              "bg-[#07162B] border-[#C5A059]/80 text-slate-100"
+            )}
+            style={{
+              backgroundImage:
+                "linear-gradient(180deg, rgba(14, 42, 82, 0.98) 0%, rgba(7, 22, 43, 0.98) 100%), url('/decor/folio-leather-texture.png')",
+              backgroundRepeat: "repeat",
+              backgroundSize: "220px",
+            }}
+          >
+            <DialogHeader className="flex flex-row items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#031124] border border-[#C5A059]/70 flex items-center justify-center text-[#FFE394] shrink-0 shadow-lg">
+                <Pencil className="w-4 h-4 text-[#DFBE77]" />
+              </div>
+
+              <div className="text-left flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <DialogTitle className="font-serif font-bold text-base text-[#FFF4D4]">
+                    Rename Binder
+                  </DialogTitle>
+                  {binderToRename && (
+                    <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#031124] border border-[#C5A059]/50 text-[#FFE394]">
+                      {binderToRename.id === "cover" ? "Binder 01" : `Binder ${binderToRename.number || ""}`}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#C6B697] mt-1 leading-relaxed">
+                  Enter a new name for this packet binder. Changes update the index, continuous docket page headers, and filing bookmarks immediately.
+                </p>
+              </div>
+            </DialogHeader>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveRename();
+              }}
+              className="mt-3 flex flex-col gap-3.5"
+            >
+              <div>
+                <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5">
+                  Binder Name / Title <span className="text-rose-400">*</span>
+                </label>
+                <Input
+                  value={renameTitleInput}
+                  onChange={(e) => setRenameTitleInput(e.target.value)}
+                  placeholder="e.g., Parent's Statement of Facts & Chronology"
+                  autoFocus
+                  onFocus={(e) => e.target.select()}
+                  className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-serif text-sm h-10 placeholder:text-[#5A4830]"
+                />
+              </div>
+
+              {binderToRename?.category === "exhibit" && (
+                <div>
+                  <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5">
+                    Exhibit Identification Tag (Optional)
+                  </label>
+                  <Input
+                    value={renameExhibitTagInput}
+                    onChange={(e) => setRenameExhibitTagInput(e.target.value)}
+                    placeholder="e.g., Exhibit A or EXHIBIT C"
+                    className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-mono text-xs h-9 placeholder:text-[#5A4830]"
+                  />
+                  <p className="text-[11px] text-[#A69371] mt-1">
+                    Used on evidentiary stamps and exhibit tab slip sheets.
+                  </p>
+                </div>
+              )}
+
+              <div className="p-2.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18] text-[11px] text-[#A69371] flex items-center justify-between">
+                <span>Category: <strong className="text-[#DFBE77] capitalize">{binderToRename?.category}</strong></span>
+                <span className="text-[10px] text-[#C6B697] italic">Press Enter to save</span>
+              </div>
+
+              <DialogFooter className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#3A2C18] mt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBinderToRename(null)}
+                  className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] text-xs h-8 cursor-pointer"
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={!renameTitleInput.trim()}
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-4 hover:brightness-110 shadow-md cursor-pointer disabled:opacity-40"
+                >
+                  Save Binder Name
+                </Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Layers,
   Trash2,
@@ -12,6 +13,7 @@ import {
   ChevronDown,
   Lock,
   FolderArchive,
+  Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -171,12 +173,44 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
     toast.success(`Moved "${moved.title}" to position ${toIndex + 1}`);
   };
 
+  // Binder marked for renaming with small window
+  const [binderToRename, setBinderToRename] = useState<DocumentPage | null>(null);
+  const [renameTitleInput, setRenameTitleInput] = useState("");
+  const [renameExhibitTagInput, setRenameExhibitTagInput] = useState("");
+
+  const handleOpenRename = (p: DocumentPage) => {
+    setBinderToRename(p);
+    setRenameTitleInput(p.title);
+    setRenameExhibitTagInput(p.exhibitTag || "");
+  };
+
+  const handleSaveRename = () => {
+    if (!binderToRename || !renameTitleInput.trim()) return;
+    const newTitle = renameTitleInput.trim();
+    const newExhibitTag = renameExhibitTagInput.trim();
+
+    const updated = pages.map((p) =>
+      p.id === binderToRename.id
+        ? {
+            ...p,
+            title: newTitle,
+            ...(p.category === "exhibit" ? { exhibitTag: newExhibitTag || p.exhibitTag } : {}),
+          }
+        : p
+    );
+    onUpdatePages(updated);
+    toast.success(`Renamed binder to "${newTitle}"`);
+    setBinderToRename(null);
+  };
+
   // Keyboard shortcut: close on Escape
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (binderPendingRemoval) {
+        if (binderToRename) {
+          setBinderToRename(null);
+        } else if (binderPendingRemoval) {
           setBinderPendingRemoval(null);
         } else {
           onClose();
@@ -185,7 +219,7 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, binderPendingRemoval, onClose]);
+  }, [isOpen, binderToRename, binderPendingRemoval, onClose]);
 
   if (!isOpen) return null;
 
@@ -450,11 +484,19 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
                           {displayNum}
                         </span>
 
-                        <div className="min-w-0 flex-1 flex flex-col justify-center">
+                        <div 
+                          className="min-w-0 flex-1 flex flex-col justify-center cursor-pointer group/title"
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenRename(p);
+                          }}
+                          title="Double-click to rename binder"
+                        >
                           <div className="flex items-center gap-2">
-                            <span className="font-serif font-bold text-[#FFF4D4] truncate block">
+                            <span className="font-serif font-bold text-[#FFF4D4] group-hover/title:text-[#FFE394] truncate block transition-colors">
                               {p.title}
                             </span>
+                            <Pencil className="w-3 h-3 text-[#C5A059] opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0" />
                             {isCover && (
                               <span className="text-[9px] font-sans font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-700/60 shrink-0">
                                 Required Form
@@ -485,7 +527,7 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
                         </div>
                       </div>
 
-                      {/* Right: Reorder Up/Down + View + Remove */}
+                      {/* Right: Reorder Up/Down + Rename + View + Remove */}
                       <div className="flex items-center gap-1.5 shrink-0">
                         {/* Up/Down buttons for accessible one-click rearrangement */}
                         {!isCover && (
@@ -510,6 +552,15 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
                             </button>
                           </div>
                         )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleOpenRename(p)}
+                          className="p-1 rounded text-[#C6B697] hover:text-[#FFE394] hover:bg-white/[0.08] transition-colors cursor-pointer"
+                          title={`Rename "${p.title}" (or double-click)`}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
 
                         <button
                           type="button"
@@ -754,6 +805,106 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
                 Yes, Remove Binder
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Small Window: Rename Binder Modal */}
+      {binderToRename && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-in fade-in duration-150">
+          <div
+            className="w-full max-w-md p-5 rounded-xl border border-[#C5A059]/80 bg-[#07162B] text-slate-100 shadow-2xl flex flex-col gap-3.5 animate-in zoom-in-95 duration-150"
+            style={{
+              backgroundImage:
+                "linear-gradient(180deg, rgba(14, 42, 82, 0.98) 0%, rgba(7, 22, 43, 0.98) 100%), url('/decor/folio-leather-texture.png')",
+              backgroundRepeat: "repeat",
+              backgroundSize: "220px",
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#031124] border border-[#C5A059]/70 flex items-center justify-center text-[#FFE394] shrink-0 shadow-lg">
+                <Pencil className="w-4 h-4 text-[#DFBE77]" />
+              </div>
+
+              <div className="text-left flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-serif font-bold text-base text-[#FFF4D4]">
+                    Rename Binder
+                  </h4>
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#031124] border border-[#C5A059]/50 text-[#FFE394]">
+                    {binderToRename.id === "cover" ? "Binder 01" : `Binder ${binderToRename.number || ""}`}
+                  </span>
+                </div>
+                <p className="text-xs text-[#C6B697] mt-1 leading-relaxed">
+                  Enter a new title for this packet binder. Changes immediately update filing bookmarks and continuous page headers.
+                </p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveRename();
+              }}
+              className="flex flex-col gap-3.5"
+            >
+              <div>
+                <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5">
+                  Binder Name / Title <span className="text-rose-400">*</span>
+                </label>
+                <Input
+                  value={renameTitleInput}
+                  onChange={(e) => setRenameTitleInput(e.target.value)}
+                  placeholder="e.g., Parent's Statement of Facts & Chronology"
+                  autoFocus
+                  onFocus={(e) => e.target.select()}
+                  className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-serif text-sm h-10 placeholder:text-[#5A4830]"
+                />
+              </div>
+
+              {binderToRename.category === "exhibit" && (
+                <div>
+                  <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5">
+                    Exhibit Identification Tag (Optional)
+                  </label>
+                  <Input
+                    value={renameExhibitTagInput}
+                    onChange={(e) => setRenameExhibitTagInput(e.target.value)}
+                    placeholder="e.g., Exhibit A or EXHIBIT C"
+                    className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-mono text-xs h-9 placeholder:text-[#5A4830]"
+                  />
+                  <p className="text-[11px] text-[#A69371] mt-1">
+                    Used on evidentiary stamps and exhibit tab slip sheets.
+                  </p>
+                </div>
+              )}
+
+              <div className="p-2.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18] text-[11px] text-[#A69371] flex items-center justify-between">
+                <span>Category: <strong className="text-[#DFBE77] capitalize">{binderToRename.category}</strong></span>
+                <span className="text-[10px] text-[#C6B697] italic">Press Enter to save</span>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#3A2C18] mt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBinderToRename(null)}
+                  className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] text-xs h-8 cursor-pointer"
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={!renameTitleInput.trim()}
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-4 hover:brightness-110 shadow-md cursor-pointer disabled:opacity-40"
+                >
+                  Save Binder Name
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
