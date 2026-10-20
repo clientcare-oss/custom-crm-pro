@@ -2607,19 +2607,6 @@ This document is incorporated herein and submitted in direct support of Complain
               <span>Compile</span>
             </Button>
 
-            {activePageId === "cover" && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handlePrintFormOnly}
-                className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] gap-1.5 text-xs h-8 px-2.5 cursor-pointer rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(0,0,0,0.5)] hidden md:flex"
-                title="Print strictly the 4 pages of the Official GaDOE State Complaint Form"
-              >
-                <FileText className="w-3.5 h-3.5 text-[#FFE394]" />
-                <span>Form (4 Pgs)</span>
-              </Button>
-            )}
 
             <Button
               type="button"
@@ -4851,17 +4838,6 @@ This document is incorporated herein and submitted in direct support of Complain
                     <span>100% Letter View</span>
                   </div>
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePrintFormOnly}
-                    className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] text-xs h-7.5 px-3 gap-1.5 cursor-pointer rounded-md shadow-sm"
-                    title="Print strictly the 4 pages of the Official GaDOE State Complaint Form"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-[#FFE394]" />
-                    <span>State Form (4 Pgs)</span>
-                  </Button>
 
                   <Button
                     type="button"
