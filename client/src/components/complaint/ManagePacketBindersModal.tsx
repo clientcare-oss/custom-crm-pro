@@ -262,7 +262,7 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
       }
     }
 
-    toast.success(`Removed "${page.title}" from packet index. Page numbers updated.`);
+    toast.success(`Removed "${page.title}" from binder index. Page numbers updated.`);
     setBinderPendingRemoval(null);
   };
 
@@ -279,7 +279,7 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
     const updatedPages = [...pages, newPage];
     onUpdatePages(updatedPages);
     onSelectPage(newPage.id);
-    toast.success(`Added "${std.title}" to packet index as Binder ${nextNum}.`);
+    toast.success(`Added "${std.title}" to binder index as Binder ${nextNum}.`);
   };
 
   // Handler: Add a new Exhibit Binder
@@ -354,7 +354,7 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
               </div>
               <div className="text-left min-w-0">
                 <div className="font-serif font-bold text-sm sm:text-base text-[#FFF4D4] tracking-wide flex items-center gap-2">
-                  <span>Packet Index Binders</span>
+                  <span>Binder Index</span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#031124] text-[#FFE394] border border-[#C5A059]/40 shrink-0">
                     {pages.length} Binders · {totalPages} Pages
                   </span>
