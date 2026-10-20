@@ -409,6 +409,20 @@ Exhibit files are attached behind this index in labeled alphabetical order.`
     title: "Exhibit A (Student's IEP)", 
     category: "exhibit", 
     exhibitTag: "Exhibit A", 
+    content: `EXHIBIT A: INDIVIDUALIZED EDUCATION PROGRAM (IEP)
+STUDENT: ELIJAH SANTIAGO · LEA / DISTRICT: COBB COUNTY SCHOOL DISTRICT
+
+DOCUMENT SUMMARY & EVIDENTIARY RECORD:
+• Document Title: Annual Individualized Education Program (IEP)
+• Authoring Entity: Special Education IEP Team & Local Educational Agency
+• Relevant Sections: Special Education & Related Services Delivery Schedule, Classroom Accommodations, and Behavioral Support Provisions.
+
+EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
+1. Baseline Service Entitlement: Establishes the binding educational program guaranteed to the student under 34 C.F.R. § 300.323 and State Special Education Rules.
+2. Mandated Service Minutes: Stipulates mandated specialized instruction and related therapeutic services guaranteed as FAPE.
+3. Substantive Violation: Directly corroborates Count I (Failure to Implement Operative IEP Services / Denial of Free Appropriate Public Education).
+
+[Evidentiary Notice: Full authentic IEP records are bound directly behind this summary sheet.]`,
   },
   { 
     id: "exhibit_b", 
@@ -416,6 +430,20 @@ Exhibit files are attached behind this index in labeled alphabetical order.`
     title: "Exhibit B (Evaluations)", 
     category: "exhibit", 
     exhibitTag: "Exhibit B", 
+    content: `EXHIBIT B: EVALUATIONS & PARENT WRITTEN REQUESTS
+STUDENT: ELIJAH SANTIAGO · LEA / DISTRICT: COBB COUNTY SCHOOL DISTRICT
+
+DOCUMENT SUMMARY & EVIDENTIARY RECORD:
+• Document Title: Psychoeducational Evaluation Report & Formal Parental Evaluation Request
+• Receiving Entity: District Special Education Administration & Case Management
+• Relevant Sections: Multidisciplinary Assessment Findings, Standardized Testing Scores, and Parental Notice of Deficits.
+
+EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
+1. Mandatory 60-Day Evaluation Timeline: Verifies LEA receipt of formal parental consent and request triggering the statutory evaluation window under 34 C.F.R. § 300.301.
+2. Child Find Duty: Establishes that the district possessed affirmative notice of suspected areas of disability requiring comprehensive evaluation.
+3. Substantive Violation: Directly corroborates Count II (Failure to Timely Evaluate & Child Find Violation).
+
+[Evidentiary Notice: Certified evaluation reports and transmission records are bound directly behind this summary sheet.]`,
   },
   { 
     id: "exhibit_c", 
@@ -423,6 +451,20 @@ Exhibit files are attached behind this index in labeled alphabetical order.`
     title: "Exhibit C (Communications)", 
     category: "exhibit", 
     exhibitTag: "Exhibit C", 
+    content: `EXHIBIT C: DISTRICT CORRESPONDENCE & SERVICE LOGS
+STUDENT: ELIJAH SANTIAGO · LEA / DISTRICT: COBB COUNTY SCHOOL DISTRICT
+
+DOCUMENT SUMMARY & EVIDENTIARY RECORD:
+• Document Title: Special Education Service Delivery Logs & Official Written Communications
+• Key Parties: Case Manager, Related Service Providers, Lead Advocate & Parent
+• Relevant Entries: Service Attendance Logs, Unfilled Provider Hours, and Written Staffing Admissions.
+
+EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
+1. Proof of Non-Delivery: Demonstrates documented missed sessions and omissions of mandated IEP accommodations.
+2. Written Admissions: Verifies administrative acknowledgment of personnel shortages with zero compensatory makeup hours.
+3. Substantive Violation: Corroborates procedural and substantive FAPE deprivations under IDEA.
+
+[Evidentiary Notice: Verifiable communication logs and provider records are bound directly behind this summary sheet.]`,
   },
 ];
 
@@ -487,6 +529,84 @@ ${box2}
 
 #3. PROPOSED RESOLUTION TO ALLEGED VIOLATIONS
 ${box3}`.trim();
+}
+
+/**
+ * Fallback evidentiary document content generator for exhibit binders when no raw PDF
+ * file has been uploaded yet, ensuring Sheet 2 (continuous docket page) always renders
+ * sequentially and is never omitted or skipped in print or preview.
+ */
+export function getDefaultExhibitContent(
+  p: { id: string; title: string; exhibitTag?: string; content?: string },
+  caseDetails?: Partial<ComplaintCaseDetails>
+): string {
+  if (p.content && p.content.trim().length > 0) {
+    return p.content;
+  }
+
+  const student = caseDetails?.studentName?.replace(/^IN\s+RE:\s*/i, "").trim() || "Elijah Santiago";
+  const district = caseDetails?.district?.trim() || "Cobb County School District";
+
+  if (p.id === "exhibit_a" || p.title?.toLowerCase().includes("iep")) {
+    return `EXHIBIT A: INDIVIDUALIZED EDUCATION PROGRAM (IEP)
+STUDENT: ${student.toUpperCase()} · LEA / DISTRICT: ${district.toUpperCase()}
+
+DOCUMENT SUMMARY & EVIDENTIARY RECORD:
+• Document Title: Annual Individualized Education Program (IEP)
+• Authoring Entity: Special Education IEP Team & Local Educational Agency
+• Relevant Sections: Special Education & Related Services Delivery Schedule, Classroom Accommodations, and Behavioral Support Provisions.
+
+EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
+1. Baseline Service Entitlement: Establishes the binding educational program guaranteed to the student under 34 C.F.R. § 300.323 and State Special Education Rules.
+2. Mandated Service Minutes: Stipulates mandated specialized instruction and related therapeutic services guaranteed as FAPE.
+3. Substantive Violation: Directly corroborates Count I (Failure to Implement Operative IEP Services / Denial of Free Appropriate Public Education).
+
+[Evidentiary Notice: Full authentic IEP records are bound directly behind this summary sheet.]`;
+  }
+
+  if (p.id === "exhibit_b" || p.title?.toLowerCase().includes("evaluation")) {
+    return `EXHIBIT B: EVALUATIONS & PARENT WRITTEN REQUESTS
+STUDENT: ${student.toUpperCase()} · LEA / DISTRICT: ${district.toUpperCase()}
+
+DOCUMENT SUMMARY & EVIDENTIARY RECORD:
+• Document Title: Psychoeducational Evaluation Report & Formal Parental Evaluation Request
+• Receiving Entity: District Special Education Administration & Case Management
+• Relevant Sections: Multidisciplinary Assessment Findings, Standardized Testing Scores, and Parental Notice of Deficits.
+
+EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
+1. Mandatory 60-Day Evaluation Timeline: Verifies LEA receipt of formal parental consent and request triggering the statutory evaluation window under 34 C.F.R. § 300.301.
+2. Child Find Duty: Establishes that the district possessed affirmative notice of suspected areas of disability requiring comprehensive evaluation.
+3. Substantive Violation: Directly corroborates Count II (Failure to Timely Evaluate & Child Find Violation).
+
+[Evidentiary Notice: Certified evaluation reports and transmission records are bound directly behind this summary sheet.]`;
+  }
+
+  if (p.id === "exhibit_c" || p.title?.toLowerCase().includes("communication") || p.title?.toLowerCase().includes("correspondence")) {
+    return `EXHIBIT C: DISTRICT CORRESPONDENCE & SERVICE LOGS
+STUDENT: ${student.toUpperCase()} · LEA / DISTRICT: ${district.toUpperCase()}
+
+DOCUMENT SUMMARY & EVIDENTIARY RECORD:
+• Document Title: Special Education Service Delivery Logs & Official Written Communications
+• Key Parties: Case Manager, Related Service Providers, Lead Advocate & Parent
+• Relevant Entries: Service Attendance Logs, Unfilled Provider Hours, and Written Staffing Admissions.
+
+EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
+1. Proof of Non-Delivery: Demonstrates documented missed sessions and omissions of mandated IEP accommodations.
+2. Written Admissions: Verifies administrative acknowledgment of personnel shortages with zero compensatory makeup hours.
+3. Substantive Violation: Corroborates procedural and substantive FAPE deprivations under IDEA.
+
+[Evidentiary Notice: Verifiable communication logs and provider records are bound directly behind this summary sheet.]`;
+  }
+
+  return `${p.exhibitTag ? `${p.exhibitTag}: ` : ""}${p.title.toUpperCase()}
+STUDENT: ${student.toUpperCase()} · LEA / DISTRICT: ${district.toUpperCase()}
+
+DOCUMENT SUMMARY & EVIDENTIARY RECORD:
+• Document Title: ${p.title}
+• Designation: ${p.exhibitTag || "Documentary Exhibit"}
+• Evidentiary Purpose: Corroborating documentary evidence submitted in support of formal state administrative complaint filing.
+
+[Evidentiary Notice: Supporting documentary records and verified attachments are bound directly behind this summary sheet.]`;
 }
 
 interface ComplaintCaseDetails {
@@ -3263,38 +3383,96 @@ This document is incorporated herein and submitted in direct support of Complain
                       }}
                     />
                   ) : (
-                    /* When no file attached yet: Clean Insert Exhibit File sheet (NO copy input on exhibit pages!) */
-                    <div
-                      style={{
-                        width: viewMode === "actual" ? "816px" : "100%",
-                        maxWidth: "816px",
-                        minHeight: "420px",
-                        transform: viewMode === "fit-page" ? "scale(0.78)" : zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
-                        transformOrigin: "top center",
-                      }}
-                      className="rounded-xs bg-[#031124] border border-[#C5A059]/60 shadow-2xl p-10 flex flex-col items-center justify-center text-center my-4"
-                    >
-                      <div className="w-14 h-14 rounded-full bg-[#051A36] border border-[#DFBE77]/60 flex items-center justify-center text-[#DFBE77] mb-4 shadow-lg">
-                        <FolderArchive className="w-7 h-7" />
-                      </div>
-                      <h3 className="font-serif text-xl font-bold text-[#FFF4D4] mb-2">
-                        Insert Evidentiary Exhibit File
-                      </h3>
-                      <p className="font-sans text-xs text-[#C6B697] max-w-md leading-relaxed mb-6">
-                        No copy input on exhibit pages. The actual evidentiary PDF will be inserted directly after this cover sheet in full fidelity with zero modifications for state investigator review.
-                      </p>
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          setTargetExhibitMode("current");
-                          setIsAddPageModalOpen(true);
+                    /* When no file attached yet: Clean Insert Exhibit File prompt + Evidentiary Summary Sheet 2 */
+                    <>
+                      <div
+                        style={{
+                          width: viewMode === "actual" ? "816px" : "100%",
+                          maxWidth: "816px",
+                          minHeight: "320px",
+                          transform: viewMode === "fit-page" ? "scale(0.78)" : zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
+                          transformOrigin: "top center",
                         }}
-                        className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 shadow-md text-xs cursor-pointer gap-2 px-5 py-2.5 hover:brightness-110"
+                        className="rounded-xs bg-[#031124] border border-[#C5A059]/60 shadow-2xl p-8 flex flex-col items-center justify-center text-center my-4"
                       >
-                        <FolderArchive className="w-4 h-4" />
-                        <span>Select File from Document Vault or Upload</span>
-                      </Button>
-                    </div>
+                        <div className="w-12 h-12 rounded-full bg-[#051A36] border border-[#DFBE77]/60 flex items-center justify-center text-[#DFBE77] mb-3 shadow-lg">
+                          <FolderArchive className="w-6 h-6" />
+                        </div>
+                        <h3 className="font-serif text-lg font-bold text-[#FFF4D4] mb-1.5">
+                          Insert Evidentiary Exhibit File
+                        </h3>
+                        <p className="font-sans text-xs text-[#C6B697] max-w-md leading-relaxed mb-4">
+                          No copy input needed. The actual evidentiary PDF will be inserted directly after this cover sheet in full fidelity with zero modifications. Alternatively, the standard Evidentiary Summary Sheet below is automatically included on continuous Page {activeBinderRange.contentPage} of {totalDocketPages}.
+                        </p>
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setTargetExhibitMode("current");
+                            setIsAddPageModalOpen(true);
+                          }}
+                          className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 shadow-md text-xs cursor-pointer gap-2 px-5 py-2.5 hover:brightness-110"
+                        >
+                          <FolderArchive className="w-4 h-4" />
+                          <span>Select File from Document Vault or Upload</span>
+                        </Button>
+                      </div>
+
+                      {/* SHEET 2: Evidentiary Summary Sheet (Active on continuous Page 12 / 14 until PDF attached) */}
+                      <div
+                        style={{
+                          width: viewMode === "actual" ? "816px" : "100%",
+                          maxWidth: "816px",
+                          minHeight: "1056px",
+                          backgroundImage: "url('/decor/fine-parchment.jpg')",
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          backgroundRepeat: "no-repeat",
+                          transform: viewMode === "fit-page" 
+                            ? "scale(0.78)" 
+                            : zoomLevel !== 100 
+                              ? `scale(${zoomLevel / 100})` 
+                              : undefined,
+                          transformOrigin: "top center",
+                        }}
+                        className={cn(
+                          "relative rounded-xs select-text flex flex-col justify-between transition-all",
+                          "bg-[#FBF6EA] text-[#1A120A] border border-[#C5A059]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.5)]",
+                          "px-8 sm:px-12 md:px-14 pt-8 pb-8 my-2 shrink-0"
+                        )}
+                      >
+                        <div className="flex items-center justify-between pb-3 border-b border-[#8C7A60]/40 shrink-0">
+                          <div>
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-[#8C7A60] font-bold">
+                              Page {activeBinderRange.contentPage} of {totalDocketPages} · {activePage.exhibitTag || "EXHIBIT"}
+                            </span>
+                            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5">
+                              {activePage.title}
+                            </h2>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[11px] font-serif text-[#6E5D43] italic block">
+                              EVIDENTIARY SUMMARY SHEET
+                            </span>
+                            <span className="text-[10px] font-mono text-[#8C7A60]">
+                              Included in Docket
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="py-6 flex flex-col w-full flex-1">
+                          <div className="text-[12.5px] leading-relaxed whitespace-pre-wrap text-justify font-serif text-[#1A120A]">
+                            {activePage.content || getDefaultExhibitContent(activePage, caseDetails)}
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-[#8C7A60]/30 flex items-center justify-between text-[11px] font-serif text-[#6E5D43] shrink-0">
+                          <span className="tracking-wide">
+                            {SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint
+                          </span>
+                          <span className="font-mono">Page {activeBinderRange.contentPage} of {totalDocketPages}</span>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               ) : (
@@ -4824,66 +5002,64 @@ This document is incorporated herein and submitted in direct support of Complain
                     </div>
 
                     {/* SHEET 2+ : EXHIBIT AUTHENTIC PDF PAGES OR STANDARD CONTENT SHEET */}
-                    {p.category === "exhibit" ? (
-                      p.renderedPages && p.renderedPages.length > 0 ? (
-                        p.renderedPages.map((pdfPage, pIdx) => {
-                          const continuousDocketPage = range.contentStart + pIdx;
-                          return (
-                            <div key={`preview-exhibit-${p.id}-p${pdfPage.pageNumber}`} className="w-full flex flex-col items-center">
-                              <div className="w-full max-w-[816px] flex items-center justify-between text-[11px] font-mono text-[#D8C7A5] bg-[#020A17]/90 px-3.5 py-1.5 rounded-t border-t border-x border-[#3A2C18]">
-                                <span className="font-bold text-[#FFE394]">
-                                  PAGE {continuousDocketPage} OF {totalDocketPages}
-                                </span>
-                                <span className="text-[#C6B697] truncate ml-2">
-                                  {p.exhibitTag || "Exhibit"} · Page {pdfPage.pageNumber} of {p.renderedPages!.length} · Evidentiary Document
-                                </span>
-                              </div>
-                              <div
-                                style={{
-                                  width: "816px",
-                                  maxWidth: "816px",
-                                  aspectRatio:
-                                    pdfPage.width && pdfPage.height
-                                      ? `${pdfPage.width} / ${pdfPage.height}`
-                                      : "8.5 / 11",
-                                  backgroundColor: "#FFFFFF",
-                                  boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
-                                  border: "1px solid #D1D5DB",
-                                }}
-                                className="relative rounded-b select-text flex flex-col items-center justify-center p-0 transition-all shrink-0 bg-white overflow-hidden"
-                              >
-                                <img
-                                  src={pdfPage.dataUrl}
-                                  alt={`Exhibit Page ${pdfPage.pageNumber}`}
-                                  className="w-full h-auto block mx-auto bg-white select-none pointer-events-none m-0 p-0"
-                                />
-                                {(p.highlights || [])
-                                  .filter((h) => h.pageNumber === pdfPage.pageNumber)
-                                  .map((h) => {
-                                    const colorDef = HIGHLIGHT_COLOR_MAP[h.color] || HIGHLIGHT_COLOR_MAP.yellow;
-                                    return (
-                                      <div
-                                        key={`preview-hl-${h.id}`}
-                                        style={{
-                                          position: "absolute",
-                                          left: `${h.x}%`,
-                                          top: `${h.y}%`,
-                                          width: `${h.width}%`,
-                                          height: `${h.height}%`,
-                                          backgroundColor: colorDef.fill,
-                                          borderBottom: `1.5px solid ${colorDef.border}`,
-                                          mixBlendMode: "multiply",
-                                          pointerEvents: "none",
-                                          borderRadius: "2px",
-                                        }}
-                                      />
-                                    );
-                                  })}
-                              </div>
+                    {p.category === "exhibit" && p.renderedPages && p.renderedPages.length > 0 ? (
+                      p.renderedPages.map((pdfPage, pIdx) => {
+                        const continuousDocketPage = range.contentStart + pIdx;
+                        return (
+                          <div key={`preview-exhibit-${p.id}-p${pdfPage.pageNumber}`} className="w-full flex flex-col items-center">
+                            <div className="w-full max-w-[816px] flex items-center justify-between text-[11px] font-mono text-[#D8C7A5] bg-[#020A17]/90 px-3.5 py-1.5 rounded-t border-t border-x border-[#3A2C18]">
+                              <span className="font-bold text-[#FFE394]">
+                                PAGE {continuousDocketPage} OF {totalDocketPages}
+                              </span>
+                              <span className="text-[#C6B697] truncate ml-2">
+                                {p.exhibitTag || "Exhibit"} · Page {pdfPage.pageNumber} of {p.renderedPages!.length} · Evidentiary Document
+                              </span>
                             </div>
-                          );
-                        })
-                      ) : null
+                            <div
+                              style={{
+                                width: "816px",
+                                maxWidth: "816px",
+                                aspectRatio:
+                                  pdfPage.width && pdfPage.height
+                                    ? `${pdfPage.width} / ${pdfPage.height}`
+                                    : "8.5 / 11",
+                                backgroundColor: "#FFFFFF",
+                                boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
+                                border: "1px solid #D1D5DB",
+                              }}
+                              className="relative rounded-b select-text flex flex-col items-center justify-center p-0 transition-all shrink-0 bg-white overflow-hidden"
+                            >
+                              <img
+                                src={pdfPage.dataUrl}
+                                alt={`Exhibit Page ${pdfPage.pageNumber}`}
+                                className="w-full h-auto block mx-auto bg-white select-none pointer-events-none m-0 p-0"
+                              />
+                              {(p.highlights || [])
+                                .filter((h) => h.pageNumber === pdfPage.pageNumber)
+                                .map((h) => {
+                                  const colorDef = HIGHLIGHT_COLOR_MAP[h.color] || HIGHLIGHT_COLOR_MAP.yellow;
+                                  return (
+                                    <div
+                                      key={`preview-hl-${h.id}`}
+                                      style={{
+                                        position: "absolute",
+                                        left: `${h.x}%`,
+                                        top: `${h.y}%`,
+                                        width: `${h.width}%`,
+                                        height: `${h.height}%`,
+                                        backgroundColor: colorDef.fill,
+                                        borderBottom: `1.5px solid ${colorDef.border}`,
+                                        mixBlendMode: "multiply",
+                                        pointerEvents: "none",
+                                        borderRadius: "2px",
+                                      }}
+                                    />
+                                  );
+                                })}
+                            </div>
+                          </div>
+                        );
+                      })
                     ) : (
                       /* SHEET 2: DOCUMENT CONTENT SHEET (WHITE PAPER) */
                       <div className="w-full flex flex-col items-center">
@@ -4892,7 +5068,9 @@ This document is incorporated herein and submitted in direct support of Complain
                             PAGE {range.contentPage} OF {totalDocketPages}
                           </span>
                           <span className="text-[#C6B697] truncate ml-2">
-                            Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} Content · Standard White Print Paper
+                            {p.category === "exhibit"
+                              ? `${p.exhibitTag || "Exhibit"} · Evidentiary Summary Sheet · Standard White Print Paper`
+                              : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} Content · Standard White Print Paper`}
                           </span>
                         </div>
                         <div
@@ -4911,7 +5089,9 @@ This document is incorporated herein and submitted in direct support of Complain
                           {/* Running Top Header */}
                           <div className="w-full shrink-0 pb-3 border-b border-black flex items-center justify-between text-xs font-sans text-slate-800">
                             <span className="font-bold uppercase tracking-wider">
-                              Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Clarity Control Restatement" : p.title}
+                              {p.category === "exhibit"
+                                ? `${p.exhibitTag ? `${p.exhibitTag} · ` : ""}${p.title}`
+                                : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · ${p.id === "clarity_control" || p.category === "restatement" ? "Clarity Control Restatement" : p.title}`}
                             </span>
                             <span className="font-mono font-bold">
                               Page {range.contentPage} of {totalDocketPages}
@@ -4920,7 +5100,7 @@ This document is incorporated herein and submitted in direct support of Complain
 
                           {/* Content Body */}
                           <div className="flex-1 py-8 font-serif text-[13px] leading-relaxed text-justify text-black whitespace-pre-wrap select-text">
-                            {p.content}
+                            {p.content || getDefaultExhibitContent(p, caseDetails)}
                           </div>
 
                           {/* Running Bottom Footer */}
@@ -5397,58 +5577,58 @@ This document is incorporated herein and submitted in direct support of Complain
                   </div>
 
                   {/* Print Sheet 2+ : Clean Real Exhibit PDF Pages OR Document Content Sheet */}
-                  {p.category === "exhibit" ? (
-                    p.renderedPages && p.renderedPages.length > 0 ? (
-                      p.renderedPages.map((pdfPage) => {
-                        return (
-                          <div
-                            key={`print-${p.id}-p${pdfPage.pageNumber}`}
-                            className="print-packet-sheet print-exhibit-page-sheet"
-                          >
-                            <img
-                              src={pdfPage.dataUrl}
-                              alt={`Exhibit Page ${pdfPage.pageNumber}`}
-                              className="max-w-full max-h-full object-contain block mx-auto bg-white m-0 p-0"
-                            />
-                            {(p.highlights || [])
-                              .filter((h) => h.pageNumber === pdfPage.pageNumber)
-                              .map((h) => {
-                                const colorDef = HIGHLIGHT_COLOR_MAP[h.color] || HIGHLIGHT_COLOR_MAP.yellow;
-                                return (
-                                  <div
-                                    key={`print-hl-${h.id}`}
-                                    style={{
-                                      position: "absolute",
-                                      left: `${h.x}%`,
-                                      top: `${h.y}%`,
-                                      width: `${h.width}%`,
-                                      height: `${h.height}%`,
-                                      backgroundColor: colorDef.fill,
-                                      borderBottom: `1.5px solid ${colorDef.border}`,
-                                      mixBlendMode: "multiply",
-                                      pointerEvents: "none",
-                                      borderRadius: "2px",
-                                    }}
-                                  />
-                                );
-                              })}
-                          </div>
-                        );
-                      })
-                    ) : null
+                  {p.category === "exhibit" && p.renderedPages && p.renderedPages.length > 0 ? (
+                    p.renderedPages.map((pdfPage) => {
+                      return (
+                        <div
+                          key={`print-${p.id}-p${pdfPage.pageNumber}`}
+                          className="print-packet-sheet print-exhibit-page-sheet"
+                        >
+                          <img
+                            src={pdfPage.dataUrl}
+                            alt={`Exhibit Page ${pdfPage.pageNumber}`}
+                            className="max-w-full max-h-full object-contain block mx-auto bg-white m-0 p-0"
+                          />
+                          {(p.highlights || [])
+                            .filter((h) => h.pageNumber === pdfPage.pageNumber)
+                            .map((h) => {
+                              const colorDef = HIGHLIGHT_COLOR_MAP[h.color] || HIGHLIGHT_COLOR_MAP.yellow;
+                              return (
+                                <div
+                                  key={`print-hl-${h.id}`}
+                                  style={{
+                                    position: "absolute",
+                                    left: `${h.x}%`,
+                                    top: `${h.y}%`,
+                                    width: `${h.width}%`,
+                                    height: `${h.height}%`,
+                                    backgroundColor: colorDef.fill,
+                                    borderBottom: `1.5px solid ${colorDef.border}`,
+                                    mixBlendMode: "multiply",
+                                    pointerEvents: "none",
+                                    borderRadius: "2px",
+                                  }}
+                                />
+                              );
+                            })}
+                        </div>
+                      );
+                    })
                   ) : (
                     /* Print Sheet 2: Document Content Sheet on White Paper */
                     <div className="print-packet-sheet print-content-sheet font-serif">
                       <div className="flex justify-between items-center border-b border-black pb-2 mb-3 text-xs font-sans shrink-0">
                         <span className="font-bold uppercase tracking-wider">
-                          Section {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}
+                          {p.category === "exhibit"
+                            ? `${p.exhibitTag ? `${p.exhibitTag} · ` : ""}${p.title}`
+                            : `Section ${idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · ${p.id === "clarity_control" || p.category === "restatement" ? "Restatement" : p.title}`}
                         </span>
                         <span className="font-mono font-bold">
                           Page {range.contentPage} of {totalDocketPages}
                         </span>
                       </div>
                       <div className="text-[12px] leading-relaxed whitespace-pre-wrap text-justify font-serif flex-1 text-black overflow-hidden">
-                        {p.content}
+                        {p.content || getDefaultExhibitContent(p, caseDetails)}
                       </div>
                       <div className="border-t border-black pt-2 flex justify-between text-[11px] font-mono mt-3 shrink-0">
                         <span>{SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"} IDEA Complaint</span>
