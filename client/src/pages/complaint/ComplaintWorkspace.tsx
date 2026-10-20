@@ -3027,16 +3027,10 @@ This document is incorporated herein and submitted in direct support of Complain
                   <button
                     type="button"
                     onClick={() => setIsNotesModalOpen(true)}
-                    className="px-2 py-0.5 rounded text-[10px] font-serif font-bold bg-[#07162B] text-[#FFE394] hover:text-[#FFF4D4] hover:bg-[#0A264D] border border-[#DFBE77]/50 hover:border-[#FFE394] transition-all cursor-pointer flex items-center gap-1 shadow-xs shrink-0"
-                    title="Open Evidence Gathering Checklist & Complaint Scratchpad Notes"
+                    className="p-1 rounded bg-[#07162B] text-[#DFBE77] hover:text-[#FFF4D4] hover:bg-[#0A264D] border border-[#DFBE77]/50 hover:border-[#FFE394] transition-all cursor-pointer flex items-center justify-center shadow-xs shrink-0"
+                    title="Evidence Gathering Checklist & Complaint Scratchpad Notes"
                   >
-                    <ClipboardCheck className="w-3 h-3 text-[#DFBE77]" />
-                    <span>Notes</span>
-                    {pendingChecklistCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-[#C5A059] text-[#07162B] font-bold leading-none ml-0.5">
-                        {pendingChecklistCount}
-                      </span>
-                    )}
+                    <ClipboardCheck className="w-3.5 h-3.5 text-[#DFBE77]" />
                   </button>
                 </div>
                 <button
@@ -3226,8 +3220,8 @@ This document is incorporated herein and submitted in direct support of Complain
                       {/* Authentic Ornate Brass & Navy Slip Bracket */}
                       <BrassSlipHandle isActive={isActive} />
 
-                      {/* Left: Grip / Lock handle + Number + vertical divider + full wrapped title */}
-                      <div className="flex items-center min-w-0 flex-1 pl-1 pr-1.5 gap-1.5">
+                      {/* Left: Grip / Lock handle + Number + vertical divider (Untouched!) */}
+                      <div className="flex items-center shrink-0 pl-1 pr-1 gap-1.5 self-center">
                         {!isCover ? (
                           <span
                             className="cursor-grab active:cursor-grabbing p-0.5 text-[#8C6D2B]/70 group-hover:text-[#3D2C10] hover:scale-110 transition-all shrink-0"
@@ -3253,10 +3247,13 @@ This document is incorporated herein and submitted in direct support of Complain
 
                         {/* Thin vertical line divider after the number */}
                         <div className={cn(
-                          "h-5 w-[1px] shrink-0 self-center",
+                          "h-6 w-[1px] shrink-0 self-center",
                           isActive ? "bg-[#8C6D2B]/75" : "bg-[#B39358]/55"
                         )} />
+                      </div>
 
+                      {/* Center: Title on top, edit options directly BELOW the text */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-center gap-1 px-1.5 py-0.5">
                         <span 
                           onDoubleClick={(e) => {
                             e.stopPropagation();
@@ -3264,79 +3261,84 @@ This document is incorporated herein and submitted in direct support of Complain
                           }}
                           title="Double-click to rename binder"
                           className={cn(
-                            "text-[12px] font-serif font-bold leading-[1.25] flex-1 min-w-0 break-words whitespace-normal cursor-pointer",
+                            "text-[12px] font-serif font-bold leading-[1.25] break-words whitespace-normal cursor-pointer select-none",
                             isActive ? "text-[#1C1003]" : "text-[#1A1005]"
                           )}
                         >
                           {p.title}
                         </span>
-                      </div>
 
-                      {/* Right: Quick Reorder Buttons, Rename Trigger, Remove Trigger, & Miniature document facsimile */}
-                      <div className="flex items-center gap-1 shrink-0">
-                        {/* Micro Up/Down Move Arrows (on hover) */}
-                        {!isCover && (
-                          <div className="opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity -mr-0.5">
-                            {index > 1 && (
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleMoveBinderUp(index);
-                                }}
-                                className="p-0.5 rounded hover:bg-black/15 text-[#3D2C10] hover:text-black transition-colors cursor-pointer"
-                                title="Move binder up in left sidebar"
-                              >
-                                <ChevronUp className="w-3 h-3 stroke-[2.5]" />
-                              </span>
-                            )}
-                            {index < pages.length - 1 && (
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleMoveBinderDown(index);
-                                }}
-                                className="p-0.5 rounded hover:bg-black/15 text-[#3D2C10] hover:text-black transition-colors cursor-pointer"
-                                title="Move binder down in left sidebar"
-                              >
-                                <ChevronDown className="w-3 h-3 stroke-[2.5]" />
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Rename Binder Pencil button (on hover) */}
-                        <span
-                          role="button"
-                          tabIndex={0}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenRenameModal(p);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-black/15 text-[#3D2C10] hover:text-black transition-opacity cursor-pointer"
-                          title={`Rename "${p.title}" (or double-click binder name)`}
-                        >
-                          <Pencil className="w-3 h-3" />
-                        </span>
-
-                        {p.id !== "cover" && p.id !== "clarity_control" && p.category !== "restatement" && (
+                        {/* Edit options row BELOW the text */}
+                        <div className="flex items-center gap-1.5 text-[10px] text-[#5C421B]">
+                          {/* Rename shortcut button */}
                           <span
                             role="button"
                             tabIndex={0}
                             onClick={(e) => {
                               e.stopPropagation();
-                              setBinderPendingRemoval({ page: p, index });
+                              handleOpenRenameModal(p);
                             }}
-                            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-950/40 text-rose-600 hover:text-rose-800 transition-opacity cursor-pointer"
-                            title={`Remove "${p.title}" from packet`}
+                            className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded hover:bg-black/15 text-[#4A3718] hover:text-black transition-colors cursor-pointer"
+                            title={`Rename "${p.title}" (or double-click)`}
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Pencil className="w-3 h-3" />
+                            <span className="text-[9.5px] font-sans font-medium">Rename</span>
                           </span>
-                        )}
 
+                          {/* Reorder Up / Down arrows */}
+                          {!isCover && (
+                            <div className="flex items-center gap-0.5">
+                              {index > 1 && (
+                                <span
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMoveBinderUp(index);
+                                  }}
+                                  className="p-0.5 rounded hover:bg-black/15 text-[#4A3718] hover:text-black transition-colors cursor-pointer"
+                                  title="Move binder up in left sidebar"
+                                >
+                                  <ChevronUp className="w-3 h-3 stroke-[2.5]" />
+                                </span>
+                              )}
+                              {index < pages.length - 1 && (
+                                <span
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMoveBinderDown(index);
+                                  }}
+                                  className="p-0.5 rounded hover:bg-black/15 text-[#4A3718] hover:text-black transition-colors cursor-pointer"
+                                  title="Move binder down in left sidebar"
+                                >
+                                  <ChevronDown className="w-3 h-3 stroke-[2.5]" />
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Remove button (when allowed) */}
+                          {p.id !== "cover" && p.id !== "clarity_control" && p.category !== "restatement" && (
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setBinderPendingRemoval({ page: p, index });
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-rose-950/30 text-rose-700 hover:text-rose-900 transition-opacity cursor-pointer ml-auto"
+                              title={`Remove "${p.title}" from packet`}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: Miniature document facsimile thumbnail */}
+                      <div className="flex items-center shrink-0 pr-0.5 self-center">
                         <MiniaturePagePreview
                           page={p}
                           caseDetails={caseDetails}
