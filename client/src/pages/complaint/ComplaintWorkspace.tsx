@@ -3268,24 +3268,10 @@ This document is incorporated herein and submitted in direct support of Complain
                           {p.title}
                         </span>
 
-                        {/* Edit options row BELOW the text */}
-                        <div className="flex items-center gap-1.5 text-[10px] text-[#5C421B]">
-                          {/* Rename shortcut button */}
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenRenameModal(p);
-                            }}
-                            className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded hover:bg-black/15 text-[#4A3718] hover:text-black transition-colors cursor-pointer"
-                            title={`Rename "${p.title}" (or double-click)`}
-                          >
-                            <Pencil className="w-3 h-3" />
-                            <span className="text-[9.5px] font-sans font-medium">Rename</span>
-                          </span>
-
-                          {/* Reorder Up / Down arrows */}
+                        {/* Edit options row BELOW the text (on hover) */}
+                        {(!isCover || (p.id !== "cover" && p.id !== "clarity_control" && p.category !== "restatement")) && (
+                          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-[10px] text-[#5C421B] transition-opacity">
+                            {/* Reorder Up / Down arrows */}
                           {!isCover && (
                             <div className="flex items-center gap-0.5">
                               {index > 1 && (
@@ -3335,6 +3321,7 @@ This document is incorporated herein and submitted in direct support of Complain
                             </span>
                           )}
                         </div>
+                      )}
                       </div>
 
                       {/* Right: Miniature document facsimile thumbnail */}
@@ -3961,10 +3948,9 @@ This document is incorporated herein and submitted in direct support of Complain
                             <h2
                               onDoubleClick={() => handleOpenRenameModal(activePage)}
                               title="Double-click to rename binder"
-                              className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5 cursor-pointer hover:underline decoration-[#8C7A60]/40 inline-flex items-center gap-1.5 group/header"
+                              className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5 cursor-pointer hover:underline decoration-[#8C7A60]/40"
                             >
-                              <span>{activePage.title}</span>
-                              <Pencil className="w-3.5 h-3.5 text-[#8C7A60] opacity-0 group-hover/header:opacity-100 transition-opacity" />
+                              {activePage.title}
                             </h2>
                           </div>
                           <div className="text-right">
@@ -4059,10 +4045,9 @@ This document is incorporated herein and submitted in direct support of Complain
                           <h2
                             onDoubleClick={() => handleOpenRenameModal(activePage)}
                             title="Double-click to rename binder"
-                            className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5 cursor-pointer hover:underline decoration-[#8C7A60]/40 inline-flex items-center gap-1.5 group/header"
+                            className="font-serif text-lg sm:text-xl font-bold text-[#1A120A] mt-0.5 cursor-pointer hover:underline decoration-[#8C7A60]/40"
                           >
-                            <span>{activePage.title}</span>
-                            <Pencil className="w-3.5 h-3.5 text-[#8C7A60] opacity-0 group-hover/header:opacity-100 transition-opacity" />
+                            {activePage.title}
                           </h2>
                         </div>
                         {/* For Page Two / Restatement, remove gadoe sped and 34 cfr etc */}
