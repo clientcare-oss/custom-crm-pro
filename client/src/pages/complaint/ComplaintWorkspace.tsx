@@ -2912,10 +2912,10 @@ This document is incorporated herein and submitted in direct support of Complain
             <div className="h-7 w-[1px] bg-[#3A2C18] border-r border-[#6B5328]/50 self-center shrink-0 mx-0.5" />
           </div>
 
-          {/* Middle: Title + Pencil Quick-Edit + Cloud Save Status (Uses all space to left up to divider) */}
-          <div className="flex-1 min-w-0 flex flex-col justify-center items-start pl-2 sm:pl-3 pr-3 overflow-hidden">
+          {/* Middle: Centered Title + Pencil Quick-Edit + Cloud Save Status */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center items-center text-center px-2 overflow-hidden">
             {isEditingTitle ? (
-              <div className="flex items-center gap-1.5 w-full max-w-lg">
+              <div className="flex items-center justify-center gap-1.5 w-full max-w-lg">
                 <input
                   type="text"
                   value={complaintTitle}
@@ -2925,7 +2925,7 @@ This document is incorporated herein and submitted in direct support of Complain
                     if (e.key === "Enter") setIsEditingTitle(false);
                   }}
                   autoFocus
-                  className="bg-[#092244] border border-[#C5A059] text-[#FFF4D4] font-serif text-[15px] sm:text-base px-2.5 py-0.5 rounded focus:outline-none shadow-inner w-full"
+                  className="bg-[#092244] border border-[#C5A059] text-[#FFF4D4] font-serif text-[15px] sm:text-base px-2.5 py-0.5 rounded focus:outline-none shadow-inner w-full text-center"
                 />
                 <button
                   type="button"
@@ -2937,9 +2937,9 @@ This document is incorporated herein and submitted in direct support of Complain
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 max-w-full min-w-0 group/title">
+              <div className="flex items-center justify-center gap-2 max-w-full min-w-0 group/title">
                 <h1 
-                  className="font-serif text-[15px] sm:text-[17px] font-bold tracking-wide text-[#FFF0C2] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] cursor-pointer whitespace-nowrap truncate"
+                  className="font-serif text-[15px] sm:text-[17px] font-bold tracking-wide text-[#FFF0C2] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] cursor-pointer whitespace-nowrap truncate text-center"
                   onClick={() => setIsEditingTitle(true)}
                   title="Click to rename"
                 >
@@ -2956,8 +2956,8 @@ This document is incorporated herein and submitted in direct support of Complain
               </div>
             )}
             
-            {/* Sub-line: Cloud Sync Status (fits cleanly without cut-off) */}
-            <div className="flex items-center gap-1.5 text-[11px] font-sans text-[#E2D4BD] font-medium leading-none mt-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] whitespace-nowrap">
+            {/* Sub-line: Centered Cloud Sync Status (fits cleanly without cut-off) */}
+            <div className="flex items-center justify-center gap-1.5 text-[11px] font-sans text-[#E2D4BD] font-medium leading-none mt-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] whitespace-nowrap">
               <span>{lastSavedText}</span>
               <Cloud className="w-3.5 h-3.5 text-emerald-300 fill-emerald-300/30 drop-shadow-[0_0_4px_rgba(110,231,183,0.7)] shrink-0" />
             </div>
