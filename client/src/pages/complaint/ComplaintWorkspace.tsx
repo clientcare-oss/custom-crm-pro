@@ -3432,35 +3432,6 @@ This document is incorporated herein and submitted in direct support of Complain
             </Button>
 
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (stateFormPages.length === 0) {
-                  renderFilledStateFormPages(officialFormState);
-                }
-                setIsPreviewModalOpen(true);
-              }}
-              className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(0,0,0,0.5)] hidden sm:flex"
-              title="Open Official Real Print Preview (Standard White Paper)"
-            >
-              <Printer className="w-3.5 h-3.5 text-[#FFE394]" />
-              <span>Print Preview</span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsCompilerModalOpen(true)}
-              className="border-[#DFBE77]/60 bg-[#092244]/90 text-[#FFF4D4] hover:text-white hover:border-[#FFE394] hover:bg-[#113A6E] gap-1.5 text-xs h-8 cursor-pointer rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(0,0,0,0.5)]"
-              title="Launch State Complaint Compiler"
-            >
-              <Settings className="w-3.5 h-3.5 text-[#FFE394]" />
-              <span>Compile</span>
-            </Button>
-
 
             <Button
               type="button"
