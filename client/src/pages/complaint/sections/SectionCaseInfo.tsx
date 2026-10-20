@@ -5,7 +5,7 @@ import { Field, SectionCard, inputCls } from "@/components/complaint/atoms";
 import { VoiceTextarea } from "@/components/complaint/VoiceTextarea";
 import { DISABILITY_CATEGORIES, calcAge, formatFirstLastName } from "@shared/complaintEngine";
 import { toast } from "sonner";
-import { Building2 } from "lucide-react";
+import { Building2, Copy } from "lucide-react";
 
 function d2s(d: Date | string | null | undefined): string {
   if (!d) return "";
@@ -235,26 +235,26 @@ export function SectionCaseInfo() {
             <span>Parent / Guardian</span>
             {!!f.parentDifferent && (
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsParentAddressCustom(false);
+                    const sAddr = (f.studentAddress as string) ?? "";
+                    setF((prev) => ({ ...prev, parentAddress: sAddr }));
+                    update.mutate({ id: caseDbId, data: { parentAddress: sAddr } });
+                    toast.success("✓ Parent address synced to match student address");
+                  }}
+                  className="text-[10px] text-[#07162B] font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 cursor-pointer px-2 py-0.5 rounded border border-[#FFE394]/50 shadow-sm flex items-center gap-1 transition-all select-none"
+                  title="Copy student residential address to parent"
+                >
+                  <Copy className="w-2.5 h-2.5 text-[#07162B]" />
+                  Same as Student
+                </button>
                 <span className="text-[11px] text-[#A69371]">
                   {!isParentAddressCustom
                     ? "✓ Address matches student"
                     : "Custom parent address"}
                 </span>
-                {isParentAddressCustom && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsParentAddressCustom(false);
-                      const sAddr = (f.studentAddress as string) ?? "";
-                      setF((prev) => ({ ...prev, parentAddress: sAddr }));
-                      update.mutate({ id: caseDbId, data: { parentAddress: sAddr } });
-                      toast.success("✓ Parent address synced to match student address");
-                    }}
-                    className="text-[11px] text-[#FFE394] hover:underline cursor-pointer bg-[#071E3D] px-2 py-0.5 rounded border border-[#FFE394]/30"
-                  >
-                    Match Student Address
-                  </button>
-                )}
               </div>
             )}
           </div>
@@ -271,7 +271,26 @@ export function SectionCaseInfo() {
             <Field label="Parent phone"><input {...txt("parentPhone")} /></Field>
             <Field label="Parent email"><input {...txt("parentEmail")} /></Field>
             <Field
-              label="Parent address"
+              label={
+                <div className="flex items-center justify-between w-full">
+                  <span>Parent address</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsParentAddressCustom(false);
+                      const sAddr = (f.studentAddress as string) ?? "";
+                      setF((prev) => ({ ...prev, parentAddress: sAddr }));
+                      update.mutate({ id: caseDbId, data: { parentAddress: sAddr } });
+                      toast.success("✓ Parent address synced to match student address");
+                    }}
+                    className="text-[10px] text-[#FFE394] hover:text-[#FFF4D4] hover:underline cursor-pointer flex items-center gap-1 bg-[#071E3D] px-1.5 py-0.5 rounded border border-[#FFE394]/30 transition-colors"
+                    title="Copy student residential address to parent"
+                  >
+                    <Copy className="w-2.5 h-2.5" />
+                    Same as Student
+                  </button>
+                </div>
+              }
               hint={!isParentAddressCustom ? "Matches student address unless changed" : "Custom address entered"}
             >
               <input

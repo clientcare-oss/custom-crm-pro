@@ -69,6 +69,7 @@ import {
   Users,
   Wand2,
   AlertTriangle,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -4207,24 +4208,27 @@ This document is incorporated herein and submitted in direct support of Complain
                       Matches student residential info unless physically customized.
                     </span>
                   </div>
-                  {!isParentAddressCustom ? (
-                    <span className="text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded font-medium">
-                      ✓ Matches Student Address
-                    </span>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={matchParentAddressToStudent}
+                      className="h-6 px-2.5 text-[10px] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 hover:brightness-110 shadow-sm cursor-pointer flex items-center gap-1.5 transition-all"
+                      title="Copy student residential address, city, state, and zip code to parent"
+                    >
+                      <Copy className="w-3 h-3 text-[#07162B]" />
+                      Same as Student
+                    </Button>
+                    {!isParentAddressCustom ? (
+                      <span className="text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded font-medium">
+                        ✓ Matches Student
+                      </span>
+                    ) : (
                       <span className="text-[10px] text-amber-300 bg-amber-950/40 border border-amber-500/30 px-1.5 py-0.5 rounded font-medium">
                         Custom Address
                       </span>
-                      <button
-                        type="button"
-                        onClick={matchParentAddressToStudent}
-                        className="text-[10px] text-[#FFE394] hover:underline cursor-pointer bg-[#071E3D] px-2 py-0.5 rounded border border-[#FFE394]/30"
-                      >
-                        Match Student
-                      </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
@@ -4262,11 +4266,22 @@ This document is incorporated herein and submitted in direct support of Complain
                   <div className="col-span-3">
                     <div className="flex items-center justify-between">
                       <Label className="text-[#C6B697] text-[11px]">Parent Residential Address</Label>
-                      {!isParentAddressCustom && (
-                        <span className="text-[10px] text-emerald-400 font-normal">
-                          (Synchronized with student address)
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {!isParentAddressCustom && (
+                          <span className="text-[10px] text-emerald-400 font-normal">
+                            (Synchronized with student address)
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={matchParentAddressToStudent}
+                          className="text-[10px] text-[#FFE394] hover:text-[#FFF4D4] hover:underline cursor-pointer flex items-center gap-1 bg-[#071E3D] px-1.5 py-0.5 rounded border border-[#FFE394]/30 transition-colors"
+                          title="Copy student residential address to parent"
+                        >
+                          <Copy className="w-2.5 h-2.5" />
+                          Same as Student
+                        </button>
+                      </div>
                     </div>
                     <Input
                       value={officialFormState.parentAddress}

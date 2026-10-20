@@ -101,7 +101,7 @@ export function AiBadge() {
   );
 }
 
-export function Field({ label, children, required, hint }: { label: string; children: ReactNode; required?: boolean; hint?: string }) {
+export function Field({ label, children, required, hint }: { label: ReactNode; children: ReactNode; required?: boolean; hint?: ReactNode }) {
   return (
     <label className="block">
       <span className="mb-1 block text-sm font-medium text-slate-300">

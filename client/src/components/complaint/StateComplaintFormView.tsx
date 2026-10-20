@@ -5,7 +5,7 @@ import {
 } from "./stateFormsData";
 import { cn } from "@/lib/utils";
 import { convertPdfToPageImages, type ImportedPdfPage } from "@/lib/pdfImporter";
-import { Check, PenTool } from "lucide-react";
+import { Check, PenTool, Copy } from "lucide-react";
 import { AdoptAndSignModal, type AdoptedSignatureData } from "./AdoptAndSignModal";
 
 export interface StateComplaintFormPageProps {
@@ -472,6 +472,28 @@ export function StateComplaintFormPage({
             >
               <span className="truncate">{formState.currentSchool || ""}</span>
             </div>
+          )}
+
+          {/* Quick "Same as Student" button on Parent section header */}
+          {isInteractive && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange?.((prev) => ({
+                  ...prev,
+                  parentAddress: prev.studentAddress || "",
+                  parentCity: prev.studentCity || "",
+                  parentState: prev.studentState || "GA",
+                  parentZip: prev.studentZip || "",
+                }));
+              }}
+              style={{ position: "absolute", top: "68.20%", right: "6.8%", height: "2.40%" }}
+              className="cursor-pointer z-30 px-2.5 py-0.5 rounded-[3px] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-[10px] sm:text-[11px] shadow-[0_2px_5px_rgba(0,0,0,0.35)] border border-[#FFE394]/70 hover:brightness-110 flex items-center gap-1.5 transition-all select-none"
+              title="Copy student residential address, city, state, and zip code to parent"
+            >
+              <Copy className="w-3 h-3" />
+              <span>Same as Student</span>
+            </button>
           )}
 
           {/* Parent Name */}
