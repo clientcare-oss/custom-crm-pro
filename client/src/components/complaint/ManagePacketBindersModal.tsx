@@ -224,8 +224,9 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
           }
         : p
     );
-    onUpdatePages(updated);
-    toast.success(`Updated "${newTitle}" details and cover page purpose.`);
+    const resequenced = resequenceExhibits(updated);
+    onUpdatePages(resequenced);
+    toast.success(`Updated "${newTitle}" and synchronized Master Exhibit Index.`);
     setBinderToRename(null);
   };
 

@@ -543,13 +543,29 @@ MANDATORY RULES:
         })
       )
       .mutation(async ({ input }) => {
-        const { queryCloudflareD1 } = await import("../_core/d1Client");
         const studentIdNum = input.studentId ?? null;
         const draftId = input.draftKey || (studentIdNum ? `draft_student_${studentIdNum}` : "draft_general");
         const title = input.title || `State Complaint Draft (${studentIdNum || "active"})`;
         const startedAt = input.startedAt || new Date().toISOString();
 
         try {
+          const cfDb = (globalThis as any).__CF_ENV_DB__;
+          if (cfDb) {
+            await cfDb
+              .prepare(
+                `INSERT INTO complaint_drafts (id, student_id, title, draft_json, started_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                 ON CONFLICT(id) DO UPDATE SET
+                   title = excluded.title,
+                   draft_json = excluded.draft_json,
+                   updated_at = CURRENT_TIMESTAMP`
+              )
+              .bind(draftId, studentIdNum, title, input.draftJson, startedAt)
+              .run();
+            return { success: true, id: draftId, startedAt };
+          }
+
+          const { queryCloudflareD1 } = await import("../_core/d1Client");
           await queryCloudflareD1(
             `INSERT INTO complaint_drafts (id, student_id, title, draft_json, started_at, updated_at)
              VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -573,8 +589,18 @@ MANDATORY RULES:
         }).optional()
       )
       .query(async ({ input }) => {
-        const { queryCloudflareD1 } = await import("../_core/d1Client");
         try {
+          const cfDb = (globalThis as any).__CF_ENV_DB__;
+          if (cfDb) {
+            const sql = input?.studentId
+              ? "SELECT id, student_id as studentId, title, started_at as startedAt, updated_at as updatedAt, draft_json as draftJson FROM complaint_drafts WHERE student_id = ? ORDER BY updated_at DESC"
+              : "SELECT id, student_id as studentId, title, started_at as startedAt, updated_at as updatedAt, draft_json as draftJson FROM complaint_drafts ORDER BY updated_at DESC";
+            const stmt = input?.studentId ? cfDb.prepare(sql).bind(input.studentId) : cfDb.prepare(sql);
+            const res = await stmt.all();
+            return res?.results || [];
+          }
+
+          const { queryCloudflareD1 } = await import("../_core/d1Client");
           const sql = input?.studentId
             ? "SELECT id, student_id as studentId, title, started_at as startedAt, updated_at as updatedAt, draft_json as draftJson FROM complaint_drafts WHERE student_id = ? ORDER BY updated_at DESC"
             : "SELECT id, student_id as studentId, title, started_at as startedAt, updated_at as updatedAt, draft_json as draftJson FROM complaint_drafts ORDER BY updated_at DESC";
@@ -595,8 +621,27 @@ MANDATORY RULES:
         })
       )
       .query(async ({ input }) => {
-        const { queryCloudflareD1 } = await import("../_core/d1Client");
         try {
+          const cfDb = (globalThis as any).__CF_ENV_DB__;
+          if (cfDb) {
+            if (input.id) {
+              const row = await cfDb
+                .prepare("SELECT draft_json as draftJson FROM complaint_drafts WHERE id = ? LIMIT 1")
+                .bind(String(input.id))
+                .first();
+              return row?.draftJson || null;
+            }
+            if (input.studentId) {
+              const row = await cfDb
+                .prepare("SELECT draft_json as draftJson FROM complaint_drafts WHERE student_id = ? ORDER BY updated_at DESC LIMIT 1")
+                .bind(input.studentId)
+                .first();
+              return row?.draftJson || null;
+            }
+            return null;
+          }
+
+          const { queryCloudflareD1 } = await import("../_core/d1Client");
           if (input.id) {
             const rows = await queryCloudflareD1(
               "SELECT draft_json as draftJson FROM complaint_drafts WHERE id = ? LIMIT 1",

@@ -780,33 +780,22 @@ export function extractCleanExhibitTitle(
   if (!raw && fallbackDocName) raw = fallbackDocName.trim();
   if (!raw) return "Evidentiary Document Record";
 
-  const lower = raw.toLowerCase();
-  if (
-    lower === "student's iep" ||
-    lower === "operative iep" ||
-    lower.includes("student's iep") ||
-    lower.includes("operative iep")
-  ) {
-    return "Operative IEP & Specialized Instruction Schedule";
-  }
-  if (
-    lower.includes("psychoed") ||
-    lower.includes("evaluations") ||
-    lower.includes("parent written request")
-  ) {
-    return "Psychoeducational Evaluations & Parent Written Requests";
-  }
-  if (
-    lower.includes("correspondence") ||
-    lower.includes("service log") ||
-    lower.includes("communications")
-  ) {
-    return "District Correspondence & Service Logs";
+  // Strip all redundant exhibit prefixes ("Exhibit A —", "Exhibit C:", etc.)
+  let cleaned = stripAllExhibitPrefixes(raw).trim();
+  // Strip outer wrapping parentheses if the user formatted it like "(Communications)"
+  cleaned = cleaned.replace(/^\((.*)\)$/, "$1").trim();
+
+  if (cleaned) {
+    return cleaned;
   }
 
-  // Strip all exhibit prefixes and nested letters
-  const cleaned = stripAllExhibitPrefixes(raw);
-  return cleaned || "Evidentiary Document Record";
+  // Fallback to document filename or classification if title was just "Exhibit A" with no sub-descriptor
+  if (fallbackDocName) {
+    const fromFile = stripAllExhibitPrefixes(fallbackDocName).replace(/^\((.*)\)$/, "$1").trim();
+    if (fromFile) return fromFile;
+  }
+
+  return raw || "Evidentiary Document Record";
 }
 
 /**
@@ -1095,7 +1084,8 @@ export function resequenceExhibits(
 
     // Extract description from title (without destroying custom user typing)
     // Strictly strip all exhibit prefixes and redundant letter tags to ensure only ONE letter ever lives on a binder
-    const cleanDesc = stripAllExhibitPrefixes(p.title);
+    const rawClean = stripAllExhibitPrefixes(p.title).trim();
+    const cleanDesc = rawClean.replace(/^\((.*)\)$/, "$1").trim();
     let newTitle = `Exhibit ${letter}`;
     if (cleanDesc) {
       if (p.title.includes("(") && p.title.includes(")")) {
@@ -1180,11 +1170,13 @@ function MiniaturePagePreview({
   caseDetails,
   isActive,
   coverThumbnail,
+  allPages,
 }: {
   page: DocumentPage;
   caseDetails: ComplaintCaseDetails;
   isActive?: boolean;
   coverThumbnail?: string;
+  allPages?: DocumentPage[];
 }) {
   const isCover = page.category === "cover" || page.id === "cover";
   const [hasThumbError, setHasThumbError] = useState(false);
@@ -1327,18 +1319,24 @@ function MiniaturePagePreview({
           </div>
 
           <div className="space-y-1 my-auto text-left text-[6px] text-[#2A1D0E]">
-            <div className="bg-[#EFE8D6] p-0.5 rounded-xs flex items-center gap-1">
-              <span className="font-bold text-[#8C6D2B]">EXH A:</span>
-              <span className="truncate">Student's IEP</span>
-            </div>
-            <div className="bg-[#EFE8D6] p-0.5 rounded-xs flex items-center gap-1">
-              <span className="font-bold text-[#8C6D2B]">EXH B:</span>
-              <span className="truncate">Psychoed Evals</span>
-            </div>
-            <div className="bg-[#EFE8D6] p-0.5 rounded-xs flex items-center gap-1">
-              <span className="font-bold text-[#8C6D2B]">EXH C:</span>
-              <span className="truncate">Service Logs</span>
-            </div>
+            {(allPages || [])
+              .filter(
+                (p) =>
+                  (p.category === "exhibit" || Boolean(p.exhibitTag) || p.id.startsWith("exhibit_")) &&
+                  p.id !== "exhibit_index"
+              )
+              .slice(0, 4)
+              .map((exh, exIdx) => {
+                const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                const letter = exIdx < alphabet.length ? alphabet[exIdx] : `Z${exIdx}`;
+                const desc = extractCleanExhibitTitle(exh.title, exh.exhibitTag, exh.fileName);
+                return (
+                  <div key={exh.id} className="bg-[#EFE8D6] p-0.5 rounded-xs flex items-center gap-1">
+                    <span className="font-bold text-[#8C6D2B]">EXH {letter}:</span>
+                    <span className="truncate">{desc}</span>
+                  </div>
+                );
+              })}
           </div>
 
           <div className="flex justify-between items-center border-t border-[#3A2810]/30 pt-0.5 text-[6px] text-[#6A5230] font-sans">
@@ -2095,6 +2093,35 @@ export default function ComplaintWorkspace() {
     }
   }, [contactsQuery.data, params?.id, location]);
 
+  // Cloud Draft Sync Query: Fetches the latest cloud-persisted draft from D1 for seamless cross-device parity
+  const effectiveStudentNum = activeStudentId || (initialUrlStudentId && !isNaN(Number(initialUrlStudentId)) ? Number(initialUrlStudentId) : null);
+  const cloudDraftQuery = trpc.stateComplaint.getDraft.useQuery(
+    { studentId: effectiveStudentNum },
+    { enabled: !!effectiveStudentNum, refetchOnWindowFocus: true }
+  );
+
+  // Automatically sync cloud draft into active workspace if cloud draft is newer or local is missing
+  useEffect(() => {
+    if (!cloudDraftQuery.data) return;
+    try {
+      const parsed = JSON.parse(cloudDraftQuery.data);
+      if (parsed && parsed.pages && Array.isArray(parsed.pages) && parsed.pages.length > 0) {
+        const studentKey = activeStudentId || initialUrlStudentId || "active";
+        const localDraft = loadComplaintDraft(studentKey);
+        const cloudTime = new Date(parsed.updatedAt || parsed.savedAt || 0).getTime();
+        const localTime = new Date(localDraft?.updatedAt || (localDraft as any)?.savedAt || 0).getTime();
+
+        if (!localDraft || cloudTime > localTime) {
+          handleSelectRecentDraft(parsed);
+          saveComplaintDraft(parsed, false);
+          setLastSavedText("Synced with cloud draft just now");
+        }
+      }
+    } catch (e) {
+      console.warn("Could not parse cloud draft JSON:", e);
+    }
+  }, [cloudDraftQuery.data]);
+
   // State: Pages and Active Navigation (restores from draft if available)
   const [pages, setPages] = useState<DocumentPage[]>(() => {
     if (initialDraft?.pages && Array.isArray(initialDraft.pages) && initialDraft.pages.length > 0) {
@@ -2694,8 +2721,8 @@ export default function ComplaintWorkspace() {
     const newExhibitTag = renameExhibitTagInput.trim();
     const newPurpose = renamePurposeInput.trim() || undefined;
 
-    setPages((prevPages) =>
-      prevPages.map((p) =>
+    setPages((prevPages) => {
+      const updated = prevPages.map((p) =>
         p.id === binderToRename.id
           ? {
               ...p,
@@ -2704,10 +2731,11 @@ export default function ComplaintWorkspace() {
               ...(p.category === "exhibit" ? { exhibitTag: newExhibitTag || p.exhibitTag } : {}),
             }
           : p
-      )
-    );
+      );
+      return resequenceExhibits(ensureRequiredBinders(updated), caseDetails);
+    });
 
-    toast.success(`Updated "${newTitle}" and cover page purpose.`);
+    toast.success(`Updated "${newTitle}" and synchronized Master Exhibit Index.`);
     setBinderToRename(null);
   };
 
@@ -3879,6 +3907,7 @@ This document is incorporated herein and submitted in direct support of Complain
                           caseDetails={caseDetails}
                           isActive={isActive}
                           coverThumbnail={p.id === "cover" ? stateFormPages[0]?.dataUrl : p.renderedPages?.[0]?.dataUrl}
+                          allPages={pages}
                         />
                       </div>
                     </div>

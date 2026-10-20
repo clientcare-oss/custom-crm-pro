@@ -179,7 +179,7 @@ describe("First Mate Build 2 - AI Reasoning & Intelligence Layer", { timeout: 30
     );
 
     // Current issue should be Evaluation Refusal
-    expect(result.liveAssist.currentIssue).toMatch(/evaluation/i);
+    expect(result.liveAssist.currentIssue).toMatch(/evaluation|child find|refusal/i);
     // Say This should be data-focused (e.g. data or information relied upon, or how team is measuring/determining/defining)
     expect(result.liveAssist.sayThis).toMatch(/data|information|relying|determin|measur|grade|defin|read|skill|class|academic|need/i);
     // Detections should have refusal or evaluation

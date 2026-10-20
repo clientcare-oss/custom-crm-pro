@@ -266,9 +266,9 @@ describe("Clarity Control Restatement Auto-Restate & Mandatory Pleading (PG-020)
   });
 
   it("extracts clean professional legal exhibit titles without redundant prefixes or vault metadata", () => {
-    expect(extractCleanExhibitTitle("Exhibit A (Student's IEP)")).toBe("Operative IEP & Specialized Instruction Schedule");
-    expect(extractCleanExhibitTitle("Exhibit B (Evaluations)")).toBe("Psychoeducational Evaluations & Parent Written Requests");
-    expect(extractCleanExhibitTitle("Exhibit C (Communications)")).toBe("District Correspondence & Service Logs");
+    expect(extractCleanExhibitTitle("Exhibit A (Student's IEP)")).toBe("Student's IEP");
+    expect(extractCleanExhibitTitle("Exhibit B (Evaluations)")).toBe("Evaluations");
+    expect(extractCleanExhibitTitle("Exhibit C (Communications)")).toBe("Communications");
     expect(extractCleanExhibitTitle("Exhibit D — Physical Therapy Evaluation")).toBe("Physical Therapy Evaluation");
     expect(extractCleanExhibitTitle("Exhibit E: 2025_09_Speech_Therapy_Logs.pdf")).toBe("Speech Therapy Logs");
   });
