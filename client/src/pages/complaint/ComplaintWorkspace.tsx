@@ -3875,8 +3875,6 @@ This document is incorporated herein and submitted in direct support of Complain
                   { id: "setup", label: "Complaint Setup", icon: Sparkles },
                   { id: "cover", label: "State Form", icon: FileText },
                   { id: "edit", label: "Edit", icon: Pencil },
-                  { id: "arrange", label: "Exhibit Index", icon: Layers },
-                  { id: "insert", label: "Add Binder", icon: Plus },
                   { id: "tools", label: "Tools", icon: PanelRight },
                 ]
                   .filter((tab) => !(tab.id === "tools" && !isToolsCollapsed))
@@ -3888,13 +3886,8 @@ This document is incorporated herein and submitted in direct support of Complain
                       key={tab.id}
                       type="button"
                       onClick={() => {
-                        if (tab.id === "insert") {
-                          setIsManageBindersModalOpen(true);
-                        } else if (tab.id === "tools") {
+                        if (tab.id === "tools") {
                           setIsToolsCollapsed((prev) => !prev);
-                        } else if (tab.id === "arrange") {
-                          setActiveToolbarTab("arrange");
-                          setActivePageId("exhibit_index");
                         } else if (tab.id === "setup") {
                           setActiveToolbarTab("setup");
                           setActivePageId("setup");
