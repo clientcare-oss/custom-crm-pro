@@ -2829,7 +2829,7 @@ This document is incorporated herein and submitted in direct support of Complain
               title="Add new exhibit, standard advocacy section, or custom binder to packet (Ctrl+Shift+B)"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ Add Binder</span>
+              <span>Add Binder</span>
             </Button>
 
             <Button
@@ -2943,7 +2943,7 @@ This document is incorporated herein and submitted in direct support of Complain
                     title="Add new binder or manage packet structure (Ctrl+Shift+B)"
                   >
                     <Plus className="w-3 h-3 text-[#FFE394]" />
-                    <span>+ Add Binder</span>
+                    <span>Add Binder</span>
                   </button>
                 </div>
                 <button
@@ -3333,7 +3333,7 @@ This document is incorporated herein and submitted in direct support of Complain
                   { id: "cover", label: "State Form", icon: FileText },
                   { id: "edit", label: "Edit", icon: Pencil },
                   { id: "arrange", label: "Exhibit Index", icon: Layers },
-                  { id: "insert", label: "+ Add Binder", icon: Plus },
+                  { id: "insert", label: "Add Binder", icon: Plus },
                   { id: "tools", label: "Tools", icon: PanelRight },
                 ]
                   .filter((tab) => !(tab.id === "tools" && !isToolsCollapsed))
