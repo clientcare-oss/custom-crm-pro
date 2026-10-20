@@ -5318,9 +5318,9 @@ This document is incorporated herein and submitted in direct support of Complain
               width: 8.5in !important;
               min-width: 8.5in !important;
               max-width: 8.5in !important;
-              height: 11in !important;
-              min-height: 11in !important;
-              max-height: 11in !important;
+              height: 10.98in !important;
+              min-height: 10.98in !important;
+              max-height: 10.98in !important;
               margin: 0 !important;
               padding: 0 !important;
               page-break-after: always !important;
@@ -5333,14 +5333,22 @@ This document is incorporated herein and submitted in direct support of Complain
               position: relative !important;
               overflow: hidden !important;
             }
+            .print-packet-sheet:last-child,
+            .print-packet-sheet:last-of-type,
+            .print-packet-sheet.is-last-sheet,
+            #state-complaint-print-docket > div:last-child,
+            #state-complaint-print-docket .is-last-sheet {
+              page-break-after: avoid !important;
+              break-after: avoid !important;
+            }
             .print-state-form-page {
               padding: 0 !important;
               margin: 0 !important;
               width: 8.5in !important;
-              height: 11in !important;
+              height: 10.98in !important;
               max-width: 8.5in !important;
-              max-height: 11in !important;
-              min-height: 11in !important;
+              max-height: 10.98in !important;
+              min-height: 10.98in !important;
               display: block !important;
               background: #ffffff !important;
               box-sizing: border-box !important;
@@ -5350,9 +5358,9 @@ This document is incorporated herein and submitted in direct support of Complain
             .print-state-form-page .state-form-sheet-root,
             .print-state-form-page > div {
               width: 8.5in !important;
-              height: 11in !important;
+              height: 10.98in !important;
               max-width: 8.5in !important;
-              max-height: 11in !important;
+              max-height: 10.98in !important;
               border: none !important;
               box-shadow: none !important;
               margin: 0 !important;
@@ -5367,9 +5375,9 @@ This document is incorporated herein and submitted in direct support of Complain
               top: 0 !important;
               left: 0 !important;
               width: 8.5in !important;
-              height: 11in !important;
+              height: 10.98in !important;
               max-width: 8.5in !important;
-              max-height: 11in !important;
+              max-height: 10.98in !important;
               object-fit: fill !important;
               display: block !important;
               z-index: 1 !important;
@@ -5386,8 +5394,8 @@ This document is incorporated herein and submitted in direct support of Complain
               margin: 0 !important;
               background: #ffffff !important;
               width: 8.5in !important;
-              height: 11in !important;
-              max-height: 11in !important;
+              height: 10.98in !important;
+              max-height: 10.98in !important;
               overflow: hidden !important;
             }
             .print-cover-page-wrapper .binder-cover-page-sheet {
@@ -5397,9 +5405,9 @@ This document is incorporated herein and submitted in direct support of Complain
               border: none !important;
               width: 8.5in !important;
               max-width: 8.5in !important;
-              min-height: 11in !important;
-              height: 11in !important;
-              max-height: 11in !important;
+              min-height: 10.98in !important;
+              height: 10.98in !important;
+              max-height: 10.98in !important;
               margin: 0 !important;
               padding: 0.65in 0.75in !important;
               box-sizing: border-box !important;
@@ -5409,8 +5417,8 @@ This document is incorporated herein and submitted in direct support of Complain
             .print-content-sheet {
               width: 8.5in !important;
               max-width: 8.5in !important;
-              height: 11in !important;
-              max-height: 11in !important;
+              height: 10.98in !important;
+              max-height: 10.98in !important;
               margin: 0 !important;
               padding: 0.65in 0.75in !important;
               box-sizing: border-box !important;
@@ -5423,8 +5431,8 @@ This document is incorporated herein and submitted in direct support of Complain
             .print-exhibit-page-sheet {
               width: 8.5in !important;
               max-width: 8.5in !important;
-              height: 11in !important;
-              max-height: 11in !important;
+              height: 10.98in !important;
+              max-height: 10.98in !important;
               margin: 0 !important;
               padding: 0 !important;
               box-sizing: border-box !important;
@@ -5437,7 +5445,7 @@ This document is incorporated herein and submitted in direct support of Complain
             }
             .print-exhibit-page-sheet img {
               max-width: 8.5in !important;
-              max-height: 11in !important;
+              max-height: 10.98in !important;
               width: auto !important;
               height: auto !important;
               object-fit: contain !important;
@@ -5468,50 +5476,57 @@ This document is incorporated herein and submitted in direct support of Complain
         <div id="state-complaint-print-docket" className="hidden print:block">
           {printScope === "form-only" ? (
             /* Print strictly the 4 State Form pages */
-            stateFormPages.map((sPage, sIdx) => (
-              <div
-                key={`print-state-form-only-p${sIdx + 1}`}
-                className="print-packet-sheet print-state-form-page font-serif"
-              >
-                <StateComplaintFormPage
-                  page={sPage}
-                  pageIdx={sIdx}
-                  formState={officialFormState}
-                  readOnly={true}
-                  isPrint={true}
-                  viewMode="actual"
-                  className="border-0 shadow-none"
-                />
-              </div>
-            ))
+            stateFormPages.map((sPage, sIdx) => {
+              const isLast = sIdx === stateFormPages.length - 1;
+              return (
+                <div
+                  key={`print-state-form-only-p${sIdx + 1}`}
+                  className={cn("print-packet-sheet print-state-form-page font-serif", isLast && "is-last-sheet")}
+                >
+                  <StateComplaintFormPage
+                    page={sPage}
+                    pageIdx={sIdx}
+                    formState={officialFormState}
+                    readOnly={true}
+                    isPrint={true}
+                    viewMode="actual"
+                    className="border-0 shadow-none"
+                  />
+                </div>
+              );
+            })
           ) : (
             /* Print the complete filing packet (14 pages) in exact 1-to-14 order */
             pages.map((p, idx) => {
+              const isLastBinder = idx === pages.length - 1;
               if (p.id === "cover") {
                 if (stateFormPages.length > 0) {
                   return (
                     <React.Fragment key={`print-state-forms`}>
-                      {stateFormPages.map((sPage, sIdx) => (
-                        <div
-                          key={`print-state-form-p${sIdx + 1}`}
-                          className="print-packet-sheet print-state-form-page font-serif"
-                        >
-                          <StateComplaintFormPage
-                            page={sPage}
-                            pageIdx={sIdx}
-                            formState={officialFormState}
-                            readOnly={true}
-                            isPrint={true}
-                            viewMode="actual"
-                            className="border-0 shadow-none"
-                          />
-                        </div>
-                      ))}
+                      {stateFormPages.map((sPage, sIdx) => {
+                        const isLast = isLastBinder && sIdx === stateFormPages.length - 1;
+                        return (
+                          <div
+                            key={`print-state-form-p${sIdx + 1}`}
+                            className={cn("print-packet-sheet print-state-form-page font-serif", isLast && "is-last-sheet")}
+                          >
+                            <StateComplaintFormPage
+                              page={sPage}
+                              pageIdx={sIdx}
+                              formState={officialFormState}
+                              readOnly={true}
+                              isPrint={true}
+                              viewMode="actual"
+                              className="border-0 shadow-none"
+                            />
+                          </div>
+                        );
+                      })}
                     </React.Fragment>
                   );
                 }
                 return (
-                  <div key={`print-${p.id}`} className="print-packet-sheet font-serif p-10">
+                  <div key={`print-${p.id}`} className={cn("print-packet-sheet font-serif p-10", isLastBinder && "is-last-sheet")}>
                     <div className="text-center border-b-2 border-black pb-3 mb-6">
                       <h3 className="text-sm font-bold uppercase tracking-widest text-slate-800">
                         GEORGIA DEPARTMENT OF EDUCATION
@@ -5578,11 +5593,12 @@ This document is incorporated herein and submitted in direct support of Complain
 
                   {/* Print Sheet 2+ : Clean Real Exhibit PDF Pages OR Document Content Sheet */}
                   {p.category === "exhibit" && p.renderedPages && p.renderedPages.length > 0 ? (
-                    p.renderedPages.map((pdfPage) => {
+                    p.renderedPages.map((pdfPage, pdfIdx) => {
+                      const isLast = isLastBinder && pdfIdx === p.renderedPages!.length - 1;
                       return (
                         <div
                           key={`print-${p.id}-p${pdfPage.pageNumber}`}
-                          className="print-packet-sheet print-exhibit-page-sheet"
+                          className={cn("print-packet-sheet print-exhibit-page-sheet", isLast && "is-last-sheet")}
                         >
                           <img
                             src={pdfPage.dataUrl}
@@ -5616,7 +5632,7 @@ This document is incorporated herein and submitted in direct support of Complain
                     })
                   ) : (
                     /* Print Sheet 2: Document Content Sheet on White Paper */
-                    <div className="print-packet-sheet print-content-sheet font-serif">
+                    <div className={cn("print-packet-sheet print-content-sheet font-serif", isLastBinder && "is-last-sheet")}>
                       <div className="flex justify-between items-center border-b border-black pb-2 mb-3 text-xs font-sans shrink-0">
                         <span className="font-bold uppercase tracking-wider">
                           {p.category === "exhibit"
