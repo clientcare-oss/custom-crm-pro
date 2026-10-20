@@ -34,9 +34,10 @@ const READONLY_TEXTAREA_CLASS =
 const READONLY_CHECK_CLASS =
   "flex items-center justify-center bg-transparent border-0 z-20";
 
-// Interactive input fields with no extra border lines — text raised 2px above the printed form line
+// Interactive input fields with prominent, locked-in fillable blue styling that stays visibly blue across all states
 const INTERACTIVE_INPUT_CLASS =
-  "bg-[#EBF4FE]/30 hover:bg-[#EBF4FE]/55 focus:bg-white/80 text-slate-900 border-0 rounded-none px-1.5 pt-0.5 pb-[2px] text-xs sm:text-[13px] font-sans leading-none focus:outline-none focus:ring-1 focus:ring-[#3B82F6]/40 z-20 transition-all placeholder:text-slate-400 placeholder:italic";
+  "bg-[#CCE5FF] hover:bg-[#B8DCFF] focus:bg-[#B8DCFF] text-[#072448] font-semibold border border-[#6BA3E8] focus:border-[#1E60BF] rounded-[2px] px-1.5 pt-0.5 pb-[2px] text-xs sm:text-[13px] font-sans leading-none focus:outline-none focus:ring-2 focus:ring-[#1E60BF]/50 z-20 transition-all placeholder:text-blue-900/60 placeholder:italic shadow-[inset_0_1px_2px_rgba(0,50,150,0.06)]";
+
 
 /**
  * Single Letter Sheet (Pages 1-4) of the Official State Complaint Form
@@ -625,7 +626,7 @@ export function StateComplaintFormPage({
               onChange={(e) => onChange((prev) => ({ ...prev, statementOfViolations: e.target.value }))}
               placeholder="Type or paste statement of the problem and the facts upon which the problem is based..."
               style={{ position: "absolute", top: "21.14%", left: "6.10%", width: "87.96%", height: "20.18%" }}
-              className="bg-[#EBF4FE] hover:bg-[#E1EFFF] focus:bg-white text-slate-900 border border-[#96C2F7] focus:border-[#2563EB] focus:ring-1 focus:ring-[#3B82F6] rounded-xs p-2.5 text-xs sm:text-[13px] font-sans resize-none leading-relaxed focus:outline-none shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all placeholder:text-slate-400 placeholder:italic"
+              className="bg-[#CCE5FF] hover:bg-[#B8DCFF] focus:bg-[#B8DCFF] text-[#072448] font-medium border-2 border-[#5594E6] focus:border-[#1E60BF] focus:ring-2 focus:ring-[#1E60BF]/50 rounded-[3px] p-2.5 text-xs sm:text-[13px] font-sans resize-none leading-relaxed focus:outline-none shadow-[inset_0_1px_3px_rgba(0,50,150,0.08)] z-20 transition-all placeholder:text-blue-900/60 placeholder:italic"
             />
           ) : (
             <div
@@ -643,7 +644,7 @@ export function StateComplaintFormPage({
               onChange={(e) => onChange((prev) => ({ ...prev, factsRelatingToViolations: e.target.value }))}
               placeholder="Continue stating the facts relevant to the alleged violations that help explain or clarify how the LEA failed to follow rules..."
               style={{ position: "absolute", top: "50.06%", left: "6.55%", width: "87.76%", height: "43.76%" }}
-              className="bg-[#EBF4FE] hover:bg-[#E1EFFF] focus:bg-white text-slate-900 border border-[#96C2F7] focus:border-[#2563EB] focus:ring-1 focus:ring-[#3B82F6] rounded-xs p-2.5 text-xs sm:text-[13px] font-sans resize-none leading-relaxed focus:outline-none shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all placeholder:text-slate-400 placeholder:italic"
+              className="bg-[#CCE5FF] hover:bg-[#B8DCFF] focus:bg-[#B8DCFF] text-[#072448] font-medium border-2 border-[#5594E6] focus:border-[#1E60BF] focus:ring-2 focus:ring-[#1E60BF]/50 rounded-[3px] p-2.5 text-xs sm:text-[13px] font-sans resize-none leading-relaxed focus:outline-none shadow-[inset_0_1px_3px_rgba(0,50,150,0.08)] z-20 transition-all placeholder:text-blue-900/60 placeholder:italic"
             />
           ) : (
             <div
@@ -666,7 +667,7 @@ export function StateComplaintFormPage({
               onChange={(e) => onChange((prev) => ({ ...prev, proposedResolution: e.target.value }))}
               placeholder="Type or paste proposed resolution of the problem..."
               style={{ position: "absolute", top: "16.85%", left: "5.14%", width: "88.18%", height: "21.00%" }}
-              className="bg-[#EBF4FE] hover:bg-[#E1EFFF] focus:bg-white text-slate-900 border border-[#96C2F7] focus:border-[#2563EB] focus:ring-1 focus:ring-[#3B82F6] rounded-xs p-2.5 text-xs sm:text-[13px] font-sans resize-none leading-relaxed focus:outline-none shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all placeholder:text-slate-400 placeholder:italic"
+              className="bg-[#CCE5FF] hover:bg-[#B8DCFF] focus:bg-[#B8DCFF] text-[#072448] font-medium border-2 border-[#5594E6] focus:border-[#1E60BF] focus:ring-2 focus:ring-[#1E60BF]/50 rounded-[3px] p-2.5 text-xs sm:text-[13px] font-sans resize-none leading-relaxed focus:outline-none shadow-[inset_0_1px_3px_rgba(0,50,150,0.08)] z-20 transition-all placeholder:text-blue-900/60 placeholder:italic"
             />
           ) : (
             <div
@@ -683,7 +684,7 @@ export function StateComplaintFormPage({
               type="button"
               onClick={() => onChange((prev) => ({ ...prev, mediationWillingness: "yes" }))}
               style={{ position: "absolute", top: "42.29%", left: "6.04%", width: "2.94%", height: "2.27%" }}
-              className="cursor-pointer flex items-center justify-center bg-[#EBF4FE] hover:bg-[#DCEBFE] border border-[#7AAEF4] rounded-[1px] shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all hover:scale-110"
+              className="cursor-pointer flex items-center justify-center bg-[#CCE5FF] hover:bg-[#B8DCFF] border-2 border-[#3A82E4] rounded-[2px] shadow-[0_1px_2px_rgba(0,50,150,0.12)] z-20 transition-all hover:scale-110"
               title="Check YES for Mediation Willingness"
             >
               {formState.mediationWillingness === "yes" && (
@@ -707,7 +708,7 @@ export function StateComplaintFormPage({
               type="button"
               onClick={() => onChange((prev) => ({ ...prev, mediationWillingness: "no" }))}
               style={{ position: "absolute", top: "42.29%", left: "17.85%", width: "2.94%", height: "2.27%" }}
-              className="cursor-pointer flex items-center justify-center bg-[#EBF4FE] hover:bg-[#DCEBFE] border border-[#7AAEF4] rounded-[1px] shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all hover:scale-110"
+              className="cursor-pointer flex items-center justify-center bg-[#CCE5FF] hover:bg-[#B8DCFF] border-2 border-[#3A82E4] rounded-[2px] shadow-[0_1px_2px_rgba(0,50,150,0.12)] z-20 transition-all hover:scale-110"
               title="Check NO for Mediation Willingness"
             >
               {formState.mediationWillingness === "no" && (
@@ -731,7 +732,7 @@ export function StateComplaintFormPage({
               type="button"
               onClick={() => onChange((prev) => ({ ...prev, mediationWillingness: "na" }))}
               style={{ position: "absolute", top: "42.29%", left: "29.27%", width: "2.94%", height: "2.27%" }}
-              className="cursor-pointer flex items-center justify-center bg-[#EBF4FE] hover:bg-[#DCEBFE] border border-[#7AAEF4] rounded-[1px] shadow-[0_1px_2px_rgba(37,99,235,0.08)] z-20 transition-all hover:scale-110"
+              className="cursor-pointer flex items-center justify-center bg-[#CCE5FF] hover:bg-[#B8DCFF] border-2 border-[#3A82E4] rounded-[2px] shadow-[0_1px_2px_rgba(0,50,150,0.12)] z-20 transition-all hover:scale-110"
               title="Check Not Applicable for Mediation Willingness"
             >
               {formState.mediationWillingness === "na" && (

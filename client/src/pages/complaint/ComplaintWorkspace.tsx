@@ -964,11 +964,11 @@ export default function ComplaintWorkspace() {
     if (initialDraft?.caseDetails) {
       return {
         studentName: initialDraft.caseDetails.studentName || initialStudentName || "Student on Record",
-        studentDob: initialDraft.caseDetails.studentDob || "[Not Found on Record]",
-        grade: initialDraft.caseDetails.grade || "[Not Found on Record]",
-        school: initialDraft.caseDetails.school || "[Not Found on Record]",
-        district: initialDraft.caseDetails.district || "[District Not Found on Record]",
-        parentName: initialDraft.caseDetails.parentName || "[Not Found on Record]",
+        studentDob: initialDraft.caseDetails.studentDob || "[Required — Please Fill Out]",
+        grade: initialDraft.caseDetails.grade || "[Required — Please Fill Out]",
+        school: initialDraft.caseDetails.school || "[Required — Please Fill Out]",
+        district: initialDraft.caseDetails.district || "[Required — Please Fill Out (District)]",
+        parentName: initialDraft.caseDetails.parentName || "[Required — Please Fill Out]",
         preparedBy: initialDraft.caseDetails.preparedBy || "Waypoint Advocates",
         submissionDate: initialDraft.caseDetails.submissionDate || new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
         showLogo: initialDraft.caseDetails.showLogo ?? true,
@@ -978,11 +978,11 @@ export default function ComplaintWorkspace() {
     if (initialStudentName) {
       return {
         studentName: initialStudentName,
-        studentDob: "[Not Found on Record]",
-        grade: "[Not Found on Record]",
-        school: "[Not Found on Record]",
-        district: "[District Not Found on Record]",
-        parentName: "[Not Found on Record]",
+        studentDob: "[Required — Please Fill Out]",
+        grade: "[Required — Please Fill Out]",
+        school: "[Required — Please Fill Out]",
+        district: "[Required — Please Fill Out (District)]",
+        parentName: "[Required — Please Fill Out]",
         preparedBy: "Waypoint Advocates",
         submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
         showLogo: true,
@@ -1005,11 +1005,11 @@ export default function ComplaintWorkspace() {
     }
     return {
       studentName: "Student on Record",
-      studentDob: "[Not Found on Record]",
-      grade: "[Not Found on Record]",
-      school: "[Not Found on Record]",
-      district: "[District Not Found on Record]",
-      parentName: "[Not Found on Record]",
+      studentDob: "[Required — Please Fill Out]",
+      grade: "[Required — Please Fill Out]",
+      school: "[Required — Please Fill Out]",
+      district: "[Required — Please Fill Out (District)]",
+      parentName: "[Required — Please Fill Out]",
       preparedBy: "Waypoint Advocates",
       submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
       showLogo: true,
@@ -1040,7 +1040,7 @@ export default function ComplaintWorkspace() {
               v.includes("parent@example.com") ||
               v.includes("9004812736")
             ) {
-              return "[Not Found on Record]";
+              return "[Required — Please Fill Out]";
             }
             return v;
           };
@@ -1158,7 +1158,7 @@ export default function ComplaintWorkspace() {
     const res = await iepDemographicsQuery.refetch();
     const demo = res.data || iepDemographicsQuery.data;
     if (!demo || (!demo.address && !demo.gtid && !demo.dob)) {
-      if (showToast) toast.warning("No residential address found on student's uploaded IEP. Retaining [Not Found on Record].");
+      if (showToast) toast.warning("No residential address found on student's uploaded IEP. Retaining [Required — Please Fill Out].");
       return;
     }
 
@@ -1180,13 +1180,13 @@ export default function ComplaintWorkspace() {
       }
       if (demo.dob) next.studentDob = demo.dob;
       if (demo.gtid) next.studentGtid = demo.gtid;
-      if (demo.parentName && (!next.parentName || next.parentName.includes("[Not Found"))) {
+      if (demo.parentName && (!next.parentName || next.parentName.includes("[Not Found") || next.parentName.includes("[Required"))) {
         next.parentName = demo.parentName;
       }
-      if (demo.parentPhone && (!next.parentPhone || next.parentPhone.includes("[Not Found"))) {
+      if (demo.parentPhone && (!next.parentPhone || next.parentPhone.includes("[Not Found") || next.parentPhone.includes("[Required"))) {
         next.parentPhone = demo.parentPhone;
       }
-      if (demo.parentEmail && (!next.parentEmail || next.parentEmail.includes("[Not Found"))) {
+      if (demo.parentEmail && (!next.parentEmail || next.parentEmail.includes("[Not Found") || next.parentEmail.includes("[Required"))) {
         next.parentEmail = demo.parentEmail;
       }
       return next;
@@ -1210,6 +1210,7 @@ export default function ComplaintWorkspace() {
         !val ||
         val.trim() === "" ||
         val.includes("[Not Found") ||
+        val.includes("[Required") ||
         val.includes("1234 Heritage") ||
         val.includes("555-0192");
 
@@ -1267,19 +1268,19 @@ export default function ComplaintWorkspace() {
     const districtName =
       student.countyDistrict?.trim() ||
       (student.company?.includes("District") ? student.company.trim() : "") ||
-      "[District Not Found on Record]";
+      "[Required — Please Fill Out (District)]";
 
     const iepDemo = iepDemoOverride || iepDemographicsQuery.data;
 
     // Helper to test if a string contains actual value or is missing/mocked
     const hasValue = (val?: string | null): val is string =>
-      Boolean(val && val.trim() !== "" && !val.includes("[Not Found") && !val.includes("1234 Heritage") && !val.includes("555-0192"));
+      Boolean(val && val.trim() !== "" && !val.includes("[Not Found") && !val.includes("[Required") && !val.includes("1234 Heritage") && !val.includes("555-0192"));
 
     // Student Address: Check CRM student contact first, then pull from IEP document
     const sAddress =
       (hasValue(student.address) ? student.address.trim() : null) ||
       (hasValue(iepDemo?.address) ? iepDemo.address.trim() : null) ||
-      "[Not Found on Record]";
+      "[Required — Please Fill Out]";
 
     const sCity =
       (hasValue(student.city) ? student.city.trim() : null) ||
@@ -1299,20 +1300,20 @@ export default function ComplaintWorkspace() {
     const sDob =
       (hasValue(student.dateOfBirth) ? student.dateOfBirth.trim() : null) ||
       (hasValue(iepDemo?.dob) ? iepDemo.dob.trim() : null) ||
-      "[Not Found on Record]";
+      "[Required — Please Fill Out]";
 
     const sGtid =
       (hasValue(student.caseId) ? student.caseId.trim() : null) ||
       (hasValue(iepDemo?.gtid) ? iepDemo.gtid.trim() : null) ||
-      "[Not Found on Record]";
+      "[Required — Please Fill Out]";
 
     const sSchool =
       (hasValue(student.schoolName) ? student.schoolName.trim() : null) ||
-      "[Not Found on Record]";
+      "[Required — Please Fill Out]";
 
     const sGrade =
       (hasValue(student.gradeLevel) ? student.gradeLevel.trim() : null) ||
-      "[Not Found on Record]";
+      "[Required — Please Fill Out]";
 
     // Parent Address & Info: By default matches student address unless physically customized
     let pName = "";
@@ -1367,22 +1368,22 @@ export default function ComplaintWorkspace() {
         pZip = hasValue(iepDemo.parentZip) ? iepDemo.parentZip.trim() : sZip;
       } else {
         // Only if not found on IEP or records from us
-        pAddress = "[Not Found on Record]";
+        pAddress = "[Required — Please Fill Out]";
         pCity = sCity;
         pState = sState;
         pZip = sZip;
       }
     }
 
-    if (!pName) pName = "[Not Found on Record]";
-    if (!pPhone) pPhone = "[Not Found on Record]";
-    if (!pEmail) pEmail = "[Not Found on Record]";
+    if (!pName) pName = "[Required — Please Fill Out]";
+    if (!pPhone) pPhone = "[Required — Please Fill Out]";
+    if (!pEmail) pEmail = "[Required — Please Fill Out]";
 
     setComplaintTitle(`State Complaint – ${sName || student.lastName || "Student"}`);
 
     setCaseDetails((prev) => ({
       ...prev,
-      studentName: sName || "[Student Name Not Found]",
+      studentName: sName || "[Required — Please Fill Out (Student Name)]",
       studentDob: sDob,
       grade: sGrade,
       school: sSchool,
@@ -1395,7 +1396,7 @@ export default function ComplaintWorkspace() {
       ...prev,
       stateCode: stateCode,
       publicAgency: districtName,
-      studentName: sName || "[Student Name Not Found]",
+      studentName: sName || "[Required — Please Fill Out (Student Name)]",
       studentDob: sDob,
       studentAddress: sAddress,
       studentCity: sCity,
@@ -1422,7 +1423,7 @@ export default function ComplaintWorkspace() {
             content = content.replace(/ALEXANDER, SHANDERIOUS JR\./gi, sName.toUpperCase());
             content = content.replace(/Elijah Santiago/gi, sName);
           }
-          if (districtName && districtName !== "[District Not Found on Record]") {
+          if (districtName && districtName !== "[District Not Found on Record]" && districtName !== "[Required — Please Fill Out (District)]") {
             content = content.replace(/COBB COUNTY SCHOOL DISTRICT/gi, districtName.toUpperCase());
             content = content.replace(/ATLANTA PUBLIC SCHOOLS/gi, districtName.toUpperCase());
           }
@@ -1435,7 +1436,7 @@ export default function ComplaintWorkspace() {
       ? "Student Contact Record"
       : iepDemo?.address?.trim()
       ? "Student IEP Document"
-      : "Not Found on Record";
+      : "Required — Please Fill Out";
 
     toast.success(`Loaded ${sName}'s record into ${SUPPORTED_STATE_FORMS[stateCode]?.name || "Georgia"} State Complaint Form (Address: ${addressSource})`);
   };
@@ -4004,7 +4005,7 @@ This document is incorporated herein and submitted in direct support of Complain
                     <Input
                       value={officialFormState.studentAddress}
                       onChange={(e) => handleStudentAddressUpdate(e.target.value)}
-                      placeholder="Street address (or [Not Found on Record])"
+                      placeholder="Street address (or [Required — Please Fill Out])"
                       className="bg-[#020A17] border-[#3A2C18] text-white mt-0.5 h-7 text-xs"
                     />
                   </div>
