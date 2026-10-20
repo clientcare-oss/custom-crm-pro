@@ -11,7 +11,9 @@ export interface StoredComplaintDraft {
   studentId?: number | string | null;
   studentName: string;
   title: string;
-  updatedAt: string; // ISO date string
+  startedAt?: string; // ISO date string when filing was first initiated
+  createdAt?: string;
+  updatedAt: string; // ISO date string of latest modification
   stateCode: string;
   pageCount: number;
   statementSnippet?: string;
@@ -36,10 +38,14 @@ export interface RecentDraftItem {
   studentId?: number | string | null;
   studentName: string;
   title: string;
-  updatedAt: string;
+  startedAt?: string; // ISO date string when filing was first initiated
+  createdAt?: string;
+  updatedAt: string; // ISO date string of latest modification
   stateCode: string;
   pageCount: number;
   statementSnippet: string;
+  source?: "local" | "cloud" | "synced";
+  draftJson?: string;
 }
 
 const REGISTRY_KEY = "waypoint_complaint_recent_registry_v1";
@@ -55,8 +61,80 @@ export function getDraftStorageKey(idOrStudentId?: string | number | null): stri
 }
 
 /**
+ * Canonical deduplicator: Consolidates duplicate records for the same complaint/student into strictly ONE clean card.
+ * Preserves the earliest startedAt and the latest updatedAt.
+ */
+export function deduplicateDraftItems(items: RecentDraftItem[]): RecentDraftItem[] {
+  const map = new Map<string, RecentDraftItem>();
+
+  for (const item of items) {
+    if (!item) continue;
+
+    // Generate canonical identity key: by studentId first, then by normalized studentName
+    let canonicalKey = "";
+    if (item.studentId && String(item.studentId) !== "null" && String(item.studentId) !== "undefined") {
+      canonicalKey = `student_${String(item.studentId).replace(/\D/g, "") || item.studentId}`;
+    } else if (item.studentName && !item.studentName.toLowerCase().includes("student on record")) {
+      canonicalKey = `name_${item.studentName.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+    } else {
+      canonicalKey = item.id || `draft_unknown_${Date.now()}`;
+    }
+
+    // Determine startedAt timestamp
+    let started = item.startedAt || item.createdAt;
+    if (!started && item.id.includes("complaint_checkpoint_")) {
+      const parts = item.id.split("_");
+      const ts = Number(parts[parts.length - 1]);
+      if (!isNaN(ts) && ts > 1600000000000) {
+        started = new Date(ts).toISOString();
+      }
+    }
+    if (!started) {
+      started = item.updatedAt || new Date().toISOString();
+    }
+
+    const updated = item.updatedAt || started;
+
+    if (!map.has(canonicalKey)) {
+      map.set(canonicalKey, {
+        ...item,
+        startedAt: started,
+        updatedAt: updated,
+      });
+    } else {
+      // Merge with existing record: keep earliest startedAt, latest updatedAt, and best title/snippet
+      const existing = map.get(canonicalKey)!;
+      const earliestStarted = new Date(started).getTime() < new Date(existing.startedAt || existing.updatedAt).getTime()
+        ? started
+        : (existing.startedAt || existing.updatedAt);
+      const latestUpdated = new Date(updated).getTime() > new Date(existing.updatedAt).getTime()
+        ? updated
+        : existing.updatedAt;
+
+      map.set(canonicalKey, {
+        ...existing,
+        id: item.id.startsWith("complaint_checkpoint_") ? existing.id : item.id,
+        title: (item.title && !item.title.includes("Draft") ? item.title : existing.title) || existing.title,
+        studentName: (item.studentName && !item.studentName.includes("Student on Record") ? item.studentName : existing.studentName) || existing.studentName,
+        statementSnippet: (item.statementSnippet && item.statementSnippet.length > (existing.statementSnippet?.length || 0)) ? item.statementSnippet : existing.statementSnippet,
+        startedAt: earliestStarted,
+        updatedAt: latestUpdated,
+        pageCount: Math.max(item.pageCount || 4, existing.pageCount || 4),
+        source: item.source || existing.source || "local",
+        draftJson: item.draftJson || existing.draftJson,
+      });
+    }
+  }
+
+  // Return sorted by latest updatedAt descending
+  return Array.from(map.values()).sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+}
+
+/**
  * Save draft into localStorage and update the Recent Drafts Registry.
- * If isCheckpoint is true, preserves this version as a distinct historical revision.
+ * Preserves the original startedAt date and strictly prevents duplicate entries for the same complaint.
  */
 export function saveComplaintDraft(draft: StoredComplaintDraft, isCheckpoint = false): void {
   if (typeof window === "undefined") return;
@@ -64,14 +142,12 @@ export function saveComplaintDraft(draft: StoredComplaintDraft, isCheckpoint = f
   try {
     const studentId = draft.studentId || draft.id || "active";
     const primaryKey = getDraftStorageKey(studentId);
-    const draftEntryId = isCheckpoint
-      ? `complaint_checkpoint_${studentId}_${Date.now()}`
-      : draft.id || `draft_${studentId}`;
+    const draftEntryId = draft.id || `draft_${studentId}`;
 
     const writeKeys = (serializedData: string) => {
       // 1. Primary student key
       localStorage.setItem(primaryKey, serializedData);
-      // 2. Draft entry key (always save both for checkpoints and standard auto-saves)
+      // 2. Draft entry key
       localStorage.setItem(draftEntryId, serializedData);
       // 3. Direct numeric/id student key (matching ComplaintWorkspace auto-save)
       if (draft.studentId) {
@@ -99,7 +175,6 @@ export function saveComplaintDraft(draft: StoredComplaintDraft, isCheckpoint = f
       writeKeys(JSON.stringify(draft));
     } catch (quotaErr) {
       console.warn("[saveComplaintDraft] LocalStorage quota reached on full draft. Saving text & form state without large image buffers:", quotaErr);
-      // Remove heavy base64 dataUrl from renderedPages while preserving all text, issues, facts, and form data
       const lightweightDraft = {
         ...draft,
         pages: (draft.pages || []).map((p: any) => {
@@ -119,8 +194,18 @@ export function saveComplaintDraft(draft: StoredComplaintDraft, isCheckpoint = f
       writeKeys(JSON.stringify(lightweightDraft));
     }
 
-    // Update Recent Registry (limit to 35 items)
+    // Update Recent Registry (strictly deduplicated: 1 card per complaint filing)
     const existingList = listRecentComplaintDrafts();
+
+    // Look for existing record to preserve its original startedAt date
+    const existingMatch = existingList.find((item) => {
+      if (draft.studentId && item.studentId && String(item.studentId) === String(draft.studentId)) return true;
+      if (draft.id && item.id === draft.id) return true;
+      if (draft.studentName && item.studentName && draft.studentName.toLowerCase().trim() === item.studentName.toLowerCase().trim() && !draft.studentName.includes("Student on Record")) return true;
+      return false;
+    });
+
+    const originalStartedAt = existingMatch?.startedAt || existingMatch?.createdAt || draft.startedAt || draft.createdAt || new Date().toISOString();
     const snippet = (
       draft.formState?.statementOfViolations ||
       draft.formState?.factsRelatingToViolations ||
@@ -133,23 +218,24 @@ export function saveComplaintDraft(draft: StoredComplaintDraft, isCheckpoint = f
       studentId: draft.studentId,
       studentName: draft.studentName || draft.caseDetails?.studentName || "Student on Record",
       title: draft.title || `State Complaint – ${draft.studentName || "Draft"}`,
+      startedAt: originalStartedAt,
       updatedAt: draft.updatedAt || new Date().toISOString(),
       stateCode: draft.stateCode || draft.formState?.stateCode || "GA",
       pageCount: draft.pages?.length || 4,
       statementSnippet: snippet,
+      source: "local",
     };
 
-    const filtered = isCheckpoint
-      ? existingList.filter((item) => item.id !== draftEntryId)
-      : existingList.filter((item) => {
-          if (draft.studentId && item.studentId) {
-            return String(item.studentId) !== String(draft.studentId);
-          }
-          return item.id !== draft.id;
-        });
+    // Filter out previous versions of this complaint so we never produce duplicate cards
+    const filtered = existingList.filter((item) => {
+      if (draft.studentId && item.studentId && String(item.studentId) === String(draft.studentId)) return false;
+      if (draft.id && item.id === draft.id) return false;
+      if (draft.studentName && item.studentName && draft.studentName.toLowerCase().trim() === item.studentName.toLowerCase().trim() && !draft.studentName.includes("Student on Record")) return false;
+      return true;
+    });
 
-    const updatedRegistry = [newItem, ...filtered].slice(0, 35);
-    localStorage.setItem(REGISTRY_KEY, JSON.stringify(updatedRegistry));
+    const deduplicated = deduplicateDraftItems([newItem, ...filtered]).slice(0, 30);
+    localStorage.setItem(REGISTRY_KEY, JSON.stringify(deduplicated));
   } catch (err) {
     console.warn("[saveComplaintDraft] localStorage quota exceeded or error:", err);
   }
@@ -304,7 +390,7 @@ export function loadComplaintDraft(idOrStudentId?: string | number | null): Stor
 }
 
 /**
- * List all recent complaint drafts from the registry.
+ * List all recent complaint drafts from the registry, automatically deduplicating.
  */
 export function listRecentComplaintDrafts(): RecentDraftItem[] {
   if (typeof window === "undefined") return [];
@@ -313,7 +399,16 @@ export function listRecentComplaintDrafts(): RecentDraftItem[] {
     const raw = localStorage.getItem(REGISTRY_KEY);
     if (!raw) return [];
     const list = JSON.parse(raw);
-    if (Array.isArray(list)) return list;
+    if (Array.isArray(list)) {
+      const deduplicated = deduplicateDraftItems(list);
+      // Auto-clean storage if duplicates were purged
+      if (deduplicated.length !== list.length) {
+        try {
+          localStorage.setItem(REGISTRY_KEY, JSON.stringify(deduplicated));
+        } catch {}
+      }
+      return deduplicated;
+    }
   } catch (err) {
     console.warn("[listRecentComplaintDrafts] Error reading registry:", err);
   }

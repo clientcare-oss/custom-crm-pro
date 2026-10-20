@@ -443,6 +443,161 @@ MANDATORY RULES:
           };
         }
       }),
-  
+
+    // -------------------------------------------------------------------------
+    // Draft Sync: Cloud Storage via D1 for Seamless Localhost & Live Sync
+    // -------------------------------------------------------------------------
+    saveDraft: publicProcedure
+      .input(
+        z.object({
+          studentId: z.number().nullable().optional(),
+          title: z.string().optional(),
+          draftKey: z.string().optional(),
+          startedAt: z.string().optional(),
+          draftJson: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const database = await db.getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const { brainDumpItems: bdi } = await import("../../drizzle/schema");
+        const { and: cand, eq: ceq } = await import("drizzle-orm");
+
+        const tagKey = input.studentId ? `student_${input.studentId}` : "general";
+        const draftTitle = input.title || `State Complaint Draft (${tagKey})`;
+        const metadataObj = {
+          studentId: input.studentId ?? null,
+          title: draftTitle,
+          startedAt: input.startedAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        try {
+          const [existing] = await database
+            .select()
+            .from(bdi)
+            .where(cand(ceq(bdi.category, "complaint_draft"), ceq(bdi.tags, tagKey)))
+            .limit(1);
+
+          if (existing) {
+            let originalStartedAt: string = input.startedAt || "";
+            if (existing.metadata) {
+              try {
+                const meta = JSON.parse(existing.metadata);
+                if (meta.startedAt) originalStartedAt = meta.startedAt;
+              } catch {}
+            }
+            if (!originalStartedAt) {
+              originalStartedAt = existing.createdAt ? existing.createdAt.toISOString() : new Date().toISOString();
+            }
+            metadataObj.startedAt = originalStartedAt;
+
+            await database
+              .update(bdi)
+              .set({
+                title: draftTitle,
+                rawText: input.draftJson,
+                metadata: JSON.stringify(metadataObj),
+                updatedAt: new Date(),
+              })
+              .where(ceq(bdi.id, existing.id));
+
+            return { success: true, id: existing.id, startedAt: originalStartedAt };
+          } else {
+            const [inserted] = await database.insert(bdi).values({
+              userId: ctx.user?.id || 1,
+              title: draftTitle,
+              rawText: input.draftJson,
+              itemType: "complaint_draft",
+              category: "complaint_draft",
+              status: "draft",
+              tags: tagKey,
+              metadata: JSON.stringify(metadataObj),
+            });
+
+            return { success: true, id: inserted.insertId, startedAt: metadataObj.startedAt };
+          }
+        } catch (err: any) {
+          console.warn("[stateComplaint.saveDraft] Cloud D1 save failed:", err?.message);
+          return { success: false, error: err?.message };
+        }
+      }),
+
+    listDrafts: publicProcedure
+      .input(
+        z.object({
+          studentId: z.number().nullable().optional(),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        const database = await db.getDb();
+        if (!database) return [];
+        const { brainDumpItems: bdi } = await import("../../drizzle/schema");
+        const { eq: ceq, desc: cdesc } = await import("drizzle-orm");
+
+        try {
+          const rows = await database
+            .select()
+            .from(bdi)
+            .where(ceq(bdi.category, "complaint_draft"))
+            .orderBy(cdesc(bdi.updatedAt));
+
+          return rows.map((r) => {
+            let meta: any = {};
+            if (r.metadata) {
+              try {
+                meta = JSON.parse(r.metadata);
+              } catch {}
+            }
+            return {
+              id: r.id,
+              tagKey: r.tags || "general",
+              studentId: meta.studentId ?? (r.tags?.startsWith("student_") ? Number(r.tags.replace("student_", "")) : null),
+              title: r.title || "State Complaint Draft",
+              startedAt: meta.startedAt || r.createdAt?.toISOString() || new Date().toISOString(),
+              updatedAt: r.updatedAt?.toISOString() || new Date().toISOString(),
+              draftJson: r.rawText,
+            };
+          });
+        } catch (err) {
+          console.warn("[stateComplaint.listDrafts] Error querying cloud drafts:", err);
+          return [];
+        }
+      }),
+
+    getDraft: publicProcedure
+      .input(
+        z.object({
+          studentId: z.number().nullable().optional(),
+          id: z.number().optional(),
+        })
+      )
+      .query(async ({ input }) => {
+        const database = await db.getDb();
+        if (!database) return null;
+        const { brainDumpItems: bdi } = await import("../../drizzle/schema");
+        const { and: cand, eq: ceq } = await import("drizzle-orm");
+
+        try {
+          if (input.id) {
+            const [row] = await database.select().from(bdi).where(ceq(bdi.id, input.id)).limit(1);
+            return row ? row.rawText : null;
+          }
+
+          if (input.studentId) {
+            const [row] = await database
+              .select()
+              .from(bdi)
+              .where(cand(ceq(bdi.category, "complaint_draft"), ceq(bdi.tags, `student_${input.studentId}`)))
+              .limit(1);
+            return row ? row.rawText : null;
+          }
+        } catch (err) {
+          console.warn("[stateComplaint.getDraft] Error querying draft:", err);
+        }
+
+        return null;
+      }),
+
 });
 

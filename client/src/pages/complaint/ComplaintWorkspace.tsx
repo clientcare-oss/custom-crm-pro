@@ -1072,6 +1072,15 @@ export default function ComplaintWorkspace() {
   const businessProfileQuery = trpc.system.getBusinessProfile.useQuery();
   const businessProfile = businessProfileQuery.data;
 
+  // Cloud D1 sync mutation for state complaint drafts (cross-environment sync)
+  const saveDraftCloudMutation = trpc.stateComplaint.saveDraft.useMutation();
+
+  // Preserved start date for this complaint filing
+  const [complaintStartedAt, setComplaintStartedAt] = useState<string>(() => {
+    if (initialDraft?.startedAt) return initialDraft.startedAt;
+    return new Date().toISOString();
+  });
+
   // Sync Complainant and Practice information from PG-024-BIZ
   const syncFromBusinessProfile = (showToast = true) => {
     if (!businessProfile) {
@@ -1452,6 +1461,9 @@ export default function ComplaintWorkspace() {
     if (draft.studentId) {
       setActiveStudentId(Number(draft.studentId));
     }
+    if (draft.startedAt) {
+      setComplaintStartedAt(draft.startedAt);
+    }
     setLastSavedText("Draft loaded just now");
   };
 
@@ -1459,30 +1471,41 @@ export default function ComplaintWorkspace() {
     setPages(DEFAULT_PAGES);
     setOfficialFormState(INITIAL_GADOE_FORM_STATE);
     setComplaintTitle("State Complaint – New Filing");
+    setComplaintStartedAt(new Date().toISOString());
     setActivePageId("cover");
     setActiveToolbarTab("setup");
     toast.success("Started a new complaint filing draft");
   };
 
   const handleSaveCurrentNow = () => {
-    saveComplaintDraft(
-      {
-        id: `draft_${activeStudentId || params?.id || "active"}`,
-        studentId: activeStudentId || params?.id || null,
-        studentName: caseDetails.studentName || officialFormState.studentName || "Student on Record",
-        title: complaintTitle,
-        updatedAt: new Date().toISOString(),
-        stateCode: officialFormState.stateCode || "GA",
-        pageCount: pages.length,
-        formState: officialFormState,
-        caseDetails,
-        pages,
-      },
-      true // creates dedicated milestone checkpoint for this student
-    );
+    const studentKey = activeStudentId || params?.id || "active";
+    const numStudentId = activeStudentId || (params?.id && !isNaN(Number(params?.id)) ? Number(params?.id) : null);
+    const draftData: StoredComplaintDraft = {
+      id: `draft_${studentKey}`,
+      studentId: numStudentId,
+      studentName: caseDetails.studentName || officialFormState.studentName || "Student on Record",
+      title: complaintTitle,
+      startedAt: complaintStartedAt,
+      updatedAt: new Date().toISOString(),
+      stateCode: officialFormState.stateCode || "GA",
+      pageCount: pages.length,
+      formState: officialFormState,
+      caseDetails,
+      pages,
+    };
+
+    saveComplaintDraft(draftData, false);
+
+    saveDraftCloudMutation.mutate({
+      studentId: numStudentId,
+      title: complaintTitle,
+      startedAt: complaintStartedAt,
+      draftJson: JSON.stringify(draftData),
+    });
+
     setRecentDraftsCount(listRecentComplaintDrafts().length);
     setLastSavedText("Version saved just now");
-    toast.success(`✓ Saved new version checkpoint for ${caseDetails.studentName || "student"}`);
+    toast.success(`✓ Saved complaint filing for ${caseDetails.studentName || "student"}`);
   };
 
 
@@ -1773,19 +1796,31 @@ export default function ComplaintWorkspace() {
     }
     setLastSavedText("Saving changes...");
     const studentKey = activeStudentId || initialUrlStudentId || params?.id || "active";
+    const numStudentId = activeStudentId || (initialUrlStudentId && !isNaN(Number(initialUrlStudentId)) ? Number(initialUrlStudentId) : null);
     const timer = setTimeout(() => {
       try {
-        saveComplaintDraft({
+        const draftObj: StoredComplaintDraft = {
           id: `draft_${studentKey}`,
-          studentId: activeStudentId || (initialUrlStudentId && !isNaN(Number(initialUrlStudentId)) ? Number(initialUrlStudentId) : null),
+          studentId: numStudentId,
           studentName: caseDetails.studentName || officialFormState.studentName || "Student on Record",
           title: complaintTitle,
+          startedAt: complaintStartedAt,
           updatedAt: new Date().toISOString(),
           stateCode: officialFormState.stateCode || "GA",
           pageCount: pages.length,
           formState: officialFormState,
           caseDetails,
           pages,
+        };
+
+        saveComplaintDraft(draftObj, false);
+
+        // Sync with Cloudflare D1 so drafts are seamlessly available across localhost and live
+        saveDraftCloudMutation.mutate({
+          studentId: numStudentId,
+          title: complaintTitle,
+          startedAt: complaintStartedAt,
+          draftJson: JSON.stringify(draftObj),
         });
 
         localStorage.setItem(
@@ -1795,6 +1830,7 @@ export default function ComplaintWorkspace() {
             caseDetails,
             pages,
             formState: officialFormState,
+            startedAt: complaintStartedAt,
             savedAt: new Date().toISOString(),
           })
         );
@@ -1814,7 +1850,7 @@ export default function ComplaintWorkspace() {
       setLastSavedText("Auto-saved just now");
     }, 800);
     return () => clearTimeout(timer);
-  }, [pages, caseDetails, officialFormState, complaintTitle, params?.id, activeStudentId, initialUrlStudentId]);
+  }, [pages, caseDetails, officialFormState, complaintTitle, params?.id, activeStudentId, initialUrlStudentId, complaintStartedAt]);
 
   // State: Modals
   const [isEditCoverModalOpen, setIsEditCoverModalOpen] = useState(false);
