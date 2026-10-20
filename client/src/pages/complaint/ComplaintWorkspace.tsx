@@ -2338,7 +2338,7 @@ This document is incorporated herein and submitted in direct support of Complain
   return (
     <ScopedErrorBoundary moduleName="State Complaint Builder">
       <div 
-        className="relative flex flex-col h-[calc(100vh-0px)] w-full overflow-hidden bg-[#020B1A] text-slate-100 select-none"
+        className="relative flex flex-col h-[calc(100vh-0px)] w-full overflow-hidden bg-[#020B1A] text-slate-100 select-none print:h-auto print:min-h-0 print:overflow-visible print:bg-white print:p-0 print:m-0"
         style={{
           backgroundColor: "#020B1A",
           backgroundImage: "radial-gradient(ellipse at 50% 0%, #0A2244 0%, #041224 60%, #020814 100%)",
@@ -2347,7 +2347,7 @@ This document is incorporated herein and submitted in direct support of Complain
 
         {/* ── TOP HEADER BAR (Executive Maritime Hardwood Rail) ─────────────── */}
         <header 
-          className="relative z-30 flex items-center justify-between px-4 sm:px-6 h-[58px] min-h-[58px] w-full border-b border-[#05142B] shadow-[0_6px_20px_rgba(0,0,0,0.65)] overflow-hidden select-none"
+          className="relative z-30 flex items-center justify-between px-4 sm:px-6 h-[58px] min-h-[58px] w-full border-b border-[#05142B] shadow-[0_6px_20px_rgba(0,0,0,0.65)] overflow-hidden select-none print:hidden"
           style={{
             backgroundImage: "linear-gradient(180deg, rgba(14, 48, 96, 0.45) 0%, rgba(10, 36, 74, 0.5) 100%), url('/decor/rail-wood-grain.png')",
             backgroundRepeat: "no-repeat, repeat-x",
@@ -2515,7 +2515,7 @@ This document is incorporated herein and submitted in direct support of Complain
         </header>
 
         {/* ── 3-COLUMN STUDIO WORKSPACE ───────────────────────────────────── */}
-        <div className="relative z-10 flex flex-1 overflow-hidden px-0 pt-2 pb-2 gap-1.5">
+        <div className="relative z-10 flex flex-1 overflow-hidden px-0 pt-2 pb-2 gap-1.5 print:hidden">
           
           {/* ── LEFT COLUMN: Document Binder / Outline Rail (Resizable via Draggable Edge) ─────────────── */}
           {!isFocusMode && !isIndexCollapsed && (
@@ -5089,17 +5089,21 @@ This document is incorporated herein and submitted in direct support of Complain
               width: 8.5in !important;
               min-width: 8.5in !important;
               max-width: 8.5in !important;
+              height: auto !important;
+              min-height: 0 !important;
               margin: 0 !important;
               padding: 0 !important;
               overflow: visible !important;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
-            header, nav, aside, dialog, [role="dialog"], button, .no-print {
+            header, nav, aside, dialog, [role="dialog"], [data-radix-portal], button, .no-print {
               display: none !important;
             }
             #root,
-            #root > div {
+            #root > div,
+            #root > div > div,
+            #root > div > div > div {
               height: auto !important;
               min-height: 0 !important;
               max-height: none !important;
@@ -5119,18 +5123,15 @@ This document is incorporated herein and submitted in direct support of Complain
             }
             #state-complaint-print-docket {
               display: block !important;
-              position: absolute !important;
-              top: 0 !important;
-              left: 0 !important;
+              position: static !important;
               width: 8.5in !important;
               max-width: 8.5in !important;
               min-width: 8.5in !important;
-              margin: 0 !important;
+              margin: 0 auto !important;
               padding: 0 !important;
               background: #ffffff !important;
               color: #000000 !important;
               overflow: visible !important;
-              z-index: 999999 !important;
             }
             .print-packet-sheet {
               display: block !important;
