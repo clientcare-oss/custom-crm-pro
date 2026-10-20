@@ -2891,31 +2891,31 @@ This document is incorporated herein and submitted in direct support of Complain
             }}
           />
 
-          {/* Left: Safe Back to Profile + Divider + Page ID badge */}
-          <div className="flex items-center gap-3 min-w-0 sm:min-w-[180px] md:min-w-[240px]">
+          {/* Left: Safe Back to Profile + Page ID badge + Divider */}
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <button
               type="button"
               onClick={handleSafeBackToProfile}
-              className="group flex flex-col items-center justify-center text-left py-0.5 px-1 hover:opacity-95 transition-all cursor-pointer select-none"
+              className="group flex flex-col items-center justify-center text-left py-0.5 px-1 hover:opacity-95 transition-all cursor-pointer select-none shrink-0"
               title="Safely save draft and return to student case profile"
             >
-              <span className="font-serif text-[15px] sm:text-[16px] text-[#FFF4D4] font-normal tracking-wide group-hover:text-[#FFE394] transition-colors leading-tight">
+              <span className="font-serif text-[14px] sm:text-[15px] text-[#FFF4D4] font-normal tracking-wide group-hover:text-[#FFE394] transition-colors leading-tight whitespace-nowrap">
                 Back to Profile
               </span>
               {/* Curved gold U-turn return arrow matching Student Workspace */}
-              <Undo2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#DFBE77] group-hover:text-[#FFE394] group-hover:-translate-x-0.5 transition-all mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
+              <Undo2 className="w-4 h-4 text-[#DFBE77] group-hover:text-[#FFE394] group-hover:-translate-x-0.5 transition-all mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
             </button>
 
-            {/* Thin vertical divider line matching reference screenshot */}
-            <div className="h-7 w-[1px] bg-[#3A2C18] border-r border-[#6B5328]/50 self-center" />
-
             <PageIdBadge id="PG-020" />
+
+            {/* Thin vertical divider line */}
+            <div className="h-7 w-[1px] bg-[#3A2C18] border-r border-[#6B5328]/50 self-center shrink-0 mx-0.5" />
           </div>
 
-          {/* Center: Centered Title + Pencil Quick-Edit + Cloud Save Status */}
-          <div className="flex flex-col items-center justify-center text-center flex-1 px-2">
+          {/* Middle: Title + Pencil Quick-Edit + Cloud Save Status (Uses all space to left up to divider) */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center items-start pl-2 sm:pl-3 pr-3 overflow-hidden">
             {isEditingTitle ? (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 w-full max-w-lg">
                 <input
                   type="text"
                   value={complaintTitle}
@@ -2925,21 +2925,21 @@ This document is incorporated herein and submitted in direct support of Complain
                     if (e.key === "Enter") setIsEditingTitle(false);
                   }}
                   autoFocus
-                  className="bg-[#092244] border border-[#C5A059] text-[#FFF4D4] font-serif text-base sm:text-[17px] px-2.5 py-0.5 rounded focus:outline-none shadow-inner"
+                  className="bg-[#092244] border border-[#C5A059] text-[#FFF4D4] font-serif text-[15px] sm:text-base px-2.5 py-0.5 rounded focus:outline-none shadow-inner w-full"
                 />
                 <button
                   type="button"
                   onClick={() => setIsEditingTitle(false)}
-                  className="p-1 rounded bg-[#C5A059] text-[#07162B] hover:bg-[#FFE394] transition-colors cursor-pointer"
+                  className="p-1 rounded bg-[#C5A059] text-[#07162B] hover:bg-[#FFE394] transition-colors cursor-pointer shrink-0"
                   title="Save title"
                 >
                   <Check className="w-3.5 h-3.5" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 group/title">
+              <div className="flex items-center gap-2 max-w-full min-w-0 group/title">
                 <h1 
-                  className="font-serif text-base sm:text-[17px] font-bold tracking-wide text-[#FFF0C2] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] cursor-pointer"
+                  className="font-serif text-[15px] sm:text-[17px] font-bold tracking-wide text-[#FFF0C2] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] cursor-pointer whitespace-nowrap truncate"
                   onClick={() => setIsEditingTitle(true)}
                   title="Click to rename"
                 >
@@ -2948,7 +2948,7 @@ This document is incorporated herein and submitted in direct support of Complain
                 <button
                   type="button"
                   onClick={() => setIsEditingTitle(true)}
-                  className="p-1 rounded-[4px] bg-[#0A264D]/90 hover:bg-[#113A6E] border border-[#DFBE77]/60 text-[#FFE7A0] hover:text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_1px_2px_rgba(0,0,0,0.6)] transition-colors cursor-pointer"
+                  className="p-1 rounded-[4px] bg-[#0A264D]/90 hover:bg-[#113A6E] border border-[#DFBE77]/60 text-[#FFE7A0] hover:text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_1px_2px_rgba(0,0,0,0.6)] transition-colors cursor-pointer shrink-0"
                   title="Rename document"
                 >
                   <Pencil className="w-3.5 h-3.5" />
@@ -2956,10 +2956,10 @@ This document is incorporated herein and submitted in direct support of Complain
               </div>
             )}
             
-            {/* Sub-line: Centered Cloud Sync Status */}
-            <div className="flex items-center gap-1.5 text-[11px] font-sans text-[#E2D4BD] font-medium mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+            {/* Sub-line: Cloud Sync Status (fits cleanly without cut-off) */}
+            <div className="flex items-center gap-1.5 text-[11px] font-sans text-[#E2D4BD] font-medium leading-none mt-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] whitespace-nowrap">
               <span>{lastSavedText}</span>
-              <Cloud className="w-3.5 h-3.5 text-emerald-300 fill-emerald-300/30 drop-shadow-[0_0_4px_rgba(110,231,183,0.7)]" />
+              <Cloud className="w-3.5 h-3.5 text-emerald-300 fill-emerald-300/30 drop-shadow-[0_0_4px_rgba(110,231,183,0.7)] shrink-0" />
             </div>
           </div>
 
