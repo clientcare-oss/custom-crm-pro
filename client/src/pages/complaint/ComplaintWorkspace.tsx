@@ -1816,6 +1816,49 @@ export default function ComplaintWorkspace() {
   const [isIndexCollapsed, setIsIndexCollapsed] = useState<boolean>(false);
   const [isToolsCollapsed, setIsToolsCollapsed] = useState<boolean>(true);
   const [lastSavedText, setLastSavedText] = useState<string>("Auto-saved just now");
+  // Save Point checkmark confirmation state (animation only, no toast)
+  const [isSavePointConfirmed, setIsSavePointConfirmed] = useState<boolean>(false);
+  const savePointTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleUpdateSavePointOnly = () => {
+    const studentKey = activeStudentId || params?.id || "active";
+    const numStudentId = activeStudentId || (params?.id && !isNaN(Number(params?.id)) ? Number(params?.id) : null);
+    const draftData: StoredComplaintDraft = {
+      id: `draft_${studentKey}`,
+      studentId: numStudentId,
+      studentName: caseDetails.studentName || officialFormState.studentName || "Student on Record",
+      title: complaintTitle,
+      startedAt: complaintStartedAt,
+      updatedAt: new Date().toISOString(),
+      stateCode: officialFormState.stateCode || "GA",
+      pageCount: pages.length,
+      formState: officialFormState,
+      caseDetails,
+      pages,
+    };
+
+    try {
+      saveComplaintDraft(draftData, false);
+      saveDraftCloudMutation.mutate({
+        studentId: numStudentId,
+        title: complaintTitle,
+        startedAt: complaintStartedAt,
+        draftJson: JSON.stringify(draftData),
+      });
+      setRecentDraftsCount(listRecentComplaintDrafts().length);
+    } catch (e) {
+      console.warn("Could not save complaint draft snapshot:", e);
+    }
+
+    setLastSavedText("Save point updated just now");
+
+    // Check animation only confirmation (no toast popup)
+    setIsSavePointConfirmed(true);
+    if (savePointTimerRef.current) clearTimeout(savePointTimerRef.current);
+    savePointTimerRef.current = setTimeout(() => {
+      setIsSavePointConfirmed(false);
+    }, 2200);
+  };
   const [complaintTitle, setComplaintTitle] = useState<string>(() => {
     if (initialDraft?.title) return initialDraft.title;
     if (initialStudentName) return `State Complaint – ${initialStudentName}`;
@@ -2956,10 +2999,29 @@ This document is incorporated herein and submitted in direct support of Complain
               </div>
             )}
             
-            {/* Sub-line: Centered Cloud Sync Status (fits cleanly without cut-off) */}
-            <div className="flex items-center justify-center gap-1.5 text-[11px] font-sans text-[#E2D4BD] font-medium leading-none mt-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] whitespace-nowrap">
-              <span>{lastSavedText}</span>
-              <Cloud className="w-3.5 h-3.5 text-emerald-300 fill-emerald-300/30 drop-shadow-[0_0_4px_rgba(110,231,183,0.7)] shrink-0" />
+            {/* Sub-line: Centered Cloud Sync Status with clickable cloud for check animation confirmation */}
+            <div className="flex items-center justify-center gap-1.5 text-[11px] font-sans text-[#E2D4BD] font-medium leading-none mt-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] whitespace-nowrap select-none">
+              <span 
+                onClick={handleUpdateSavePointOnly} 
+                className="cursor-pointer hover:text-[#FFF4D4] transition-colors"
+                title="Click cloud to update save point"
+              >
+                {isSavePointConfirmed ? "Save point updated" : lastSavedText}
+              </span>
+              <button
+                type="button"
+                onClick={handleUpdateSavePointOnly}
+                className="group/cloud inline-flex items-center justify-center p-0.5 rounded cursor-pointer transition-transform hover:scale-125 active:scale-90 text-emerald-300 hover:text-emerald-200 focus:outline-none"
+                title="Click to update save point"
+              >
+                {isSavePointConfirmed ? (
+                  <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-emerald-500/25 border border-emerald-400/60 text-emerald-300 animate-in zoom-in-50 spin-in-12 duration-200 shadow-[0_0_8px_rgba(52,211,153,0.7)]">
+                    <Check className="w-2.5 h-2.5 text-emerald-300 stroke-[3]" />
+                  </span>
+                ) : (
+                  <Cloud className="w-3.5 h-3.5 text-emerald-300 fill-emerald-300/30 group-hover/cloud:drop-shadow-[0_0_6px_rgba(110,231,183,0.9)] drop-shadow-[0_0_4px_rgba(110,231,183,0.7)] shrink-0 transition-all duration-200" />
+                )}
+              </button>
             </div>
           </div>
 
