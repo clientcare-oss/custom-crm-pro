@@ -461,8 +461,8 @@ Parent notified district administration of ongoing service deprivation and reque
 BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
 DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
 
-STUDENT: ELIJAH SANTIAGO
-AGENCY: ATLANTA PUBLIC SCHOOLS
+STUDENT: Brooklyn Smith
+AGENCY: PAULDING COUNTY SCHOOL DISTRICT
 
 ================================================================================
 TABLE OF COMPLAINT FILING SECTIONS:
@@ -481,7 +481,7 @@ MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:
 
 EXHIBIT A: STUDENT'S IEP
 • Document: Annual Individualized Education Program (IEP)
-• Date: August 28, 2025 · Author: Cobb County School District IEP Team
+• Date: August 28, 2025 · Author: PAULDING COUNTY SCHOOL DISTRICT IEP Team
 • Relevant Pages: Pages 4–8 (Service Delivery Schedule & Accommodations)
 • Evidentiary Purpose: Establishes binding baseline of 240 weekly reading minutes and 60 minutes speech therapy.
 • Supports: Count I (Failure to Implement IEP Services / Denial of FAPE).
@@ -507,7 +507,7 @@ Exhibit files are attached behind this index in labeled alphabetical order.`
     category: "exhibit", 
     exhibitTag: "Exhibit A", 
     content: `EXHIBIT A: INDIVIDUALIZED EDUCATION PROGRAM (IEP)
-STUDENT: ELIJAH SANTIAGO · LEA / DISTRICT: COBB COUNTY SCHOOL DISTRICT
+STUDENT: Brooklyn Smith · LEA / DISTRICT: PAULDING COUNTY SCHOOL DISTRICT
 
 DOCUMENT SUMMARY & EVIDENTIARY RECORD:
 • Document Title: Annual Individualized Education Program (IEP)
@@ -528,7 +528,7 @@ EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
     category: "exhibit", 
     exhibitTag: "Exhibit B", 
     content: `EXHIBIT B: EVALUATIONS & PARENT WRITTEN REQUESTS
-STUDENT: ELIJAH SANTIAGO · LEA / DISTRICT: COBB COUNTY SCHOOL DISTRICT
+STUDENT: Brooklyn Smith · LEA / DISTRICT: PAULDING COUNTY SCHOOL DISTRICT
 
 DOCUMENT SUMMARY & EVIDENTIARY RECORD:
 • Document Title: Psychoeducational Evaluation Report & Formal Parental Evaluation Request
@@ -549,7 +549,7 @@ EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
     category: "exhibit", 
     exhibitTag: "Exhibit C", 
     content: `EXHIBIT C: DISTRICT CORRESPONDENCE & SERVICE LOGS
-STUDENT: ELIJAH SANTIAGO · LEA / DISTRICT: COBB COUNTY SCHOOL DISTRICT
+STUDENT: Brooklyn Smith · LEA / DISTRICT: PAULDING COUNTY SCHOOL DISTRICT
 
 DOCUMENT SUMMARY & EVIDENTIARY RECORD:
 • Document Title: Special Education Service Delivery Logs & Official Written Communications
@@ -641,8 +641,54 @@ export function getDefaultExhibitContent(
     return p.content;
   }
 
-  const student = caseDetails?.studentName?.replace(/^IN\s+RE:\s*/i, "").trim() || "Elijah Santiago";
-  const district = caseDetails?.district?.trim() || "Cobb County School District";
+  const student = caseDetails?.studentName?.replace(/^IN\s+RE:\s*/i, "").trim() || "Brooklyn Smith";
+  const district = caseDetails?.district?.trim() || "PAULDING COUNTY SCHOOL DISTRICT";
+
+  if (p.id === "exhibit_index") {
+    return `FORMAL STATE COMPLAINT — EXHIBIT INDEX & DOCUMENT SCHEDULE
+
+BEFORE THE GEORGIA DEPARTMENT OF EDUCATION
+DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
+
+STUDENT: ${student}
+AGENCY: ${district.toUpperCase()}
+
+================================================================================
+TABLE OF COMPLAINT FILING SECTIONS:
+================================================================================
+  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document (Pages 1–4)
+  2. CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims (Pages 5–6)
+  3. CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones (Pages 7–8)
+  4. EXHIBIT INDEX: Cover Page & Master Evidentiary Schedule (Pages 9–10)
+  5. EXHIBIT A: Cover Page & Student's IEP (Pages 11–12)
+  6. EXHIBIT B: Cover Page & Evaluations & Parent Written Requests (Pages 13–14)
+  7. EXHIBIT C: Cover Page & District Correspondence & Service Logs (Pages 15–16)
+
+================================================================================
+MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:
+================================================================================
+
+EXHIBIT A: STUDENT'S IEP
+• Document: Annual Individualized Education Program (IEP)
+• Date: August 28, 2025 · Author: ${district.toUpperCase()} IEP Team
+• Relevant Pages: Pages 4–8 (Service Delivery Schedule & Accommodations)
+• Evidentiary Purpose: Establishes binding baseline of 240 weekly reading minutes and 60 minutes speech therapy.
+• Supports: Count I (Failure to Implement IEP Services / Denial of FAPE).
+
+EXHIBIT B: EVALUATIONS & PARENT WRITTEN REQUESTS
+• Document: Psychoeducational Evaluation & Formal Parent Re-Evaluation Request Letter
+• Date: October 12, 2025 (timestamped delivery 8:42 AM)
+• Evidentiary Purpose: Verifies written notice of emerging sensory deficits and triggers 60-day statutory timeline.
+• Supports: Count II (Failure to Timely Evaluate & Child Find Violation).
+
+EXHIBIT C: DISTRICT CORRESPONDENCE, PWN & SERVICE LOGS
+• Document: Special Education Service Delivery Logs & Email Correspondence
+• Date: November 1, 2025 – January 15, 2026
+• Evidentiary Purpose: Documentary proof of 18 missed sessions and written admission of staff shortages.
+• Supports: Count I & Count III (Prior Written Notice Omission).
+
+Exhibit files are attached behind this index in labeled alphabetical order.`;
+  }
 
   if (p.id === "exhibit_a" || p.title?.toLowerCase().includes("iep")) {
     return `EXHIBIT A: INDIVIDUALIZED EDUCATION PROGRAM (IEP)
@@ -748,37 +794,55 @@ export function syncExhibitIndexTableOfSections(
   pagesList: DocumentPage[],
   caseDetails?: Partial<ComplaintCaseDetails>
 ): string {
-  if (!content || !content.includes("TABLE OF COMPLAINT FILING SECTIONS:")) return content;
+  if (!content) return content;
 
-  const lines: string[] = [];
-  lines.push("TABLE OF COMPLAINT FILING SECTIONS:");
-  lines.push("================================================================================");
-  lines.push("  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document (Pages 1–4)");
+  let updatedContent = content;
 
-  for (let i = 1; i < pagesList.length; i++) {
-    const p = pagesList[i];
-    const range = getBinderPageRange(i, pagesList, caseDetails);
-    const rangeStr = range.start === range.end ? `Page ${range.start}` : `Pages ${range.start}–${range.end}`;
-    const num = i + 1;
-    let label = p.title.toUpperCase();
-    if (p.id === "clarity_control" || p.category === "restatement") {
-      label = "CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims";
-    } else if (p.id === "chrono_summary" || p.title.toLowerCase().includes("chronological")) {
-      label = "CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones";
-    } else if (p.id === "exhibit_index") {
-      label = "EXHIBIT INDEX: Cover Page & Master Evidentiary Schedule";
-    } else {
-      label = `${p.exhibitTag ? `${p.exhibitTag.toUpperCase()}: ` : ""}${p.title.toUpperCase()}`;
+  // 1. Sync student and district if caseDetails provided
+  const student = caseDetails?.studentName?.replace(/^IN\s+RE:\s*/i, "").trim() || "Brooklyn Smith";
+  const district = (caseDetails?.district?.trim() || "PAULDING COUNTY SCHOOL DISTRICT").toUpperCase();
+
+  if (student && student !== "Student on Record") {
+    updatedContent = updatedContent.replace(/STUDENT:\s*[^\n]+/i, `STUDENT: ${student}`);
+  }
+  if (district && district !== "[REQUIRED — PLEASE FILL OUT (DISTRICT)]") {
+    updatedContent = updatedContent.replace(/AGENCY:\s*[^\n]+/i, `AGENCY: ${district}`);
+    updatedContent = updatedContent.replace(/Author:\s*[^·\n]+IEP Team/i, `Author: ${district} IEP Team`);
+  }
+
+  // 2. Sync Table of Complaint Filing Sections
+  if (updatedContent.includes("TABLE OF COMPLAINT FILING SECTIONS:")) {
+    const lines: string[] = [];
+    lines.push("TABLE OF COMPLAINT FILING SECTIONS:");
+    lines.push("================================================================================");
+    lines.push("  1. STATE FORM: Official GaDOE Formal State Complaint Filing Document (Pages 1–4)");
+
+    for (let i = 1; i < pagesList.length; i++) {
+      const p = pagesList[i];
+      const range = getBinderPageRange(i, pagesList, caseDetails);
+      const rangeStr = range.start === range.end ? `Page ${range.start}` : `Pages ${range.start}–${range.end}`;
+      const num = i + 1;
+      let label = p.title.toUpperCase();
+      if (p.id === "clarity_control" || p.category === "restatement") {
+        label = "CLARITY CONTROL RESTATEMENT: Cover Page & Restatement of Statutory Claims";
+      } else if (p.id === "chrono_summary" || p.title.toLowerCase().includes("chronological")) {
+        label = "CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones";
+      } else if (p.id === "exhibit_index") {
+        label = "EXHIBIT INDEX: Cover Page & Master Evidentiary Schedule";
+      } else {
+        label = `${p.exhibitTag ? `${p.exhibitTag.toUpperCase()}: ` : ""}${p.title.toUpperCase()}`;
+      }
+      lines.push(`  ${num}. ${label} (${rangeStr})`);
     }
-    lines.push(`  ${num}. ${label} (${rangeStr})`);
+
+    const newTableBlock = lines.join("\n");
+    const tableRegex = /TABLE OF COMPLAINT FILING SECTIONS:[\s\S]*?(?================================================================================\s*MASTER INDEX|$)/;
+    if (tableRegex.test(updatedContent)) {
+      updatedContent = updatedContent.replace(tableRegex, newTableBlock + "\n\n");
+    }
   }
 
-  const newTableBlock = lines.join("\n");
-  const tableRegex = /TABLE OF COMPLAINT FILING SECTIONS:[\s\S]*?(?================================================================================\s*MASTER INDEX|$)/;
-  if (tableRegex.test(content)) {
-    return content.replace(tableRegex, newTableBlock + "\n\n");
-  }
-  return content;
+  return updatedContent;
 }
 
 // ── Authentic Transparent Photographic Brass Corner Bracket Asset ───────────
@@ -1150,12 +1214,12 @@ export default function ComplaintWorkspace() {
     }
     if (!initialUrlStudentId) {
       return {
-        studentName: "Elijah Santiago",
+        studentName: "Brooklyn Smith",
         studentDob: "05/18/2008",
         grade: "10th Grade",
-        school: "Midtown High School",
-        district: "Atlanta Public Schools",
-        parentName: "Marcus Santiago",
+        school: "Paulding County High School",
+        district: "PAULDING COUNTY SCHOOL DISTRICT",
+        parentName: "Marcus Smith",
         preparedBy: "Waypoint Advocates",
         submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
         showLogo: true,
@@ -1756,7 +1820,7 @@ export default function ComplaintWorkspace() {
     if (initialDraft?.title) return initialDraft.title;
     if (initialStudentName) return `State Complaint – ${initialStudentName}`;
     if (initialUrlStudentId) return "State Complaint";
-    return "State Complaint – Elijah Santiago";
+    return "State Complaint – Brooklyn Smith";
   });
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [isOpenRecentModalOpen, setIsOpenRecentModalOpen] = useState(false);
@@ -3242,8 +3306,8 @@ This document is incorporated herein and submitted in direct support of Complain
                         )} />
                       </div>
 
-                      {/* Center: Title on top, edit options directly BELOW the text */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-center gap-1 px-1.5 py-0.5">
+                      {/* Center: Title vertically centered right in the middle */}
+                      <div className="flex-1 min-w-0 flex items-center px-2 py-0.5 self-center">
                         <span 
                           onDoubleClick={(e) => {
                             e.stopPropagation();
@@ -3257,28 +3321,24 @@ This document is incorporated herein and submitted in direct support of Complain
                         >
                           {p.title}
                         </span>
-
-                        {/* Remove trigger (on hover, when allowed) */}
-                        {p.id !== "cover" && p.id !== "clarity_control" && p.category !== "restatement" && (
-                          <div className="opacity-0 group-hover:opacity-100 flex items-center justify-end text-[10px] text-[#5C421B] transition-opacity">
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setBinderPendingRemoval({ page: p, index });
-                              }}
-                              className="p-0.5 rounded hover:bg-rose-950/30 text-rose-700 hover:text-rose-900 transition-colors cursor-pointer ml-auto"
-                              title={`Remove "${p.title}" from packet`}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </span>
-                          </div>
-                        )}
                       </div>
 
-                      {/* Right: Miniature document facsimile thumbnail */}
-                      <div className="flex items-center shrink-0 pr-0.5 self-center">
+                      {/* Right: Miniature document facsimile thumbnail + hover remove */}
+                      <div className="flex items-center shrink-0 pr-0.5 gap-1 self-center">
+                        {p.id !== "cover" && p.id !== "clarity_control" && p.category !== "restatement" && (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBinderPendingRemoval({ page: p, index });
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-rose-950/30 text-rose-700 hover:text-rose-900 transition-opacity cursor-pointer"
+                            title={`Remove "${p.title}" from packet`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </span>
+                        )}
                         <MiniaturePagePreview
                           page={p}
                           caseDetails={caseDetails}
@@ -4050,7 +4110,11 @@ This document is incorporated herein and submitted in direct support of Complain
                       <div className="py-4 flex flex-col w-full flex-1">
                         <textarea
                           ref={textareaRef}
-                          value={activePage.content || ""}
+                          value={
+                            activePage.id === "exhibit_index"
+                              ? syncExhibitIndexTableOfSections(activePage.content || getDefaultExhibitContent(activePage, caseDetails), pages, caseDetails)
+                              : (activePage.content || "")
+                          }
                           onChange={(e) => {
                             handleUpdatePageContent(e.target.value);
                             e.target.style.height = "auto";
