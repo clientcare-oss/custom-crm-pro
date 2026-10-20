@@ -9,6 +9,7 @@ import {
   STATE_FORM_PAGE_COUNT,
   PAGES_PER_BINDER,
 } from "../client/src/pages/complaint/ComplaintWorkspace";
+import { INITIAL_GADOE_FORM_STATE } from "../client/src/components/complaint/stateFormsData";
 
 describe("State Complaint Packet Index & Continuous Page Renumbering (PG-020)", () => {
   const initialPages = [
@@ -281,6 +282,18 @@ MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:
     expect(synced).toContain("3. CHRONOLOGICAL SUMMARY: Cover Page & Chronological Timeline of Facts & Milestones (Pages 8–9)");
     // Master index section at the bottom remains intact
     expect(synced).toContain("MASTER INDEX OF DOCUMENTARY EXHIBITS ATTACHED:");
+  });
+
+  it("defaults state mediation willingness to 'no' unless explicitly changed by user", () => {
+    // Official GaDOE default form state must have 'no' preselected for mediation willingness
+    expect(INITIAL_GADOE_FORM_STATE.mediationWillingness).toBe("no");
+
+    // Allows user to select 'yes' or 'na' when clicked
+    const userSelectedYes = { ...INITIAL_GADOE_FORM_STATE, mediationWillingness: "yes" as const };
+    expect(userSelectedYes.mediationWillingness).toBe("yes");
+
+    const userSelectedNa = { ...INITIAL_GADOE_FORM_STATE, mediationWillingness: "na" as const };
+    expect(userSelectedNa.mediationWillingness).toBe("na");
   });
 });
 

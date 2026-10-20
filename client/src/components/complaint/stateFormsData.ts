@@ -210,7 +210,7 @@ export const INITIAL_GADOE_FORM_STATE: OfficialComplaintFormState = {
     "See attached Chronological Summary of Facts & Timeline (Section 03) detailing all incidents, IEP team meetings, service withholding, and evaluation requests occurring within the one-year statutory period (October 2025 – October 2026).\n\nKey Facts:\n• Operative IEP mandated specialized instruction and related services.\n• Formal written parental re-evaluation request submitted for assessment.\n• Service delivery logs establish missed sessions without compensatory make-up time.",
   proposedResolution:
     "1. Award certified 1-on-1 academic instruction and related therapy as compensatory education.\n2. Fund an Independent Educational Evaluation (IEE) at public expense by an independent specialist.\n3. Order the IEP team to reconvene within 15 school days to integrate compensatory hours into an amended IEP.\n4. Mandate administrative training for school-based special education personnel regarding mandatory PWN and evaluation timelines.",
-  mediationWillingness: "yes",
+  mediationWillingness: "no",
   serviceDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }),
   serviceRecipient: "Special Education Director & Superintendent",
   serviceMethod: "Electronic Delivery",

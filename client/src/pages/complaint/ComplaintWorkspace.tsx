@@ -1155,7 +1155,10 @@ export default function ComplaintWorkspace() {
   // State: Official State Complaint Form State (defaults to Georgia GaDOE or loaded draft)
   const [officialFormState, setOfficialFormState] = useState<OfficialComplaintFormState>(() => {
     if (initialDraft?.formState) {
-      return initialDraft.formState;
+      return {
+        ...initialDraft.formState,
+        mediationWillingness: initialDraft.formState.mediationWillingness || "no",
+      };
     }
     if (typeof window !== "undefined") {
       try {
@@ -1186,6 +1189,7 @@ export default function ComplaintWorkspace() {
               !parsed.serviceMethod || parsed.serviceMethod.includes("Certified Mail")
                 ? "Electronic Delivery"
                 : parsed.serviceMethod,
+            mediationWillingness: parsed.mediationWillingness || "no",
             studentAddress: sanitizeMock(parsed.studentAddress),
             studentGtid: sanitizeMock(parsed.studentGtid),
             parentAddress: sanitizeMock(parsed.parentAddress),
@@ -1588,6 +1592,9 @@ export default function ComplaintWorkspace() {
       const cleanForm = { ...draft.formState };
       if (!cleanForm.serviceMethod || cleanForm.serviceMethod.includes("Certified Mail")) {
         cleanForm.serviceMethod = "Electronic Delivery";
+      }
+      if (!cleanForm.mediationWillingness) {
+        cleanForm.mediationWillingness = "no";
       }
       setOfficialFormState((prev) => ({ ...prev, ...cleanForm }));
     }
