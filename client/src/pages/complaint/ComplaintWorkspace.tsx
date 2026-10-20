@@ -5381,12 +5381,12 @@ This document is incorporated herein and submitted in direct support of Complain
 
         {/* 3. Insert Document / Exhibit Modal with PG-023-VAULT Document Vault Access */}
         <Dialog open={isAddPageModalOpen} onOpenChange={setIsAddPageModalOpen}>
-          <DialogContent className="max-w-2xl bg-[#05142B] border border-[#3A2C18] text-white shadow-2xl p-0 overflow-hidden">
+          <DialogContent className="w-[94vw] max-w-4xl lg:max-w-5xl max-h-[86vh] flex flex-col bg-[#05142B] border border-[#C5A059]/60 text-white shadow-2xl p-0 overflow-hidden rounded-xl">
             {/* Header with Admiralty styling & PG-023-VAULT Badge */}
-            <div className="p-5 border-b border-[#3A2C18] bg-gradient-to-r from-[#041633] via-[#072147] to-[#041633] relative">
+            <div className="p-4 sm:p-5 border-b border-[#3A2C18] bg-gradient-to-r from-[#041633] via-[#072147] to-[#041633] relative shrink-0">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#0A2540] text-[#FFE394] border border-[#DFBE77]/40 flex items-center gap-1.5">
                       <FolderArchive className="w-3 h-3 text-[#DFBE77]" />
                       PG-023-VAULT · Document Vault
@@ -5405,12 +5405,12 @@ This document is incorporated herein and submitted in direct support of Complain
               </div>
 
               {/* 3 Tab Mode Switcher */}
-              <div className="flex items-center gap-1.5 mt-4 border-b border-[#3A2C18]/80 pb-0">
+              <div className="flex items-center gap-1.5 mt-3 sm:mt-4 border-b border-[#3A2C18]/80 pb-0 overflow-x-auto custom-scrollbar">
                 <button
                   type="button"
                   onClick={() => setInsertModalTab("vault")}
                   className={cn(
-                    "flex items-center gap-2 px-3.5 py-2 text-xs font-serif font-bold rounded-t-md transition-all cursor-pointer border-b-2",
+                    "flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-[13px] font-serif font-bold rounded-t-md transition-all cursor-pointer border-b-2 whitespace-nowrap",
                     insertModalTab === "vault"
                       ? "bg-[#0B254A] text-[#FFE394] border-[#DFBE77]"
                       : "text-[#C6B697] hover:text-white border-transparent hover:bg-white/[0.04]"
@@ -5427,7 +5427,7 @@ This document is incorporated herein and submitted in direct support of Complain
                   type="button"
                   onClick={() => setInsertModalTab("upload")}
                   className={cn(
-                    "flex items-center gap-2 px-3.5 py-2 text-xs font-serif font-bold rounded-t-md transition-all cursor-pointer border-b-2",
+                    "flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-[13px] font-serif font-bold rounded-t-md transition-all cursor-pointer border-b-2 whitespace-nowrap",
                     insertModalTab === "upload"
                       ? "bg-[#0B254A] text-[#FFE394] border-[#DFBE77]"
                       : "text-[#C6B697] hover:text-white border-transparent hover:bg-white/[0.04]"
@@ -5441,7 +5441,7 @@ This document is incorporated herein and submitted in direct support of Complain
                   type="button"
                   onClick={() => setInsertModalTab("custom")}
                   className={cn(
-                    "flex items-center gap-2 px-3.5 py-2 text-xs font-serif font-bold rounded-t-md transition-all cursor-pointer border-b-2",
+                    "flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-[13px] font-serif font-bold rounded-t-md transition-all cursor-pointer border-b-2 whitespace-nowrap",
                     insertModalTab === "custom"
                       ? "bg-[#0B254A] text-[#FFE394] border-[#DFBE77]"
                       : "text-[#C6B697] hover:text-white border-transparent hover:bg-white/[0.04]"
@@ -5454,7 +5454,7 @@ This document is incorporated herein and submitted in direct support of Complain
             </div>
 
             {/* Modal Body */}
-            <div className="p-5 max-h-[60vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-[#3A2C18]">
+            <div className="p-4 sm:p-6 flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-[#3A2C18]">
               {/* Exhibit Destination Selector (Shows when currently on an open binder) */}
               {activePage.id !== "cover" && (
                 <div className="mb-4 p-3 rounded-lg bg-[#020A17] border border-[#3A2C18] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
@@ -5772,15 +5772,16 @@ This document is incorporated herein and submitted in direct support of Complain
             </div>
 
             {/* Modal Footer */}
-            <div className="p-3.5 border-t border-[#3A2C18] bg-[#031124] flex items-center justify-between text-xs">
+            <div className="p-3 sm:p-3.5 border-t border-[#3A2C18] bg-[#031124] flex items-center justify-between text-xs shrink-0">
               <span className="text-[11px] text-[#A69371] font-mono">
                 Admiralty Docket Engine · Waypoint Advocates
               </span>
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
+                size="sm"
                 onClick={() => setIsAddPageModalOpen(false)}
-                className="text-xs h-7 text-[#C6B697] hover:text-white hover:bg-white/[0.08]"
+                className="text-xs h-7.5 px-3.5 border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] cursor-pointer"
               >
                 Close
               </Button>
