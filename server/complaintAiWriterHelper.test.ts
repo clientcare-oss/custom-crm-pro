@@ -56,4 +56,35 @@ describe("State Complaint AI Writer Helper (PG-020)", () => {
     expect(result.enhancedText.toLowerCase()).not.toContain("master coach");
     expect(result.enhancedText.toLowerCase()).not.toContain("master iep coach");
   });
+
+  it("should generate tailored binder purpose for new binders (PG-020)", async () => {
+    const result = await caller.stateComplaint.generateBinderPurpose({
+      binderTitle: "Speech-Language Therapy Attendance & Provider Service Logs",
+      binderCategory: "exhibit",
+      studentName: "Brooklyn Smith",
+      districtName: "Cobb County School District",
+      stateCode: "GA",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.purpose.length).toBeGreaterThan(15);
+    expect(result.purpose.startsWith("To ")).toBe(true);
+    expect(result.purpose.toLowerCase()).not.toContain("master coach");
+    expect(result.purpose.toLowerCase()).not.toContain("operative");
+  });
+
+  it("should reword existing binder purpose into authoritative legal phrasing", async () => {
+    const result = await caller.stateComplaint.generateBinderPurpose({
+      binderTitle: "Parent Written Re-Evaluation Request Records",
+      binderCategory: "exhibit",
+      existingPurpose: "Show mom sent email asking for testing",
+      studentName: "Elijah Santiago",
+      districtName: "Atlanta Public Schools",
+      stateCode: "GA",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.purpose.length).toBeGreaterThan(20);
+    expect(result.purpose.toLowerCase()).not.toContain("master coach");
+  });
 });

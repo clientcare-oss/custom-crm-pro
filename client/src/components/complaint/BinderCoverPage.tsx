@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { Sparkles } from "lucide-react";
 
 export interface BinderCoverDetails {
   subtitle?: string;
@@ -26,12 +27,14 @@ interface BinderCoverPageProps {
   submissionDate?: string;
   agencyName?: string;
   coverDetails?: BinderCoverDetails;
+  purpose?: string;
   paperTheme?: "parchment" | "white";
   className?: string;
   style?: React.CSSProperties;
   viewMode?: "fit-width" | "fit-page" | "actual";
   zoomLevel?: number;
   onUpdateSummary?: (text: string) => void;
+  onOpenPurposeModal?: () => void;
 }
 
 export function BinderCoverPage({
@@ -50,12 +53,14 @@ export function BinderCoverPage({
   submissionDate,
   agencyName = "Georgia Department of Education",
   coverDetails,
+  purpose,
   paperTheme = "parchment",
   className,
   style,
   viewMode = "fit-width",
   zoomLevel = 100,
   onUpdateSummary,
+  onOpenPurposeModal,
 }: BinderCoverPageProps) {
   const isExhibit = category === "exhibit" || pageId.startsWith("exhibit");
   const isRestatement = pageId === "clarity_control" || category === "restatement";
@@ -118,7 +123,7 @@ export function BinderCoverPage({
   cleanTitle = cleanTitle.replace(/\boperative\s*/gi, "").trim();
 
   // Tailored, authoritative purpose text matching user's legal specification
-  const rawPurposeText = coverDetails?.evidentiaryPurpose || coverDetails?.summary || (() => {
+  const rawPurposeText = purpose || coverDetails?.evidentiaryPurpose || coverDetails?.summary || (() => {
     if (cleanTitle.toLowerCase().includes("evaluation") || cleanTitle.toLowerCase().includes("request")) {
       return "To document the parent's written request for a comprehensive evaluation and establish the date the District received notice of the request.";
     }
@@ -238,11 +243,34 @@ export function BinderCoverPage({
         </h1>
 
         {/* Purpose Box (Clean rectangular bordered box, add nothing extra) */}
-        <div className="w-full border border-[#1A120A] p-5 sm:p-6 text-left bg-transparent">
-          <span className="font-serif uppercase font-bold text-[11px] sm:text-xs tracking-[0.25em] text-[#8C6D2B] block mb-2">
-            PURPOSE
-          </span>
-          <p className="font-serif text-xs sm:text-[14px] leading-relaxed text-[#1A120A]">
+        <div className="w-full border border-[#1A120A] p-5 sm:p-6 text-left bg-transparent group relative">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-serif uppercase font-bold text-[11px] sm:text-xs tracking-[0.25em] text-[#8C6D2B]">
+              PURPOSE
+            </span>
+            {onOpenPurposeModal && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenPurposeModal();
+                }}
+                className="print:hidden opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity flex items-center gap-1.5 text-[11px] font-sans font-semibold px-2 py-0.5 rounded bg-[#07162B] text-[#DFBE77] hover:bg-[#0C2240] hover:text-[#FFE394] border border-[#C5A059]/50 shadow-xs cursor-pointer"
+                title="Edit or AI Rewrite Purpose Statement"
+              >
+                <Sparkles className="w-3 h-3 text-[#DFBE77]" />
+                <span>Edit / AI Rewrite</span>
+              </button>
+            )}
+          </div>
+          <p
+            onClick={onOpenPurposeModal}
+            className={cn(
+              "font-serif text-xs sm:text-[14px] leading-relaxed text-[#1A120A]",
+              onOpenPurposeModal && "cursor-pointer hover:bg-black/[0.02] rounded transition-colors"
+            )}
+            title={onOpenPurposeModal ? "Click to edit or AI-rewrite purpose" : undefined}
+          >
             {purposeText}
           </p>
         </div>

@@ -364,6 +364,7 @@ export interface DocumentPage {
   title: string;
   category: "cover" | "restatement" | "pleading" | "facts" | "violations" | "remedies" | "exhibit";
   content?: string;
+  purpose?: string;
   exhibitTag?: string;
   fileUrl?: string;
   fileName?: string;
@@ -401,6 +402,7 @@ const DEFAULT_PAGES: DocumentPage[] = [
     number: "02", 
     title: "Clarity Control Restatement", 
     category: "restatement", 
+    purpose: "To provide an itemized clarity control restatement of statutory violations pursuant to 34 C.F.R. § 300.153 and state administrative rules, establishing Counts I, II, and III with jurisdictional facts.",
     content: `#1. STATEMENT OF ALLEGED VIOLATIONS
 See attached Clarity Control Restatement of Issues & Statutory Violations (Section 02) and accompanying Exhibit Index for complete itemized counts under 34 C.F.R. § 300.153 and Ga. Comp. R. & Regs. 160-4-7-.12.
 
@@ -427,6 +429,7 @@ Key Facts:
     number: "03", 
     title: "Chronological Summary", 
     category: "facts", 
+    purpose: "To establish a chronological factual narrative of all relevant events, requests, and statutory milestones occurring within the applicable one-year statutory period.",
     content: `CHRONOLOGICAL SUMMARY OF FACTS & TIMELINE
 
 ELIJAH SANTIAGO
@@ -457,6 +460,7 @@ Parent notified district administration of ongoing service deprivation and reque
     number: "04", 
     title: "Master Exhibit Index", 
     category: "pleading", 
+    purpose: "To provide a comprehensive master evidentiary schedule indexing all attached documentary records, service logs, and evaluation reports.",
     content: `MASTER EXHIBIT INDEX
 Formal State Complaint
 
@@ -481,6 +485,7 @@ District Correspondence & Service Logs`
     title: "Exhibit A — Operative IEP & Specialized Instruction Schedule", 
     category: "exhibit", 
     exhibitTag: "Exhibit A", 
+    purpose: "To document the Individualized Education Program (IEP) in effect, establishing mandated specialized instruction hours, accommodations, and service delivery commitments.",
     content: `EXHIBIT A: INDIVIDUALIZED EDUCATION PROGRAM (IEP)
 STUDENT: Brooklyn Smith · LEA / DISTRICT: PAULDING COUNTY SCHOOL DISTRICT
 
@@ -502,6 +507,7 @@ EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
     title: "Exhibit B — Psychoeducational Evaluations & Parent Written Requests", 
     category: "exhibit", 
     exhibitTag: "Exhibit B", 
+    purpose: "To document the parent's written request for a comprehensive evaluation and establish the date the District received notice of the request.",
     content: `EXHIBIT B: EVALUATIONS & PARENT WRITTEN REQUESTS
 STUDENT: Brooklyn Smith · LEA / DISTRICT: PAULDING COUNTY SCHOOL DISTRICT
 
@@ -523,6 +529,7 @@ EVIDENTIARY BASIS IN SUPPORT OF COMPLAINT:
     title: "Exhibit C — District Correspondence & Service Logs", 
     category: "exhibit", 
     exhibitTag: "Exhibit C", 
+    purpose: "To document written communications and formal correspondence between parent, advocate, and District personnel establishing notice and timeline compliance.",
     content: `EXHIBIT C: DISTRICT CORRESPONDENCE & SERVICE LOGS
 STUDENT: Brooklyn Smith · LEA / DISTRICT: PAULDING COUNTY SCHOOL DISTRICT
 
@@ -2427,6 +2434,8 @@ export default function ComplaintWorkspace() {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState("");
   const [newPageCategory, setNewPageCategory] = useState<DocumentPage["category"]>("exhibit");
+  const [newPagePurpose, setNewPagePurpose] = useState("");
+  const [isGeneratingNewPagePurpose, setIsGeneratingNewPagePurpose] = useState(false);
   const [insertModalTab, setInsertModalTab] = useState<"vault" | "upload" | "custom">("vault");
   const [vaultSearchQuery, setVaultSearchQuery] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -2619,17 +2628,71 @@ export default function ComplaintWorkspace() {
   const [binderToRename, setBinderToRename] = useState<DocumentPage | null>(null);
   const [renameTitleInput, setRenameTitleInput] = useState("");
   const [renameExhibitTagInput, setRenameExhibitTagInput] = useState("");
+  const [renamePurposeInput, setRenamePurposeInput] = useState("");
+  const [isGeneratingRenamePurpose, setIsGeneratingRenamePurpose] = useState(false);
+
+  const generatePurposeMutation = trpc.stateComplaint.generateBinderPurpose.useMutation();
 
   const handleOpenRenameModal = (page: DocumentPage) => {
     setBinderToRename(page);
     setRenameTitleInput(page.title);
     setRenameExhibitTagInput(page.exhibitTag || "");
+    const initialPurpose = page.purpose || (() => {
+      const lower = page.title.toLowerCase();
+      if (lower.includes("evaluation") || lower.includes("request")) {
+        return "To document the parent's written request for a comprehensive evaluation and establish the date the District received notice of the request.";
+      }
+      if (lower.includes("iep")) {
+        return "To document the Individualized Education Program (IEP) in effect, establishing mandated specialized instruction hours, accommodations, and service delivery commitments.";
+      }
+      if (lower.includes("communication") || lower.includes("email")) {
+        return "To document written communications and formal correspondence between parent, advocate, and District personnel establishing notice and timeline compliance.";
+      }
+      if (page.id === "clarity_control" || page.category === "restatement") {
+        return "To provide an itemized clarity control restatement of statutory violations pursuant to 34 C.F.R. § 300.153 and state administrative rules, establishing Counts I, II, and III with jurisdictional facts.";
+      }
+      if (page.id === "chronological_summary" || page.category === "facts") {
+        return "To establish a chronological factual narrative of all relevant events, requests, and statutory milestones occurring within the applicable one-year statutory period.";
+      }
+      if (page.id === "exhibit_index") {
+        return "To provide a comprehensive master evidentiary schedule indexing all attached documentary records, service logs, and evaluation reports.";
+      }
+      if (page.category === "exhibit") {
+        return "To document authenticated documentary evidence in support of Complainant's statement of statutory violations and factual allegations.";
+      }
+      return "To document official administrative filing records and factual allegations submitted on behalf of the student pursuant to IDEA dispute resolution procedures.";
+    })();
+    setRenamePurposeInput(initialPurpose);
+  };
+
+  const handleAiRewordPurpose = async () => {
+    if (!binderToRename || !renameTitleInput.trim()) return;
+    try {
+      setIsGeneratingRenamePurpose(true);
+      const res = await generatePurposeMutation.mutateAsync({
+        binderTitle: renameTitleInput.trim(),
+        binderCategory: binderToRename.category,
+        existingPurpose: renamePurposeInput.trim() || undefined,
+        studentName: caseDetails.studentName,
+        districtName: caseDetails.district,
+        stateCode: officialFormState.stateCode || "GA",
+      });
+      if (res?.purpose) {
+        setRenamePurposeInput(res.purpose);
+        toast.success("AI reworded purpose statement for cover page");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reword purpose");
+    } finally {
+      setIsGeneratingRenamePurpose(false);
+    }
   };
 
   const handleSaveRename = () => {
     if (!binderToRename || !renameTitleInput.trim()) return;
     const newTitle = renameTitleInput.trim();
     const newExhibitTag = renameExhibitTagInput.trim();
+    const newPurpose = renamePurposeInput.trim() || undefined;
 
     setPages((prevPages) =>
       prevPages.map((p) =>
@@ -2637,13 +2700,14 @@ export default function ComplaintWorkspace() {
           ? {
               ...p,
               title: newTitle,
+              purpose: newPurpose,
               ...(p.category === "exhibit" ? { exhibitTag: newExhibitTag || p.exhibitTag } : {}),
             }
           : p
       )
     );
 
-    toast.success(`Renamed binder to "${newTitle}"`);
+    toast.success(`Updated "${newTitle}" and cover page purpose.`);
     setBinderToRename(null);
   };
 
@@ -3025,6 +3089,33 @@ export default function ComplaintWorkspace() {
     );
   }, [iepDocQuery.data, draftHistoryQuery.data, vaultQuery.data, vaultSearchQuery]);
 
+  // AI Generator for Tab 3 New Custom Page Purpose
+  const handleGenerateNewPagePurpose = async () => {
+    if (!newPageTitle.trim()) {
+      toast.error("Please enter a section title first to generate a purpose statement.");
+      return;
+    }
+    try {
+      setIsGeneratingNewPagePurpose(true);
+      const res = await generatePurposeMutation.mutateAsync({
+        binderTitle: newPageTitle.trim(),
+        binderCategory: newPageCategory,
+        existingPurpose: newPagePurpose.trim() || undefined,
+        studentName: caseDetails.studentName,
+        districtName: caseDetails.district,
+        stateCode: officialFormState.stateCode || "GA",
+      });
+      if (res?.purpose) {
+        setNewPagePurpose(res.purpose);
+        toast.success("AI generated purpose statement for cover page");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate purpose statement");
+    } finally {
+      setIsGeneratingNewPagePurpose(false);
+    }
+  };
+
   // Add Page handler
   const handleAddPage = () => {
     if (!newPageTitle.trim()) return;
@@ -3043,6 +3134,7 @@ export default function ComplaintWorkspace() {
       number: nextNum,
       title: finalTitle,
       category: newPageCategory,
+      purpose: newPagePurpose.trim() || undefined,
       exhibitTag: isExhibit ? `Exhibit ${nextLetter}` : undefined,
       content: isExhibit
         ? `EXHIBIT ${nextLetter} · EVIDENTIARY RECORD\n\nThis evidentiary exhibit is incorporated in formal support of Complainant's state complaint claims.`
@@ -3053,7 +3145,8 @@ export default function ComplaintWorkspace() {
     setActivePageId(newPage.id);
     setIsAddPageModalOpen(false);
     setNewPageTitle("");
-    toast.success(`Binder "${finalTitle}" (${nextNum}) added to state complaint packet`);
+    setNewPagePurpose("");
+    toast.success(`Binder "${finalTitle}" (${nextNum}) with standard cover page added to packet`);
   };
 
   // Handler: Insert exhibit directly from Document Vault (PG-023-VAULT)
@@ -4317,6 +4410,8 @@ This document is incorporated herein and submitted in direct support of Complain
                     preparedBy={caseDetails.preparedBy}
                     submissionDate={caseDetails.submissionDate}
                     agencyName={SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"}
+                    purpose={activePage.purpose}
+                    onOpenPurposeModal={() => handleOpenRenameModal(activePage)}
                     viewMode={viewMode}
                     zoomLevel={zoomLevel}
                   />
@@ -4473,6 +4568,8 @@ This document is incorporated herein and submitted in direct support of Complain
                     preparedBy={caseDetails.preparedBy}
                     submissionDate={caseDetails.submissionDate}
                     agencyName={SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"}
+                    purpose={activePage.purpose}
+                    onOpenPurposeModal={() => handleOpenRenameModal(activePage)}
                     viewMode={viewMode}
                     zoomLevel={zoomLevel}
                   />
@@ -5757,6 +5854,38 @@ This document is incorporated herein and submitted in direct support of Complain
                     </select>
                   </div>
 
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <Label className="text-[#C6B697] text-xs">
+                        Cover Page Purpose Statement (Standard Black-Bordered Box)
+                      </Label>
+                      <button
+                        type="button"
+                        disabled={!newPageTitle.trim() || isGeneratingNewPagePurpose}
+                        onClick={handleGenerateNewPagePurpose}
+                        className="flex items-center gap-1.5 text-[11px] font-sans font-semibold text-[#DFBE77] hover:text-[#FFE394] transition-colors disabled:opacity-40 cursor-pointer px-2 py-0.5 rounded bg-[#020A17] border border-[#C5A059]/40 hover:border-[#DFBE77]"
+                        title="Generate or reword purpose statement using AI"
+                      >
+                        {isGeneratingNewPagePurpose ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-[#DFBE77]" />
+                        ) : (
+                          <Sparkles className="w-3.5 h-3.5 text-[#DFBE77]" />
+                        )}
+                        <span>{newPagePurpose ? "AI Reword Purpose" : "✨ AI Generate Purpose"}</span>
+                      </button>
+                    </div>
+                    <textarea
+                      placeholder="e.g. To establish a chronological factual narrative of all relevant events and statutory milestones occurring within the applicable one-year statutory period..."
+                      value={newPagePurpose}
+                      onChange={(e) => setNewPagePurpose(e.target.value)}
+                      rows={3}
+                      className="w-full bg-[#020A17] border border-[#3A2C18] focus:border-[#DFBE77] text-white rounded-md p-2.5 text-xs leading-relaxed resize-none font-serif placeholder:text-[#5A4830] outline-none"
+                    />
+                    <p className="text-[10.5px] text-[#A69371] mt-1">
+                      Renders inside the black-bordered <strong className="text-[#DFBE77]">PURPOSE</strong> box on this binder's standard cover sheet (just like Binder 02).
+                    </p>
+                  </div>
+
                   <div className="pt-2 flex justify-end">
                     <Button
                       type="button"
@@ -5997,6 +6126,7 @@ This document is incorporated herein and submitted in direct support of Complain
                         preparedBy={caseDetails.preparedBy}
                         submissionDate={caseDetails.submissionDate}
                         agencyName={SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"}
+                        purpose={p.purpose}
                         paperTheme="white"
                         viewMode="actual"
                         zoomLevel={100}
@@ -6214,6 +6344,7 @@ This document is incorporated herein and submitted in direct support of Complain
           }}
           stateCode={officialFormState.stateCode || "GA"}
           studentName={caseDetails.studentName}
+          districtName={caseDetails.district}
           onOpenVaultInsert={() => {
             setIsManageBindersModalOpen(false);
             setIsAddPageModalOpen(true);
@@ -6297,7 +6428,7 @@ This document is incorporated herein and submitted in direct support of Complain
         >
           <DialogContent
             className={cn(
-              "w-full max-w-md p-5 rounded-xl border shadow-2xl",
+              "w-[95vw] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[88vh] overflow-y-auto custom-scrollbar p-6 sm:p-7 rounded-2xl border shadow-2xl",
               "bg-[#07162B] border-[#C5A059]/80 text-slate-100"
             )}
             style={{
@@ -6307,24 +6438,31 @@ This document is incorporated herein and submitted in direct support of Complain
               backgroundSize: "220px",
             }}
           >
-            <DialogHeader className="flex flex-row items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#031124] border border-[#C5A059]/70 flex items-center justify-center text-[#FFE394] shrink-0 shadow-lg">
-                <Pencil className="w-4 h-4 text-[#DFBE77]" />
+            <DialogHeader className="flex flex-row items-start gap-3.5 pb-2 border-b border-[#3A2C18]">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#DFBE77] to-[#9E7D3B] p-0.5 flex items-center justify-center shrink-0 shadow-lg">
+                <div className="w-full h-full bg-[#031124] rounded-[10px] flex items-center justify-center text-[#FFE394]">
+                  <Pencil className="w-5 h-5 text-[#DFBE77]" />
+                </div>
               </div>
 
               <div className="text-left flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <DialogTitle className="font-serif font-bold text-base text-[#FFF4D4]">
-                    Rename Binder
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <DialogTitle className="font-serif font-bold text-lg sm:text-xl text-[#FFF4D4]">
+                    Rename Binder & Cover Page
                   </DialogTitle>
                   {binderToRename && (
-                    <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#031124] border border-[#C5A059]/50 text-[#FFE394]">
+                    <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#031124] border border-[#C5A059]/60 text-[#FFE394] font-bold">
                       {binderToRename.id === "cover" ? "Binder 01" : `Binder ${binderToRename.number || ""}`}
+                    </span>
+                  )}
+                  {binderToRename?.category && (
+                    <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#0A2540] text-[#DFBE77] border border-[#DFBE77]/40 uppercase tracking-wider">
+                      {binderToRename.category}
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-[#C6B697] mt-1 leading-relaxed">
-                  Enter a new name for this packet binder. Changes update the index, continuous docket page headers, and filing bookmarks immediately.
+                  Configure this packet binder's name, evidentiary tag, and standard cover sheet purpose statement. Updates reflect immediately across the index, continuous docket page headers, and filing bookmarks.
                 </p>
               </div>
             </DialogHeader>
@@ -6334,51 +6472,107 @@ This document is incorporated herein and submitted in direct support of Complain
                 e.preventDefault();
                 handleSaveRename();
               }}
-              className="mt-3 flex flex-col gap-3.5"
+              className="mt-4 flex flex-col gap-4.5"
             >
-              <div>
-                <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5">
-                  Binder Name / Title <span className="text-rose-400">*</span>
-                </label>
-                <Input
-                  value={renameTitleInput}
-                  onChange={(e) => setRenameTitleInput(e.target.value)}
-                  placeholder="e.g., Parent's Statement of Facts & Chronology"
-                  autoFocus
-                  onFocus={(e) => e.target.select()}
-                  className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-serif text-sm h-10 placeholder:text-[#5A4830]"
-                />
-              </div>
-
-              {binderToRename?.category === "exhibit" && (
-                <div>
-                  <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5">
-                    Exhibit Identification Tag (Optional)
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className={cn(binderToRename?.category === "exhibit" ? "md:col-span-2" : "col-span-full")}>
+                  <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5 flex items-center justify-between">
+                    <span>Binder Name / Title <span className="text-rose-400">*</span></span>
+                    <span className="text-[10px] font-sans font-normal text-[#A69371]">Docket Index & Header</span>
                   </label>
                   <Input
-                    value={renameExhibitTagInput}
-                    onChange={(e) => setRenameExhibitTagInput(e.target.value)}
-                    placeholder="e.g., Exhibit A or EXHIBIT C"
-                    className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-mono text-xs h-9 placeholder:text-[#5A4830]"
+                    value={renameTitleInput}
+                    onChange={(e) => setRenameTitleInput(e.target.value)}
+                    placeholder="e.g., Parent's Statement of Facts & Chronology"
+                    autoFocus
+                    onFocus={(e) => e.target.select()}
+                    className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-serif text-sm h-11 px-3.5 placeholder:text-[#5A4830] rounded-lg"
                   />
-                  <p className="text-[11px] text-[#A69371] mt-1">
-                    Used on evidentiary stamps and exhibit tab slip sheets.
-                  </p>
+                </div>
+
+                {binderToRename?.category === "exhibit" && (
+                  <div className="md:col-span-1">
+                    <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5 flex items-center justify-between">
+                      <span>Exhibit Identification Tag</span>
+                      <span className="text-[10px] font-sans font-normal text-[#A69371]">Optional</span>
+                    </label>
+                    <Input
+                      value={renameExhibitTagInput}
+                      onChange={(e) => setRenameExhibitTagInput(e.target.value)}
+                      placeholder="e.g., Exhibit A or EXHIBIT C"
+                      className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-mono text-sm h-11 px-3.5 placeholder:text-[#5A4830] rounded-lg"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Cover Page Purpose Statement with AI Reword Button */}
+              {binderToRename?.id !== "cover" && (
+                <div className="p-4 sm:p-5 rounded-xl bg-[#031124]/90 border border-[#3A2C18] shadow-inner flex flex-col gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-md bg-[#0A2540] border border-[#DFBE77]/40 flex items-center justify-center text-[#DFBE77] shrink-0">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="block text-xs font-serif font-bold text-[#FFE394]">
+                          Cover Page Purpose Statement
+                        </span>
+                        <span className="text-[10px] text-[#A69371]">
+                          Formal legal/factual objective printed on the binder's standard cover sheet
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={!renameTitleInput.trim() || isGeneratingRenamePurpose}
+                      onClick={handleAiRewordPurpose}
+                      className="flex items-center justify-center gap-1.5 text-xs font-sans font-bold text-[#07162B] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 transition-all disabled:opacity-40 cursor-pointer px-3.5 py-1.5 rounded-lg shadow-sm shrink-0"
+                      title="Use AI to reword or generate an authoritative purpose statement"
+                    >
+                      {isGeneratingRenamePurpose ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-3.5 h-3.5" />
+                      )}
+                      <span>{renamePurposeInput ? "✨ AI Reword Purpose" : "✨ AI Generate Purpose"}</span>
+                    </button>
+                  </div>
+
+                  <textarea
+                    value={renamePurposeInput}
+                    onChange={(e) => setRenamePurposeInput(e.target.value)}
+                    placeholder="e.g., To establish authenticated written correspondence between parent and LEA, demonstrating actual notice of educational disputes under 34 C.F.R. § 300.503 and Georgia Rule 160-4-7-.12..."
+                    rows={4}
+                    className="w-full bg-[#020A17] border border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-serif text-sm p-3.5 rounded-lg placeholder:text-[#5A4830] resize-y leading-relaxed outline-none transition-all shadow-inner"
+                  />
+
+                  <div className="flex items-center gap-2 text-[11px] text-[#A69371] bg-[#020A17]/80 p-2.5 rounded-lg border border-[#3A2C18]/60">
+                    <span className="font-semibold text-[#DFBE77] shrink-0">Standard Specification:</span>
+                    <span>
+                      Renders inside the black-bordered <strong className="text-[#FFF4D4]">PURPOSE</strong> box on this binder's standard cover sheet (matching Binder 02).
+                    </span>
+                  </div>
                 </div>
               )}
 
-              <div className="p-2.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18] text-[11px] text-[#A69371] flex items-center justify-between">
-                <span>Category: <strong className="text-[#DFBE77] capitalize">{binderToRename?.category}</strong></span>
-                <span className="text-[10px] text-[#C6B697] italic">Press Enter to save</span>
+              <div className="p-3 rounded-lg bg-[#020A17]/80 border border-[#3A2C18] text-xs text-[#A69371] flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <span>Category: <strong className="text-[#DFBE77] capitalize">{binderToRename?.category}</strong></span>
+                  <span>•</span>
+                  <span>Binder ID: <strong className="text-[#FFE394] font-mono">{binderToRename?.id}</strong></span>
+                </div>
+                <span className="text-[11px] text-[#C6B697] italic">Press Enter to save</span>
               </div>
 
-              <DialogFooter className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#3A2C18] mt-1">
+              <DialogFooter className="flex items-center justify-end gap-3 pt-3 border-t border-[#3A2C18] mt-1">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setBinderToRename(null)}
-                  className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] text-xs h-8 cursor-pointer"
+                  className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] text-xs h-9 px-4 cursor-pointer"
                 >
                   Cancel
                 </Button>
@@ -6387,9 +6581,9 @@ This document is incorporated herein and submitted in direct support of Complain
                   type="submit"
                   size="sm"
                   disabled={!renameTitleInput.trim()}
-                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-4 hover:brightness-110 shadow-md cursor-pointer disabled:opacity-40"
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-9 px-6 hover:brightness-110 shadow-md cursor-pointer disabled:opacity-40"
                 >
-                  Save Binder Name
+                  Save Binder & Cover Page
                 </Button>
               </DialogFooter>
             </form>
@@ -6989,6 +7183,7 @@ This document is incorporated herein and submitted in direct support of Complain
                       preparedBy={caseDetails.preparedBy}
                       submissionDate={caseDetails.submissionDate}
                       agencyName={SUPPORTED_STATE_FORMS[officialFormState.stateCode]?.agencyName || "Georgia Department of Education"}
+                      purpose={p.purpose}
                       paperTheme="white"
                       viewMode="actual"
                     />

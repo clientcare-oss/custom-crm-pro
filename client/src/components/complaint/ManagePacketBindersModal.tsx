@@ -14,9 +14,13 @@ import {
   Lock,
   FolderArchive,
   Pencil,
+  Sparkles,
+  Loader2,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 import {
   getDocketTotalPages,
   getBinderPageRange,
@@ -32,6 +36,7 @@ export const STANDARD_ADVOCACY_BINDERS: Omit<DocumentPage, "number">[] = [
     id: "clarity_control",
     title: "Clarity Control Restatement",
     category: "restatement",
+    purpose: "To provide an itemized clarity control restatement of statutory violations pursuant to 34 C.F.R. § 300.153 and state administrative rules, establishing Counts I, II, and III with jurisdictional facts.",
     content: `BEFORE THE STATE DEPARTMENT OF EDUCATION
 DIVISION FOR SPECIAL EDUCATION SERVICES AND SUPPORTS
 
@@ -54,6 +59,7 @@ The LEA altered educational programming and refused evaluations without mandator
     id: "chronological_summary",
     title: "Chronological Summary of Facts",
     category: "facts",
+    purpose: "To establish a chronological factual narrative of all relevant events, requests, and statutory milestones occurring within the applicable one-year statutory period.",
     content: `CHRONOLOGICAL SUMMARY OF RELEVANT FACTS & TIMELINE
 (ALL EVENTS WITHIN 1-YEAR STATUTORY PERIOD · 34 C.F.R. § 300.153(c))
 
@@ -66,6 +72,7 @@ The LEA altered educational programming and refused evaluations without mandator
     id: "exhibit_index",
     title: "Master Exhibit Index",
     category: "pleading",
+    purpose: "To provide a comprehensive master evidentiary schedule indexing all attached documentary records, service logs, and evaluation reports.",
     content: `MASTER EXHIBIT INDEX
 Formal State Complaint
 
@@ -83,6 +90,7 @@ Highlighted sections: Pages 32–34`,
     id: "student_impact",
     title: "Student Impact & Educational Regression",
     category: "pleading",
+    purpose: "To document the tangible educational, emotional, and behavioral impact of withheld services and establish the legal justification for compensatory restoration.",
     content: `STUDENT IMPACT & DOCUMENTED EDUCATIONAL REGRESSION
 
 1. ACADEMIC IMPACT:
@@ -98,6 +106,7 @@ Full compensatory 1-on-1 certified instruction is required to restore the studen
     id: "pwn_procedural_log",
     title: "Prior Written Notice (PWN) Omission Log",
     category: "pleading",
+    purpose: "To document systematic procedural violations of 34 C.F.R. § 300.503 arising from the Local Educational Agency's failure to provide mandatory Prior Written Notice.",
     content: `PRIOR WRITTEN NOTICE (PWN) PROCEDURAL COMPLIANCE AUDIT
 GOVERNING STATUTE: 34 C.F.R. § 300.503
 
@@ -107,6 +116,7 @@ The LEA repeatedly altered educational programming, refused parent requests, and
     id: "compensatory_calculation",
     title: "Compensatory Education Calculation",
     category: "remedies",
+    purpose: "To provide an itemized qualitative and quantitative schedule of requested compensatory education and independent evaluation remedies.",
     content: `PROPOSED COMPENSATORY EDUCATION CALCULATION & RELIEF SCHEDULE
 
 1. Special Education Instruction:
@@ -131,6 +141,7 @@ interface ManagePacketBindersModalProps {
   onSelectPage: (pageId: string) => void;
   stateCode?: string;
   studentName?: string;
+  districtName?: string;
   onOpenVaultInsert?: () => void;
 }
 
@@ -143,6 +154,7 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
   onSelectPage,
   stateCode = "GA",
   studentName = "Student",
+  districtName = "District",
   onOpenVaultInsert,
 }) => {
   // Binder marked for deletion with Yes/No confirmation dialog
@@ -156,9 +168,15 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [dragPos, setDragPos] = useState<"before" | "after" | null>(null);
 
-  // New Custom Binder Name input
+  // New Custom Binder Name, Category & Purpose inputs
   const [customBinderTitle, setCustomBinderTitle] = useState("");
+  const [customBinderCategory, setCustomBinderCategory] = useState<DocumentPage["category"]>("pleading");
+  const [customBinderPurpose, setCustomBinderPurpose] = useState("");
   const [isAddingCustom, setIsAddingCustom] = useState(false);
+  const [isGeneratingCustomPurpose, setIsGeneratingCustomPurpose] = useState(false);
+
+  // AI Purpose Generation Mutation
+  const generatePurposeMutation = trpc.stateComplaint.generateBinderPurpose.useMutation();
 
   // Handler: Reorder binders
   const handleReorder = (fromIndex: number, toIndex: number) => {
@@ -180,30 +198,86 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
   const [binderToRename, setBinderToRename] = useState<DocumentPage | null>(null);
   const [renameTitleInput, setRenameTitleInput] = useState("");
   const [renameExhibitTagInput, setRenameExhibitTagInput] = useState("");
+  const [renamePurposeInput, setRenamePurposeInput] = useState("");
+  const [isGeneratingRenamePurpose, setIsGeneratingRenamePurpose] = useState(false);
 
   const handleOpenRename = (p: DocumentPage) => {
     setBinderToRename(p);
     setRenameTitleInput(p.title);
     setRenameExhibitTagInput(p.exhibitTag || "");
+    setRenamePurposeInput(p.purpose || "");
   };
 
   const handleSaveRename = () => {
     if (!binderToRename || !renameTitleInput.trim()) return;
     const newTitle = renameTitleInput.trim();
     const newExhibitTag = renameExhibitTagInput.trim();
+    const newPurpose = renamePurposeInput.trim() || undefined;
 
     const updated = pages.map((p) =>
       p.id === binderToRename.id
         ? {
             ...p,
             title: newTitle,
+            purpose: newPurpose,
             ...(p.category === "exhibit" ? { exhibitTag: newExhibitTag || p.exhibitTag } : {}),
           }
         : p
     );
     onUpdatePages(updated);
-    toast.success(`Renamed binder to "${newTitle}"`);
+    toast.success(`Updated "${newTitle}" details and cover page purpose.`);
     setBinderToRename(null);
+  };
+
+  // AI Generator for Custom Binder Purpose
+  const handleGenerateCustomPurpose = async () => {
+    if (!customBinderTitle.trim()) {
+      toast.error("Please enter a binder title first to generate a purpose statement.");
+      return;
+    }
+    try {
+      setIsGeneratingCustomPurpose(true);
+      const res = await generatePurposeMutation.mutateAsync({
+        binderTitle: customBinderTitle.trim(),
+        binderCategory: customBinderCategory,
+        existingPurpose: customBinderPurpose.trim() || undefined,
+        studentName,
+        districtName,
+        stateCode,
+      });
+      if (res?.purpose) {
+        setCustomBinderPurpose(res.purpose);
+        toast.success("Generated authoritative purpose statement for cover page");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate purpose statement");
+    } finally {
+      setIsGeneratingCustomPurpose(false);
+    }
+  };
+
+  // AI Generator for Renaming/Editing Purpose
+  const handleGenerateRenamePurpose = async () => {
+    if (!binderToRename || !renameTitleInput.trim()) return;
+    try {
+      setIsGeneratingRenamePurpose(true);
+      const res = await generatePurposeMutation.mutateAsync({
+        binderTitle: renameTitleInput.trim(),
+        binderCategory: binderToRename.category,
+        existingPurpose: renamePurposeInput.trim() || undefined,
+        studentName,
+        districtName,
+        stateCode,
+      });
+      if (res?.purpose) {
+        setRenamePurposeInput(res.purpose);
+        toast.success("AI rewritten purpose statement ready");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to rewrite purpose statement");
+    } finally {
+      setIsGeneratingRenamePurpose(false);
+    }
   };
 
   // Keyboard shortcut: close on Escape
@@ -274,12 +348,13 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
     const newPage: DocumentPage = {
       ...std,
       number: nextNum,
+      purpose: std.purpose,
     };
 
     const updatedPages = [...pages, newPage];
     onUpdatePages(updatedPages);
     onSelectPage(newPage.id);
-    toast.success(`Added "${std.title}" to binder index as Binder ${nextNum}.`);
+    toast.success(`Added "${std.title}" with standard cover page as Binder ${nextNum}.`);
   };
 
   // Handler: Add a new Exhibit Binder
@@ -293,6 +368,7 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
       number: nextNum,
       title: `Exhibit ${nextLetter}`,
       category: "exhibit",
+      purpose: `To document authenticated documentary evidence in support of Complainant's statement of statutory violations and factual allegations.`,
       exhibitTag: `Exhibit ${nextLetter}`,
       content: `EXHIBIT ${nextLetter} · EVIDENTIARY RECORD\n\nThis evidentiary exhibit is incorporated in formal support of Complainant's state complaint claims.`,
     };
@@ -300,7 +376,7 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
     const updatedPages = resequenceExhibits([...pages, newExhibit]);
     onUpdatePages(updatedPages);
     onSelectPage(newExhibit.id);
-    toast.success(`Added Exhibit ${nextLetter} as Binder ${nextNum}. Page numbers updated.`);
+    toast.success(`Added Exhibit ${nextLetter} with standard cover page as Binder ${nextNum}.`);
   };
 
   // Handler: Add a custom user-defined binder
@@ -309,21 +385,33 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
 
     const nextIdx = pages.length;
     const nextNum = nextIdx + 1 < 10 ? `0${nextIdx + 1}` : `${nextIdx + 1}`;
+    const nextLetter = getNextExhibitLetter(pages);
+    const isExhibit = customBinderCategory === "exhibit";
+
+    let finalTitle = customBinderTitle.trim();
+    if (isExhibit && !finalTitle.toLowerCase().startsWith("exhibit")) {
+      finalTitle = `Exhibit ${nextLetter} — ${finalTitle}`;
+    }
 
     const newPage: DocumentPage = {
-      id: `custom_${Date.now()}`,
+      id: isExhibit ? `exhibit_${nextLetter.toLowerCase()}_${Date.now()}` : `custom_${Date.now()}`,
       number: nextNum,
-      title: customBinderTitle.trim(),
-      category: "pleading",
-      content: `DOCUMENT SECTION: ${customBinderTitle.toUpperCase()}\n\nEnter formal legal statement, factual chronology, or evidentiary proffer here...`,
+      title: finalTitle,
+      category: customBinderCategory,
+      purpose: customBinderPurpose.trim() || undefined,
+      exhibitTag: isExhibit ? `Exhibit ${nextLetter}` : undefined,
+      content: isExhibit
+        ? `EXHIBIT ${nextLetter} · EVIDENTIARY RECORD\n\nThis evidentiary exhibit is incorporated in formal support of Complainant's state complaint claims.`
+        : `DOCUMENT SECTION: ${finalTitle.toUpperCase()}\n\nEnter formal legal statement, factual chronology, or evidentiary proffer here...`,
     };
 
-    const updatedPages = [...pages, newPage];
+    const updatedPages = isExhibit ? resequenceExhibits([...pages, newPage]) : [...pages, newPage];
     onUpdatePages(updatedPages);
     onSelectPage(newPage.id);
     setCustomBinderTitle("");
+    setCustomBinderPurpose("");
     setIsAddingCustom(false);
-    toast.success(`Added "${newPage.title}" as Binder ${nextNum}. Page numbers updated.`);
+    toast.success(`Added "${newPage.title}" with standard cover page as Binder ${nextNum}.`);
   };
 
   const totalPages = getDocketTotalPages(pages);
@@ -334,7 +422,7 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150">
         <div
           className={cn(
-            "w-full max-w-2xl max-h-[85vh] flex flex-col rounded-xl overflow-hidden border shadow-2xl transition-all",
+            "w-full max-w-4xl lg:max-w-5xl max-h-[88vh] flex flex-col rounded-xl overflow-hidden border shadow-2xl transition-all",
             "bg-[#041329] border-[#C5A059]/70 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.08)]"
           )}
           style={{
@@ -528,6 +616,11 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
                               </>
                             )}
                           </div>
+                          {p.purpose && (
+                            <div className="text-[10px] text-[#C6B697] truncate mt-1 max-w-[360px] sm:max-w-[440px] leading-tight" title={`Cover Page Purpose: ${p.purpose}`}>
+                              <span className="text-[#8C6D2B] font-semibold">Purpose:</span> {p.purpose}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -654,37 +747,109 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
             {/* Section 3: Add Additional Exhibit or Custom Section */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#3A2C18] shrink-0">
               {isAddingCustom ? (
-                <div className="flex items-center gap-2 w-full">
-                  <input
-                    type="text"
-                    value={customBinderTitle}
-                    onChange={(e) => setCustomBinderTitle(e.target.value)}
-                    placeholder="Enter custom binder title (e.g., Speech Therapy Service Logs)..."
-                    className="flex-1 bg-[#020A17] border border-[#C5A059] text-xs text-[#FFF4D4] px-3 py-1.5 rounded-md focus:outline-none placeholder:text-[#6E5D43]"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAddCustomBinder();
-                      if (e.key === "Escape") setIsAddingCustom(false);
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleAddCustomBinder}
-                    disabled={!customBinderTitle.trim()}
-                    className="bg-gradient-to-r from-[#DFBE77] to-[#C5A059] text-[#07162B] font-bold text-xs h-8 px-3"
-                  >
-                    Add
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsAddingCustom(false)}
-                    className="border-[#3A2C18] text-[#C6B697] text-xs h-8 px-2"
-                  >
-                    Cancel
-                  </Button>
+                <div className="w-full p-4 rounded-xl border border-[#C5A059]/70 bg-[#020D1D] shadow-xl flex flex-col gap-3 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between border-b border-[#3A2C18] pb-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#DFBE77]" />
+                      <h4 className="font-serif font-bold text-sm text-[#FFF4D4]">
+                        Add New Binder with Standard Cover Page
+                      </h4>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingCustom(false)}
+                      className="text-[#A69371] hover:text-[#FFF4D4] p-1 cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-serif font-bold text-[#FFE394] mb-1">
+                        Binder Title <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={customBinderTitle}
+                        onChange={(e) => setCustomBinderTitle(e.target.value)}
+                        placeholder="e.g., Speech-Language Therapy Attendance & Service Logs"
+                        className="w-full bg-[#020A17] border border-[#3A2C18] focus:border-[#C5A059] text-xs text-[#FFF4D4] px-3 py-1.5 rounded-md focus:outline-none placeholder:text-[#5A4830]"
+                        autoFocus
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-serif font-bold text-[#FFE394] mb-1">
+                        Category
+                      </label>
+                      <select
+                        value={customBinderCategory}
+                        onChange={(e) => setCustomBinderCategory(e.target.value as any)}
+                        className="w-full bg-[#020A17] border border-[#3A2C18] focus:border-[#C5A059] text-xs text-[#FFF4D4] px-2.5 py-1.5 rounded-md focus:outline-none"
+                      >
+                        <option value="pleading">Formal Pleading</option>
+                        <option value="facts">Statement of Facts</option>
+                        <option value="violations">Legal Violations</option>
+                        <option value="remedies">Remedies Schedule</option>
+                        <option value="restatement">Restatement</option>
+                        <option value="exhibit">Evidentiary Exhibit</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-serif font-bold text-[#FFE394]">
+                        Cover Page Purpose Statement (Standard Black-Bordered Box)
+                      </label>
+                      <button
+                        type="button"
+                        disabled={!customBinderTitle.trim() || isGeneratingCustomPurpose}
+                        onClick={handleGenerateCustomPurpose}
+                        className="flex items-center gap-1 text-[11px] font-sans font-semibold text-[#DFBE77] hover:text-[#FFE394] transition-colors disabled:opacity-40 cursor-pointer"
+                        title="Use AI to generate an authoritative purpose statement"
+                      >
+                        {isGeneratingCustomPurpose ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-[#DFBE77]" />
+                        ) : (
+                          <Sparkles className="w-3 h-3 text-[#DFBE77]" />
+                        )}
+                        <span>{customBinderPurpose ? "AI Rewrite Purpose" : "✨ AI Purpose"}</span>
+                      </button>
+                    </div>
+                    <textarea
+                      value={customBinderPurpose}
+                      onChange={(e) => setCustomBinderPurpose(e.target.value)}
+                      placeholder="e.g., To document authenticated speech-language pathology attendance logs and establish missed service hours pursuant to 34 C.F.R. § 300.323..."
+                      rows={2}
+                      className="w-full bg-[#020A17] border border-[#3A2C18] focus:border-[#C5A059] text-xs text-[#FFF4D4] p-2.5 rounded-md focus:outline-none placeholder:text-[#5A4830] font-serif resize-none"
+                    />
+                    <p className="text-[10px] text-[#A69371] mt-0.5">
+                      Just like Binder 02, every new binder includes our standard cover page with this purpose statement.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-[#3A2C18]">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsAddingCustom(false)}
+                      className="border-[#3A2C18] text-[#C6B697] text-xs h-8 px-3"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleAddCustomBinder}
+                      disabled={!customBinderTitle.trim()}
+                      className="bg-gradient-to-r from-[#DFBE77] to-[#C5A059] text-[#07162B] font-bold text-xs h-8 px-4 cursor-pointer disabled:opacity-40"
+                    >
+                      Add Binder with Cover Page
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 w-full justify-between">
@@ -815,9 +980,9 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
 
       {/* Small Window: Rename Binder Modal */}
       {binderToRename && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-xs animate-in fade-in duration-150">
           <div
-            className="w-full max-w-md p-5 rounded-xl border border-[#C5A059]/80 bg-[#07162B] text-slate-100 shadow-2xl flex flex-col gap-3.5 animate-in zoom-in-95 duration-150"
+            className="w-[95vw] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[88vh] overflow-y-auto custom-scrollbar p-6 sm:p-7 rounded-2xl border border-[#C5A059]/80 bg-[#07162B] text-slate-100 shadow-2xl flex flex-col gap-4.5 animate-in zoom-in-95 duration-150"
             style={{
               backgroundImage:
                 "linear-gradient(180deg, rgba(14, 42, 82, 0.98) 0%, rgba(7, 22, 43, 0.98) 100%), url('/decor/folio-leather-texture.png')",
@@ -825,22 +990,29 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
               backgroundSize: "220px",
             }}
           >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#031124] border border-[#C5A059]/70 flex items-center justify-center text-[#FFE394] shrink-0 shadow-lg">
-                <Pencil className="w-4 h-4 text-[#DFBE77]" />
+            <div className="flex items-start gap-3.5 pb-2 border-b border-[#3A2C18]">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#DFBE77] to-[#9E7D3B] p-0.5 flex items-center justify-center shrink-0 shadow-lg">
+                <div className="w-full h-full bg-[#031124] rounded-[10px] flex items-center justify-center text-[#FFE394]">
+                  <Pencil className="w-5 h-5 text-[#DFBE77]" />
+                </div>
               </div>
 
               <div className="text-left flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-serif font-bold text-base text-[#FFF4D4]">
-                    Rename Binder
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h4 className="font-serif font-bold text-lg sm:text-xl text-[#FFF4D4]">
+                    Rename Binder & Cover Page
                   </h4>
-                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#031124] border border-[#C5A059]/50 text-[#FFE394]">
+                  <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#031124] border border-[#C5A059]/60 text-[#FFE394] font-bold">
                     {binderToRename.id === "cover" ? "Binder 01" : `Binder ${binderToRename.number || ""}`}
                   </span>
+                  {binderToRename.category && (
+                    <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#0A2540] text-[#DFBE77] border border-[#DFBE77]/40 uppercase tracking-wider">
+                      {binderToRename.category}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-[#C6B697] mt-1 leading-relaxed">
-                  Enter a new title for this packet binder. Changes immediately update filing bookmarks and continuous page headers.
+                  Enter a new title and standard cover sheet purpose for this packet binder. Changes immediately update filing bookmarks, index tables, and continuous page headers.
                 </p>
               </div>
             </div>
@@ -850,51 +1022,107 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
                 e.preventDefault();
                 handleSaveRename();
               }}
-              className="flex flex-col gap-3.5"
+              className="flex flex-col gap-4.5"
             >
-              <div>
-                <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5">
-                  Binder Name / Title <span className="text-rose-400">*</span>
-                </label>
-                <Input
-                  value={renameTitleInput}
-                  onChange={(e) => setRenameTitleInput(e.target.value)}
-                  placeholder="e.g., Parent's Statement of Facts & Chronology"
-                  autoFocus
-                  onFocus={(e) => e.target.select()}
-                  className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-serif text-sm h-10 placeholder:text-[#5A4830]"
-                />
-              </div>
-
-              {binderToRename.category === "exhibit" && (
-                <div>
-                  <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5">
-                    Exhibit Identification Tag (Optional)
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className={cn(binderToRename.category === "exhibit" ? "md:col-span-2" : "col-span-full")}>
+                  <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5 flex items-center justify-between">
+                    <span>Binder Name / Title <span className="text-rose-400">*</span></span>
+                    <span className="text-[10px] font-sans font-normal text-[#A69371]">Docket Index & Header</span>
                   </label>
                   <Input
-                    value={renameExhibitTagInput}
-                    onChange={(e) => setRenameExhibitTagInput(e.target.value)}
-                    placeholder="e.g., Exhibit A or EXHIBIT C"
-                    className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-mono text-xs h-9 placeholder:text-[#5A4830]"
+                    value={renameTitleInput}
+                    onChange={(e) => setRenameTitleInput(e.target.value)}
+                    placeholder="e.g., Parent's Statement of Facts & Chronology"
+                    autoFocus
+                    onFocus={(e) => e.target.select()}
+                    className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-serif text-sm h-11 px-3.5 placeholder:text-[#5A4830] rounded-lg"
                   />
-                  <p className="text-[11px] text-[#A69371] mt-1">
-                    Used on evidentiary stamps and exhibit tab slip sheets.
-                  </p>
+                </div>
+
+                {binderToRename.category === "exhibit" && (
+                  <div className="md:col-span-1">
+                    <label className="block text-xs font-serif font-bold text-[#FFE394] mb-1.5 flex items-center justify-between">
+                      <span>Exhibit Tag</span>
+                      <span className="text-[10px] font-sans font-normal text-[#A69371]">Optional</span>
+                    </label>
+                    <Input
+                      value={renameExhibitTagInput}
+                      onChange={(e) => setRenameExhibitTagInput(e.target.value)}
+                      placeholder="e.g., Exhibit A or EXHIBIT C"
+                      className="bg-[#020A17] border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-mono text-sm h-11 px-3.5 placeholder:text-[#5A4830] rounded-lg"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Cover Page Purpose Statement with AI Reword Button */}
+              {binderToRename.id !== "cover" && (
+                <div className="p-4 sm:p-5 rounded-xl bg-[#031124]/90 border border-[#3A2C18] shadow-inner flex flex-col gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-md bg-[#0A2540] border border-[#DFBE77]/40 flex items-center justify-center text-[#DFBE77] shrink-0">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="block text-xs font-serif font-bold text-[#FFE394]">
+                          Cover Page Purpose Statement
+                        </span>
+                        <span className="text-[10px] text-[#A69371]">
+                          Formal legal/factual objective printed on the binder's standard cover sheet
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={!renameTitleInput.trim() || isGeneratingRenamePurpose}
+                      onClick={handleGenerateRenamePurpose}
+                      className="flex items-center justify-center gap-1.5 text-xs font-sans font-bold text-[#07162B] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 transition-all disabled:opacity-40 cursor-pointer px-3.5 py-1.5 rounded-lg shadow-sm shrink-0"
+                      title="AI rewrite this binder's cover page purpose"
+                    >
+                      {isGeneratingRenamePurpose ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-3.5 h-3.5" />
+                      )}
+                      <span>{renamePurposeInput ? "✨ AI Reword Purpose" : "✨ AI Generate Purpose"}</span>
+                    </button>
+                  </div>
+
+                  <textarea
+                    value={renamePurposeInput}
+                    onChange={(e) => setRenamePurposeInput(e.target.value)}
+                    placeholder="e.g., To establish authenticated written correspondence between parent and LEA, demonstrating actual notice of educational disputes under 34 C.F.R. § 300.503 and Georgia Rule 160-4-7-.12..."
+                    rows={4}
+                    className="w-full bg-[#020A17] border border-[#3A2C18] focus:border-[#DFBE77] text-[#FFF4D4] font-serif text-sm p-3.5 rounded-lg placeholder:text-[#5A4830] resize-y leading-relaxed outline-none transition-all shadow-inner"
+                  />
+
+                  <div className="flex items-center gap-2 text-[11px] text-[#A69371] bg-[#020A17]/80 p-2.5 rounded-lg border border-[#3A2C18]/60">
+                    <span className="font-semibold text-[#DFBE77] shrink-0">Standard Specification:</span>
+                    <span>
+                      Renders inside the black-bordered <strong className="text-[#FFF4D4]">PURPOSE</strong> box on this binder's standard cover sheet (matching Binder 02).
+                    </span>
+                  </div>
                 </div>
               )}
 
-              <div className="p-2.5 rounded-lg bg-[#020A17]/80 border border-[#3A2C18] text-[11px] text-[#A69371] flex items-center justify-between">
-                <span>Category: <strong className="text-[#DFBE77] capitalize">{binderToRename.category}</strong></span>
-                <span className="text-[10px] text-[#C6B697] italic">Press Enter to save</span>
+              <div className="p-3 rounded-lg bg-[#020A17]/80 border border-[#3A2C18] text-xs text-[#A69371] flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <span>Category: <strong className="text-[#DFBE77] capitalize">{binderToRename.category}</strong></span>
+                  <span>•</span>
+                  <span>Binder ID: <strong className="text-[#FFE394] font-mono">{binderToRename.id}</strong></span>
+                </div>
+                <span className="text-[11px] text-[#C6B697] italic">Press Enter to save changes</span>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#3A2C18] mt-1">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#3A2C18] mt-1">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setBinderToRename(null)}
-                  className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] text-xs h-8 cursor-pointer"
+                  className="border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] text-xs h-9 px-4 cursor-pointer"
                 >
                   Cancel
                 </Button>
@@ -903,9 +1131,9 @@ export const ManagePacketBindersModal: React.FC<ManagePacketBindersModalProps> =
                   type="submit"
                   size="sm"
                   disabled={!renameTitleInput.trim()}
-                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-8 px-4 hover:brightness-110 shadow-md cursor-pointer disabled:opacity-40"
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-9 px-6 hover:brightness-110 shadow-md cursor-pointer disabled:opacity-40"
                 >
-                  Save Binder Name
+                  Save Binder & Cover Page
                 </Button>
               </div>
             </form>

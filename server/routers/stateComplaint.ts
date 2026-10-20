@@ -335,6 +335,91 @@ Return only JSON matching the schema.`;
         }
       }),
 
+    generateBinderPurpose: protectedProcedure
+      .input(z.object({
+        binderTitle: z.string().min(1, "Binder title is required"),
+        binderCategory: z.string().optional(),
+        existingPurpose: z.string().optional(),
+        studentName: z.string().optional(),
+        districtName: z.string().optional(),
+        stateCode: z.string().default("GA"),
+      }))
+      .mutation(async ({ input }) => {
+        const { invokeLLM, CF_MODELS } = await import("../_core/llm");
+        const { sanitizeComplaintText } = await import("../../shared/complaintEngine");
+
+        const student = input.studentName?.trim() || "the student";
+        const district = input.districtName?.trim() || "the Local Educational Agency";
+        const title = input.binderTitle.trim();
+        const category = input.binderCategory || "pleading";
+
+        const systemPrompt = `You are Byron Honea, Lead Special Education Advocate at Waypoint Advocates, drafting a formal IDEA state administrative complaint filed against ${district}.
+Your task is to draft an authoritative, formal, 1 to 2 sentence PURPOSE statement for the standard cover page of a complaint packet binder titled "${title}".
+The PURPOSE statement appears in the prominent black-bordered PURPOSE box on the cover sheet (just like on Binder 02 / Restatement).
+It must start with an action infinitive (e.g., "To document...", "To establish...", "To provide an itemized clarity control restatement...", "To demonstrate...", "To incorporate authenticated records...") and succinctly explain to the state education department investigator why this specific binder is included and what legal or evidentiary violation it supports.
+
+MANDATORY RULES:
+1. STRICT TERMINOLOGY GUARDRAIL (AGENTS.md Rule F): NEVER use the terms "Master Coach", "Master IEP Coach", "Master Coaching", or "IEP Coach". Always use "Lead Special Education Advocate" or "Special Education Advocate".
+2. LENGTH: 1 to 2 concise, powerful sentences.
+3. OUTPUT FORMAT: Return ONLY the raw purpose statement text. Do NOT include quotes, preamble, or conversational greetings.`;
+
+        const userPrompt = input.existingPurpose?.trim()
+          ? `Please rewrite and legally elevate this draft purpose statement for "${title}" (${category}): "${input.existingPurpose.trim()}"`
+          : `Please generate a formal, authoritative cover page purpose statement for a complaint binder titled "${title}" (${category}) for student ${student} against ${district}.`;
+
+        try {
+          const response = await invokeLLM({
+            messages: [
+              { role: "system" as const, content: systemPrompt },
+              { role: "user" as const, content: userPrompt },
+            ],
+            model: CF_MODELS.FAST,
+          });
+
+          const rawContent = response?.choices?.[0]?.message?.content;
+          const content = typeof rawContent === "string" ? rawContent : Array.isArray(rawContent) ? rawContent.map((p: any) => p.text ?? "").join("") : "";
+          const cleaned = sanitizeComplaintText(content.trim().replace(/^["']|["']$/g, ""));
+
+          if (cleaned.length > 0) {
+            return {
+              success: true,
+              purpose: cleaned,
+            };
+          }
+          throw new Error("Empty response from LLM");
+        } catch (err: any) {
+          console.warn("[stateComplaint.generateBinderPurpose] LLM failed, using intelligent heuristic fallback:", err?.message);
+
+          // Heuristic local fallback
+          let fallback = "";
+          const tLower = title.toLowerCase();
+          if (tLower.includes("evaluation") || tLower.includes("assessment") || tLower.includes("psychoed")) {
+            fallback = `To document authenticated comprehensive evaluation records, diagnostic assessments, and independent evaluations establishing the student's identified disabilities and educational programming needs under 34 C.F.R. § 300.301.`;
+          } else if (tLower.includes("iep") || tLower.includes("504") || tLower.includes("bip")) {
+            fallback = `To document the operative Individualized Education Program (IEP) and behavior intervention commitments in effect, establishing mandated specialized instruction minutes, related therapeutic services, and classroom accommodations.`;
+          } else if (tLower.includes("speech") || tLower.includes("therapy") || tLower.includes("service log") || tLower.includes("attendance")) {
+            fallback = `To document service delivery logs, provider attendance records, and therapist session notes establishing missed specialized instruction and related service withholding without timely compensatory make-up sessions.`;
+          } else if (tLower.includes("communication") || tLower.includes("email") || tLower.includes("correspondence") || tLower.includes("notice")) {
+            fallback = `To document written correspondence, timestamped email notices, and administrative requests delivered between parent, advocate, and public agency personnel establishing notice and statutory compliance timelines.`;
+          } else if (tLower.includes("remed") || tLower.includes("compensatory") || tLower.includes("calculation")) {
+            fallback = `To establish an itemized compensatory education calculation, 1-on-1 tutoring schedule, and proposed corrective relief to remediate educational benefit deprivation suffered by the student.`;
+          } else if (category === "facts") {
+            fallback = `To establish a chronological factual narrative of all relevant events, statutory requests, and administrative milestones occurring within the applicable one-year statutory period.`;
+          } else if (category === "violations") {
+            fallback = `To provide an itemized statement of statutory violations under 34 C.F.R. § 300.153 and state special education administrative regulations, establishing jurisdictional counts and legal non-compliance.`;
+          } else if (category === "exhibit") {
+            fallback = `To incorporate authenticated documentary records and evidentiary exhibits in direct support of Complainant's statement of statutory violations and factual allegations against the LEA.`;
+          } else {
+            fallback = `To document official administrative legal arguments, factual proffers, and supporting evidence submitted on behalf of ${student} pursuant to IDEA state complaint procedures.`;
+          }
+
+          return {
+            success: true,
+            purpose: sanitizeComplaintText(fallback),
+          };
+        }
+      }),
+
     aiWriterHelper: protectedProcedure
       .input(z.object({
         text: z.string().min(1, "Please provide text or notes to improve"),
