@@ -198,7 +198,7 @@ export default function CalendarDayTimeline({
   }, [dayOperationalBlocks]);
 
   return (
-    <div className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] p-4 sm:p-5 relative overflow-hidden">
+    <div className="rounded-xl border-2 border-[#5B4323] bg-gradient-to-b from-[#091E3B]/95 via-[#071933]/95 to-[#06152B]/95 shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_30px_rgba(197,160,89,0.08),inset_0_1px_2px_rgba(255,255,255,0.12)] p-4 sm:p-5 relative overflow-hidden backdrop-blur-md">
       {/* ── ALL-DAY CLOSURE / HOLIDAY FULL-WIDTH BANNER ── */}
       {allDayClosure && (
         <div
@@ -287,7 +287,7 @@ export default function CalendarDayTimeline({
             <div key={hour} className="flex items-start gap-4">
               {/* Hour Label */}
               <div className="w-16 sm:w-20 shrink-0 text-right pt-2">
-                <span className="text-xs font-semibold text-[#A69371] font-mono">
+                <span className="text-xs font-bold text-[#FFE394] font-mono">
                   {hourLabel}
                 </span>
                 {hasOperationalBlock && (
@@ -311,8 +311,8 @@ export default function CalendarDayTimeline({
                   hasOperationalBlock
                     ? "border-l-2 border-l-[#C5A059]/50 shadow-inner"
                     : hourApts.length === 0
-                    ? "hover:bg-[#102B4E]/20 cursor-pointer"
-                    : ""
+                    ? "bg-[#0A2140]/40 hover:bg-[#12396B]/50 cursor-pointer"
+                    : "bg-[#0A2140]/30"
                 }`}
               >
                 {/* 1. OPERATIONAL AVAILABILITY BLOCKS (Rendered first as the base fabric banners) */}

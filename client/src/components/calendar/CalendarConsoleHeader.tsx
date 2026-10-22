@@ -232,40 +232,38 @@ export default function CalendarConsoleHeader({
         width={1024}
         height={576}
         style={{ aspectRatio: "16 / 9" }}
-        className="w-full h-auto min-h-[460px] sm:min-h-[500px] object-cover block select-none pointer-events-none"
+        className="w-full h-auto min-h-[460px] sm:min-h-[500px] object-cover object-top block select-none pointer-events-none"
       />
 
-      {/* ── Interactive UI Overlay (Aligned with precision over the full picture) ── */}
-      <div className="absolute inset-0 z-10 flex flex-col justify-between px-3 sm:px-5 lg:px-7 py-2 sm:py-3 pointer-events-none">
-        {/* ── 1. UPPER SHELF (Top ~25%): Centered Carved Plaque in brass frame + Right Parchment Note ── */}
-        <div className="relative flex items-center justify-between pointer-events-auto shrink-0">
-          {/* Left spacer for centering balance */}
-          <div className="hidden lg:block w-56 shrink-0" />
+      {/* ── 1. TITLE WITHIN THE FRAME (Centered precisely inside the carved gold-leaf wooden plaque) ── */}
+      <div
+        className="absolute pointer-events-auto flex flex-col items-center justify-center text-center px-4 z-20"
+        style={{
+          top: "13.4%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "33.6%",
+          minWidth: "260px",
+          maxWidth: "420px",
+          height: "13.5%",
+          maxHeight: "82px",
+        }}
+      >
+        <h1 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-tight text-[#FFF4D4] drop-shadow-[0_4px_14px_rgba(0,0,0,0.95)] leading-tight select-none">
+          Calendar
+        </h1>
+        <p className="hidden sm:block text-[11px] sm:text-xs font-serif italic text-[#FFE394]/90 tracking-wide mt-0.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] select-none truncate max-w-full">
+          Schedule smarter. Protect your time.
+        </p>
+      </div>
 
-          {/* Central Carved Gold-Leaf Plaque (Positions directly inside the framed wooden sign in artwork) */}
-          <div className="flex-1 max-w-xl mx-auto text-center px-4 py-1 rounded-xl">
-            <h1 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-tight text-[#FFF4D4] drop-shadow-[0_4px_14px_rgba(0,0,0,0.95)]">
-              Calendar
-            </h1>
-            <p className="text-[11px] sm:text-xs font-serif italic text-[#FFE394]/95 tracking-wide mt-0.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
-              Schedule smarter. Keep cases moving. Protect your time.
-            </p>
-          </div>
-
-          {/* Right Hanging Parchment Note (Matches reference mockup) */}
-          <div className="hidden lg:flex items-center justify-end w-56 shrink-0">
-            <div className="p-2 sm:p-2.5 rounded-lg bg-gradient-to-b from-[#F7EED4] via-[#F2E5C4] to-[#E5D4AF] border border-[#8C6D37]/80 shadow-[0_8px_20px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.7)] text-center max-w-[190px] transform rotate-[1deg] hover:rotate-0 transition-transform">
-              <p className="font-serif italic text-xs font-bold text-[#2C1D10] leading-snug drop-shadow-sm select-none">
-                “Right Meetings<br />
-                Right People<br />
-                Brighter Futures”
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* ── 2. NAVIGATION TAB STRIP (Middle ~9%): Directly below wooden shelf rail ── */}
-        <div className="flex items-center justify-between gap-3 flex-wrap pointer-events-auto shrink-0">
+      {/* ── 2. BOXES BELOW THE SHELF SYSTEM (Navigation, KPI Cards, Command Bar, Mini Calendar) ── */}
+      <div
+        className="absolute left-0 right-0 z-10 flex flex-col gap-2.5 px-3 sm:px-5 lg:px-7 pointer-events-none"
+        style={{ top: "28%" }}
+      >
+        {/* ── 2A. NAVIGATION TAB STRIP (Directly below wooden shelf rail on dark wood planks) ── */}
+        <div className="flex items-center justify-between gap-3 flex-wrap pointer-events-auto shrink-0 pt-0.5">
           {/* Navigation Pill Group — Clean & compact with Filter & Views Dropdown */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full scrollbar-none">
             {/* Primary View: Calendar */}
@@ -502,8 +500,8 @@ export default function CalendarConsoleHeader({
           </div>
         </div>
 
-        {/* ── 3. LOWER SHIPLAP DECK (Bottom ~64%): 5 KPI Cards (Left) + Integrated Month Calendar Widget (Right) ── */}
-        <div className="flex flex-col lg:flex-row items-stretch gap-2.5 pointer-events-auto flex-1 min-h-0">
+        {/* ── 2B. LOWER SHIPLAP DECK: 5 KPI Cards (Left) + Integrated Month Calendar Widget (Right) ── */}
+        <div className="flex flex-col lg:flex-row items-start gap-2.5 pointer-events-auto">
           {/* ── Left Column: KPI Cards + Bottom Unified Command Bar ── */}
           <div className="flex-1 flex flex-col justify-start gap-2 min-w-0">
             {/* Row of 5 KPI Cards (Admiralty Executive Inset Cards: Icon + Number on top, Title on bottom) */}
@@ -839,8 +837,8 @@ export default function CalendarConsoleHeader({
             </div>
           </div>
 
-          {/* ── Right Column: Integrated Month Calendar Widget (Optimized Proportions with Zero Clipping) ── */}
-          <div className="w-[240px] sm:w-[250px] lg:w-[260px] shrink-0 rounded-xl border border-[#3A2C18] bg-[#05142B]/90 backdrop-blur-md p-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between">
+          {/* ── Right Column: Integrated Month Calendar Widget (Compact scaled desk calendar with zero stretching) ── */}
+          <div className="w-[240px] sm:w-[250px] lg:w-[260px] shrink-0 rounded-xl border border-[#3A2C18] bg-[#05142B]/90 backdrop-blur-md p-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-start gap-1.5 self-start h-fit">
             {/* Calendar Widget Month Header */}
             <div className="flex items-center justify-between pb-1 border-b border-[#3A2C18]/60">
               <button

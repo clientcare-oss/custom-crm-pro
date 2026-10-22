@@ -248,7 +248,7 @@ export default function CalendarView({
   const monthGridDays: React.ReactNode[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) {
     monthGridDays.push(
-      <div key={`empty-${i}`} className="min-h-[7rem] border border-[#3A2C18]/40 bg-[#020A17]/40" />
+      <div key={`empty-${i}`} className="min-h-[7rem] border-b border-r border-[#3A2C18]/50 bg-[#051427]/60" />
     );
   }
 
@@ -268,8 +268,8 @@ export default function CalendarView({
     );
 
     let cellBackground = isToday
-      ? "bg-[#071F3D]/50 border-[#C5A059]/70"
-      : "hover:bg-[#07162B]/50 bg-[#020A17]/80";
+      ? "bg-gradient-to-br from-[#12396B]/90 via-[#0E2F59]/85 to-[#0A2344]/90 border-2 border-[#FFE394] shadow-[inset_0_0_20px_rgba(255,227,148,0.15)]"
+      : "bg-[#0A2140]/90 hover:bg-[#10315C]/95 transition-all";
     let cellStyle: React.CSSProperties = {};
 
     if (allDayClosure) {
@@ -287,16 +287,18 @@ export default function CalendarView({
       <div
         key={day}
         style={cellStyle}
-        className={`min-h-[7rem] border border-[#3A2C18]/60 p-1.5 transition-colors cursor-pointer ${cellBackground}`}
+        className={`min-h-[7rem] border-b border-r border-[#3A2C18]/60 p-2 transition-all cursor-pointer ${cellBackground}`}
         onClick={() => {
           const clickedDate = new Date(year, month, day);
           onDateClick?.(clickedDate);
         }}
       >
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between mb-1.5">
           <span
             className={`text-xs font-mono font-bold ${
-              isToday ? "text-[#FFE394] bg-[#020A17] px-1 rounded-[5px] border border-[#C5A059]/50" : "text-[#A69371]"
+              isToday
+                ? "text-[#07162B] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] px-1.5 py-0.5 rounded-[4px] shadow-sm font-extrabold"
+                : "text-[#FFF4D4] drop-shadow-sm font-semibold"
             }`}
           >
             {day}
@@ -586,13 +588,13 @@ export default function CalendarView({
       )}
 
       {viewMode === "month" && (
-        <Card className="rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] overflow-hidden">
-          <CardContent className="p-3">
-            <div className="grid grid-cols-7 gap-0">
+        <Card className="rounded-xl border-2 border-[#5B4323] bg-gradient-to-b from-[#091E3B]/95 via-[#071933]/95 to-[#06152B]/95 shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_30px_rgba(197,160,89,0.08),inset_0_1px_2px_rgba(255,255,255,0.12)] overflow-hidden backdrop-blur-md">
+          <CardContent className="p-3.5">
+            <div className="grid grid-cols-7 gap-0 rounded-lg overflow-hidden border border-[#5B4323]/80 shadow-md">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                 <div
                   key={d}
-                  className="text-center text-xs font-serif font-bold text-[#FFE394] py-2 border-b border-[#3A2C18]/60 uppercase tracking-wider"
+                  className="text-center text-xs font-serif font-bold text-[#FFE394] py-2.5 bg-gradient-to-b from-[#0F2D54] to-[#0A2242] border-b border-r last:border-r-0 border-[#5B4323]/70 uppercase tracking-widest shadow-sm"
                 >
                   {d}
                 </div>

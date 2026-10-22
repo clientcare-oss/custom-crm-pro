@@ -381,9 +381,9 @@ export default function CalendarWeekView({
   }, [filteredAppointments, operationalBlocks, weekDays]);
 
   return (
-    <div className="w-full rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] overflow-hidden">
+    <div className="w-full rounded-xl border-2 border-[#5B4323] bg-gradient-to-b from-[#091E3B]/95 via-[#071933]/95 to-[#06152B]/95 shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_30px_rgba(197,160,89,0.08),inset_0_1px_2px_rgba(255,255,255,0.12)] overflow-hidden backdrop-blur-md">
       {/* ── TOP NAV BAR (Arrows, October 4–10, 2026, View Controls) ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-[#3A2C18]/80 bg-[#020A17]/80">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-[#5B4323]/80 bg-gradient-to-r from-[#0C2548] to-[#081B34]">
         {/* Left: Previous / Next & Range Title */}
         <div className="flex items-center gap-3">
           <div className="flex items-center p-0.5 rounded-[5px] border border-[#3A2C18] bg-[#05142B]">
@@ -469,9 +469,9 @@ export default function CalendarWeekView({
       <div className="w-full overflow-x-auto select-none">
         <div className="min-w-[900px]">
           {/* Day Headers Row */}
-          <div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-[#3A2C18]">
+          <div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-[#5B4323]">
             {/* Empty corner for time column */}
-            <div className="border-r border-[#3A2C18]/60 bg-[#020A17]/60" />
+            <div className="border-r border-[#5B4323]/60 bg-[#071830]" />
 
             {/* 7 Days: Sun 4, Mon 5, Tue 6, etc. */}
             {weekDays.map((day, idx) => {
@@ -489,11 +489,11 @@ export default function CalendarWeekView({
                   key={idx}
                   onClick={() => onDayClick(day)}
                   className={cn(
-                    "flex flex-col items-center justify-center py-2.5 px-1 border-r border-[#3A2C18]/60 cursor-pointer transition-colors hover:bg-[#07162B]/60",
-                    isToday ? "bg-[#102B4E]/30" : "bg-[#020A17]/40"
+                    "flex flex-col items-center justify-center py-2.5 px-1 border-r border-[#5B4323]/60 cursor-pointer transition-all hover:bg-[#12396B]/60",
+                    isToday ? "bg-gradient-to-b from-[#12396B] to-[#0D2C54]" : "bg-gradient-to-b from-[#0F2D54] to-[#0A2242]"
                   )}
                 >
-                  <span className="text-[11px] font-mono font-medium text-[#A69371] uppercase">
+                  <span className="text-[11px] font-mono font-bold text-[#FFE394] uppercase">
                     {dayName}
                   </span>
 
@@ -515,12 +515,12 @@ export default function CalendarWeekView({
           {/* Time Rows and Event Grid Container */}
           <div className="relative grid grid-cols-[70px_repeat(7,1fr)]">
             {/* Left Y-axis Time Labels */}
-            <div className="border-r border-[#3A2C18]/80 bg-[#020A17]/70 text-right pr-2 select-none">
+            <div className="border-r border-[#5B4323]/70 bg-[#071830] text-right pr-2 select-none">
               {HOURS.map((hour) => (
                 <div
                   key={hour}
                   style={{ height: `${HOUR_HEIGHT}px` }}
-                  className="relative -top-2.5 text-[11px] font-mono text-[#A69371] tracking-tight"
+                  className="relative -top-2.5 text-[11px] font-mono text-[#FFE394]/90 font-semibold tracking-tight"
                 >
                   {formatHourLabel(hour)}
                 </div>
@@ -538,7 +538,7 @@ export default function CalendarWeekView({
                   key={dayIdx}
                   className={cn(
                     "relative border-r border-[#3A2C18]/60",
-                    isToday ? "bg-[#051833]/25" : "bg-transparent"
+                    isToday ? "bg-[#103362]/35" : "bg-[#0A2140]/80"
                   )}
                 >
                   {/* Horizontal Hour Lines & Clickable Slot Targets */}
@@ -547,7 +547,7 @@ export default function CalendarWeekView({
                       key={hour}
                       style={{ height: `${HOUR_HEIGHT}px` }}
                       onClick={() => onSlotClick?.(day, `${hour}:00`)}
-                      className="border-b border-[#3A2C18]/40 hover:bg-[#102B4E]/20 transition-colors cursor-pointer"
+                      className="border-b border-[#3A2C18]/50 hover:bg-[#143B6E]/40 transition-colors cursor-pointer"
                     />
                   ))}
 

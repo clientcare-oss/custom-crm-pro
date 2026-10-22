@@ -867,8 +867,8 @@ export default function Appointments() {
             backgroundPosition: "top center",
           }}
         >
-          {/* Subtle maritime vignette overlay so calendar grids & cards maintain maximum visual legibility */}
-          <div className="w-full min-h-full bg-gradient-to-b from-[#07162B]/20 via-[#07162B]/10 to-[#030D1A]/50">
+          {/* Refined luminous overlay so calendar grids & cards maintain maximum visual legibility and brightness */}
+          <div className="w-full min-h-full bg-gradient-to-b from-[#07162B]/10 via-transparent to-[#07162B]/20">
             {/* ── Main Workspace Body (Padded) ── */}
             <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
 
