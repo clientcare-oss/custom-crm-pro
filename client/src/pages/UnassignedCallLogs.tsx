@@ -484,33 +484,6 @@ export default function UnassignedCallLogs() {
         )}
       </div>
 
-      {/* LIVE QUO WEBHOOK & CALL LOG FEED */}
-      <LiveCallLogsTable
-        logs={logs as any}
-        isLoading={isFetching}
-        onRefresh={() => {
-          refetchLogs();
-          toast.success("Call logs refreshed");
-        }}
-        onCallNumber={handleDirectCallPhone}
-        onOpenSms={handleDirectSmsPhone}
-        onAssignToLead={(log) => {
-          setShowCallWorkspace(true);
-          startCall({
-            callerCategory: "new_lead",
-            callType: "Inbound Call",
-            callerInfo: { name: "Inbound Caller", phone: log.fromNumber },
-            generalNotes: `Inbound Call #${log.id} (${log.eventType || "call"})\nFrom: ${log.fromNumber}\nTo: ${log.toNumber}\nDuration: ${log.durationSeconds || 0}s`,
-          });
-          toast.success(`Loaded Call #${log.id} into Workspace`);
-          setTimeout(() => {
-            const el = document.getElementById("call-workspace");
-            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 100);
-        }}
-        onOpenSettings={() => setShowSettings(true)}
-      />
-
       {/* Operational Activity Deck (3 Cards: Needs Attention, Today's Schedule, Voicemails) */}
       <BottomOperationalDeck
         onCallNumber={handleDirectCallPhone}
@@ -668,6 +641,35 @@ export default function UnassignedCallLogs() {
           onScheduleAppointment={(contact) => {
             window.location.href = `/scheduler?contactId=${contact.id}`;
           }}
+        />
+      </div>
+
+      {/* LIVE QUO WEBHOOK & CALL LOG FEED (BOTTOM OF PAGE) */}
+      <div id="live-quo-feed-section" className="scroll-mt-6">
+        <LiveCallLogsTable
+          logs={logs as any}
+          isLoading={isFetching}
+          onRefresh={() => {
+            refetchLogs();
+            toast.success("Call logs refreshed");
+          }}
+          onCallNumber={handleDirectCallPhone}
+          onOpenSms={handleDirectSmsPhone}
+          onAssignToLead={(log) => {
+            setShowCallWorkspace(true);
+            startCall({
+              callerCategory: "new_lead",
+              callType: "Inbound Call",
+              callerInfo: { name: "Inbound Caller", phone: log.fromNumber },
+              generalNotes: `Inbound Call #${log.id} (${log.eventType || "call"})\nFrom: ${log.fromNumber}\nTo: ${log.toNumber}\nDuration: ${log.durationSeconds || 0}s`,
+            });
+            toast.success(`Loaded Call #${log.id} into Workspace`);
+            setTimeout(() => {
+              const el = document.getElementById("call-workspace");
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 100);
+          }}
+          onOpenSettings={() => setShowSettings(true)}
         />
       </div>
 
