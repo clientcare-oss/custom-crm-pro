@@ -252,6 +252,15 @@ export default function UnassignedCallLogs() {
     toast.success(`Opening Quo desktop app for ${name || phone}...`);
   };
 
+  const handleDirectSmsPhone = (phone: string, name?: string) => {
+    const clean = phone.replace(/\D/g, "");
+    const formatted = clean.length === 10 ? `+1${clean}` : `+${clean}`;
+    try {
+      window.location.href = `openphone://message?number=${formatted}`;
+    } catch {}
+    toast.success(`Opening Quo messaging for ${name || phone}...`);
+  };
+
   const handleScrollToNeedsAttention = () => {
     const el = document.getElementById("needs-attention-box");
     if (el) {
@@ -484,6 +493,7 @@ export default function UnassignedCallLogs() {
           toast.success("Call logs refreshed");
         }}
         onCallNumber={handleDirectCallPhone}
+        onOpenSms={handleDirectSmsPhone}
         onAssignToLead={(log) => {
           setShowCallWorkspace(true);
           startCall({
