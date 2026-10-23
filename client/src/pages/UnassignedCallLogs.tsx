@@ -28,6 +28,7 @@ import { OpenQuoPhoneModal } from "@/components/callCenter/OpenQuoPhoneModal";
 import { AddNewContactModal } from "@/components/callCenter/AddNewContactModal";
 import { SimulatedCallCard } from "@/components/callCenter/SimulatedCallCard";
 import { SimulatedCallState } from "@/components/callCenter/CallCenterTestPanel";
+import { LiveCallLogsTable } from "@/components/callCenter/LiveCallLogsTable";
 import SmsComposerDialog from "@/components/quo/SmsComposerDialog";
 
 export default function UnassignedCallLogs() {
@@ -473,6 +474,32 @@ export default function UnassignedCallLogs() {
           />
         )}
       </div>
+
+      {/* LIVE QUO WEBHOOK & CALL LOG FEED */}
+      <LiveCallLogsTable
+        logs={logs as any}
+        isLoading={isFetching}
+        onRefresh={() => {
+          refetchLogs();
+          toast.success("Call logs refreshed");
+        }}
+        onCallNumber={handleDirectCallPhone}
+        onAssignToLead={(log) => {
+          setShowCallWorkspace(true);
+          startCall({
+            callerCategory: "new_lead",
+            callType: "Inbound Call",
+            callerInfo: { name: "Inbound Caller", phone: log.fromNumber },
+            generalNotes: `Inbound Call #${log.id} (${log.eventType || "call"})\nFrom: ${log.fromNumber}\nTo: ${log.toNumber}\nDuration: ${log.durationSeconds || 0}s`,
+          });
+          toast.success(`Loaded Call #${log.id} into Workspace`);
+          setTimeout(() => {
+            const el = document.getElementById("call-workspace");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 100);
+        }}
+        onOpenSettings={() => setShowSettings(true)}
+      />
 
       {/* Operational Activity Deck (3 Cards: Needs Attention, Today's Schedule, Voicemails) */}
       <BottomOperationalDeck
