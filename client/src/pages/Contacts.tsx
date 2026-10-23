@@ -7,7 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search, X, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ export default function Contacts() {
     phone: "",
     company: "",
     jobTitle: "",
+    bestTimeToCall: "",
   });
 
   const { data: contacts, isLoading, refetch } = trpc.contacts.list.useQuery(
@@ -53,6 +55,7 @@ export default function Contacts() {
         phone: "",
         company: "",
         jobTitle: "",
+        bestTimeToCall: "",
       });
     },
     onError: (error) => {
@@ -73,6 +76,7 @@ export default function Contacts() {
         phone: "",
         company: "",
         jobTitle: "",
+        bestTimeToCall: "",
       });
     },
     onError: (error) => {
@@ -128,6 +132,7 @@ export default function Contacts() {
       phone: "",
       company: "",
       jobTitle: "",
+      bestTimeToCall: "",
     });
     setOpen(true);
   };
@@ -141,6 +146,7 @@ export default function Contacts() {
       phone: contact.phone || "",
       company: contact.company || "",
       jobTitle: contact.jobTitle || "",
+      bestTimeToCall: contact.bestTimeToCall || "",
     });
     setOpen(true);
   };
@@ -294,6 +300,46 @@ export default function Contacts() {
                         }
                         placeholder="CEO"
                       />
+                    </div>
+                    <div className="space-y-2 pt-1 border-t border-[#1e3250]/60">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-semibold flex items-center gap-1.5 text-[#F0DFC5]">
+                          <Clock className="h-3.5 w-3.5 text-[#E5C175]" />
+                          Preferred Contact Time
+                        </label>
+                        <span className="text-[11px] text-[#A69371]">e.g., Weekdays before 1pm</span>
+                      </div>
+                      <VoiceInput
+                        value={formData.bestTimeToCall}
+                        onChange={(e) =>
+                          setFormData({ ...formData, bestTimeToCall: e.target.value })
+                        }
+                        placeholder="e.g., Weekdays before 1:00 PM, Mornings 9am–11am"
+                      />
+                      {/* Rapid preset chips */}
+                      <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                        {[
+                          "Weekdays before 1:00 PM",
+                          "Mornings (9am – 12pm)",
+                          "Afternoons (1pm – 5pm)",
+                          "Evenings after 5:00 PM",
+                          "Anytime (Standard Hours)",
+                        ].map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, bestTimeToCall: preset })}
+                            className={cn(
+                              "text-[10.5px] px-2 py-0.5 rounded-md border transition-all cursor-pointer",
+                              formData.bestTimeToCall === preset
+                                ? "bg-[#C5A059] text-[#07162B] font-bold border-[#FFE394] shadow-xs"
+                                : "bg-[#091D38]/80 text-[#C6B697] border-[#1E3A63] hover:border-[#C5A059]/60 hover:text-[#FFF4D4]"
+                            )}
+                          >
+                            {preset}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <div className="flex gap-2 pt-4">
                       <MetalPlaqueButton

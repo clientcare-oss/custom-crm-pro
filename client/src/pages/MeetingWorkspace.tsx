@@ -42,6 +42,8 @@ import { MeetingModeView } from "../components/meeting-workspace/live/MeetingMod
 import { ImportAdvocateReadyModal } from "../components/meeting-workspace/prep/ImportAdvocateReadyModal";
 import { ParentConcernStatementWorkspace } from "../components/meeting-workspace/pcs/ParentConcernStatementWorkspace";
 import { MeetingWorkspaceAnimatedHeader } from "../components/meeting-workspace/MeetingWorkspaceAnimatedHeader";
+import { MeetingStatusBar } from "../components/meeting-workspace/MeetingStatusBar";
+import { Step5ReadyView } from "../components/meeting-workspace/prep/Step5ReadyView";
 import type { PcsMetadata } from "../components/meeting-workspace/pcs/types";
 
 export default function MeetingWorkspace() {
@@ -135,6 +137,7 @@ export default function MeetingWorkspace() {
   const [parentConcerns, setParentConcerns] = useState<ParentIntelConcern[]>([]);
   const [pcsText, setPcsText] = useState<string>("");
   const [pcsApproved, setPcsApproved] = useState<boolean>(false);
+  const [parentDoesntWantText, setParentDoesntWantText] = useState<string>("");
   const [targets, setTargets] = useState<MeetingTarget[]>([]);
   const [parkingLot, setParkingLot] = useState<ParkingLotItem[]>([]);
   const [additionalItems, setAdditionalItems] = useState<AdditionalItem[]>([]);
@@ -236,11 +239,19 @@ export default function MeetingWorkspace() {
       if (workspace.parkingLot) setParkingLot(safeParseJson<ParkingLotItem[]>(workspace.parkingLot, []));
       if (workspace.additionalItems) setAdditionalItems(safeParseJson<AdditionalItem[]>(workspace.additionalItems, []));
       if (workspace.closeoutChecks) {
-        setCloseoutChecks(
-          safeParseJson<any>(workspace.closeoutChecks, {
-            allRequestsRaised: false, pwnIdentified: false, agreedLocationsClear: false, followUpAssigned: false, nextMeetingDiscussed: false,
-          })
-        );
+        const parsedChecks = safeParseJson<any>(workspace.closeoutChecks, {
+          allRequestsRaised: false, pwnIdentified: false, agreedLocationsClear: false, followUpAssigned: false, nextMeetingDiscussed: false,
+        });
+        setCloseoutChecks(parsedChecks);
+        if (parsedChecks.parentDoesntWant && typeof parsedChecks.parentDoesntWant === "string") {
+          setParentDoesntWantText(parsedChecks.parentDoesntWant);
+        }
+      }
+      if (selectedStudentId) {
+        try {
+          const cachedPdw = localStorage.getItem(`mw_pdw_${selectedStudentId}`);
+          if (cachedPdw && !parentDoesntWantText) setParentDoesntWantText(cachedPdw);
+        } catch {}
       }
       if (workspace.status === "LIVE") {
         setActiveTab("MEETING_MODE");
@@ -372,11 +383,23 @@ export default function MeetingWorkspace() {
     }
   };
 
-  const handleSavePcsFromWorkspace = async (newText: string, updatedMetadata: PcsMetadata) => {
+  const handleSavePcsFromWorkspace = async (
+    newText: string,
+    updatedMetadata: PcsMetadata,
+    newDoesntWant?: string
+  ) => {
     setPcsText(newText);
+    const resolvedDoesntWant = newDoesntWant !== undefined ? newDoesntWant : parentDoesntWantText;
+    if (newDoesntWant !== undefined) {
+      setParentDoesntWantText(newDoesntWant);
+      if (selectedStudentId) {
+        try { localStorage.setItem(`mw_pdw_${selectedStudentId}`, newDoesntWant); } catch {}
+      }
+    }
     const updatedChecks = {
       ...closeoutChecks,
       pcsMetadata: updatedMetadata,
+      parentDoesntWant: resolvedDoesntWant,
     };
     setCloseoutChecks(updatedChecks);
     saveCurrentState({
@@ -470,64 +493,23 @@ export default function MeetingWorkspace() {
         {/* ── Main Workspace Content Deck (Trailing ivy vines drape gracefully over the deck) ── */}
         <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1700px] mx-auto w-full flex-1 -mt-4 sm:-mt-8 lg:-mt-12 relative z-30">
           
-          {/* Status Bar & Live Meeting Command Bar (Only shows when Live, Ready, or syncing) */}
-          <div className="flex items-center justify-between gap-3 flex-wrap px-3.5 py-2 rounded-xl bg-[#05142B]/85 border border-[#3A2C18] shadow-[0_4px_16px_rgba(0,0,0,0.6)] backdrop-blur-md">
-            {/* Live D1 Sync Pill */}
-            <div className="flex items-center gap-2 text-xs">
-              {saveMutation.isPending ? (
-                <>
-                  <span className="h-2 w-2 rounded-full bg-[#FFE394] animate-ping" />
-                  <span className="text-[#FFE394] font-medium flex items-center gap-1">
-                    <Loader2 className="h-3 w-3 animate-spin text-[#FFE394]" />
-                    Syncing to Cloudflare D1...
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  <span className="text-emerald-300 font-medium flex items-center gap-1.5">
-                    <span>Saved to Cloudflare D1</span>
-                    {lastSavedAt && (
-                      <span className="text-[#A69371] font-mono text-[11px]">
-                        ({lastSavedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })})
-                      </span>
-                    )}
-                  </span>
-                </>
-              )}
-            </div>
-
-            {/* Quick Live Meeting Action & Page ID Badge */}
-            <div className="flex items-center gap-2.5">
-              {meetingStatus === "LIVE" ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-950/90 border border-emerald-500 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.35)] font-mono">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                  LIVE MEETING IN PROGRESS
-                </span>
-              ) : meetingStatus === "READY" ? (
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setMeetingStatus("LIVE");
-                    setActiveTab("MEETING_MODE");
-                    saveCurrentState({ status: "LIVE", activeTab: "MEETING_MODE" });
-                    const globalRec = (window as any).voyageGlobalRecorder;
-                    if (globalRec) {
-                      if (selectedStudentId) globalRec.setSelectedContactId(selectedStudentId);
-                      globalRec.setTitle(`${studentName} — ${meetingType || "Annual IEP Meeting"} (${meetingDate})`);
-                    }
-                    toast.success("Live Meeting session initiated");
-                  }}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 cursor-pointer h-7 px-3"
-                >
-                  <Zap className="h-3.5 w-3.5 fill-[#07162B]" />
-                  Launch Live Meeting
-                </Button>
-              ) : null}
-
-              <PageIdBadge id="PG-043" name="⚡ Meeting Workspace" />
-            </div>
-          </div>
+          {/* Status Bar & Live Meeting Command Bar */}
+          <MeetingStatusBar
+            isSaving={saveMutation.isPending}
+            lastSavedAt={lastSavedAt}
+            meetingStatus={meetingStatus}
+            onLaunchLiveMeeting={() => {
+              setMeetingStatus("LIVE");
+              setActiveTab("MEETING_MODE");
+              saveCurrentState({ status: "LIVE", activeTab: "MEETING_MODE" });
+              const globalRec = (window as any).voyageGlobalRecorder;
+              if (globalRec) {
+                if (selectedStudentId) globalRec.setSelectedContactId(selectedStudentId);
+                globalRec.setTitle(`${studentName} — ${meetingType || "Annual IEP Meeting"} (${meetingDate})`);
+              }
+              toast.success("Live Meeting session initiated");
+            }}
+          />
 
         {/* Loading state */}
         {workspaceLoading && (
@@ -604,6 +586,19 @@ export default function MeetingWorkspace() {
                     onPrevStep={() => {
                       setPrepStep("iep_intel");
                     }}
+                    parentDoesntWantText={parentDoesntWantText}
+                    onUpdateParentDoesntWant={(newText) => {
+                      setParentDoesntWantText(newText);
+                      if (selectedStudentId) {
+                        try { localStorage.setItem(`mw_pdw_${selectedStudentId}`, newText); } catch {}
+                      }
+                      const updatedChecks = {
+                        ...closeoutChecks,
+                        parentDoesntWant: newText,
+                      };
+                      setCloseoutChecks(updatedChecks);
+                      saveCurrentState({ closeoutChecks: updatedChecks }, true);
+                    }}
                   />
                 )}
 
@@ -678,39 +673,14 @@ export default function MeetingWorkspace() {
 
                 {/* Step 5: Ready for Meeting */}
                 {prepStep === "ready" && (
-                  <div className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl p-8 text-center max-w-2xl mx-auto space-y-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
-                    <div className="w-14 h-14 rounded-2xl bg-[#020A17] border border-[#3A2C18] text-[#FFE394] flex items-center justify-center mx-auto shadow-inner">
-                      <span className="text-2xl select-none">⚡</span>
-                    </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-serif font-black text-[#FFF4D4]">Meeting Preparation Complete</h3>
-                      <p className="text-xs text-[#C6B697] mt-1.5 max-w-md mx-auto leading-relaxed">
-                        All IEP intel, parent concerns, and meeting targets have been approved. You are ready to run the IEP meeting.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-center gap-3">
-                      <Button
-                        onClick={() => {
-                          setActiveTab("MEETING_MODE");
-                        }}
-                        variant="outline"
-                        className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 text-xs cursor-pointer"
-                      >
-                        Preview Meeting Mode
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setMeetingStatus("LIVE");
-                          setActiveTab("MEETING_MODE");
-                          saveCurrentState({ status: "LIVE" });
-                        }}
-                        className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs gap-2 cursor-pointer shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 hover:brightness-105"
-                      >
-                        ⚡ Launch Live Meeting Mode
-                      </Button>
-                    </div>
-                  </div>
+                  <Step5ReadyView
+                    onPreviewMeetingMode={() => setActiveTab("MEETING_MODE")}
+                    onLaunchLiveMeeting={() => {
+                      setMeetingStatus("LIVE");
+                      setActiveTab("MEETING_MODE");
+                      saveCurrentState({ status: "LIVE" });
+                    }}
+                  />
                 )}
               </div>
             )}
@@ -804,6 +774,7 @@ export default function MeetingWorkspace() {
               parentConcerns={parentConcerns}
               iepFindings={iepFindings}
               rawPcsMetadata={(closeoutChecks as any)?.pcsMetadata}
+              parentDoesntWantText={parentDoesntWantText}
               onSavePcs={handleSavePcsFromWorkspace}
             />
           </div>

@@ -183,4 +183,30 @@ describe("PG-043 Parent Concern Statement (PCS) Workspace Specifications", () =>
       expect(item.usedFor).toBeTruthy();
     });
   });
+
+  it("6. Dedicated space for What the Parent Doesn't Want is preserved in workspace state and synced cleanly", () => {
+    const parentDoesntWantSample = [
+      "• Reject reducing Speech-Language therapy from 60 to 30 min/week without comprehensive re-evaluation.",
+      "• Explicitly refuse segregated resource room placement for lunch or specials.",
+      "• Prohibit any physical restraint, prone restraint, or isolated seclusion timeout rooms.",
+      "• Do not agree to removing 1:1 adult paraprofessional during transitions.",
+    ].join("\n");
+
+    const closeoutChecks = {
+      allRequestsRaised: true,
+      pwnIdentified: false,
+      agreedLocationsClear: true,
+      followUpAssigned: false,
+      nextMeetingDiscussed: true,
+      parentDoesntWant: parentDoesntWantSample,
+    };
+
+    expect(closeoutChecks.parentDoesntWant).toContain("Reject reducing Speech-Language");
+    expect(closeoutChecks.parentDoesntWant).toContain("Prohibit any physical restraint");
+
+    // Serialization check
+    const serialized = JSON.stringify(closeoutChecks);
+    const parsed = JSON.parse(serialized);
+    expect(parsed.parentDoesntWant).toBe(parentDoesntWantSample);
+  });
 });

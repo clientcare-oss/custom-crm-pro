@@ -403,7 +403,8 @@ export async function updateContact(id: number, ownerId: number, data: any): Pro
         "firstName", "lastName", "email", "phone", "company", "jobTitle", "address", "city",
         "state", "zipCode", "country", "notes", "dateOfBirth", "diagnosis", "schoolName",
         "gradeLevel", "countyDistrict", "challenges", "previousSchool", "goingToSchool",
-        "planType", "pipelineStage", "planTier", "accountStatus", "billingStatus", "contractStatus"
+        "planType", "pipelineStage", "planTier", "accountStatus", "billingStatus", "contractStatus",
+        "bestTimeToCall"
       ];
       const fallbackData: Record<string, any> = {};
       for (const k of coreKeys) {

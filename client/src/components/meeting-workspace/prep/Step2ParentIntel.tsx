@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { ParentIntelConcern } from "../types";
+import { ParentDoesntWantBox } from "../pcs/ParentDoesntWantBox";
+import { toast } from "sonner";
 
 interface Step2ParentIntelProps {
   studentContactId: number;
@@ -16,6 +18,8 @@ interface Step2ParentIntelProps {
   isLoading: boolean;
   onNextStep: () => void;
   onPrevStep: () => void;
+  parentDoesntWantText?: string;
+  onUpdateParentDoesntWant?: (text: string) => void;
 }
 
 export function Step2ParentIntel({
@@ -27,6 +31,8 @@ export function Step2ParentIntel({
   isLoading,
   onNextStep,
   onPrevStep,
+  parentDoesntWantText,
+  onUpdateParentDoesntWant,
 }: Step2ParentIntelProps) {
   const [editingConcernId, setEditingConcernId] = useState<string | null>(null);
   const [editTopic, setEditTopic] = useState("");
@@ -347,6 +353,19 @@ export function Step2ParentIntel({
           </div>
         )}
       </div>
+
+      {/* ── What the Parent Doesn't Want (Red Box) ── */}
+      {onUpdateParentDoesntWant && (
+        <ParentDoesntWantBox
+          content={parentDoesntWantText || ""}
+          onChangeContent={onUpdateParentDoesntWant}
+          onSaveContent={async () => {
+            toast.success("What Parent Doesn't Want saved to workspace.");
+          }}
+          isSaving={false}
+          isDirty={false}
+        />
+      )}
 
       {/* Navigation */}
       <div className="flex items-center justify-between pt-3 border-t border-[#3A2C18]/80">

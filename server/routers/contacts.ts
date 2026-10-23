@@ -38,6 +38,7 @@ export const contactsRouter = router({
           country: z.string().optional(),
           notes: z.string().optional(),
           parentContactId: z.number().optional(),
+          bestTimeToCall: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -82,6 +83,7 @@ export const contactsRouter = router({
               howHeardAboutUs: z.string().optional(),
               referredBy: z.string().optional(),
               caseId: z.string().optional(),
+              bestTimeToCall: z.string().optional(),
             })
           ),
         })
@@ -106,6 +108,7 @@ export const contactsRouter = router({
           city: z.string().optional(),
           state: z.string().optional(),
           notes: z.string().optional(),
+          bestTimeToCall: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -182,6 +185,7 @@ export const contactsRouter = router({
           managerApprovalStatus: z.string().optional(),
           approvingManager: z.string().optional(),
           scholarshipNotes: z.string().optional(),
+          bestTimeToCall: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {

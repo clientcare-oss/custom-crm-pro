@@ -55,6 +55,7 @@ export interface ContactItem {
   zipCode?: string | null;
   confirmedTimeZone?: string | null;
   timezone?: string | null;
+  bestTimeToCall?: string | null;
   preferredCallingStartTime?: string | null;
   preferredCallingEndTime?: string | null;
   mayCallOutsidePreferredHours?: boolean | null;
@@ -234,6 +235,7 @@ export default function ContactsLedgerView({
           phone.includes(q) ||
           company.includes(q) ||
           jobTitle.includes(q) ||
+          (c.bestTimeToCall || "").toLowerCase().includes(q) ||
           matchesChild;
         if (!match) return false;
       }
@@ -613,6 +615,32 @@ export default function ContactsLedgerView({
                                     return `${contact.jobTitle || "Contact"}${contact.company ? ` · ${contact.company}` : ""}`;
                                   })()}
                                 </p>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <Clock
+                                    className={cn(
+                                      "h-3 w-3 shrink-0",
+                                      contact.bestTimeToCall
+                                        ? "text-[#E5C175]"
+                                        : isLight
+                                        ? "text-[#8C7A62]"
+                                        : "text-[#5C7290]"
+                                    )}
+                                  />
+                                  <span
+                                    className={cn(
+                                      "text-[10px] sm:text-[11px] truncate leading-none",
+                                      contact.bestTimeToCall
+                                        ? isLight
+                                          ? "text-[#4A3205] font-semibold"
+                                          : "text-[#FFE394] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+                                        : isLight
+                                        ? "text-[#8C7A62] italic"
+                                        : "text-[#627794] italic"
+                                    )}
+                                  >
+                                    {contact.bestTimeToCall ? `Prefers: ${contact.bestTimeToCall}` : "Preferred time: Not set"}
+                                  </span>
+                                </div>
                               </div>
                             </div>
 
@@ -993,6 +1021,69 @@ export default function ContactsLedgerView({
                           {callingStatus.label}
                         </span>
                       </div>
+                    </div>
+
+                    {/* Sub-divider hairline */}
+                    <div className="my-2 mx-1 h-[1px] bg-gradient-to-r from-transparent via-[#FFEAA3]/30 to-transparent" />
+
+                    {/* Lower Tier: Client Preferred Contact Time */}
+                    <div className="flex items-center justify-between gap-2 pl-2 sm:pl-2.5 pr-2 sm:pr-2.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className={cn(
+                            "w-6 h-6 rounded-full flex items-center justify-center shrink-0 border",
+                            isLight
+                              ? "bg-[#EFE2C6] border-[#A88849] text-[#5A3E09] shadow-xs"
+                              : "bg-[#061224] border-[#D4AF37]/50 text-[#FCE09E] shadow-[0_0_8px_rgba(212,175,55,0.3)]"
+                          )}
+                        >
+                          <Clock className="h-3.5 w-3.5" />
+                        </div>
+
+                        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                          <span
+                            className={cn(
+                              "text-[10px] uppercase font-serif font-bold tracking-wider",
+                              isLight ? "text-[#5C4212]" : "text-[#E8D1A7]"
+                            )}
+                          >
+                            Preferred Time:
+                          </span>
+                          <span
+                            className={cn(
+                              "font-serif text-xs sm:text-[13px] font-bold tracking-tight truncate",
+                              dossierContact.bestTimeToCall
+                                ? isLight
+                                  ? "text-[#1F1404]"
+                                  : "text-[#FFE394] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                                : isLight
+                                ? "text-[#735828] italic font-normal"
+                                : "text-[#8CA4C4] italic font-normal"
+                            )}
+                          >
+                            {dossierContact.bestTimeToCall || "Not specified yet"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Quick Edit Button */}
+                      <button
+                        type="button"
+                        onClick={() => onEditContact(dossierContact)}
+                        className={cn(
+                          "text-[10px] font-serif font-bold px-2.5 py-0.5 rounded border transition-all cursor-pointer shrink-0 shadow-xs",
+                          dossierContact.bestTimeToCall
+                            ? isLight
+                              ? "bg-[#DFCB9F] hover:bg-[#D2B983] border-[#9E7D3F] text-[#3D2704]"
+                              : "bg-[#091E3B] hover:bg-[#10305C] border-[#D4AF37]/50 text-[#FCE09E]"
+                            : isLight
+                            ? "bg-[#E5BF65] hover:bg-[#D4AF37] border-[#8C6418] text-[#291A04]"
+                            : "bg-[#291A04] hover:bg-[#3D2808] border-[#E5C175]/60 text-[#FFE394]"
+                        )}
+                        title="Edit preferred contact time"
+                      >
+                        {dossierContact.bestTimeToCall ? "Edit" : "+ Set Time"}
+                      </button>
                     </div>
                   </div>
                 </div>

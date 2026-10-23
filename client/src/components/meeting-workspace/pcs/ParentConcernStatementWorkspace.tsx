@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PcsAdvocateBox } from "./PcsAdvocateBox";
+import { ParentDoesntWantBox } from "./ParentDoesntWantBox";
 import { PcsDetailsPanel } from "./PcsDetailsPanel";
 import { PcsPasteReplaceModal } from "./PcsPasteReplaceModal";
 import { PcsEmailModal } from "./PcsEmailModal";
@@ -22,7 +23,8 @@ interface ParentConcernStatementWorkspaceProps {
   parentConcerns?: ParentIntelConcern[];
   iepFindings?: IepIntelFinding[];
   rawPcsMetadata?: any;
-  onSavePcs: (newPcsText: string, updatedMetadata: PcsMetadata) => Promise<void> | void;
+  parentDoesntWantText?: string;
+  onSavePcs: (newPcsText: string, updatedMetadata: PcsMetadata, parentDoesntWantText?: string) => Promise<void> | void;
 }
 
 export function ParentConcernStatementWorkspace({
@@ -33,6 +35,7 @@ export function ParentConcernStatementWorkspace({
   parentConcerns = [],
   iepFindings = [],
   rawPcsMetadata,
+  parentDoesntWantText,
   onSavePcs,
 }: ParentConcernStatementWorkspaceProps) {
   // ── 1. Local working draft state ───────────────────────────────────────────
@@ -41,12 +44,24 @@ export function ParentConcernStatementWorkspace({
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [status, setStatus] = useState<PcsStatus>("DRAFT");
 
+  // ── 1b. What the Parent Doesn't Want (Muted Wine Red Box) ─────────────────
+  const [parentDoesntWant, setParentDoesntWant] = useState<string>(parentDoesntWantText || "");
+  const [isDirtyDoesntWant, setIsDirtyDoesntWant] = useState<boolean>(false);
+  const [isSavingDoesntWant, setIsSavingDoesntWant] = useState<boolean>(false);
+
   // Sync incoming pcsText if advocate hasn't typed unsaved changes
   useEffect(() => {
     if (pcsText && !isDirty) {
       setContent(pcsText);
     }
   }, [pcsText, isDirty]);
+
+  // Sync incoming parentDoesntWantText if advocate hasn't typed unsaved changes
+  useEffect(() => {
+    if (typeof parentDoesntWantText === "string" && !isDirtyDoesntWant) {
+      setParentDoesntWant(parentDoesntWantText);
+    }
+  }, [parentDoesntWantText, isDirtyDoesntWant]);
 
   // ── 2. Modal and Details Panel View States ─────────────────────────────────
   const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
@@ -258,12 +273,30 @@ export function ParentConcernStatementWorkspace({
       setIsDirty(false);
       setStatus("EDITED");
 
-      await onSavePcs(content, updatedMeta);
+      await onSavePcs(content, updatedMeta, parentDoesntWant);
       toast.success("Parent Concern Statement saved successfully.");
     } catch (err: any) {
       toast.error(`Failed to save statement: ${err?.message || "Unknown error"}`);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleChangeParentDoesntWant = (text: string) => {
+    setParentDoesntWant(text);
+    setIsDirtyDoesntWant(true);
+  };
+
+  const handleSaveParentDoesntWant = async () => {
+    setIsSavingDoesntWant(true);
+    try {
+      setIsDirtyDoesntWant(false);
+      await onSavePcs(content, metadata, parentDoesntWant);
+      toast.success("What Parent Doesn't Want saved successfully.");
+    } catch (err: any) {
+      toast.error(`Failed to save non-negotiables: ${err?.message || "Unknown error"}`);
+    } finally {
+      setIsSavingDoesntWant(false);
     }
   };
 
@@ -391,19 +424,31 @@ export function ParentConcernStatementWorkspace({
 
   return (
     <div id="parent-concern-statement-workspace" className="w-full space-y-4 pt-6">
-      {/* ── 1. Main Advocate-Facing Box (Always directly visible & editable) ─ */}
-      <PcsAdvocateBox
-        content={content}
-        status={status}
-        isDetailsOpen={isDetailsOpen}
-        onToggleDetails={() => setIsDetailsOpen((prev) => !prev)}
-        onChangeContent={handleChangeContent}
-        onSaveContent={handleSaveContent}
-        onOpenPasteReplace={() => setIsPasteModalOpen(true)}
-        onOpenEmailToParent={() => setIsEmailModalOpen(true)}
-        isSaving={isSaving}
-        isDirty={isDirty}
-      />
+      {/* ── 1. Main Advocate-Facing Deck: What Parent Wants vs What Parent Doesn't Want ─ */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+        {/* Left Column: What the Parent Wants & Requests (Parent Concern Statement) */}
+        <PcsAdvocateBox
+          content={content}
+          status={status}
+          isDetailsOpen={isDetailsOpen}
+          onToggleDetails={() => setIsDetailsOpen((prev) => !prev)}
+          onChangeContent={handleChangeContent}
+          onSaveContent={handleSaveContent}
+          onOpenPasteReplace={() => setIsPasteModalOpen(true)}
+          onOpenEmailToParent={() => setIsEmailModalOpen(true)}
+          isSaving={isSaving}
+          isDirty={isDirty}
+        />
+
+        {/* Right Column: What the Parent DOESN'T Want (Muted Wine Red Box) */}
+        <ParentDoesntWantBox
+          content={parentDoesntWant}
+          onChangeContent={handleChangeParentDoesntWant}
+          onSaveContent={handleSaveParentDoesntWant}
+          isSaving={isSavingDoesntWant}
+          isDirty={isDirtyDoesntWant}
+        />
+      </div>
 
       {/* ── 2. Behind-the-Scenes AI Working Area (Details Panel) ───────────── */}
       {isDetailsOpen && (
