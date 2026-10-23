@@ -119,13 +119,7 @@ export default function Settings() {
   }, []);
 
   return (
-    <div 
-      className="min-h-screen w-full relative overflow-x-hidden bg-[#07162B] text-slate-100"
-      style={{
-        backgroundColor: "#07162B",
-        backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
-      }}
-    >
+    <div className="min-h-screen w-full relative overflow-x-hidden bg-[#000820] text-slate-100">
       <div className="w-full px-4 sm:px-6 md:px-8 py-8 space-y-6 max-w-7xl mx-auto">
         {/* ── TOP HEADER & TELEMETRY ────────────────────────────────────────── */}
         <div className="space-y-4 border-b border-[#3A2C18]/80 pb-5">

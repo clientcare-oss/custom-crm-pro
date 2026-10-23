@@ -1596,7 +1596,17 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         />
       </div>
 
-      <SidebarInset className={cn(location.startsWith("/meeting-workspace") && "bg-[#000820]")}>
+      <SidebarInset className={cn((
+        location.startsWith("/meeting-workspace") ||
+        location === "/leads" || location.startsWith("/leads") ||
+        location === "/advocacy-pipeline" || location.startsWith("/advocacy-pipeline") ||
+        location === "/pipeline" || location.startsWith("/pipeline") ||
+        location === "/templates" || location.startsWith("/templates") ||
+        location === "/tools" || (location.startsWith("/tools") && !location.startsWith("/tools/state-complaint-builder")) ||
+        location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai") ||
+        location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics") ||
+        location === "/settings" || location.startsWith("/settings")
+      ) && "bg-[#000820]")}>
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
@@ -1613,10 +1623,16 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location === "/giving" || location.startsWith("/giving")) && "p-0 bg-[#07162B]",
           (location === "/agreements" || location.startsWith("/agreements") || location === "/contracts" || location.startsWith("/smart-files")) && "p-0 bg-[#07162B]",
           (location.startsWith("/state-complaint-builder") || location.startsWith("/tools/state-complaint-builder")) && "p-0 bg-[#030D1A]",
-          (location.startsWith("/automations") || location.startsWith("/waypoint-ai")) && "p-0 bg-[#07162B]",
           (location.startsWith("/call-center") || location.startsWith("/call-logs")) && "p-0 bg-[#07162B]",
           (location === "/calendar" || location.startsWith("/calendar") || location === "/appointments" || location.startsWith("/appointments")) && "p-0 bg-[#07162B]",
-          (location === "/" || location.startsWith("/crew-quarters")) && "p-0 bg-[#07162B]"
+          (location === "/" || location.startsWith("/crew-quarters")) && "p-0 bg-[#07162B]",
+          (location === "/leads" || location.startsWith("/leads")) && "p-0 bg-[#000820]",
+          (location === "/advocacy-pipeline" || location.startsWith("/advocacy-pipeline") || location === "/pipeline" || location.startsWith("/pipeline")) && "p-0 bg-[#000820]",
+          (location === "/templates" || location.startsWith("/templates")) && "p-0 bg-[#000820]",
+          (location === "/tools" || (location.startsWith("/tools") && !location.startsWith("/tools/state-complaint-builder"))) && "p-0 bg-[#000820]",
+          (location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai")) && "p-0 bg-[#000820]",
+          (location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics")) && "p-0 bg-[#000820]",
+          (location === "/settings" || location.startsWith("/settings")) && "p-0 bg-[#000820]"
         )}>
           {currentForbiddenModule ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-lg mx-auto text-center px-4 py-12">

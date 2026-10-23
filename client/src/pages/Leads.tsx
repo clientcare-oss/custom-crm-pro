@@ -461,13 +461,7 @@ export default function Leads() {
 
   return (
     <ScopedErrorBoundary moduleName="Lead Center">
-      <div
-        className="space-y-6 p-4 sm:p-6 lg:p-8 min-h-screen text-slate-100 relative overflow-x-hidden"
-        style={{
-          backgroundColor: "#07162B",
-          backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
-        }}
-      >
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8 min-h-screen text-slate-100 relative bg-[#000820] w-full overflow-x-hidden">
         {/* Header */}
         <LeadCenterHeader
           onManageForms={() => setLocation("/leads/forms")}

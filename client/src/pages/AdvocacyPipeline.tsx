@@ -968,13 +968,7 @@ export default function AdvocacyPipeline() {
 
   return (
     <ScopedErrorBoundary moduleName="Advocacy Pipeline">
-      <div 
-        className="space-y-3.5 p-3.5 sm:p-5 lg:p-6 min-h-screen text-slate-100 relative overflow-x-hidden"
-        style={{
-          backgroundColor: "#07162B",
-          backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
-        }}
-      >
+      <div className="space-y-3.5 p-3.5 sm:p-5 lg:p-6 min-h-screen text-slate-100 relative bg-[#000820] w-full overflow-x-hidden">
         {/* 1. Page Header (Compact) */}
         <AdvocacyPipelineHeader
           onCustomizePipeline={() => setShowCustomizeModal(true)}

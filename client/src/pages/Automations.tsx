@@ -666,12 +666,7 @@ export default function Automations() {
 
   return (
     <ScopedErrorBoundary moduleName="Automations Engine">
-      <div
-        className="min-h-screen w-full relative text-[#F0DFC5] p-4 sm:p-6 lg:p-8"
-        style={{
-          background: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
-        }}
-      >
+      <div className="min-h-screen w-full relative text-[#F0DFC5] p-4 sm:p-6 lg:p-8 bg-[#000820] overflow-x-hidden">
         <div className="max-w-7xl mx-auto w-full space-y-7">
 
           {/* ─── Top Header Deck & Tab Switcher ─── */}

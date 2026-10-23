@@ -665,13 +665,7 @@ export default function Tools() {
 
   return (
     <ScopedErrorBoundary moduleName="Tools Hub">
-      <div 
-        className="min-h-screen w-full relative overflow-x-hidden bg-[#07162B] text-slate-100 p-6 md:p-8"
-        style={{
-          backgroundColor: "#07162B",
-          backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
-        }}
-      >
+      <div className="min-h-screen w-full relative overflow-x-hidden bg-[#000820] text-slate-100 p-6 md:p-8">
         <div className="max-w-6xl mx-auto w-full space-y-10">
           {/* Top Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#3A2C18] pb-6">

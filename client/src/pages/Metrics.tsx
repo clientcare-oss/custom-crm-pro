@@ -187,13 +187,7 @@ export default function Metrics() {
 
   return (
     <ScopedErrorBoundary moduleName="Waypoint Metrics Console">
-      <div 
-        className="min-h-screen w-full relative overflow-x-hidden bg-[#07162B] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-8 select-none"
-        style={{
-          backgroundColor: "#07162B",
-          backgroundImage: "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
-        }}
-      >
+      <div className="min-h-screen w-full relative overflow-x-hidden bg-[#000820] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-8 select-none">
         {/* ── Universal Header with Multi-Dimensional Filters ── */}
         <MetricsHeader
           filters={filters}
