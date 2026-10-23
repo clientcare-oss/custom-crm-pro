@@ -624,7 +624,17 @@ export async function handleQuoWebhookRequest(request: Request): Promise<Respons
 /**
  * Express Middleware Registration for local development and Node.js runtime.
  */
-export function registerQuoWebhookRoutes(app: Router) {
+export function registerQuoWebhookRoutes(app: any) {
+  const rawBodyParser = (req: any, _res: any, next: any) => {
+    if (Buffer.isBuffer(req.body)) return next();
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk: Buffer) => chunks.push(chunk));
+    req.on("end", () => {
+      req.body = Buffer.concat(chunks);
+      next();
+    });
+  };
+
   const webhookHandler = async (req: any, res: any) => {
     const sigHeaders: QuoSignatureHeaders = {
       openphoneSignature: req.headers["openphone-signature"] as string | undefined,
@@ -639,8 +649,8 @@ export function registerQuoWebhookRoutes(app: Router) {
 
   const webhookPaths = ["/api/quo/webhook", "/api/integrations/quo/webhooks"];
   webhookPaths.forEach((path) => {
-    app.post(path, raw({ type: "application/json" }), webhookHandler);
-    app.get(path, (_req, res) => {
+    app.post(path, rawBodyParser, webhookHandler);
+    app.get(path, (_req: any, res: any) => {
       res.json({
         status: "ok",
         service: "Waypoint Quo Webhook Receiver",
@@ -660,7 +670,7 @@ export function registerQuoWebhookRoutes(app: Router) {
         ],
       });
     });
-    app.options(path, (_req, res) => {
+    app.options(path, (_req: any, res: any) => {
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
       res.setHeader("Access-Control-Allow-Headers", "*");
