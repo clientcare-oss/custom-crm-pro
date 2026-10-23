@@ -17,7 +17,6 @@
  *   - Modern Quo: Standard Webhooks (Svix) with headers webhook-id, webhook-timestamp, webhook-signature (or svix-*)
  *   - Legacy OpenPhone: openphone-signature: hmac;1;<timestamp>;<base64digest>
  */
-import { Router, raw } from "express";
 import crypto from "crypto";
 import { Webhook } from "svix";
 import * as db from "./db";
