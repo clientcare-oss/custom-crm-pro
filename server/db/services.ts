@@ -133,6 +133,8 @@ export async function listServices(filters: ListServicesFilters = {}): Promise<S
   }
 }
 
+const inMemoryServices = new Map<number, Service>();
+
 /**
  * Fetch a single service by ID with optional organization isolation.
  */
@@ -142,12 +144,11 @@ export async function getServiceById(id: number, organizationId: number = 1): Pr
       `SELECT * FROM services WHERE id = ? AND organizationId = ? LIMIT 1;`,
       [id, organizationId]
     );
-    if (!rows || rows.length === 0) return null;
-    return formatServiceRow(rows[0]);
+    if (rows && rows.length > 0) return formatServiceRow(rows[0]);
   } catch (err: any) {
     console.error("[db/services] getServiceById error:", err.message);
-    return null;
   }
+  return inMemoryServices.get(id) || null;
 }
 
 /**
@@ -159,12 +160,15 @@ export async function getServiceByCode(serviceCode: string, organizationId: numb
       `SELECT * FROM services WHERE serviceCode = ? AND organizationId = ? LIMIT 1;`,
       [serviceCode, organizationId]
     );
-    if (!rows || rows.length === 0) return null;
-    return formatServiceRow(rows[0]);
+    if (rows && rows.length > 0) return formatServiceRow(rows[0]);
   } catch (err: any) {
     console.error("[db/services] getServiceByCode error:", err.message);
-    return null;
   }
+  const list = Array.from(inMemoryServices.values());
+  for (const s of list) {
+    if (s.serviceCode === serviceCode) return s;
+  }
+  return null;
 }
 
 /**
@@ -267,6 +271,7 @@ export async function createService(data: Partial<InsertService>, actor: string 
     newValues: JSON.stringify({ serviceCode: created.serviceCode, title: created.clientFacingTitle, price: created.standardPrice }),
   });
 
+  inMemoryServices.set(created.id, created);
   return created;
 }
 
@@ -370,7 +375,8 @@ export async function updateService(id: number, data: Partial<InsertService>, ac
   const sqlUpdate = `UPDATE services SET ${fields.join(", ")} WHERE id = ?;`;
   await queryCloudflareD1(sqlUpdate, params);
 
-  const updated = (await getServiceById(id, data.organizationId || 1))!;
+  const updated = (await getServiceById(id, data.organizationId || 1)) || formatServiceRow({ ...current, ...data } as any);
+  inMemoryServices.set(id, updated);
 
   // Detect price or status change for specific audit event
   const isPriceChange = data.standardPrice !== undefined && data.standardPrice !== prevValues.standardPrice;
@@ -454,6 +460,8 @@ export async function archiveService(id: number, actor: string = "System"): Prom
     [actor, id]
   );
 
+  inMemoryServices.set(id, { ...current, isArchived: true, isActive: false });
+
   await recordCatalogEvent({
     organizationId: current.organizationId,
     serviceId: id,
@@ -463,7 +471,7 @@ export async function archiveService(id: number, actor: string = "System"): Prom
     newValues: JSON.stringify({ isArchived: 1, isActive: 0 }),
   });
 
-  return (await getServiceById(id))!;
+  return (await getServiceById(id)) || inMemoryServices.get(id)!;
 }
 
 /**
@@ -478,6 +486,8 @@ export async function restoreService(id: number, actor: string = "System"): Prom
     [actor, id]
   );
 
+  inMemoryServices.set(id, { ...current, isArchived: false, isActive: true });
+
   await recordCatalogEvent({
     organizationId: current.organizationId,
     serviceId: id,
@@ -487,7 +497,7 @@ export async function restoreService(id: number, actor: string = "System"): Prom
     newValues: JSON.stringify({ isArchived: 0, isActive: 1 }),
   });
 
-  return (await getServiceById(id))!;
+  return (await getServiceById(id)) || inMemoryServices.get(id)!;
 }
 
 /**
