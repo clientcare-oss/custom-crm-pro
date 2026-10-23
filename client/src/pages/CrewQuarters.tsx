@@ -130,7 +130,7 @@ const DEFAULT_TIME_OFF: TimeOffRequest[] = [
 ];
 
 export default function CrewQuarters() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const utils = trpc.useUtils();
 
@@ -147,6 +147,9 @@ export default function CrewQuarters() {
   // Internal navigation tabs (Overview · Crew Messages · My Tasks · Team Schedule · Resources)
   const getInitialTab = () => {
     if (typeof window !== "undefined") {
+      if (window.location.pathname === "/crew-messages" || window.location.pathname.startsWith("/crew-quarters/messages")) {
+        return "messages";
+      }
       const params = new URLSearchParams(window.location.search);
       return params.get("tab") || "overview";
     }
@@ -165,8 +168,13 @@ export default function CrewQuarters() {
   const [currentTab, setCurrentTab] = useState<string>(getInitialTab);
   const [selectedConversationId, setSelectedConversationId] = useState<number | null>(getInitialConvId);
 
+  // Sync tab whenever URL or browser history changes
   useEffect(() => {
     const handlePopState = () => {
+      if (window.location.pathname === "/crew-messages" || window.location.pathname.startsWith("/crew-quarters/messages")) {
+        setCurrentTab("messages");
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       setCurrentTab(params.get("tab") || "overview");
       const c = params.get("conversationId");
@@ -175,6 +183,36 @@ export default function CrewQuarters() {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  // Listen for explicit crew tab switch events from global navigation/buttons
+  useEffect(() => {
+    const handleCustomTabSwitch = (e: any) => {
+      const targetTab = e?.detail?.tab;
+      if (targetTab) {
+        handleTabChange(targetTab, e?.detail?.conversationId ?? null);
+      }
+    };
+    window.addEventListener("waypoint:switch-crew-tab", handleCustomTabSwitch);
+    return () => window.removeEventListener("waypoint:switch-crew-tab", handleCustomTabSwitch);
+  }, []);
+
+  useEffect(() => {
+    if (location === "/crew-messages" || location.startsWith("/crew-quarters/messages")) {
+      if (currentTab !== "messages") {
+        setCurrentTab("messages");
+      }
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get("tab");
+    if (tabParam && tabParam !== currentTab) {
+      setCurrentTab(tabParam);
+    }
+    const c = params.get("conversationId");
+    if (c !== null && c !== undefined) {
+      setSelectedConversationId(Number(c));
+    }
+  }, [location]);
 
   const handleTabChange = (tab: string, convId?: number | null) => {
     setCurrentTab(tab);

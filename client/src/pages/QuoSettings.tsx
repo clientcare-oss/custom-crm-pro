@@ -19,6 +19,9 @@ import {
   Radio,
   HelpCircle,
   ExternalLink,
+  Key,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,7 +53,19 @@ export default function QuoSettings() {
   const { data: devices, refetch: refetchDevices, isLoading: devicesLoading } =
     trpc.quo.listMyDevices.useQuery();
 
+  const { data: quoSecretStatus, refetch: refetchSecretStatus } =
+    trpc.system.getQuoStatus.useQuery();
+
   // Mutations
+  const saveSecretMutation = trpc.system.setQuoSecret.useMutation({
+    onSuccess: () => {
+      toast.success("Quo Webhook Signing Secret saved successfully!");
+      setSecretInput("");
+      refetchSecretStatus();
+    },
+    onError: (err) => toast.error(`Failed to save secret: ${err.message}`),
+  });
+
   const saveSettingsMutation = trpc.quo.saveSettings.useMutation({
     onSuccess: () => {
       toast.success("Quo phone settings saved successfully");
@@ -101,6 +116,10 @@ export default function QuoSettings() {
     },
     onError: (err) => toast.error(`Failed to remove device: ${err.message}`),
   });
+
+  // Local state for Quo Webhook Signing Secret
+  const [secretInput, setSecretInput] = useState("");
+  const [showSecret, setShowSecret] = useState(false);
 
   // Local state for Phone Settings
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -302,6 +321,62 @@ export default function QuoSettings() {
                 >
                   {copiedUrl === "Legacy Webhook" ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                   <span className="text-xs">{copiedUrl === "Legacy Webhook" ? "Copied" : "Copy"}</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Cryptographic Webhook Signing Secret */}
+            <div className="space-y-2 pt-2 border-t border-border/50">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                  <Key className="h-3.5 w-3.5 text-cyan-400" />
+                  <span>Webhook Signing Secret</span>
+                </Label>
+                <Badge
+                  variant="outline"
+                  className={
+                    quoSecretStatus?.configured
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-[10px]"
+                      : "bg-amber-500/10 text-amber-400 border-amber-500/30 text-[10px]"
+                  }
+                >
+                  {quoSecretStatus?.configured ? "Configured & Verified" : "Secret Missing"}
+                </Badge>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Found in your Quo (OpenPhone) dashboard under <strong>Settings &rarr; Webhooks</strong>. Used to cryptographically authenticate every incoming call, transcript, recording, and SMS.
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    type={showSecret ? "text" : "password"}
+                    value={secretInput}
+                    onChange={(e) => setSecretInput(e.target.value)}
+                    placeholder={quoSecretStatus?.configured ? "•••••••••••••••• (Secret Active — Enter to replace)" : "Paste signing secret from Quo..."}
+                    className="bg-background/60 text-xs font-mono pr-9 h-8"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSecret(!showSecret)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                    title={showSecret ? "Hide secret" : "Show secret"}
+                  >
+                    {showSecret ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (!secretInput.trim()) {
+                      toast.error("Please enter your Quo signing secret");
+                      return;
+                    }
+                    saveSecretMutation.mutate({ secret: secretInput.trim() });
+                  }}
+                  disabled={saveSecretMutation.isPending || !secretInput.trim()}
+                  className="h-8 px-3 text-xs bg-cyan-600 hover:bg-cyan-500 text-white shrink-0 cursor-pointer"
+                >
+                  {saveSecretMutation.isPending ? "Saving..." : "Save Secret"}
                 </Button>
               </div>
             </div>

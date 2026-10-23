@@ -192,6 +192,8 @@ function Router() {
         <Switch>
           <Route path="/" component={CrewQuarters} />
           <Route path="/crew-quarters" component={CrewQuarters} />
+          <Route path="/crew-messages" component={CrewQuarters} />
+          <Route path="/crew-quarters/messages" component={CrewQuarters} />
           <Route path="/company/dashboard" component={CompanyDashboard} />
           <Route path="/company-dashboard" component={CompanyDashboard} />
           <Route path="/dashboard" component={CompanyDashboard} />

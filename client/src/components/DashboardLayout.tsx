@@ -55,6 +55,7 @@ import { Loader2 } from "lucide-react";
 import { LighthouseCottageIcon } from "@/components/ui/LighthouseCottageIcon";
 import { MarineRadarIcon } from "@/components/ui/MarineRadarIcon";
 import { getTestUnreadState } from "@/lib/testUnreadHelper";
+import { broadcastPageId } from "@/lib/pageIdRegistry";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -730,6 +731,39 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     handleCloseSearch();
   };
 
+  // Handler to open Crew Messages Workspace (PG-038-MSG)
+  const handleOpenCrewMessages = () => {
+    const isAlreadyOnCrewQuarters =
+      location === "/" ||
+      location === "/crew-quarters" ||
+      location.startsWith("/crew-quarters") ||
+      location === "/crew-messages";
+
+    if (isAlreadyOnCrewQuarters) {
+      window.dispatchEvent(
+        new CustomEvent("waypoint:switch-crew-tab", { detail: { tab: "messages" } })
+      );
+      const params = new URLSearchParams(window.location.search);
+      params.set("tab", "messages");
+      const targetPath = location === "/" ? "/crew-quarters" : location;
+      const newUrl = `${targetPath}?${params.toString()}`;
+      window.history.pushState(null, "", newUrl);
+      broadcastPageId({
+        id: "PG-038-MSG",
+        name: "Crew Messages Workspace",
+        category: "Communications",
+        description: "Internal team communication, direct messaging, and case collaboration",
+      });
+    } else {
+      setLocation("/crew-quarters?tab=messages");
+      setTimeout(() => {
+        window.dispatchEvent(
+          new CustomEvent("waypoint:switch-crew-tab", { detail: { tab: "messages" } })
+        );
+      }, 60);
+    }
+  };
+
   // Close search on click outside
   useEffect(() => {
     if (!isSearchOpen) return;
@@ -1208,10 +1242,10 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                         {/* Messages Icon Button (right of ADVOCATES, directly under the close/collapse button) */}
                         <button
                           type="button"
-                          onClick={() => setLocation("/crew-quarters?tab=messages")}
+                          onClick={handleOpenCrewMessages}
                           className="absolute right-0 w-7 h-7 rounded-full flex items-center justify-center text-[#B9CDE3]/80 hover:text-[#F8D279] hover:bg-white/[0.08] transition-all cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] group"
-                          aria-label="Team member messages"
-                          title={hasUnreadMessages ? `${unreadMessageCount} new message${unreadMessageCount > 1 ? "s" : ""} — click to view` : "Team Member Messages"}
+                          aria-label="Crew Messages Workspace (PG-038-MSG)"
+                          title={hasUnreadMessages ? `${unreadMessageCount} new message${unreadMessageCount > 1 ? "s" : ""} — click to open Crew Messages Workspace` : "Crew Messages Workspace (PG-038-MSG)"}
                         >
                           <MessageSquare className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
                           {hasUnreadMessages && (
@@ -1605,7 +1639,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         location === "/tools" || (location.startsWith("/tools") && !location.startsWith("/tools/state-complaint-builder")) ||
         location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai") ||
         location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics") ||
-        location === "/settings" || location.startsWith("/settings")
+        location === "/settings" || location.startsWith("/settings") ||
+        location === "/messages" || location.startsWith("/messages")
       ) && "bg-[#000820]")}>
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
@@ -1632,7 +1667,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location === "/tools" || (location.startsWith("/tools") && !location.startsWith("/tools/state-complaint-builder"))) && "p-0 bg-[#000820]",
           (location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai")) && "p-0 bg-[#000820]",
           (location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics")) && "p-0 bg-[#000820]",
-          (location === "/settings" || location.startsWith("/settings")) && "p-0 bg-[#000820]"
+          (location === "/settings" || location.startsWith("/settings")) && "p-0 bg-[#000820]",
+          (location === "/messages" || location.startsWith("/messages")) && "p-0 bg-[#000820]"
         )}>
           {currentForbiddenModule ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-lg mx-auto text-center px-4 py-12">

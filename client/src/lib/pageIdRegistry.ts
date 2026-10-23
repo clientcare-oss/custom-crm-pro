@@ -11,6 +11,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/":                                { id: "PG-038", name: "Crew Quarters", category: "Core", description: "Personal employee home base and operational station" },
   "/crew-quarters":                   { id: "PG-038", name: "Crew Quarters", category: "Core", description: "Personal employee home base and operational station" },
   "/crew-quarters/messages":          { id: "PG-038-MSG", name: "Crew Messages Workspace", category: "Communications", description: "Internal team communication, direct messaging, and case collaboration" },
+  "/crew-messages":                   { id: "PG-038-MSG", name: "Crew Messages Workspace", category: "Communications", description: "Internal team communication, direct messaging, and case collaboration" },
   "/crew-quarters/tasks":             { id: "PG-038-TSK", name: "Crew Task Queue", category: "Productivity", description: "Personal advocate action items, IEP reviews, and milestones" },
   "/crew-quarters/schedule":          { id: "PG-038-SCH", name: "Team Schedule & Time Off", category: "Schedule", description: "Staff calendar, leave requests, and coverage scheduling" },
   "/crew-quarters/resources":         { id: "PG-038-RES", name: "Employee Resources", category: "Content", description: "Staff directory, handbook, policy templates, and guidance" },
@@ -443,6 +444,18 @@ export function resolvePageId(pathname: string, search = ""): PageIdInfo {
     }
     // Default settings view is Business Profile (PG-024-BIZ)
     return SETTINGS_SECTION_IDS["business"];
+  }
+
+  // Check Crew Quarters sub-tabs (/crew-quarters?tab=messages, /?tab=messages, etc.)
+  if (cleanPath === "/" || cleanPath === "/crew-quarters" || cleanPath === "/crew-messages" || cleanPath === "/crew-quarters/messages") {
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const tabParam = urlParams.get("tab") || (cleanPath === "/crew-messages" || cleanPath === "/crew-quarters/messages" ? "messages" : null);
+    if (tabParam && CREW_QUARTERS_TAB_IDS[tabParam]) {
+      return CREW_QUARTERS_TAB_IDS[tabParam];
+    }
+    if (cleanPath === "/crew-messages" || cleanPath === "/crew-quarters/messages") {
+      return CREW_QUARTERS_TAB_IDS["messages"];
+    }
   }
 
   // Check URL query search for calendar sub-tabs (/calendar?tab=dispatch, coverage, session-types)

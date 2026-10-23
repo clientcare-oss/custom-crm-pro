@@ -37,7 +37,7 @@ export default function UnassignedCallLogs() {
 
   // Queries
   const { data: logs = [], refetch: refetchLogs, isFetching } =
-    trpc.callLogs.listAll.useQuery({ filter: "all", limit: 100 });
+    trpc.callLogs.listAll.useQuery({ filter: "all", limit: 100 }, { refetchInterval: 4000 });
   const { data: contactsData = [], isLoading: contactsLoading } =
     trpc.contacts.list.useQuery();
   const { data: leadsData = [] } = trpc.leads.list.useQuery();

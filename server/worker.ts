@@ -8,6 +8,7 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "../shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { storagePut } from "./storage";
 import { getR2SignedDownloadUrl, getR2SignedUploadUrl } from "./_core/r2Client";
+import { handleQuoWebhookRequest } from "./quoWebhook";
 
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
@@ -82,6 +83,14 @@ export default {
           headers: { "Content-Type": "application/json" }
         });
       }
+    }
+
+    // 2b. Handle Quo (OpenPhone) Webhook Ingestion
+    if (
+      url.pathname === "/api/integrations/quo/webhooks" ||
+      url.pathname === "/api/quo/webhook"
+    ) {
+      return await handleQuoWebhookRequest(request);
     }
 
     // 3. Handle AssemblyAI Temporary Token Endpoint for First Mate
