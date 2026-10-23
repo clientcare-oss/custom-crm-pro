@@ -86,9 +86,10 @@ export default {
     }
 
     // 2b. Handle Quo (OpenPhone) Webhook Ingestion
+    const cleanPath = url.pathname.replace(/\/$/, "");
     if (
-      url.pathname === "/api/integrations/quo/webhooks" ||
-      url.pathname === "/api/quo/webhook"
+      cleanPath === "/api/integrations/quo/webhooks" ||
+      cleanPath === "/api/quo/webhook"
     ) {
       return await handleQuoWebhookRequest(request);
     }

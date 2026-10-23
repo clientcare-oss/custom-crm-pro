@@ -17,7 +17,9 @@ export function QuoSettingsDrawer({ open, onClose, isConfigured }: QuoSettingsDr
   const [secretInput, setSecretInput] = useState("");
   const [showSecret, setShowSecret] = useState(false);
 
-  const webhookUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/api/quo/webhook`;
+  const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+  const liveProductionUrl = "https://custom-crm-pro.clientcare-fa6.workers.dev/api/quo/webhook";
+  const webhookUrl = isLocal ? liveProductionUrl : `${typeof window !== "undefined" ? window.location.origin : ""}/api/quo/webhook`;
 
   const saveSecretMutation = trpc.system.setQuoSecret.useMutation({
     onSuccess: () => {

@@ -234,12 +234,17 @@ Return only JSON matching the schema.`;
         } catch (err: any) {
           console.warn("[stateComplaint.refineIssues] LLM failed, using intelligent heuristic fallback:", err?.message);
 
+          const toRoman = (num: number) => {
+            const romanMap: Record<number, string> = { 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI" };
+            return romanMap[num] || String(num);
+          };
+
           const narrative = (input.statementOfViolations || input.factsRelatingToViolations || "").toLowerCase();
           const dynamicCounts: string[] = [];
 
           if (narrative.includes("speech") || narrative.includes("ot") || narrative.includes("occupational") || narrative.includes("therapy") || narrative.includes("implement") || narrative.includes("reading") || narrative.includes("minute")) {
             dynamicCounts.push(
-              `COUNT ${dynamicCounts.length + 1}: FAILURE TO IMPLEMENT MANDATED IEP SERVICES & DENIAL OF FAPE\n` +
+              `COUNT ${toRoman(dynamicCounts.length + 1)}: FAILURE TO IMPLEMENT MANDATED IEP SERVICES & DENIAL OF FAPE\n` +
               `(34 C.F.R. § 300.323(c)(2) · ${stateInfo.iepRule})\n` +
               `The public agency failed to implement the student's individualized education program as written by withholding mandated specialized instruction, related therapeutic services, and designated accommodations without lawful justification within the statutory filing period.`
             );
@@ -247,7 +252,7 @@ Return only JSON matching the schema.`;
 
           if (narrative.includes("eval") || narrative.includes("testing") || narrative.includes("test") || narrative.includes("psych") || narrative.includes("child find") || narrative.includes("assess") || narrative.includes("diagnos")) {
             dynamicCounts.push(
-              `COUNT ${dynamicCounts.length + 1}: FAILURE TO TIMELY EVALUATE & CHILD FIND VIOLATION\n` +
+              `COUNT ${toRoman(dynamicCounts.length + 1)}: FAILURE TO TIMELY EVALUATE & CHILD FIND VIOLATION\n` +
               `(34 C.F.R. § 300.111, § 300.301 · ${stateInfo.evalRule})\n` +
               `The public agency failed in its affirmative statutory duty to timely evaluate the student in all areas of suspected disability following documented educational need and parental notice.`
             );
@@ -255,7 +260,7 @@ Return only JSON matching the schema.`;
 
           if (narrative.includes("suspend") || narrative.includes("suspension") || narrative.includes("expel") || narrative.includes("discipline") || narrative.includes("mdr") || narrative.includes("sent home") || narrative.includes("behavior")) {
             dynamicCounts.push(
-              `COUNT ${dynamicCounts.length + 1}: UNLAWFUL DISCIPLINARY REMOVAL WITHOUT MANIFESTATION DETERMINATION REVIEW (MDR)\n` +
+              `COUNT ${toRoman(dynamicCounts.length + 1)}: UNLAWFUL DISCIPLINARY REMOVAL WITHOUT MANIFESTATION DETERMINATION REVIEW (MDR)\n` +
               `(34 C.F.R. § 300.530(e) · ${stateInfo.ruleCitation})\n` +
               `The public agency subjected the student to cumulative disciplinary removals altering educational placement without convening a timely Manifestation Determination Review team meeting as required under federal law.`
             );
@@ -263,7 +268,7 @@ Return only JSON matching the schema.`;
 
           if (narrative.includes("pwn") || narrative.includes("written notice") || narrative.includes("refuse") || narrative.includes("refusal") || narrative.includes("ignore") || narrative.includes("email") || dynamicCounts.length === 0) {
             dynamicCounts.push(
-              `COUNT ${dynamicCounts.length + 1}: UNLAWFUL REFUSAL TO ISSUE TIMELY PRIOR WRITTEN NOTICE (PWN)\n` +
+              `COUNT ${toRoman(dynamicCounts.length + 1)}: UNLAWFUL REFUSAL TO ISSUE TIMELY PRIOR WRITTEN NOTICE (PWN)\n` +
               `(34 C.F.R. § 300.503 · ${stateInfo.pwnRule})\n` +
               `The public agency altered educational programming, denied services, or refused requested evaluations without issuing mandatory Prior Written Notice explaining the legal and factual basis for its actions.`
             );

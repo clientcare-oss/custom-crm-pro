@@ -198,9 +198,25 @@ export const systemRouter = router({
     }),
 
   // Get whether Quo webhook secret is configured (returns status only, not the secret)
-  getQuoStatus: adminProcedure.query(async () => {
+  getQuoStatus: adminProcedure.query(async ({ ctx }) => {
     const owner = await resolveOwner();
-    return { configured: !!(owner?.quoWebhookSecret) };
+    let configured = !!(owner?.quoWebhookSecret);
+    if (!configured) {
+      const database = await db.getDb();
+      if (database) {
+        try {
+          const { quoSettings } = await import("../../drizzle/schema");
+          const { eq } = await import("drizzle-orm");
+          const [s] = await database
+            .select({ webhookSecret: quoSettings.webhookSecret })
+            .from(quoSettings)
+            .where(eq(quoSettings.ownerId, ctx.user.id))
+            .limit(1);
+          if (s?.webhookSecret) configured = true;
+        } catch {}
+      }
+    }
+    return { configured };
   }),
 
   // Save the Quo webhook signing secret into the DB — uses logged-in user's openId
@@ -208,6 +224,42 @@ export const systemRouter = router({
     .input(z.object({ secret: z.string().max(512) }))
     .mutation(async ({ ctx, input }) => {
       await db.updateOwnerQuoSecret(ctx.user.openId, input.secret || null);
+
+      // Also sync to quoSettings table
+      const database = await db.getDb();
+      if (database) {
+        try {
+          const { quoSettings } = await import("../../drizzle/schema");
+          const { eq } = await import("drizzle-orm");
+          const [existing] = await database
+            .select({ id: quoSettings.id })
+            .from(quoSettings)
+            .where(eq(quoSettings.ownerId, ctx.user.id))
+            .limit(1);
+
+          if (existing) {
+            await database
+              .update(quoSettings)
+              .set({
+                webhookSecret: input.secret || null,
+                status: input.secret ? "connected" : "disconnected",
+                updatedAt: new Date(),
+              })
+              .where(eq(quoSettings.id, existing.id));
+          } else {
+            await database.insert(quoSettings).values({
+              ownerId: ctx.user.id,
+              status: input.secret ? "connected" : "disconnected",
+              webhookSecret: input.secret || null,
+              webhookUrl: "/api/quo/webhook",
+              hasApiKey: false,
+            });
+          }
+        } catch (e) {
+          console.warn("[setQuoSecret] Could not sync to quoSettings:", e);
+        }
+      }
+
       return { success: true };
     }),
 

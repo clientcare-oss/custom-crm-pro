@@ -16,7 +16,9 @@ function QuoIntegrationCard() {
   const [secretInput, setSecretInput] = useState("");
   const [showSecret, setShowSecret] = useState(false);
 
-  const webhookUrl = `${window.location.origin}/api/quo/webhook`;
+  const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+  const liveProductionUrl = "https://custom-crm-pro.clientcare-fa6.workers.dev/api/quo/webhook";
+  const webhookUrl = isLocal ? liveProductionUrl : `${window.location.origin}/api/quo/webhook`;
 
   const { data: quoStatus, refetch: refetchStatus } = trpc.system.getQuoStatus.useQuery(undefined, {
     retry: false,

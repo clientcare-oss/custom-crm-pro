@@ -115,4 +115,48 @@ describe("Quo Phone Integration Services & Routers", () => {
       await expect(caller.quo.getSettings()).rejects.toThrow();
     });
   });
+
+  describe("Quo webhook ingestion & signature verification", () => {
+    it("acknowledges test events gracefully", async () => {
+      const { processQuoWebhook } = await import("./quoWebhook");
+      const testPayload = Buffer.from(
+        JSON.stringify({
+          id: "evt_test_123",
+          type: "test",
+          createdAt: new Date().toISOString(),
+        })
+      );
+
+      const res = await processQuoWebhook(testPayload, null);
+      expect(res.status).toBe(200);
+      expect(res.data.action).toBe("tested");
+    });
+
+    it("processes incoming call webhook payload and records call log", async () => {
+      const { processQuoWebhook } = await import("./quoWebhook");
+      const callId = `call_test_${Date.now()}`;
+      const payload = Buffer.from(
+        JSON.stringify({
+          id: `evt_${Date.now()}`,
+          type: "call.completed",
+          data: {
+            resource: {
+              id: callId,
+              from: "+17705550199",
+              to: "+18336964377",
+              duration: 45,
+              direction: "inbound",
+              transcript: "Hello, this is a test parent calling regarding an IEP meeting.",
+              summary: "Parent requested advocate support for upcoming IEP meeting.",
+            },
+          },
+        })
+      );
+
+      const res = await processQuoWebhook(payload, null);
+      expect(res.status).toBe(200);
+      expect(res.data.received).toBe(true);
+    });
+  });
 });
+

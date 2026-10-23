@@ -4,31 +4,32 @@
  * Supported events:
  *   call.completed          — answered/unanswered calls, voicemail embedded
  *   call.ringing / started  — live call ringing / in-progress
+ *   call.missed             — missed calls
  *   call.transcript.completed — AI transcript for a call
  *   call.summary.completed  — AI summary for a call
  *   call.recording.completed — recording URL available
  *   message.received        — inbound SMS/MMS
  *   message.delivered       — outbound SMS/MMS delivered
- *   contact.updated         — contact created/modified in Quo
+ *   contact.created/updated — contact created/modified in Quo
  *   contact.deleted         — contact removed from Quo
  *
- * Signature verification follows the Quo spec:
- *   header: openphone-signature: hmac;1;<timestamp>;<base64digest>
- *   signed data: <timestamp>.<rawBody>
- *   key: base64-decoded signing secret
+ * Signature verification:
+ *   - Modern Quo: Standard Webhooks (Svix) with headers webhook-id, webhook-timestamp, webhook-signature (or svix-*)
+ *   - Legacy OpenPhone: openphone-signature: hmac;1;<timestamp>;<base64digest>
  */
 import { Router, raw } from "express";
 import crypto from "crypto";
+import { Webhook } from "svix";
 import * as db from "./db";
 import { ENV } from "./_core/env";
 
 // Normalize a phone number to digits only for matching
-function normalizePhone(phone: string): string {
+export function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, "");
 }
 
 // Check if two phone numbers match (compare last 10 digits)
-function phonesMatch(a: string, b: string): boolean {
+export function phonesMatch(a: string, b: string): boolean {
   const na = normalizePhone(a);
   const nb = normalizePhone(b);
   if (!na || !nb) return false;
@@ -36,7 +37,7 @@ function phonesMatch(a: string, b: string): boolean {
 }
 
 // Format phone for display: 17706847089 → +1 (770) 684-7089
-function formatPhone(raw: string): string {
+export function formatPhone(raw: string): string {
   const digits = normalizePhone(raw);
   if (digits.length === 11 && digits.startsWith("1")) {
     return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
@@ -47,33 +48,98 @@ function formatPhone(raw: string): string {
   return raw;
 }
 
+// Extract phone string from potentially nested object (e.g. from: { phoneNumber: "+1..." } or from: "+1...")
+function extractPhoneString(val: any): string {
+  if (typeof val === "string") return val;
+  if (val && typeof val === "object") {
+    return val.phoneNumber || val.number || val.phone || "";
+  }
+  return "";
+}
+
+export interface QuoSignatureHeaders {
+  openphoneSignature?: string | null;
+  webhookSignature?: string | null;
+  webhookId?: string | null;
+  webhookTimestamp?: string | null;
+}
+
 /**
- * Verify Quo webhook signature.
- * Header format: openphone-signature: hmac;1;<timestamp>;<base64digest>
- * Signed data: <timestamp>.<rawBody>
- * Key: base64-decoded signing secret
+ * Verify Quo webhook signature supporting both modern Svix headers and legacy OpenPhone HMAC.
  */
-function verifyQuoSignature(rawBody: Buffer, sigHeader: string, secret: string): boolean {
+export function verifyQuoSignature(
+  rawBody: Buffer,
+  headers: QuoSignatureHeaders | string,
+  secret: string
+): boolean {
   try {
-    const parts = sigHeader.split(";");
-    if (parts.length < 4) return false;
-    const timestamp = parts[2];
-    const providedDigest = parts[3];
+    const rawBodyStr = rawBody.toString("utf8");
 
-    // signed data = timestamp + "." + raw JSON body string
-    const signedData = timestamp + "." + rawBody.toString("utf8");
+    const headerObj: QuoSignatureHeaders =
+      typeof headers === "string" ? { openphoneSignature: headers } : headers;
 
-    // key is base64-encoded — decode to binary
-    const keyBinary = Buffer.from(secret, "base64").toString("binary");
+    // 1. Check Svix signature (Modern Quo standard: webhook-signature or svix-signature)
+    const svixSig = headerObj.webhookSignature;
+    if (svixSig) {
+      try {
+        const wh = new Webhook(secret);
+        const svixHeaders: Record<string, string> = {
+          "webhook-id": headerObj.webhookId || "id",
+          "webhook-timestamp": headerObj.webhookTimestamp || String(Math.floor(Date.now() / 1000)),
+          "webhook-signature": svixSig,
+        };
+        wh.verify(rawBodyStr, svixHeaders);
+        return true;
+      } catch (err: any) {
+        console.warn("[Quo Webhook] Svix signature verification failed:", err?.message);
+      }
+    }
 
-    // compute HMAC-SHA256, encode as base64
-    const computedDigest = crypto
-      .createHmac("sha256", keyBinary)
-      .update(Buffer.from(signedData, "utf8"))
-      .digest("base64");
+    // 2. Check Legacy OpenPhone signature: hmac;1;<timestamp>;<base64digest>
+    const legacySig = headerObj.openphoneSignature;
+    if (legacySig) {
+      const parts = legacySig.split(";");
+      if (parts.length >= 4) {
+        const timestamp = parts[2];
+        const providedDigest = parts[3];
 
-    return providedDigest === computedDigest;
-  } catch {
+        // Quo spec requirement: strip whitespace and newlines from json
+        let sanitizedBody = rawBodyStr;
+        try {
+          sanitizedBody = JSON.stringify(JSON.parse(rawBodyStr));
+        } catch {}
+
+        const signedCandidates = [
+          `${timestamp}.${sanitizedBody}`,
+          `${timestamp}.${rawBodyStr}`,
+        ];
+
+        // Secret might be base64-encoded or raw string
+        const secretKeys: Buffer[] = [];
+        try {
+          const b64 = Buffer.from(secret, "base64");
+          if (b64.length > 0) secretKeys.push(b64);
+        } catch {}
+        secretKeys.push(Buffer.from(secret, "utf8"));
+
+        for (const secKey of secretKeys) {
+          for (const candidate of signedCandidates) {
+            const computedDigest = crypto
+              .createHmac("sha256", secKey)
+              .update(Buffer.from(candidate, "utf8"))
+              .digest("base64");
+
+            if (computedDigest === providedDigest) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    return false;
+  } catch (err) {
+    console.error("[Quo Webhook] Signature verification exception:", err);
     return false;
   }
 }
@@ -81,7 +147,7 @@ function verifyQuoSignature(rawBody: Buffer, sigHeader: string, secret: string):
 /**
  * Robust secret resolver: looks in database user record, quoSettings, or environment variables.
  */
-async function resolveQuoWebhookSecret(): Promise<string | null> {
+export async function resolveQuoWebhookSecret(): Promise<string | null> {
   const dbSecret = await db.getOwnerQuoSecret(ENV.ownerOpenId).catch(() => null);
   if (dbSecret) return dbSecret;
 
@@ -90,19 +156,22 @@ async function resolveQuoWebhookSecret(): Promise<string | null> {
     try {
       const { users, quoSettings } = await import("../drizzle/schema");
       const { isNotNull } = await import("drizzle-orm");
-      const [u] = await database
-        .select({ quoWebhookSecret: users.quoWebhookSecret })
-        .from(users)
-        .where(isNotNull(users.quoWebhookSecret))
-        .limit(1);
-      if (u?.quoWebhookSecret) return u.quoWebhookSecret;
 
+      // Check quoSettings table
       const [s] = await database
         .select({ webhookSecret: quoSettings.webhookSecret })
         .from(quoSettings)
         .where(isNotNull(quoSettings.webhookSecret))
         .limit(1);
       if (s?.webhookSecret) return s.webhookSecret;
+
+      // Check users table
+      const [u] = await database
+        .select({ quoWebhookSecret: users.quoWebhookSecret })
+        .from(users)
+        .where(isNotNull(users.quoWebhookSecret))
+        .limit(1);
+      if (u?.quoWebhookSecret) return u.quoWebhookSecret;
     } catch {}
   }
 
@@ -110,14 +179,39 @@ async function resolveQuoWebhookSecret(): Promise<string | null> {
 }
 
 /**
- * Robust owner resolver: ensures ownerId is always resolved gracefully.
+ * Robust owner resolver: ensures ownerId prioritizes the account configuring Quo.
  */
-async function resolveOwnerId(): Promise<number> {
+export async function resolveOwnerId(): Promise<number> {
   const database = await db.getDb();
   if (database) {
     try {
-      const { users } = await import("../drizzle/schema");
-      const { eq } = await import("drizzle-orm");
+      const { users, quoSettings } = await import("../drizzle/schema");
+      const { eq, isNotNull } = await import("drizzle-orm");
+
+      // 1. Owner from quoSettings
+      const [setting] = await database
+        .select({ ownerId: quoSettings.ownerId })
+        .from(quoSettings)
+        .limit(1);
+      if (setting?.ownerId) return setting.ownerId;
+
+      // 2. User with quoWebhookSecret saved
+      const [userWithSecret] = await database
+        .select({ id: users.id })
+        .from(users)
+        .where(isNotNull(users.quoWebhookSecret))
+        .limit(1);
+      if (userWithSecret) return userWithSecret.id;
+
+      // 3. Byron / ClientCare lead advocate account
+      const [leadAdvocate] = await database
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, "clientcare@waypointadvocates.com"))
+        .limit(1);
+      if (leadAdvocate) return leadAdvocate.id;
+
+      // 4. Any admin user
       const [admin] = await database
         .select({ id: users.id })
         .from(users)
@@ -125,6 +219,7 @@ async function resolveOwnerId(): Promise<number> {
         .limit(1);
       if (admin) return admin.id;
 
+      // 5. First user
       const [firstUser] = await database
         .select({ id: users.id })
         .from(users)
@@ -145,21 +240,37 @@ export interface QuoWebhookProcessResult {
  */
 export async function processQuoWebhook(
   rawBody: Buffer,
-  sigHeader?: string | null
+  sigInput?: QuoSignatureHeaders | string | null
 ): Promise<QuoWebhookProcessResult> {
   const webhookSecret = await resolveQuoWebhookSecret();
 
+  const headers: QuoSignatureHeaders =
+    typeof sigInput === "string"
+      ? { openphoneSignature: sigInput }
+      : sigInput || {};
+
+  const hasAnySignatureHeader =
+    !!headers.openphoneSignature || !!headers.webhookSignature;
+
   // Verify signature if secret is configured
-  if (webhookSecret && sigHeader) {
-    const valid = verifyQuoSignature(rawBody, sigHeader, webhookSecret);
+  if (webhookSecret && hasAnySignatureHeader) {
+    const valid = verifyQuoSignature(rawBody, headers, webhookSecret);
     if (!valid) {
       console.warn("[Quo Webhook] Signature mismatch — rejecting");
       return { status: 401, data: { error: "Invalid signature" } };
     }
-  } else if (webhookSecret && !sigHeader) {
-    // Secret configured but no signature header — reject
+  } else if (webhookSecret && !hasAnySignatureHeader) {
+    // If webhook is sent with no signature header, log warning but allow graceful ping/setup if JSON is valid test
+    let testCheck: any = null;
+    try {
+      testCheck = JSON.parse(rawBody.toString("utf8"));
+    } catch {}
+    if (testCheck?.type === "test" || testCheck?.type === "ping" || testCheck?.eventType === "test") {
+      console.info("[Quo Webhook] Test event allowed through without signature header");
+      return { status: 200, data: { received: true, action: "test_acknowledged" } };
+    }
     console.warn("[Quo Webhook] Missing signature header — rejecting");
-    return { status: 401, data: { error: "Missing signature" } };
+    return { status: 401, data: { error: "Missing signature header (openphone-signature or webhook-signature)" } };
   } else if (!webhookSecret) {
     console.info("[Quo Webhook] No webhook signing secret configured — accepting payload in provisional mode");
   }
@@ -171,8 +282,13 @@ export async function processQuoWebhook(
     return { status: 400, data: { error: "Invalid JSON" } };
   }
 
-  const eventType: string = payload?.type || payload?.event || "";
+  const eventType: string = payload?.type || payload?.event || payload?.eventType || "";
   console.log(`[Quo Webhook] Processing event: ${eventType}`);
+
+  // Test / Ping handshake acknowledgement
+  if (eventType === "test" || eventType === "ping" || payload?.test) {
+    return { status: 200, data: { received: true, action: "tested", eventType } };
+  }
 
   // Get the database and owner
   const database = await db.getDb();
@@ -202,11 +318,17 @@ export async function processQuoWebhook(
     eventType === "call_completed" ||
     eventType === "call_recording_completed"
   ) {
-    const callData = payload?.data?.object || payload?.data || payload?.call || {};
+    const callData =
+      payload?.data?.resource ||
+      payload?.data?.object ||
+      payload?.data ||
+      payload?.call ||
+      {};
+
     const quoCallId: string = callData?.id || callData?.callId || payload?.id || "";
-    const fromNumber: string = callData?.from || callData?.fromNumber || "";
-    const toNumber: string = callData?.to || callData?.toNumber || "";
-    const durationSeconds: number = callData?.duration || callData?.durationSeconds || 0;
+    const fromNumber: string = extractPhoneString(callData?.from || callData?.fromNumber || "");
+    const toNumber: string = extractPhoneString(callData?.to || callData?.toNumber || "");
+    const durationSeconds: number = Number(callData?.duration || callData?.durationSeconds || 0);
     const direction: string = callData?.direction || "inbound";
 
     // Transcript
@@ -242,7 +364,7 @@ export async function processQuoWebhook(
       callData?.voicemailTranscript ||
       "";
 
-    const participants: string[] = callData?.participants || [];
+    const participants: string[] = Array.isArray(callData?.participants) ? callData.participants : [];
 
     // Detect missed call
     const isMissed =
@@ -317,7 +439,7 @@ export async function processQuoWebhook(
       }
       console.log(`[Quo Webhook] Auto-assigned to contact #${contactId} (student: ${studentId ?? "none"})`);
     } else {
-      console.log(`[Quo Webhook] No phone match — unassigned`);
+      console.log(`[Quo Webhook] No phone match for ${fromNumber} / ${toNumber} — unassigned`);
     }
 
     await database.insert(callLogs).values({
@@ -350,10 +472,16 @@ export async function processQuoWebhook(
 
   // ─── MESSAGE EVENTS ────────────────────────────────────────────
   if (eventType === "message.received" || eventType === "message.delivered") {
-    const msgData = payload?.data?.object || payload?.data || payload?.message || {};
+    const msgData =
+      payload?.data?.resource ||
+      payload?.data?.object ||
+      payload?.data ||
+      payload?.message ||
+      {};
+
     const quoMsgId: string = msgData?.id || payload?.id || "";
-    const fromNumber: string = msgData?.from || msgData?.fromNumber || "";
-    const toNumber: string = msgData?.to || msgData?.toNumber || "";
+    const fromNumber: string = extractPhoneString(msgData?.from || msgData?.fromNumber || "");
+    const toNumber: string = extractPhoneString(msgData?.to || msgData?.toNumber || "");
     const smsBody: string = msgData?.body || msgData?.text || payload?.body || "";
     const direction = eventType === "message.received" ? "inbound" : "outbound";
 
@@ -401,8 +529,8 @@ export async function processQuoWebhook(
   }
 
   // ─── CONTACT EVENTS ────────────────────────────────────────────
-  if (eventType === "contact.updated" || eventType === "contact.deleted") {
-    console.log(`[Quo Webhook] Contact event received: ${eventType} (logged only)`);
+  if (eventType === "contact.updated" || eventType === "contact.created" || eventType === "contact.deleted") {
+    console.log(`[Quo Webhook] Contact event received: ${eventType} (acknowledged)`);
     return { status: 200, data: { received: true, action: "logged", eventType } };
   }
 
@@ -415,6 +543,16 @@ export async function processQuoWebhook(
  * Web Standard Fetch Handler for Cloudflare Workers.
  */
 export async function handleQuoWebhookRequest(request: Request): Promise<Response> {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, openphone-signature, webhook-signature, webhook-id, webhook-timestamp, svix-id, svix-timestamp, svix-signature",
+  };
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
   if (request.method === "GET") {
     return new Response(
       JSON.stringify({
@@ -431,12 +569,14 @@ export async function handleQuoWebhookRequest(request: Request): Promise<Respons
           "call.recording.completed",
           "message.received",
           "message.delivered",
+          "contact.created",
           "contact.updated",
+          "contact.deleted",
         ],
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   }
@@ -444,19 +584,31 @@ export async function handleQuoWebhookRequest(request: Request): Promise<Respons
   if (request.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
 
   try {
     const arrayBuf = await request.arrayBuffer();
     const rawBody = Buffer.from(arrayBuf);
-    const sigHeader = request.headers.get("openphone-signature");
 
-    const result = await processQuoWebhook(rawBody, sigHeader);
+    const sigHeaders: QuoSignatureHeaders = {
+      openphoneSignature: request.headers.get("openphone-signature"),
+      webhookSignature:
+        request.headers.get("webhook-signature") ||
+        request.headers.get("svix-signature"),
+      webhookId:
+        request.headers.get("webhook-id") ||
+        request.headers.get("svix-id"),
+      webhookTimestamp:
+        request.headers.get("webhook-timestamp") ||
+        request.headers.get("svix-timestamp"),
+    };
+
+    const result = await processQuoWebhook(rawBody, sigHeaders);
     return new Response(JSON.stringify(result.data), {
       status: result.status,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (err: any) {
     console.error("[Quo Webhook Cloudflare Worker Exception]", err);
@@ -464,7 +616,7 @@ export async function handleQuoWebhookRequest(request: Request): Promise<Respons
       JSON.stringify({ error: "Internal webhook processing error", details: err?.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   }
@@ -475,9 +627,14 @@ export async function handleQuoWebhookRequest(request: Request): Promise<Respons
  */
 export function registerQuoWebhookRoutes(app: Router) {
   const webhookHandler = async (req: any, res: any) => {
-    const sigHeader = req.headers["openphone-signature"] as string | undefined;
+    const sigHeaders: QuoSignatureHeaders = {
+      openphoneSignature: req.headers["openphone-signature"] as string | undefined,
+      webhookSignature: (req.headers["webhook-signature"] || req.headers["svix-signature"]) as string | undefined,
+      webhookId: (req.headers["webhook-id"] || req.headers["svix-id"]) as string | undefined,
+      webhookTimestamp: (req.headers["webhook-timestamp"] || req.headers["svix-timestamp"]) as string | undefined,
+    };
     const rawBody = req.body as Buffer;
-    const result = await processQuoWebhook(rawBody, sigHeader);
+    const result = await processQuoWebhook(rawBody, sigHeaders);
     return res.status(result.status).json(result.data);
   };
 
@@ -485,7 +642,30 @@ export function registerQuoWebhookRoutes(app: Router) {
   webhookPaths.forEach((path) => {
     app.post(path, raw({ type: "application/json" }), webhookHandler);
     app.get(path, (_req, res) => {
-      res.json({ status: "ok", service: "Waypoint Quo Webhook Receiver", active: true });
+      res.json({
+        status: "ok",
+        service: "Waypoint Quo Webhook Receiver",
+        active: true,
+        supportedEvents: [
+          "call.completed",
+          "call.ringing",
+          "call.started",
+          "call.missed",
+          "call.transcript.completed",
+          "call.summary.completed",
+          "call.recording.completed",
+          "message.received",
+          "message.delivered",
+          "contact.created",
+          "contact.updated",
+        ],
+      });
+    });
+    app.options(path, (_req, res) => {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "*");
+      res.sendStatus(200);
     });
   });
 }
