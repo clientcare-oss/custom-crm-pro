@@ -324,34 +324,121 @@ export async function processQuoWebhook(
       payload?.call ||
       {};
 
-    const quoCallId: string = callData?.id || callData?.callId || payload?.id || "";
-    const fromNumber: string = extractPhoneString(callData?.from || callData?.fromNumber || "");
-    const toNumber: string = extractPhoneString(callData?.to || callData?.toNumber || "");
-    const durationSeconds: number = Number(callData?.duration || callData?.durationSeconds || 0);
-    const direction: string = callData?.direction || "inbound";
-
-    // Transcript
-    const transcript: string =
-      callData?.transcript?.text ||
-      callData?.transcript ||
-      payload?.transcript?.text ||
-      payload?.transcript ||
+    const quoCallId: string =
+      callData?.callId ||
+      callData?.id ||
+      payload?.data?.object?.callId ||
+      payload?.data?.callId ||
+      payload?.id ||
       "";
 
-    // Summary
-    const summary: string =
-      callData?.summary?.text ||
+    const fromNumber: string = extractPhoneString(
+      callData?.from || callData?.fromNumber || payload?.from || ""
+    );
+    const toNumber: string = extractPhoneString(
+      callData?.to || callData?.toNumber || payload?.to || ""
+    );
+
+    // Duration extraction
+    let durationSeconds: number = 0;
+    if (typeof callData?.duration === "number" && callData.duration > 0) {
+      durationSeconds = Math.round(callData.duration);
+    } else if (typeof callData?.durationSeconds === "number" && callData.durationSeconds > 0) {
+      durationSeconds = Math.round(callData.durationSeconds);
+    } else if (typeof payload?.duration === "number" && payload.duration > 0) {
+      durationSeconds = Math.round(payload.duration);
+    }
+
+    const direction: string = callData?.direction || payload?.direction || "inbound";
+
+    // Format seconds into [MM:SS]
+    const formatTime = (secs: number | null | undefined): string => {
+      if (secs == null || isNaN(secs)) return "";
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return `[${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}]`;
+    };
+
+    // Robust Transcript extraction
+    let transcript: string = "";
+    if (typeof callData?.transcript === "string" && callData.transcript.trim()) {
+      transcript = callData.transcript.trim();
+    } else if (typeof callData?.transcript?.text === "string" && callData.transcript.text.trim()) {
+      transcript = callData.transcript.text.trim();
+    } else if (typeof payload?.transcript?.text === "string" && payload.transcript.text.trim()) {
+      transcript = payload.transcript.text.trim();
+    } else if (typeof payload?.transcript === "string" && payload.transcript.trim()) {
+      transcript = payload.transcript.trim();
+    } else {
+      // Check callTranscript object or dialogue array (Quo API v3 standard)
+      const transcriptObj =
+        callData?.callTranscript ||
+        payload?.callTranscript ||
+        (callData?.object === "callTranscript" ? callData : null) ||
+        (payload?.object === "callTranscript" ? payload : null);
+
+      const dialogue =
+        transcriptObj?.dialogue ||
+        callData?.dialogue ||
+        payload?.dialogue ||
+        callData?.transcript?.dialogue;
+
+      if (Array.isArray(dialogue) && dialogue.length > 0) {
+        transcript = dialogue
+          .map((d: any) => {
+            const time = formatTime(d?.start);
+            const isEmployee = Boolean(d?.userId);
+            const speaker = isEmployee
+              ? "Advocate (Waypoint)"
+              : d?.identifier
+              ? `Caller (${formatPhone(d.identifier)})`
+              : d?.speaker
+              ? `Speaker ${d.speaker}`
+              : "Speaker";
+            const content = d?.content || d?.text || "";
+            return `${time ? time + " " : ""}${speaker}: ${content}`;
+          })
+          .join("\n\n");
+      }
+    }
+
+    // Robust Summary extraction (including notes and action items)
+    let summary: string = "";
+    const sumObj =
+      callData?.callSummary ||
       callData?.summary ||
-      payload?.summary?.text ||
+      payload?.callSummary ||
       payload?.summary ||
-      "";
+      (callData?.object === "callSummary" ? callData : null);
 
-    // Recording URL
-    const recordingUrl: string =
+    if (typeof sumObj === "string" && sumObj.trim()) {
+      summary = sumObj.trim();
+    } else if (typeof sumObj?.text === "string" && sumObj.text.trim()) {
+      summary = sumObj.text.trim();
+    } else if (typeof sumObj?.summary === "string" && sumObj.summary.trim()) {
+      summary = sumObj.summary.trim();
+      if (Array.isArray(sumObj?.notes) && sumObj.notes.length > 0) {
+        summary += "\n\nKey Takeaways:\n" + sumObj.notes.map((n: string) => `• ${n}`).join("\n");
+      }
+      if (Array.isArray(sumObj?.actionItems) && sumObj.actionItems.length > 0) {
+        summary += "\n\nAction Items:\n" + sumObj.actionItems.map((a: string) => `• ${a}`).join("\n");
+      }
+    }
+
+    // Robust Recording URL extraction
+    let recordingUrl: string =
       callData?.recordingUrl ||
       callData?.recording?.url ||
+      callData?.url ||
       payload?.recordingUrl ||
       "";
+
+    if (!recordingUrl && Array.isArray(callData?.media) && callData.media.length > 0) {
+      const audio = callData.media.find(
+        (m: any) => (m?.type && String(m.type).startsWith("audio")) || m?.url
+      );
+      if (audio?.url) recordingUrl = audio.url;
+    }
 
     // Voicemail detection
     const voicemailData = callData?.voicemail || payload?.voicemail;
@@ -374,12 +461,19 @@ export async function processQuoWebhook(
       (isVoicemail && durationSeconds === 0);
     const callbackStatus = isMissed ? "pending" : "none";
 
-    // Idempotency check — update existing record if same call ID
+    // Idempotency check — update existing record if same call ID or parent callId
     if (quoCallId) {
+      const { or } = await import("drizzle-orm");
+      const altCallId = callData?.callId || callData?.id || payload?.data?.object?.callId || null;
+      const lookupConditions = [eq(callLogs.quoCallId, quoCallId)];
+      if (altCallId && altCallId !== quoCallId) {
+        lookupConditions.push(eq(callLogs.quoCallId, altCallId));
+      }
+
       const [existing] = await database
         .select({ id: callLogs.id })
         .from(callLogs)
-        .where(eq(callLogs.quoCallId, quoCallId))
+        .where(lookupConditions.length > 1 ? or(...lookupConditions) : lookupConditions[0])
         .limit(1);
 
       if (existing) {

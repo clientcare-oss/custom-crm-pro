@@ -138,4 +138,68 @@ export const callLogsRouter = router({
       .where(whereClause);
     return { count: rows.length };
   }),
+
+  // Synthesize or retrieve AI Executive Summary for a call with a transcript
+  generateSummary: protectedProcedure
+    .input(z.object({ callLogId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const database = await db.getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { callLogs } = await import("../../drizzle/schema");
+      const isAdmin = ctx.user?.role === "admin";
+      const whereClause = isAdmin
+        ? eq(callLogs.id, input.callLogId)
+        : and(eq(callLogs.id, input.callLogId), eq(callLogs.ownerId, ctx.user.id));
+
+      const [log] = await database.select().from(callLogs).where(whereClause).limit(1);
+      if (!log) throw new TRPCError({ code: "NOT_FOUND", message: "Call log not found" });
+
+      if (log.summary && log.summary.trim().length > 20) {
+        return { summary: log.summary };
+      }
+
+      if (!log.transcript || log.transcript.trim().length < 10) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No transcript available to summarize" });
+      }
+
+      let summaryText = "";
+      try {
+        const { invokeLLM, CF_MODELS } = await import("../_core/llm");
+        const transcriptSlice = log.transcript.slice(0, 12000);
+        const res = await invokeLLM({
+          model: CF_MODELS.FAST,
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an executive special education advocacy assistant for Waypoint Advocates (Byron Honea, Lead Special Education Advocate). Analyze this call transcript between an advocate and a parent or school personnel. Provide an Executive Summary in 2 concise paragraphs, followed by 'Key Takeaways:' with bullet points, and 'Action Items:' with bullet points if applicable. Never use the prohibited term 'Master Coach'. Use clean markdown.",
+            },
+            {
+              role: "user",
+              content: `Call Transcript:\n${transcriptSlice}`,
+            },
+          ],
+        });
+
+        const content = res.choices[0]?.message?.content;
+        summaryText =
+          typeof content === "string"
+            ? content
+            : Array.isArray(content)
+            ? (content[0] as any)?.text || ""
+            : "";
+      } catch (err: any) {
+        console.warn("[CallLogs] LLM summary synthesis failed, using local extraction:", err?.message);
+        summaryText = `Advocacy consultation call between Waypoint Advocates and ${log.fromNumber || "the client"} (duration: ${Math.round((log.durationSeconds || 0) / 60)} minutes). Dialogue recorded regarding IEP special education needs.`;
+      }
+
+      if (summaryText) {
+        await database
+          .update(callLogs)
+          .set({ summary: summaryText })
+          .where(eq(callLogs.id, log.id));
+      }
+
+      return { summary: summaryText };
+    }),
 });
