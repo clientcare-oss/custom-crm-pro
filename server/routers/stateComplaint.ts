@@ -385,13 +385,13 @@ MANDATORY RULES:
           const content = typeof rawContent === "string" ? rawContent : Array.isArray(rawContent) ? rawContent.map((p: any) => p.text ?? "").join("") : "";
           const cleaned = sanitizeComplaintText(content.trim().replace(/^["']|["']$/g, ""));
 
-          if (cleaned.length > 0) {
+          if (cleaned.length > 0 && !cleaned.includes("offline fallback")) {
             return {
               success: true,
               purpose: cleaned,
             };
           }
-          throw new Error("Empty response from LLM");
+          throw new Error("Empty or offline fallback response from LLM");
         } catch (err: any) {
           console.warn("[stateComplaint.generateBinderPurpose] LLM failed, using intelligent heuristic fallback:", err?.message);
 
@@ -401,7 +401,7 @@ MANDATORY RULES:
           if (tLower.includes("evaluation") || tLower.includes("assessment") || tLower.includes("psychoed")) {
             fallback = `To document authenticated comprehensive evaluation records, diagnostic assessments, and independent evaluations establishing the student's identified disabilities and educational programming needs under 34 C.F.R. § 300.301.`;
           } else if (tLower.includes("iep") || tLower.includes("504") || tLower.includes("bip")) {
-            fallback = `To document the operative Individualized Education Program (IEP) and behavior intervention commitments in effect, establishing mandated specialized instruction minutes, related therapeutic services, and classroom accommodations.`;
+            fallback = `To document the active Individualized Education Program (IEP) and behavior intervention commitments in effect, establishing mandated specialized instruction minutes, related therapeutic services, and classroom accommodations.`;
           } else if (tLower.includes("speech") || tLower.includes("therapy") || tLower.includes("service log") || tLower.includes("attendance")) {
             fallback = `To document service delivery logs, provider attendance records, and therapist session notes establishing missed specialized instruction and related service withholding without timely compensatory make-up sessions.`;
           } else if (tLower.includes("communication") || tLower.includes("email") || tLower.includes("correspondence") || tLower.includes("notice")) {
@@ -499,14 +499,14 @@ MANDATORY RULES:
           const content = typeof rawContent === "string" ? rawContent : Array.isArray(rawContent) ? rawContent.map((p: any) => p.text ?? "").join("") : "";
           const cleaned = sanitizeComplaintText(content.trim());
 
-          if (cleaned.length > 0) {
+          if (cleaned.length > 0 && !cleaned.includes("offline fallback")) {
             return {
               success: true,
               enhancedText: cleaned,
               mode: input.mode,
             };
           }
-          throw new Error("Empty response from LLM");
+          throw new Error("Empty or offline fallback response from LLM");
         } catch (err: any) {
           console.warn("[stateComplaint.aiWriterHelper] LLM failed, using intelligent heuristic fallback:", err?.message);
 
