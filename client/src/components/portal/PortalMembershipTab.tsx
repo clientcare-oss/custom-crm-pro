@@ -296,8 +296,8 @@ export function PortalMembershipTab({
             </Badge>
           </div>
 
-          {/* Body: Physical Sample Card on Left + Spacious Info across screen + Button on Right */}
-          <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          {/* Body: Physical CC Card + Update Button */}
+          <div className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
             {/* 1. Left: The Realistic Sleek Dark Nautical Credit Card Graphic (Sample Card) */}
             <div className="w-full sm:w-[320px] shrink-0">
               <div className="relative rounded-2xl bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/40 p-5 text-white shadow-2xl overflow-hidden space-y-4 group">
@@ -361,48 +361,6 @@ export function PortalMembershipTab({
               </div>
             </div>
 
-            {/* 2. Middle: Clean Horizontal Saved Card Info (Card number only on CC card graphic) */}
-            <div className="flex-1 space-y-2.5 px-0 lg:px-4 py-1">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono px-2.5 py-0.5">
-                  Default Auto-Pay
-                </Badge>
-                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-                  <Lock className="h-3.5 w-3.5" /> PCI-DSS Level 1 Secure
-                </span>
-                <span className="text-xs text-blue-200/50 hidden sm:inline">•</span>
-                <span className="text-xs text-blue-200/70 font-medium hidden sm:inline">
-                  Verified Active Card
-                </span>
-              </div>
-
-              {/* One continuous horizontal line of parameters */}
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-blue-100/90 font-medium">
-                <div>
-                  <span className="text-white/50 text-[11px] uppercase tracking-wider block sm:inline sm:mr-1.5">Cardholder:</span>
-                  <strong className="text-white font-semibold">{cardData.cardholder}</strong>
-                </div>
-                <span className="text-white/20 hidden sm:inline">•</span>
-                <div>
-                  <span className="text-white/50 text-[11px] uppercase tracking-wider block sm:inline sm:mr-1.5">Expires:</span>
-                  <strong className="text-amber-300 font-mono font-bold">{cardData.expMonth}/{cardData.expYear.slice(-2)}</strong>
-                </div>
-                <span className="text-white/20 hidden sm:inline">•</span>
-                <div>
-                  <span className="text-white/50 text-[11px] uppercase tracking-wider block sm:inline sm:mr-1.5">Postal Code:</span>
-                  <strong className="text-white font-mono">{cardData.zipCode}</strong>
-                </div>
-                <span className="text-white/20 hidden sm:inline">•</span>
-                <div>
-                  <span className="text-white/50 text-[11px] uppercase tracking-wider block sm:inline sm:mr-1.5">Retainer:</span>
-                  <strong className="text-white font-mono font-bold">$55.00/mo</strong>
-                </div>
-              </div>
-
-              <p className="text-xs text-blue-200/60 leading-relaxed">
-                Primary payment method on file for continuous monthly advocacy retainer and IEP document audits.
-              </p>
-            </div>
 
             {/* 3. Right: Update Payment Method Button */}
             <div className="shrink-0 flex flex-col gap-2.5 sm:w-auto w-full self-start lg:self-center">
