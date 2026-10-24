@@ -221,17 +221,28 @@ Representative: Waypoint Advocates (clientcare@waypointadvocates.com)`;
           const Icon = s.icon;
 
           return (
-            <div key={idx} className="relative flex items-start gap-4 sm:gap-6 group">
+            <div key={idx} className="relative flex items-center gap-4 sm:gap-6 group">
               
               {/* ── Medallion & Centered Connecting Spine Column ── */}
-              <div className="relative self-stretch flex flex-col items-center shrink-0 w-13 sm:w-15 select-none">
+              <div className="relative self-stretch flex items-center justify-center shrink-0 w-13 sm:w-15 select-none">
                 
-                {/* Glowing 3D Nautical Braided Spine Segment (from center of current medallion down to center of next medallion) */}
+                {/* Top Connecting Line Segment (from previous row's gap midpoint to center of this medallion) */}
+                {idx > 0 && (
+                  <div 
+                    className="absolute -top-3.5 bottom-1/2 left-1/2 -translate-x-1/2 w-[3px] pointer-events-none z-0"
+                    style={{
+                      background: "linear-gradient(to bottom, #DFBE77, #C5A059 50%, #FFE394 100%)",
+                      boxShadow: "0 0 14px rgba(223, 190, 119, 0.45), 0 0 4px rgba(255, 227, 148, 0.8)",
+                    }}
+                  />
+                )}
+
+                {/* Bottom Connecting Line Segment (from center of this medallion to next row's gap midpoint) */}
                 {idx < steps.length - 1 && (
                   <div 
-                    className="absolute top-[26px] sm:top-[30px] -bottom-[50px] sm:-bottom-[54px] left-1/2 -translate-x-1/2 w-[3px] pointer-events-none z-0"
+                    className="absolute top-1/2 -bottom-3.5 left-1/2 -translate-x-1/2 w-[3px] pointer-events-none z-0"
                     style={{
-                      background: "linear-gradient(to bottom, #FFE394 0%, #C5A059 30%, #DFBE77 65%, #9E7D3B 100%)",
+                      background: "linear-gradient(to bottom, #FFE394 0%, #C5A059 50%, #DFBE77 100%)",
                       boxShadow: "0 0 14px rgba(223, 190, 119, 0.45), 0 0 4px rgba(255, 227, 148, 0.8)",
                     }}
                   />
