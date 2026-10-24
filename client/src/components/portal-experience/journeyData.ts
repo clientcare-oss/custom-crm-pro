@@ -30,7 +30,7 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     stepNumber: "02",
     name: "Discovery Call Scheduled",
     category: "Discovery & Intake",
-    description: "Prospective client has scheduled their free 30-min call with Byron Honea. Authenticated pre-sale portal activated.",
+    description: "Prospective client has scheduled their free 30-min call with Waypoint Advocates. Authenticated pre-sale portal activated.",
     status: "published",
     triggerCondition: "Calendar booking confirmed with prospective client email & phone",
     associatedPortalPage: "Discovery Call Details & Pre-Portal",
@@ -42,7 +42,7 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     availableClientActions: [
       "Preview future Student Workspace & Document Library",
       "Reschedule or manage Discovery Call booking",
-      "Send introductory note or concerns to Byron"
+      "Send introductory note or concerns to Waypoint"
     ],
     stateEngineKey: "DISCOVERY_SCHEDULED",
     iconName: "CalendarCheck",
@@ -54,9 +54,9 @@ export const INITIAL_JOURNEY_STAGES: JourneyStage[] = [
     stepNumber: "03",
     name: "Discovery Call Completed",
     category: "Discovery & Intake",
-    description: "Discovery Call held. Coach notes logged and customized support recommendations ready for parent review.",
+    description: "Discovery Call held. Advocate notes logged and customized support recommendations ready for parent review.",
     status: "published",
-    triggerCondition: "Coach marks discovery call attended / completed in CRM",
+    triggerCondition: "Advocate marks discovery call attended / completed in CRM",
     associatedPortalPage: "Discovery Call Summary & Next Steps",
     associatedRoute: "/portal/discovery-summary",
     requiredClientActions: [
