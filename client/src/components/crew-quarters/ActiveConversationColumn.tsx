@@ -310,7 +310,7 @@ export default function ActiveConversationColumn({
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-6"
+        className="flex-1 overflow-y-auto min-h-0 px-4 sm:px-6 py-4 space-y-4"
       >
         {isLoading && (
           <div className="flex items-center justify-center py-16 text-blue-200/50 gap-2 text-xs">
@@ -617,7 +617,7 @@ export default function ActiveConversationColumn({
       )}
 
       {/* ── Fixed Floating Composer (3D Capsule) ── */}
-      <div className="p-4 border-t border-sky-500/25 bg-gradient-to-b from-[#061833]/95 to-[#020a17]/95 backdrop-blur-md shrink-0 space-y-2.5 shadow-[0_-10px_30px_rgba(0,5,20,0.5)]">
+      <div className="p-2.5 sm:p-3 border-t border-sky-500/25 bg-gradient-to-b from-[#061833]/95 to-[#020a17]/95 backdrop-blur-md shrink-0 space-y-2 shadow-[0_-10px_30px_rgba(0,5,20,0.5)]">
         {/* Replying indicator */}
         {replyToMessage && (
           <div className="flex items-center justify-between px-3 py-1.5 bg-[#020b18] border border-sky-400/40 rounded-xl text-xs text-sky-300 shadow-inner">

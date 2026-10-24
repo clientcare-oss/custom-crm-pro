@@ -179,7 +179,7 @@ export default function CrewMessagesWorkspace({
   };
 
   return (
-    <div className="relative flex h-[calc(100vh-13rem)] min-h-[660px] max-h-[940px] w-full rounded-3xl overflow-hidden border border-sky-400/30 bg-[#040f24] shadow-[0_30px_90px_rgba(0,5,20,0.9),0_0_0_1px_rgba(56,189,248,0.25),inset_0_1px_2px_rgba(255,255,255,0.18)]">
+    <div className="relative flex flex-1 h-full min-h-0 w-full rounded-2xl overflow-hidden border border-sky-400/30 bg-[#040f24] shadow-[0_30px_90px_rgba(0,5,20,0.9),0_0_0_1px_rgba(56,189,248,0.25),inset_0_1px_2px_rgba(255,255,255,0.18)]">
       {/* 3D Top Rim Light Specular Reflection */}
       <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-sky-300/80 to-transparent z-30 pointer-events-none" />
 

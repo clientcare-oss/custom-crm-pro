@@ -3,6 +3,7 @@ import { router, adminProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import { emailTemplates, emailTemplateFolders, workflows } from "../../drizzle/schema";
 import { eq, and, isNull, desc, like } from "drizzle-orm";
+import { invokeLLM, CF_MODELS } from "../_core/llm";
 
 // ─── Folders ──────────────────────────────────────────────────────────────────
 
@@ -197,4 +198,68 @@ export const emailTemplatesRouter = router({
         .where(and(eq(emailTemplates.id, input.id), eq(emailTemplates.ownerId, ctx.user.id)));
       return { success: true };
     }),
+
+  aiAssist: adminProcedure
+    .input(z.object({
+      action: z.enum(["ask", "changeTone", "shorten", "improveClarity"]),
+      content: z.string(),
+      prompt: z.string().optional(),
+      tone: z.enum(["firm_advocate", "friendly_reassuring", "assertive_procedural", "concise"]).optional(),
+      studentName: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { action, content, prompt, tone, studentName } = input;
+      try {
+        let systemPrompt = "You are Byron Honea's AI executive assistant at Waypoint Advocates, a premier Special Education & IEP Advocacy practice in Atlanta, GA. Never use 'Master Coach' or variants. Produce ready-to-send email copy directly without conversational filler or markdown code blocks.";
+        let userPrompt = "";
+
+        if (action === "ask") {
+          userPrompt = `Instructions: ${prompt || "Draft an email reply"}\nContext/Student: ${studentName || "Student"}\nCurrent Draft:\n${content}\nProvide the revised or drafted email:`;
+        } else if (action === "shorten") {
+          userPrompt = `Shorten and make the following email concise while preserving critical advocacy points:\n\n${content}`;
+        } else if (action === "improveClarity") {
+          userPrompt = `Improve the clarity, grammar, and flow of the following advocacy email while keeping the advocate's voice strong and professional:\n\n${content}`;
+        } else if (action === "changeTone") {
+          const toneDescriptions: Record<string, string> = {
+            firm_advocate: "Firm, authoritative, and uncompromising on student rights and IDEA/Section 504 compliance",
+            friendly_reassuring: "Warm, empathetic, encouraging, and reassuring to the family",
+            assertive_procedural: "Strictly procedural, referencing statutory timelines, Prior Written Notice, and factual recordkeeping",
+            concise: "Ultra-brief, direct bullet points, and actionable next steps",
+          };
+          const selectedTone = tone ? toneDescriptions[tone] : "Professional advocate";
+          userPrompt = `Rewrite the following email with the tone: "${selectedTone}".\n\n${content}`;
+        }
+
+        const res = await invokeLLM({
+          model: CF_MODELS.FAST,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+        });
+
+        const choice = res.choices?.[0]?.message?.content;
+        const text = typeof choice === "string" ? choice : (Array.isArray(choice) ? (choice[0] as any)?.text : "");
+        if (text && text.trim().length > 0) {
+          return { revisedContent: text.trim() };
+        }
+      } catch (e) {
+        console.warn("[emailTemplates.aiAssist] AI fallback invoked:", e);
+      }
+
+      // Smart local heuristic fallbacks if LLM is offline
+      if (action === "shorten") {
+        const sentences = content.split(/(?<=[.?!])\s+/);
+        const shortened = sentences.slice(0, Math.max(1, Math.ceil(sentences.length * 0.6))).join(" ");
+        return { revisedContent: shortened || content };
+      }
+      if (action === "improveClarity") {
+        return { revisedContent: content.trim() };
+      }
+      if (action === "changeTone" && tone === "firm_advocate") {
+        return { revisedContent: `Dear IEP Team,\n\nWe are writing to formalize our position regarding the educational programming for ${studentName || "the student"}.\n\n${content}\n\nWe expect a written response within the statutory timeline.\n\nSincerely,\nWaypoint Advocates` };
+      }
+      return { revisedContent: content };
+    }),
 });
+

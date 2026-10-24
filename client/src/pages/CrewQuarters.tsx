@@ -343,6 +343,122 @@ export default function CrewQuarters() {
   const clientMessagesCount = dbUnreadCount;
   const newMessagesCount = dbUnreadCount > 0 ? dbUnreadCount : 1;
 
+  // Dedicated Full-Viewport Layout for Crew Messages (PG-038-MSG)
+  // Ensures the messaging workspace fits 100% inside the view window without page scrolling or clipped headers/footers
+  if (currentTab === "messages") {
+    return (
+      <ScopedErrorBoundary moduleName="Crew Messages">
+        <div className="h-screen max-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] flex flex-col overflow-hidden select-none p-2 sm:p-3 gap-2">
+          {/* Top Bar with Crew Quarters identification & quick controls */}
+          <div className="w-full flex flex-col p-1.5 sm:p-2 bg-[#05142B]/95 border border-[#3A2C18] rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.06)] gap-1 shrink-0 relative overflow-hidden">
+            {/* Top subtle golden accent shimmer line */}
+            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#C5A059]/60 to-transparent pointer-events-none" />
+
+            {/* Quick Header Row */}
+            <div className="flex items-center justify-between gap-2 px-1 pb-1 border-b border-[#3A2C18]/60">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#020A17] border border-[#3A2C18] text-[#FFE394] text-xs font-bold tracking-wider uppercase font-mono">
+                  <LighthouseCottageIcon className="w-3.5 h-3.5 text-[#C5A059] shrink-0" />
+                  <span>Crew Quarters</span>
+                </div>
+                <PageIdBadge id="PG-038-MSG" name="Crew Messages" inline />
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>On Duty</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-serif text-[#C6B697]">
+                <span className="font-bold text-[#FFF4D4]">{employeeName}</span>
+                <span className="text-[#3A2C18]">•</span>
+                <span>{new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</span>
+              </div>
+            </div>
+
+            {/* Row 1: Team & Daily Operations */}
+            <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full relative z-10 overflow-x-auto pt-0.5">
+              <div className="flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0">
+                <span className="hidden xl:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest text-[#C5A059] bg-[#020A17] border border-[#3A2C18] shrink-0 mr-1 select-none font-mono">
+                  Team Ops
+                </span>
+                {[
+                  { id: "overview", label: "Overview", icon: LayoutDashboard },
+                  { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
+                  { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
+                  { id: "schedule", label: "Team Schedule", icon: Calendar },
+                  { id: "resources", label: "Resources", icon: BookOpen },
+                ].map((tab) => {
+                  const isActive = currentTab === tab.id;
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`flex-1 min-w-0 h-7 sm:h-8 px-2 sm:px-2.5 py-0.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                        isActive
+                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
+                          : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
+                      }`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
+                      <span className="truncate">{tab.label}</span>
+                      {Boolean(tab.badge && tab.badge > 0) && (
+                        <span className={`ml-0.5 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight shrink-0 ${
+                          isActive ? "bg-[#07162B] text-[#FFE394]" : "bg-[#C5A059] text-[#07162B]"
+                        }`}>
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Row 2: Employee Self-Service & Personal Management */}
+            <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1 border-t border-[#3A2C18]/60 relative z-10 overflow-x-auto">
+              <div className="flex items-center gap-1 sm:gap-1.5 w-full">
+                <span className="hidden xl:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest text-[#FFE394] bg-[#020A17] border border-[#3A2C18] shrink-0 mr-1 select-none font-mono">
+                  Employee Hub
+                </span>
+                {[
+                  { id: "notes", label: "My Notes", icon: Lightbulb },
+                  { id: "availability", label: "My Availability", icon: Clock },
+                  { id: "time-off", label: "Time Off & PTO", icon: Palmtree },
+                  { id: "timesheet", label: "My Timesheet", icon: Timer },
+                  { id: "profile", label: "Profile & Credentials", icon: Award },
+                  { id: "payroll", label: "Payroll & Direct Deposit", icon: CreditCard },
+                  { id: "equipment", label: "Equipment & Tech", icon: Laptop },
+                ].map((tab) => {
+                  const isActive = currentTab === tab.id;
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`flex-1 min-w-0 h-7 sm:h-8 px-2 sm:px-2.5 py-0.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                        isActive
+                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
+                          : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
+                      }`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
+                      <span className="truncate">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Messages Workspace: Takes 100% of remaining height, perfectly fitting viewport */}
+          <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
+            <CrewMessagesWorkspace initialConversationId={selectedConversationId} />
+          </div>
+        </div>
+      </ScopedErrorBoundary>
+    );
+  }
+
   return (
     <ScopedErrorBoundary moduleName="Crew Quarters">
       <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] pb-12 flex flex-col">

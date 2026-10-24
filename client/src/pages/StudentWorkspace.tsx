@@ -809,6 +809,7 @@ export default function StudentWorkspace() {
                 fullName={fullName}
                 parentName={parentName}
                 parentPhone={parentPhone}
+                parentEmail={parent?.email || (student as any)?.parentEmail}
                 caseId={student?.caseId || String(studentId)}
                 parentContactId={parent?.id || (student as any)?.parentId}
                 onReturnToOverview={() => setActiveTab("overview")}
