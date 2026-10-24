@@ -680,17 +680,17 @@ export function PortalStudentDetailsTab({
               {/* ─── PAYMENT DECLINED FLASHING RED ALERT BANNER (Directly above Message Advocate) ─── */}
               {paymentDeclined && (
                 <div className="mb-3.5 rounded-xl border border-red-900/50 bg-gradient-to-r from-[#200407] via-[#2f060b] to-[#200407] p-3.5 relative overflow-hidden transition-all shadow-md">
-                  {/* High-Shine Pulsing Perimeter Border Overlay (ONLY the border flashes with brilliant specular shine) */}
+                  {/* High-Shine Pulsing Perimeter Border Overlay (100% PURE RED NEON SHINE) */}
                   <div 
-                    className="absolute inset-0 rounded-xl border-2 border-red-400 pointer-events-none z-10 animate-[pulse_1.4s_cubic-bezier(0.4,0,0.6,1)_infinite]" 
+                    className="absolute inset-0 rounded-xl border-2 border-red-500 pointer-events-none z-10 animate-[pulse_1.4s_cubic-bezier(0.4,0,0.6,1)_infinite]" 
                     style={{
-                      boxShadow: "0 0 14px rgba(255, 100, 100, 0.9), 0 0 32px rgba(239, 68, 68, 0.75), 0 0 55px rgba(220, 38, 38, 0.4), inset 0 1.5px 2px rgba(255, 255, 255, 0.8), inset 0 0 14px rgba(255, 80, 80, 0.3)"
+                      boxShadow: "0 0 16px rgba(239, 68, 68, 0.95), 0 0 36px rgba(239, 68, 68, 0.8), 0 0 60px rgba(220, 38, 38, 0.5), inset 0 0 16px rgba(239, 68, 68, 0.45)"
                     }}
                   >
-                    {/* Top-Edge Specular Glass Glint (Crisp white-hot reflection on upper rim) */}
-                    <span className="absolute -top-[1.5px] inset-x-4 h-[2px] bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_12px_rgba(255,255,255,1)]" />
-                    {/* Bottom-Edge Ambient Refraction Rim */}
-                    <span className="absolute -bottom-[1px] inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-red-300 to-transparent shadow-[0_0_8px_rgba(255,150,150,0.8)]" />
+                    {/* Top-Edge Pure Red Laser Glint */}
+                    <span className="absolute -top-[1.5px] inset-x-4 h-[2px] bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_14px_rgba(239,68,68,1)]" />
+                    {/* Bottom-Edge Pure Red Radiant Rim */}
+                    <span className="absolute -bottom-[1px] inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-red-600 to-transparent shadow-[0_0_10px_rgba(239,68,68,0.85)]" />
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-0">
