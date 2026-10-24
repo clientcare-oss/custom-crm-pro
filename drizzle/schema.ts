@@ -13,6 +13,7 @@ import {
   tinyint,
   datetime,
   date,
+  uniqueIndex,
 } from "drizzle-orm/mysql-core";
 
 /**
@@ -185,6 +186,9 @@ export const contacts = mysqlTable("contacts", {
   mapLocationStatus: varchar("mapLocationStatus", { length: 50 }).default("needs_geocoding"), // "ready" | "needs_geocoding" | "needs_review" | "failed"
   isDemoData: boolean("isDemoData").default(false),
   referralCode: varchar("referralCode", { length: 50 }), // Permanent unique referral code e.g. WP-7K4M9
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  enrollmentOfferId: int("enrollmentOfferId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -207,7 +211,7 @@ export const leads = mysqlTable("leads", {
   ownerId: int("ownerId").notNull(),
   contactId: int("contactId"),
   source: varchar("source", { length: 100 }),
-  status: mysqlEnum("status", ["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Ready for Archive", "Won", "Lost"])
+  status: mysqlEnum("status", ["New", "14 Day Follow-up", "30 Day Follow-up", "60 Day Follow-up", "90 Day Follow-up", "Ready for Archive", "Discovery Completed", "Approved for Enrollment", "Won", "Lost"])
     .default("New")
     .notNull(),
   value: decimal("value", { precision: 12, scale: 2 }),
@@ -458,6 +462,10 @@ export const appointments = mysqlTable("appointments", {
   candidateSlotId: int("candidateSlotId"),
   confirmedBy: varchar("confirmedBy", { length: 150 }),
   confirmedAt: timestamp("confirmedAt"),
+  // Persistent Family & Lead Relationships (PG-007 ↔ PG-003)
+  leadId: int("leadId"),
+  discoveryCallId: int("discoveryCallId"),
+  parentContactId: int("parentContactId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -1523,6 +1531,10 @@ export const discoveryCalls = mysqlTable("discoveryCalls", {
   callRecordingKey: text("callRecordingKey"),      // S3 key for uploaded recording
   scheduledAt: timestamp("scheduledAt"),
   completedAt: timestamp("completedAt"),
+  // Persistent Relationships to Appointments & Contacts
+  appointmentId: int("appointmentId"),
+  contactId: int("contactId"),
+  studentContactId: int("studentContactId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -3201,3 +3213,138 @@ export const operationalBlocks = mysqlTable("operational_blocks", {
 
 export type OperationalBlock = typeof operationalBlocks.$inferSelect;
 export type InsertOperationalBlock = typeof operationalBlocks.$inferInsert;
+
+/**
+ * Family Enrollment Offers (PG-002, PG-003, PG-030, PG-023)
+ * Persistent family-level enrollment offer records for Waypoint Advocates.
+ * Anchors enrollment approval to Parent Contact ID.
+ */
+export const familyEnrollmentOffers = mysqlTable("family_enrollment_offers", {
+  id: int("id").autoincrement().primaryKey(),
+  parentContactId: int("parentContactId").notNull(),
+  studentContactId: int("studentContactId"),
+  leadId: int("leadId"),
+  status: varchar("status", { length: 50 }).default("draft").notNull(),
+  // "draft" | "approved" | "invitation_sent" | "plan_selected" | "agreement_pending" | "agreement_signed" | "payment_pending" | "active" | "payment_attention" | "expired" | "revoked"
+  enrollmentMode: varchar("enrollmentMode", { length: 50 }).default("standard").notNull(),
+  // "standard" | "custom"
+  authorizedPlans: text("authorizedPlans").default('["navigator","anchor","family"]').notNull(),
+  // JSON array of authorized plan keys e.g. ["navigator","anchor","family"]
+  customPlanKey: varchar("customPlanKey", { length: 50 }),
+  customPlanName: varchar("customPlanName", { length: 150 }),
+  customMonthlyPrice: decimal("customMonthlyPrice", { precision: 10, scale: 2 }),
+  customBillingFrequency: varchar("customBillingFrequency", { length: 50 }).default("monthly"),
+  customCommitmentMonths: int("customCommitmentMonths").default(12),
+  customTerms: text("customTerms"),
+  billingArrangement: varchar("billingArrangement", { length: 50 }).default("autopay").notNull(),
+  // "autopay" | "manual_invoice"
+  manualInvoiceDueDate: varchar("manualInvoiceDueDate", { length: 50 }),
+  manualInvoiceReason: text("manualInvoiceReason"),
+  isDiscoveryOverridden: boolean("isDiscoveryOverridden").default(false).notNull(),
+  discoveryOverrideReason: text("discoveryOverrideReason"),
+  approvedBy: int("approvedBy"),
+  approvedByName: varchar("approvedByName", { length: 150 }),
+  approvedAt: timestamp("approvedAt"),
+  invitationExpiresAt: timestamp("invitationExpiresAt"),
+  invitationSentAt: timestamp("invitationSentAt"),
+  resendCount: int("resendCount").default(0).notNull(),
+  // Revision tracking (Phase 2A.1)
+  revisionNumber: int("revisionNumber").default(1).notNull(),
+  revisionHistory: text("revisionHistory"), // JSON array of past revisions with previous/updated terms, user, timestamp, reason
+  changeReason: text("changeReason"),
+  // Delivery status (Phase 2A.1)
+  invitationStatus: varchar("invitationStatus", { length: 50 }).default("pending").notNull(),
+  // "pending" | "dispatched" | "confirmed" | "failed"
+  invitationDeliveryError: text("invitationDeliveryError"),
+  selectedPlanKey: varchar("selectedPlanKey", { length: 50 }),
+  selectedPlanName: varchar("selectedPlanName", { length: 150 }),
+  selectedPlanPrice: decimal("selectedPlanPrice", { precision: 10, scale: 2 }),
+  selectedAt: timestamp("selectedAt"),
+  agreementId: int("agreementId"),
+  agreementStatus: varchar("agreementStatus", { length: 50 }),
+  agreementSignedAt: timestamp("agreementSignedAt"),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+  stripeCheckoutSessionId: varchar("stripeCheckoutSessionId", { length: 255 }),
+  paymentStatus: varchar("paymentStatus", { length: 50 }),
+  paymentAttentionReason: text("paymentAttentionReason"),
+  paidAt: timestamp("paidAt"),
+  membershipStartedAt: timestamp("membershipStartedAt"),
+  commitmentEndsAt: timestamp("commitmentEndsAt"),
+  gracePeriodEndsAt: timestamp("gracePeriodEndsAt"),
+  initialInvoiceId: int("initialInvoiceId"),
+  documentReviewStatus: varchar("documentReviewStatus", { length: 50 }).default("pending"),
+  documentReviewCompletedAt: timestamp("documentReviewCompletedAt"),
+  documentReviewCompletedBy: int("documentReviewCompletedBy"),
+  documentReviewCompletedByName: varchar("documentReviewCompletedByName", { length: 150 }),
+  // Flexible Payment Structures & Calculations (Phase 2D)
+  paymentStructure: varchar("payment_structure", { length: 50 }).default("monthly_autopay").notNull(),
+  // "monthly_autopay" | "pay_in_full" | "manual_invoice"
+  payInFullDiscountType: varchar("pay_in_full_discount_type", { length: 50 }).default("none").notNull(),
+  // "none" | "percentage" | "fixed_amount"
+  payInFullDiscountValue: decimal("pay_in_full_discount_value", { precision: 10, scale: 2 }).default("0.00"),
+  payInFullOriginalAmount: decimal("pay_in_full_original_amount", { precision: 10, scale: 2 }),
+  payInFullDiscountAmount: decimal("pay_in_full_discount_amount", { precision: 10, scale: 2 }).default("0.00"),
+  payInFullFinalAmount: decimal("pay_in_full_final_amount", { precision: 10, scale: 2 }),
+  payInFullPaymentMethod: varchar("pay_in_full_payment_method", { length: 50 }),
+  // Safe Agreement Revisions (Phase 2F.1)
+  hasPendingRevision: boolean("has_pending_revision").default(false).notNull(),
+  pendingRevisionAgreementId: int("pending_revision_agreement_id"),
+  pendingRevisionStructure: varchar("pending_revision_structure", { length: 50 }),
+  pendingRevisionCreatedAt: timestamp("pending_revision_created_at"),
+  // Authoritative Agreement Alignment & Billing Decoupling (Phase 2G)
+  coveredStudentIds: text("coveredStudentIds"), // JSON array of student contact IDs
+  coveredStudentNames: text("coveredStudentNames"), // Formatted full names of covered students
+  totalScheduledInstallments: int("totalScheduledInstallments").default(12).notNull(),
+  collectedInstallmentCount: int("collectedInstallmentCount").default(0).notNull(),
+  outstandingBalanceCents: int("outstandingBalanceCents").default(0).notNull(),
+  lastProcessedWebhookEventId: varchar("lastProcessedWebhookEventId", { length: 255 }),
+  processedStripeInvoiceIds: text("processedStripeInvoiceIds"), // JSON array of processed Stripe invoice IDs for atomic idempotency
+  revokedAt: timestamp("revokedAt"),
+  revokedBy: int("revokedBy"),
+  revokedByName: varchar("revokedByName", { length: 150 }),
+  revokedReason: text("revokedReason"),
+  completedAt: timestamp("completedAt"),
+  internalNotes: text("internalNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  parentIdx: index("family_offers_parent_idx").on(t.parentContactId),
+  statusIdx: index("family_offers_status_idx").on(t.status),
+  modeIdx: index("family_offers_mode_idx").on(t.enrollmentMode),
+}));
+
+export type FamilyEnrollmentOffer = typeof familyEnrollmentOffers.$inferSelect;
+export type InsertFamilyEnrollmentOffer = typeof familyEnrollmentOffers.$inferInsert;
+
+/**
+ * Phase 2G: Persistent Family Enrollment Payment Ledger with UNIQUE Stripe Invoice Idempotency.
+ * Guarantees atomic invoice deduplication under high-concurrency webhook deliveries, retries, and multi-event replays.
+ */
+export const familyEnrollmentPaymentLedger = mysqlTable(
+  "family_enrollment_payment_ledger",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    offerId: int("offer_id").notNull(),
+    stripeInvoiceId: varchar("stripe_invoice_id", { length: 255 }).notNull().unique(),
+    stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+    stripeEventId: varchar("stripe_event_id", { length: 255 }),
+    eventType: varchar("event_type", { length: 100 }).notNull(),
+    installmentNumber: int("installment_number").notNull(),
+    amountPaidCents: int("amount_paid_cents").notNull(),
+    currency: varchar("currency", { length: 10 }).default("usd").notNull(),
+    status: varchar("status", { length: 50 }).default("paid").notNull(),
+    refundedAmountCents: int("refunded_amount_cents").default(0).notNull(),
+    processedAt: timestamp("processed_at").defaultNow().notNull(),
+    metadata: text("metadata"),
+  },
+  (t) => ({
+    stripeInvoiceIdx: uniqueIndex("family_ledger_stripe_invoice_idx").on(t.stripeInvoiceId),
+    offerIdx: index("family_ledger_offer_idx").on(t.offerId),
+  })
+);
+
+export type FamilyEnrollmentPaymentLedger = typeof familyEnrollmentPaymentLedger.$inferSelect;
+export type InsertFamilyEnrollmentPaymentLedger = typeof familyEnrollmentPaymentLedger.$inferInsert;
+

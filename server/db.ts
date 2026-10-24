@@ -41,7 +41,10 @@ import {
   waypointCreditLedger,
   referralProgramSettings,
   aiLawyerPreps,
+  familyEnrollmentOffers,
 } from "../drizzle/schema";
+export * from "./db/familyEnrollment";
+
 import { ENV } from './_core/env';
 
 import { getDb } from "./db/connection";
@@ -1584,6 +1587,5 @@ export * from "./db/proposedMeetings";
 
 // ─── Operational Availability Blocks (PG-007) ──────────────────────────
 export * from "./db/operationalBlocks";
-
-
-
+// ─── Family Enrollment Persistent Offers (Phase 2A, 2B, 2C) ────────────
+export * from "./db/familyEnrollment";

@@ -44,82 +44,60 @@ export const intakeRouter = router({
         if (!ownerUser) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "No owner configured" });
         const ownerId = ownerUser.id;
 
-        // 1. Create parent contact
-        const parentResult = await db.createContact({
-          firstName: input.parentFirstName,
-          lastName: input.parentLastName,
-          email: input.parentEmail,
-          phone: input.parentPhone,
-          jobTitle: "Parent",
-          timezone: input.timezone,
-          bestTimeToCall: input.bestTimeToCall,
-          howHeardAboutUs: input.howHeardAboutUs,
-          referredBy: input.referredBy,
-          secondParentName: input.secondParentName,
-          secondParentPhone: input.secondParentPhone,
-          secondParentEmail: input.secondParentEmail,
-          state: input.state,
-          zipCode: input.zipCode,
-          city: input.city,
-        }, ownerId);
-        const parentContactId = db.getInsertId(parentResult);
-
-        // 2. Generate unique caseId for the student
-        const year = new Date().getFullYear();
-        const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-        const caseId = `WP-${year}-${randomSuffix}`;
-
-        // 3. Create student contact linked to parent
-        const studentResult = await db.createContact({
-          firstName: input.studentFirstName,
-          lastName: input.studentLastName,
-          jobTitle: "Student",
-          parentContactId,
-          caseId,
-          dateOfBirth: input.dateOfBirth,
-          diagnosis: input.diagnosis,
-          schoolName: input.schoolName,
-          gradeLevel: input.gradeLevel,
-          city: input.city,
-          state: input.state,
-          zipCode: input.zipCode,
-          countyDistrict: input.countyDistrict,
-          challenges: input.challenges,
-        }, ownerId);
-        const studentContactId = db.getInsertId(studentResult);
-
-        // 4. Create initial project/case for the student
-        const projectName = `${input.studentFirstName} ${input.studentLastName} — Case`;
-        await db.createProject({
-          clientId: studentContactId,
-          name: projectName,
-          description: `Intake case created from lead form. Student: ${input.studentFirstName} ${input.studentLastName}. Diagnosis: ${input.diagnosis || 'Not specified'}.`,
-          status: "Planning",
-        }, ownerId);
-
-        // 5. Create a lead record for pipeline tracking
-        await db.createLead({
-          contactId: parentContactId,
+        // Resolve or create connected family identity
+        const { resolveOrCreateFamilyIdentity } = await import("../services/familyIdentityService");
+        const resolution = await resolveOrCreateFamilyIdentity({
+          ownerId,
+          parent: {
+            firstName: input.parentFirstName,
+            lastName: input.parentLastName,
+            email: input.parentEmail,
+            phone: input.parentPhone,
+            timezone: input.timezone,
+            bestTimeToCall: input.bestTimeToCall,
+            howHeardAboutUs: input.howHeardAboutUs,
+            referredBy: input.referredBy,
+            secondParentName: input.secondParentName,
+            secondParentPhone: input.secondParentPhone,
+            secondParentEmail: input.secondParentEmail,
+            state: input.state,
+            zipCode: input.zipCode,
+            city: input.city,
+          },
+          student: {
+            firstName: input.studentFirstName,
+            lastName: input.studentLastName,
+            dateOfBirth: input.dateOfBirth,
+            diagnosis: input.diagnosis,
+            schoolName: input.schoolName,
+            gradeLevel: input.gradeLevel,
+            challenges: input.challenges,
+            countyDistrict: input.countyDistrict,
+          },
           source: input.howHeardAboutUs || "Lead Form",
-          status: "New",
-          parentName: `${input.parentFirstName} ${input.parentLastName}`.trim(),
-          parentPhone: input.parentPhone || undefined,
-          studentName: `${input.studentFirstName} ${input.studentLastName}`.trim(),
-          studentGrade: input.gradeLevel || undefined,
-          notes: `Intake form submitted. Student: ${input.studentFirstName} ${input.studentLastName}. Challenges: ${input.challenges || 'Not specified'}.`,
-        }, ownerId);
+          notes: `Intake form submission for ${input.studentFirstName} ${input.studentLastName}. Diagnosis: ${input.diagnosis || "Not specified"}. Challenges: ${input.challenges || "Not specified"}.`,
+        });
 
-        // 6. Notify the advocate
+        // Get student contact caseId if created/found
+        let studentCaseId = "";
+        if (resolution.studentContactId) {
+          const studentContact = await db.getContactById(resolution.studentContactId, ownerId);
+          studentCaseId = studentContact?.caseId || `WP-${new Date().getFullYear()}-${resolution.studentContactId}`;
+        }
+
+        // Notify the advocate
         await notifyOwner({
-          title: `New Lead: ${input.parentFirstName} ${input.parentLastName}`,
-          content: `A new intake form was submitted.\n\nParent: ${input.parentFirstName} ${input.parentLastName} (${input.parentEmail})\nStudent: ${input.studentFirstName} ${input.studentLastName}\nCase ID: ${caseId}\nDiagnosis: ${input.diagnosis || 'Not specified'}\nSchool: ${input.schoolName || 'Not specified'}\nChallenges: ${input.challenges || 'Not specified'}`,
+          title: `${resolution.isExistingFamily ? "Existing Family Inquiry" : "New Lead"}: ${input.parentFirstName} ${input.parentLastName}`,
+          content: `${resolution.isExistingFamily ? "An existing family submitted an inquiry" : "A new intake form was submitted"}.\n\nParent: ${input.parentFirstName} ${input.parentLastName} (${input.parentEmail})\nStudent: ${input.studentFirstName} ${input.studentLastName}\nCase ID: ${studentCaseId}\nDiagnosis: ${input.diagnosis || "Not specified"}\nSchool: ${input.schoolName || "Not specified"}\nChallenges: ${input.challenges || "Not specified"}${resolution.ambiguousMatch ? `\n\n⚠️ Notice: ${resolution.ambiguousMatch.reason}` : ""}`,
         });
 
         return {
           success: true,
-          caseId,
-          parentContactId,
-          studentContactId,
+          caseId: studentCaseId,
+          parentContactId: resolution.parentContactId,
+          studentContactId: resolution.studentContactId,
+          leadId: resolution.leadId,
+          isExistingFamily: resolution.isExistingFamily,
         };
       }),
   

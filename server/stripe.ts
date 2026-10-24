@@ -3,16 +3,8 @@ import { ENV } from "./_core/env";
 import { Router, raw } from "express";
 import * as db from "./db";
 
-// Lazy-initialize Stripe — only created when an endpoint is hit
-let _stripe: Stripe | null = null;
-function getStripe(): Stripe {
-  if (!_stripe) {
-    const key = process.env.STRIPE_SECRET_KEY;
-    if (!key) throw new Error("STRIPE_SECRET_KEY is not configured");
-    _stripe = new Stripe(key, { apiVersion: "2025-04-30.basil" as any });
-  }
-  return _stripe;
-}
+import { getStripe, getSafeStripe } from "./stripeClient";
+export { getStripe, getSafeStripe };
 
 export function registerStripeRoutes(app: Router) {
   // Stripe webhook handler - MUST be registered before express.json()
@@ -31,6 +23,17 @@ export function registerStripeRoutes(app: Router) {
     } catch (err: any) {
       console.error("[Stripe Webhook] Signature verification failed:", err.message);
       return res.status(400).json({ error: "Webhook signature verification failed" });
+    }
+
+    // Process Family Enrollment events (Phase 2C)
+    try {
+      const { processFamilyEnrollmentWebhook } = await import("./services/familyEnrollmentService");
+      const enrollResult = await processFamilyEnrollmentWebhook(event as any);
+      if (enrollResult.processed) {
+        console.log(`[Stripe Webhook] Family enrollment event processed: ${enrollResult.action} (Offer #${enrollResult.offerId})`);
+      }
+    } catch (enrollErr: any) {
+      console.error("[Stripe Webhook] Error processing family enrollment event:", enrollErr.message);
     }
 
     // Handle test events

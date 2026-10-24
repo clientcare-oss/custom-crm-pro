@@ -7,6 +7,7 @@ import { ENV } from "../_core/env";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
+import { resolveOrCreateFamilyIdentity } from "../services/familyIdentityService";
 
 export const leadFormsRouter = router({
 
@@ -217,60 +218,47 @@ export const leadFormsRouter = router({
         } else {
           ownerId = form.ownerId;
         }
-        // Create parent contact
-        const parentResult = await db.createContact({
-          firstName: input.parentFirstName,
-          lastName: input.parentLastName,
-          email: input.parentEmail,
-          phone: input.parentPhone,
-          jobTitle: "Parent",
-          timezone: input.timezone,
-          bestTimeToCall: input.bestTimeToCall,
-          howHeardAboutUs: input.howHeardAboutUs,
-          referredBy: input.referredBy,
-          secondParentName: input.secondParentName,
-          secondParentPhone: input.secondParentPhone,
-          secondParentEmail: input.secondParentEmail,
-        }, ownerId);
-        const parentContactId = db.getInsertId(parentResult);
-        // Create student contact
-        const studentResult = await db.createContact({
-          firstName: input.studentFirstName,
-          lastName: input.studentLastName,
-          jobTitle: "Student",
-          parentContactId,
-          dateOfBirth: input.dateOfBirth,
-          diagnosis: input.diagnosis,
-          schoolName: input.schoolName,
-          gradeLevel: input.gradeLevel,
-          city: input.city,
-          state: input.state,
-          zipCode: input.zipCode,
-          countyDistrict: input.countyDistrict,
-          challenges: input.challenges,
-        }, ownerId);
-        const studentContactId = db.getInsertId(studentResult);
-        const studentContact = await db.getContactById(studentContactId, ownerId);
-        const caseId = studentContact?.caseId || `WP-${new Date().getFullYear()}-${studentContactId}`;
-        // Create project
-        await db.createProject({
-          clientId: studentContactId,
-          name: `${input.studentFirstName} ${input.studentLastName} — Case`,
-          description: `Case from form: ${form.name}. Diagnosis: ${input.diagnosis || 'Not specified'}.`,
-          status: "Planning",
-        }, ownerId);
-        // Create lead
-        const leadResult = await db.createLead({
-          contactId: parentContactId,
-          source: input.referralCode ? `${form.name} (Ref: ${input.referralCode})` : form.name,
-          status: "New",
-          parentName: `${input.parentFirstName} ${input.parentLastName}`.trim(),
-          parentPhone: input.parentPhone || undefined,
-          studentName: `${input.studentFirstName} ${input.studentLastName}`.trim(),
-          studentGrade: input.gradeLevel || undefined,
-          notes: `Form submission: ${form.name}. Student: ${input.studentFirstName} ${input.studentLastName}.${input.referralCode ? ` Referral Code: ${input.referralCode}.` : ''}${input.referredBy ? ` Referred By: ${input.referredBy}.` : ''}`,
-        }, ownerId);
-        const leadId = db.getInsertId(leadResult);
+        // Resolve or create unified family identity
+        const formName = form?.name || "Public Intake Form";
+        const identity = await resolveOrCreateFamilyIdentity({
+          parent: {
+            firstName: input.parentFirstName,
+            lastName: input.parentLastName,
+            email: input.parentEmail,
+            phone: input.parentPhone,
+            city: input.city,
+            state: input.state,
+            zipCode: input.zipCode,
+            bestTimeToCall: input.bestTimeToCall,
+            timezone: input.timezone,
+            howHeardAboutUs: input.howHeardAboutUs,
+            referredBy: input.referredBy,
+            secondParentName: input.secondParentName,
+            secondParentPhone: input.secondParentPhone,
+            secondParentEmail: input.secondParentEmail,
+          },
+          student: {
+            firstName: input.studentFirstName,
+            lastName: input.studentLastName,
+            dateOfBirth: input.dateOfBirth,
+            diagnosis: input.diagnosis,
+            schoolName: input.schoolName,
+            gradeLevel: input.gradeLevel,
+            challenges: input.challenges,
+            city: input.city,
+            state: input.state,
+            zipCode: input.zipCode,
+            countyDistrict: input.countyDistrict,
+          },
+          leadSource: input.referralCode ? `${formName} (Ref: ${input.referralCode})` : formName,
+          referralCode: input.referralCode,
+          ownerId,
+        });
+
+        const parentContactId = identity.parentContactId;
+        const studentContactId = identity.studentContactId;
+        const leadId = identity.leadId;
+        const caseId = identity.caseId;
 
         // Record referral relationship if referral code or referredBy was provided
         if (input.referralCode || input.referredBy) {
@@ -279,7 +267,7 @@ export const leadFormsRouter = router({
               referralCode: input.referralCode,
               referredLeadId: leadId,
               referredClientId: parentContactId,
-              notes: `Lead form submission via "${form.name}". ${input.referredBy ? `Referred By: ${input.referredBy}` : ''}`,
+              notes: `Lead form submission via "${formName}". ${input.referredBy ? `Referred By: ${input.referredBy}` : ''}`,
             });
           } catch (refErr) {
             console.error("Failed to attach referral to lead:", refErr);
@@ -290,11 +278,13 @@ export const leadFormsRouter = router({
         await db.incrementLeadFormSubmissionCount(input.slug);
 
         // Trigger lead_form_submitted automation
-        try {
-          const { triggerAutomationFlow } = await import("../db/automations");
-          await triggerAutomationFlow("lead_form_submitted", studentContactId);
-        } catch (e) {
-          console.error("Failed to run lead form automation flow:", e);
+        if (studentContactId) {
+          try {
+            const { triggerAutomationFlow } = await import("../db/automations");
+            await triggerAutomationFlow("lead_form_submitted", studentContactId);
+          } catch (e) {
+            console.error("Failed to run lead form automation flow:", e);
+          }
         }
         
         // Get worksheet if assigned to this form

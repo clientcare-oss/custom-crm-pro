@@ -25,6 +25,7 @@ import { StudentCommunicationWorkspace } from "@/components/students/StudentComm
 import { StudentDocumentVaultMirror } from "@/components/students/StudentDocumentVaultMirror";
 import { StudentWorkspaceMoreTab } from "@/components/students/StudentWorkspaceMoreTab";
 import { IepProfileUpdateBubble } from "@/components/students/IepProfileUpdateBubble";
+import { StudentCurrentFocusPanel } from "@/components/students/StudentCurrentFocusPanel";
 
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
@@ -71,6 +72,17 @@ export default function StudentWorkspace() {
   const projects = (data as any)?.projects || [];
   const effectiveStudentId = student?.id || studentId;
   const effectiveProjectId = (data as any)?.projects?.[0]?.id || effectiveStudentId;
+
+  // Query discovery calls for family anchor
+  const { data: discoveryCalls = [] } = trpc.discovery.listByContact.useQuery(
+    { contactId: parent?.id || 0 },
+    { enabled: !!parent?.id }
+  );
+
+  // Query leads for family anchor
+  const { data: leads = [] } = trpc.leads.list.useQuery(undefined, {
+    enabled: !!parent?.id || !!student?.id,
+  });
 
   // Store active student profile route for safe return from nested tools
   if (effectiveStudentId > 0 && typeof window !== "undefined") {
@@ -524,149 +536,21 @@ export default function StudentWorkspace() {
 
                 {/* ─── RIGHT PANEL: Current Focus & Action Center (~62% width) ── */}
                 <div className="lg:col-span-7 sm:px-6 py-2 flex flex-col justify-between">
-                  <div>
-                    {/* Current Focus Banner */}
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-bold tracking-widest uppercase text-sky-300/90 drop-shadow">
-                        CURRENT FOCUS
-                      </p>
-                      <h3 
-                        className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight"
-                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                      >
-                        {compass?.currentStatus || "Prepare for the next IEP meeting"}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-white/80 drop-shadow">
-                        {compass?.nextStep || "Review records and organize parent concerns."}
-                      </p>
-                    </div>
-
-                    {/* Primary Action Buttons */}
-                    <div className="flex flex-wrap items-center gap-3 mt-4">
-                      <Button
-                        onClick={() => setLocation(`/meeting-workspace/${studentId}`)}
-                        className="bg-gradient-to-r from-[#0d2242] to-[#14325c] hover:from-[#13305c] hover:to-[#1a4078] text-white border border-[#D4AF37]/80 font-semibold text-xs rounded-xl h-10 px-5 gap-2 shadow-md cursor-pointer"
-                      >
-                        <Calendar className="h-4 w-4 text-amber-300" />
-                        <span>Prepare for Meeting</span>
-                      </Button>
-
-                      <Button
-                        onClick={() => setLocation(`/post-meeting-review/${studentId}`)}
-                        variant="outline"
-                        className="bg-[#081a33]/60 hover:bg-[#0c2447] text-white/95 hover:text-white border-white/20 font-semibold text-xs rounded-xl h-10 px-5 gap-2 shadow-sm cursor-pointer"
-                      >
-                        <FileText className="h-4 w-4 text-white/75" />
-                        <span>Post-Meeting Review</span>
-                      </Button>
-                    </div>
-
-                    {/* Middle Cards: Next Meeting & Next Actions */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                      
-                      {/* Card 1: Next Meeting */}
-                      <div className="rounded-xl bg-[#020b18]/25 border border-white/15 p-4 flex flex-col justify-between min-h-[160px]">
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50">
-                          <Calendar className="h-3.5 w-3.5" />
-                          <span>NEXT MEETING</span>
-                        </div>
-
-                        {nextAppointment ? (
-                          <div className="my-2 space-y-1">
-                            <p className="text-sm font-bold text-white">{nextAppointment.title || "IEP Review Session"}</p>
-                            <p className="text-xs sm:text-sm text-amber-300 font-medium">
-                              {new Date(nextAppointment.date!).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center text-center my-2 space-y-1">
-                            <Calendar className="h-6 w-6 text-white/35" />
-                            <p className="text-xs sm:text-sm font-semibold text-white/95">No meeting scheduled</p>
-                            <p className="text-[11px] text-white/55 max-w-[220px]">
-                              Schedule a meeting to keep this case on track.
-                            </p>
-                          </div>
-                        )}
-
-                        <Button
-                          onClick={() => setScheduleModalOpen(true)}
-                          size="sm"
-                          variant="outline"
-                          className="w-full mt-2 bg-[#091b35]/60 hover:bg-[#0f2a52] border-[#D4AF37]/50 text-white text-xs font-semibold rounded-lg h-8 gap-2 cursor-pointer"
-                        >
-                          <Calendar className="h-3.5 w-3.5 text-amber-300" />
-                          <span>Schedule meeting</span>
-                        </Button>
-                      </div>
-
-                      {/* Card 2: Next Actions */}
-                      <div className="rounded-xl bg-[#020b18]/25 border border-white/15 p-4 flex flex-col justify-between min-h-[160px]">
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50 mb-2.5">
-                          <CheckSquare className="h-3.5 w-3.5" />
-                          <span>NEXT ACTIONS</span>
-                        </div>
-
-                        <div className="space-y-2">
-                          {[
-                            { id: "review-iep", label: "Review latest IEP" },
-                            { id: "confirm-priorities", label: "Confirm parent priorities" },
-                            { id: "missing-records", label: "Request missing records" },
-                          ].map((action) => {
-                            const isDone = !!checkedActions[action.id];
-                            return (
-                              <button
-                                key={action.id}
-                                onClick={() => toggleAction(action.id)}
-                                className="w-full flex items-center gap-2.5 text-left text-xs sm:text-sm text-white/90 hover:text-white transition-colors cursor-pointer group"
-                              >
-                                <div className={cn(
-                                  "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                                  isDone 
-                                    ? "bg-amber-400 border-amber-300 text-slate-950 font-bold" 
-                                    : "border-white/30 group-hover:border-amber-300 bg-black/20"
-                                )}>
-                                  {isDone && <CheckCircle2 className="h-3.5 w-3.5" />}
-                                </div>
-                                <span className={cn(isDone && "line-through text-white/40")}>
-                                  {action.label}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        <div className="pt-1.5 text-[11px] text-white/40">
-                          {Object.values(checkedActions).filter(Boolean).length} of 3 completed
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bottom Card: Recent Activity */}
-                    <div className="rounded-xl bg-[#020b18]/25 border border-white/15 p-3.5 mt-4 flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50">
-                          <FileText className="h-3.5 w-3.5" />
-                          <span>RECENT ACTIVITY</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs sm:text-sm text-white/75">
-                          <Clock className="h-3.5 w-3.5 text-white/40" />
-                          <span>Case updates appear here.</span>
-                        </div>
-                      </div>
-
-                      <Button
-                        onClick={() => setActiveTab("more")}
-                        variant="outline"
-                        size="sm"
-                        className="bg-transparent hover:bg-white/5 border-white/20 text-white text-xs sm:text-sm font-semibold rounded-lg h-8 px-3 gap-2 cursor-pointer"
-                      >
-                        <Clock className="h-3.5 w-3.5 text-white/70" />
-                        <span>View timeline</span>
-                      </Button>
-                    </div>
-                  </div>
-
-
+                  <StudentCurrentFocusPanel
+                    student={student}
+                    parent={parent}
+                    compass={compass}
+                    appointments={appointments}
+                    discoveryCalls={discoveryCalls}
+                    contracts={(data as any)?.contracts || []}
+                    invoices={(data as any)?.invoices || []}
+                    leads={leads as any}
+                    checkedActions={checkedActions}
+                    onToggleAction={toggleAction}
+                    onOpenScheduleModal={() => setScheduleModalOpen(true)}
+                    onNavigate={(path) => setLocation(path)}
+                    onSetActiveTab={(tab) => setActiveTab(tab as any)}
+                  />
                 </div>
               </div>
             </div>

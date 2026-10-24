@@ -1233,6 +1233,8 @@ export default function ClientPortal() {
       case "choose-support":
         return (
           <ChooseSupportExperience
+            parentContactId={portalUser?.contactId || previewParentContactId || effectiveStudent?.parentContactId || undefined}
+            studentContactId={effectiveStudentContactId || undefined}
             onPaymentSuccess={() => {
               setClientStage("ONBOARDING");
               addCompletedStep("choose-support");
@@ -1241,6 +1243,7 @@ export default function ClientPortal() {
             onNavigateTab={(tab) => setActiveTab(tab as any)}
           />
         );
+
 
       case "agreements":
         return (

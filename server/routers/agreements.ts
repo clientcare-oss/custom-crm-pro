@@ -1085,6 +1085,19 @@ export const agreementsRouter = router({
         }
       } catch (e) {}
 
+      // Update family enrollment offer if linked to this agreement
+      try {
+        const { onAgreementSignedForEnrollment } = await import("../services/familyEnrollmentService");
+        await onAgreementSignedForEnrollment({
+          agreementId: agreement.id,
+          clientId: agreement.clientId,
+          signerName: input.signerName,
+          pdfUrl: pdfResult.pdfUrl,
+        });
+      } catch (enrollmentHookErr) {
+        console.error("Family enrollment agreement hook error:", enrollmentHookErr);
+      }
+
       // Case Activity Timeline
       if (agreement.studentContactId) {
         try {

@@ -146,7 +146,7 @@ export const DEFAULT_PLAN_DEFINITIONS: PlanDefinition[] = [
       { serviceKey: "504_MEETING", allowanceType: "unlimited", baseAllowance: 0, trackingMethod: "calendar", reserveOnOpen: true },
       { serviceKey: "RECORDS_REVIEW", allowanceType: "limited", baseAllowance: 2, trackingMethod: "calendar", reserveOnOpen: true },
       { serviceKey: "EMAIL_ASSISTANCE", allowanceType: "limited", baseAllowance: 10, trackingMethod: "timeline", reserveOnOpen: false },
-      { serviceKey: "STATE_COMPLAINT", allowanceType: "not_included", baseAllowance: 0, trackingMethod: "timeline", reserveOnOpen: true },
+      { serviceKey: "STATE_COMPLAINT", allowanceType: "limited", baseAllowance: 1, trackingMethod: "timeline", reserveOnOpen: true },
       { serviceKey: "PWN_SUPPORT", allowanceType: "limited", baseAllowance: 2, trackingMethod: "timeline", reserveOnOpen: false },
       { serviceKey: "ADVOCATE_SESSION", allowanceType: "limited", baseAllowance: 3, trackingMethod: "calendar", reserveOnOpen: true },
       { serviceKey: "DOCUMENT_REVIEW", allowanceType: "limited", baseAllowance: 2, trackingMethod: "timeline", reserveOnOpen: false },

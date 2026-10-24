@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,9 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, Loader2 } from "lucide-react";
+import { Calendar, Loader2, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LEAD_STATUSES, format12Hour, type LeadFormData, type LeadStatus } from "./types";
+import { FamilyEnrollmentApprovalModal } from "@/components/enrollment/FamilyEnrollmentApprovalModal";
 
 interface LeadModalProps {
   open: boolean;
@@ -38,8 +39,11 @@ export function LeadModal({
   onSubmit,
   isPending,
 }: LeadModalProps) {
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
+
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-[#05142B]/95 border-[#3A2C18] text-[#FFF4D4] shadow-[0_16px_48px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl no-scrollbar">
         <DialogHeader>
           <DialogTitle className="font-serif font-bold text-lg text-[#FFF4D4]">
@@ -311,6 +315,28 @@ export function LeadModal({
             />
           </div>
 
+          {/* Phase 2 Enrollment Approval Action Placement */}
+          {editingId && (
+            <div className="pt-2 flex items-center justify-between bg-[#020A17]/80 p-3 rounded-xl border border-[#3A2C18]">
+              <div>
+                <span className="text-xs font-semibold text-[#FFF4D4] block">Enrollment Pipeline</span>
+                <span className="text-[11px] text-[#C6B697]">
+                  {formData.status === "Discovery Completed" ? "Discovery completed — ready for Phase 2 approval" : "Shared enrollment trigger placement"}
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsApprovalModalOpen(true)}
+                className="border-[#C5A059] text-[#FFE394] hover:text-white bg-[#07162B] hover:bg-[#0f2a52] text-xs font-semibold cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-[#C5A059] mr-1.5" />
+                Approve for Enrollment
+              </Button>
+            </div>
+          )}
+
           <div className="flex gap-2 pt-3 border-t border-[#3A2C18]">
             <Button
               type="button"
@@ -337,5 +363,18 @@ export function LeadModal({
         </form>
       </DialogContent>
     </Dialog>
+
+    {editingId && (
+      <FamilyEnrollmentApprovalModal
+        isOpen={isApprovalModalOpen}
+        onClose={() => setIsApprovalModalOpen(false)}
+        parentContactId={0}
+        leadId={editingId}
+        familyName={formData.parentName || "Family"}
+        studentName={formData.studentName || undefined}
+
+      />
+    )}
+    </>
   );
 }

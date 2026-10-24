@@ -207,7 +207,7 @@ export default function DynamicForm() {
 
   const submitMutation = trpc.leadForms.submit.useMutation({
     onSuccess: (data) => {
-      setCaseId(data.caseId);
+      setCaseId(data.caseId || "");
       setWorksheetUrl(data.worksheetUrl || null);
       setSubmitted(true);
     },

@@ -438,6 +438,30 @@ export function AgreementsExperience({ onComplete, onNavigateTab }: AgreementsEx
                 )}
               </div>
 
+              {/* Phase 2C Payment Activation Banner */}
+              <div className="p-4 rounded-xl bg-amber-950/30 border border-amber-500/40 text-xs text-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <Clock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-amber-300 font-semibold block">Agreement Executed — Step 2: Payment Authorization</strong>
+                    <p className="text-[11px] text-amber-200/80 mt-0.5 leading-relaxed">
+                      Your advocacy service agreement is electronically signed and permanently executed. Proceed to payment authorization to verify first payment and activate your family membership.
+                    </p>
+                  </div>
+                </div>
+
+                {onNavigateTab && (
+                  <Button
+                    onClick={() => onNavigateTab("choose-support")}
+                    className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs h-9 px-4 shrink-0 shadow-md gap-1.5 cursor-pointer"
+                  >
+                    <span>Proceed to Payment</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+
+
               {activeAgreement?.documentHash && (
                 <div className="p-3 rounded-xl bg-slate-950/80 border border-emerald-900/40 text-xs flex items-center justify-between">
                   <span className="text-white/60 font-mono text-[11px] truncate mr-2">

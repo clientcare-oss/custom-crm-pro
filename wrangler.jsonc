@@ -20,5 +20,24 @@
   ],
   "ai": {
     "binding": "AI"
+  },
+  "env": {
+    "staging": {
+      "name": "custom-crm-pro-staging",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "custom-crm-pro-staging-db",
+          "database_id": "53704ce6-552e-4d19-bdf1-b8b0c424353a"
+        }
+      ],
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "NODE_ENV": "staging"
+      },
+      "ai": {
+        "binding": "AI"
+      }
+    }
   }
 }

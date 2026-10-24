@@ -39,6 +39,8 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import DiscoveryHeader from "@/components/discovery/DiscoveryHeader";
 import DiscoverySectionHeader from "@/components/discovery/DiscoverySectionHeader";
+import { FamilyEnrollmentApprovalModal } from "@/components/enrollment/FamilyEnrollmentApprovalModal";
+
 
 interface DiscoveryCallPageProps {
   leadId: number;
@@ -97,6 +99,8 @@ export default function DiscoveryCall({
 
   // Active tab: "call" | "resources"
   const [activeTab, setActiveTab] = useState<"call" | "resources">("call");
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState<boolean>(false);
+
 
   // Question mode
   const [questionMode, setQuestionMode] = useState<"IEP/504" | "General">("IEP/504");
@@ -1365,13 +1369,34 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
                       onClick={() => {
                         saveMutation.mutate({ leadId, status: "Completed" });
                         onCallCompleted?.({ status: "Completed", closingResponse: "Yes" });
-                        toast.success("Lead moved to Won / Active Client!");
+                        toast.success("Discovery call completed! Family record saved & ready for enrollment review.");
                       }}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 shadow-lg cursor-pointer"
+                      className="w-full bg-[#102B4E] hover:bg-[#153866] text-[#FFE394] border border-[#C5A059]/40 font-semibold text-xs py-2.5 shadow-lg cursor-pointer transition-all"
                     >
-                      <CheckCircle2 className="w-4 h-4 mr-1.5" /> Move to Won / Active Client
+                      <CheckCircle2 className="w-4 h-4 mr-1.5 text-[#C5A059]" /> Finish Discovery
                     </Button>
+
+                    {/* Shared Architecture Contextual Placement: Approve for Enrollment (Phase 2) */}
+                    <div className="pt-2.5 border-t border-[#3A2C18]/60 flex items-center justify-between text-left">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5 text-[#C5A059]" />
+                          <span className="text-[11px] font-semibold text-[#FFF4D4]">Family Enrollment Status</span>
+                        </div>
+                        <p className="text-[10px] text-[#C6B697] mt-0.5">Pre-enrollment discovery record completed.</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsApprovalModalOpen(true)}
+                        className="border-[#C5A059] text-[#FFE394] hover:text-white bg-[#020A17] hover:bg-[#07162B] text-xs font-semibold cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 text-[#C5A059] mr-1.5" />
+                        Approve for Enrollment
+                      </Button>
+                    </div>
                   </div>
+
                 )}
 
                 {/* Case 2: Think about it / Spouse review */}
@@ -1872,9 +1897,23 @@ My name is [Your Name] with Waypoint Advocates. I'm calling because you requeste
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Shared Family Enrollment Approval Modal */}
+      <FamilyEnrollmentApprovalModal
+        isOpen={isApprovalModalOpen}
+        onClose={() => setIsApprovalModalOpen(false)}
+        parentContactId={lead?.contactId || 0}
+        leadId={leadId}
+        familyName={parentName}
+        studentName={studentName}
+        onSuccess={() => {
+          toast.success("Family enrollment approved successfully.");
+        }}
+      />
     </div>
   );
 }
+
 
 // Resource form sub-component
 function ResourceForm({

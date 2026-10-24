@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -56,6 +57,9 @@ function getServiceKeyForMeetingType(meetingType: string): string | null {
 interface Appointment {
   id: number;
   clientId: number | null;
+  parentContactId?: number | null;
+  leadId?: number | null;
+  discoveryCallId?: number | null;
   title: string;
   description: string | null;
   startTime: Date;
@@ -123,6 +127,7 @@ export default function Appointments() {
     window.history.replaceState(null, "", url.toString());
   };
 
+  const [, setLocation] = useLocation();
   const [viewMode, setViewMode] = useState<CalendarViewMode>(initialView);
 
   const handleViewModeChange = (mode: CalendarViewMode) => {
@@ -290,6 +295,10 @@ export default function Appointments() {
   const { data: contacts = [] } = trpc.contacts.list.useQuery(undefined, {
     refetchOnWindowFocus: false,
     staleTime: 300000,
+  });
+  const { data: leads = [] } = trpc.leads.list.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    staleTime: 60000,
   });
   const { data: availability = [], refetch: refetchAvailability } = trpc.availability.get.useQuery(undefined, {
     refetchOnWindowFocus: false,
@@ -1189,6 +1198,84 @@ export default function Appointments() {
                     timeZone={selectedApt.clientTimeZone}
                   />
                 </div>
+
+                {/* Unified Family & Discovery Call Connections */}
+                {(() => {
+                  let resolvedParentId = selectedApt.parentContactId || null;
+                  if (!resolvedParentId && selectedApt.clientId) {
+                    const c = (contacts as any[]).find((x) => x.id === selectedApt.clientId);
+                    if (c?.jobTitle === "Student" && c.parentContactId) {
+                      resolvedParentId = c.parentContactId;
+                    } else if (c?.jobTitle === "Parent") {
+                      resolvedParentId = c.id;
+                    }
+                  }
+                  if (!resolvedParentId && selectedApt.parentPhone) {
+                    const normPhone = selectedApt.parentPhone.replace(/\D/g, "");
+                    const c = (contacts as any[]).find((x) => (x.phone || "").replace(/\D/g, "") === normPhone && x.jobTitle !== "Student");
+                    if (c) resolvedParentId = c.id;
+                  }
+
+                  let resolvedLeadId = selectedApt.leadId || null;
+                  if (!resolvedLeadId && resolvedParentId) {
+                    const l = (leads as any[]).find((x) => x.contactId === resolvedParentId);
+                    if (l) resolvedLeadId = l.id;
+                  }
+                  if (!resolvedLeadId && selectedApt.parentPhone) {
+                    const normPhone = selectedApt.parentPhone.replace(/\D/g, "");
+                    const l = (leads as any[]).find((x) => (x.parentPhone || "").replace(/\D/g, "") === normPhone);
+                    if (l) resolvedLeadId = l.id;
+                  }
+
+                  const isDiscovery = selectedApt.meetingType === "Discovery Call" || selectedApt.title?.toLowerCase().includes("discovery") || !!resolvedLeadId;
+
+                  return (
+                    <div className="mt-2.5 p-3 rounded-lg border border-[#3A2C18] bg-[#020A17]/80 space-y-2">
+                      <div className="flex items-center justify-between text-xs font-semibold text-[#FFF4D4]">
+                        <span className="flex items-center gap-1.5 text-[#C6B697]">
+                          <UserCheck className="w-3.5 h-3.5 text-[#C5A059]" /> Connected Family Record
+                        </span>
+                        {isDiscovery && (
+                          <span className="text-[10px] text-[#FFE394] bg-[#FFE394]/10 border border-[#FFE394]/30 px-2 py-0.5 rounded-full font-medium">
+                            Discovery Session
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        {isDiscovery && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={!resolvedLeadId}
+                            onClick={() => {
+                              if (resolvedLeadId) {
+                                setSelectedApt(null);
+                                setLocation(`/leads/${resolvedLeadId}/discovery`);
+                              }
+                            }}
+                            className="w-full text-xs font-semibold border-[#C5A059]/60 bg-[#07162B] text-[#FFE394] hover:bg-[#102B4E] hover:text-white transition-all justify-center gap-1.5 disabled:opacity-50"
+                          >
+                            <CalendarClock className="w-3.5 h-3.5 text-[#C5A059]" /> Open Discovery Call
+                          </Button>
+                        )}
+                        {(resolvedParentId || selectedApt.clientId) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedApt(null);
+                              setLocation(`/contacts/${resolvedParentId || selectedApt.clientId}`);
+                            }}
+                            className="w-full text-xs font-semibold border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] transition-all justify-center gap-1.5"
+                          >
+                            <User className="w-3.5 h-3.5 text-[#C5A059]" /> View Family Profile
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Multi-Zone Schedule Alignment (Red for Client, Green for Waypoint Advocate) */}

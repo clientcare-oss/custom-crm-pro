@@ -54,15 +54,55 @@ export const appointmentsRouter = router({
 
         // Recompute endTime server-side from session type to prevent client-side duration bugs
         let computedEndTime = input.endTime;
+        let isBlueprintSessionType = false;
         if (input.sessionTypeId && dbConn2) {
           const [st] = await dbConn2.select().from(sessionTypesTable).where(eq(sessionTypesTable.id, input.sessionTypeId)).limit(1);
           if (st) {
+            if (st.name && st.name.toLowerCase().includes("blueprint")) {
+              isBlueprintSessionType = true;
+            }
             const durationMin = String(st.durationUnit).trim() === 'hours' ? Number(st.duration) * 60 : Number(st.duration);
             computedEndTime = new Date(input.startTime.getTime() + durationMin * 60 * 1000);
             console.log('[book] sessionType:', st.name, 'duration:', st.duration, st.durationUnit, '-> durationMin:', durationMin, 'endTime:', computedEndTime);
           }
         } else {
           console.log('[book] no sessionTypeId, using client endTime, diff_min:', (input.endTime.getTime() - input.startTime.getTime()) / 60000);
+        }
+
+        // Phase 2F.1: Enforce Document Review Gating for IEP Blueprint Strategy Calls
+        const isBlueprintSession = 
+          isBlueprintSessionType ||
+          input.title.toLowerCase().includes("blueprint") ||
+          (input.meetingType && input.meetingType.toLowerCase().includes("blueprint"));
+
+        if (isBlueprintSession && input.clientId && dbConn2) {
+          try {
+            const { familyEnrollmentOffers, contacts: contactsTable } = await import("../../drizzle/schema");
+            const { eq, or, desc, sql } = await import("drizzle-orm");
+            const [student] = await dbConn2.select().from(contactsTable).where(eq(contactsTable.id, input.clientId)).limit(1);
+            const parentContactId: number | null = student ? (student as any).parentContactId : null;
+
+            const [offer] = await dbConn2
+              .select()
+              .from(familyEnrollmentOffers)
+              .where(
+                or(
+                  eq(familyEnrollmentOffers.studentContactId, input.clientId),
+                  parentContactId ? eq(familyEnrollmentOffers.parentContactId, parentContactId) : sql`0=1`
+                )
+              )
+              .orderBy(desc(familyEnrollmentOffers.id))
+              .limit(1);
+
+            if (offer && offer.status === "active" && offer.documentReviewStatus !== "approved") {
+              throw new TRPCError({
+                code: "FORBIDDEN",
+                message: "IEP Blueprint Strategy Session scheduling is locked. Lead advocate document review must be completed before booking.",
+              });
+            }
+          } catch (gateErr: any) {
+            if (gateErr instanceof TRPCError) throw gateErr;
+          }
         }
 
         // Auto-fill parentPhone and clientTimeZone from the linked contact (student's parent or student)
@@ -120,6 +160,9 @@ export const appointmentsRouter = router({
       .input(
         z.object({
           clientId: z.number().optional(),
+          parentContactId: z.number().optional(),
+          leadId: z.number().optional(),
+          discoveryCallId: z.number().optional(),
           caseId: z.string().optional(),
           title: z.string().min(1),
           description: z.string().optional(),
@@ -159,17 +202,82 @@ export const appointmentsRouter = router({
         }
 
         let clientTz = input.clientTimeZone;
-        if (!clientTz && input.clientId) {
+        let parentContactId = input.parentContactId;
+        let leadId = input.leadId;
+        let discoveryCallId = input.discoveryCallId;
+
+        if (input.clientId) {
           try {
             const contact = await db.getContactById(input.clientId, ctx.user.id);
             if (contact) {
-              clientTz = (contact as any).confirmedTimeZone || (contact as any).timezone;
+              if (!clientTz) {
+                clientTz = (contact as any).confirmedTimeZone || (contact as any).timezone;
+              }
+              if (!parentContactId) {
+                if (contact.jobTitle === "Student" && contact.parentContactId) {
+                  parentContactId = contact.parentContactId;
+                } else if (contact.jobTitle === "Parent") {
+                  parentContactId = contact.id;
+                }
+              }
             }
           } catch { /* ignore */ }
         }
 
+        // Connect discovery appointment to lead and discoveryCalls
+        if (input.meetingType === "Discovery Call" || leadId) {
+          try {
+            const { discoveryCalls, leads } = await import("../../drizzle/schema");
+            const { eq: deq, and: dand } = await import("drizzle-orm");
+            const dbConn = await db.getDb();
+
+            // Look up open lead if not provided
+            if (!leadId && parentContactId && dbConn) {
+              const [openLead] = await dbConn.select().from(leads)
+                .where(dand(deq(leads.contactId, parentContactId), deq(leads.ownerId, ctx.user.id)))
+                .limit(1);
+              if (openLead) {
+                leadId = openLead.id;
+              }
+            }
+
+            if (leadId && dbConn) {
+              const [existingCall] = await dbConn.select().from(discoveryCalls)
+                .where(dand(deq(discoveryCalls.leadId, leadId), deq(discoveryCalls.ownerId, ctx.user.id)))
+                .limit(1);
+              if (existingCall) {
+                discoveryCallId = existingCall.id;
+                await dbConn.update(discoveryCalls).set({
+                  scheduledAt: input.startTime,
+                  contactId: parentContactId || existingCall.contactId,
+                  studentContactId: input.clientId || existingCall.studentContactId,
+                }).where(deq(discoveryCalls.id, existingCall.id));
+              } else {
+                const res = await dbConn.insert(discoveryCalls).values({
+                  leadId,
+                  ownerId: ctx.user.id,
+                  contactId: parentContactId || null,
+                  studentContactId: input.clientId || null,
+                  scheduledAt: input.startTime,
+                });
+                discoveryCallId = (res as any).insertId;
+              }
+
+              // Synchronize discovery call date to lead
+              await dbConn.update(leads).set({
+                discoveryCallDate: input.startTime,
+              }).where(deq(leads.id, leadId));
+            }
+          } catch (dErr) {
+            console.warn("[Appointment] Discovery sync notice:", dErr);
+          }
+        }
+
         const created = await db.createAppointment({
           clientId: input.clientId,
+          parentContactId,
+          leadId,
+          discoveryCallId,
           caseId: input.caseId,
           title: input.title,
           description: input.description,
@@ -186,6 +294,18 @@ export const appointmentsRouter = router({
           clientTimeZone: clientTz || "America/New_York",
           originalTimeZone: input.originalTimeZone || "America/New_York",
         }, ctx.user.id);
+
+        const createdAptId = (created as any)?.insertId || (created as any)?.id;
+        if (createdAptId && discoveryCallId) {
+          try {
+            const { discoveryCalls } = await import("../../drizzle/schema");
+            const { eq: deq } = await import("drizzle-orm");
+            const dbConn = await db.getDb();
+            if (dbConn) {
+              await dbConn.update(discoveryCalls).set({ appointmentId: createdAptId }).where(deq(discoveryCalls.id, discoveryCallId));
+            }
+          } catch {}
+        }
 
         if (input.adminOverride && input.clientId) {
           try {
@@ -209,6 +329,10 @@ export const appointmentsRouter = router({
       .input(
         z.object({
           id: z.number(),
+          clientId: z.number().optional(),
+          parentContactId: z.number().optional(),
+          leadId: z.number().optional(),
+          discoveryCallId: z.number().optional(),
           caseId: z.string().optional(),
           title: z.string().optional(),
           description: z.string().optional(),
@@ -228,7 +352,52 @@ export const appointmentsRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
-        return await db.updateAppointment(id, ctx.user.id, data);
+        const result = await db.updateAppointment(id, ctx.user.id, data);
+
+        // When rescheduling or updating relationships, synchronize discovery calls and lead
+        if (data.startTime || data.leadId || data.discoveryCallId) {
+          try {
+            const { appointments, discoveryCalls, leads } = await import("../../drizzle/schema");
+            const { eq: deq, and: dand } = await import("drizzle-orm");
+            const dbConn = await db.getDb();
+            if (dbConn) {
+              const [apt] = await dbConn.select().from(appointments).where(deq(appointments.id, id)).limit(1);
+              if (apt) {
+                const targetLeadId = data.leadId || apt.leadId;
+                const targetDiscoveryId = data.discoveryCallId || apt.discoveryCallId;
+                const newScheduledAt = data.startTime || apt.startTime;
+
+                if (targetDiscoveryId) {
+                  await dbConn.update(discoveryCalls).set({
+                    scheduledAt: newScheduledAt,
+                    appointmentId: id,
+                  }).where(deq(discoveryCalls.id, targetDiscoveryId));
+                } else if (targetLeadId) {
+                  const [disc] = await dbConn.select().from(discoveryCalls)
+                    .where(dand(deq(discoveryCalls.leadId, targetLeadId), deq(discoveryCalls.ownerId, ctx.user.id)))
+                    .limit(1);
+                  if (disc) {
+                    await dbConn.update(discoveryCalls).set({
+                      scheduledAt: newScheduledAt,
+                      appointmentId: id,
+                    }).where(deq(discoveryCalls.id, disc.id));
+                    await dbConn.update(appointments).set({ discoveryCallId: disc.id }).where(deq(appointments.id, id));
+                  }
+                }
+
+                if (targetLeadId && newScheduledAt) {
+                  await dbConn.update(leads).set({
+                    discoveryCallDate: newScheduledAt,
+                  }).where(deq(leads.id, targetLeadId));
+                }
+              }
+            }
+          } catch (syncErr) {
+            console.warn("[Appointment] Reschedule sync warning:", syncErr);
+          }
+        }
+
+        return result;
       }),
 
     delete: adminProcedure

@@ -9,17 +9,32 @@ export const discoveryRouter = router({
     getOrCreate: adminProcedure
       .input(z.object({ leadId: z.number() }))
       .query(async ({ ctx, input }) => {
-        const { discoveryCalls, discoveryPipelineSteps, discoveryQuestions } = await import("../../drizzle/schema");
-        const { eq: deq, asc: dasc } = await import("drizzle-orm");
+        const { discoveryCalls, leads } = await import("../../drizzle/schema");
+        const { eq: deq } = await import("drizzle-orm");
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        // Fetch lead to get linked contactId
+        const [lead] = await dbConn.select().from(leads).where(deq(leads.id, input.leadId)).limit(1);
+
         // Get existing call
         const [existing] = await dbConn.select().from(discoveryCalls)
           .where(and(deq(discoveryCalls.leadId, input.leadId), deq(discoveryCalls.ownerId, ctx.user.id)))
           .limit(1);
-        if (existing) return existing;
-        // Create new call session
-        const result = await dbConn.insert(discoveryCalls).values({ leadId: input.leadId, ownerId: ctx.user.id });
+        if (existing) {
+          if (!existing.contactId && lead?.contactId) {
+            await dbConn.update(discoveryCalls).set({ contactId: lead.contactId }).where(deq(discoveryCalls.id, existing.id));
+            existing.contactId = lead.contactId;
+          }
+          return existing;
+        }
+
+        // Create new call session linked to lead and parent contact
+        const result = await dbConn.insert(discoveryCalls).values({
+          leadId: input.leadId,
+          ownerId: ctx.user.id,
+          contactId: lead?.contactId || null,
+        });
         const [created] = await dbConn.select().from(discoveryCalls)
           .where(deq(discoveryCalls.id, (result as any).insertId))
           .limit(1);
@@ -30,6 +45,9 @@ export const discoveryRouter = router({
     save: adminProcedure
       .input(z.object({
         leadId: z.number(),
+        contactId: z.number().optional(),
+        studentContactId: z.number().optional(),
+        appointmentId: z.number().optional(),
         currentStepId: z.number().optional(),
         status: z.enum(["Preparing", "In Progress", "Completed", "Lost"]).optional(),
         openingScript: z.string().optional(),
@@ -48,30 +66,49 @@ export const discoveryRouter = router({
         scheduledAt: z.date().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { discoveryCalls } = await import("../../drizzle/schema");
+        const { discoveryCalls, leads } = await import("../../drizzle/schema");
         const { eq: deq } = await import("drizzle-orm");
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         const { leadId, ...data } = input;
+
+        // Fetch lead contactId if not supplied in input
+        let contactId = data.contactId;
+        if (!contactId) {
+          const [lead] = await dbConn.select().from(leads).where(deq(leads.id, leadId)).limit(1);
+          if (lead?.contactId) {
+            contactId = lead.contactId;
+          }
+        }
+
         // Upsert
         const [existing] = await dbConn.select().from(discoveryCalls)
           .where(and(deq(discoveryCalls.leadId, leadId), deq(discoveryCalls.ownerId, ctx.user.id)))
           .limit(1);
         if (existing) {
-          await dbConn.update(discoveryCalls).set(data).where(deq(discoveryCalls.id, existing.id));
+          await dbConn.update(discoveryCalls).set({
+            ...data,
+            ...(contactId ? { contactId } : {}),
+          }).where(deq(discoveryCalls.id, existing.id));
         } else {
-          await dbConn.insert(discoveryCalls).values({ leadId, ownerId: ctx.user.id, ...data });
+          await dbConn.insert(discoveryCalls).values({
+            leadId,
+            ownerId: ctx.user.id,
+            contactId: contactId || null,
+            ...data,
+          });
         }
 
         // Synchronize outcome status & notes back to the original Lead Center record
+        // CRITICAL GUARDRAIL: Completing discovery marks the lead as "Discovery Completed", NOT "Won"!
+        // A family remains eligible for future enrollment approval without premature subscription or billing.
         try {
-          const { leads } = await import("../../drizzle/schema");
           if (data.status === "Completed") {
             const noteText = data.closingResponse
               ? `Discovery call completed (${data.closingResponse}). ${data.additionalNotes || ""}`.trim()
               : data.additionalNotes || undefined;
             await dbConn.update(leads).set({
-              status: "Won",
+              status: "Discovery Completed",
               ...(noteText ? { notes: noteText } : {}),
             }).where(and(deq(leads.id, leadId), deq(leads.ownerId, ctx.user.id)));
           } else if (data.status === "Lost") {
@@ -85,6 +122,62 @@ export const discoveryRouter = router({
         }
 
         return { success: true };
+      }),
+
+    // List discovery history for a parent contact or associated student
+    listByContact: adminProcedure
+      .input(z.object({ contactId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const { discoveryCalls, leads, contacts } = await import("../../drizzle/schema");
+        const { eq: deq, desc: ddesc, or } = await import("drizzle-orm");
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        // Fetch contact to see if this is a parent or student
+        const [targetContact] = await dbConn.select().from(contacts).where(deq(contacts.id, input.contactId)).limit(1);
+        const parentId = targetContact?.jobTitle === "Student" && targetContact.parentContactId
+          ? targetContact.parentContactId
+          : input.contactId;
+
+        const calls = await dbConn
+          .select({
+            id: discoveryCalls.id,
+            leadId: discoveryCalls.leadId,
+            contactId: discoveryCalls.contactId,
+            appointmentId: discoveryCalls.appointmentId,
+            studentContactId: discoveryCalls.studentContactId,
+            status: discoveryCalls.status,
+            currentStepId: discoveryCalls.currentStepId,
+            scheduledAt: discoveryCalls.scheduledAt,
+            pricingNotes: discoveryCalls.pricingNotes,
+            callScriptNotes: discoveryCalls.callScriptNotes,
+            theirStoryNotes: discoveryCalls.theirStoryNotes,
+            questionNotes: discoveryCalls.questionNotes,
+            closingResponse: discoveryCalls.closingResponse,
+            additionalNotes: discoveryCalls.additionalNotes,
+            createdAt: discoveryCalls.createdAt,
+            updatedAt: discoveryCalls.updatedAt,
+            leadParentName: leads.parentName,
+            leadStudentName: leads.studentName,
+            leadStatus: leads.status,
+          })
+          .from(discoveryCalls)
+          .leftJoin(leads, deq(discoveryCalls.leadId, leads.id))
+          .where(
+            and(
+              deq(discoveryCalls.ownerId, ctx.user.id),
+              or(
+                deq(discoveryCalls.contactId, input.contactId),
+                deq(discoveryCalls.contactId, parentId),
+                deq(discoveryCalls.studentContactId, input.contactId),
+                deq(leads.contactId, input.contactId),
+                deq(leads.contactId, parentId)
+              )
+            )
+          )
+          .orderBy(ddesc(discoveryCalls.createdAt));
+
+        return calls;
       }),
 
     // Sync additional/private notes to the contact's project notes (advocate-only)

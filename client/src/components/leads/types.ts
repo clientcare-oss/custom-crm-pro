@@ -154,6 +154,8 @@ export const LEAD_STATUSES = [
   "30 Day Follow-up",
   "60 Day Follow-up",
   "90 Day Follow-up",
+  "Discovery Completed",
+  "Approved for Enrollment",
   "Ready for Archive",
   "Won",
   "Lost",
@@ -327,6 +329,8 @@ export const getStatusColor = (status: LeadStatus): string => {
     "60 Day Follow-up": "bg-[#331800]/90 border border-[#9A5B15] text-[#FDBA74]",
     "90 Day Follow-up": "bg-[#331800]/90 border border-[#9A5B15] text-[#FDBA74]",
     "Ready for Archive": "bg-[#020A17] border border-[#3A2C18] text-[#C6B697]",
+    "Discovery Completed": "bg-[#04241B]/90 border border-[#059669] text-[#6EE7B7]",
+    "Approved for Enrollment": "bg-[#2A1D05]/90 border border-[#C5A059] text-[#FFE394]",
     Won: "bg-[#04241B]/90 border border-[#059669] text-[#6EE7B7]",
     Lost: "bg-[#33090F]/90 border border-[#9F1239] text-[#FDA4AF]",
   };

@@ -23,7 +23,7 @@ import VoiceInput from "@/components/VoiceInput";
 import { Textarea } from "@/components/ui/textarea";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble, Video, ArrowRight, School, GraduationCap, Home, Milestone, Award } from "lucide-react";
+import { ArrowLeft, Compass, FileText, DollarSign, MessageSquare, Info, Folder, Calendar, ScrollText, Loader2, Pencil, Save, Clock, ChevronDown, ChevronRight, ChevronUp, X, ExternalLink, Users, Activity, BookOpen, ArrowRightCircle, Zap, CalendarCheck, CheckSquare, Plus, CheckCircle2, Circle, Wrench, Timer, Play, Square, Trash2, Phone, PhoneIncoming, PhoneOutgoing, User, Copy, Send, Eye, Scale, Dribbble, Video, ArrowRight, School, GraduationCap, Home, Milestone, Award, CalendarClock, ShieldCheck } from "lucide-react";
 import { parseStudentDiagnoses } from "@/lib/studentUtils";
 import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { CaseParticipants } from "@/components/CaseParticipants";
@@ -40,6 +40,7 @@ import ContactNotesTab from "@/components/contact/ContactNotesTab";
 import ContactFilesTab from "@/components/contact/ContactFilesTab";
 import ContactStudentsTab from "@/components/contact/ContactStudentsTab";
 import ContactFinancialsTab from "@/components/contact/ContactFinancialsTab";
+import ContactDiscoveryTab from "@/components/contact/ContactDiscoveryTab";
 import PortalVoyageLogTab from "@/components/portal/PortalVoyageLogTab";
 import ClientCallControls from "@/components/quo/ClientCallControls";
 import CallLogsWithCallback from "@/components/quo/CallLogsWithCallback";
@@ -616,6 +617,17 @@ export default function ContactDetail() {
                   <Eye className="h-3.5 w-3.5" />
                   Preview Parent Portal
                 </Button>
+                {/* Primary Enrollment Approval Action Placement (Phase 2 Architecture) */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled
+                  title="Enrollment approval will be unlocked in Phase 2"
+                  className="inline-flex items-center gap-1.5 text-xs text-[#FFE394] border-[#C5A059]/50 bg-[#07162B] opacity-80 cursor-not-allowed font-semibold shadow-sm"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#C5A059]" />
+                  Approve for Enrollment (Phase 2)
+                </Button>
                 {(contact as any).archivedAt ? (
                   <Button
                     variant="outline"
@@ -1015,6 +1027,12 @@ function ParentTabs({
     { parentContactId: contactId },
     { enabled: !!contactId }
   );
+
+  // Fetch discovery history for this family
+  const { data: discoveryCalls = [], isLoading: discoveryLoading } = trpc.discovery.listByContact.useQuery(
+    { contactId },
+    { enabled: !!contactId }
+  );
   
   // Debug logging
   useEffect(() => {
@@ -1037,6 +1055,15 @@ function ParentTabs({
           {students.length > 0 && (
             <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
               {students.length}
+            </span>
+          )}
+        </TabsTrigger>
+        <TabsTrigger value="discovery" className={parentTriggerClass}>
+          <CalendarClock className="h-4 w-4 shrink-0 text-blue-300/70 group-hover:text-blue-100 group-data-[state=active]:text-[#F5B544] transition-colors" />
+          <span>Discovery</span>
+          {discoveryCalls.length > 0 && (
+            <span className="ml-1 inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 rounded-full text-[10px] font-bold bg-[#F5B544] text-[#07162B] shrink-0 leading-none">
+              {discoveryCalls.length}
             </span>
           )}
         </TabsTrigger>
@@ -1081,6 +1108,16 @@ function ParentTabs({
         <ContactStudentsTab
           students={students}
           onSelectStudent={(id) => setLocation(`/contacts/${id}`)}
+        />
+      </TabsContent>
+
+      {/* DISCOVERY HISTORY TAB */}
+      <TabsContent value="discovery" className="mt-4">
+        <ContactDiscoveryTab
+          contactId={contactId}
+          contactName={`${contact.firstName} ${contact.lastName}`}
+          discoveryCalls={discoveryCalls as any}
+          isLoading={discoveryLoading}
         />
       </TabsContent>
 

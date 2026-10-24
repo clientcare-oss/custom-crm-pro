@@ -67,9 +67,12 @@ import { referralsRouter } from "./routers/referrals";
 import { lawyerPrepRouter } from "./routers/lawyerPrep";
 import { agreementsRouter } from "./routers/agreements";
 import { receiptsRouter } from "./routers/receipts";
+import { familyEnrollmentRouter } from "./routers/familyEnrollment";
 
 export const appRouter = router({
+  familyEnrollment: familyEnrollmentRouter,
   receipts: receiptsRouter,
+
   agreements: agreementsRouter,
   lawyerPrep: lawyerPrepRouter,
   referrals: referralsRouter,
