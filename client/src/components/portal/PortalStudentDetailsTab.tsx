@@ -694,36 +694,29 @@ export function PortalStudentDetailsTab({
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-0">
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       {/* Warning Beacon & Alert Icon */}
-                      <div className="relative mt-0.5 shrink-0">
-                        <div className="w-9 h-9 rounded-xl bg-red-950/90 border border-red-500/70 flex items-center justify-center text-red-400 shadow-inner">
-                          <AlertTriangle className="h-5 w-5 text-red-400" />
-                        </div>
+                      <div className="w-8 h-8 rounded-lg bg-red-950/90 border border-red-500/70 flex items-center justify-center text-red-400 shadow-inner shrink-0">
+                        <AlertTriangle className="h-4 w-4 text-red-400" />
                       </div>
 
-                      <div className="space-y-1 min-w-0">
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
-                            <span className="text-red-400 font-extrabold uppercase tracking-wide">Action Required:</span>
-                            <span>Payment Declined</span>
+                          <h4 className="text-xs sm:text-sm font-extrabold text-red-400 uppercase tracking-wide">
+                            Payment Declined
                           </h4>
-                          <span className="text-[9px] font-extrabold tracking-wider text-red-200 uppercase bg-red-900/80 border border-red-500/80 px-2 py-0.5 rounded-full font-mono shadow-sm">
-                            RETAINER PAST DUE
+                          <span className="hidden sm:inline text-red-200/90 text-xs">
+                            — Please update your card on file to keep coverage active.
                           </span>
                         </div>
-                        <p className="text-[11px] sm:text-xs text-red-200/90 leading-snug">
-                          Your recent monthly advocacy payment was declined. Please update your payment card to ensure uninterrupted representation and meeting coverage.
+                        <p className="sm:hidden text-[11px] text-red-200/90 leading-tight">
+                          Please update your card on file to keep coverage active.
                         </p>
-                        <div className="flex items-center gap-2 pt-0.5 text-[10px] text-red-300 font-mono">
-                          <CreditCard className="h-3 w-3 text-red-400 shrink-0" />
-                          <span>Visa ending in •••• 4242 failed to process</span>
-                        </div>
                       </div>
                     </div>
 
                     {/* Action Button */}
-                    <div className="shrink-0 flex items-center gap-2 pt-1 sm:pt-0 self-end sm:self-center">
+                    <div className="shrink-0 self-end sm:self-center">
                       <Button
                         size="sm"
                         onClick={() => setShowUpdatePaymentModal(true)}
