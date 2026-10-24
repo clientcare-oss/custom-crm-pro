@@ -20,9 +20,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { StudentProfileDossier } from "@/components/students/StudentProfileDossier";
 import { TactileStickyNotesBoard } from "@/components/students/TactileStickyNotesBoard";
 import { FolioCornerBrackets } from "@/components/students/FolioCornerBrackets";
-import { IepDocumentBlocks } from "@/components/IepDocumentBlocks";
 import { StudentTasksWorkspace } from "@/components/students/StudentTasksWorkspace";
 import { StudentCommunicationWorkspace } from "@/components/students/StudentCommunicationWorkspace";
+import { StudentDocumentVaultMirror } from "@/components/students/StudentDocumentVaultMirror";
 import { StudentWorkspaceMoreTab } from "@/components/students/StudentWorkspaceMoreTab";
 import { IepProfileUpdateBubble } from "@/components/students/IepProfileUpdateBubble";
 
@@ -696,97 +696,15 @@ export default function StudentWorkspace() {
               </div>
             )}
 
-            {/* ─── DOCUMENTS TAB: IEP Records & Document Vault (Extends Folio Dynamically) ─── */}
+            {/* ─── DOCUMENTS TAB: PG-023-VAULT Document Vault Mirror (Connected Storage) ─── */}
             {activeTab === "documents" && (
-              <div className="w-full min-h-[540px] xl:min-h-[580px] p-6 sm:p-8 md:p-10 pt-6 sm:pt-8 flex flex-col justify-between">
-                <div>
-                  {/* Top Hub Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-white/15 gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-md shrink-0">
-                        <Folder className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 
-                          className="text-xl sm:text-2xl font-bold text-white tracking-wide drop-shadow-sm flex items-center gap-2"
-                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                        >
-                          <span>Student IEP Records & Document Vault</span>
-                        </h3>
-                        <p className="text-xs sm:text-sm text-white/65 mt-0.5">
-                          Official IEP/504 plans, historical draft revisions, evaluations, and case documentation.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-                      <Badge className="bg-[#0e274a]/90 text-amber-300 border border-amber-400/35 text-[11px] font-medium px-3 py-1 rounded-lg shadow-sm">
-                        Case #{student?.caseId || studentId} · {fullName}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* IEP Document Management Workspace */}
-                  <div className="bg-[#020b18]/70 rounded-xl border border-white/15 p-4 sm:p-6 shadow-xl backdrop-blur-xs">
-                    <IepDocumentBlocks contactId={effectiveStudentId} />
-                  </div>
-
-                  {/* Quick Action Tiles for IEP Tools */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                    <div 
-                      onClick={() => setLocation(`/tools/iep-comparator`)}
-                      className="group p-4 rounded-xl bg-[#020b18]/60 hover:bg-[#031d42]/80 border border-white/15 hover:border-amber-400/60 cursor-pointer transition-all flex items-center justify-between shadow-md"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-blue-300">
-                          <GitCompare className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">
-                            IEP Draft Comparator
-                          </h4>
-                          <p className="text-xs text-white/60">
-                            Side-by-side diff comparison between past and present drafts
-                          </p>
-                        </div>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-amber-300 group-hover:translate-x-0.5 transition-all" />
-                    </div>
-
-                    <div 
-                      onClick={() => setLocation(`/tools/pwn-decoder`)}
-                      className="group p-4 rounded-xl bg-[#020b18]/60 hover:bg-[#031d42]/80 border border-white/15 hover:border-amber-400/60 cursor-pointer transition-all flex items-center justify-between shadow-md"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300">
-                          <FileSearch className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">
-                            PWN Decoder (Prior Written Notice)
-                          </h4>
-                          <p className="text-xs text-white/60">
-                            Analyze district rejection notices and formal procedural compliance
-                          </p>
-                        </div>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-amber-300 group-hover:translate-x-0.5 transition-all" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer Return Button */}
-                <div className="pt-4 flex items-center justify-between border-t border-white/10 mt-6 text-xs text-white/50">
-                  <span>Waypoint Advocates · Case #{student?.caseId || studentId}</span>
-                  <Button
-                    onClick={() => setActiveTab("overview")}
-                    variant="outline"
-                    size="sm"
-                    className="bg-transparent hover:bg-white/10 border-white/20 text-white text-xs h-8 px-3 rounded-lg cursor-pointer"
-                  >
-                    Return to Overview Desk
-                  </Button>
-                </div>
+              <div className="w-full min-h-[540px] xl:min-h-[580px] p-4 sm:p-6 md:p-8">
+                <StudentDocumentVaultMirror
+                  student={student}
+                  studentId={effectiveStudentId}
+                  fullName={fullName}
+                  onReturnToOverview={() => setActiveTab("overview")}
+                />
               </div>
             )}
 
