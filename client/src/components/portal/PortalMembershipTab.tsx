@@ -245,14 +245,14 @@ export function PortalMembershipTab({
         </div>
       </div>
 
-      {/* ── Two-Box Grid: Saved Payment Method (Left) + Enrolled Plan (Right) ── */}
+      {/* ── Two-Box Grid: Saved Payment Method (Bigger Left Box) + Enrolled Plan (Smaller Right Box) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
-        {/* ── Left Box: Saved Payment Method with Sample Credit Card (Smaller towards Left) ── */}
+        {/* ── Left Box: Saved Payment Method (Bigger Box — lg:col-span-7) ── */}
         <div 
           id="saved-payment-method"
           ref={paymentMethodCardRef}
-          className="lg:col-span-5 scroll-mt-24"
+          className="lg:col-span-7 scroll-mt-24"
         >
           <Card 
             className={cn(
@@ -289,7 +289,7 @@ export function PortalMembershipTab({
                     )}
                   </h3>
                   <p className="text-xs text-blue-200/60">
-                    Primary card on file
+                    Primary card on file for monthly membership retainer
                   </p>
                 </div>
               </div>
@@ -299,11 +299,11 @@ export function PortalMembershipTab({
               </Badge>
             </div>
 
-            {/* Content: Sample CC Card + Premium Action Button */}
-            <div className="p-4 sm:p-5 flex-1 flex flex-col items-center justify-between gap-4 relative z-10">
+            {/* Content: Sample CC Card on Left + Centered Premium Action Button on Right */}
+            <div className="p-5 sm:p-6 flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
               {/* Sample CC Card Graphic */}
-              <div className="w-full max-w-[340px]">
-                <div className="relative rounded-2xl bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/40 p-4 sm:p-4.5 text-white shadow-2xl overflow-hidden space-y-3 group">
+              <div className="w-full sm:w-[310px] shrink-0">
+                <div className="relative rounded-2xl bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/40 p-4.5 text-white shadow-2xl overflow-hidden space-y-3.5 group">
                   {/* Gold accent sheen */}
                   <div className="absolute top-0 right-0 w-44 h-44 bg-[#F5B544]/10 rounded-full blur-2xl pointer-events-none -mr-16 -mt-16 group-hover:bg-[#F5B544]/20 transition-all duration-700" />
                   
@@ -362,7 +362,7 @@ export function PortalMembershipTab({
               </div>
 
               {/* Centered Premium Action Button */}
-              <div className="w-full max-w-[340px] flex flex-col items-center gap-2 pt-1">
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 w-full">
                 <Button
                   onClick={() => {
                     setHighlightPaymentMethod(false);
@@ -376,7 +376,7 @@ export function PortalMembershipTab({
                     setEditCardOpen(true);
                   }}
                   className={cn(
-                    "w-full h-11 sm:h-12 px-6 rounded-2xl font-extrabold text-xs sm:text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer shadow-xl relative overflow-hidden group",
+                    "w-full sm:w-auto h-12 sm:h-13 px-8 rounded-2xl font-extrabold text-xs sm:text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer shadow-xl relative overflow-hidden group",
                     highlightPaymentMethod
                       ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] border-2 border-amber-300 shadow-[0_0_35px_rgba(245,181,68,0.95)] scale-[1.03] animate-pulse"
                       : "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#F0CF88] hover:via-[#D6B16A] hover:to-[#AF8E4C] text-[#07162B] border border-[#FFE394]/70 shadow-[0_8px_24px_rgba(0,0,0,0.6),0_0_20px_rgba(197,160,89,0.3)] hover:shadow-[0_12px_32px_rgba(245,181,68,0.5)] hover:scale-[1.02] active:scale-[0.98]"
@@ -387,7 +387,7 @@ export function PortalMembershipTab({
                   <span className="font-extrabold tracking-wide">Update Payment Method</span>
                 </Button>
 
-                <div className="flex items-center gap-2 text-[11px] text-[#D8C7A5] font-medium bg-[#020A17]/80 px-3.5 py-1 rounded-full border border-[#3A2C18] shadow-inner">
+                <div className="flex items-center gap-2 text-[11px] text-[#D8C7A5] font-medium bg-[#020A17]/80 px-3.5 py-1.5 rounded-full border border-[#3A2C18] shadow-inner">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                   <span>Instant encrypted sync</span>
                   <span className="text-white/20">•</span>
@@ -398,80 +398,57 @@ export function PortalMembershipTab({
           </Card>
         </div>
 
-        {/* ── Right Box: Enrolled Plan ($55/mo) — Not exceeding tallness of left box ── */}
-        <div className="lg:col-span-7">
+        {/* ── Right Box: Enrolled Plan (Smaller Box — lg:col-span-5, Clean, Simple, Not Much to Read) ── */}
+        <div className="lg:col-span-5">
           <Card className="h-full flex flex-col justify-between border border-blue-900/40 bg-[#06172F] shadow-xl rounded-3xl overflow-hidden text-white">
             <CardHeader className="bg-[#030C22] border-b border-blue-900/40 p-4 sm:p-5 shrink-0">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                  <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase mb-1">
-                    Current Enrolled Plan
+                  <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase mb-1 font-mono">
+                    Current Plan
                   </Badge>
                   <CardTitle className="text-base sm:text-lg font-bold text-white tracking-tight">
                     Essential Continuity & IEP Advisory
                   </CardTitle>
                   <CardDescription className="text-xs text-blue-200/70 mt-0.5">
-                    Student: <strong className="text-white font-semibold">{studentName}</strong> • Special Education Advisory
+                    Student: <strong className="text-white font-semibold">{studentName}</strong>
                   </CardDescription>
                 </div>
                 <div className="text-right">
                   <span className="text-2xl font-black text-amber-300 font-mono block leading-none">$55.00</span>
-                  <span className="text-[10px] text-white/50 block font-medium mt-0.5">per month per student</span>
+                  <span className="text-[10px] text-white/50 block font-medium mt-0.5">/ month</span>
                 </div>
               </div>
             </CardHeader>
 
             <CardContent className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3 text-xs">
-              <p className="text-white/80 leading-relaxed text-xs">
-                Continuous IEP advocacy, draft document audits, and direct strategy access with Waypoint Advocates throughout your child's academic year.
-              </p>
-
-              {/* Compact Benefits List */}
-              <div className="space-y-1.5 pt-1.5 border-t border-white/10">
-                <span className="text-[10px] font-bold text-[#F5B544] uppercase tracking-wider block font-mono">
-                  Enrolled Membership Benefits:
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-white/90 text-xs">
-                  <div className="flex items-start gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Unlimited IEP & 504 document audits</span>
-                  </div>
-                  <div className="flex items-start gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Quarterly IEP goal compliance monitoring</span>
-                  </div>
-                  <div className="flex items-start gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Pre-meeting strategy agendas (48h prior)</span>
-                  </div>
-                  <div className="flex items-start gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Document Vault & IEP Comparator access</span>
-                  </div>
+              {/* Clean, Simple Highlights — Not much to read */}
+              <div className="space-y-2 text-white/90 text-xs">
+                <div className="flex items-center gap-2">
+                  <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <span>Unlimited IEP & 504 document audits</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <span>Quarterly IEP compliance monitoring</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <span>Full access to Document Vault & Case Compass™</span>
                 </div>
               </div>
 
-              {/* Compact Stat Pills */}
-              <div className="grid grid-cols-3 gap-2 pt-1">
-                <div className="p-2 sm:p-2.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-center">
-                  <span className="text-[9px] text-white/50 block font-medium uppercase tracking-wider">Billing</span>
-                  <span className="font-bold text-white text-xs block mt-0.5">Monthly</span>
-                </div>
-                <div className="p-2 sm:p-2.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-center">
-                  <span className="text-[9px] text-white/50 block font-medium uppercase tracking-wider">Next Invoice</span>
-                  <span className="font-bold text-amber-300 text-xs block mt-0.5 font-mono">June 1, 2026</span>
-                </div>
-                <div className="p-2 sm:p-2.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-center">
-                  <span className="text-[9px] text-white/50 block font-medium uppercase tracking-wider">Status</span>
-                  <span className="font-bold text-emerald-400 text-xs block mt-0.5">Auto-Pay Active</span>
-                </div>
+              {/* Clean compact billing status pill */}
+              <div className="p-2.5 rounded-xl bg-[#030C22] border border-blue-900/40 flex items-center justify-between text-xs">
+                <span className="text-white/60">Next renewal: <strong className="text-amber-300 font-mono">June 1, 2026</strong></span>
+                <span className="text-emerald-400 font-semibold text-[11px]">✓ Active Auto-Pay</span>
               </div>
             </CardContent>
 
-            <CardFooter className="p-4 sm:p-5 bg-[#030C22]/60 border-t border-blue-900/40 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <CardFooter className="p-4 sm:p-5 bg-[#030C22]/60 border-t border-blue-900/40 flex items-center justify-between gap-3 shrink-0">
               <span className="text-[11px] text-blue-200/60 flex items-center gap-1.5">
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                Cancel anytime with 30-day notice
+                Cancel anytime
               </span>
 
               <Button
@@ -480,7 +457,7 @@ export function PortalMembershipTab({
                 onClick={() => onNavigateTab?.("renewal")}
                 className="border-blue-900/40 bg-[#030C22] hover:bg-blue-900/40 text-white text-xs font-semibold rounded-xl cursor-pointer h-9 px-3.5"
               >
-                <span>Upgrade to Live Representation</span>
+                <span>Change or Upgrade</span>
                 <ChevronRight className="h-3.5 w-3.5 ml-1" />
               </Button>
             </CardFooter>
