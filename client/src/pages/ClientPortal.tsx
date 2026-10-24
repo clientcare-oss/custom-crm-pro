@@ -1306,6 +1306,8 @@ export default function ClientPortal() {
         return (
           <YourJourneyExperience
             onNavigateTab={(tab) => setActiveTab(tab as any)}
+            effectiveStudent={effectiveStudent}
+            displayName={displayName}
           />
         );
 

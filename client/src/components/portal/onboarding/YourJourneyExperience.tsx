@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -11,18 +11,69 @@ import {
   FileSearch,
   MessageSquare,
   Users,
-  CheckCircle2,
   Calendar,
   Layers,
-  ChevronRight
+  Mail,
+  Copy,
+  Check,
+  ExternalLink,
+  CreditCard,
+  Send,
+  FileText
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 import PageIdBadge from "@/components/PageIdBadge";
 
 interface YourJourneyExperienceProps {
   onNavigateTab: (tabId: string) => void;
+  effectiveStudent?: any;
+  displayName?: string;
 }
 
-export function YourJourneyExperience({ onNavigateTab }: YourJourneyExperienceProps) {
+export function YourJourneyExperience({ onNavigateTab, effectiveStudent, displayName }: YourJourneyExperienceProps) {
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
+
+  const studentName = effectiveStudent?.firstName 
+    ? `${effectiveStudent.firstName} ${effectiveStudent.lastName || ""}`.trim()
+    : "your child";
+
+  const studentSchool = effectiveStudent?.company || effectiveStudent?.schoolDistrict || "Special Education Department / IEP Committee";
+  const parentName = displayName || "The Family";
+
+  const prewrittenEmailSubject = `Formal Written Notice of Representation — ${studentName} · Waypoint Advocates`;
+  
+  const prewrittenEmailBody = `To: Principal & Special Education Department / IEP Committee
+School / District: ${studentSchool}
+Student: ${studentName}
+
+Dear IEP Team Members,
+
+This letter serves as formal notification that our family has retained Waypoint Advocates (Special Education & IEP Advocacy) to assist us with all educational planning, ARD/IEP committee meetings, 504 accommodation reviews, evaluations, and school correspondence.
+
+Please include Waypoint Advocates (clientcare@waypointadvocates.com) on all written notices, meeting invitations, psychoeducational evaluations, draft IEP documents, Prior Written Notices (PWN), and quarterly progress reports regarding our child.
+
+Thank you for your partnership and dedication to ensuring appropriate educational support for ${studentName}.
+
+Sincerely,
+${parentName}
+Representative: Waypoint Advocates (clientcare@waypointadvocates.com)`;
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText(`Subject: ${prewrittenEmailSubject}\n\n${prewrittenEmailBody}`).then(() => {
+      setEmailCopied(true);
+      toast.success("Prewritten school notice email copied to clipboard!");
+      setTimeout(() => setEmailCopied(false), 2500);
+    });
+  };
+
   const steps = [
     {
       step: "01",
@@ -38,6 +89,28 @@ export function YourJourneyExperience({ onNavigateTab }: YourJourneyExperiencePr
     {
       step: "02",
       stepBadge: "STEP 02",
+      title: "Pick a Plan",
+      icon: CreditCard,
+      desc: "Choose the advocacy plan that best fits your family's needs and lock in your dedicated advocate.",
+      actionLabel: "Select Advocacy Plan",
+      actionTab: "choose-support",
+      statusText: "Support Selection",
+      glowColor: "from-amber-500/20 via-amber-500/5 to-transparent",
+    },
+    {
+      step: "03",
+      stepBadge: "STEP 03",
+      title: "Notify School",
+      icon: Mail,
+      desc: "Notify your child's school and IEP team with our prewritten email template confirming Waypoint represents your family.",
+      actionLabel: "View Prewritten Email",
+      actionCustom: () => setShowEmailModal(true),
+      statusText: "School Notice",
+      glowColor: "from-blue-500/20 via-blue-500/5 to-transparent",
+    },
+    {
+      step: "04",
+      stepBadge: "STEP 04",
       title: "Gather Documents",
       icon: FolderUp,
       desc: "Upload your child's IEP, evaluations, and other important school records.",
@@ -47,8 +120,8 @@ export function YourJourneyExperience({ onNavigateTab }: YourJourneyExperiencePr
       glowColor: "from-blue-500/20 via-blue-500/5 to-transparent",
     },
     {
-      step: "03",
-      stepBadge: "STEP 03",
+      step: "05",
+      stepBadge: "STEP 05",
       title: "Records Review",
       icon: FileSearch,
       desc: "We review your documents to better understand your child's needs and identify areas of concern.",
@@ -58,8 +131,8 @@ export function YourJourneyExperience({ onNavigateTab }: YourJourneyExperiencePr
       glowColor: "from-amber-500/20 via-amber-500/5 to-transparent",
     },
     {
-      step: "04",
-      stepBadge: "STEP 04",
+      step: "06",
+      stepBadge: "STEP 06",
       title: "Blueprint Meeting",
       icon: Compass,
       desc: "We meet with you to discuss priorities, recommendations, and our plan for the school meeting.",
@@ -69,8 +142,8 @@ export function YourJourneyExperience({ onNavigateTab }: YourJourneyExperiencePr
       glowColor: "from-emerald-500/20 via-emerald-500/5 to-transparent",
     },
     {
-      step: "05",
-      stepBadge: "STEP 05",
+      step: "07",
+      stepBadge: "STEP 07",
       title: "Your IEP Meeting",
       icon: Users,
       desc: "Your Waypoint advocate attends virtually, helps communicate your concerns, asks important questions, and supports you throughout the meeting.",
@@ -142,14 +215,14 @@ export function YourJourneyExperience({ onNavigateTab }: YourJourneyExperiencePr
         </div>
       </div>
 
-      {/* ── 3D Interactive Timeline Track (STEPS 01 to 05) ── */}
+      {/* ── 3D Interactive Timeline Track (STEPS 01 to 07) ── */}
       <div className="relative pl-4 sm:pl-8 space-y-6">
         
         {/* Glowing 3D Nautical Braided Spine (Vertical Connection) */}
         <div 
           className="absolute left-[33px] sm:left-[49px] top-6 bottom-6 w-[3px] rounded-full pointer-events-none"
           style={{
-            background: "linear-gradient(to bottom, #FFE394 0%, #C5A059 30%, #DFBE77 60%, #856529 85%, #3A2C18 100%)",
+            background: "linear-gradient(to bottom, #FFE394 0%, #C5A059 20%, #DFBE77 50%, #856529 80%, #3A2C18 100%)",
             boxShadow: "0 0 16px rgba(223, 190, 119, 0.45), 0 0 4px rgba(255, 227, 148, 0.8)",
           }}
         />
@@ -213,12 +286,18 @@ export function YourJourneyExperience({ onNavigateTab }: YourJourneyExperiencePr
                     </p>
 
                     {/* Recessed Action Inset Plate if available */}
-                    {s.actionLabel && s.actionTab && (
+                    {(s.actionLabel && (s.actionTab || s.actionCustom)) && (
                       <div className="pt-1">
                         <div className="inline-flex items-center bg-[#020A17]/80 border border-[#3A2C18]/80 rounded-xl p-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
                           <Button
                             size="sm"
-                            onClick={() => onNavigateTab(s.actionTab!)}
+                            onClick={() => {
+                              if (s.actionCustom) {
+                                s.actionCustom();
+                              } else if (s.actionTab) {
+                                onNavigateTab(s.actionTab);
+                              }
+                            }}
                             className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-bold text-xs h-7 px-3.5 rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.4)] flex items-center gap-1.5 cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
                           >
                             <span>{s.actionLabel}</span>
@@ -273,6 +352,95 @@ export function YourJourneyExperience({ onNavigateTab }: YourJourneyExperiencePr
           </div>
         </div>
       </div>
+
+      {/* ── 3D Modal: Notify School Prewritten Email ── */}
+      <Dialog open={showEmailModal} onOpenChange={setShowEmailModal}>
+        <DialogContent className="bg-gradient-to-b from-[#0B1E38] via-[#07162B] to-[#040D1A] border border-[#FFE394]/40 text-white max-w-2xl shadow-[0_25px_60px_rgba(0,0,0,0.95)] rounded-2xl p-6">
+          <DialogHeader className="border-b border-[#3A2C18] pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl p-[1.5px] bg-gradient-to-b from-[#FFE394] via-[#C5A059] to-[#3A2C18] shadow-md shrink-0">
+                <div className="w-full h-full rounded-[10px] bg-gradient-to-b from-[#142642] to-[#051124] flex items-center justify-center border border-[#FFE394]/20 shadow-inner">
+                  <Mail className="w-5 h-5 text-[#FAD77B]" />
+                </div>
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-serif font-bold text-[#FFF4D4]">
+                  School Notification Email Template
+                </DialogTitle>
+                <DialogDescription className="text-xs text-[#C6B697] mt-0.5">
+                  Send this formal notice to your child&apos;s principal and special education team to establish Waypoint Advocates on record.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            {/* Subject Line Pill */}
+            <div className="bg-[#020A17]/85 border border-[#3A2C18] rounded-xl p-3 shadow-inner space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#C5A059] font-bold block">
+                Subject Line
+              </span>
+              <p className="text-xs font-mono text-[#FFF4D4] select-all">
+                {prewrittenEmailSubject}
+              </p>
+            </div>
+
+            {/* Email Body */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#C5A059] font-bold block">
+                Email Message Body
+              </span>
+              <div className="bg-[#020A17]/90 border border-[#3A2C18] rounded-xl p-4 shadow-inner max-h-60 overflow-y-auto font-sans text-xs text-[#D8C7A5] leading-relaxed whitespace-pre-line select-all">
+                {prewrittenEmailBody}
+              </div>
+            </div>
+
+            {/* Actions Toolbar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#3A2C18]">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEmailModal(false);
+                  onNavigateTab("files");
+                }}
+                className="text-xs text-[#DFBE77] hover:underline flex items-center gap-1 cursor-pointer font-medium"
+              >
+                <span>Open in Action Center</span>
+                <ExternalLink className="h-3 w-3" />
+              </button>
+
+              <div className="flex items-center gap-2.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowEmailModal(false)}
+                  className="text-white/70 hover:text-white text-xs"
+                >
+                  Close
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={handleCopyEmail}
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs h-9 px-4 rounded-xl border border-[#FFE394]/70 shadow-md cursor-pointer flex items-center gap-1.5 transition-transform hover:scale-[1.02]"
+                >
+                  {emailCopied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>Copy Email Template</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
