@@ -216,35 +216,40 @@ Representative: Waypoint Advocates (clientcare@waypointadvocates.com)`;
       </div>
 
       {/* ── 3D Interactive Timeline Track (STEPS 01 to 07) ── */}
-      <div className="relative pl-4 sm:pl-8 space-y-6">
-        
-        {/* Glowing 3D Nautical Braided Spine (Vertical Connection) */}
-        <div 
-          className="absolute left-[33px] sm:left-[49px] top-6 bottom-6 w-[3px] rounded-full pointer-events-none"
-          style={{
-            background: "linear-gradient(to bottom, #FFE394 0%, #C5A059 20%, #DFBE77 50%, #856529 80%, #3A2C18 100%)",
-            boxShadow: "0 0 16px rgba(223, 190, 119, 0.45), 0 0 4px rgba(255, 227, 148, 0.8)",
-          }}
-        />
-
+      <div className="relative space-y-6">
         {steps.map((s, idx) => {
           const Icon = s.icon;
 
           return (
             <div key={idx} className="relative flex items-start gap-4 sm:gap-6 group">
               
-              {/* ── 3D Embossed Waypoint Medallion ── */}
-              <div className="relative z-10 shrink-0 select-none">
-                {/* Outer Beveled Brass Rim */}
-                <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl p-[2px] bg-gradient-to-b from-[#FFE394] via-[#C5A059] to-[#3A2C18] shadow-[0_10px_24px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.4)] transition-transform duration-300 group-hover:scale-105 group-hover:shadow-[0_12px_28px_rgba(197,160,89,0.35)]">
-                  {/* Inner Core with Radial Depth */}
-                  <div className="w-full h-full rounded-[14px] bg-gradient-to-b from-[#14233D] via-[#091529] to-[#040A15] border border-[#FFE394]/30 flex flex-col items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.9),inset_0_-1px_2px_rgba(255,255,255,0.1)]">
-                    <span className="text-[8px] sm:text-[8.5px] uppercase font-mono font-extrabold tracking-widest text-[#C5A059] leading-none mb-0.5">
-                      STEP
-                    </span>
-                    <span className="text-base sm:text-lg font-serif font-black text-[#FFF4D4] leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                      {s.step}
-                    </span>
+              {/* ── Medallion & Centered Connecting Spine Column ── */}
+              <div className="relative self-stretch flex flex-col items-center shrink-0 w-13 sm:w-15 select-none">
+                
+                {/* Glowing 3D Nautical Braided Spine Segment (from center of current medallion down to center of next medallion) */}
+                {idx < steps.length - 1 && (
+                  <div 
+                    className="absolute top-[26px] sm:top-[30px] -bottom-[50px] sm:-bottom-[54px] left-1/2 -translate-x-1/2 w-[3px] pointer-events-none z-0"
+                    style={{
+                      background: "linear-gradient(to bottom, #FFE394 0%, #C5A059 30%, #DFBE77 65%, #9E7D3B 100%)",
+                      boxShadow: "0 0 14px rgba(223, 190, 119, 0.45), 0 0 4px rgba(255, 227, 148, 0.8)",
+                    }}
+                  />
+                )}
+
+                {/* ── 3D Embossed Waypoint Medallion (z-10 sits on top, perfectly concealing the line endpoint) ── */}
+                <div className="relative z-10 shrink-0 select-none">
+                  {/* Outer Beveled Brass Rim */}
+                  <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl p-[2px] bg-gradient-to-b from-[#FFE394] via-[#C5A059] to-[#3A2C18] shadow-[0_10px_24px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.4)] transition-transform duration-300 group-hover:scale-105 group-hover:shadow-[0_12px_28px_rgba(197,160,89,0.35)]">
+                    {/* Inner Core with Radial Depth */}
+                    <div className="w-full h-full rounded-[14px] bg-gradient-to-b from-[#14233D] via-[#091529] to-[#040A15] border border-[#FFE394]/30 flex flex-col items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.9),inset_0_-1px_2px_rgba(255,255,255,0.1)]">
+                      <span className="text-[8px] sm:text-[8.5px] uppercase font-mono font-extrabold tracking-widest text-[#C5A059] leading-none mb-0.5">
+                        STEP
+                      </span>
+                      <span className="text-base sm:text-lg font-serif font-black text-[#FFF4D4] leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                        {s.step}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
