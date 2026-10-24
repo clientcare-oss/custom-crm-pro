@@ -6,10 +6,10 @@ import {
   FileText, DollarSign, MessageSquare, LogOut, Calendar, Clock,
   Upload, Trash2, File, Shield, PenTool, Compass, CheckSquare,
   FolderOpen, Info, Briefcase, Sun, Moon, Wrench, GitCompare, Lock, ScrollText,
-  ChevronDown, ChevronRight, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home,
+  ChevronDown, ChevronRight, ChevronLeft, CheckCircle2, Circle, StickyNote, Menu, X, Link2, Scale, Loader2, Pencil, BookOpen, Home,
   Video, Play, Volume2, Maximize, Search, MoreVertical, Download, Sparkles, Clapperboard, CreditCard,
   GraduationCap, User, Mail, Phone, Building, ShieldCheck, ArrowRight,
-  CircleParking, UploadCloud, Camera, HardDrive, RefreshCw, Gift
+  CircleParking, UploadCloud, Camera, HardDrive, RefreshCw, Gift, CalendarPlus, Check
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -575,6 +575,17 @@ export default function ClientPortal() {
   const [schedulerSessionTypeId, setSchedulerSessionTypeId] = useState<number | null>(null);
   const [schedulerSessionTypeName, setSchedulerSessionTypeName] = useState<string>("");
   const [schedulerBooked, setSchedulerBooked] = useState(false);
+  const [schedulerMode, setSchedulerMode] = useState<"choice" | "advocate-time" | "school-meeting">("choice");
+  const [schoolMeetingForm, setSchoolMeetingForm] = useState({
+    title: "",
+    meetingType: "IEP Annual Review",
+    meetingDate: "",
+    meetingTime: "09:00",
+    duration: 180,
+    location: "School Conference Room",
+    virtualLink: "",
+    notes: ""
+  });
 
   // Quick Upload Docs Modal from Header
   const [showUploadDocsModal, setShowUploadDocsModal] = useState(false);
@@ -1110,15 +1121,66 @@ export default function ClientPortal() {
 
   const logoutMutation = trpc.auth.logout.useMutation({ onSuccess: () => setLocation("/") });
   const parentDisplayName = portalUser?.name ?? (studentDetail?.parentContact ? `${studentDetail.parentContact.firstName} ${studentDetail.parentContact.lastName}` : "Client");
-  const advocateDisplayName = user?.name ? (user.name.toLowerCase().includes("byron") ? "Byron Honea (Lead Advocate)" : `Advocate ${user.name}`) : "Advocate";
+  const advocateDisplayName = user?.name ? "Waypoint Lead Advocate" : "Waypoint Advocate";
   const displayName = isAdminView ? advocateDisplayName : parentDisplayName;
   const parentContactId = isAdminView ? null : (studentDetail?.contact?.parentContactId ?? effectiveStudent?.parentContactId);
 
-  const handleOpenScheduler = (sessionTypeId: number, sessionTypeName: string) => { setSchedulerSessionTypeId(sessionTypeId); setSchedulerSessionTypeName(sessionTypeName); setSchedulerBooked(false); };
+  const handleOpenScheduler = (sessionTypeId: number, sessionTypeName: string) => { 
+    setSchedulerSessionTypeId(sessionTypeId); 
+    setSchedulerSessionTypeName(sessionTypeName); 
+    setSchedulerBooked(false); 
+    setSchedulerMode("advocate-time");
+  };
+
   const handleSchedulerBooked = (date: string, time: string) => {
     setSchedulerBooked(true);
     toast.success(`Session booked for ${date} at ${time}!`);
-    setTimeout(() => setShowMeetingScheduler(false), 2000);
+    utils.portal.getStudentAppointments.invalidate();
+    utils.portal.getAllMyAppointments.invalidate();
+    setTimeout(() => {
+      setShowMeetingScheduler(false);
+      setSchedulerBooked(false);
+      setSchedulerMode("choice");
+    }, 2200);
+  };
+
+  const createAppointmentMutation = trpc.appointments.create.useMutation({
+    onSuccess: () => {
+      toast.success("School meeting added successfully! Waypoint has been notified.");
+      utils.portal.getStudentAppointments.invalidate();
+      utils.portal.getAllMyAppointments.invalidate();
+      setSchedulerBooked(true);
+      setTimeout(() => {
+        setShowMeetingScheduler(false);
+        setSchedulerBooked(false);
+        setSchedulerMode("choice");
+      }, 2200);
+    },
+    onError: (err) => {
+      toast.error(`Failed to schedule meeting: ${err.message}`);
+    },
+  });
+
+  const handleSaveSchoolMeeting = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!schoolMeetingForm.meetingDate) {
+      toast.error("Please select a meeting date");
+      return;
+    }
+    const start = new Date(`${schoolMeetingForm.meetingDate}T${schoolMeetingForm.meetingTime || "09:00"}:00`);
+    const end = new Date(start.getTime() + (schoolMeetingForm.duration || 180) * 60000);
+    const studentTitleName = effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : "Student";
+    const finalTitle = schoolMeetingForm.title.trim() || `${schoolMeetingForm.meetingType} (${studentTitleName})`;
+
+    createAppointmentMutation.mutate({
+      clientId: effectiveStudentContactId || 0,
+      title: finalTitle,
+      description: `School Meeting Type: ${schoolMeetingForm.meetingType}${schoolMeetingForm.notes ? `\nNotes: ${schoolMeetingForm.notes}` : ""}`,
+      startTime: start,
+      endTime: end,
+      location: schoolMeetingForm.location || undefined,
+      videoLink: schoolMeetingForm.virtualLink || undefined,
+    });
   };
 
   if (!isClientOrPreview) return <PortalLoginForm onSuccess={refetchPortalMe} />;
@@ -2017,36 +2079,394 @@ export default function ClientPortal() {
         </div>
       </div>
 
-      {/* Meeting Scheduler Dialog */}
-      <Dialog open={showMeetingScheduler} onOpenChange={(open) => { setShowMeetingScheduler(open); if (!open) { setSchedulerSessionTypeId(null); setSchedulerSessionTypeName(""); setSchedulerBooked(false); } }}>
-        <DialogContent className="max-w-2xl w-full">
-          <DialogHeader><DialogTitle>Schedule a Meeting</DialogTitle></DialogHeader>
-          {!schedulerSessionTypeId ? (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Select the type of meeting you'd like to schedule:</p>
-              {(publicSessionTypes ?? []).length === 0 && <p className="text-sm text-muted-foreground italic">No session types available. Please contact us directly.</p>}
-              {(publicSessionTypes ?? []).map((st: any) => (
-                <Button key={st.id} onClick={() => handleOpenScheduler(st.id, st.name)} variant="outline" className="w-full justify-start gap-3 px-4 py-3 font-semibold">
-                  <Clock className="h-4 w-4 flex-shrink-0" />
-                  <span className="flex-1 text-left">{st.name}</span>
-                  <span className="text-xs text-muted-foreground">{st.duration} {st.durationUnit === 'hours' ? (st.duration === 1 ? 'hour' : 'hours') : 'min'}</span>
-                </Button>
-              ))}
-            </div>
-          ) : schedulerBooked ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-4">
-              <div className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8 text-green-500" />
+      {/* ── Meeting Scheduler Dialog ── */}
+      <Dialog 
+        open={showMeetingScheduler} 
+        onOpenChange={(open) => { 
+          setShowMeetingScheduler(open); 
+          if (!open) { 
+            setSchedulerSessionTypeId(null); 
+            setSchedulerSessionTypeName(""); 
+            setSchedulerBooked(false); 
+            setSchedulerMode("choice");
+          } 
+        }}
+      >
+        <DialogContent className={`text-white border border-blue-900/50 shadow-[0_25px_70px_rgba(0,0,0,0.95)] backdrop-blur-2xl transition-all ${
+          schedulerMode === "choice" 
+            ? "max-w-5xl sm:max-w-5xl w-[94vw] bg-[#040D1A]/95 p-4 sm:p-5 rounded-2xl overflow-hidden" 
+            : "max-w-2xl w-[94vw] bg-[#07152B] p-5 sm:p-6 rounded-2xl max-h-[88vh] overflow-y-auto"
+        }`}>
+          {schedulerBooked ? (
+            <div className="flex flex-col items-center justify-center py-6 gap-3 text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <CheckCircle2 className="w-7 h-7 text-emerald-400" />
               </div>
-              <p className="text-lg font-semibold">Session Booked!</p>
-              <p className="text-sm text-muted-foreground">We'll send you a confirmation shortly.</p>
+              <div>
+                <p className="text-base sm:text-lg font-bold font-serif text-white">Meeting Successfully Scheduled!</p>
+                <p className="text-xs text-blue-200/70 mt-0.5 max-w-md mx-auto">
+                  {schedulerMode === "school-meeting"
+                    ? "Your school meeting has been logged into your case file. The Waypoint team will review records and prepare parent concerns."
+                    : "Your strategy session has been booked. A calendar invite and meeting details have been sent to your email."}
+                </p>
+              </div>
+              <Button
+                onClick={() => {
+                  setShowMeetingScheduler(false);
+                  setSchedulerBooked(false);
+                  setSchedulerMode("choice");
+                }}
+                className="mt-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-1.5 rounded-xl text-xs cursor-pointer shadow-md"
+              >
+                Done
+              </Button>
+            </div>
+          ) : schedulerMode === "choice" ? (
+            <div className="w-full">
+              {/* Accessible DialogTitle for screen readers without taking vertical space */}
+              <DialogTitle className="sr-only">Schedule a Meeting</DialogTitle>
+              <DialogDescription className="sr-only">
+                Select 1-on-1 strategy time with your Waypoint advocate or add an upcoming school IEP / 504 conference.
+              </DialogDescription>
+
+              {/* Two Action Cards (Exact same size and styling as Discovery screen) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* ── Card A: Schedule Time With My Advocate ── */}
+                <div className="rounded-2xl border border-blue-900/40 bg-gradient-to-b from-[#0B2553]/95 via-[#071D40]/95 to-[#06172F]/95 backdrop-blur-md shadow-xl p-4 sm:p-5 flex flex-col justify-between hover:border-amber-400/50 transition-all relative overflow-hidden group space-y-3">
+                  {/* Top Accent Line */}
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent" />
+
+                  <div className="space-y-2.5">
+                    {/* Header: Icon & Category Tag */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full border border-[#F5B544]/30 bg-[#030C22] text-[#F5B544] flex items-center justify-center shrink-0 shadow-inner">
+                          <User className="h-4 w-4 stroke-[1.8]" />
+                        </div>
+                        <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                          Schedule Time With My Advocate
+                        </h4>
+                      </div>
+                      <span className="text-[9px] font-extrabold tracking-wider text-[#F5B544] uppercase bg-[#F5B544]/10 border border-[#F5B544]/20 px-2 py-0.5 rounded-full shrink-0 font-mono">
+                        YOU &amp; ADVOCATE ONLY
+                      </span>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-[11px] sm:text-xs text-blue-200/70 leading-relaxed pl-0.5">
+                      Need to ask questions or prep for a meeting? Book dedicated 1-on-1 strategy time with Waypoint.
+                    </p>
+
+                    {/* Feature Highlight Chips */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
+                        <span className="text-[#F5B544] font-bold text-[10px]">✓</span> Strategy Calls
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
+                        <span className="text-[#F5B544] font-bold text-[10px]">✓</span> Case Prep
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Compact Footer */}
+                  <div className="pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-blue-200/60 flex items-center gap-1 font-mono">
+                      <Clock className="h-3 w-3 text-[#F5B544]" />
+                      Flexible Scheduling
+                    </span>
+
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const advocateSession = (publicSessionTypes ?? []).find((st: any) =>
+                          st.name?.toLowerCase().includes("advocate") ||
+                          st.name?.toLowerCase().includes("1:1") ||
+                          st.name?.toLowerCase().includes("strategy") ||
+                          st.name?.toLowerCase().includes("prep")
+                        ) || publicSessionTypes?.[0];
+
+                        if (advocateSession) {
+                          handleOpenScheduler(advocateSession.id, advocateSession.name);
+                        } else {
+                          setSchedulerMode("advocate-time");
+                        }
+                      }}
+                      className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Choose a Time</span>
+                      <ChevronRight className="h-3 w-3 stroke-[2.5]" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* ── Card B: Add an IEP / 504 Meeting ── */}
+                <div className="rounded-2xl border border-blue-900/40 bg-gradient-to-b from-[#0B2553]/95 via-[#071D40]/95 to-[#06172F]/95 backdrop-blur-md shadow-xl p-4 sm:p-5 flex flex-col justify-between hover:border-blue-400/50 transition-all relative overflow-hidden group space-y-3">
+                  {/* Top Accent Line */}
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" />
+
+                  <div className="space-y-2.5">
+                    {/* Header: Icon & Category Tag */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full border border-blue-400/30 bg-[#030C22] text-blue-400 flex items-center justify-center shrink-0 shadow-inner">
+                          <CalendarPlus className="h-4 w-4 stroke-[1.8]" />
+                        </div>
+                        <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                          Add an IEP / 504 Meeting
+                        </h4>
+                      </div>
+                      <span className="text-[9px] font-extrabold tracking-wider text-blue-300 uppercase bg-blue-400/10 border border-blue-400/20 px-2 py-0.5 rounded-full shrink-0 font-mono">
+                        SCHOOL &amp; ADVOCATE
+                      </span>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-[11px] sm:text-xs text-blue-200/70 leading-relaxed pl-0.5">
+                      Have a date from your school? Add it so your advocate can review records and attend.
+                    </p>
+
+                    {/* Feature Highlight Chips */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
+                        <span className="text-blue-400 font-bold text-[10px]">✓</span> Annual IEPs
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
+                        <span className="text-blue-400 font-bold text-[10px]">✓</span> 504 Conferences
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Compact Footer */}
+                  <div className="pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-blue-200/60 flex items-center gap-1 font-mono">
+                      <Shield className="h-3 w-3 text-blue-400" />
+                      Advocate Representation
+                    </span>
+
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const studentTitleName = effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : "Student";
+                        setSchoolMeetingForm((prev) => ({
+                          ...prev,
+                          title: prev.title || `Annual IEP Meeting (${studentTitleName})`
+                        }));
+                        setSchedulerMode("school-meeting");
+                      }}
+                      className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Add School Meeting</span>
+                      <ChevronRight className="h-3 w-3 stroke-[2.5]" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : schedulerMode === "school-meeting" ? (
+            <div className="space-y-4">
+              <button
+                type="button"
+                onClick={() => setSchedulerMode("choice")}
+                className="text-xs text-amber-300 hover:text-amber-200 flex items-center gap-1 cursor-pointer font-medium"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Back to meeting choices</span>
+              </button>
+
+              <div className="border-b border-blue-900/40 pb-3">
+                <DialogTitle className="flex items-center gap-2 text-base font-bold text-white">
+                  <CalendarPlus className="h-5 w-5 text-sky-400" />
+                  Add an Upcoming School IEP / 504 Meeting
+                </DialogTitle>
+                <DialogDescription className="text-xs text-blue-200/70 mt-1">
+                  Enter the date and details provided by your school district so Waypoint can prepare parent concerns and attend with you.
+                </DialogDescription>
+              </div>
+
+              <form onSubmit={handleSaveSchoolMeeting} className="space-y-3.5 pt-1 text-xs">
+                <div className="space-y-1">
+                  <label className="text-white/80 font-semibold block">Meeting Title / Topic</label>
+                  <input
+                    type="text"
+                    required
+                    value={schoolMeetingForm.title}
+                    onChange={(e) => setSchoolMeetingForm({ ...schoolMeetingForm, title: e.target.value })}
+                    placeholder="e.g. Annual IEP Meeting (Liam Jenkins)"
+                    className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-white/80 font-semibold block">Meeting Type</label>
+                    <select
+                      value={schoolMeetingForm.meetingType}
+                      onChange={(e) => setSchoolMeetingForm({ ...schoolMeetingForm, meetingType: e.target.value })}
+                      className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none cursor-pointer"
+                    >
+                      <option value="IEP Annual Review">IEP Annual Review</option>
+                      <option value="504 Accommodation Conference">504 Accommodation Conference</option>
+                      <option value="Triennial / Reevaluation IEP">Triennial / Reevaluation IEP</option>
+                      <option value="Eligibility Conference">Eligibility Conference</option>
+                      <option value="IEP Amendment / Revision">IEP Amendment / Revision</option>
+                      <option value="Resolution / Mediation">Resolution / Mediation</option>
+                      <option value="Other School Conference">Other School Conference</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-white/80 font-semibold block">Estimated Duration</label>
+                    <select
+                      value={schoolMeetingForm.duration}
+                      onChange={(e) => setSchoolMeetingForm({ ...schoolMeetingForm, duration: Number(e.target.value) })}
+                      className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none cursor-pointer"
+                    >
+                      <option value={60}>60 Minutes (1 Hour)</option>
+                      <option value={120}>120 Minutes (2 Hours)</option>
+                      <option value={180}>180 Minutes (3 Hours — Recommended)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-white/80 font-semibold block">Meeting Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={schoolMeetingForm.meetingDate}
+                      onChange={(e) => setSchoolMeetingForm({ ...schoolMeetingForm, meetingDate: e.target.value })}
+                      className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-white/80 font-semibold block">Start Time</label>
+                    <input
+                      type="time"
+                      required
+                      value={schoolMeetingForm.meetingTime}
+                      onChange={(e) => setSchoolMeetingForm({ ...schoolMeetingForm, meetingTime: e.target.value })}
+                      className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-white/80 font-semibold block">Location</label>
+                    <input
+                      type="text"
+                      value={schoolMeetingForm.location}
+                      onChange={(e) => setSchoolMeetingForm({ ...schoolMeetingForm, location: e.target.value })}
+                      placeholder="e.g. School Conference Room or Google Meet"
+                      className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-white/80 font-semibold block">Virtual Link (Optional)</label>
+                    <input
+                      type="url"
+                      value={schoolMeetingForm.virtualLink}
+                      onChange={(e) => setSchoolMeetingForm({ ...schoolMeetingForm, virtualLink: e.target.value })}
+                      placeholder="https://meet.google.com/... or zoom.us/..."
+                      className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-white/80 font-semibold block">Notes for Waypoint &amp; Advocate Team</label>
+                  <textarea
+                    rows={2}
+                    value={schoolMeetingForm.notes}
+                    onChange={(e) => setSchoolMeetingForm({ ...schoolMeetingForm, notes: e.target.value })}
+                    placeholder="Key priorities, accommodations to request, or specific concerns..."
+                    className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-blue-900/40">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setSchedulerMode("choice")}
+                    className="text-white/70 hover:text-white text-xs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createAppointmentMutation.isPending}
+                    className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow-md gap-1.5 cursor-pointer"
+                  >
+                    {createAppointmentMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>Add School Meeting</span>
+                  </Button>
+                </div>
+              </form>
             </div>
           ) : (
             <div className="space-y-3">
-              <button onClick={() => setSchedulerSessionTypeId(null)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
-                <ChevronDown className="w-3 h-3 rotate-90" /> Back to meeting types
+              <button 
+                onClick={() => {
+                  if (schedulerSessionTypeId) {
+                    setSchedulerSessionTypeId(null);
+                  } else {
+                    setSchedulerMode("choice");
+                  }
+                }} 
+                className="text-xs text-amber-300 hover:text-amber-200 flex items-center gap-1 cursor-pointer font-medium"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>{schedulerSessionTypeId ? "Back to meeting types" : "Back to meeting choices"}</span>
               </button>
-              <InlineScheduler sessionTypeId={schedulerSessionTypeId} sessionTypeName={schedulerSessionTypeName} parentName={portalUser?.name ?? user?.name ?? ""} parentEmail={portalUser?.email ?? user?.email ?? ""} clientId={effectiveStudentContactId} studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : ""} onBooked={handleSchedulerBooked} />
+
+              {!schedulerSessionTypeId ? (
+                <div className="space-y-3 py-2">
+                  <p className="text-xs text-blue-200/70">Select the type of session with Waypoint you'd like to book:</p>
+                  {(publicSessionTypes ?? []).length === 0 && (
+                    <p className="text-xs text-slate-400 italic">No session types currently available. Please contact your advocate directly.</p>
+                  )}
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {(publicSessionTypes ?? []).map((st: any) => (
+                      <button
+                        key={st.id}
+                        onClick={() => handleOpenScheduler(st.id, st.name)}
+                        className="w-full rounded-xl p-3.5 flex items-center justify-between text-left transition-all border border-blue-900/50 bg-[#030C22] hover:bg-white/[0.06] hover:border-amber-400/50 cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+                            <Clock className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <span className="font-semibold text-white text-xs sm:text-sm group-hover:text-amber-300 transition-colors block">
+                              {st.name}
+                            </span>
+                            <span className="text-[10px] text-blue-200/60 font-mono">
+                              1-on-1 Dedicated Strategy Session
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-xs text-amber-300 font-mono bg-amber-400/10 border border-amber-400/20 px-2 py-1 rounded-md">
+                          {st.duration} {st.durationUnit === 'hours' ? (st.duration === 1 ? 'hour' : 'hours') : 'min'}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <InlineScheduler
+                  sessionTypeId={schedulerSessionTypeId}
+                  sessionTypeName={schedulerSessionTypeName}
+                  parentName={portalUser?.name ?? user?.name ?? ""}
+                  parentEmail={portalUser?.email ?? user?.email ?? ""}
+                  clientId={effectiveStudentContactId}
+                  studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : ""}
+                  onBooked={handleSchedulerBooked}
+                />
+              )}
             </div>
           )}
         </DialogContent>

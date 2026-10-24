@@ -163,7 +163,7 @@ export function PlanTransitionExperience({
       highlights: [
         "Full access to all Waypoint tools & Case Compass™ portfolio",
         "Live advocate attendance & co-chairing at all IEP, 504 & MDR school conferences",
-        "Direct priority messaging & strategic advisory with Lead Advocate Byron Honea",
+        "Direct priority messaging & strategic advisory with Waypoint Advocates",
         "Pre-meeting parent strategy agendas & talking point roadmaps delivered 48h prior",
         "Priority rapid document turnarounds (PWNs, evaluation requests, dissents)",
         "Uninterrupted advocacy continuity (no gap in student defense)"
@@ -186,7 +186,7 @@ export function PlanTransitionExperience({
         "Advocate meeting attendance & special education coaching included",
         "Unlimited IEP & 504 document audits, draft review checks, and amendment analyses",
         "Quarterly IEP goal progress audit & school compliance monitoring",
-        "Direct strategic advisory with Lead Advocate Byron Honea",
+        "Direct strategic advisory with Waypoint Advocates",
         "Parent meeting prep briefs and customized strategy roadmaps"
       ],
       recommendedFor: "Families wanting expert coaching, draft audits, and goal monitoring between school meetings."
@@ -227,7 +227,7 @@ export function PlanTransitionExperience({
         "Permanent Cloudflare R2 zero-trust encrypted storage for all student records",
         "Continued parent upload capabilities for new school documents",
         "Full download portability & export anytime without limits",
-        "Byron Honea's verified provenance audit tags remain sealed and protected",
+        "Waypoint's verified provenance audit tags remain sealed and protected",
         "Preserves your family's records without monthly coaching retainer"
       ],
       recommendedFor: "Families who have reached stable accommodations and want permanent encrypted records preservation."
@@ -977,7 +977,7 @@ export function PlanTransitionExperience({
             <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-900/40 flex items-start gap-2.5 text-blue-200/80 leading-relaxed">
               <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <span>
-                Byron Honea will be notified of your directive. If you ever need to re-engage live advocacy or meeting representation in the future, you can upgrade in 1 click from your portal.
+                Waypoint will be notified of your directive. If you ever need to re-engage live advocacy or meeting representation in the future, you can upgrade in 1 click from your portal.
               </span>
             </div>
           </div>

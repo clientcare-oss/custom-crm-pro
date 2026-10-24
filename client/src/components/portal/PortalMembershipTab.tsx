@@ -68,7 +68,7 @@ export function PortalMembershipTab({
     last4: "4242",
     expMonth: "08",
     expYear: "2028",
-    cardholder: displayName || "Byron Honea",
+    cardholder: displayName || "Waypoint Member",
     zipCode: "30303"
   });
 
@@ -199,7 +199,7 @@ export function PortalMembershipTab({
             Membership Plan Configured ($55.00 / month per student)
           </h3>
           <p className="text-blue-200/70 leading-relaxed">
-            Your monthly advocacy membership is staged and active. Auto-billing commences upon conclusion of your scheduled Discovery Call with Lead Advocate Byron Honea.
+            Your monthly advocacy membership is staged and active. Auto-billing commences upon conclusion of your scheduled Discovery Call with Waypoint Advocates.
           </p>
         </div>
       </div>
@@ -232,7 +232,7 @@ export function PortalMembershipTab({
 
             <CardContent className="p-5 sm:p-6 space-y-4 text-xs">
               <p className="text-white/80 leading-relaxed">
-                Provides continuous IEP advocacy, draft document audits, and direct strategy access with Byron Honea throughout your child's academic year.
+                Provides continuous IEP advocacy, draft document audits, and direct strategy access with Waypoint throughout your child's academic year.
               </p>
 
               {/* What's Included list */}
@@ -255,7 +255,7 @@ export function PortalMembershipTab({
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Direct priority portal messaging & strategic advisory with Lead Advocate Byron Honea</span>
+                    <span>Direct priority portal messaging & strategic advisory with Waypoint Advocates</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
@@ -430,7 +430,7 @@ export function PortalMembershipTab({
             </h3>
 
             <p className="text-xs sm:text-sm text-blue-200/80 leading-relaxed">
-              Choose what happens when your plan ends. Select whether to <strong className="text-amber-300">keep your vault</strong>, retain <strong className="text-cyan-300">self-advocacy tools</strong>, or <strong className="text-emerald-300">renew active representation</strong> with Byron Honea.
+              Choose what happens when your plan ends. Select whether to <strong className="text-amber-300">keep your vault</strong>, retain <strong className="text-cyan-300">self-advocacy tools</strong>, or <strong className="text-emerald-300">renew active representation</strong> with Waypoint Advocates.
             </p>
 
             {/* Quick badges for the 3 paths */}

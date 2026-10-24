@@ -36,7 +36,7 @@ export function WaypointScanStage4Finish({
             Saved automatically to Document Vault
           </h4>
           <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-            Your flattened, signed PDF is secure in Byron’s client vault and ready whenever you need it.
+            Your flattened, signed PDF is secure in Waypoint’s client vault and ready whenever you need it.
           </p>
         </div>
       </div>

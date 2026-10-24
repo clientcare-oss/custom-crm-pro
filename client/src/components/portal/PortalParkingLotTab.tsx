@@ -346,7 +346,7 @@ export default function PortalParkingLotTab({
       "504 Plan accommodation checklist for finals",
       "General education inclusion time tracking (LRE)",
       "Bullying incident report & safety plan follow-up",
-      "General advocacy question for Byron",
+      "General advocacy question for Waypoint",
     ];
 
     // Find all currently vacant spots
@@ -702,7 +702,7 @@ export default function PortalParkingLotTab({
               <Textarea
                 value={newNotes}
                 onChange={(e) => setNewNotes(e.target.value)}
-                placeholder="Add optional notes, student impact, specific questions for Byron, or talking points for the meeting agenda..."
+                placeholder="Add optional notes, student impact, specific questions for Waypoint, or talking points for the meeting agenda..."
                 className="bg-[#030C22]/90 border-blue-900/50 text-white text-xs placeholder:text-white/40 rounded-xl min-h-[85px] leading-relaxed resize-y"
               />
             </div>

@@ -294,7 +294,7 @@ export function PortalAppointmentsTab({
 
               {/* Description */}
               <p className="text-[11px] sm:text-xs text-blue-200/70 leading-relaxed pl-0.5">
-                Need to ask questions, review evaluations, or prep for a meeting? Book dedicated 1-on-1 strategy time with Byron.
+                Need to ask questions, review evaluations, or prep for a meeting? Book dedicated 1-on-1 strategy time with Waypoint.
               </p>
 
               {/* Feature Highlight Chips */}
@@ -658,7 +658,7 @@ export function PortalAppointmentsTab({
               Update Your Contact Phone Number
             </DialogTitle>
             <DialogDescription className="text-xs text-white/60">
-              Byron will call this number directly for your scheduled strategy calls.
+              Waypoint will call this number directly for your scheduled strategy calls.
             </DialogDescription>
           </DialogHeader>
 
@@ -690,7 +690,7 @@ export function PortalAppointmentsTab({
                 className="w-full bg-[#030C22] border border-blue-900/40 focus:border-[#F5B544] rounded-xl p-2.5 text-sm text-white outline-none transition-colors"
               />
               <p className="text-[11px] text-white/50 mt-1.5 leading-relaxed">
-                Byron will call you directly at this number on <strong className="text-white">{apptDate}</strong> at <strong className="text-white">{apptTime}</strong>.
+                Waypoint will call you directly at this number on <strong className="text-white">{apptDate}</strong> at <strong className="text-white">{apptTime}</strong>.
               </p>
             </div>
 
@@ -787,7 +787,7 @@ export function PortalAppointmentsTab({
               Add an Upcoming School IEP / 504 Meeting
             </DialogTitle>
             <DialogDescription className="text-xs text-white/60">
-              Enter the date and details provided by your school district so Byron can prepare and attend.
+              Enter the date and details provided by your school district so Waypoint can prepare and attend.
             </DialogDescription>
           </DialogHeader>
 

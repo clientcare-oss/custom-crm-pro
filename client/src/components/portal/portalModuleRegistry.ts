@@ -193,7 +193,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
     visibleStages: ["DISCOVERY_INQUIRY", "DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "PLAN_SELECTION", "PAYMENT_PENDING", "ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     unlockedStages: ["DISCOVERY_INQUIRY", "DISCOVERY_SCHEDULED", "DISCOVERY_COMPLETED", "PLAN_SELECTION", "PAYMENT_PENDING", "ONBOARDING", "ACTIVE", "CLOSING", "INACTIVE"],
     lockedPreviewAllowed: true,
-    description: "Direct messaging with Byron Honea and advocacy team.",
+    description: "Direct messaging with Waypoint and advocacy team.",
     includeInPortalTour: true,
     tourTitle: "Communication",
     tourDescription: "Keep track of important advocacy-related communication and stay connected with Waypoint.",

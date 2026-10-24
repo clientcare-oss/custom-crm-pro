@@ -44,7 +44,7 @@ export function AdvocacyIntakeExperience({ onComplete, onNavigateTab }: Advocacy
             Advocacy Priorities & Goals Intake
           </h1>
           <p className="text-xs md:text-sm text-white/70 mt-1">
-            Tell Byron Honea your child's key strengths, school friction points, and primary goals for upcoming IEP meetings.
+            Tell Waypoint your child's key strengths, school friction points, and primary goals for upcoming IEP meetings.
           </p>
         </div>
 

@@ -66,7 +66,7 @@ const RECORDINGS_DATA: Recording[] = [
       "Sign special education services consent form",
       "Provide copies of child's physical records"
     ],
-    notes: "Advocate Byron led the presentation of clinical diagnosis notes. The district psychologist accepted our clinical documentation and agreed that OHI eligibility is appropriate. Staff will draft the official goals.",
+    notes: "The Waypoint advocate led the presentation of clinical diagnosis notes. The district psychologist accepted our clinical documentation and agreed that OHI eligibility is appropriate. Staff will draft the official goals.",
     transcript: [
       { time: "05:10", seconds: 310, text: "The school psychologist presents the psychological evaluation results to the committee." },
       { time: "22:45", seconds: 1365, text: "Based on the educational testing, the student meets eligibility criteria for OHI." },

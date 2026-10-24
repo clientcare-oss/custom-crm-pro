@@ -27,12 +27,17 @@ import {
   Plus,
   StickyNote,
   Eye,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Globe,
+  Landmark,
+  Award,
+  Activity
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { WaypointCompassRose } from "@/components/portal/PlanTransitionExperience";
+import { FolioCornerBrackets } from "@/components/students/FolioCornerBrackets";
 
 interface PortalStudentDetailsTabProps {
   effectiveStudent?: any;
@@ -149,6 +154,63 @@ export function PortalStudentDetailsTab({
     effectiveStudent?.caseId || 
     studentDetail?.contact?.caseId || 
     (effectiveStudent?.id ? `•••• ${String(effectiveStudent.id).padStart(4, "0").slice(-4)}` : "•••• 4821");
+
+  // Clean Grade
+  const cleanGrade = (() => {
+    if (!studentGrade) return "Grade Not Specified";
+    const g = String(studentGrade).trim();
+    if (/^\d+$/.test(g)) return `${g}th Grade`;
+    return g;
+  })();
+
+  // Parent Phone from contact record
+  const parentPhone = 
+    parentContact?.phone || 
+    effectiveStudent?.phone || 
+    effectiveStudent?.parentPhone || 
+    (portalUser?.phone || "4786960726");
+
+  // Dossier Record Attributes
+  const displayState = 
+    effectiveStudent?.state || 
+    studentDetail?.contact?.state || 
+    "GA";
+
+  const displayDistrict = 
+    effectiveStudent?.countyDistrict || 
+    effectiveStudent?.district || 
+    studentDetail?.contact?.countyDistrict || 
+    studentDetail?.contact?.district ||
+    "Paulding County School District";
+
+  const displayEligibility = 
+    effectiveStudent?.iepEligibility || 
+    effectiveStudent?.eligibilityCategory || 
+    effectiveStudent?.primaryEligibility || 
+    studentDetail?.contact?.iepEligibility || 
+    "Assessment Pending";
+
+  const displayMedicalDiagnoses = 
+    effectiveStudent?.medicalDiagnoses || 
+    effectiveStudent?.diagnosis || 
+    studentDetail?.contact?.medicalDiagnoses || 
+    "Advocacy Client";
+
+  // Client Local Time (Eastern default / student timezone)
+  const clientTime = (() => {
+    try {
+      return new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        timeZone: effectiveStudent?.timezone || "America/New_York",
+      });
+    } catch {
+      return new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+  })();
 
   // Greeting based on time of day
   const greeting = (() => {
@@ -332,100 +394,300 @@ export function PortalStudentDetailsTab({
         </div>
       </div>
 
-      {/* ── MASTER STUDENT PROFILE CARD (Dual Split Panel) ── */}
-      <div className="rounded-2xl border border-sky-500/40 bg-gradient-to-br from-[#0c2b59] via-[#081f42] to-[#051630] p-5 sm:p-6 shadow-2xl shadow-sky-950/50 relative overflow-hidden">
-        {/* Subtle luminous ambient glows */}
-        <div className="absolute top-0 left-0 w-72 h-72 bg-sky-400/10 rounded-full blur-3xl pointer-events-none -translate-x-1/3 -translate-y-1/3" />
-        <div className="absolute bottom-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none translate-x-1/3 translate-y-1/3" />
+      {/* ── MASTER STUDENT PROFILE DOSSIER FOLIO (Admiralty Navy & Brass Desk Pad) ── */}
+      <div className="relative w-full rounded-2xl overflow-visible bg-[#02132d] border-2 border-[#c59e45]/75 shadow-[0_16px_40px_rgba(0,0,0,0.85),0_4px_12px_rgba(0,0,0,0.65),inset_0_1.5px_0.5px_rgba(255,235,175,0.45),inset_1px_0_0_rgba(255,235,175,0.2),inset_0_-2.5px_2px_rgba(0,0,0,0.95)]">
+        {/* ─── Saddle Band 1: Fixed Top Cap (120px locked at top: 0, zero gap) ─── */}
+        <div 
+          className="absolute top-0 left-0 right-0 h-[120px] pointer-events-none select-none z-0 rounded-t-2xl overflow-hidden"
+          style={{
+            backgroundImage: "url('/decor/folio-band-top.png?v=20261002-pure')",
+            backgroundSize: "100% 120px",
+            backgroundPosition: "top center",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
+        {/* ─── Saddle Band 2: Flexible Middle Body (Pure continuous grain) ─── */}
+        <div 
+          className="absolute left-0 right-0 top-[119px] bottom-[99px] pointer-events-none select-none z-0"
+          style={{
+            backgroundImage: "url('/decor/folio-band-middle.png?v=20261002-pure')",
+            backgroundSize: "100% 100%",
+            backgroundPosition: "center center",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+
+        {/* ─── Saddle Band 3: Fixed Bottom Cap (100px locked at bottom: 0) ─── */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-[100px] pointer-events-none select-none z-0 rounded-b-2xl overflow-hidden"
+          style={{
+            backgroundImage: "url('/decor/folio-band-bottom.png?v=20261002-pure')",
+            backgroundSize: "100% 100px",
+            backgroundPosition: "bottom center",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+
+        {/* Ambient Lighting & Saddle Dye Vignette Overlay */}
+        <div 
+          className="absolute inset-0 rounded-2xl pointer-events-none select-none z-0" 
+          style={{
+            background: "radial-gradient(ellipse at 50% 20%, rgba(255,255,255,0.05) 0%, transparent 65%), linear-gradient(180deg, rgba(3,19,45,0.15) 0%, rgba(2,11,24,0.55) 100%)",
+          }}
+        />
+
+        {/* Outer Precision Gold Foil Perimeter Inlay (16px from edge) */}
+        <div className="absolute inset-3 sm:inset-4 md:inset-[16px] rounded-xl border border-[#D4AF37]/50 pointer-events-none select-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_1px_3px_rgba(0,0,0,0.6)] z-10" />
+
+        {/* Inner Fine Hairline Gold Piping (22px from edge) */}
+        <div className="absolute inset-4 sm:inset-5 md:inset-[22px] rounded-lg border border-[#D4AF37]/20 pointer-events-none select-none z-10" />
+
+        {/* Rigid Photorealistic Brass Corner Brackets — Floating at z-30 Above All Layers */}
+        <FolioCornerBrackets />
+
+        {/* Inner Content Grid with Zero-Gap Folio Spine Architecture */}
+        <div className="relative z-20 p-5 sm:p-7 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-0 items-stretch w-full">
           
-          {/* Left Panel (6 Cols): Avatar, Identity & Support Badge */}
-          <div className="lg:col-span-6 flex flex-col sm:flex-row items-center sm:items-start gap-5 lg:pr-6 lg:border-r border-sky-700/40">
-            {/* Avatar & Student Name */}
-            <div className="flex items-center gap-4 text-center sm:text-left">
-              {/* Gold Ring Circular Avatar */}
-              <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full border-2 border-amber-400 p-1 shrink-0 shadow-lg shadow-amber-400/20">
-                <div className="w-full h-full rounded-full bg-gradient-to-b from-[#0e356d] via-[#092349] to-[#051733] flex items-center justify-center text-white font-serif font-bold text-2xl tracking-wider shadow-inner">
-                  {studentInitials}
+          {/* ─── LEFT PANEL: Student Profile Dossier (~42% width) ─── */}
+          <div className="lg:col-span-5 relative pt-2 pb-2 px-3 sm:px-5 lg:px-6 flex flex-col justify-start items-center">
+            <div className="w-full max-w-[268px] sm:max-w-[276px] mx-auto flex flex-col justify-start relative text-left">
+              {/* Golden Glowing Avatar Badge Centered on Top */}
+              <div className="flex flex-col items-center text-center mb-2.5">
+                <div className="relative mb-1.5 mt-0">
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full border-2 border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-xl sm:text-2xl shadow-[0_0_20px_rgba(212,175,55,0.4)] ring-4 ring-[#081b35]/50">
+                    {studentInitials}
+                  </div>
                 </div>
-              </div>
 
-              {/* Name & Badge */}
-              <div className="space-y-1">
-                <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-tight leading-tight">
+                {/* Student Full Name */}
+                <h2 
+                  className="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
                   {studentFullName}
                 </h2>
-                <p className="text-xs sm:text-sm text-sky-200/90 font-medium">
-                  {parentFullName}
-                </p>
-                <div className="pt-0.5">
-                  <Badge className="bg-amber-400 text-slate-950 font-bold font-mono text-[10.5px] px-3 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+
+                {/* Badges */}
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <Badge className="bg-[#123159]/85 text-sky-200 border border-sky-400/40 text-[9px] font-bold tracking-wider px-2.5 py-0.5 rounded-full uppercase shadow-sm">
                     {planType}
                   </Badge>
+                  <Badge className="bg-[#093527]/85 text-emerald-300 border border-emerald-500/40 text-[9px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Active</span>
+                  </Badge>
                 </div>
-                <p className="text-xs text-slate-200 font-normal pt-0.5">
-                  {studentGrade} · {studentSchool}
-                </p>
-                <p className="text-[11px] font-serif italic text-sky-300/90">
-                  Student page is already connected to your case.
-                </p>
               </div>
+
+              {/* ── STUDENT PROFILE Info (Transparent on Leather Desk Pad) ── */}
+              <div className="w-full space-y-1.5 px-0.5 bg-transparent border-0 shadow-none text-[11px]">
+                {/* Section Header */}
+                <div className="flex items-center justify-between pb-1 border-b border-white/15">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-sky-300 flex items-center gap-1">
+                    <User className="h-3 w-3 text-[#38BDF8]" />
+                    <span>STUDENT PROFILE</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-300/90">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>Case Connected</span>
+                  </span>
+                </div>
+
+                {/* Age */}
+                <div className="flex items-center justify-between gap-1.5 py-0.5">
+                  <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                    <User className="h-3 w-3 text-[#38BDF8]" />
+                    <span>Age:</span>
+                  </div>
+                  <span className="font-bold text-white text-right">{studentAge}</span>
+                </div>
+
+                {/* Grade */}
+                <div className="flex items-center justify-between gap-1.5 py-0.5">
+                  <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                    <GraduationCap className="h-3 w-3 text-[#38BDF8] shrink-0" />
+                    <span>Grade:</span>
+                  </div>
+                  <span className="font-bold text-white text-right">{cleanGrade}</span>
+                </div>
+
+                {/* State */}
+                <div className="flex items-center justify-between gap-1.5 py-0.5">
+                  <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                    <Globe className="h-3 w-3 text-[#38BDF8]" />
+                    <span>State:</span>
+                  </div>
+                  <span className="font-bold text-white text-right">{displayState}</span>
+                </div>
+
+                {/* District */}
+                <div className="flex items-center justify-between gap-1.5 py-0.5">
+                  <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                    <Landmark className="h-3 w-3 text-[#38BDF8] shrink-0" />
+                    <span>District:</span>
+                  </div>
+                  <span className="font-bold text-white truncate max-w-[130px] text-right" title={displayDistrict}>
+                    {displayDistrict}
+                  </span>
+                </div>
+
+                {/* Current School */}
+                <div className="flex items-center justify-between gap-1.5 py-0.5">
+                  <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                    <School className="h-3 w-3 text-[#38BDF8] shrink-0" />
+                    <span>Current School:</span>
+                  </div>
+                  <span className="font-bold text-white truncate max-w-[130px] text-right" title={studentSchool}>
+                    {studentSchool}
+                  </span>
+                </div>
+
+                {/* Original School */}
+                <div className="flex items-center justify-between gap-1.5 py-0.5">
+                  <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                    <ArrowRight className="h-3 w-3 text-[#38BDF8] shrink-0" />
+                    <span>Original School:</span>
+                  </div>
+                  <span className="font-bold text-white truncate max-w-[125px] text-right" title={transferSchool}>
+                    {transferSchool}
+                  </span>
+                </div>
+
+                {/* GTID */}
+                <div className="flex items-center justify-between gap-1.5 py-0.5">
+                  <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                    <ShieldCheck className="h-3 w-3 text-[#38BDF8] shrink-0" />
+                    <span>GTID:</span>
+                  </div>
+                  <span className="font-bold text-white font-mono text-right">{studentGtid}</span>
+                </div>
+
+                {/* Eligibility */}
+                <div className="flex items-center justify-between gap-1.5 py-0.5">
+                  <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                    <Award className="h-3 w-3 text-[#38BDF8]" />
+                    <span>Eligibility:</span>
+                  </div>
+                  <span className="font-bold text-white text-right truncate max-w-[125px]" title={displayEligibility}>
+                    {displayEligibility}
+                  </span>
+                </div>
+
+                {/* Medical Diagnoses */}
+                <div className="pt-1.5 border-t border-white/10">
+                  <div className="flex items-center gap-1.5 text-slate-300 mb-0.5">
+                    <Activity className="h-3 w-3 text-[#38BDF8] shrink-0" />
+                    <span>Medical Diagnoses:</span>
+                  </div>
+                  <div className="pl-4">
+                    <span className="font-bold text-white text-left block leading-snug break-words text-[10.5px]">
+                      {displayMedicalDiagnoses}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Parent / Guardian Row */}
+                <div className="pt-1.5 border-t border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-slate-400">
+                    <User className="h-3 w-3 text-white/50" />
+                    <span>Parent: <strong className="text-white">{parentFullName}</strong></span>
+                  </div>
+                  <a href={`tel:${parentPhone}`} className="text-sky-300 hover:text-amber-300 transition-colors font-medium">
+                    {parentPhone}
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* ─── Authentic Leather Folio Spine / Vertical Seam Divider ─── */}
+            <div className="hidden lg:flex absolute right-0 translate-x-1/2 -top-3 -bottom-3 w-[6px] flex-col items-center justify-between pointer-events-none select-none z-20">
+              {/* Top Brass Anchor Accent */}
+              <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#ffe082] via-[#d4af37] to-[#6b4700] ring-1 ring-black/70 shadow-[0_1px_2px_rgba(0,0,0,0.9)] opacity-85" />
+
+              {/* Vertical Debossed Seam Groove with Double Specular Line */}
+              <div className="w-[2px] h-full flex justify-between my-1">
+                {/* Dark Debossed Groove Shadow */}
+                <div className="w-[1px] h-full bg-gradient-to-b from-transparent via-[#010814] to-transparent shadow-[-1px_0_0_rgba(255,255,255,0.06)]" />
+                {/* Warm Gold / Burnished Brass Milled Seam */}
+                <div className="w-[1px] h-full bg-gradient-to-b from-transparent via-[#D4AF37]/50 to-transparent shadow-[1px_0_1px_rgba(0,0,0,0.8)]" />
+              </div>
+
+              {/* Bottom Brass Anchor Accent */}
+              <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#ffe082] via-[#d4af37] to-[#6b4700] ring-1 ring-black/70 shadow-[0_1px_2px_rgba(0,0,0,0.9)] opacity-85" />
             </div>
           </div>
 
-          {/* Right Panel (6 Cols): Educational Details Grid & Inspiration Quote */}
-          <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
-            {/* Left side: 2-column info grid (7 cols) */}
-            <div className="sm:col-span-7 grid grid-cols-1 gap-2 text-xs">
-              <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
-                <span className="text-sky-300 flex items-center gap-2">
-                  <User className="w-3.5 h-3.5 text-sky-400" /> Age:
-                </span>
-                <span className="font-semibold text-white">{studentAge}</span>
+          {/* ─── RIGHT PANEL: Current Focus & Advocacy Action Center (~58% width) ─── */}
+          <div className="lg:col-span-7 py-2 pl-6 sm:pl-8 lg:pl-12 xl:pr-4 flex flex-col justify-between">
+            <div>
+              {/* Action Bar — Full-Width Extended Button */}
+              <div className="mb-4">
+                <Button
+                  onClick={() => onNavigateTab("communication")}
+                  className="w-full bg-gradient-to-r from-[#0d2242] via-[#122e57] to-[#14325c] hover:from-[#13305c] hover:via-[#183c70] hover:to-[#1a4078] text-white border border-[#D4AF37]/80 font-semibold text-xs sm:text-sm rounded-xl h-10 px-5 gap-2.5 shadow-md cursor-pointer transition-all hover:scale-[1.01] flex items-center justify-center"
+                >
+                  <Mail className="h-4 w-4 text-amber-300" />
+                  <span>Message Advocate</span>
+                </Button>
               </div>
-              <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
-                <span className="text-sky-300 flex items-center gap-2">
-                  <GraduationCap className="w-3.5 h-3.5 text-sky-400" /> Grade:
-                </span>
-                <span className="font-semibold text-white">{studentGrade.replace(/[^0-9]/g, "") || studentGrade}</span>
-              </div>
-              <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
-                <span className="text-sky-300 flex items-center gap-2">
-                  <School className="w-3.5 h-3.5 text-sky-400" /> Current School:
-                </span>
-                <span className="font-semibold text-white truncate max-w-[140px] text-right" title={studentSchool}>
-                  {studentSchool}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
-                <span className="text-sky-300 flex items-center gap-2">
-                  <RefreshCw className="w-3.5 h-3.5 text-sky-400" /> Original School:
-                </span>
-                <span className="font-semibold text-white truncate max-w-[140px] text-right" title={transferSchool}>
-                  {transferSchool}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-1 border-b border-sky-700/35">
-                <span className="text-sky-300 flex items-center gap-2">
-                  <ShieldCheck className="w-3.5 h-3.5 text-sky-400" /> GTID:
-                </span>
-                <span className="font-mono font-semibold text-white">{studentGtid}</span>
-              </div>
-              <div className="flex items-center justify-between py-1">
-                <span className="text-sky-300 flex items-center gap-2">
-                  <Folder className="w-3.5 h-3.5 text-sky-400" /> Case Type:
-                </span>
-                <span className="font-semibold text-white">{caseType}</span>
+
+              {/* Upcoming Appointments (Full Width directly below Message Advocate) */}
+              <div className="rounded-xl bg-[#020b18]/60 border border-[#3A2C18] p-4 flex flex-col justify-between shadow-inner">
+                <div className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase text-[#C6B697]">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-amber-300" />
+                    UPCOMING APPOINTMENTS
+                  </span>
+                  <Badge className="bg-[#123159]/85 text-sky-200 border border-sky-400/40 text-[9px] font-mono py-0 px-2 rounded-full">
+                    {displayAppointments.length} Booked
+                  </Badge>
+                </div>
+
+                <div className="my-3 space-y-2">
+                  {displayAppointments && displayAppointments.length > 0 ? (
+                    displayAppointments.slice(0, 3).map((apt: any, idx: number) => (
+                      <div key={apt.id || idx} className="flex items-center justify-between text-xs py-2 px-3 rounded-lg bg-white/[0.02] border border-white/5 hover:border-amber-400/20 transition-all">
+                        <div className="flex items-center gap-2.5 truncate pr-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+                          <span className="font-semibold text-white truncate text-xs sm:text-[13px]">{apt.title}</span>
+                        </div>
+                        <span className="text-amber-200 font-mono text-xs shrink-0 font-medium bg-[#10233d]/70 px-2.5 py-0.5 rounded border border-amber-400/20">
+                          {apt.date} · {apt.time}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-white/60 py-3 text-center">No upcoming appointments scheduled.</p>
+                  )}
+                </div>
+
+                <div className="pt-2.5 border-t border-white/10 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={onOpenScheduler}
+                    className="text-xs font-semibold text-amber-300 hover:text-amber-200 flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <Clock className="h-3 w-3" />
+                    <span>{displayAppointments.length > 0 ? "View / Manage Sessions" : "Book Session"}</span>
+                  </button>
+                  <span className="text-[10px] text-slate-400 font-mono">Zoom / Phone Support</span>
+                </div>
               </div>
             </div>
 
-            {/* Right side: Inspiration Quote (5 cols) */}
-            <div className="sm:col-span-5 sm:border-l border-sky-700/40 sm:pl-5 flex flex-col justify-center text-center sm:text-left space-y-2">
-              <p className="font-serif italic text-amber-200 text-sm sm:text-base leading-snug">
-                “Advocacy turns potential into possibility.”
-              </p>
-              <div className="w-12 h-[2px] bg-gradient-to-r from-amber-400 to-amber-300 mx-auto sm:mx-0 shadow-sm" />
+            {/* Bottom Inset: Golden Inspiration Quote */}
+            <div className="rounded-xl bg-[#020a17]/60 border border-[#3A2C18]/80 px-4 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-3 mt-5 shadow-inner">
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-6 rounded-full bg-gradient-to-b from-[#D4AF37] to-[#ffe082] shrink-0" />
+                <p className="font-serif italic text-amber-200/95 text-xs sm:text-sm leading-snug">
+                  “Advocacy turns potential into possibility.”
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#C6B697] uppercase tracking-wider shrink-0">
+                <Sparkles className="h-3 w-3 text-amber-400" />
+                <span>Waypoint Advocates</span>
+              </div>
             </div>
           </div>
 

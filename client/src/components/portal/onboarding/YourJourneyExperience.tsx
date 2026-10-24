@@ -48,7 +48,7 @@ export function YourJourneyExperience({ onNavigateTab }: YourJourneyExperiencePr
       title: "Strategy Formulation & Pre-Meeting Agendas",
       tag: "Phase 3: Preparation",
       icon: Sparkles,
-      desc: "Prior to any school IEP meeting, Byron prepares concrete parent talking points, proposed SMART goal amendments, and Prior Written Notice (PWN) strategies.",
+      desc: "Prior to any school IEP meeting, Waypoint prepares concrete parent talking points, proposed SMART goal amendments, and Prior Written Notice (PWN) strategies.",
       deliverables: ["Pre-IEP Talking Points Document", "Side-by-Side Goal Comparison", "School Correspondence Strategy"]
     },
     {

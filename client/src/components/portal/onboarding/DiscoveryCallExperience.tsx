@@ -12,12 +12,9 @@ import {
   FileText,
   FolderOpen,
   CheckSquare,
-  User,
-  CalendarPlus,
   Info,
   CalendarDays,
-  ExternalLink,
-  Shield
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,7 +74,6 @@ export function DiscoveryCallExperience({
   const [currentPhone, setCurrentPhone] = useState(initialPhone);
   const [phoneEditInput, setPhoneEditInput] = useState(initialPhone);
   const [phoneUpdateOpen, setPhoneUpdateOpen] = useState(false);
-  const [addMeetingOpen, setAddMeetingOpen] = useState(false);
 
   const apptDate = upcomingAppointment?.startTime 
     ? new Date(upcomingAppointment.startTime).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
@@ -188,119 +184,6 @@ export function DiscoveryCallExperience({
               <Calendar className="h-3.5 w-3.5 text-amber-400" />
               <span>Reschedule</span>
             </Button>
-          </div>
-        </div>
-
-        {/* ── Middle Row: Two Action Cards (Compacted & Streamlined) ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Card A: Schedule Time With My Advocate */}
-          <div className="rounded-2xl border border-blue-900/40 bg-gradient-to-b from-[#0B2553]/95 via-[#071D40]/95 to-[#06172F]/95 backdrop-blur-md shadow-xl p-4 sm:p-5 flex flex-col justify-between hover:border-amber-400/50 transition-all relative overflow-hidden group space-y-3">
-            {/* Top Accent Line */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/60 to-transparent" />
-
-            <div className="space-y-2.5">
-              {/* Header: Icon & Category Tag */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full border border-[#F5B544]/30 bg-[#030C22] text-[#F5B544] flex items-center justify-center shrink-0 shadow-inner">
-                    <User className="h-4 w-4 stroke-[1.8]" />
-                  </div>
-                  <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
-                    Schedule Time With My Advocate
-                  </h4>
-                </div>
-                <span className="text-[9px] font-extrabold tracking-wider text-[#F5B544] uppercase bg-[#F5B544]/10 border border-[#F5B544]/20 px-2 py-0.5 rounded-full shrink-0 font-mono">
-                  YOU & ADVOCATE ONLY
-                </span>
-              </div>
-
-              {/* Description */}
-              <p className="text-[11px] sm:text-xs text-blue-200/70 leading-relaxed pl-0.5">
-                Need to ask questions or prep for a meeting? Book dedicated 1-on-1 strategy time with Byron.
-              </p>
-
-              {/* Feature Highlight Chips */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
-                  <span className="text-[#F5B544] font-bold text-[10px]">✓</span> Strategy Calls
-                </span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
-                  <span className="text-[#F5B544] font-bold text-[10px]">✓</span> Case Prep
-                </span>
-              </div>
-            </div>
-
-            {/* Compact Footer */}
-            <div className="pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
-              <span className="text-[10px] text-blue-200/60 flex items-center gap-1 font-mono">
-                <Clock className="h-3 w-3 text-[#F5B544]" />
-                Flexible Scheduling
-              </span>
-
-              <Button
-                size="sm"
-                onClick={onOpenScheduler}
-                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
-              >
-                <span>Choose a Time</span>
-                <ChevronRight className="h-3 w-3 stroke-[2.5]" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Card B: Add an IEP / 504 Meeting */}
-          <div className="rounded-2xl border border-blue-900/40 bg-gradient-to-b from-[#0B2553]/95 via-[#071D40]/95 to-[#06172F]/95 backdrop-blur-md shadow-xl p-4 sm:p-5 flex flex-col justify-between hover:border-blue-400/50 transition-all relative overflow-hidden group space-y-3">
-            {/* Top Accent Line */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" />
-
-            <div className="space-y-2.5">
-              {/* Header: Icon & Category Tag */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full border border-blue-400/30 bg-[#030C22] text-blue-400 flex items-center justify-center shrink-0 shadow-inner">
-                    <CalendarPlus className="h-4 w-4 stroke-[1.8]" />
-                  </div>
-                  <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
-                    Add an IEP / 504 Meeting
-                  </h4>
-                </div>
-                <span className="text-[9px] font-extrabold tracking-wider text-blue-300 uppercase bg-blue-400/10 border border-blue-400/20 px-2 py-0.5 rounded-full shrink-0 font-mono">
-                  SCHOOL & ADVOCATE
-                </span>
-              </div>
-
-              {/* Description */}
-              <p className="text-[11px] sm:text-xs text-blue-200/70 leading-relaxed pl-0.5">
-                Have a date from your school? Add it so your advocate can review records and attend.
-              </p>
-
-              {/* Feature Highlight Chips */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
-                  <span className="text-blue-400 font-bold text-[10px]">✓</span> Annual IEPs
-                </span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white/90 bg-[#030C22] border border-blue-900/40 px-2 py-0.5 rounded-md">
-                  <span className="text-blue-400 font-bold text-[10px]">✓</span> 504 Conferences
-                </span>
-              </div>
-            </div>
-
-            {/* Compact Footer */}
-            <div className="pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
-              <span className="text-[10px] text-blue-200/60 flex items-center gap-1 font-mono">
-                <Shield className="h-3 w-3 text-blue-400" />
-                Advocate Representation
-              </span>
-
-              <Button
-                size="sm"
-                onClick={() => setAddMeetingOpen(true)}
-                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
-              >
-                <span>Add School Meeting</span>
-                <ChevronRight className="h-3 w-3 stroke-[2.5]" />
-              </Button>
-            </div>
           </div>
         </div>
 
@@ -465,7 +348,7 @@ export function DiscoveryCallExperience({
               Update Your Phone Number
             </DialogTitle>
             <DialogDescription className="text-xs text-blue-200/70">
-              Byron will call this number directly for your scheduled Discovery Call.
+              Waypoint will call this number directly for your scheduled Discovery Call.
             </DialogDescription>
           </DialogHeader>
 
@@ -497,7 +380,7 @@ export function DiscoveryCallExperience({
                 className="w-full bg-[#030C22] border border-blue-900/40 focus:border-[#F5B544] rounded-xl p-2.5 text-sm text-white outline-none transition-colors"
               />
               <p className="text-[11px] text-blue-200/60 mt-1.5 leading-relaxed">
-                Byron will call you directly at this number on <strong className="text-white">{apptDate}</strong> at <strong className="text-white">{apptTime}</strong>.
+                Waypoint will call you directly at this number on <strong className="text-white">{apptDate}</strong> at <strong className="text-white">{apptTime}</strong>.
               </p>
             </div>
 
@@ -520,71 +403,6 @@ export function DiscoveryCallExperience({
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog: Add School Meeting Modal ───────────────────────────────── */}
-      <Dialog open={addMeetingOpen} onOpenChange={setAddMeetingOpen}>
-        <DialogContent className="bg-[#06172F] border-blue-900/40 text-white max-w-md shadow-2xl rounded-2xl">
-          <DialogHeader className="border-b border-blue-900/40 pb-3">
-            <DialogTitle className="flex items-center gap-2 text-base font-bold text-white">
-              <CalendarPlus className="h-5 w-5 text-[#F5B544]" />
-              Add an IEP / 504 Meeting Date
-            </DialogTitle>
-            <DialogDescription className="text-xs text-blue-200/70">
-              Let your advocate know about upcoming school ARD/IEP/504 conference dates.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 pt-2 text-xs">
-            <div>
-              <label className="text-white/70 font-semibold block mb-1">Meeting Type</label>
-              <select className="w-full bg-[#030C22] border border-blue-900/40 rounded-xl p-2 text-xs text-white outline-none">
-                <option>Annual IEP Review</option>
-                <option>Initial Eligibility / Evaluation</option>
-                <option>504 Plan Meeting</option>
-                <option>Manifestation Determination Review (MDR)</option>
-                <option>IEP Amendment / Progress Check</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-white/70 font-semibold block mb-1">Date & Time</label>
-              <input
-                type="datetime-local"
-                className="w-full bg-[#030C22] border border-blue-900/40 rounded-xl p-2 text-xs text-white outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-white/70 font-semibold block mb-1">School / Location / Notes</label>
-              <textarea
-                placeholder="e.g. Virtual via Zoom, or In-person at North Gwinnett High Room 104..."
-                className="w-full bg-[#030C22] border border-blue-900/40 rounded-xl p-2 text-xs text-white outline-none min-h-[60px]"
-              />
-            </div>
-
-            <div className="flex gap-2 justify-end pt-3 border-t border-blue-900/40">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setAddMeetingOpen(false)}
-                className="text-xs text-white/70 hover:text-white"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setAddMeetingOpen(false);
-                  toast.success("School meeting date saved!");
-                }}
-                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs rounded-xl shadow-md"
-              >
-                Submit Meeting Date
-              </Button>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
     </div>

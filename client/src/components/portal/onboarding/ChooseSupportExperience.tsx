@@ -725,7 +725,7 @@ export function ChooseSupportExperience({
         </h1>
         <p className="text-sm text-[#C6B697] mt-1.5 leading-relaxed">
           {isCustomMode
-            ? "Review your custom advocacy terms authorized by Lead Advocate Byron Honea."
+            ? "Review your custom advocacy terms authorized by Waypoint Advocates."
             : "Choose the membership plan that best fits your student's representation needs. All standard plans have a 12-month commitment."}
         </p>
       </div>

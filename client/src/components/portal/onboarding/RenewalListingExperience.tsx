@@ -78,7 +78,7 @@ export function RenewalListingExperience({
         "Unlimited IEP & 504 document audits, draft review checks, and amendment analyses",
         "Quarterly IEP goal progress audit & school compliance monitoring",
         "Pre-meeting parent strategy agendas & talking point roadmaps delivered 48h prior",
-        "Direct priority portal messaging & strategic advisory with Lead Advocate Byron Honea",
+        "Direct priority portal messaging & strategic advisory with Waypoint Advocates",
         "Full access to Document Vault, IEP Comparator, and Case Compass™"
       ],
       idealFor: "Families wanting continuous IEP oversight, draft reviews, and expert coaching between school meetings.",
@@ -96,7 +96,7 @@ export function RenewalListingExperience({
         "Includes everything in the Essential Continuity Plan, plus:",
         "Live advocate attendance & co-chairing at all IEP, 504 & MDR school meetings (virtual or in-person)",
         "Priority rapid document turnarounds (Prior Written Notices, evaluation requests, dissent filings)",
-        "Dedicated 1-on-1 strategy prep & debrief session with Byron before and after every meeting",
+        "Dedicated 1-on-1 strategy prep & debrief session with Waypoint before and after every meeting",
         "Campus & grade transition defense (elementary to middle/high school, secondary placement reviews)",
         "Formal dispute guidance & administrative complaint drafting support if district non-compliance arises"
       ],
@@ -143,7 +143,7 @@ export function RenewalListingExperience({
               Advocacy Plan Renewed for {studentName}!
             </h1>
             <p className="text-sm sm:text-base text-blue-200/70 max-w-xl mx-auto leading-relaxed">
-              Thank you for trusting Waypoint Advocates. Byron Honea's advocacy coverage is active for <strong className="text-amber-300">{studentName}</strong> at <strong className="text-white">${monthlyTotal}/month</strong>.
+              Thank you for trusting Waypoint Advocates. Waypoint advocacy coverage is active for <strong className="text-amber-300">{studentName}</strong> at <strong className="text-white">${monthlyTotal}/month</strong>.
             </p>
           </div>
 
@@ -232,7 +232,7 @@ export function RenewalListingExperience({
 
             <Button
               variant="outline"
-              onClick={() => toast.info("Connecting to Byron's calendar for a 15-min Renewal Alignment Call...")}
+              onClick={() => toast.info("Connecting to Waypoint's calendar for a 15-min Renewal Alignment Call...")}
               className="gap-2 text-xs font-semibold h-11 border-blue-900/40 bg-[#030C22] hover:bg-blue-900/40 text-white rounded-xl cursor-pointer"
             >
               <PhoneCall className="h-4 w-4 text-[#F5B544]" />
@@ -371,7 +371,7 @@ export function RenewalListingExperience({
                 Renewal Summary for {studentName}
               </CardTitle>
               <CardDescription className="text-xs text-blue-200/70 mt-0.5">
-                Lead Advocate Byron Honea Representation Coverage
+                Waypoint Lead Advocate Representation Coverage
               </CardDescription>
             </div>
             <Badge className="bg-[#F5B544] text-[#07152B] font-bold text-xs px-3 py-1 self-start sm:self-auto">
@@ -407,7 +407,7 @@ export function RenewalListingExperience({
         <CardFooter className="p-5 sm:p-6 pt-0 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-xs text-white/50 flex items-center gap-1.5">
             <Lock className="h-3.5 w-3.5 text-amber-400" />
-            <span>256-Bit Encrypted Secure Checkout • Backed by Byron Honea</span>
+            <span>256-Bit Encrypted Secure Checkout • Backed by Waypoint Advocates</span>
           </div>
 
           <Button

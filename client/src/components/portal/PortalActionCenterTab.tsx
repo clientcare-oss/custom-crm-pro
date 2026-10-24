@@ -64,22 +64,22 @@ const DEFAULT_ACTION_ITEMS: ActionItem[] = [
     id: "act-1",
     title: "Notify School of Advocate",
     category: "Advocate Notice",
-    description: "Formal written notice to principal and IEP team confirming Byron Honea as designated advocate.",
+    description: "Formal written notice to principal and IEP team confirming Waypoint Advocates as designated advocate.",
     status: "NEEDS_YOUR_REVIEW",
     responsibility: "CLIENT",
     lastUpdated: "Sep 2, 2026",
     isCompleted: false,
     savedToVault: false,
-    notesFromAdvocate: "Please review the school contact list and confirm you're comfortable with Byron speaking directly with the case manager.",
+    notesFromAdvocate: "Please review the school contact list and confirm you're comfortable with Waypoint speaking directly with the case manager.",
     contentDraft: `To: Principal & Special Education Department
 School District: Fulton County Schools
 Student: Liam Jenkins (DOB: 05/14/2016)
 
 Dear IEP Team Members,
 
-This letter serves as formal notification that we have retained Byron Honea (Lead Special Education Advocate, Waypoint Advocates) to assist our family with all educational planning, ARD/IEP committee meetings, and 504 accommodation reviews.
+This letter serves as formal notification that we have retained Waypoint Advocates (Lead Special Education Advocates) to assist our family with all educational planning, ARD/IEP committee meetings, and 504 accommodation reviews.
 
-Please include Byron Honea (byron@waypointadvocates.com) on all written notices, meeting invitations, evaluations, and progress reports regarding Liam.
+Please include Waypoint Advocates (clientcare@waypointadvocates.com) on all written notices, meeting invitations, evaluations, and progress reports regarding Liam.
 
 Sincerely,
 The Jenkins Family`
@@ -94,7 +94,7 @@ The Jenkins Family`
     lastUpdated: "Sep 1, 2026",
     isCompleted: false,
     savedToVault: false,
-    notesFromAdvocate: "Byron is compiling the specific IDEA 34 CFR § 300.304 statutory citations and sensory processing concerns.",
+    notesFromAdvocate: "Waypoint is compiling the specific IDEA 34 CFR § 300.304 statutory citations and sensory processing concerns.",
     contentDraft: `Comprehensive evaluation request is currently being formulated by Waypoint Advocates to ensure all 6 key areas of suspected sensory and executive functioning deficits are formally evaluated under state timeline guidelines.`
   },
   {
@@ -202,7 +202,7 @@ const PERMITTED_CLIENT_ACTIONS = [
     id: "notify-advocate",
     title: "Notify School of Advocate",
     category: "Advocate Notice",
-    description: "Inform the school principal and case manager that Byron Honea is your designated advocate.",
+    description: "Inform the school principal and case manager that Waypoint Advocates is your designated advocate.",
     icon: User
   },
   {
@@ -779,7 +779,7 @@ export default function PortalActionCenterTab({
                 <div className="p-3.5 rounded-xl bg-amber-400/10 border border-amber-400/30 text-xs text-amber-200">
                   <p className="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
                     <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                    Instructions from Byron Honea:
+                    Instructions from Waypoint Advocates:
                   </p>
                   <p className="leading-relaxed">{selectedAction.notesFromAdvocate}</p>
                 </div>
@@ -806,7 +806,7 @@ export default function PortalActionCenterTab({
                   <Textarea
                     value={clientComment}
                     onChange={(e) => setClientComment(e.target.value)}
-                    placeholder="Enter any notes, corrections, or additional points for Byron to incorporate..."
+                    placeholder="Enter any notes, corrections, or additional points for Waypoint to incorporate..."
                     className="bg-[#030C22] border-blue-900/40 text-xs text-white placeholder:text-white/30 rounded-xl focus-visible:ring-amber-400"
                     rows={3}
                   />
@@ -919,7 +919,7 @@ export default function PortalActionCenterTab({
               Start an Action
             </DialogTitle>
             <DialogDescription className="text-xs text-white/60">
-              Select a guided request, statement, or workflow to collaborate on with Byron Honea.
+              Select a guided request, statement, or workflow to collaborate on with Waypoint Advocates.
             </DialogDescription>
           </DialogHeader>
 

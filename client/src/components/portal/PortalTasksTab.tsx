@@ -71,7 +71,7 @@ export default function PortalTasksTab({
     {
       id: "t-1",
       title: "Upload current IEP / 504 Plan & Evaluation Reports",
-      subtitle: "Attach your child's most recent school documents for Byron's initial compliance audit.",
+      subtitle: "Attach your child's most recent school documents for Waypoint's initial compliance audit.",
       category: "Intake & Review",
       type: "upload",
       dueDate: "May 15, 2026",
@@ -80,7 +80,7 @@ export default function PortalTasksTab({
     {
       id: "t-2",
       title: "Provide School Virtual Meeting Link (Zoom / Teams / Meet)",
-      subtitle: "Paste the video conference invitation from your case manager so Byron can attend with you.",
+      subtitle: "Paste the video conference invitation from your case manager so Waypoint can attend with you.",
       category: "Meeting Prep",
       type: "meeting_link",
       dueDate: "May 18, 2026",
@@ -96,12 +96,12 @@ export default function PortalTasksTab({
       isCompleted: false,
       payload: {
         emailSubject: `Notice of Parent Advocate Attendance - ${studentName}`,
-        emailBody: `Dear IEP Case Manager & Team,\n\nPlease note that Byron Honea (Lead Special Education Advocate) will be attending ${studentName}'s upcoming IEP meeting with us as our advocate. Please ensure the meeting link and all draft goals/evaluations are sent to our family at least 3 business days prior.\n\nThank you,\nParent`
+        emailBody: `Dear IEP Case Manager & Team,\n\nPlease note that Waypoint Advocates (Lead Special Education Advocates) will be attending ${studentName}'s upcoming IEP meeting with us as our advocate. Please ensure the meeting link and all draft goals/evaluations are sent to our family at least 3 business days prior.\n\nThank you,\nParent`
       }
     },
     {
       id: "t-4",
-      title: "Review & approve Byron's 48-Hour Parent Talking Points",
+      title: "Review & approve Waypoint's 48-Hour Parent Talking Points",
       subtitle: "Check the customized priority strategy roadmap prepared for your upcoming school conference.",
       category: "Meeting Prep",
       type: "general",
@@ -181,7 +181,7 @@ export default function PortalTasksTab({
 
     triggerConfetti();
     toast.success(`"${file.name}" uploaded successfully!`, {
-      description: "Archived to your Document Vault and shared with Byron."
+      description: "Archived to your Document Vault and shared with Waypoint."
     });
   };
 
@@ -209,7 +209,7 @@ export default function PortalTasksTab({
     setMeetingUrlInput("");
     triggerConfetti();
     toast.success("Meeting link saved!", {
-      description: "Byron has been updated with the video conference link."
+      description: "Waypoint has been updated with the video conference link."
     });
   };
 
