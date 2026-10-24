@@ -361,79 +361,46 @@ export function PortalMembershipTab({
               </div>
             </div>
 
-            {/* 2. Middle: Saved Card Info across the screen on one line / expansive row */}
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
-                  Cardholder on File
+            {/* 2. Middle: Clean Horizontal Saved Card Info (No Little Boxes) */}
+            <div className="flex-1 space-y-3 px-0 lg:px-4 py-1">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-xl sm:text-2xl font-mono font-bold text-white tracking-widest">
+                  •••• •••• •••• {cardData.last4}
                 </span>
-                <span className="text-sm font-bold text-white truncate block">
-                  {cardData.cardholder}
-                </span>
-                <span className="text-[11px] text-blue-200/60 block">
-                  Authorized Signer
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
-                  Billing Postal Code
-                </span>
-                <span className="text-sm font-mono font-bold text-white block">
-                  {cardData.zipCode}
-                </span>
-                <span className="text-[11px] text-blue-200/60 block">
-                  Verified AVS Match
+                <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono px-2.5 py-0.5">
+                  Default Auto-Pay
+                </Badge>
+                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                  <Lock className="h-3.5 w-3.5" /> PCI-DSS Level 1 Secure
                 </span>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
-                  Security Protocol
-                </span>
-                <span className="text-sm font-semibold text-emerald-400 flex items-center gap-1.5">
-                  <Lock className="h-3.5 w-3.5" /> PCI-DSS Level 1
-                </span>
-                <span className="text-[11px] text-blue-200/60 block">
-                  256-Bit Tokenized Vault
-                </span>
+              {/* One continuous horizontal line of parameters */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-blue-100/90 font-medium">
+                <div>
+                  <span className="text-white/50 text-[11px] uppercase tracking-wider block sm:inline sm:mr-1.5">Cardholder:</span>
+                  <strong className="text-white font-semibold">{cardData.cardholder}</strong>
+                </div>
+                <span className="text-white/20 hidden sm:inline">•</span>
+                <div>
+                  <span className="text-white/50 text-[11px] uppercase tracking-wider block sm:inline sm:mr-1.5">Expires:</span>
+                  <strong className="text-amber-300 font-mono font-bold">{cardData.expMonth}/{cardData.expYear.slice(-2)}</strong>
+                </div>
+                <span className="text-white/20 hidden sm:inline">•</span>
+                <div>
+                  <span className="text-white/50 text-[11px] uppercase tracking-wider block sm:inline sm:mr-1.5">Postal Code:</span>
+                  <strong className="text-white font-mono">{cardData.zipCode}</strong>
+                </div>
+                <span className="text-white/20 hidden sm:inline">•</span>
+                <div>
+                  <span className="text-white/50 text-[11px] uppercase tracking-wider block sm:inline sm:mr-1.5">Retainer:</span>
+                  <strong className="text-white font-mono font-bold">$55.00/mo</strong>
+                </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
-                  Card Brand & Type
-                </span>
-                <span className="text-sm font-mono font-bold text-amber-300 block">
-                  {cardData.brand.toUpperCase()} Executive
-                </span>
-                <span className="text-[11px] text-blue-200/60 block">
-                  Ending in {cardData.last4}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
-                  Auto-Billing Schedule
-                </span>
-                <span className="text-sm font-bold text-white block">
-                  $55.00 / month
-                </span>
-                <span className="text-[11px] text-emerald-400 block font-medium">
-                  Next charge: June 1, 2026
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
-                  Advocacy Protection
-                </span>
-                <span className="text-sm font-bold text-white block">
-                  Continuous Coverage
-                </span>
-                <span className="text-[11px] text-blue-200/60 block">
-                  Guaranteed Retainer Rate
-                </span>
-              </div>
+              <p className="text-xs text-blue-200/60 leading-relaxed">
+                Primary payment method on file for continuous monthly advocacy retainer and IEP document audits.
+              </p>
             </div>
 
             {/* 3. Right: Update Payment Method Button */}
