@@ -361,17 +361,18 @@ export function PortalMembershipTab({
               </div>
             </div>
 
-            {/* 2. Middle: Clean Horizontal Saved Card Info (No Little Boxes) */}
-            <div className="flex-1 space-y-3 px-0 lg:px-4 py-1">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-xl sm:text-2xl font-mono font-bold text-white tracking-widest">
-                  •••• •••• •••• {cardData.last4}
-                </span>
+            {/* 2. Middle: Clean Horizontal Saved Card Info (Card number only on CC card graphic) */}
+            <div className="flex-1 space-y-2.5 px-0 lg:px-4 py-1">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono px-2.5 py-0.5">
                   Default Auto-Pay
                 </Badge>
                 <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
                   <Lock className="h-3.5 w-3.5" /> PCI-DSS Level 1 Secure
+                </span>
+                <span className="text-xs text-blue-200/50 hidden sm:inline">•</span>
+                <span className="text-xs text-blue-200/70 font-medium hidden sm:inline">
+                  Verified Active Card
                 </span>
               </div>
 
