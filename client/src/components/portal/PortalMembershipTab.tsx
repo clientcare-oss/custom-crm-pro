@@ -22,7 +22,8 @@ import {
   Receipt,
   User,
   ShieldAlert,
-  Wrench
+  Wrench,
+  Radio
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -244,216 +245,199 @@ export function PortalMembershipTab({
         </div>
       </div>
 
-      {/* ── 2-Column Grid: Active Plan Details on Left, Payment Method Card on Right ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* Left Column: Active $55/mo Plan Card (7 Cols) */}
-        <div className="lg:col-span-7 space-y-4">
-          <Card className="border border-blue-900/40 bg-[#06172F] shadow-xl rounded-3xl overflow-hidden text-white">
-            <CardHeader className="bg-[#030C22] border-b border-blue-900/40 p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div>
-                  <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase mb-1">
-                    Current Enrolled Plan
-                  </Badge>
-                  <CardTitle className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                    Essential Continuity & IEP Advisory
-                  </CardTitle>
-                </div>
-                <div className="text-right">
-                  <span className="text-2xl font-black text-amber-300 font-mono block">$55.00</span>
-                  <span className="text-[10px] text-white/50 block font-medium">per month per student</span>
-                </div>
-              </div>
-              <CardDescription className="text-xs text-blue-200/70 mt-1">
-                Student: <strong className="text-white font-semibold">{studentName}</strong> • Special Education Advisory
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="p-5 sm:p-6 space-y-4 text-xs">
-              <p className="text-white/80 leading-relaxed">
-                Provides continuous IEP advocacy, draft document audits, and direct strategy access with Waypoint throughout your child's academic year.
-              </p>
-
-              {/* What's Included list */}
-              <div className="space-y-2.5 pt-2 border-t border-white/10">
-                <span className="text-[11px] font-bold text-[#F5B544] uppercase tracking-wider block font-mono">
-                  Enrolled Membership Benefits:
-                </span>
-                <ul className="space-y-2 text-white/90">
-                  <li className="flex items-start gap-2">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Unlimited IEP & 504 document audits, draft review checks, and amendments</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Quarterly IEP goal progress audit & school compliance monitoring</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Pre-meeting parent strategy agendas & talking point roadmaps delivered 48h prior</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Direct priority portal messaging & strategic advisory with Waypoint Advocates</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Full access to Document Vault, IEP Comparator, and Case Compass™</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Membership management pills */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2">
-                <div className="p-3 rounded-xl bg-[#030C22] border border-blue-900/40 text-center">
-                  <span className="text-[10px] text-white/50 block font-medium">Billing Term</span>
-                  <span className="font-bold text-white text-xs block mt-0.5">Monthly Recurring</span>
-                </div>
-                <div className="p-3 rounded-xl bg-[#030C22] border border-blue-900/40 text-center">
-                  <span className="text-[10px] text-white/50 block font-medium">Next Invoice</span>
-                  <span className="font-bold text-amber-300 text-xs block mt-0.5 font-mono">June 1, 2026</span>
-                </div>
-                <div className="p-3 rounded-xl bg-[#030C22] border border-blue-900/40 text-center col-span-2 sm:col-span-1">
-                  <span className="text-[10px] text-white/50 block font-medium">Status</span>
-                  <span className="font-bold text-emerald-400 text-xs block mt-0.5">Active Auto-Pay</span>
-                </div>
-              </div>
-            </CardContent>
-
-            <CardFooter className="p-5 sm:p-6 bg-[#030C22]/60 border-t border-blue-900/40 flex flex-wrap items-center justify-between gap-3">
-              <span className="text-xs text-blue-200/60 flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                Cancel or pause anytime with 30-day notice
-              </span>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onNavigateTab?.("renewal")}
-                className="border-blue-900/40 bg-[#030C22] hover:bg-blue-900/40 text-white text-xs font-semibold rounded-xl cursor-pointer"
-              >
-                <span>Upgrade to $105/mo Live Representation</span>
-                <ChevronRight className="h-3.5 w-3.5 ml-1" />
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-
-        {/* Right Column: Fake Credit Card & Payment Method Manager (5 Cols) */}
-        <div 
-          id="saved-payment-method"
-          ref={paymentMethodCardRef}
-          className="lg:col-span-5 space-y-4 scroll-mt-24"
+      {/* ── FULL-WIDTH HORIZONTAL SAVED CARD BAR WITH REALISTIC SAMPLE CARD ── */}
+      <div 
+        id="saved-payment-method"
+        ref={paymentMethodCardRef}
+        className="scroll-mt-24"
+      >
+        <Card 
+          className={cn(
+            "border bg-[#06172F] shadow-xl rounded-3xl overflow-hidden text-white transition-all duration-500 relative",
+            highlightPaymentMethod 
+              ? "border-amber-400 ring-4 ring-amber-400/40 shadow-[0_0_50px_rgba(245,181,68,0.7),inset_0_0_20px_rgba(245,181,68,0.25)] animate-[pulse_1.5s_cubic-bezier(0.4,0,0.6,1)_infinite]" 
+              : "border-blue-900/40"
+          )}
         >
-          <Card 
-            className={cn(
-              "border bg-[#06172F] shadow-xl rounded-3xl overflow-hidden text-white transition-all duration-500 relative",
-              highlightPaymentMethod 
-                ? "border-amber-400 ring-4 ring-amber-400/40 shadow-[0_0_50px_rgba(245,181,68,0.7),inset_0_0_20px_rgba(245,181,68,0.25)] animate-[pulse_1.5s_cubic-bezier(0.4,0,0.6,1)_infinite]" 
-                : "border-blue-900/40"
-            )}
-          >
-            {/* Illuminated Radiant Aura when focused */}
-            {highlightPaymentMethod && (
-              <div className="absolute inset-0 rounded-3xl pointer-events-none z-20 border-2 border-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.8)]" />
-            )}
+          {/* Illuminated Radiant Aura when focused */}
+          {highlightPaymentMethod && (
+            <div className="absolute inset-0 rounded-3xl pointer-events-none z-20 border-2 border-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.8)]" />
+          )}
 
-            <CardHeader className={cn(
-              "border-b p-5 transition-colors duration-500",
-              highlightPaymentMethod 
-                ? "bg-gradient-to-r from-[#1c1303] via-[#352303] to-[#1c1303] border-amber-400/60" 
-                : "bg-[#030C22] border-blue-900/40"
-            )}>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                  <CreditCard className={cn(
-                    "h-4 w-4 transition-colors",
-                    highlightPaymentMethod ? "text-amber-300 animate-bounce" : "text-[#F5B544]"
-                  )} />
-                  <span>Saved Payment Method</span>
-                </CardTitle>
-                <div className="flex items-center gap-1.5">
+          {/* Header Row */}
+          <div className={cn(
+            "border-b p-4 sm:p-5 flex items-center justify-between transition-colors duration-500",
+            highlightPaymentMethod 
+              ? "bg-gradient-to-r from-[#1c1303] via-[#352303] to-[#1c1303] border-amber-400/60" 
+              : "bg-[#030C22] border-blue-900/40"
+          )}>
+            <div className="flex items-center gap-2.5">
+              <CreditCard className={cn(
+                "h-5 w-5 transition-colors",
+                highlightPaymentMethod ? "text-amber-300 animate-bounce" : "text-[#F5B544]"
+              )} />
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-white tracking-wide flex items-center gap-2">
+                  Saved Payment Method
                   {highlightPaymentMethod && (
-                    <Badge className="bg-amber-400 text-slate-950 font-extrabold text-[10px] uppercase tracking-wider font-mono shadow-md animate-pulse">
+                    <Badge className="bg-amber-400 text-slate-950 font-extrabold text-[9px] uppercase tracking-wider font-mono shadow-md animate-pulse">
                       Update Required
                     </Badge>
                   )}
-                  <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono">
-                    Default Auto-Pay
-                  </Badge>
-                </div>
+                </h3>
+                <p className="text-xs text-blue-200/60">
+                  Primary card on file used for continuous monthly advocacy retainer
+                </p>
               </div>
-              <CardDescription className="text-xs text-blue-200/60">
-                Primary card used for monthly $55 membership billing.
-              </CardDescription>
-            </CardHeader>
+            </div>
 
-            <CardContent className="p-5 space-y-4">
-              {/* ── Realistic Sleek Dark Nautical Credit Card Graphic ── */}
-              <div className="relative rounded-2xl bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/40 p-5 text-white shadow-2xl overflow-hidden space-y-5 group">
+            <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono">
+              Default Auto-Pay
+            </Badge>
+          </div>
+
+          {/* Body: Physical Sample Card on Left + Spacious Info across screen + Button on Right */}
+          <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            {/* 1. Left: The Realistic Sleek Dark Nautical Credit Card Graphic (Sample Card) */}
+            <div className="w-full sm:w-[320px] shrink-0">
+              <div className="relative rounded-2xl bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/40 p-5 text-white shadow-2xl overflow-hidden space-y-4 group">
                 {/* Gold accent sheen */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5B544]/10 rounded-full blur-2xl pointer-events-none" />
-
-                {/* Card Top Row: Chip & Brand */}
+                <div className="absolute top-0 right-0 w-48 h-48 bg-[#F5B544]/10 rounded-full blur-2xl pointer-events-none -mr-16 -mt-16 group-hover:bg-[#F5B544]/20 transition-all duration-700" />
+                
+                {/* Card Top Row: Chip & Wireless icon */}
                 <div className="flex items-center justify-between relative z-10">
-                  {/* EMV Chip Graphic */}
-                  <div className="w-10 h-7 rounded-md bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 border border-amber-300/50 shadow-inner flex items-center justify-center">
-                    <div className="w-8 h-5 border border-amber-800/40 rounded-sm grid grid-cols-2 gap-0.5 opacity-60" />
+                  <div className="flex items-center gap-2">
+                    {/* Metallic Chip */}
+                    <div className="w-10 h-7 rounded-md bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 border border-amber-700/60 shadow-inner flex items-center justify-center p-1">
+                      <div className="w-full h-full border border-amber-900/40 rounded-xs grid grid-cols-2 gap-0.5 opacity-60">
+                        <div className="border-r border-b border-amber-900/40" />
+                        <div className="border-b border-amber-900/40" />
+                        <div className="border-r border-amber-900/40" />
+                        <div />
+                      </div>
+                    </div>
+                    {/* Contactless waves icon */}
+                    <Radio className="h-4 w-4 text-amber-300/70 rotate-90" />
                   </div>
 
-                  <span className="text-base font-black italic tracking-wider text-white font-mono">
-                    {cardData.brand.toUpperCase()}
-                  </span>
-                </div>
-
-                {/* Card Number */}
-                <div className="space-y-1 relative z-10">
-                  <span className="text-[10px] text-white/50 uppercase font-mono tracking-widest block">
-                    Card Number
-                  </span>
-                  <div className="text-lg sm:text-xl font-mono tracking-widest text-white font-bold">
-                    •••• •••• •••• {cardData.last4}
-                  </div>
-                </div>
-
-                {/* Card Bottom Row: Cardholder & Expiry */}
-                <div className="flex items-center justify-between text-xs relative z-10 pt-1 border-t border-white/10">
-                  <div>
-                    <span className="text-[9px] text-white/50 uppercase font-mono tracking-wider block">
-                      Cardholder
+                  {/* Brand Logo text / badge */}
+                  <div className="text-right">
+                    <span className="text-base font-black italic tracking-wider text-amber-300 font-mono drop-shadow-sm">
+                      {cardData.brand.toUpperCase()}
                     </span>
-                    <span className="font-semibold text-white truncate max-w-[140px] block">
+                    <span className="text-[9px] uppercase tracking-widest text-white/50 block font-mono">
+                      Executive Debit
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card Number: Formatted in 4 groups */}
+                <div className="py-0.5 relative z-10">
+                  <span className="text-lg sm:text-xl font-mono tracking-widest text-white font-bold drop-shadow">
+                    •••• •••• •••• {cardData.last4}
+                  </span>
+                </div>
+
+                {/* Card Bottom Row: Cardholder & Expiration */}
+                <div className="flex items-end justify-between relative z-10 text-xs">
+                  <div>
+                    <span className="text-[9px] uppercase tracking-widest text-white/60 block font-mono">
+                      Cardholder Name
+                    </span>
+                    <span className="font-bold text-white tracking-wide uppercase font-mono text-xs">
                       {cardData.cardholder}
                     </span>
                   </div>
 
                   <div className="text-right">
-                    <span className="text-[9px] text-white/50 uppercase font-mono tracking-wider block">
+                    <span className="text-[9px] uppercase tracking-widest text-white/60 block font-mono">
                       Expires
                     </span>
-                    <span className="font-semibold text-amber-300 font-mono block">
+                    <span className="font-bold text-amber-300 font-mono text-xs">
                       {cardData.expMonth}/{cardData.expYear.slice(-2)}
                     </span>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Card Meta details */}
-              <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/40 text-xs space-y-1.5">
-                <div className="flex justify-between text-white/70">
-                  <span>Billing Postal Code:</span>
-                  <span className="font-mono font-bold text-white">{cardData.zipCode}</span>
-                </div>
-                <div className="flex justify-between text-white/70">
-                  <span>Security Protocol:</span>
-                  <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                    <Lock className="h-3 w-3" /> PCI-DSS Level 1
-                  </span>
-                </div>
+            {/* 2. Middle: Saved Card Info across the screen on one line / expansive row */}
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
+                  Cardholder on File
+                </span>
+                <span className="text-sm font-bold text-white truncate block">
+                  {cardData.cardholder}
+                </span>
+                <span className="text-[11px] text-blue-200/60 block">
+                  Authorized Signer
+                </span>
               </div>
 
-              {/* Update Card Action Button */}
+              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
+                  Billing Postal Code
+                </span>
+                <span className="text-sm font-mono font-bold text-white block">
+                  {cardData.zipCode}
+                </span>
+                <span className="text-[11px] text-blue-200/60 block">
+                  Verified AVS Match
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
+                  Security Protocol
+                </span>
+                <span className="text-sm font-semibold text-emerald-400 flex items-center gap-1.5">
+                  <Lock className="h-3.5 w-3.5" /> PCI-DSS Level 1
+                </span>
+                <span className="text-[11px] text-blue-200/60 block">
+                  256-Bit Tokenized Vault
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
+                  Card Brand & Type
+                </span>
+                <span className="text-sm font-mono font-bold text-amber-300 block">
+                  {cardData.brand.toUpperCase()} Executive
+                </span>
+                <span className="text-[11px] text-blue-200/60 block">
+                  Ending in {cardData.last4}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
+                  Auto-Billing Schedule
+                </span>
+                <span className="text-sm font-bold text-white block">
+                  $55.00 / month
+                </span>
+                <span className="text-[11px] text-emerald-400 block font-medium">
+                  Next charge: June 1, 2026
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#030C22] border border-blue-900/40 space-y-1">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 block">
+                  Advocacy Protection
+                </span>
+                <span className="text-sm font-bold text-white block">
+                  Continuous Coverage
+                </span>
+                <span className="text-[11px] text-blue-200/60 block">
+                  Guaranteed Retainer Rate
+                </span>
+              </div>
+            </div>
+
+            {/* 3. Right: Update Payment Method Button */}
+            <div className="shrink-0 flex flex-col gap-2.5 sm:w-auto w-full self-start lg:self-center">
               <Button
                 onClick={() => {
                   setHighlightPaymentMethod(false);
@@ -467,7 +451,7 @@ export function PortalMembershipTab({
                   setEditCardOpen(true);
                 }}
                 className={cn(
-                  "w-full text-xs font-bold h-11 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md",
+                  "w-full sm:w-auto text-xs font-bold h-12 px-6 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md",
                   highlightPaymentMethod
                     ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] border-2 border-amber-300 shadow-[0_0_25px_rgba(245,181,68,0.9)] scale-[1.02] animate-pulse"
                     : "bg-[#030C22] hover:bg-blue-900/40 text-white border border-blue-900/40 font-semibold"
@@ -476,10 +460,105 @@ export function PortalMembershipTab({
                 <Edit3 className={cn("h-4 w-4", highlightPaymentMethod ? "text-[#07162B]" : "text-[#F5B544]")} />
                 <span>Update Payment Method</span>
               </Button>
-            </CardContent>
-          </Card>
-        </div>
+              <span className="text-[11px] text-blue-200/50 text-center flex items-center justify-center gap-1">
+                <ShieldCheck className="h-3 w-3 text-emerald-400" />
+                Instant encrypted sync
+              </span>
+            </div>
+          </div>
+        </Card>
       </div>
+
+      {/* ── Active Plan Details Full-Width Card ── */}
+      <Card className="border border-blue-900/40 bg-[#06172F] shadow-xl rounded-3xl overflow-hidden text-white">
+        <CardHeader className="bg-[#030C22] border-b border-blue-900/40 p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div>
+              <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase mb-1">
+                Current Enrolled Plan
+              </Badge>
+              <CardTitle className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                Essential Continuity & IEP Advisory
+              </CardTitle>
+            </div>
+            <div className="text-right">
+              <span className="text-2xl font-black text-amber-300 font-mono block">$55.00</span>
+              <span className="text-[10px] text-white/50 block font-medium">per month per student</span>
+            </div>
+          </div>
+          <CardDescription className="text-xs text-blue-200/70 mt-1">
+            Student: <strong className="text-white font-semibold">{studentName}</strong> • Special Education Advisory
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="p-5 sm:p-6 space-y-4 text-xs">
+          <p className="text-white/80 leading-relaxed">
+            Provides continuous IEP advocacy, draft document audits, and direct strategy access with Waypoint throughout your child's academic year.
+          </p>
+
+          {/* What's Included list */}
+          <div className="space-y-2.5 pt-2 border-t border-white/10">
+            <span className="text-[11px] font-bold text-[#F5B544] uppercase tracking-wider block font-mono">
+              Enrolled Membership Benefits:
+            </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-white/90">
+              <div className="flex items-start gap-2">
+                <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                <span>Unlimited IEP & 504 document audits, draft review checks, and amendments</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                <span>Quarterly IEP goal progress audit & school compliance monitoring</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                <span>Pre-meeting parent strategy agendas & talking point roadmaps delivered 48h prior</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                <span>Direct priority portal messaging & strategic advisory with Waypoint Advocates</span>
+              </div>
+              <div className="flex items-start gap-2 md:col-span-2">
+                <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                <span>Full access to Document Vault, IEP Comparator, and Case Compass™</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Membership management pills */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2">
+            <div className="p-3 rounded-xl bg-[#030C22] border border-blue-900/40 text-center">
+              <span className="text-[10px] text-white/50 block font-medium">Billing Term</span>
+              <span className="font-bold text-white text-xs block mt-0.5">Monthly Recurring</span>
+            </div>
+            <div className="p-3 rounded-xl bg-[#030C22] border border-blue-900/40 text-center">
+              <span className="text-[10px] text-white/50 block font-medium">Next Invoice</span>
+              <span className="font-bold text-amber-300 text-xs block mt-0.5 font-mono">June 1, 2026</span>
+            </div>
+            <div className="p-3 rounded-xl bg-[#030C22] border border-blue-900/40 text-center col-span-2 sm:col-span-1">
+              <span className="text-[10px] text-white/50 block font-medium">Status</span>
+              <span className="font-bold text-emerald-400 text-xs block mt-0.5">Active Auto-Pay</span>
+            </div>
+          </div>
+        </CardContent>
+
+        <CardFooter className="p-5 sm:p-6 bg-[#030C22]/60 border-t border-blue-900/40 flex flex-wrap items-center justify-between gap-3">
+          <span className="text-xs text-blue-200/60 flex items-center gap-1.5">
+            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            Cancel or pause anytime with 30-day notice
+          </span>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onNavigateTab?.("renewal")}
+            className="border-blue-900/40 bg-[#030C22] hover:bg-blue-900/40 text-white text-xs font-semibold rounded-xl cursor-pointer"
+          >
+            <span>Upgrade to $105/mo Live Representation</span>
+            <ChevronRight className="h-3.5 w-3.5 ml-1" />
+          </Button>
+        </CardFooter>
+      </Card>
 
       {/* ── Plan Transition Block (Choose what happens when your plan ends: keep vault, tool, renew) ── */}
       <div className="rounded-3xl border border-amber-400/40 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] p-6 sm:p-7 shadow-2xl relative overflow-hidden group">
