@@ -362,8 +362,8 @@ export function PortalMembershipTab({
             </div>
 
 
-            {/* 3. Right: Update Payment Method Button */}
-            <div className="shrink-0 flex flex-col gap-2.5 sm:w-auto w-full self-start lg:self-center">
+            {/* 2. Center: Update Payment Method Button (Centered, Larger & Premium Admiralty) */}
+            <div className="flex-1 flex flex-col items-center justify-center gap-3.5 w-full py-4 sm:py-2">
               <Button
                 onClick={() => {
                   setHighlightPaymentMethod(false);
@@ -377,19 +377,25 @@ export function PortalMembershipTab({
                   setEditCardOpen(true);
                 }}
                 className={cn(
-                  "w-full sm:w-auto text-xs font-bold h-12 px-6 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md",
+                  "h-13 sm:h-14 px-8 sm:px-10 rounded-2xl font-extrabold text-sm sm:text-base tracking-wide transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer shadow-xl relative overflow-hidden group cursor-pointer",
                   highlightPaymentMethod
-                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] border-2 border-amber-300 shadow-[0_0_25px_rgba(245,181,68,0.9)] scale-[1.02] animate-pulse"
-                    : "bg-[#030C22] hover:bg-blue-900/40 text-white border border-blue-900/40 font-semibold"
+                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] border-2 border-amber-300 shadow-[0_0_35px_rgba(245,181,68,0.95)] scale-[1.03] animate-pulse"
+                    : "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#F0CF88] hover:via-[#D6B16A] hover:to-[#AF8E4C] text-[#07162B] border border-[#FFE394]/70 shadow-[0_8px_24px_rgba(0,0,0,0.6),0_0_20px_rgba(197,160,89,0.3)] hover:shadow-[0_12px_32px_rgba(245,181,68,0.5)] hover:scale-[1.02] active:scale-[0.98]"
                 )}
               >
-                <Edit3 className={cn("h-4 w-4", highlightPaymentMethod ? "text-[#07162B]" : "text-[#F5B544]")} />
-                <span>Update Payment Method</span>
+                {/* Subtle sheen highlight on hover */}
+                <div className="absolute inset-0 w-1/2 h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-1000 ease-out pointer-events-none" />
+
+                <Edit3 className="h-5 w-5 text-[#07162B] shrink-0 stroke-[2.5]" />
+                <span className="font-extrabold tracking-wide">Update Payment Method</span>
               </Button>
-              <span className="text-[11px] text-blue-200/50 text-center flex items-center justify-center gap-1">
-                <ShieldCheck className="h-3 w-3 text-emerald-400" />
-                Instant encrypted sync
-              </span>
+
+              <div className="flex items-center gap-2 text-xs text-[#D8C7A5] font-medium bg-[#020A17]/80 px-4 py-1.5 rounded-full border border-[#3A2C18] shadow-inner">
+                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span>Instant encrypted sync</span>
+                <span className="text-white/20">•</span>
+                <span className="text-[#C6B697] font-mono text-[11px]">PCI-DSS Level 1</span>
+              </div>
             </div>
           </div>
         </Card>
