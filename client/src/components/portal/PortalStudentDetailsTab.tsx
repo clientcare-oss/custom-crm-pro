@@ -679,21 +679,22 @@ export function PortalStudentDetailsTab({
             <div>
               {/* ─── PAYMENT DECLINED FLASHING RED ALERT BANNER (Directly above Message Advocate) ─── */}
               {paymentDeclined && (
-                <div className="mb-3.5 rounded-xl border-2 border-red-500/90 bg-gradient-to-r from-[#200407] via-[#35070c] to-[#200407] p-3.5 shadow-[0_0_30px_rgba(239,68,68,0.45)] relative overflow-hidden transition-all animate-[pulse_3s_cubic-bezier(0.4,0,0.6,1)_infinite]">
-                  {/* Flashing Top Red Radiant Accent */}
-                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_16px_rgba(239,68,68,1)] animate-pulse" />
+                <div className="mb-3.5 rounded-xl border border-red-900/50 bg-gradient-to-r from-[#200407] via-[#2f060b] to-[#200407] p-3.5 relative overflow-hidden transition-all shadow-md">
+                  {/* Flashing Perimeter Border Overlay (ONLY the border flashes) */}
+                  <div 
+                    className="absolute inset-0 rounded-xl border-2 border-red-500 pointer-events-none z-10 animate-[pulse_1.5s_cubic-bezier(0.4,0,0.6,1)_infinite]" 
+                    style={{
+                      boxShadow: "0 0 20px rgba(239, 68, 68, 0.65), inset 0 0 8px rgba(239, 68, 68, 0.2)"
+                    }}
+                  />
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-0">
                     <div className="flex items-start gap-3">
-                      {/* Pulsing Beacon & Alert Icon */}
+                      {/* Warning Beacon & Alert Icon */}
                       <div className="relative mt-0.5 shrink-0">
                         <div className="w-9 h-9 rounded-xl bg-red-950/90 border border-red-500/70 flex items-center justify-center text-red-400 shadow-inner">
-                          <AlertTriangle className="h-5 w-5 text-red-400 animate-bounce" />
+                          <AlertTriangle className="h-5 w-5 text-red-400" />
                         </div>
-                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-90" />
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,1)]" />
-                        </span>
                       </div>
 
                       <div className="space-y-1 min-w-0">
