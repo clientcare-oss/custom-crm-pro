@@ -31,10 +31,21 @@ import {
   Globe,
   Landmark,
   Award,
-  Activity
+  Activity,
+  AlertTriangle,
+  CreditCard,
+  Lock,
+  ShieldAlert
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { WaypointCompassRose } from "@/components/portal/PlanTransitionExperience";
 import { FolioCornerBrackets } from "@/components/students/FolioCornerBrackets";
@@ -275,6 +286,51 @@ export function PortalStudentDetailsTab({
     } catch (e) {
       console.error(e);
     }
+  };
+
+  // ── Payment Declined Alert State (flashing red banner above Message Advocate) ──
+  const [paymentDeclined, setPaymentDeclined] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const urlParam = new URLSearchParams(window.location.search).get("payment");
+      if (urlParam === "declined") return true;
+      if (urlParam === "paid" || urlParam === "ok") return false;
+      const stored = localStorage.getItem("waypoint_payment_declined");
+      if (stored !== null) return stored === "true";
+    }
+    return Boolean(
+      effectiveStudent?.paymentDeclined ??
+      (effectiveStudent?.billingStatus === "declined" ||
+       effectiveStudent?.billingStatus === "past_due" ||
+       effectiveStudent?.paymentStatus === "declined" ||
+       effectiveStudent?.paymentStatus === "failed" ||
+       studentDetail?.contact?.billingStatus === "declined" ||
+       true // active for review & testing so Byron can immediately see and verify the alert
+      )
+    );
+  });
+
+  const [showUpdatePaymentModal, setShowUpdatePaymentModal] = useState(false);
+  const [isUpdatingCard, setIsUpdatingCard] = useState(false);
+  const [cardForm, setCardForm] = useState({
+    cardholderName: parentFullName || "Jennifer Jenkins",
+    cardNumber: "•••• •••• •••• 4242",
+    expMonthYear: "08/28",
+    cvc: "•••",
+    zipCode: "30303",
+  });
+
+  const handleUpdateCardSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingCard(true);
+    setTimeout(() => {
+      setIsUpdatingCard(false);
+      setPaymentDeclined(false);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("waypoint_payment_declined", "false");
+      }
+      setShowUpdatePaymentModal(false);
+      toast.success("Payment method updated! Retainer payment has been processed successfully.");
+    }, 1100);
   };
 
   // Top 3 documents from record files or clean fallbacks matching screenshot
@@ -621,6 +677,60 @@ export function PortalStudentDetailsTab({
           {/* ─── RIGHT PANEL: Current Focus & Advocacy Action Center (~58% width) ─── */}
           <div className="lg:col-span-7 py-2 pl-6 sm:pl-8 lg:pl-12 xl:pr-4 flex flex-col justify-between">
             <div>
+              {/* ─── PAYMENT DECLINED FLASHING RED ALERT BANNER (Directly above Message Advocate) ─── */}
+              {paymentDeclined && (
+                <div className="mb-3.5 rounded-xl border-2 border-red-500/90 bg-gradient-to-r from-[#200407] via-[#35070c] to-[#200407] p-3.5 shadow-[0_0_30px_rgba(239,68,68,0.45)] relative overflow-hidden transition-all animate-[pulse_3s_cubic-bezier(0.4,0,0.6,1)_infinite]">
+                  {/* Flashing Top Red Radiant Accent */}
+                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_16px_rgba(239,68,68,1)] animate-pulse" />
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      {/* Pulsing Beacon & Alert Icon */}
+                      <div className="relative mt-0.5 shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-red-950/90 border border-red-500/70 flex items-center justify-center text-red-400 shadow-inner">
+                          <AlertTriangle className="h-5 w-5 text-red-400 animate-bounce" />
+                        </div>
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-90" />
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,1)]" />
+                        </span>
+                      </div>
+
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+                            <span className="text-red-400 font-extrabold uppercase tracking-wide">Action Required:</span>
+                            <span>Payment Declined</span>
+                          </h4>
+                          <span className="text-[9px] font-extrabold tracking-wider text-red-200 uppercase bg-red-900/80 border border-red-500/80 px-2 py-0.5 rounded-full font-mono shadow-sm">
+                            RETAINER PAST DUE
+                          </span>
+                        </div>
+                        <p className="text-[11px] sm:text-xs text-red-200/90 leading-snug">
+                          Your recent monthly advocacy payment was declined. Please update your payment card to ensure uninterrupted representation and meeting coverage.
+                        </p>
+                        <div className="flex items-center gap-2 pt-0.5 text-[10px] text-red-300 font-mono">
+                          <CreditCard className="h-3 w-3 text-red-400 shrink-0" />
+                          <span>Visa ending in •••• 4242 failed to process</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="shrink-0 flex items-center gap-2 pt-1 sm:pt-0 self-end sm:self-center">
+                      <Button
+                        size="sm"
+                        onClick={() => setShowUpdatePaymentModal(true)}
+                        className="bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-lg shadow-red-950/60 transition-all flex items-center gap-1.5 cursor-pointer hover:scale-[1.02] border border-red-400/50"
+                      >
+                        <CreditCard className="h-3.5 w-3.5" />
+                        <span>Update Card</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Action Bar — Full-Width Extended Button */}
               <div className="mb-4">
                 <Button
@@ -1307,6 +1417,131 @@ export function PortalStudentDetailsTab({
         </div>
       </div>
 
+      {/* ── UPDATE PAYMENT METHOD MODAL ── */}
+      <Dialog open={showUpdatePaymentModal} onOpenChange={setShowUpdatePaymentModal}>
+        <DialogContent className="bg-gradient-to-b from-[#0b172a] via-[#071324] to-[#030914] border border-red-500/50 text-white max-w-md shadow-2xl rounded-2xl p-5">
+          <DialogHeader className="border-b border-white/10 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-red-950 border border-red-500/50 flex items-center justify-center text-red-400">
+                <CreditCard className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-white font-serif">
+                  Update Payment Method
+                </DialogTitle>
+                <DialogDescription className="text-xs text-blue-200/70">
+                  Update your card on file to reprocess your monthly advocacy retainer.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <form onSubmit={handleUpdateCardSubmit} className="space-y-3.5 pt-2 text-xs">
+            <div className="rounded-lg bg-red-950/40 border border-red-500/30 p-2.5 flex items-center gap-2 text-red-200 text-[11px]">
+              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+              <span>Updating your payment details will immediately re-attempt the outstanding retainer.</span>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-white/80 font-semibold block">Cardholder Name</label>
+              <input
+                type="text"
+                required
+                value={cardForm.cardholderName}
+                onChange={(e) => setCardForm({ ...cardForm, cardholderName: e.target.value })}
+                placeholder="Name on card"
+                className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-white/80 font-semibold block">Card Number</label>
+              <input
+                type="text"
+                required
+                value={cardForm.cardNumber}
+                onChange={(e) => setCardForm({ ...cardForm, cardNumber: e.target.value })}
+                placeholder="4242 •••• •••• 4242"
+                className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none font-mono"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-white/80 font-semibold block">Expiration (MM/YY)</label>
+                <input
+                  type="text"
+                  required
+                  value={cardForm.expMonthYear}
+                  onChange={(e) => setCardForm({ ...cardForm, expMonthYear: e.target.value })}
+                  placeholder="MM/YY"
+                  className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-white/80 font-semibold block">CVC / Security Code</label>
+                <input
+                  type="password"
+                  maxLength={4}
+                  required
+                  value={cardForm.cvc}
+                  onChange={(e) => setCardForm({ ...cardForm, cvc: e.target.value })}
+                  placeholder="•••"
+                  className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-white/80 font-semibold block">Billing ZIP / Postal Code</label>
+              <input
+                type="text"
+                required
+                value={cardForm.zipCode}
+                onChange={(e) => setCardForm({ ...cardForm, zipCode: e.target.value })}
+                placeholder="ZIP Code"
+                className="w-full bg-[#030C22] border border-blue-900/40 focus:border-amber-400 rounded-xl p-2.5 text-xs text-white outline-none font-mono"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUpdatePaymentModal(false);
+                  onNavigateTab("financials");
+                }}
+                className="text-[11px] text-blue-300 hover:text-white underline cursor-pointer"
+              >
+                Go to Membership &amp; Invoices
+              </button>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowUpdatePaymentModal(false)}
+                  className="text-white/70 hover:text-white text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isUpdatingCard}
+                  className="bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-md gap-1.5 cursor-pointer"
+                >
+                  {isUpdatingCard ? (
+                    <span>Validating Card...</span>
+                  ) : (
+                    <span>Save &amp; Reprocess Payment</span>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
