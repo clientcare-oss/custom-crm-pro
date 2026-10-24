@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   CreditCard, 
   ShieldCheck, 
@@ -38,6 +38,7 @@ import {
 import { toast } from "sonner";
 import PageIdBadge from "@/components/PageIdBadge";
 import VaultSafeIcon from "@/components/ui/VaultSafeIcon";
+import { cn } from "@/lib/utils";
 
 interface PortalMembershipTabProps {
   displayName?: string;
@@ -73,6 +74,45 @@ export function PortalMembershipTab({
   });
 
   const [editCardOpen, setEditCardOpen] = useState(false);
+  const [highlightPaymentMethod, setHighlightPaymentMethod] = useState(false);
+  const paymentMethodCardRef = useRef<HTMLDivElement>(null);
+
+  const triggerHighlightAndScroll = () => {
+    setHighlightPaymentMethod(true);
+    setTimeout(() => {
+      paymentMethodCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 200);
+    // Stay illuminated for 6 seconds
+    setTimeout(() => {
+      setHighlightPaymentMethod(false);
+    }, 6000);
+  };
+
+  useEffect(() => {
+    let shouldHighlight = false;
+    try {
+      if (sessionStorage.getItem("waypoint_highlight_payment_method") === "true") {
+        shouldHighlight = true;
+        sessionStorage.removeItem("waypoint_highlight_payment_method");
+      }
+    } catch {}
+
+    if (typeof window !== "undefined" && window.location.hash === "#saved-payment-method") {
+      shouldHighlight = true;
+    }
+
+    if (shouldHighlight) {
+      triggerHighlightAndScroll();
+    }
+
+    const handleCustomFocus = () => {
+      triggerHighlightAndScroll();
+    };
+
+    window.addEventListener("waypoint:focus-payment-method", handleCustomFocus);
+    return () => window.removeEventListener("waypoint:focus-payment-method", handleCustomFocus);
+  }, []);
+
   const [cardForm, setCardForm] = useState({
     cardNumber: "4242 •••• •••• 4242",
     cardholder: cardData.cardholder,
@@ -301,17 +341,48 @@ export function PortalMembershipTab({
         </div>
 
         {/* Right Column: Fake Credit Card & Payment Method Manager (5 Cols) */}
-        <div className="lg:col-span-5 space-y-4">
-          <Card className="border border-blue-900/40 bg-[#06172F] shadow-xl rounded-3xl overflow-hidden text-white">
-            <CardHeader className="bg-[#030C22] border-b border-blue-900/40 p-5">
+        <div 
+          id="saved-payment-method"
+          ref={paymentMethodCardRef}
+          className="lg:col-span-5 space-y-4 scroll-mt-24"
+        >
+          <Card 
+            className={cn(
+              "border bg-[#06172F] shadow-xl rounded-3xl overflow-hidden text-white transition-all duration-500 relative",
+              highlightPaymentMethod 
+                ? "border-amber-400 ring-4 ring-amber-400/40 shadow-[0_0_50px_rgba(245,181,68,0.7),inset_0_0_20px_rgba(245,181,68,0.25)] animate-[pulse_1.5s_cubic-bezier(0.4,0,0.6,1)_infinite]" 
+                : "border-blue-900/40"
+            )}
+          >
+            {/* Illuminated Radiant Aura when focused */}
+            {highlightPaymentMethod && (
+              <div className="absolute inset-0 rounded-3xl pointer-events-none z-20 border-2 border-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.8)]" />
+            )}
+
+            <CardHeader className={cn(
+              "border-b p-5 transition-colors duration-500",
+              highlightPaymentMethod 
+                ? "bg-gradient-to-r from-[#1c1303] via-[#352303] to-[#1c1303] border-amber-400/60" 
+                : "bg-[#030C22] border-blue-900/40"
+            )}>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-[#F5B544]" />
-                  Saved Payment Method
+                  <CreditCard className={cn(
+                    "h-4 w-4 transition-colors",
+                    highlightPaymentMethod ? "text-amber-300 animate-bounce" : "text-[#F5B544]"
+                  )} />
+                  <span>Saved Payment Method</span>
                 </CardTitle>
-                <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono">
-                  Default Auto-Pay
-                </Badge>
+                <div className="flex items-center gap-1.5">
+                  {highlightPaymentMethod && (
+                    <Badge className="bg-amber-400 text-slate-950 font-extrabold text-[10px] uppercase tracking-wider font-mono shadow-md animate-pulse">
+                      Update Required
+                    </Badge>
+                  )}
+                  <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono">
+                    Default Auto-Pay
+                  </Badge>
+                </div>
               </div>
               <CardDescription className="text-xs text-blue-200/60">
                 Primary card used for monthly $55 membership billing.
@@ -385,6 +456,7 @@ export function PortalMembershipTab({
               {/* Update Card Action Button */}
               <Button
                 onClick={() => {
+                  setHighlightPaymentMethod(false);
                   setCardForm({
                     cardNumber: `•••• •••• •••• ${cardData.last4}`,
                     cardholder: cardData.cardholder,
@@ -394,9 +466,14 @@ export function PortalMembershipTab({
                   });
                   setEditCardOpen(true);
                 }}
-                className="w-full bg-[#030C22] hover:bg-blue-900/40 text-white border border-blue-900/40 text-xs font-semibold h-10 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className={cn(
+                  "w-full text-xs font-bold h-11 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md",
+                  highlightPaymentMethod
+                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] border-2 border-amber-300 shadow-[0_0_25px_rgba(245,181,68,0.9)] scale-[1.02] animate-pulse"
+                    : "bg-[#030C22] hover:bg-blue-900/40 text-white border border-blue-900/40 font-semibold"
+                )}
               >
-                <Edit3 className="h-3.5 w-3.5 text-[#F5B544]" />
+                <Edit3 className={cn("h-4 w-4", highlightPaymentMethod ? "text-[#07162B]" : "text-[#F5B544]")} />
                 <span>Update Payment Method</span>
               </Button>
             </CardContent>

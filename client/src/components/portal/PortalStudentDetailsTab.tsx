@@ -719,11 +719,17 @@ export function PortalStudentDetailsTab({
                     <div className="shrink-0 self-end sm:self-center">
                       <Button
                         size="sm"
-                        onClick={() => setShowUpdatePaymentModal(true)}
+                        onClick={() => {
+                          try {
+                            sessionStorage.setItem("waypoint_highlight_payment_method", "true");
+                          } catch {}
+                          onNavigateTab("financials");
+                          window.dispatchEvent(new CustomEvent("waypoint:focus-payment-method"));
+                        }}
                         className="bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-lg shadow-red-950/60 transition-all flex items-center gap-1.5 cursor-pointer hover:scale-[1.02] border border-red-400/50"
                       >
                         <CreditCard className="h-3.5 w-3.5" />
-                        <span>Update Card</span>
+                        <span>Update Payment Method</span>
                       </Button>
                     </div>
                   </div>
