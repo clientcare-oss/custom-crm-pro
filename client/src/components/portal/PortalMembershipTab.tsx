@@ -302,8 +302,11 @@ export function PortalMembershipTab({
             {/* Content: Fake Credit Card with Update Button Directly Underneath */}
             <div className="p-5 sm:p-6 flex-1 flex flex-col items-center justify-center gap-4 relative z-10">
               {/* Fake Credit Card Graphic */}
-              <div className="w-full max-w-[340px]">
-                <div className="relative rounded-2xl bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/40 p-4.5 sm:p-5 text-white shadow-2xl overflow-hidden space-y-3.5 group">
+              <div className="w-full max-w-[340px] sm:max-w-[350px]">
+                <div 
+                  style={{ aspectRatio: "85.6 / 53.98" }}
+                  className="relative aspect-[85.6/53.98] w-full rounded-2xl bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/40 p-4.5 sm:p-5 text-white shadow-2xl overflow-hidden flex flex-col justify-between group select-none"
+                >
                   {/* Gold accent sheen */}
                   <div className="absolute top-0 right-0 w-44 h-44 bg-[#F5B544]/10 rounded-full blur-2xl pointer-events-none -mr-16 -mt-16 group-hover:bg-[#F5B544]/20 transition-all duration-700" />
                   
@@ -344,7 +347,7 @@ export function PortalMembershipTab({
                       <span className="text-[8px] uppercase tracking-widest text-white/60 block font-mono">
                         Cardholder Name
                       </span>
-                      <span className="font-bold text-white tracking-wide uppercase font-mono text-[11px]">
+                      <span className="font-bold text-white tracking-wide uppercase font-mono text-[11px] sm:text-xs">
                         {cardData.cardholder}
                       </span>
                     </div>
@@ -353,7 +356,7 @@ export function PortalMembershipTab({
                       <span className="text-[8px] uppercase tracking-widest text-white/60 block font-mono">
                         Expires
                       </span>
-                      <span className="font-bold text-amber-300 font-mono text-[11px]">
+                      <span className="font-bold text-amber-300 font-mono text-[11px] sm:text-xs">
                         {cardData.expMonth}/{cardData.expYear.slice(-2)}
                       </span>
                     </div>
@@ -362,7 +365,7 @@ export function PortalMembershipTab({
               </div>
 
               {/* Update Card Button Directly Under the Fake Credit Card */}
-              <div className="w-full max-w-[340px] flex flex-col items-center gap-2 pt-0.5">
+              <div className="w-full max-w-[340px] sm:max-w-[350px] flex flex-col items-center gap-2 pt-0.5">
                 <Button
                   onClick={() => {
                     setHighlightPaymentMethod(false);
