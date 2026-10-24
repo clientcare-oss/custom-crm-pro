@@ -16,6 +16,7 @@ import {
   PortalModuleDefinition 
 } from "./portal/portalModuleRegistry";
 import { cn } from "@/lib/utils";
+import { resolvePortalTabId, PORTAL_TAB_IDS } from "@/lib/pageIdRegistry";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -395,6 +396,8 @@ export function ClientPortalSidebar({
             {gettingStartedModules.map(({ id, icon: Icon, label, isCompleted }) => {
               const isActive = activeTab === id;
               const isTourItem = id === "explore-portal";
+              const pageInfo = resolvePortalTabId(id) || PORTAL_TAB_IDS[id];
+              const subId = pageInfo?.id;
 
               // Special treatment for Explore Your Portal: progress bar inside card
               if (isTourItem) {
@@ -402,11 +405,12 @@ export function ClientPortalSidebar({
                   <button
                     key={id}
                     data-nav-id={id}
+                    data-page-id={subId}
                     onClick={() => {
                       onSelectTab(id);
                       if (onCloseMobile) onCloseMobile();
                     }}
-                    title={isCollapsed ? label : undefined}
+                    title={subId ? `${label} (${subId})` : label}
                     className={cn(
                       "w-full flex flex-col rounded-lg transition-all duration-150 text-left cursor-pointer",
                       isCollapsed && !mobile ? "items-center justify-center p-2" : "px-3 py-2",
@@ -429,10 +433,22 @@ export function ClientPortalSidebar({
                       
                       {(!isCollapsed || mobile) && (
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between gap-1.5">
                             <span className="text-xs font-semibold truncate">{label}</span>
                             <div className="flex items-center gap-1 shrink-0">
-                              {isTourAllExplored && <span className="text-[10px] text-emerald-400 font-bold ml-1">✓</span>}
+                              {subId && (
+                                <span className={cn(
+                                  "text-[8.5px] font-mono font-bold px-1.5 py-0.5 rounded tracking-tighter select-none",
+                                  isActive
+                                    ? "bg-[#D4AF37]/25 text-[#F8D279] border border-[#D4AF37]/50 shadow-xs"
+                                    : isLight
+                                      ? "bg-slate-100 text-slate-500 border border-slate-200"
+                                      : "bg-[#030C22] text-[#8EA7C7] border border-[#172D4D]/80"
+                                )}>
+                                  {subId}
+                                </span>
+                              )}
+                              {isTourAllExplored && <span className="text-[10px] text-emerald-400 font-bold ml-0.5">✓</span>}
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -482,11 +498,12 @@ export function ClientPortalSidebar({
                 <button
                   key={id}
                   data-nav-id={id}
+                  data-page-id={subId}
                   onClick={() => {
                     onSelectTab(id);
                     if (onCloseMobile) onCloseMobile();
                   }}
-                  title={isCollapsed ? label : undefined}
+                  title={subId ? `${label} (${subId})` : label}
                   className={cn(
                     "h-9 w-full rounded-lg text-xs cursor-pointer transition-all duration-150 flex items-center select-none",
                     isCollapsed && !mobile ? "justify-center" : "gap-2.5 px-3 text-left",
@@ -515,8 +532,22 @@ export function ClientPortalSidebar({
                   )} />
                   {(!isCollapsed || mobile) && (
                     <span className="truncate flex-1 flex items-center justify-between tracking-wide">
-                      <span>{label}</span>
-                      {isCompleted && <span className="text-[10px] text-emerald-400 font-bold ml-1">✓</span>}
+                      <span className="truncate mr-1.5">{label}</span>
+                      <span className="flex items-center gap-1 shrink-0">
+                        {subId && (
+                          <span className={cn(
+                            "text-[8.5px] font-mono font-bold px-1.5 py-0.5 rounded tracking-tighter select-none",
+                            isActive
+                              ? "bg-[#D4AF37]/25 text-[#F8D279] border border-[#D4AF37]/50 shadow-xs"
+                              : isLight
+                                ? "bg-slate-100 text-slate-500 border border-slate-200"
+                                : "bg-[#030C22] text-[#8EA7C7] border border-[#172D4D]/80"
+                          )}>
+                            {subId}
+                          </span>
+                        )}
+                        {isCompleted && <span className="text-[10px] text-emerald-400 font-bold ml-0.5">✓</span>}
+                      </span>
                     </span>
                   )}
                 </button>
@@ -546,16 +577,19 @@ export function ClientPortalSidebar({
             const isActive = activeTab === id;
             const isTourTarget = isExplorationActive && TOUR_MODULES.some(m => m.id === id);
             const isUnexplored = isTourTarget && !exploredTourIds.includes(id);
+            const pageInfo = resolvePortalTabId(id) || PORTAL_TAB_IDS[id];
+            const subId = pageInfo?.id;
 
             return (
               <button
                 key={id}
                 data-nav-id={id}
+                data-page-id={subId}
                 onClick={() => {
                   onSelectTab(id);
                   if (onCloseMobile) onCloseMobile();
                 }}
-                title={isCollapsed ? label : undefined}
+                title={subId ? `${label} (${subId})` : label}
                 className={cn(
                   "h-10 w-full rounded-lg cursor-pointer transition-all duration-150 flex items-center select-none",
                   isCollapsed && !mobile ? "justify-center px-1" : "gap-3 px-3 text-left",
@@ -578,8 +612,8 @@ export function ClientPortalSidebar({
                   id === "plan-transition" && isActive ? "animate-spin-slow" : ""
                 )} />
                 {(!isCollapsed || mobile) && (
-                  <span className="truncate flex-1 flex items-center justify-between tracking-wide text-[13.5px]">
-                    <span>{label === "Details" || label === "Student Workspace" ? "My Students" : label}</span>
+                  <span className="truncate flex-1 flex items-center justify-between tracking-wide text-[13px]">
+                    <span className="truncate mr-1.5">{label === "Details" || label === "Student Workspace" ? "My Students" : label}</span>
                     <span className="flex items-center gap-1.5 shrink-0">
                       {badge && (
                         <span className={cn(
@@ -589,6 +623,21 @@ export function ClientPortalSidebar({
                             : "bg-amber-400/20 text-[#F8D279] border border-amber-400/35 shadow-xs"
                         )}>
                           {badge}
+                        </span>
+                      )}
+                      {subId && (
+                        <span
+                          className={cn(
+                            "text-[8.5px] font-mono font-bold px-1.5 py-0.5 rounded tracking-tighter select-none transition-colors",
+                            isActive
+                              ? "bg-[#D4AF37]/25 text-[#F8D279] border border-[#D4AF37]/50 shadow-xs"
+                              : isLight
+                                ? "bg-slate-100 text-slate-500 border border-slate-200"
+                                : "bg-[#030C22] text-[#8EA7C7] border border-[#172D4D]/80 group-hover:border-[#D4AF37]/40 group-hover:text-white"
+                          )}
+                          title={`Page ID: ${subId}`}
+                        >
+                          {subId}
                         </span>
                       )}
                       {isUnexplored && (

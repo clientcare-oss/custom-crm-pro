@@ -326,13 +326,19 @@ export const PORTAL_TAB_IDS: Record<string, PageIdInfo> = {
 
   // Onboarding Stage Modules
   "discovery-call":   { id: "PG-027-S02", name: "Discovery Call Scheduled", category: "Portal Stage" },
+  "your-journey":     { id: "PG-027-S03", name: "Your Waypoint Journey", category: "Portal Stage", description: "The 5-step Waypoint representation roadmap" },
+  "journey":          { id: "PG-027-S03", name: "Your Waypoint Journey", category: "Portal Stage" },
   "choose-support":   { id: "PG-027-S04", name: "Support Tier Selection", category: "Portal Stage" },
-  "agreements":       { id: "PG-027-S07", name: "Advocacy Agreements", category: "Portal Stage" },
+  "agreements":       { id: "PG-023-AGR", name: "Advocacy Agreements", category: "Portal" },
   "student-setup":    { id: "PG-027-S08", name: "Student Setup Profile", category: "Portal Stage" },
   "upload-records":   { id: "PG-027-S09", name: "Document Upload", category: "Portal Stage" },
   "advocacy-intake":  { id: "PG-027-S10", name: "Advocacy Detailed Intake", category: "Portal Stage" },
   "explore-portal":   { id: "PG-027-S12", name: "Explore Portal Tour", category: "Portal Stage" },
   "guidance":         { id: "PG-030-GCL", name: "Guide Client Live", category: "Advocacy" },
+  "vault":            { id: "PG-023-VAULT", name: "Document Vault", category: "Portal" },
+  "students":         { id: "PG-023-STU", name: "My Students", category: "Portal" },
+  "messages":         { id: "PG-023-COM", name: "Portal Communication", category: "Portal" },
+  "action-center":    { id: "PG-023-ACT", name: "Action Center", category: "Portal" },
 };
 
 // ─── Crew Quarters Sub-ID Mappings ───────────────────────────────────────────
@@ -476,6 +482,17 @@ export function resolvePageId(pathname: string, search = ""): PageIdInfo {
     if (tabParam === "session-types" || tabParam === "scheduler") {
       return PAGE_IDS["/session-types"];
     }
+  }
+
+  // Check Client Portal sub-tabs (/portal?tab=..., /client-portal?tab=..., /project-workspace?tab=...)
+  if (cleanPath === "/portal" || cleanPath === "/client-portal" || cleanPath.startsWith("/project-workspace")) {
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const tabParam = urlParams.get("tab");
+    if (tabParam && PORTAL_TAB_IDS[tabParam]) {
+      return PORTAL_TAB_IDS[tabParam];
+    }
+    // Default to Compass tab if no sub-tab specified
+    return PORTAL_TAB_IDS["compass"] || { id: "PG-023-CMP", name: "Portal Case Compass", category: "Portal" };
   }
 
   // 1. Direct exact match

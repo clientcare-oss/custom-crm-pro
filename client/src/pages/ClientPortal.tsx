@@ -62,7 +62,7 @@ import { PortalAppointmentsTab } from "@/components/portal/PortalAppointmentsTab
 import { PortalMembershipTab } from "@/components/portal/PortalMembershipTab";
 import { PortalReferralsTab } from "@/components/portal/PortalReferralsTab";
 import { ClientStage, getDefaultModuleForStage, TOUR_MODULES } from "@/components/portal/portalModuleRegistry";
-import { resolvePortalTabId, broadcastPageId } from "@/lib/pageIdRegistry";
+import { resolvePortalTabId, broadcastPageId, PORTAL_TAB_IDS } from "@/lib/pageIdRegistry";
 import { openWaypointScan } from "@/lib/waypointScanEvents";
 import { PortalToolsContent } from "@/components/portal/PortalToolsContent";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -632,6 +632,23 @@ export default function ClientPortal() {
     if (stageFromUrl) return getDefaultModuleForStage(stageFromUrl);
     return "discovery-call";
   });
+
+  // Sync specific page sub-ID and browser URL with active portal tab
+  useEffect(() => {
+    const pageInfo = resolvePortalTabId(activeTab) || PORTAL_TAB_IDS[activeTab];
+    if (pageInfo) {
+      broadcastPageId(pageInfo);
+    }
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("tab") !== activeTab) {
+        url.searchParams.set("tab", activeTab);
+        window.history.replaceState(null, "", url.toString());
+      }
+    } catch {
+      // ignore
+    }
+  }, [activeTab]);
 
   // Portal Tour & Exploration State: Auto-start for new clients + initialize with ["explore-portal"]
   const [isExplorationActive, setIsExplorationActive] = useState<boolean>(() => {
