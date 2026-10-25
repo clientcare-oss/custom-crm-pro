@@ -45,6 +45,7 @@ interface MarinaLotViewProps {
   onSequenceFill?: () => void;
   onStopSequence?: () => void;
   onClearDemo?: () => void;
+  quickEntrySlot?: React.ReactNode;
 }
 
 // Studio-grade 3D photorealistic luxury crossover SUV (Clean, shadow-free on asphalt, authentic slender proportions)
@@ -234,6 +235,7 @@ export function MarinaLotView({
   onSequenceFill,
   onStopSequence,
   onClearDemo,
+  quickEntrySlot,
 }: MarinaLotViewProps) {
   const [hoveredSpot, setHoveredSpot] = useState<number | null>(null);
   const [showIdTags, setShowIdTags] = useState(true);
@@ -375,8 +377,8 @@ export function MarinaLotView({
         })}
       </div>
 
-      {/* ── Quick Footer Status Ribbon ── */}
-      <div className="px-4 py-2.5 bg-[#030c18] border-t border-blue-900/40 flex items-center justify-between flex-wrap gap-2 text-xs">
+      {/* ── Quick Footer Status Ribbon & Type It Bar ── */}
+      <div className="p-3 sm:p-4 bg-[#030c18] border-t border-blue-900/40 space-y-3 text-xs">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
@@ -390,66 +392,12 @@ export function MarinaLotView({
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Sequence Fill Animation Button or Stop Button */}
-          {onSequenceFill && (
-            isSequencing ? (
-              <button
-                type="button"
-                onClick={onStopSequence}
-                className="px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border bg-red-950/90 text-red-200 border-red-500/60 shadow-[0_0_12px_rgba(239,68,68,0.4)] hover:bg-red-900 animate-pulse"
-                title="Immediately stop filling remaining stalls"
-              >
-                <Square className="w-3 h-3 fill-current text-red-400" />
-                <span>⏹ Stop Filling Stalls</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onSequenceFill}
-                className="px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border bg-blue-900/40 hover:bg-amber-400 hover:text-slate-950 text-amber-300 border-amber-400/40 shadow-[0_0_8px_rgba(251,191,36,0.25)]"
-                title="Watch cars arrive in sequence through the entrance gate and park into vacant stalls"
-              >
-                <span>▶ Fill Lot in Sequence</span>
-              </button>
-            )
-          )}
-
-          {/* Toggle Hide/Show ID Tags Button Beside Fill Lot */}
-          <button
-            type="button"
-            onClick={() => setShowIdTags((prev) => !prev)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
-              !showIdTags
-                ? "bg-amber-500/20 text-amber-300 border-amber-400/50 shadow-[0_0_8px_rgba(251,191,36,0.2)]"
-                : "bg-slate-900/80 hover:bg-slate-800 text-slate-300 border-slate-700/60"
-            }`}
-            title={showIdTags ? "Hide note ID tags on parked cars" : "Show note ID tags on parked cars"}
-          >
-            {!showIdTags ? (
-              <>
-                <Eye className="w-3.5 h-3.5 text-amber-400" />
-                <span>Show ID Tags</span>
-              </>
-            ) : (
-              <>
-                <EyeOff className="w-3.5 h-3.5 text-slate-400" />
-                <span>Hide ID Tags</span>
-              </>
-            )}
-          </button>
-
-
-          {onClearDemo && spotItemMap.size > 0 && (
-            <button type="button" disabled={isSequencing} onClick={onClearDemo} className="px-2 py-1 rounded-lg text-[11px] font-medium text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer" title="Clear all parked cars">
-              Reset Stalls
-            </button>
-          )}
-
-          <span className="px-2 py-0.5 rounded bg-blue-950/60 border border-blue-800/40 text-[10px] text-amber-300 font-mono">
-            ⚓ Marina Lot · PG-023-PRK
-          </span>
-        </div>
+        {/* Quick Entry / Type It Bar right here */}
+        {quickEntrySlot && (
+          <div className="w-full">
+            {quickEntrySlot}
+          </div>
+        )}
       </div>
     </div>
   );

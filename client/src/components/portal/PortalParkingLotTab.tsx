@@ -571,197 +571,199 @@ export default function PortalParkingLotTab({
       </div>
 
       {/* ── Super Compact / Expandable "PARK IT" Quick Entry Console ── */}
-      {!isFormExpanded ? (
-        <Card className="rounded-2xl border border-blue-900/50 bg-[#06172F]/95 backdrop-blur-md px-3 py-2 sm:py-2.5 shadow-xl transition-all">
-          <form onSubmit={handleParkIt} className="flex flex-col sm:flex-row items-center gap-2">
-            {/* Quick Topic / Concern Input */}
-            <div className="relative flex-1 w-full flex items-center">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400 pointer-events-none flex items-center gap-1">
-                <Car className="h-4 w-4" />
-              </div>
-              <Input
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="Park a concern, question, or meeting topic..."
-                className="pl-9 pr-24 bg-[#030C22] border-blue-900/60 text-white placeholder:text-white/40 rounded-xl text-xs sm:text-sm h-10 focus:border-amber-400/80 w-full"
-              />
-              {/* Expand Button embedded at right edge of input */}
-              <button
-                type="button"
-                onClick={() => setIsFormExpanded(true)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-sky-400 hover:text-white hover:bg-sky-500/20 px-2 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-                title="Expand form to add notes, details, and priority"
-              >
-                <Maximize2 className="h-3 w-3" />
-                <span className="hidden md:inline">Expand</span>
-              </button>
-            </div>
-
-            {/* Expand Toggle & Main Submit Button */}
-            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-between sm:justify-start">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsFormExpanded(true)}
-                className="text-xs text-blue-300 hover:text-white hover:bg-blue-900/40 border border-blue-800/50 rounded-xl h-10 px-2.5 flex items-center gap-1.5 cursor-pointer"
-                title="Need more room? Expand to add notes, background, and priority"
-              >
-                <ChevronDown className="h-3.5 w-3.5 text-amber-400" />
-                <span className="text-[11px] font-semibold">More Room</span>
-              </Button>
-
-              <Button
-                type="submit"
-                disabled={isSubmitting || !newTitle.trim()}
-                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-4 h-10 rounded-xl shadow-[0_0_12px_rgba(245,158,11,0.3)] transition-all hover:scale-[1.02] flex items-center gap-1.5 cursor-pointer ml-auto sm:ml-0"
-              >
-                <span>🚗</span>
-                <span>PARK IT</span>
-              </Button>
-            </div>
-          </form>
-        </Card>
-      ) : (
-        <Card className="rounded-2xl border border-blue-800/60 bg-[#06172F] p-4 sm:p-5 shadow-2xl transition-all animate-in fade-in-50 duration-200">
-          <form onSubmit={handleParkIt} className="space-y-4">
-            {/* Header with quick collapse */}
-            <div className="flex items-center justify-between gap-2 border-b border-blue-900/50 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-amber-400/10 text-amber-300 border border-amber-400/30">
+      {(() => {
+        const quickEntryConsole = !isFormExpanded ? (
+          <Card className="rounded-2xl border border-blue-900/50 bg-[#06172F]/95 backdrop-blur-md px-3 py-2 sm:py-2.5 shadow-xl transition-all">
+            <form onSubmit={handleParkIt} className="flex flex-col sm:flex-row items-center gap-2">
+              {/* Quick Topic / Concern Input */}
+              <div className="relative flex-1 w-full flex items-center">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400 pointer-events-none flex items-center gap-1">
                   <Car className="h-4 w-4" />
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <span>Park a Concern, Question, or Meeting Topic</span>
-                  </h3>
-                  <p className="text-[11px] text-white/50">Fills automatically from top to bottom into the next open stall</p>
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsFormExpanded(false)}
-                className="text-xs text-sky-300 hover:text-white hover:bg-blue-900/40 border border-blue-800/40 rounded-xl h-8 px-2.5 flex items-center gap-1.5 cursor-pointer"
-                title="Collapse back to compact single bar"
-              >
-                <Minimize2 className="h-3 w-3" />
-                <span className="text-[11px] font-medium">Compact View</span>
-              </Button>
-            </div>
-
-            {/* Inputs Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end">
-              {/* Concern / Question Input */}
-              <div className="md:col-span-8 space-y-1.5">
-                <Label className="text-xs font-semibold text-white/90">
-                  What's on your mind? <span className="text-amber-400">*</span>
-                </Label>
                 <Input
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Speech-to-text in math, bus sensory accommodation, question on IEP draft..."
-                  className="bg-[#030C22] border-blue-900/60 text-white placeholder:text-white/40 rounded-xl text-sm h-11 focus:border-amber-400/80"
-                  autoFocus
+                  placeholder="Park a concern, question, or meeting topic..."
+                  className="pl-9 pr-24 bg-[#030C22] border-blue-900/60 text-white placeholder:text-white/40 rounded-xl text-xs sm:text-sm h-10 focus:border-amber-400/80 w-full"
                 />
+                {/* Expand Button embedded at right edge of input */}
+                <button
+                  type="button"
+                  onClick={() => setIsFormExpanded(true)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-sky-400 hover:text-white hover:bg-sky-500/20 px-2 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Expand form to add notes, details, and priority"
+                >
+                  <Maximize2 className="h-3 w-3" />
+                  <span className="hidden md:inline">Expand</span>
+                </button>
               </div>
 
-              {/* Priority */}
-              <div className="md:col-span-4 space-y-1.5">
-                <Label className="text-xs font-semibold text-white/90">Priority</Label>
-                <div className="grid grid-cols-3 gap-1.5 h-11">
-                  {(["Normal", "High", "Urgent"] as const).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setNewPriority(p)}
-                      className={`rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                        newPriority === p
-                          ? p === "Urgent"
-                            ? "bg-red-500/20 text-red-300 border-red-500/60 shadow-[0_0_8px_rgba(239,68,68,0.4)]"
-                            : p === "High"
-                            ? "bg-amber-500/20 text-amber-300 border-amber-500/60 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
-                            : "bg-sky-500/20 text-sky-300 border-sky-500/60 shadow-[0_0_8px_rgba(56,189,248,0.4)]"
-                          : "bg-[#030C22] text-white/50 border-blue-900/40 hover:text-white"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Roomy Notes & Meeting Agenda Details */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold text-white/90">Notes & Meeting Agenda Details</Label>
-                <span className="text-[11px] text-white/40">Optional context for advocate & school team</span>
-              </div>
-              <Textarea
-                value={newNotes}
-                onChange={(e) => setNewNotes(e.target.value)}
-                placeholder="Add optional notes, student impact, specific questions for Waypoint, or talking points for the meeting agenda..."
-                className="bg-[#030C22]/90 border-blue-900/50 text-white text-xs placeholder:text-white/40 rounded-xl min-h-[85px] leading-relaxed resize-y"
-              />
-            </div>
-
-            {/* Action Row */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1 border-t border-blue-900/40">
-              <span className="text-[11px] text-white/50 text-center sm:text-left">
-                💡 Submitting saves immediately to database, then drives your car into park.
-              </span>
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              {/* Expand Toggle & Main Submit Button */}
+              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-between sm:justify-start">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsFormExpanded(false)}
-                  className="text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-xl h-10 px-3 cursor-pointer"
+                  onClick={() => setIsFormExpanded(true)}
+                  className="text-xs text-blue-300 hover:text-white hover:bg-blue-900/40 border border-blue-800/50 rounded-xl h-10 px-2.5 flex items-center gap-1.5 cursor-pointer"
+                  title="Need more room? Expand to add notes, background, and priority"
                 >
-                  Collapse
+                  <ChevronDown className="h-3.5 w-3.5 text-amber-400" />
+                  <span className="text-[11px] font-semibold">More Room</span>
                 </Button>
+
                 <Button
                   type="submit"
                   disabled={isSubmitting || !newTitle.trim()}
-                  className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm px-6 h-10 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.35)] transition-all hover:scale-[1.02] flex items-center gap-2 cursor-pointer"
+                  className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-4 h-10 rounded-xl shadow-[0_0_12px_rgba(245,158,11,0.3)] transition-all hover:scale-[1.02] flex items-center gap-1.5 cursor-pointer ml-auto sm:ml-0"
                 >
                   <span>🚗</span>
                   <span>PARK IT</span>
                 </Button>
               </div>
-            </div>
-          </form>
-        </Card>
-      )}
+            </form>
+          </Card>
+        ) : (
+          <Card className="rounded-2xl border border-blue-800/60 bg-[#06172F] p-4 sm:p-5 shadow-2xl transition-all animate-in fade-in-50 duration-200">
+            <form onSubmit={handleParkIt} className="space-y-4">
+              {/* Header with quick collapse */}
+              <div className="flex items-center justify-between gap-2 border-b border-blue-900/50 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-amber-400/10 text-amber-300 border border-amber-400/30">
+                    <Car className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <span>Park a Concern, Question, or Meeting Topic</span>
+                    </h3>
+                    <p className="text-[11px] text-white/50">Fills automatically from top to bottom into the next open stall</p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFormExpanded(false)}
+                  className="text-xs text-sky-300 hover:text-white hover:bg-blue-900/40 border border-blue-800/40 rounded-xl h-8 px-2.5 flex items-center gap-1.5 cursor-pointer"
+                  title="Collapse back to compact single bar"
+                >
+                  <Minimize2 className="h-3 w-3" />
+                  <span className="text-[11px] font-medium">Compact View</span>
+                </Button>
+              </div>
 
-      {/* ── Main View Area: Marina Parking Lot vs Agenda Table ── */}
-      {viewMode === "marina" ? (
-        <div className="space-y-3">
-          <MarinaLotView
-            items={items}
-            animatingSpot={animatingSpot}
-            animatingVehicleId={animatingVehicleId}
-            isSequencing={isSequencing}
-            onSequenceFill={handleSequenceFill}
-            onStopSequence={handleStopSequence}
-            onClearDemo={handleClearDemo}
-            onCarClick={(item) => {
-              setInspectedCar(item);
-              setEditForm({
-                title: item.title,
-                notes: item.notes || "",
-                category: item.category,
-                priority: item.priority,
-              });
-            }}
-          />
-        </div>
-      ) : (
-        /* ── Agenda List View ── */
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              {/* Inputs Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end">
+                {/* Concern / Question Input */}
+                <div className="md:col-span-8 space-y-1.5">
+                  <Label className="text-xs font-semibold text-white/90">
+                    What's on your mind? <span className="text-amber-400">*</span>
+                  </Label>
+                  <Input
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="e.g. Speech-to-text in math, bus sensory accommodation, question on IEP draft..."
+                    className="bg-[#030C22] border-blue-900/60 text-white placeholder:text-white/40 rounded-xl text-sm h-11 focus:border-amber-400/80"
+                    autoFocus
+                  />
+                </div>
+
+                {/* Priority */}
+                <div className="md:col-span-4 space-y-1.5">
+                  <Label className="text-xs font-semibold text-white/90">Priority</Label>
+                  <div className="grid grid-cols-3 gap-1.5 h-11">
+                    {(["Normal", "High", "Urgent"] as const).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setNewPriority(p)}
+                        className={`rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                          newPriority === p
+                            ? p === "Urgent"
+                              ? "bg-red-500/20 text-red-300 border-red-500/60 shadow-[0_0_8px_rgba(239,68,68,0.4)]"
+                              : p === "High"
+                              ? "bg-amber-500/20 text-amber-300 border-amber-500/60 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+                              : "bg-sky-500/20 text-sky-300 border-sky-500/60 shadow-[0_0_8px_rgba(56,189,248,0.4)]"
+                            : "bg-[#030C22] text-white/50 border-blue-900/40 hover:text-white"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Roomy Notes & Meeting Agenda Details */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold text-white/90">Notes & Meeting Agenda Details</Label>
+                  <span className="text-[11px] text-white/40">Optional context for advocate & school team</span>
+                </div>
+                <Textarea
+                  value={newNotes}
+                  onChange={(e) => setNewNotes(e.target.value)}
+                  placeholder="Add optional notes, student impact, specific questions for Waypoint, or talking points for the meeting agenda..."
+                  className="bg-[#030C22]/90 border-blue-900/50 text-white text-xs placeholder:text-white/40 rounded-xl min-h-[85px] leading-relaxed resize-y"
+                />
+              </div>
+
+              {/* Action Row */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1 border-t border-blue-900/40">
+                <span className="text-[11px] text-white/50 text-center sm:text-left">
+                  💡 Submitting saves immediately to database, then drives your car into park.
+                </span>
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsFormExpanded(false)}
+                    className="text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-xl h-10 px-3 cursor-pointer"
+                  >
+                    Collapse
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting || !newTitle.trim()}
+                    className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm px-6 h-10 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.35)] transition-all hover:scale-[1.02] flex items-center gap-2 cursor-pointer"
+                  >
+                    <span>🚗</span>
+                    <span>PARK IT</span>
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </Card>
+        );
+
+        return viewMode === "marina" ? (
+          <div className="space-y-3">
+            <MarinaLotView
+              items={items}
+              animatingSpot={animatingSpot}
+              animatingVehicleId={animatingVehicleId}
+              isSequencing={isSequencing}
+              onSequenceFill={handleSequenceFill}
+              onStopSequence={handleStopSequence}
+              onClearDemo={handleClearDemo}
+              quickEntrySlot={quickEntryConsole}
+              onCarClick={(item) => {
+                setInspectedCar(item);
+                setEditForm({
+                  title: item.title,
+                  notes: item.notes || "",
+                  category: item.category,
+                  priority: item.priority,
+                });
+              }}
+            />
+          </div>
+        ) : (
+          /* ── Agenda List View ── */
+          <div className="space-y-4">
+            {quickEntryConsole}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-80">
               <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
               <Input
@@ -865,7 +867,8 @@ export default function PortalParkingLotTab({
               ))}
           </div>
         </div>
-      )}
+      );
+    })()}
 
       {/* ── Clicked Parked Car Details Modal (Clean Marina UX) ── */}
       <Dialog open={inspectedCar !== null} onOpenChange={(open) => !open && setInspectedCar(null)}>
