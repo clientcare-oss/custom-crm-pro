@@ -48,6 +48,7 @@ import { trpc } from "@/lib/trpc";
 interface PortalMembershipTabProps {
   displayName?: string;
   effectiveStudent?: any;
+  parentContactId?: number | null;
   onNavigateTab?: (tabId: string) => void;
 }
 
@@ -66,12 +67,15 @@ interface InvoiceItem {
 export function PortalMembershipTab({
   displayName = "Parent Client",
   effectiveStudent,
+  parentContactId,
   onNavigateTab
 }: PortalMembershipTabProps) {
-  const studentName = effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName || ""}`.trim() : "Liam Jenkins";
+  const studentName = effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName || ""}`.trim() : "Student";
 
-  // Resolve family contact ID
+  // Resolve family billing contact ID strictly under parent account
   const contactId = 
+    parentContactId ||
+    effectiveStudent?.parentContactId ||
     effectiveStudent?.clientId || 
     effectiveStudent?.contactId || 
     (typeof effectiveStudent?.id === "number" ? effectiveStudent.id : undefined);
@@ -237,10 +241,10 @@ export function PortalMembershipTab({
   useEffect(() => {
     try {
       const targetId = sessionStorage.getItem("waypoint_target_invoice_id");
-      if (targetId) {
-        sessionStorage.removeItem("waypoint_target_invoice_id");
+      if (targetId && dbInvoices.length > 0) {
         const found = dbInvoices.find((i: any) => String(i.id) === targetId);
         if (found) {
+          sessionStorage.removeItem("waypoint_target_invoice_id");
           handleOpenPayInvoice(found);
           return;
         }
@@ -249,7 +253,7 @@ export function PortalMembershipTab({
       if (typeof window !== "undefined") {
         const urlParams = new URLSearchParams(window.location.search);
         const invParam = urlParams.get("invoiceId");
-        if (invParam) {
+        if (invParam && dbInvoices.length > 0) {
           const found = dbInvoices.find((i: any) => String(i.id) === invParam);
           if (found) {
             handleOpenPayInvoice(found);
@@ -259,7 +263,22 @@ export function PortalMembershipTab({
     } catch {}
   }, [dbInvoices]);
 
-  const unpaidInvoices = dbInvoices.filter((inv: any) => inv.status === "Sent" || inv.status === "Overdue");
+  const unpaidInvoices = [...dbInvoices]
+    .filter((inv: any) => {
+      if (inv.status === "Draft" || inv.status === "Paid" || inv.status === "Voided" || inv.status === "Cancelled") return false;
+      const total = Number(inv.total || inv.amount || 0);
+      const paid = Number(inv.amountPaid || 0);
+      if (paid >= total && total > 0) return false;
+      return inv.status === "Sent" || inv.status === "Overdue" || inv.status === "Open" || total > paid;
+    })
+    .sort((a: any, b: any) => {
+      const now = Date.now();
+      const aOverdue = a.status === "Overdue" || (a.dueDate && new Date(a.dueDate).getTime() < now);
+      const bOverdue = b.status === "Overdue" || (b.dueDate && new Date(b.dueDate).getTime() < now);
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    });
 
   // Fallback default ledger items (Preserves original Waypoint Advocacy history)
   const defaultInvoices: InvoiceItem[] = [

@@ -1337,8 +1337,11 @@ export async function applyCreditToNextPayment(params: {
     inv.status = isSatisfiedByCredit ? "Paid" : (inv.status || "Draft");
     inv.creditApplicationStatus = isSatisfiedByCredit ? "satisfied_by_credit" : "pending_application";
     inv.paymentStatusNote = isSatisfiedByCredit ? "Satisfied by Referral Credit" : null;
-    inv.paidDate = isSatisfiedByCredit ? new Date() : null;
     inMemoryInvoices.set(targetInvoiceId, inv);
+    try {
+      const { inMemoryBillingInvoices } = await import("./billing");
+      inMemoryBillingInvoices.set(targetInvoiceId, inv);
+    } catch {}
 
     const tx: WaypointCreditTransaction = {
       id: ++nextLedgerId,

@@ -344,7 +344,8 @@ export default function StudentWorkspace() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const targetUrl = student?.caseId ? `/portal?caseId=${student.caseId}` : `/portal`;
+                  const parentId = parent?.id || student?.parentContactId;
+                  const targetUrl = `/portal?preview=true&contactId=${effectiveStudentId}${parentId ? `&parentContactId=${parentId}` : ""}${student?.caseId ? `&caseId=${student.caseId}` : ""}`;
                   window.open(targetUrl, "_blank");
                 }}
                 className="bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-100 text-xs font-semibold rounded-lg h-8 px-3.5 gap-2 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
@@ -562,6 +563,11 @@ export default function StudentWorkspace() {
                 studentId={studentId}
                 caseId={student?.caseId}
                 studentName={fullName}
+                parentContactId={parent?.id || student?.parentContactId}
+                parentName={parentName}
+                parentEmail={parent?.email}
+                parentPhone={parentPhone}
+                studentGrade={student?.gradeLevel}
               />
             )}
 

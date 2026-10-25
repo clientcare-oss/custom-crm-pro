@@ -26,6 +26,12 @@ export async function getInvoiceById(id: number, userId?: number, userRole?: str
   if (inMemoryBillingInvoices.has(id)) {
     return inMemoryBillingInvoices.get(id);
   }
+  try {
+    const { inMemoryInvoices } = await import("./referrals");
+    if (inMemoryInvoices.has(id)) {
+      return inMemoryInvoices.get(id);
+    }
+  } catch {}
 
   const db = await getDb();
   if (!db) return undefined;
@@ -314,6 +320,7 @@ export async function updateOneTimeInvoice(
     internalNotes?: string | null;
     clientNotes?: string | null;
     status?: "Draft" | "Sent" | "Paid" | "Overdue" | "Cancelled" | "Voided" | "Uncollectible";
+    amountPaid?: string | number;
     dueDate?: Date | string;
     stripePaymentUrl?: string;
     sentAt?: Date;
@@ -581,14 +588,44 @@ export async function recordExternalPayment(
 
 /**
  * Returns outstanding payable invoices and aggregate balance for a family account.
+ * Honors single-invoice two-state alert requirements:
+ * - Excludes Draft, Paid, Voided, Cancelled, and Uncollectible records
+ * - Computes remaining balance when partially paid
  */
 export async function getFamilyOutstandingInvoices(clientId: number) {
   const allInvoices = await listAllInvoicesDetailed({ clientId });
-  const outstanding = allInvoices.filter(
-    (inv: any) => inv.status === "Sent" || inv.status === "Overdue" || inv.status === "Open"
-  );
+  const outstanding = allInvoices.filter((inv: any) => {
+    if (!inv) return false;
+    // Exclude draft, paid, voided, cancelled, and uncollectible invoices
+    if (
+      inv.status === "Draft" ||
+      inv.status === "Paid" ||
+      inv.status === "Voided" ||
+      inv.status === "Cancelled" ||
+      inv.status === "Uncollectible"
+    ) {
+      return false;
+    }
+    const total = Number(inv.total) || 0;
+    const paid = Number(inv.amountPaid) || 0;
+    // Paid in full
+    if (paid >= total && total > 0) {
+      return false;
+    }
+    return (
+      inv.status === "Sent" ||
+      inv.status === "Overdue" ||
+      inv.status === "Open" ||
+      (total > paid)
+    );
+  });
 
-  const totalBalance = outstanding.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
+  const totalBalance = outstanding.reduce((sum, inv) => {
+    const total = Number(inv.total) || 0;
+    const paid = Number(inv.amountPaid) || 0;
+    const remaining = total - paid;
+    return sum + (remaining > 0 ? remaining : total);
+  }, 0);
 
   return {
     totalBalance: Math.round(totalBalance * 100) / 100,

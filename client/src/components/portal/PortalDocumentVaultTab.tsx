@@ -228,9 +228,9 @@ export default function PortalDocumentVaultTab({
 }: PortalDocumentVaultTabProps) {
   const studentFullName = effectiveStudent 
     ? `${effectiveStudent.firstName || ""} ${effectiveStudent.lastName || ""}`.trim() 
-    : "Liam Jenkins";
-  const studentFirstName = effectiveStudent?.firstName || (studentFullName.split(" ")[0] || "Liam");
-  const studentId = effectiveStudent?.id || 101;
+    : "Student";
+  const studentFirstName = effectiveStudent?.firstName || (studentFullName.split(" ")[0] || "Student");
+  const studentId = effectiveStudent?.id || 0;
   const storageKeyWorkspaces = `waypoint_vault_workspaces_${studentId}`;
   const storageKeyDocs = `waypoint_vault_documents_${studentId}`;
 

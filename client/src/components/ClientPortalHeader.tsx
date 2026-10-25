@@ -45,8 +45,8 @@ interface ClientPortalHeaderProps {
 
 export function ClientPortalHeader({
   displayName,
-  studentName = "Liam Jenkins",
-  studentIdNumber = "84257",
+  studentName = "Student",
+  studentIdNumber = "",
   students,
   selectedStudentId,
   onSelectStudent,
@@ -66,19 +66,52 @@ export function ClientPortalHeader({
   const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
   const uploadMenuRef = useRef<HTMLDivElement>(null);
 
-  // Default demo student profiles if none passed
-  const availableStudents: StudentOption[] = students && students.length > 0 ? students : [
-    { id: "84257", firstName: "Liam", lastName: "Jenkins", studentIdNumber: "84257", grade: "4th Grade" },
-    { id: "96321", firstName: "Maya", lastName: "Jenkins", studentIdNumber: "96321", grade: "2nd Grade" },
-  ];
+  // Dynamically resolve available students from props without Liam Jenkins fallback
+  const availableStudents: StudentOption[] = React.useMemo(() => {
+    if (students && students.length > 0) return students;
+    if (studentName && studentName.trim() && studentName !== "Student") {
+      const parts = studentName.trim().split(" ");
+      const firstName = parts[0] || "Student";
+      const lastName = parts.slice(1).join(" ") || "";
+      return [{
+        id: selectedStudentId || "student",
+        firstName,
+        lastName,
+        studentIdNumber: studentIdNumber || (selectedStudentId ? String(selectedStudentId) : undefined),
+      }];
+    }
+    return [{
+      id: "student",
+      firstName: studentName || "Student",
+      lastName: "",
+      studentIdNumber: studentIdNumber || "",
+    }];
+  }, [students, studentName, selectedStudentId, studentIdNumber]);
 
-  const [currentStudent, setCurrentStudent] = useState<StudentOption>(() => {
-    if (selectedStudentId) {
-      const match = availableStudents.find(s => String(s.id) === String(selectedStudentId));
+  // Track currently selected student ID reactively
+  const [internalSelectedId, setInternalSelectedId] = useState<string | number | undefined>(selectedStudentId);
+
+  useEffect(() => {
+    if (selectedStudentId !== undefined) {
+      setInternalSelectedId(selectedStudentId);
+    }
+  }, [selectedStudentId]);
+
+  // Compute active student reactively from availableStudents or props
+  const currentStudent: StudentOption = React.useMemo(() => {
+    if (internalSelectedId && availableStudents.length > 0) {
+      const match = availableStudents.find((s) => String(s.id) === String(internalSelectedId));
       if (match) return match;
     }
-    return availableStudents[0];
-  });
+    if (availableStudents.length > 0) return availableStudents[0];
+    const parts = (studentName || "Student").trim().split(" ");
+    return {
+      id: internalSelectedId || "student",
+      firstName: parts[0] || "Student",
+      lastName: parts.slice(1).join(" ") || "",
+      studentIdNumber: studentIdNumber || "",
+    };
+  }, [availableStudents, internalSelectedId, studentName, studentIdNumber]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -95,7 +128,7 @@ export function ClientPortalHeader({
   }, []);
 
   const handleStudentSelect = (student: StudentOption) => {
-    setCurrentStudent(student);
+    setInternalSelectedId(student.id);
     setDropdownOpen(false);
     toast.success(`Switched active student to ${student.firstName} ${student.lastName}`);
     onSelectStudent?.(student);
@@ -112,7 +145,7 @@ export function ClientPortalHeader({
 
   const isLight = theme === "blue";
 
-  const studentInitials = `${currentStudent.firstName[0] || "A"}${currentStudent.lastName[0] || "H"}`.toUpperCase();
+  const studentInitials = `${(currentStudent.firstName?.[0] || "S")}${(currentStudent.lastName?.[0] || "")}`.toUpperCase();
 
   return (
     <div
@@ -149,7 +182,7 @@ export function ClientPortalHeader({
             className={`text-sm sm:text-base font-bold tracking-wide truncate transition-colors duration-[300ms] ease-in-out ${isLight ? "text-slate-800" : "text-white"}`}
             style={{ fontFamily: "'Libre Baskerville', serif" }}
           >
-            {`${currentStudent.firstName} ${currentStudent.lastName}`}
+            {`${currentStudent.firstName} ${currentStudent.lastName}`.trim() || studentName || "Student"}
           </h1>
           <p className={`text-[11px] font-medium mt-0.5 transition-colors duration-[300ms] ease-in-out ${isLight ? "text-amber-800" : "text-amber-400"}`}>
             Welcome,{" "}

@@ -33,6 +33,7 @@ import {
   Award,
   Activity,
   AlertTriangle,
+  AlertCircle,
   CreditCard,
   Lock,
   ShieldAlert
@@ -184,8 +185,11 @@ export function PortalStudentDetailsTab({
 
   // ── FAMILY INVOICE & BILLING BALANCE (PG-023-STU Alert) ──
   const familyContactId = 
+    effectiveStudent?.parentContactId ||
     parentContact?.id ||
+    portalUser?.contactId ||
     effectiveStudent?.clientId || 
+    studentDetail?.contact?.parentContactId ||
     studentDetail?.contact?.clientId || 
     effectiveStudent?.contactId || 
     (typeof effectiveStudent?.id === "number" ? effectiveStudent.id : undefined);
@@ -412,61 +416,206 @@ export function PortalStudentDetailsTab({
         </div>
       )}
 
-      {/* ── PG-023-STU Contextual Invoice Waiting Alert ── */}
-      {balanceData && balanceData.count > 0 && (
-        <div 
-          className={`relative overflow-hidden rounded-xl p-3.5 sm:p-4 transition-all duration-200 ${
-            balanceData.invoices.some((inv: any) => inv.status === "Overdue")
-              ? "bg-[#000820] border border-[#FFE394]/60 shadow-[0_4px_20px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,227,148,0.25)]"
-              : "bg-[#000820] border border-[#3A2C18] shadow-[0_4px_16px_rgba(0,0,0,0.7)]"
-          }`}
-        >
-          {/* Subtle gold specular hairline */}
-          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#DFBE77]/60 to-transparent" />
+      {/* ── PG-023-STU Contextual Invoice Alert (Two-State: Ready vs Overdue) ── */}
+      {balanceData && balanceData.count > 0 && (() => {
+        const hasOverdue = Boolean(
+          balanceData.hasOverdue ||
+          balanceData.invoices.some((inv: any) => 
+            inv.isOverdue || 
+            inv.status === "Overdue" || 
+            (inv.dueDate && new Date(inv.dueDate).getTime() < Date.now())
+          )
+        );
+        const primaryInvoice = balanceData.invoices[0];
+        const primaryRemaining = Number(primaryInvoice?.remainingBalance ?? primaryInvoice?.total ?? balanceData.totalBalance);
+        const isSingle = balanceData.count === 1;
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#05142B] border border-[#DFBE77]/40 flex items-center justify-center shrink-0 shadow-inner">
-                <CreditCard className="w-4 h-4 text-[#FAD77B]" />
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-serif font-bold text-[#FFF4D4]">
-                    {balanceData.count === 1
-                      ? `Invoice Ready · $${balanceData.totalBalance.toFixed(2)}`
-                      : `${balanceData.count} Invoices Waiting · $${balanceData.totalBalance.toFixed(2)} Total`}
-                  </span>
-                  {balanceData.invoices.some((inv: any) => inv.status === "Overdue") && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#142642] text-[#FFE394] border border-[#DFBE77]/50">
-                      Payment Overdue
-                    </span>
+        const formatDueDate = (dateStr?: string | Date | null) => {
+          if (!dateStr) return "Upon Receipt";
+          try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return "Upon Receipt";
+            return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+          } catch {
+            return "Upon Receipt";
+          }
+        };
+
+        const handleCardClick = (targetId?: number) => {
+          const invId = targetId || primaryInvoice?.id;
+          if (invId) {
+            try {
+              sessionStorage.setItem("waypoint_target_invoice_id", String(invId));
+            } catch {}
+          }
+          onNavigateTab("billing");
+        };
+
+        return (
+          <div 
+            role="button"
+            tabIndex={0}
+            onClick={() => handleCardClick()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleCardClick();
+              }
+            }}
+            className={`relative overflow-hidden rounded-xl p-3.5 sm:p-4 transition-all duration-200 cursor-pointer group select-none ${
+              hasOverdue
+                ? "bg-[#000820] border border-rose-500/50 hover:border-rose-400 shadow-[0_4px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(244,63,94,0.22)]"
+                : "bg-[#000820] border border-emerald-500/40 hover:border-emerald-400 shadow-[0_4px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(52,211,153,0.18)]"
+            }`}
+          >
+            {/* Top specular hairline with state-appropriate restrained illumination */}
+            <div 
+              className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${
+                hasOverdue
+                  ? "from-transparent via-rose-500/70 to-transparent"
+                  : "from-transparent via-emerald-400/60 to-transparent"
+              }`} 
+            />
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+              <div className="flex items-start sm:items-center gap-3">
+                {/* State Icon with subtle illumination container */}
+                <div 
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${
+                    hasOverdue
+                      ? "bg-[#20070e] border border-rose-500/40 text-rose-400"
+                      : "bg-[#031d17] border border-emerald-500/40 text-emerald-400"
+                  }`}
+                >
+                  {hasOverdue ? (
+                    <AlertCircle className="w-4 h-4 text-rose-400" />
+                  ) : (
+                    <CreditCard className="w-4 h-4 text-emerald-400" />
                   )}
                 </div>
-                <p className="text-xs text-[#C6B697]">
-                  {balanceData.count === 1
-                    ? `You have an invoice waiting for payment: ${balanceData.invoices[0].title}`
-                    : `You have ${balanceData.count} invoices awaiting family payment.`}
-                </p>
+
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Pulsing indicator dot respecting reduced-motion accessibility */}
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span 
+                        className={`motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 ${
+                          hasOverdue ? "bg-rose-400" : "bg-emerald-400"
+                        }`}
+                      />
+                      <span 
+                        className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                          hasOverdue 
+                            ? "bg-rose-400 ring-2 ring-rose-500/30" 
+                            : "bg-emerald-400 ring-2 ring-emerald-500/30"
+                        }`} 
+                      />
+                    </span>
+
+                    {/* Status Badge */}
+                    <span 
+                      className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${
+                        hasOverdue
+                          ? "bg-rose-950/70 text-rose-200 border border-rose-500/50"
+                          : "bg-emerald-950/60 text-emerald-300 border border-emerald-500/40"
+                      }`}
+                    >
+                      {hasOverdue ? "Invoice Overdue" : "Invoice Ready"}
+                    </span>
+
+                    {/* Amount */}
+                    <span className="text-sm font-serif font-bold text-[#FFF4D4]">
+                      {isSingle
+                        ? `$${primaryRemaining.toFixed(2)}`
+                        : `$${balanceData.totalBalance.toFixed(2)} Total`}
+                    </span>
+
+                    {/* Due Date Indicator */}
+                    <span className="text-xs text-[#C6B697] font-mono">
+                      {hasOverdue
+                        ? `· ${primaryInvoice?.dueDate ? `Due ${formatDueDate(primaryInvoice.dueDate)}` : "Payment Overdue"}`
+                        : `· Due ${formatDueDate(primaryInvoice?.dueDate)}`}
+                    </span>
+                  </div>
+
+                  {/* Standardized Alert Copy */}
+                  <p className="text-xs text-[#C6B697]">
+                    {hasOverdue ? (
+                      isSingle
+                        ? "An invoice needs your attention."
+                        : `An invoice needs your attention. (${balanceData.count} outstanding invoices)`
+                    ) : (
+                      isSingle
+                        ? "Your invoice is ready for payment."
+                        : `Your invoices are ready for payment. (${balanceData.count} outstanding invoices)`
+                    )}
+                  </p>
+                </div>
               </div>
+
+              {/* Action Button: Pay Now (Overdue) vs View & Pay (Ready) */}
+              <Button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCardClick();
+                }}
+                className={`font-extrabold text-xs h-8 px-4 rounded-lg shadow-sm cursor-pointer flex items-center gap-1.5 shrink-0 transition-transform hover:scale-[1.02] ${
+                  hasOverdue
+                    ? "bg-gradient-to-r from-rose-600 via-rose-700 to-rose-800 hover:brightness-110 text-white border border-rose-400/60 shadow-[0_2px_10px_rgba(225,29,72,0.4)]"
+                    : "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] border border-[#FFE394]/70"
+                }`}
+              >
+                <span>{hasOverdue ? "Pay Now" : "View & Pay"}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
             </div>
 
-            <Button
-              onClick={() => {
-                if (balanceData.invoices[0]) {
-                  try {
-                    sessionStorage.setItem("waypoint_target_invoice_id", String(balanceData.invoices[0].id));
-                  } catch {}
-                }
-                onNavigateTab("billing");
-              }}
-              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs h-8 px-4 rounded-lg border border-[#FFE394]/70 shadow-sm cursor-pointer flex items-center gap-1.5 shrink-0 transition-transform hover:scale-[1.02]"
-            >
-              <span>View &amp; Pay</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
+            {/* Direct Access Pills for Multiple Invoices */}
+            {balanceData.count > 1 && (
+              <div className="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap items-center gap-2">
+                <span className="text-[11px] text-[#A69371] font-mono shrink-0">
+                  Direct Invoice Access:
+                </span>
+                {balanceData.invoices.map((inv: any) => {
+                  const isInvOverdue = inv.isOverdue || inv.status === "Overdue" || (inv.dueDate && new Date(inv.dueDate).getTime() < Date.now());
+                  const invBalance = Number(inv.remainingBalance ?? inv.total ?? 0);
+                  return (
+                    <button
+                      key={inv.id}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCardClick(inv.id);
+                      }}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer border ${
+                        isInvOverdue
+                          ? "bg-[#20070e] hover:bg-[#2e0b15] text-rose-300 border-rose-500/40 hover:border-rose-400"
+                          : "bg-[#031d17] hover:bg-[#062c23] text-emerald-300 border-emerald-500/40 hover:border-emerald-400"
+                      }`}
+                      title={`Pay ${inv.title || `Invoice ${inv.invoiceNumber}`}`}
+                    >
+                      <span className="font-bold">{inv.invoiceNumber}</span>
+                      <span className="text-white/60">·</span>
+                      <span>${invBalance.toFixed(2)}</span>
+                      {isInvOverdue ? (
+                        <span className="text-[9px] px-1 py-0.2 rounded bg-rose-500/30 text-rose-200 font-sans font-semibold uppercase tracking-wider">
+                          Overdue
+                        </span>
+                      ) : (
+                        <span className="text-white/60 text-[10px]">
+                          Due {formatDueDate(inv.dueDate)}
+                        </span>
+                      )}
+                      <ArrowRight className="w-2.5 h-2.5 ml-0.5 opacity-70" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── HERO GREETING BANNER WITH TWILIGHT LIGHTHOUSE ── */}
       <div className="relative overflow-hidden rounded-2xl border border-sky-600/35 bg-gradient-to-r from-[#031124] via-[#041735] to-[#020b18] p-6 sm:p-7 shadow-2xl min-h-[140px] flex items-center justify-between">

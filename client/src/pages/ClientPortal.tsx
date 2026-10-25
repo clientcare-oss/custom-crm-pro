@@ -18,7 +18,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import CaseCompassCard from "@/components/CaseCompassCard";
 import ClientPortalDashboard from "@/components/ClientPortalDashboard";
 import { ClientPortalSidebar } from "@/components/ClientPortalSidebar";
-import { ClientPortalHeader } from "@/components/ClientPortalHeader";
+import { ClientPortalHeader, type StudentOption } from "@/components/ClientPortalHeader";
 import PortalCommunicationTab from "@/components/portal/PortalCommunicationTab";
 import PortalTasksTab from "@/components/portal/PortalTasksTab";
 import PortalVoyageLogTab from "@/components/portal/PortalVoyageLogTab";
@@ -33,7 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useLocation, useParams } from "wouter";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -797,15 +797,21 @@ export default function ClientPortal() {
     onSuccess: () => { localStorage.removeItem("portal_token"); refetchPortalMe(); },
   });
 
-  const isPreviewMode = (typeof window !== "undefined" && window.location.search.includes("preview=true")) || isWorkspaceMode;
+  // PREVIEW SECURITY: Only authenticated staff/admin can use preview mode
+  const isAdmin = user?.role === "admin";
+  const isPreviewMode = isAdmin && ((typeof window !== "undefined" && window.location.search.includes("preview=true")) || isWorkspaceMode);
   const isOnPortalRoute = typeof window !== "undefined" && (window.location.pathname === "/portal" || window.location.pathname === "/client-portal" || window.location.pathname.startsWith("/project-workspace/"));
-  const isClientOrPreview = (user?.role === "admin" && isPreviewMode) || !!portalUser || user?.role === "client" || (!!user && isOnPortalRoute);
+  const isClientOrPreview = (isAdmin && isPreviewMode) || !!portalUser || user?.role === "client" || (!!user && isOnPortalRoute);
 
-  const { data: myStudents = [] } = trpc.portal.getMyStudents.useQuery(undefined, { enabled: !!portalUser || user?.role === "client" });
+  // Authenticated parents fetch their own authorized students strictly from verified session
+  const { data: myStudents = [] } = trpc.portal.getMyStudents.useQuery(undefined, {
+    enabled: !isPreviewMode && (!!portalUser || user?.role === "client"),
+  });
 
   const previewStudentContactId = routeStudentId || (() => {
-    if (typeof window === "undefined") return null;
-    const v = new URLSearchParams(window.location.search).get("contactId");
+    if (typeof window === "undefined" || !isPreviewMode) return null;
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("contactId") || params.get("studentId");
     return v ? parseInt(v, 10) : null;
   })();
 
@@ -814,19 +820,36 @@ export default function ClientPortal() {
     { enabled: isPreviewMode && !!previewStudentContactId }
   );
 
-  const { data: allContacts = [] } = trpc.contacts.list.useQuery(undefined, {
-    enabled: isPreviewMode && typeof window !== "undefined" && !new URLSearchParams(window.location.search).get("parentContactId") && !studentDetail?.contact?.parentContactId,
-  });
+  const ensureDevParentMutation = trpc.portal.ensureDevParentForStudent.useMutation();
+
+  useEffect(() => {
+    if (
+      isPreviewMode &&
+      previewStudentContactId &&
+      studentDetail?.contact &&
+      !studentDetail.contact.parentContactId &&
+      !ensureDevParentMutation.isPending &&
+      !ensureDevParentMutation.isSuccess
+    ) {
+      ensureDevParentMutation.mutate(
+        { studentContactId: previewStudentContactId },
+        {
+          onSuccess: (res) => {
+            utils.contacts.detail.invalidate({ id: previewStudentContactId });
+            utils.portal.getStudentsForParent.invalidate({ parentContactId: res.parentId });
+          },
+        }
+      );
+    }
+  }, [isPreviewMode, previewStudentContactId, studentDetail?.contact?.parentContactId]);
 
   const previewParentContactId = (() => {
-    if (typeof window === "undefined") return null;
+    if (typeof window === "undefined" || !isPreviewMode) return null;
     const parentId = new URLSearchParams(window.location.search).get("parentContactId");
     if (parentId) return parseInt(parentId, 10);
     if (studentDetail?.contact?.parentContactId) return studentDetail.contact.parentContactId;
-    
-    // Fallback to the first parent contact in the system if no ID was provided
-    const parent = allContacts.find((c: any) => c.type === "parent" || c.type === "contact");
-    return parent?.id || null;
+    if (ensureDevParentMutation.data?.parentId) return ensureDevParentMutation.data.parentId;
+    return null;
   })();
 
   const { data: previewStudents = [] } = trpc.portal.getStudentsForParent.useQuery(
@@ -853,34 +876,62 @@ export default function ClientPortal() {
       }]
     : [];
 
+  // Reconcile preview students: ensure originating student is included alongside any family siblings
+  const resolvedPreviewStudents = useMemo(() => {
+    if (!isPreviewMode) return [];
+    if (previewStudents.length > 0) {
+      if (studentDetail?.contact && !previewStudents.some((s: any) => s.id === studentDetail.contact.id)) {
+        return [studentDetail.contact, ...previewStudents];
+      }
+      return previewStudents;
+    }
+    if (studentDetail?.contact) {
+      return [studentDetail.contact];
+    }
+    return [];
+  }, [isPreviewMode, previewStudents, studentDetail]);
+
   const portalStudents = isWorkspaceMode 
     ? workspaceStudents 
     : isPreviewMode 
-      ? previewStudents 
+      ? resolvedPreviewStudents 
       : myStudents;
 
-  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const headerStudents: StudentOption[] = useMemo(() => {
+    return portalStudents.map((s: any) => ({
+      id: s.id,
+      firstName: s.firstName || "",
+      lastName: s.lastName || "",
+      studentIdNumber: s.caseId || String(s.id),
+      grade: s.gradeLevel,
+    }));
+  }, [portalStudents]);
+
+  // Selected student state: auto-select originating student if specified in URL or route
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(() => {
+    if (typeof window !== "undefined") {
+      const v = new URLSearchParams(window.location.search).get("contactId");
+      if (v) return parseInt(v, 10);
+    }
+    return routeStudentId || null;
+  });
 
   useEffect(() => {
-    if (isWorkspaceMode && previewStudentContactId) {
+    if (previewStudentContactId && selectedStudentId !== previewStudentContactId) {
       setSelectedStudentId(previewStudentContactId);
     }
-  }, [isWorkspaceMode, previewStudentContactId]);
+  }, [previewStudentContactId]);
 
-  const fallbackStudent = {
-    id: 101,
-    firstName: "Liam",
-    lastName: "Jenkins",
-    gradeLevel: "4th Grade",
-    caseId: 1,
-    parentContactId: 1,
-    parentName: "Jennifer Jenkins",
-    parentFirstName: "Jennifer",
-  };
+  // Resolve effective student: strictly from portalStudents without Liam Jenkins fallback
+  const effectiveStudent = useMemo(() => {
+    if (portalStudents.length === 0) return null;
+    if (selectedStudentId) {
+      const found = portalStudents.find((s: any) => s.id === selectedStudentId);
+      if (found) return found;
+    }
+    return portalStudents[0] || null;
+  }, [portalStudents, selectedStudentId]);
 
-  const effectiveStudent = (selectedStudentId
-    ? portalStudents.find((s) => s.id === selectedStudentId) ?? portalStudents[0]
-    : portalStudents[0]) ?? fallbackStudent;
   const effectiveCaseId = effectiveStudent?.caseId ?? null;
   const effectiveStudentContactId = effectiveStudent?.id ?? null;
 
@@ -1509,7 +1560,7 @@ export default function ClientPortal() {
             projectId={studentProjects[0]?.id || 0}
             isAdminView={isAdminView}
             refetchTasks={refetchTasks}
-            studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName || ""}`.trim() : "Liam Jenkins"}
+            studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName || ""}`.trim() : "Student"}
           />
         );
 
@@ -1657,6 +1708,7 @@ export default function ClientPortal() {
           <PortalMembershipTab
             displayName={displayName}
             effectiveStudent={effectiveStudent}
+            parentContactId={previewParentContactId || portalUser?.contactId || effectiveStudent?.parentContactId}
             onNavigateTab={(tab) => setActiveTab(tab)}
           />
         );
@@ -1838,6 +1890,37 @@ export default function ClientPortal() {
 
 
       case "details":
+        if (!effectiveStudent) {
+          return (
+            <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center max-w-lg mx-auto">
+              <div className="w-16 h-16 rounded-full bg-sky-500/10 border border-sky-400/25 flex items-center justify-center mb-4">
+                <GraduationCap className="w-8 h-8 text-sky-400" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2 font-serif">No Student Record Linked</h2>
+              <p className="text-sm text-sky-200/70 mb-6 leading-relaxed">
+                {isPreviewMode
+                  ? "No student records were found matching this preview query. Please ensure the student contact exists in the CRM and is linked to their parent account."
+                  : "Your family account does not have an active student profile linked yet. Please reach out to your Lead Special Education Advocate, Byron Honea, to activate your portal."}
+              </p>
+              {isPreviewMode ? (
+                <Button
+                  variant="outline"
+                  onClick={() => window.close()}
+                  className="border-sky-500/30 text-sky-200 hover:bg-sky-500/10 cursor-pointer"
+                >
+                  Close Preview Window
+                </Button>
+              ) : (
+                <a
+                  href="mailto:clientcare@waypointadvocates.com"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-400 text-slate-950 font-bold text-xs hover:bg-amber-300 transition-colors"
+                >
+                  Contact Waypoint Advocates
+                </a>
+              )}
+            </div>
+          );
+        }
         return (
           <div className="p-3 sm:p-5 lg:p-6 max-w-7xl mx-auto">
             <PortalStudentDetailsTab
@@ -1866,7 +1949,7 @@ export default function ClientPortal() {
         return (
           <div className="p-4 sm:p-6 lg:p-8">
             <PlanTransitionExperience
-              studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : "Liam Jenkins"}
+              studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : "Student"}
               studentGrade={effectiveStudent?.grade || "5th Grade → 6th Grade"}
               currentTierName="Full IEP Representation (2025–2026)"
               studentId={effectiveStudentContactId ? String(effectiveStudentContactId) : undefined}
@@ -2052,6 +2135,15 @@ export default function ClientPortal() {
         <ClientPortalHeader
           displayName={displayName}
           studentName={effectiveStudent ? `${effectiveStudent.firstName} ${effectiveStudent.lastName}`.trim() : undefined}
+          studentIdNumber={effectiveStudent?.caseId || (effectiveStudent?.id ? String(effectiveStudent.id) : undefined)}
+          students={headerStudents}
+          selectedStudentId={selectedStudentId ?? undefined}
+          onSelectStudent={(stu) => {
+            const id = typeof stu.id === "number" ? stu.id : parseInt(String(stu.id), 10);
+            if (!isNaN(id) && id > 0) {
+              setSelectedStudentId(id);
+            }
+          }}
           parentContactId={parentContactId}
           theme={theme}
           onToggleTheme={toggleTheme}

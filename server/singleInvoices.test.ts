@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import * as db from "./db";
@@ -406,3 +406,152 @@ describe("Single Invoice Management & Payment Experience (E2E 14 Requirements)",
     expect(paymentEvents.length).toBeGreaterThan(0);
   });
 });
+
+describe("WAYPOINT CRM | Two-State Invoice Alerts (PG-023-STU Verification)", () => {
+  const alertTestFamilyId = 9482;
+  const adminCaller = appRouter.createCaller(createAdminContext());
+  const familyCaller = appRouter.createCaller(createFamilyContext(alertTestFamilyId));
+
+  beforeAll(async () => {
+    inMemoryContacts.set(alertTestFamilyId, {
+      id: alertTestFamilyId,
+      ownerId: 1,
+      firstName: "Marcus",
+      lastName: "Sterling",
+      email: "marcus.sterling@example.com",
+      phone: "404-555-0177",
+      jobTitle: "Parent",
+      status: "Active",
+      stripeCustomerId: `cus_alert_test_${Date.now()}`,
+      defaultPaymentMethodBrand: "visa",
+      defaultPaymentMethodLast4: "8821",
+      defaultPaymentMethodExp: "11/2028",
+      defaultPaymentMethodId: "pm_card_alert_test",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await db.addFamilyPaymentMethod({
+      clientId: alertTestFamilyId,
+      stripePaymentMethodId: "pm_card_alert_test",
+      brand: "visa",
+      last4: "8821",
+      expMonth: 11,
+      expYear: 2028,
+      isDefault: true,
+    });
+  });
+
+  it("1. Newly issued invoice displays green Ready alert before due date", async () => {
+    const futureDueDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const readyInvoice = await adminCaller.invoices.create({
+      clientId: alertTestFamilyId,
+      title: "IEP Strategy & Record Review",
+      lineItems: [{ description: "IEP Comprehensive Audit", quantity: 1, unitPrice: 250, total: 250 }],
+      dueDate: futureDueDate,
+      status: "Sent",
+    });
+
+    const balance = await familyCaller.invoices.getFamilyOutstandingBalance({ contactId: alertTestFamilyId });
+    expect(balance.count).toBe(1);
+    expect(balance.totalBalance).toBe(250);
+    expect(balance.hasOverdue).toBe(false);
+    expect(balance.invoices[0].id).toBe(readyInvoice.id);
+    expect(balance.invoices[0].isOverdue).toBe(false);
+    expect(balance.invoices[0].status).toBe("Sent");
+    expect(Number(balance.invoices[0].remainingBalance)).toBe(250);
+  });
+
+  it("2. Draft and Voided invoices do NOT trigger alerts", async () => {
+    // Create draft invoice
+    await adminCaller.invoices.create({
+      clientId: alertTestFamilyId,
+      title: "Draft Proposal - Do Not Alert",
+      lineItems: [{ description: "Draft Item", quantity: 1, unitPrice: 500, total: 500 }],
+      status: "Draft",
+    });
+
+    // Create an invoice and void it
+    const voidedInv = await adminCaller.invoices.create({
+      clientId: alertTestFamilyId,
+      title: "Voided Invoice - Do Not Alert",
+      lineItems: [{ description: "Voided Item", quantity: 1, unitPrice: 300, total: 300 }],
+      status: "Sent",
+    });
+    await db.updateOneTimeInvoice(voidedInv.id, { status: "Voided" });
+
+    // The balance should still only count the 1 active Sent invoice ($250)
+    const balance = await familyCaller.invoices.getFamilyOutstandingBalance({ contactId: alertTestFamilyId });
+    expect(balance.count).toBe(1);
+    expect(balance.totalBalance).toBe(250);
+  });
+
+  it("3. Overdue invoice changes to Overdue state when due date has passed", async () => {
+    const pastDueDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    const overdueInvoice = await adminCaller.invoices.create({
+      clientId: alertTestFamilyId,
+      title: "State Complaint Filing Fee",
+      lineItems: [{ description: "DOE Direct Filing Support", quantity: 1, unitPrice: 175, total: 175 }],
+      dueDate: pastDueDate,
+      status: "Sent", // Sent status, but dueDate is in the past -> automatically overdue
+    });
+
+    const balance = await familyCaller.invoices.getFamilyOutstandingBalance({ contactId: alertTestFamilyId });
+    expect(balance.count).toBe(2);
+    expect(balance.hasOverdue).toBe(true);
+    // Prioritizes overdue invoice first
+    expect(balance.invoices[0].id).toBe(overdueInvoice.id);
+    expect(balance.invoices[0].isOverdue).toBe(true);
+    expect(balance.invoices[0].status).toBe("Overdue");
+  });
+
+  it("4. Multiple invoices consolidate into one alert with overdue prioritized and direct access", async () => {
+    const balance = await familyCaller.invoices.getFamilyOutstandingBalance({ contactId: alertTestFamilyId });
+    expect(balance.count).toBe(2);
+    expect(balance.totalBalance).toBe(425); // 250 + 175
+    expect(balance.hasOverdue).toBe(true);
+
+    // Overdue invoice is first
+    expect(balance.invoices[0].isOverdue).toBe(true);
+    expect(balance.invoices[0].title).toBe("State Complaint Filing Fee");
+
+    // Second invoice is the future ready one
+    expect(balance.invoices[1].isOverdue).toBe(false);
+    expect(balance.invoices[1].title).toBe("IEP Strategy & Record Review");
+  });
+
+  it("5. Partially paid invoices reflect the remaining balance and correct status", async () => {
+    const partialInvoice = await adminCaller.invoices.create({
+      clientId: alertTestFamilyId,
+      title: "Multi-Session Advocacy Retainer",
+      lineItems: [{ description: "Retainer", quantity: 1, unitPrice: 400, total: 400 }],
+      status: "Sent",
+      dueDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+
+    // Record partial payment of $150 against $400
+    await db.updateOneTimeInvoice(partialInvoice.id, {
+      amountPaid: "150.00",
+    });
+
+    const balance = await familyCaller.invoices.getFamilyOutstandingBalance({ contactId: alertTestFamilyId });
+    const foundPartial = balance.invoices.find((i: any) => i.id === partialInvoice.id);
+    expect(foundPartial).toBeDefined();
+    expect(Number(foundPartial?.remainingBalance)).toBe(250); // 400 - 150 = 250
+  });
+
+  it("6. Paying removes the alert after confirmed payment", async () => {
+    // Fetch all current outstanding invoices for this family
+    const before = await familyCaller.invoices.getFamilyOutstandingBalance({ contactId: alertTestFamilyId });
+    for (const inv of before.invoices) {
+      await familyCaller.invoices.payWithSavedMethod({ invoiceId: inv.id });
+    }
+
+    const after = await familyCaller.invoices.getFamilyOutstandingBalance({ contactId: alertTestFamilyId });
+    expect(after.count).toBe(0);
+    expect(after.totalBalance).toBe(0);
+    expect(after.hasOverdue).toBe(false);
+    expect(after.invoices.length).toBe(0);
+  });
+});
+

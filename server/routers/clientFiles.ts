@@ -165,19 +165,10 @@ export const clientFilesRouter = router({
       }
 
       // 3. Scan existing documents in vault to check key document availability
-      let allFiles: any[] = [];
-      if (database) {
-        try {
-          allFiles = await database
-            .select()
-            .from(clientFiles)
-            .where(eq(clientFiles.clientId, targetClientId))
-            .orderBy(desc(clientFiles.uploadedAt));
-        } catch {
-          allFiles = inMemoryVaultFiles.get(targetClientId) || [];
-        }
-      } else {
-        allFiles = inMemoryVaultFiles.get(targetClientId) || [];
+      const lookupId = targetStudentId || targetClientId;
+      let allFiles = await db.getClientFilesByClient(lookupId);
+      if (!allFiles || allFiles.length === 0) {
+        allFiles = inMemoryVaultFiles.get(targetClientId) || inMemoryVaultFiles.get(lookupId) || [];
       }
 
       let hasCurrentIep = false;
@@ -348,21 +339,9 @@ export const clientFilesRouter = router({
       }).optional()
     )
     .query(async ({ ctx, input }) => {
-      const targetClientId = input?.clientId || ctx.user.id;
-      const database = await db.getDb();
-
-      let files: any[] = [];
-      if (database) {
-        try {
-          files = await database
-            .select()
-            .from(clientFiles)
-            .where(eq(clientFiles.clientId, targetClientId))
-            .orderBy(desc(clientFiles.uploadedAt));
-        } catch {
-          files = inMemoryVaultFiles.get(targetClientId) || [];
-        }
-      } else {
+      const targetClientId = input?.studentId || input?.clientId || ctx.user.id;
+      let files = await db.getClientFilesByClient(targetClientId);
+      if (!files || files.length === 0) {
         files = inMemoryVaultFiles.get(targetClientId) || [];
       }
 

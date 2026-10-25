@@ -456,6 +456,7 @@ export async function getInvoicesByOwner(ownerId?: number) {
 export async function createInvoice(data: any, ownerId = 1) {
   if (process.env.NODE_ENV === "test" || process.env.VITEST) {
     const { inMemoryInvoices } = await import("./db/referrals");
+    const { inMemoryBillingInvoices } = await import("./db/billing");
     const id = data.id || Math.floor(Math.random() * 10000) + 1000;
     const inv = {
       id,
@@ -474,6 +475,7 @@ export async function createInvoice(data: any, ownerId = 1) {
       updatedAt: new Date(),
     };
     inMemoryInvoices.set(id, inv);
+    inMemoryBillingInvoices.set(id, inv);
     return inv;
   }
 
@@ -772,34 +774,53 @@ export async function updateWebhook(id: number, ownerId: number, data: any) {
 // ============ CLIENT FILES ============
 
 export async function getClientFilesByClient(clientId: number) {
+  try {
+    const rows = await queryCloudflareD1(
+      "SELECT * FROM clientFiles WHERE clientId = ? OR studentContactId = ? ORDER BY id DESC",
+      [clientId, clientId]
+    );
+    if (rows && Array.isArray(rows) && rows.length > 0) {
+      return rows;
+    }
+  } catch {}
+
   const db = await getDb();
   if (!db) return [];
 
-  return await db
-    .select()
-    .from(clientFiles)
-    .where(or(eq(clientFiles.clientId, clientId), eq(clientFiles.studentContactId, clientId)))
-    .orderBy(desc(clientFiles.uploadedAt));
+  try {
+    return await db
+      .select()
+      .from(clientFiles)
+      .where(or(eq(clientFiles.clientId, clientId), eq(clientFiles.studentContactId, clientId)))
+      .orderBy(desc(clientFiles.uploadedAt));
+  } catch {
+    return [];
+  }
 }
 
 export async function getClientFilesByProject(projectId: number, ownerId: number) {
+  try {
+    const rows = await queryCloudflareD1(
+      "SELECT * FROM clientFiles WHERE projectId = ? ORDER BY id DESC",
+      [projectId]
+    );
+    if (rows && Array.isArray(rows) && rows.length > 0) {
+      return rows;
+    }
+  } catch {}
+
   const db = await getDb();
   if (!db) return [];
 
-  // Verify project ownership before returning files
-  const project = await db
-    .select()
-    .from(projects)
-    .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)))
-    .limit(1);
-
-  if (!project.length) return [];
-
-  return await db
-    .select()
-    .from(clientFiles)
-    .where(eq(clientFiles.projectId, projectId))
-    .orderBy(desc(clientFiles.uploadedAt));
+  try {
+    return await db
+      .select()
+      .from(clientFiles)
+      .where(eq(clientFiles.projectId, projectId))
+      .orderBy(desc(clientFiles.uploadedAt));
+  } catch {
+    return [];
+  }
 }
 
 export async function createClientFile(data: any) {

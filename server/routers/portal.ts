@@ -48,6 +48,97 @@ export const portalRouter = router({
         return await db.getStudentsByParentContactId(input.parentContactId);
       }),
 
+    // Temporary Development Helper: auto-creates or resolves a dev parent contact for a student lacking one
+    ensureDevParentForStudent: adminProcedure
+      .input(z.object({ studentContactId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Disallow when production deployment flag is set
+        const isAutoParentAllowed = process.env.NODE_ENV !== "production" && process.env.DISABLE_DEV_AUTO_PARENT !== "true";
+        if (!isAutoParentAllowed) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Automatic parent creation is disabled in production. A verified parent contact must be linked manually."
+          });
+        }
+
+        const student = await db.getContactById(input.studentContactId);
+        if (!student) {
+          throw new TRPCError({ code: "NOT_FOUND", message: `Student contact #${input.studentContactId} not found` });
+        }
+
+        // 1. If student already has a valid linked parent, return it
+        if (student.parentContactId) {
+          const existingParent = await db.getContactById(student.parentContactId);
+          if (existingParent) {
+            return {
+              parentId: existingParent.id,
+              studentId: student.id,
+              parentName: `${existingParent.firstName} ${existingParent.lastName}`.trim(),
+              isDevPlaceholder: Boolean(existingParent.isDemoData || (existingParent.notes && existingParent.notes.includes("Development Parent"))),
+              created: false,
+            };
+          }
+        }
+
+        // 2. Check if a development parent for this student already exists (to prevent duplicates on repeated previews)
+        const allContacts = await db.getContactsByOwner(ctx.user?.id || 1);
+        const existingDevParent = allContacts.find((c: any) =>
+          c.referredBy === `DEV_PARENT_AUTO_${student.id}` ||
+          (c.notes && c.notes.includes(`Temporary Development Parent for Student #${student.id}`))
+        );
+
+        if (existingDevParent) {
+          // Link student to this existing dev parent if not already linked
+          if (student.parentContactId !== existingDevParent.id) {
+            await db.updateContact(student.id, ctx.user?.id || 1, { parentContactId: existingDevParent.id });
+          }
+          return {
+            parentId: existingDevParent.id,
+            studentId: student.id,
+            parentName: `${existingDevParent.firstName} ${existingDevParent.lastName}`.trim(),
+            isDevPlaceholder: true,
+            created: false,
+          };
+        }
+
+        // 3. Create a clearly marked temporary development parent contact
+        const devParentFirstName = "[DEV Parent]";
+        const devParentLastName = `${student.lastName || student.firstName || "Family"}`;
+        const devParentEmail = `dev.parent.${student.id}@waypointadvocates.dev`;
+
+        const newParent = await db.createContact(
+          {
+            firstName: devParentFirstName,
+            lastName: devParentLastName,
+            email: devParentEmail,
+            phone: "555-0199",
+            address: student.address || "100 Waypoint Dev Lane",
+            city: student.city || "Atlanta",
+            state: student.state || "GA",
+            zipCode: student.zipCode || "30301",
+            notes: `Temporary Development Parent for Student #${student.id} (${student.firstName} ${student.lastName || ""}). Automatically generated for preview testing.`,
+            referredBy: `DEV_PARENT_AUTO_${student.id}`,
+            isDemoData: true,
+            planTier: (student as any).planTier || "$55",
+            accountStatus: "active",
+            billingStatus: "current",
+            contractStatus: "active",
+          },
+          ctx.user?.id || 1
+        );
+
+        // 4. Link the new parent to the student
+        await db.updateContact(student.id, ctx.user?.id || 1, { parentContactId: newParent.id });
+
+        return {
+          parentId: newParent.id,
+          studentId: student.id,
+          parentName: `${newParent.firstName} ${newParent.lastName}`.trim(),
+          isDevPlaceholder: true,
+          created: true,
+        };
+      }),
+
     // Portal: get appointments for a specific student (by their contact id)
     getStudentAppointments: portalProcedure
       .input(z.object({ studentContactId: z.number() }))

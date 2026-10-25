@@ -547,6 +547,8 @@ export default function ContactDetail() {
     onError: (err) => toast.error("Failed to save Compass: " + err.message),
   });
 
+  const ensureDevParentMutation = trpc.portal.ensureDevParentForStudent.useMutation();
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -590,6 +592,35 @@ export default function ContactDetail() {
   const calculatedAge = calculateAge(contact.dateOfBirth);
   const currentPlanType = (contact as any).planType || "No IEP/504 Yet";
 
+  const handlePreviewPortal = async () => {
+    if (!contact) return;
+    try {
+      // If contact is already a parent, preview this parent's portal
+      if (isParent) {
+        const url = `/portal?preview=true&parentContactId=${contact.id}`;
+        window.open(url, "_blank");
+        return;
+      }
+      // If student already has a parent linked, preview with that parent
+      if (contact.parentContactId) {
+        const url = `/portal?preview=true&contactId=${contact.id}&parentContactId=${contact.parentContactId}`;
+        window.open(url, "_blank");
+        return;
+      }
+      // If student does not have a parent, auto-create/resolve temporary dev parent
+      const res = await ensureDevParentMutation.mutateAsync({ studentContactId: contact.id });
+      utils.contacts.detail.invalidate({ id: contactId });
+      utils.contacts.list.invalidate();
+      if (res.created) {
+        toast.info(`Created temporary development parent: ${res.parentName}`);
+      }
+      const url = `/portal?preview=true&contactId=${contact.id}&parentContactId=${res.parentId}`;
+      window.open(url, "_blank");
+    } catch (err: any) {
+      toast.error("Failed to open portal preview: " + err.message);
+    }
+  };
+
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Back Button */}
@@ -614,15 +645,13 @@ export default function ContactDetail() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    const url = `/portal?preview=true&parentContactId=${contact.id}`;
-                    window.open(url, "_blank");
-                  }}
+                  onClick={handlePreviewPortal}
+                  disabled={ensureDevParentMutation.isPending}
                   className="inline-flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 cursor-pointer"
                   title="Preview how this case appears to the parent in the Client Portal"
                 >
                   <Eye className="h-3.5 w-3.5" />
-                  Preview Parent Portal
+                  {ensureDevParentMutation.isPending ? "Connecting Portal..." : "Preview Parent Portal"}
                 </Button>
 
                 {/* Create Invoice Action for Family */}
@@ -767,10 +796,7 @@ export default function ContactDetail() {
           onEditStudent={() => setShowEditStudentModal(true)}
           onArchive={() => setShowArchiveDialog(true)}
           onUnarchive={() => unarchiveMutation.mutate({ id: contact.id })}
-          onPreviewPortal={() => {
-            const url = `/portal?preview=true&contactId=${contact.id}${contact.parentContactId ? `&parentContactId=${contact.parentContactId}` : ""}`;
-            window.open(url, "_blank");
-          }}
+          onPreviewPortal={handlePreviewPortal}
           onUpdatePlanType={handleQuickUpdatePlanType}
           calculatedAge={calculatedAge}
         />

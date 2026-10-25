@@ -323,7 +323,7 @@ export default function ClientPortalDashboard({
       {student1?.id && (
         <ParentOfferCard
           studentId={student1.id}
-          studentName={student1.firstName || student1.name || "Liam"}
+          studentName={student1.firstName || student1.name || "Student"}
           isLight={isLight}
         />
       )}

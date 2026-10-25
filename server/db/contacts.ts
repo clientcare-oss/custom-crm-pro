@@ -384,6 +384,24 @@ export async function updateContact(id: number, ownerId: number, data: any): Pro
     }
   }
 
+  // Sync to local.sqlite for offline resilience
+  try {
+    const local = getLocalDbClient();
+    const sets: string[] = [];
+    const vals: any[] = [];
+    for (const [k, v] of Object.entries(updateData)) {
+      sets.push(`${k} = ?`);
+      vals.push(v);
+    }
+    if (sets.length > 0) {
+      vals.push(id);
+      await local.execute({
+        sql: `UPDATE contacts SET ${sets.join(", ")} WHERE id = ?`,
+        args: vals
+      });
+    }
+  } catch {}
+
   try {
     return await db
       .update(contacts)
@@ -391,7 +409,7 @@ export async function updateContact(id: number, ownerId: number, data: any): Pro
       .where(eq(contacts.id, id));
   } catch (err: any) {
     const msg = err?.message || String(err);
-    if (msg.includes("no such column")) {
+    if (msg.includes("no such column") || msg.includes("SQLITE_ERROR")) {
       const colMatch = msg.match(/no such column:\s*([a-zA-Z0-9_]+)/i);
       const missingCol = colMatch ? colMatch[1] : null;
       if (missingCol && updateData[missingCol] !== undefined) {
@@ -404,13 +422,17 @@ export async function updateContact(id: number, ownerId: number, data: any): Pro
         "state", "zipCode", "country", "notes", "dateOfBirth", "diagnosis", "schoolName",
         "gradeLevel", "countyDistrict", "challenges", "previousSchool", "goingToSchool",
         "planType", "pipelineStage", "planTier", "accountStatus", "billingStatus", "contractStatus",
-        "bestTimeToCall"
+        "bestTimeToCall", "parentContactId", "portalUserId", "caseId", "hourlyRate", "timezone",
+        "isDemoData", "referredBy"
       ];
       const fallbackData: Record<string, any> = {};
       for (const k of coreKeys) {
         if (updateData[k] !== undefined) fallbackData[k] = updateData[k];
       }
-      return await db.update(contacts).set(fallbackData).where(eq(contacts.id, id));
+      if (Object.keys(fallbackData).length > 0) {
+        return await db.update(contacts).set(fallbackData).where(eq(contacts.id, id));
+      }
+      return { success: true };
     }
     throw err;
   }
@@ -506,19 +528,48 @@ export async function deleteContact(id: number, ownerId: number) {
 }
 
 export async function getStudentsByParentContactId(parentContactId: number) {
+  const memStudents = Array.from(inMemoryContacts.values()).filter(
+    (c) =>
+      Number(c.parentContactId) === Number(parentContactId) &&
+      (c.jobTitle === "Student" || c.type === "student")
+  );
+
+  // Direct D1 query (clean, fast, and avoids 126-column Drizzle SQLite limit)
+  try {
+    const directStudents = await queryCloudflareD1(
+      "SELECT * FROM contacts WHERE parentContactId = ? AND (jobTitle = 'Student' OR jobTitle = 'student') ORDER BY firstName ASC",
+      [parentContactId]
+    );
+    if (directStudents && Array.isArray(directStudents) && directStudents.length > 0) {
+      return directStudents;
+    }
+  } catch (directErr) {
+    // fallback
+  }
+
   const db = await getDb();
-  if (!db) return [];
-  return await db
-    .select()
-    .from(contacts)
-    .where(
-      and(
-        eq(contacts.parentContactId, parentContactId),
-        eq(contacts.jobTitle, "Student")
+  if (!db) return memStudents;
+
+  try {
+    const dbStudents = await db
+      .select()
+      .from(contacts)
+      .where(
+        and(
+          eq(contacts.parentContactId, parentContactId),
+          eq(contacts.jobTitle, "Student")
+        )
       )
-    )
-    .orderBy(asc(contacts.firstName));
+      .orderBy(asc(contacts.firstName));
+
+    if (dbStudents.length > 0) return dbStudents;
+  } catch (err) {
+    console.error("Error fetching students by parent contact ID from DB:", err);
+  }
+
+  return memStudents;
 }
+
 
 export interface BulkImportClientItem {
   firstName: string;

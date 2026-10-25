@@ -64,7 +64,7 @@ export default function PortalTasksTab({
   studentContactId,
   projectId,
   isAdminView = false,
-  studentName = "Liam Jenkins"
+  studentName = "Student"
 }: PortalTasksTabProps) {
   // referencehbptl / Monday style streamlined tasks
   const [taskList, setTaskList] = useState<ClientTaskItem[]>([

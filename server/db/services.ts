@@ -11,7 +11,7 @@ import {
   type InsertServiceCatalogEvent,
 } from "../../drizzle/schema";
 import { getDb } from "./connection";
-import { queryCloudflareD1 } from "../_core/d1Client";
+import { queryCloudflareD1, getLocalDbClient } from "../_core/d1Client";
 
 /**
  * Filter options for listing services from the authoritative catalog.
@@ -98,7 +98,17 @@ export async function listServices(filters: ListServicesFilters = {}): Promise<S
 
     query += ` ORDER BY sortOrder ASC, id ASC;`;
 
-    const rows: any[] = await queryCloudflareD1(query, params);
+    let rows: any[] = await queryCloudflareD1(query, params);
+    if (!rows || rows.length === 0) {
+      try {
+        const local = getLocalDbClient();
+        const localRes = await local.execute({ sql: query, args: params });
+        if (localRes.rows && localRes.rows.length > 0) {
+          rows = localRes.rows;
+        }
+      } catch {}
+    }
+
     if (!rows || rows.length === 0) {
       return [
         formatServiceRow({
@@ -148,6 +158,14 @@ export async function getServiceById(id: number, organizationId: number = 1): Pr
   } catch (err: any) {
     console.error("[db/services] getServiceById error:", err.message);
   }
+  try {
+    const local = getLocalDbClient();
+    const res = await local.execute({
+      sql: `SELECT * FROM services WHERE id = ? AND organizationId = ? LIMIT 1;`,
+      args: [id, organizationId]
+    });
+    if (res.rows && res.rows.length > 0) return formatServiceRow(res.rows[0]);
+  } catch {}
   return inMemoryServices.get(id) || null;
 }
 
@@ -164,6 +182,14 @@ export async function getServiceByCode(serviceCode: string, organizationId: numb
   } catch (err: any) {
     console.error("[db/services] getServiceByCode error:", err.message);
   }
+  try {
+    const local = getLocalDbClient();
+    const res = await local.execute({
+      sql: `SELECT * FROM services WHERE serviceCode = ? AND organizationId = ? LIMIT 1;`,
+      args: [serviceCode, organizationId]
+    });
+    if (res.rows && res.rows.length > 0) return formatServiceRow(res.rows[0]);
+  } catch {}
   const list = Array.from(inMemoryServices.values());
   for (const s of list) {
     if (s.serviceCode === serviceCode) return s;
@@ -827,7 +853,16 @@ export async function listCatalogEvents(
     query += ` ORDER BY timestamp DESC LIMIT ?;`;
     params.push(limit);
 
-    const rows: any[] = await queryCloudflareD1(query, params);
+    let rows: any[] = await queryCloudflareD1(query, params);
+    if (!rows || rows.length === 0) {
+      try {
+        const local = getLocalDbClient();
+        const localRes = await local.execute({ sql: query, args: params });
+        if (localRes.rows && localRes.rows.length > 0) {
+          rows = localRes.rows;
+        }
+      } catch {}
+    }
     return rows.map((r) => ({
       id: r.id,
       organizationId: r.organizationId ?? 1,

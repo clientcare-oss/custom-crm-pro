@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { drizzle as drizzleD1 } from "drizzle-orm/d1";
-import { queryCloudflareD1 } from "../_core/d1Client";
+import { queryCloudflareD1, getLocalDbClient } from "../_core/d1Client";
 
 let _db: any = null;
 let _cfD1Db: any = null;
@@ -70,16 +70,38 @@ export async function getDb() {
   if (!_db) {
     try {
       _db = drizzle(async (sql, params, method) => {
+        const isWrite = /^\s*(insert|update|delete|replace)/i.test(sql);
         try {
           const res = await queryCloudflareD1(sql, params);
-          const rows = Array.isArray(res) ? res : (res?.results || []);
+          let rows = Array.isArray(res) ? res : (res?.results || []);
+
+          // If remote returned 0 rows for a read query, check local SQLite
+          if (!isWrite && rows.length === 0) {
+            try {
+              const localRes = await getLocalDbClient().execute({ sql, args: params });
+              if (localRes.rows && localRes.rows.length > 0) {
+                rows = localRes.rows;
+              }
+            } catch {}
+          }
+
           if (method === "get") {
             return { rows: rows[0] ? Object.values(rows[0]) : [] };
           }
           return { rows: rows.map((r: any) => Object.values(r)) };
         } catch (err) {
-          console.warn("[Database] D1 query fallback to empty result:", err);
-          return { rows: [] };
+          // Fall back to local SQLite on remote error
+          try {
+            const localRes = await getLocalDbClient().execute({ sql, args: params });
+            const rows = localRes.rows || [];
+            if (method === "get") {
+              return { rows: rows[0] ? Object.values(rows[0]) : [] };
+            }
+            return { rows: rows.map((r: any) => Object.values(r)) };
+          } catch (localErr) {
+            console.warn("[Database] D1 query fallback error:", localErr);
+            return { rows: [] };
+          }
         }
       });
     } catch (error) {

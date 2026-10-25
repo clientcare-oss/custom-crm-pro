@@ -566,28 +566,52 @@ export const invoicesRouter = router({
     .query(async ({ ctx, input }) => {
       const clientId = input?.contactId || (ctx.user as any)?.contactId || (ctx.user as any)?.id;
       if (!clientId) {
-        return { totalBalance: 0, count: 0, invoices: [] };
+        return { totalBalance: 0, count: 0, hasOverdue: false, invoices: [] };
       }
 
       const res = await db.getFamilyOutstandingInvoices(Number(clientId));
+      const now = Date.now();
       const hasOverdue = res.invoices.some(
         (inv: any) =>
           inv.status === "Overdue" ||
-          (inv.dueDate && new Date(inv.dueDate) < new Date())
+          (inv.dueDate && new Date(inv.dueDate).getTime() < now)
       );
+
+      // Sort invoices with overdue invoices first, then earliest due date, then newest
+      const sortedInvoices = [...res.invoices].sort((a: any, b: any) => {
+        const aOverdue = a.status === "Overdue" || (a.dueDate && new Date(a.dueDate).getTime() < now);
+        const bOverdue = b.status === "Overdue" || (b.dueDate && new Date(b.dueDate).getTime() < now);
+        if (aOverdue && !bOverdue) return -1;
+        if (!aOverdue && bOverdue) return 1;
+        if (a.dueDate && b.dueDate) {
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        }
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      });
+
       return {
         totalBalance: res.totalBalance,
         count: res.count,
         hasOverdue,
-        invoices: res.invoices.map((inv: any) => ({
-          id: inv.id,
-          invoiceNumber: inv.invoiceNumber,
-          title: inv.title || `Invoice ${inv.invoiceNumber}`,
-          total: inv.total,
-          dueDate: inv.dueDate,
-          status: inv.status,
-          createdAt: inv.createdAt,
-        })),
+        invoices: sortedInvoices.map((inv: any) => {
+          const isOverdue = inv.status === "Overdue" || (inv.dueDate && new Date(inv.dueDate).getTime() < now);
+          const totalNum = Number(inv.total) || 0;
+          const paidNum = Number(inv.amountPaid) || 0;
+          const remainingBalance = Math.max(0, totalNum - paidNum);
+          return {
+            id: inv.id,
+            invoiceNumber: inv.invoiceNumber,
+            title: inv.title || `Invoice ${inv.invoiceNumber}`,
+            total: inv.total,
+            amountPaid: inv.amountPaid || "0.00",
+            remainingBalance: remainingBalance > 0 ? remainingBalance : totalNum,
+            dueDate: inv.dueDate,
+            status: isOverdue ? "Overdue" : inv.status,
+            isOverdue: !!isOverdue,
+            stripePaymentUrl: inv.stripePaymentUrl,
+            createdAt: inv.createdAt,
+          };
+        }),
       };
     }),
 
@@ -608,6 +632,34 @@ export const invoicesRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Invoice not found" });
       }
 
+      // ─── 1. SERVER-SIDE INVOICE OWNERSHIP & AUTH ENFORCEMENT ─────────────────
+      let callerContactId: number | null = null;
+      if ((ctx as any).portalContactId) {
+        callerContactId = Number((ctx as any).portalContactId);
+      } else if (ctx.user) {
+        if (ctx.user.role === "admin" || (ctx as any).isAdminPreview) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Portal preview mode is view-only. Staff cannot submit payments on behalf of clients via portal preview.",
+          });
+        }
+        callerContactId = Number((ctx.user as any).contactId ?? ctx.user.id);
+      }
+
+      if (!callerContactId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You must be signed in to submit an invoice payment.",
+        });
+      }
+
+      if (Number(inv.clientId) !== callerContactId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Unauthorized: You do not have permission to pay an invoice belonging to another family account.",
+        });
+      }
+
       // Idempotency: If already paid, return early to prevent duplicate charges
       if (inv.status === "Paid") {
         return {
@@ -622,10 +674,6 @@ export const invoicesRouter = router({
 
       if (inv.status === "Voided" || inv.status === "Cancelled") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot pay a voided or cancelled invoice." });
-      }
-
-      if (!inv.clientId) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "No family account associated with this invoice." });
       }
 
       // Retrieve saved payment methods for this family
@@ -643,8 +691,27 @@ export const invoicesRouter = router({
       const cardLast4 = targetMethod?.last4 || inv.client?.defaultPaymentMethodLast4 || "4242";
       const stripePmId = targetMethod?.stripePaymentMethodId || inv.client?.defaultPaymentMethodId;
 
+      const isProduction = process.env.NODE_ENV === "production";
       const stripe = getSafeStripe();
-      let stripePaymentIntentId = `pi_saved_${Date.now()}`;
+
+      // ─── 2. PRODUCTION GATEWAY INTEGRITY (NO FABRICATED INTENTS) ────────────
+      if (isProduction) {
+        if (!stripe) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Payment processing gateway is not configured. Please contact Waypoint Advocates to complete your payment.",
+          });
+        }
+        if (!stripePmId || stripePmId.startsWith("pm_mock_") || !inv.client?.stripeCustomerId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "A verified payment method on file is required to complete this payment.",
+          });
+        }
+      }
+
+      let stripePaymentIntentId = `pi_dev_sim_${Date.now()}`;
+      let isSimulated = false;
 
       if (stripe && stripePmId && !stripePmId.startsWith("pm_mock_") && inv.client?.stripeCustomerId) {
         try {
@@ -680,12 +747,24 @@ export const invoicesRouter = router({
             message: `Card processing failed: ${stripeErr.message}. Please try a different card.`,
           });
         }
+      } else {
+        if (isProduction) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Live gateway confirmation required in production.",
+          });
+        }
+        isSimulated = true;
       }
 
       // Record invoice as Paid
+      const paymentNote = isSimulated
+        ? `[SIMULATED - DEV ONLY] Paid via saved card (${cardBrand.toUpperCase()} ending in ${cardLast4})`
+        : `Paid via saved card (${cardBrand.toUpperCase()} ending in ${cardLast4})`;
+
       const updated = await db.recordInvoicePayment(inv.id, {
         stripePaymentIntentId,
-        paymentNote: `Paid via saved card (${cardBrand.toUpperCase()} ending in ${cardLast4})`,
+        paymentNote,
       });
 
       // Record in Case Activity Timeline
@@ -738,6 +817,34 @@ export const invoicesRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Invoice not found" });
       }
 
+      // ─── 1. SERVER-SIDE INVOICE OWNERSHIP & AUTH ENFORCEMENT ─────────────────
+      let callerContactId: number | null = null;
+      if ((ctx as any).portalContactId) {
+        callerContactId = Number((ctx as any).portalContactId);
+      } else if (ctx.user) {
+        if (ctx.user.role === "admin" || (ctx as any).isAdminPreview) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Portal preview mode is view-only. Staff cannot submit payments on behalf of clients via portal preview.",
+          });
+        }
+        callerContactId = Number((ctx.user as any).contactId ?? ctx.user.id);
+      }
+
+      if (!callerContactId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You must be signed in to submit an invoice payment.",
+        });
+      }
+
+      if (Number(inv.clientId) !== callerContactId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Unauthorized: You do not have permission to pay an invoice belonging to another family account.",
+        });
+      }
+
       // Idempotency safeguard
       if (inv.status === "Paid") {
         return {
@@ -750,7 +857,18 @@ export const invoicesRouter = router({
         };
       }
 
-      // Error simulation / test handling
+      const isProduction = process.env.NODE_ENV === "production";
+
+      // Error simulation / test handling (strictly prohibited in production)
+      if (input.simulateFailure || input.simulateRequiresAction) {
+        if (isProduction) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Payment simulation parameters are strictly disabled in production.",
+          });
+        }
+      }
+
       if (input.simulateFailure) {
         if (inv.clientId) {
           try {
@@ -782,8 +900,27 @@ export const invoicesRouter = router({
         };
       }
 
+      const stripe = getSafeStripe();
+
+      // ─── 2. PRODUCTION GATEWAY INTEGRITY ────────────────────────────────────
+      if (isProduction) {
+        if (!stripe) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Payment processing gateway is not configured. Please contact Waypoint Advocates to complete your payment.",
+          });
+        }
+        if (!input.stripePaymentMethodId || input.stripePaymentMethodId.startsWith("pm_mock_")) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "A verified card token is required to complete payment.",
+          });
+        }
+      }
+
       const stripePmId = input.stripePaymentMethodId || `pm_new_${Date.now()}`;
-      let stripeIntentId = `pi_new_${Date.now()}`;
+      let stripeIntentId = `pi_dev_sim_${Date.now()}`;
+      let isSimulated = false;
 
       // Save payment method for future if requested
       if (input.saveForFuture && inv.clientId) {
@@ -802,10 +939,57 @@ export const invoicesRouter = router({
         }
       }
 
+      if (stripe && input.stripePaymentMethodId && !input.stripePaymentMethodId.startsWith("pm_mock_") && inv.client?.stripeCustomerId) {
+        try {
+          const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(Number(inv.total) * 100),
+            currency: "usd",
+            customer: inv.client.stripeCustomerId,
+            payment_method: input.stripePaymentMethodId,
+            confirm: true,
+            return_url: `${process.env.BASE_URL || "http://localhost:3000"}/portal?tab=billing&invoiceId=${inv.id}`,
+            metadata: {
+              invoiceId: String(inv.id),
+              invoiceNumber: inv.invoiceNumber,
+            },
+          });
+
+          if (paymentIntent.status === "requires_action") {
+            return {
+              success: false,
+              requiresAction: true,
+              clientSecret: paymentIntent.client_secret,
+              invoiceId: inv.id,
+              invoiceNumber: inv.invoiceNumber,
+            };
+          }
+
+          stripeIntentId = paymentIntent.id;
+        } catch (stripeErr: any) {
+          console.error("[New Payment Error]:", stripeErr.message);
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Card processing failed: ${stripeErr.message}. Please check card details or try another payment method.`,
+          });
+        }
+      } else {
+        if (isProduction) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Live gateway confirmation required in production.",
+          });
+        }
+        isSimulated = true;
+      }
+
       // Mark invoice as Paid
+      const paymentNote = isSimulated
+        ? `[SIMULATED - DEV ONLY] Paid via new card (${input.brand.toUpperCase()} ending in ${input.last4})`
+        : `Paid via new card (${input.brand.toUpperCase()} ending in ${input.last4})`;
+
       const updated = await db.recordInvoicePayment(inv.id, {
         stripePaymentIntentId: stripeIntentId,
-        paymentNote: `Paid via new card (${input.brand.toUpperCase()} ending in ${input.last4})`,
+        paymentNote,
       });
 
       // Record in Case Activity Timeline
