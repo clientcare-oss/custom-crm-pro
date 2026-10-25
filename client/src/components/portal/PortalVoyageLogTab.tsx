@@ -404,93 +404,137 @@ export default function PortalVoyageLogTab({
         className="hidden"
       />
 
-      {/* ── Top Header: Welcoming, Crisp & Clean ── */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-white/10">
-        <div>
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* 3D App Icon Box */}
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400/25 via-amber-500/15 to-amber-600/5 border border-amber-400/40 text-amber-300 shadow-[0_8px_20px_rgba(245,181,68,0.25),inset_0_1px_1px_rgba(255,255,255,0.2)] flex items-center justify-center">
-              <Video className="h-5 w-5 drop-shadow" />
-            </div>
+      {/* ── 3D Admiralty Hero Header: VOYAGE MEETING LOGS ── */}
+      <div className="relative rounded-3xl p-[1px] bg-gradient-to-b from-[#FFE394]/70 via-[#C5A059]/40 to-[#9E7D3B]/40 shadow-[0_20px_50px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.2)]">
+        <div className="bg-gradient-to-b from-[#0B1E38] via-[#07162B] to-[#040D1A] p-6 sm:p-7 rounded-[23px] relative overflow-hidden">
+          {/* 3D Specular Top Bevel Hairline */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFE394] to-transparent shadow-[0_0_15px_rgba(255,227,148,0.8)]" />
 
-            <div>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-sm flex items-center gap-2">
-                  Voyage Log
+          {/* Ambient Maritime Background Glow */}
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#C5A059]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-[#1E3A8A]/20 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 relative z-10">
+            <div className="space-y-3 max-w-2xl">
+              {/* 3D Eyebrow Badges */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-mono font-extrabold uppercase tracking-widest bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07152B] shadow-md border border-[#FFE394]/60">
+                  <Video className="h-3.5 w-3.5 text-[#07152B]" />
+                  VOYAGE MEETING LOGS
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold bg-[#020A17]/85 border border-[#DFBE77]/40 text-[#C6B697] shadow-inner">
+                  <Shield className="h-3.5 w-3.5 text-emerald-400" />
+                  Encrypted &bull; FERPA Compliant
+                </span>
+              </div>
+
+              {/* Main Headline */}
+              <div className="flex items-center gap-3.5 flex-wrap">
+                <div className="w-12 h-12 rounded-2xl p-[1.5px] bg-gradient-to-b from-[#FFE394] via-[#C5A059] to-[#9E7D3B] shadow-[0_8px_20px_rgba(0,0,0,0.85)] shrink-0">
+                  <div className="w-full h-full rounded-[14px] bg-gradient-to-b from-[#142642] to-[#051124] flex items-center justify-center border border-[#FFE394]/20 shadow-inner">
+                    <Video className="h-6 w-6 text-[#FAD77B] drop-shadow-[0_0_8px_rgba(250,215,123,0.6)]" />
+                  </div>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#FFF4D4] tracking-tight drop-shadow-md">
+                  Voyage Meeting Logs
                 </h1>
                 <PageIdBadge id="PG-023-VOY" name="Voyage Log" />
               </div>
-              <p className="text-xs sm:text-sm text-slate-300/80 mt-0.5 font-normal">
-                Your recorded meetings. Securely stored. Easily searchable.
+
+              {/* Subtitle */}
+              <p className="text-xs sm:text-sm text-[#D8C7A5] font-normal leading-relaxed pl-0.5">
+                Every IEP conference, school evaluation, and advocacy session securely recorded, transcribed, and indexed.
               </p>
             </div>
+
+            {isAdminView && (
+              <div className="shrink-0 self-start md:self-auto">
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs h-11 px-5 rounded-xl border border-[#FFE394]/70 shadow-[0_6px_20px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.4)] flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-[#07162B]" />
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse shrink-0 shadow-sm" />
+                      <span>Upload Meeting Recording</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
-
-        {isAdminView && (
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="w-full md:w-auto bg-gradient-to-b from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-[0_6px_18px_rgba(245,181,68,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] border border-amber-200 flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin text-slate-950" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse shrink-0 shadow-sm" />
-                Upload Meeting Recording
-              </>
-            )}
-          </Button>
-        )}
       </div>
 
-      {/* ── 4 Metrics Panels in a Row: Cooler, Elevated 3D Depth ── */}
+      {/* ── 4 Metrics Panels in a Row: 3D Elevated Gold-Edge Depth ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1 */}
-        <div className="bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-950/90 border border-white/10 rounded-2xl p-4 shadow-[0_10px_24px_-4px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_-2px_4px_rgba(0,0,0,0.4)] flex items-center gap-4 hover:-translate-y-0.5 hover:border-indigo-400/40 transition-all duration-300">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/25 to-indigo-700/10 border border-indigo-400/30 text-indigo-300 shadow-[0_4px_12px_rgba(99,102,241,0.25),inset_0_1px_1px_rgba(255,255,255,0.2)] flex items-center justify-center shrink-0">
-            <Clapperboard className="h-5 w-5 drop-shadow" />
-          </div>
-          <div>
-            <p className="text-2xl font-extrabold text-white tracking-tight leading-none drop-shadow-sm">14</p>
-            <p className="text-xs text-slate-400 font-medium mt-1">Recorded Meetings</p>
+        <div className="relative rounded-2xl p-[1px] bg-gradient-to-b from-[#FFE394]/50 via-[#C5A059]/30 to-[#9E7D3B]/20 shadow-[0_12px_28px_rgba(0,0,0,0.85)] hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(197,160,89,0.22)] transition-all">
+          <div className="bg-gradient-to-br from-[#0B1E38]/95 via-[#07162B]/95 to-[#040D1A]/95 rounded-[15px] p-4.5 relative overflow-hidden flex items-center gap-4">
+            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#FFE394]/50 to-transparent" />
+            <div className="w-12 h-12 rounded-xl p-[1px] bg-gradient-to-b from-[#FFE394]/70 via-[#C5A059]/40 to-[#9E7D3B]/20 shadow-md shrink-0">
+              <div className="w-full h-full rounded-[10px] bg-gradient-to-b from-[#14233D] to-[#040A15] flex items-center justify-center border border-[#FFE394]/25 shadow-inner">
+                <Clapperboard className="h-5 w-5 text-indigo-300 drop-shadow" />
+              </div>
+            </div>
+            <div>
+              <p className="text-2xl font-serif font-black text-[#FFF4D4] tracking-tight leading-none drop-shadow-sm">14</p>
+              <p className="text-xs text-[#A69371] font-medium mt-1">Recorded Meetings</p>
+            </div>
           </div>
         </div>
 
         {/* Metric 2 */}
-        <div className="bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-950/90 border border-white/10 rounded-2xl p-4 shadow-[0_10px_24px_-4px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_-2px_4px_rgba(0,0,0,0.4)] flex items-center gap-4 hover:-translate-y-0.5 hover:border-amber-400/40 transition-all duration-300">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/25 to-amber-700/10 border border-amber-400/30 text-amber-300 shadow-[0_4px_12px_rgba(245,181,68,0.25),inset_0_1px_1px_rgba(255,255,255,0.2)] flex items-center justify-center shrink-0">
-            <Clock className="h-5 w-5 drop-shadow" />
-          </div>
-          <div>
-            <p className="text-2xl font-extrabold text-white tracking-tight leading-none drop-shadow-sm">32.4</p>
-            <p className="text-xs text-slate-400 font-medium mt-1">Total Hours Recorded</p>
+        <div className="relative rounded-2xl p-[1px] bg-gradient-to-b from-[#FFE394]/50 via-[#C5A059]/30 to-[#9E7D3B]/20 shadow-[0_12px_28px_rgba(0,0,0,0.85)] hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(197,160,89,0.22)] transition-all">
+          <div className="bg-gradient-to-br from-[#0B1E38]/95 via-[#07162B]/95 to-[#040D1A]/95 rounded-[15px] p-4.5 relative overflow-hidden flex items-center gap-4">
+            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#FFE394]/50 to-transparent" />
+            <div className="w-12 h-12 rounded-xl p-[1px] bg-gradient-to-b from-[#FFE394]/70 via-[#C5A059]/40 to-[#9E7D3B]/20 shadow-md shrink-0">
+              <div className="w-full h-full rounded-[10px] bg-gradient-to-b from-[#14233D] to-[#040A15] flex items-center justify-center border border-[#FFE394]/25 shadow-inner">
+                <Clock className="h-5 w-5 text-[#FAD77B] drop-shadow" />
+              </div>
+            </div>
+            <div>
+              <p className="text-2xl font-serif font-black text-[#FFF4D4] tracking-tight leading-none drop-shadow-sm">32.4</p>
+              <p className="text-xs text-[#A69371] font-medium mt-1">Total Hours Recorded</p>
+            </div>
           </div>
         </div>
 
         {/* Metric 3 */}
-        <div className="bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-950/90 border border-white/10 rounded-2xl p-4 shadow-[0_10px_24px_-4px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_-2px_4px_rgba(0,0,0,0.4)] flex items-center gap-4 hover:-translate-y-0.5 hover:border-sky-400/40 transition-all duration-300">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500/25 to-sky-700/10 border border-sky-400/30 text-sky-300 shadow-[0_4px_12px_rgba(14,165,233,0.25),inset_0_1px_1px_rgba(255,255,255,0.2)] flex items-center justify-center shrink-0">
-            <FileText className="h-5 w-5 drop-shadow" />
-          </div>
-          <div>
-            <p className="text-2xl font-extrabold text-white tracking-tight leading-none drop-shadow-sm">100%</p>
-            <p className="text-xs text-slate-400 font-medium mt-1">Meetings Transcribed</p>
+        <div className="relative rounded-2xl p-[1px] bg-gradient-to-b from-[#FFE394]/50 via-[#C5A059]/30 to-[#9E7D3B]/20 shadow-[0_12px_28px_rgba(0,0,0,0.85)] hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(197,160,89,0.22)] transition-all">
+          <div className="bg-gradient-to-br from-[#0B1E38]/95 via-[#07162B]/95 to-[#040D1A]/95 rounded-[15px] p-4.5 relative overflow-hidden flex items-center gap-4">
+            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#FFE394]/50 to-transparent" />
+            <div className="w-12 h-12 rounded-xl p-[1px] bg-gradient-to-b from-[#FFE394]/70 via-[#C5A059]/40 to-[#9E7D3B]/20 shadow-md shrink-0">
+              <div className="w-full h-full rounded-[10px] bg-gradient-to-b from-[#14233D] to-[#040A15] flex items-center justify-center border border-[#FFE394]/25 shadow-inner">
+                <FileText className="h-5 w-5 text-sky-300 drop-shadow" />
+              </div>
+            </div>
+            <div>
+              <p className="text-2xl font-serif font-black text-[#FFF4D4] tracking-tight leading-none drop-shadow-sm">100%</p>
+              <p className="text-xs text-[#A69371] font-medium mt-1">Meetings Transcribed</p>
+            </div>
           </div>
         </div>
 
         {/* Metric 4 */}
-        <div className="bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-950/90 border border-white/10 rounded-2xl p-4 shadow-[0_10px_24px_-4px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_-2px_4px_rgba(0,0,0,0.4)] flex items-center gap-4 hover:-translate-y-0.5 hover:border-emerald-400/40 transition-all duration-300">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/25 to-emerald-700/10 border border-emerald-400/30 text-emerald-300 shadow-[0_4px_12px_rgba(16,185,129,0.25),inset_0_1px_1px_rgba(255,255,255,0.2)] flex items-center justify-center shrink-0">
-            <Shield className="h-5 w-5 drop-shadow" />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-white leading-tight">Secure & Private</p>
-            <p className="text-[11px] text-slate-400 font-medium mt-0.5 leading-snug">Only you & your advocate</p>
+        <div className="relative rounded-2xl p-[1px] bg-gradient-to-b from-[#FFE394]/50 via-[#C5A059]/30 to-[#9E7D3B]/20 shadow-[0_12px_28px_rgba(0,0,0,0.85)] hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(197,160,89,0.22)] transition-all">
+          <div className="bg-gradient-to-br from-[#0B1E38]/95 via-[#07162B]/95 to-[#040D1A]/95 rounded-[15px] p-4.5 relative overflow-hidden flex items-center gap-4">
+            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#FFE394]/50 to-transparent" />
+            <div className="w-12 h-12 rounded-xl p-[1px] bg-gradient-to-b from-[#FFE394]/70 via-[#C5A059]/40 to-[#9E7D3B]/20 shadow-md shrink-0">
+              <div className="w-full h-full rounded-[10px] bg-gradient-to-b from-[#14233D] to-[#040A15] flex items-center justify-center border border-[#FFE394]/25 shadow-inner">
+                <Shield className="h-5 w-5 text-emerald-400 drop-shadow" />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-serif font-bold text-[#FFF4D4] leading-tight">Secure & Private</p>
+              <p className="text-[11px] text-[#A69371] font-medium mt-0.5 leading-snug">Only you & your advocate</p>
+            </div>
           </div>
         </div>
       </div>
@@ -501,10 +545,10 @@ export default function PortalVoyageLogTab({
         {/* ── Left Column: Recordings List (1 Col) ── */}
         <div className="lg:col-span-1 space-y-3.5">
           <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono">
+            <span className="text-xs font-mono font-bold text-[#C5A059] uppercase tracking-wider">
               All Recordings ({processedRecordings.length})
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">
+            <span className="text-[10px] text-[#A69371] font-mono">
               Click to view
             </span>
           </div>
@@ -517,56 +561,68 @@ export default function PortalVoyageLogTab({
                   key={rec.id}
                   onClick={() => setActiveRecId(rec.id)}
                   className={cn(
-                    "rounded-2xl p-3.5 flex gap-3 transition-all duration-300 cursor-pointer relative overflow-hidden group select-none",
+                    "rounded-2xl transition-all duration-300 cursor-pointer relative overflow-hidden group select-none",
                     isActive
-                      ? "bg-gradient-to-b from-blue-950/80 via-slate-900/90 to-slate-950 border-2 border-amber-400/70 shadow-[0_10px_25px_-5px_rgba(245,181,68,0.2),0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] -translate-y-0.5"
-                      : "bg-slate-900/70 hover:bg-slate-900/90 border border-white/10 hover:border-amber-400/30 shadow-[0_6px_16px_-2px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:-translate-y-0.5"
+                      ? "p-[1.5px] bg-gradient-to-b from-[#FFE394] via-[#DFBE77] to-[#9E7D3B] shadow-[0_12px_28px_rgba(197,160,89,0.25)] -translate-y-0.5"
+                      : "p-[1px] bg-gradient-to-b from-[#FFE394]/30 via-[#C5A059]/20 to-[#9E7D3B]/10 hover:from-[#FFE394]/60 hover:via-[#DFBE77]/40 shadow-md hover:-translate-y-0.5"
                   )}
                 >
-                  {/* 3D Thumbnail */}
-                  <div className="relative w-24 h-16 rounded-xl bg-gradient-to-tr from-slate-950 via-[#0A2647] to-[#103E73] border border-white/15 overflow-hidden shrink-0 flex items-center justify-center shadow-inner group-hover:border-amber-400/50 transition-colors">
-                    {/* Visual sailboat & lighthouse accents */}
-                    <div className="absolute w-2 h-2 bg-amber-400/80 rounded-full blur-[2px] top-4 left-10" />
-                    <div className="w-7 h-7 rounded-full bg-slate-950/70 border border-white/20 flex items-center justify-center shadow-md relative z-10 group-hover:scale-110 transition-transform">
-                      <Play className="h-3.5 w-3.5 text-white ml-0.5" />
-                    </div>
-                    <span className="absolute bottom-1 right-1 bg-black/80 backdrop-blur-xs px-1.5 py-0.5 rounded text-[8.5px] font-bold text-white font-mono leading-none border border-white/10">
-                      {rec.duration}
-                    </span>
-                  </div>
+                  <div className={cn(
+                    "rounded-[14.5px] p-3.5 flex gap-3 relative overflow-hidden",
+                    isActive
+                      ? "bg-gradient-to-br from-[#0F2744] via-[#0B1E38] to-[#040D1A]"
+                      : "bg-gradient-to-br from-[#07162B]/95 via-[#051429]/95 to-[#020A17]/95 group-hover:from-[#0B1E38]/95"
+                  )}>
+                    {/* Top specular hairline */}
+                    <div className={cn(
+                      "absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent to-transparent transition-all",
+                      isActive ? "via-[#FFE394]" : "via-[#FFE394]/30 group-hover:via-[#FFE394]/60"
+                    )} />
 
-                  {/* Recording Details */}
-                  <div className="min-w-0 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h4 className={cn(
-                        "font-bold text-xs truncate transition-colors flex items-center gap-1.5",
-                        isActive ? "text-amber-300" : "text-white group-hover:text-amber-200"
-                      )}>
-                        {rec.title}
-                        {rec.starred && <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" />}
-                      </h4>
-                      <p className="text-[10px] text-slate-400 mt-0.5 font-mono">
-                        {rec.date}
-                      </p>
+                    {/* 3D Thumbnail */}
+                    <div className="relative w-24 h-16 rounded-xl bg-gradient-to-tr from-[#020A17] via-[#0A2647] to-[#103E73] border border-[#DFBE77]/30 overflow-hidden shrink-0 flex items-center justify-center shadow-inner group-hover:border-[#FFE394]/60 transition-colors">
+                      <div className="absolute w-2 h-2 bg-[#DFBE77] rounded-full blur-[2px] top-4 left-10" />
+                      <div className="w-7 h-7 rounded-full bg-[#020A17]/80 border border-[#DFBE77]/40 flex items-center justify-center shadow-md relative z-10 group-hover:scale-110 transition-transform">
+                        <Play className="h-3.5 w-3.5 text-[#FFE394] ml-0.5" />
+                      </div>
+                      <span className="absolute bottom-1 right-1 bg-black/85 backdrop-blur-xs px-1.5 py-0.5 rounded text-[8.5px] font-bold text-[#FFF4D4] font-mono leading-none border border-[#DFBE77]/30">
+                        {rec.duration}
+                      </span>
                     </div>
 
-                    <div className="flex items-center justify-between mt-1">
-                      {rec.status === "uploading" ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[8.5px] font-semibold text-amber-400 border border-amber-500/30">
-                          <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                          Uploading...
-                        </span>
-                      ) : rec.status === "processing" ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/15 px-2 py-0.5 text-[8.5px] font-semibold text-indigo-300 border border-indigo-500/30">
-                          <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                          Transcribing...
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[8.5px] font-semibold text-emerald-300 border border-emerald-500/30">
-                          <Check className="h-2.5 w-2.5 text-emerald-400" />
-                          Transcript Ready
-                        </span>
-                      )}
+                    {/* Recording Details */}
+                    <div className="min-w-0 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h4 className={cn(
+                          "font-serif font-bold text-xs truncate transition-colors flex items-center gap-1.5",
+                          isActive ? "text-[#FFF4D4]" : "text-white group-hover:text-[#FFE394]"
+                        )}>
+                          {rec.title}
+                          {rec.starred && <Star className="h-3 w-3 fill-[#DFBE77] text-[#DFBE77] shrink-0" />}
+                        </h4>
+                        <p className="text-[10px] text-[#A69371] mt-0.5 font-mono">
+                          {rec.date}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-1">
+                        {rec.status === "uploading" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[8.5px] font-semibold text-amber-300 border border-amber-500/40">
+                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                            Uploading...
+                          </span>
+                        ) : rec.status === "processing" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/15 px-2 py-0.5 text-[8.5px] font-semibold text-indigo-300 border border-indigo-500/40">
+                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                            Transcribing...
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[8.5px] font-semibold text-emerald-300 border border-emerald-500/40">
+                            <Check className="h-2.5 w-2.5 text-emerald-400" />
+                            Transcript Ready
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -576,7 +632,7 @@ export default function PortalVoyageLogTab({
 
           <Button
             variant="outline"
-            className="w-full text-xs font-semibold bg-slate-900/60 border-white/10 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-xl shadow-md cursor-pointer"
+            className="w-full text-xs font-semibold bg-[#07162B] border border-[#DFBE77]/40 text-[#DFBE77] hover:bg-[#FFE394]/10 hover:text-[#FFF4D4] rounded-xl shadow-md cursor-pointer"
             onClick={() => toast.info("All recorded sessions are currently shown.")}
           >
             Load More Recordings
@@ -586,313 +642,311 @@ export default function PortalVoyageLogTab({
         {/* ── Right Column: Video Player, Highlights, Actions, & Transcript (2 Cols) ── */}
         <div className="lg:col-span-2 space-y-5">
           {/* Main Player & Highlights Card with 3D Depth */}
-          <Card className="bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-950/90 border border-white/10 rounded-3xl p-5 shadow-[0_16px_36px_-6px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_-2px_4px_rgba(0,0,0,0.4)] space-y-4 text-white relative overflow-hidden">
-            
-            {/* Top Subtle Gleam */}
-            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
-
-            {/* Title & Action Buttons */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/10">
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight drop-shadow-sm">
-                  {activeRec.title}
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5 font-mono">
-                  {activeRec.date} &bull; {activeRec.duration}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={handleDownloadTranscript}
-                  size="sm"
-                  className="h-8.5 text-xs font-bold flex items-center gap-1.5 bg-slate-800/80 hover:bg-slate-700/80 border border-white/15 text-white hover:text-amber-300 rounded-xl shadow-md cursor-pointer transition-all"
-                >
-                  <Download className="h-3.5 w-3.5 text-amber-400" />
-                  <span>Download Transcript</span>
-                </Button>
-                <Button
-                  size="sm"
-                  className="h-8.5 w-8.5 p-0 bg-slate-800/80 hover:bg-slate-700/80 border border-white/15 text-white rounded-xl shadow-md cursor-pointer"
-                  onClick={() => toast.info("Export options ready.")}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Custom 3D Video Player simulator */}
-            <div className="relative aspect-video rounded-2xl bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border border-white/15 overflow-hidden flex flex-col justify-between group shadow-[0_12px_30px_rgba(0,0,0,0.7),inset_0_2px_4px_rgba(0,0,0,0.8)] select-none">
+          <div className="relative rounded-3xl p-[1px] bg-gradient-to-b from-[#FFE394]/60 via-[#C5A059]/35 to-[#9E7D3B]/20 shadow-[0_20px_50px_rgba(0,0,0,0.9)]">
+            <div className="bg-gradient-to-b from-[#0B1E38] via-[#07162B] to-[#040D1A] rounded-[23px] p-5 sm:p-6 space-y-4 text-white relative overflow-hidden">
               
-              {/* Cinematic Backdrop Glow */}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+              {/* Top Specular Hairline */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFE394]/60 to-transparent pointer-events-none" />
 
-              {/* Watermark bar */}
-              <div className="p-3 text-[10px] tracking-wider text-slate-300 uppercase font-semibold relative z-10 flex items-center justify-between bg-slate-950/40 backdrop-blur-xs border-b border-white/5">
-                <div className="flex items-center gap-1.5">
-                  <Shield className="h-3.5 w-3.5 text-amber-400" />
-                  <span>Secure Encrypted Stream &bull; Waypoint Advocates</span>
-                </div>
-                <span className="font-mono text-emerald-400 text-[9px] bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                  ● Verified Playback
-                </span>
-              </div>
-
-              {/* 3D Big Center Play Button with Skip Controls */}
-              <div className="flex items-center justify-center gap-6 relative z-10">
-                <button
-                  onClick={() => handleSkip(-10)}
-                  className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/15 text-slate-300 hover:text-white transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
-                  title="Rewind 10 seconds"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </button>
-
-                <button
-                  onClick={handlePlayToggle}
-                  className="w-14 h-14 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 text-slate-950 flex items-center justify-center transition-all hover:scale-105 active:scale-95 border-2 border-amber-200 shadow-[0_8px_25px_rgba(245,181,68,0.5),inset_0_1px_1px_rgba(255,255,255,0.4)] cursor-pointer"
-                >
-                  {isPlaying ? (
-                    <Pause className="h-6 w-6 text-slate-950 fill-current" />
-                  ) : (
-                    <Play className="h-6 w-6 ml-0.5 text-slate-950 fill-current" />
-                  )}
-                </button>
-
-                <button
-                  onClick={() => handleSkip(10)}
-                  className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/15 text-slate-300 hover:text-white transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
-                  title="Forward 10 seconds"
-                >
-                  <RotateCw className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Video control bar at bottom with 3D Bevel */}
-              <div className="p-3 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent space-y-2 relative z-10 border-t border-white/5">
-                {/* Scrub Timeline Slider */}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min={0}
-                    max={activeRec.secondsLimit}
-                    value={currentTime}
-                    onChange={(e) => setCurrentTime(parseInt(e.target.value))}
-                    className="flex-1 h-1.5 rounded-lg bg-slate-800 accent-amber-400 cursor-pointer appearance-none shadow-inner"
-                  />
+              {/* Title & Action Buttons */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#DFBE77]/25">
+                <div>
+                  <h3 className="text-base sm:text-lg font-serif font-bold text-[#FFF4D4] tracking-tight drop-shadow-sm">
+                    {activeRec.title}
+                  </h3>
+                  <p className="text-xs text-[#A69371] mt-0.5 font-mono">
+                    {activeRec.date} &bull; {activeRec.duration}
+                  </p>
                 </div>
 
-                {/* Left/Right controls */}
-                <div className="flex justify-between items-center text-xs text-slate-200">
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleDownloadTranscript}
+                    size="sm"
+                    className="h-8.5 text-xs font-bold flex items-center gap-1.5 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] border border-[#FFE394]/70 rounded-xl shadow-md cursor-pointer transition-all"
+                  >
+                    <Download className="h-3.5 w-3.5 text-[#07162B]" />
+                    <span>Download Transcript</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-8.5 w-8.5 p-0 bg-[#020A17] hover:bg-[#07162B] border border-[#DFBE77]/40 text-[#DFBE77] hover:text-[#FFF4D4] rounded-xl shadow-md cursor-pointer"
+                    onClick={() => toast.info("Export options ready.")}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Custom 3D Video Player simulator */}
+              <div className="relative aspect-video rounded-2xl bg-gradient-to-b from-[#020A17] via-[#07162B] to-[#020A17] border border-[#DFBE77]/35 overflow-hidden flex flex-col justify-between group shadow-[0_12px_30px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(0,0,0,0.9)] select-none">
+                
+                {/* Cinematic Backdrop Glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#020A17] via-[#07162B]/50 to-transparent" />
+
+                {/* Watermark bar */}
+                <div className="p-3 text-[10px] tracking-wider text-[#C6B697] uppercase font-semibold relative z-10 flex items-center justify-between bg-[#020A17]/80 backdrop-blur-xs border-b border-[#DFBE77]/20">
+                  <div className="flex items-center gap-1.5">
+                    <Shield className="h-3.5 w-3.5 text-[#DFBE77]" />
+                    <span>Secure Encrypted Stream &bull; Waypoint Advocates</span>
+                  </div>
+                  <span className="font-mono text-emerald-400 text-[9px] bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                    ● Verified Playback
+                  </span>
+                </div>
+
+                {/* 3D Big Center Play Button with Skip Controls */}
+                <div className="flex items-center justify-center gap-6 relative z-10">
+                  <button
+                    onClick={() => handleSkip(-10)}
+                    className="p-2.5 rounded-xl bg-[#020A17]/85 hover:bg-[#0B1E38] border border-[#DFBE77]/40 text-[#DFBE77] hover:text-[#FFF4D4] transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
+                    title="Rewind 10 seconds"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    onClick={handlePlayToggle}
+                    className="w-14 h-14 rounded-full bg-gradient-to-b from-[#FFE394] via-[#DFBE77] to-[#C5A059] hover:brightness-110 text-[#07162B] flex items-center justify-center transition-all hover:scale-105 active:scale-95 border-2 border-[#FFF4D4] shadow-[0_8px_25px_rgba(245,181,68,0.5),inset_0_1px_1px_rgba(255,255,255,0.5)] cursor-pointer"
+                  >
+                    {isPlaying ? (
+                      <Pause className="h-6 w-6 text-[#07162B] fill-current" />
+                    ) : (
+                      <Play className="h-6 w-6 ml-0.5 text-[#07162B] fill-current" />
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handleSkip(10)}
+                    className="p-2.5 rounded-xl bg-[#020A17]/85 hover:bg-[#0B1E38] border border-[#DFBE77]/40 text-[#DFBE77] hover:text-[#FFF4D4] transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
+                    title="Forward 10 seconds"
+                  >
+                    <RotateCw className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Video control bar at bottom with 3D Bevel */}
+                <div className="p-3 bg-gradient-to-t from-[#020A17] via-[#020A17]/95 to-transparent space-y-2 relative z-10 border-t border-[#DFBE77]/20">
+                  {/* Scrub Timeline Slider */}
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={handlePlayToggle}
-                      className="hover:text-amber-400 cursor-pointer transition-colors"
-                    >
-                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    </button>
-                    <span className="font-mono text-xs">
-                      {formatSeconds(currentTime)} / {activeRec.duration}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-4 relative">
-                    {/* Volume Slider */}
-                    <div className="flex items-center gap-1.5">
-                      <Volume2 className="h-4 w-4 text-slate-300" />
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={volume}
-                        onChange={(e) => setVolume(parseInt(e.target.value))}
-                        className="w-16 h-1 rounded bg-slate-800 accent-amber-400 cursor-pointer appearance-none"
-                      />
-                    </div>
-
-                    {/* Speed Selector */}
-                    <div className="relative">
-                      <button
-                        onClick={() => setShowSpeedMenu(!showSpeedMenu)}
-                        className="font-semibold text-xs px-2 py-0.5 rounded-md bg-slate-800 border border-white/10 hover:border-amber-400/50 cursor-pointer transition-colors"
-                      >
-                        {speed}
-                      </button>
-                      {showSpeedMenu && (
-                        <div className="absolute bottom-7 right-0 bg-slate-900 border border-white/15 rounded-xl py-1 w-18 text-center text-xs shadow-2xl flex flex-col z-50">
-                          {["0.5x", "1x", "1.25x", "1.5x", "2x"].map((s) => (
-                            <button
-                              key={s}
-                              onClick={() => {
-                                setSpeed(s);
-                                setShowSpeedMenu(false);
-                              }}
-                              className={cn(
-                                "py-1 px-2 hover:bg-white/15 w-full block text-white cursor-pointer transition-colors text-xs font-mono",
-                                speed === s && "text-amber-400 font-bold bg-white/5"
-                              )}
-                            >
-                              {s}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Fullscreen icon */}
-                    <button
-                      className="hover:text-amber-400 cursor-pointer transition-colors"
-                      onClick={() => toast.info("Fullscreen simulator.")}
-                    >
-                      <Maximize className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Highlights & Action Items: 3D Recessed Containers ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-              {/* Highlights Box */}
-              <div className="space-y-2 p-4 rounded-2xl bg-gradient-to-b from-slate-950/60 to-slate-900/40 border border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]">
-                <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <Sparkles className="h-4 w-4 text-purple-400 fill-purple-400" />
-                  Meeting Highlights
-                </h4>
-                <ul className="space-y-2 pt-1">
-                  {activeRec.highlights.map((h, i) => (
-                    <li key={i} className="text-xs text-slate-200 flex items-start gap-2 leading-relaxed">
-                      {h.includes("denied") ? (
-                        <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
-                      ) : (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                      )}
-                      <span>{h}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Action Items Box */}
-              <div className="space-y-2 p-4 rounded-2xl bg-gradient-to-b from-slate-950/60 to-slate-900/40 border border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]">
-                <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <ClipboardList className="h-4 w-4 text-amber-400" />
-                  Action Items
-                </h4>
-                <ul className="space-y-2 pt-1">
-                  {activeRec.actionItems.map((a, i) => (
-                    <li key={i} className="text-xs text-slate-200 flex items-start gap-2 leading-relaxed">
-                      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 mt-1.5 shadow-[0_0_6px_rgba(245,181,68,0.6)]" />
-                      <span>{a}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </Card>
-
-          {/* ── Interactive Transcript / Notes Tabbed Card with 3D Depth ── */}
-          <Card className="rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-950/90 shadow-[0_16px_36px_-6px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_-2px_4px_rgba(0,0,0,0.4)] overflow-hidden text-white">
-            {/* Tabs Header with 3D Bevel */}
-            <div className="flex border-b border-white/10 bg-slate-950/60">
-              <button
-                onClick={() => setRightTab("transcript")}
-                className={cn(
-                  "flex-1 py-3 text-xs font-bold uppercase tracking-wider text-center transition-all cursor-pointer relative",
-                  rightTab === "transcript"
-                    ? "text-amber-400 bg-amber-500/10 shadow-inner"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                )}
-              >
-                Transcript
-                {rightTab === "transcript" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 shadow-[0_0_8px_rgba(245,181,68,0.8)]" />
-                )}
-              </button>
-              <button
-                onClick={() => setRightTab("notes")}
-                className={cn(
-                  "flex-1 py-3 text-xs font-bold uppercase tracking-wider text-center transition-all cursor-pointer relative",
-                  rightTab === "notes"
-                    ? "text-amber-400 bg-amber-500/10 shadow-inner"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                )}
-              >
-                Notes
-                {rightTab === "notes" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 shadow-[0_0_8px_rgba(245,181,68,0.8)]" />
-                )}
-              </button>
-            </div>
-
-            <div className="p-4 sm:p-5 space-y-4">
-              {rightTab === "transcript" ? (
-                <>
-                  {/* Search Bar */}
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
-                    <Input
-                      placeholder="Search this transcript..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 bg-slate-950/60 border-white/10 text-xs text-white placeholder:text-slate-500 rounded-xl focus:border-amber-400/60 focus-visible:ring-amber-400 h-9.5 shadow-inner"
+                    <input
+                      type="range"
+                      min={0}
+                      max={activeRec.secondsLimit}
+                      value={currentTime}
+                      onChange={(e) => setCurrentTime(parseInt(e.target.value))}
+                      className="flex-1 h-1.5 rounded-lg bg-[#07162B] accent-[#DFBE77] cursor-pointer appearance-none shadow-inner"
                     />
                   </div>
 
-                  {/* Transcript Rows with 3D Hover & Jump Button */}
-                  <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-                    {activeRec.transcript
-                      .filter((row) =>
-                        row.text.toLowerCase().includes(searchQuery.toLowerCase())
-                      )
-                      .map((row, i) => (
-                        <div
-                          key={i}
-                          className="flex items-start justify-between gap-4 p-3 rounded-xl bg-slate-950/40 hover:bg-slate-800/60 border border-white/5 hover:border-white/15 transition-all duration-200 group shadow-xs"
-                        >
-                          <div className="flex items-start gap-3">
-                            <button
-                              onClick={() => handleTimeJump(row.seconds)}
-                              className="text-[11px] font-bold text-amber-400 hover:underline shrink-0 pt-0.5 font-mono cursor-pointer"
-                            >
-                              {row.time}
-                            </button>
-                            <p className="text-xs text-slate-200 leading-relaxed font-medium">
-                              {highlightMatches(row.text, searchQuery)}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleTimeJump(row.seconds)}
-                            className="p-1.5 rounded-lg bg-slate-800 border border-white/15 hover:bg-amber-400 hover:text-slate-950 text-white shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md"
-                            title="Jump to this moment"
-                          >
-                            <Play className="h-3 w-3 fill-current" />
-                          </button>
-                        </div>
-                      ))}
+                  {/* Left/Right controls */}
+                  <div className="flex justify-between items-center text-xs text-[#FFF4D4]">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handlePlayToggle}
+                        className="hover:text-[#FFE394] cursor-pointer transition-colors"
+                      >
+                        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                      </button>
+                      <span className="font-mono text-xs text-[#C6B697]">
+                        {formatSeconds(currentTime)} / {activeRec.duration}
+                      </span>
+                    </div>
 
-                    {activeRec.transcript.filter((row) =>
-                      row.text.toLowerCase().includes(searchQuery.toLowerCase())
-                    ).length === 0 && (
-                      <p className="text-xs text-slate-400 text-center py-6">
-                        No matches found for "{searchQuery}".
-                      </p>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-white border-b border-white/10 pb-2">
-                    <UserCheck className="h-4 w-4 text-amber-400" />
-                    Advocate Review Notes
-                  </div>
-                  <div className="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap bg-slate-950/50 p-4 rounded-2xl border border-white/10 shadow-inner">
-                    {activeRec.notes}
+                    <div className="flex items-center gap-4 relative">
+                      {/* Volume Slider */}
+                      <div className="flex items-center gap-1.5">
+                        <Volume2 className="h-4 w-4 text-[#DFBE77]" />
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={volume}
+                          onChange={(e) => setVolume(parseInt(e.target.value))}
+                          className="w-16 h-1 rounded bg-[#07162B] accent-[#DFBE77] cursor-pointer appearance-none"
+                        />
+                      </div>
+
+                      {/* Speed Selector */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowSpeedMenu(!showSpeedMenu)}
+                          className="font-semibold text-xs px-2 py-0.5 rounded-md bg-[#020A17] border border-[#DFBE77]/40 text-[#DFBE77] hover:border-[#FFE394] cursor-pointer transition-colors"
+                        >
+                          {speed}
+                        </button>
+                        {showSpeedMenu && (
+                          <div className="absolute bottom-7 right-0 bg-[#0B1E38] border border-[#DFBE77]/50 rounded-xl py-1 w-18 text-center text-xs shadow-2xl flex flex-col z-50">
+                            {["0.5x", "1x", "1.25x", "1.5x", "2x"].map((s) => (
+                              <button
+                                key={s}
+                                onClick={() => {
+                                  setSpeed(s);
+                                  setShowSpeedMenu(false);
+                                }}
+                                className={cn(
+                                  "py-1 px-2 hover:bg-white/10 w-full block text-white cursor-pointer transition-colors text-xs font-mono",
+                                  speed === s && "text-[#DFBE77] font-bold bg-[#FFE394]/10"
+                                )}
+                              >
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Fullscreen icon */}
+                      <button
+                        className="hover:text-[#FFE394] cursor-pointer transition-colors text-[#DFBE77]"
+                        onClick={() => toast.info("Fullscreen simulator.")}
+                      >
+                        <Maximize className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* ── Highlights & Action Items: 3D Recessed Containers ── */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                {/* Highlights Box */}
+                <div className="space-y-2 p-4 rounded-2xl bg-[#020A17]/85 border border-[#DFBE77]/30 shadow-inner">
+                  <h4 className="text-xs font-serif font-bold text-[#FFF4D4] flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-[#FAD77B]" />
+                    Meeting Highlights
+                  </h4>
+                  <ul className="space-y-2 pt-1">
+                    {activeRec.highlights.map((h, i) => (
+                      <li key={i} className="text-xs text-[#D8C7A5] flex items-start gap-2 leading-relaxed">
+                        {h.includes("denied") ? (
+                          <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                        ) : (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        )}
+                        <span>{h}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Action Items Box */}
+                <div className="space-y-2 p-4 rounded-2xl bg-[#020A17]/85 border border-[#DFBE77]/30 shadow-inner">
+                  <h4 className="text-xs font-serif font-bold text-[#FFF4D4] flex items-center gap-1.5">
+                    <ClipboardList className="h-4 w-4 text-[#DFBE77]" />
+                    Action Items
+                  </h4>
+                  <ul className="space-y-2 pt-1">
+                    {activeRec.actionItems.map((a, i) => (
+                      <li key={i} className="text-xs text-[#D8C7A5] flex items-start gap-2 leading-relaxed">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#DFBE77] shrink-0 mt-1.5 shadow-[0_0_6px_rgba(223,190,119,0.8)]" />
+                        <span>{a}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
-          </Card>
+          </div>
+
+          {/* ── Interactive Transcript / Notes Tabbed Card with 3D Depth ── */}
+          <div className="relative rounded-3xl p-[1px] bg-gradient-to-b from-[#FFE394]/50 via-[#C5A059]/30 to-[#9E7D3B]/20 shadow-[0_16px_36px_rgba(0,0,0,0.85)]">
+            <div className="rounded-[23px] bg-gradient-to-b from-[#0B1E38] via-[#07162B] to-[#040D1A] overflow-hidden text-white">
+              {/* Tabs Header with Gold Edges */}
+              <div className="flex border-b border-[#DFBE77]/30 bg-[#020A17]/80">
+                <button
+                  onClick={() => setRightTab("transcript")}
+                  className={cn(
+                    "flex-1 py-3 text-xs font-mono font-bold uppercase tracking-wider text-center transition-all cursor-pointer relative",
+                    rightTab === "transcript"
+                      ? "text-[#07162B] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] shadow-md font-extrabold"
+                      : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B]/60"
+                  )}
+                >
+                  Transcript
+                </button>
+                <button
+                  onClick={() => setRightTab("notes")}
+                  className={cn(
+                    "flex-1 py-3 text-xs font-mono font-bold uppercase tracking-wider text-center transition-all cursor-pointer relative",
+                    rightTab === "notes"
+                      ? "text-[#07162B] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] shadow-md font-extrabold"
+                      : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B]/60"
+                  )}
+                >
+                  Notes
+                </button>
+              </div>
+
+              <div className="p-4 sm:p-5 space-y-4">
+                {rightTab === "transcript" ? (
+                  <>
+                    {/* Search Bar */}
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#A69371]" />
+                      <Input
+                        placeholder="Search this transcript..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 bg-[#020A17]/90 border border-[#DFBE77]/40 text-xs text-[#FFF4D4] placeholder:text-[#A69371] rounded-xl focus:border-[#FFE394] focus-visible:ring-1 focus-visible:ring-[#FFE394]/50 h-9.5 shadow-inner"
+                      />
+                    </div>
+
+                    {/* Transcript Rows with 3D Hover & Jump Button */}
+                    <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                      {activeRec.transcript
+                        .filter((row) =>
+                          row.text.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                        .map((row, i) => (
+                          <div
+                            key={i}
+                            className="flex items-start justify-between gap-4 p-3 rounded-xl bg-[#020A17]/70 hover:bg-[#0E2548]/70 border border-[#DFBE77]/20 hover:border-[#DFBE77]/50 transition-all duration-200 group shadow-xs"
+                          >
+                            <div className="flex items-start gap-3">
+                              <button
+                                onClick={() => handleTimeJump(row.seconds)}
+                                className="text-[11px] font-bold text-[#DFBE77] hover:underline shrink-0 pt-0.5 font-mono cursor-pointer"
+                              >
+                                {row.time}
+                              </button>
+                              <p className="text-xs text-[#FFF4D4] leading-relaxed font-medium">
+                                {highlightMatches(row.text, searchQuery)}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleTimeJump(row.seconds)}
+                              className="p-1.5 rounded-lg bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md hover:scale-105 active:scale-95"
+                              title="Jump to this moment"
+                            >
+                              <Play className="h-3 w-3 fill-current" />
+                            </button>
+                          </div>
+                        ))}
+
+                      {activeRec.transcript.filter((row) =>
+                        row.text.toLowerCase().includes(searchQuery.toLowerCase())
+                      ).length === 0 && (
+                        <p className="text-xs text-[#A69371] text-center py-6 font-mono">
+                          No matches found for &quot;{searchQuery}&quot;.
+                        </p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-serif font-bold text-[#FFF4D4] border-b border-[#DFBE77]/30 pb-2">
+                      <UserCheck className="h-4 w-4 text-[#DFBE77]" />
+                      Advocate Review Notes
+                    </div>
+                    <div className="text-xs text-[#D8C7A5] leading-relaxed whitespace-pre-wrap bg-[#020A17]/90 p-4 rounded-2xl border border-[#DFBE77]/30 shadow-inner">
+                      {activeRec.notes}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
