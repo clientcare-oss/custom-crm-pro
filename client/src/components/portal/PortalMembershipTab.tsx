@@ -269,7 +269,7 @@ export function PortalMembershipTab({
 
             {/* Header Row */}
             <div className={cn(
-              "border-b px-3.5 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between transition-colors duration-500 shrink-0",
+              "border-b px-3.5 py-2 sm:px-4 sm:py-2.5 flex items-center justify-between transition-colors duration-500 shrink-0",
               highlightPaymentMethod 
                 ? "bg-gradient-to-r from-[#1c1303] via-[#352303] to-[#1c1303] border-amber-400/60" 
                 : "bg-[#030C22] border-blue-900/40"
@@ -279,19 +279,14 @@ export function PortalMembershipTab({
                   "h-4 w-4 transition-colors",
                   highlightPaymentMethod ? "text-amber-300 animate-bounce" : "text-[#F5B544]"
                 )} />
-                <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-white tracking-wide flex items-center gap-2">
-                    Saved Payment Method
-                    {highlightPaymentMethod && (
-                      <Badge className="bg-amber-400 text-slate-950 font-extrabold text-[8px] uppercase tracking-wider font-mono shadow-md animate-pulse py-0 px-1.5">
-                        Update Required
-                      </Badge>
-                    )}
-                  </h3>
-                  <p className="text-[10.5px] text-blue-200/60">
-                    Primary card on file for monthly retainer
-                  </p>
-                </div>
+                <h3 className="text-xs sm:text-sm font-bold text-white tracking-wide flex items-center gap-2">
+                  Saved Payment Method
+                  {highlightPaymentMethod && (
+                    <Badge className="bg-amber-400 text-slate-950 font-extrabold text-[8px] uppercase tracking-wider font-mono shadow-md animate-pulse py-0 px-1.5">
+                      Update Required
+                    </Badge>
+                  )}
+                </h3>
               </div>
 
               <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-mono py-0.5 px-2">
@@ -299,21 +294,21 @@ export function PortalMembershipTab({
               </Badge>
             </div>
 
-            {/* Content: Fake Credit Card with Update Button Directly Underneath */}
-            <div className="p-3 sm:p-3.5 flex flex-col items-center justify-start gap-2 relative z-10">
+            {/* Content: Fake Credit Card with Update Button Directly Underneath - Positioned at Top */}
+            <div className="px-3.5 pt-1.5 pb-3 sm:px-4 sm:pt-2 sm:pb-3.5 flex flex-col items-center justify-start gap-2 relative z-10">
               {/* Fake Credit Card Graphic */}
-              <div className="w-full max-w-[215px] sm:max-w-[225px]">
+              <div className="w-full max-w-[280px] sm:max-w-[295px]">
                 <div 
                   style={{ aspectRatio: "85.6 / 53.98" }}
-                  className="relative aspect-[85.6/53.98] w-full rounded-lg bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/40 p-2.5 sm:p-3 text-white shadow-xl overflow-hidden flex flex-col justify-between group select-none"
+                  className="relative aspect-[85.6/53.98] w-full rounded-xl bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/40 p-3.5 sm:p-4 text-white shadow-xl overflow-hidden flex flex-col justify-between group select-none"
                 >
                   {/* Gold accent sheen */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5B544]/10 rounded-full blur-2xl pointer-events-none -mr-12 -mt-12 group-hover:bg-[#F5B544]/20 transition-all duration-700" />
+                  <div className="absolute top-0 right-0 w-36 h-36 bg-[#F5B544]/10 rounded-full blur-2xl pointer-events-none -mr-14 -mt-14 group-hover:bg-[#F5B544]/20 transition-all duration-700" />
                   
                   {/* Card Top Row: Chip & Wireless icon */}
                   <div className="flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-1">
-                      <div className="w-6 h-4.5 rounded bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 border border-amber-700/60 shadow-inner flex items-center justify-center p-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-7 h-5 rounded bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 border border-amber-700/60 shadow-inner flex items-center justify-center p-0.5">
                         <div className="w-full h-full border border-amber-900/40 rounded-2xs grid grid-cols-2 gap-0.5 opacity-60">
                           <div className="border-r border-b border-amber-900/40" />
                           <div className="border-b border-amber-900/40" />
@@ -321,14 +316,14 @@ export function PortalMembershipTab({
                           <div />
                         </div>
                       </div>
-                      <Radio className="h-2.5 w-2.5 text-amber-300/70 rotate-90" />
+                      <Radio className="h-3 w-3 text-amber-300/70 rotate-90" />
                     </div>
 
                     <div className="text-right">
-                      <span className="text-[10.5px] font-black italic tracking-wider text-amber-300 font-mono drop-shadow-sm block leading-none">
+                      <span className="text-xs sm:text-sm font-black italic tracking-wider text-amber-300 font-mono drop-shadow-sm block leading-none">
                         {cardData.brand.toUpperCase()}
                       </span>
-                      <span className="text-[6.5px] uppercase tracking-widest text-white/50 block font-mono mt-0.5">
+                      <span className="text-[7px] uppercase tracking-widest text-white/50 block font-mono mt-0.5">
                         Executive Debit
                       </span>
                     </div>
@@ -336,7 +331,7 @@ export function PortalMembershipTab({
 
                   {/* Card Number */}
                   <div className="py-0 relative z-10">
-                    <span className="text-[11.5px] sm:text-xs font-mono tracking-widest text-white font-bold drop-shadow">
+                    <span className="text-sm sm:text-base font-mono tracking-widest text-white font-bold drop-shadow">
                       •••• •••• •••• {cardData.last4}
                     </span>
                   </div>
@@ -344,19 +339,19 @@ export function PortalMembershipTab({
                   {/* Card Bottom Row */}
                   <div className="flex items-end justify-between relative z-10 text-xs">
                     <div>
-                      <span className="text-[6.5px] uppercase tracking-widest text-white/60 block font-mono leading-tight">
+                      <span className="text-[7px] uppercase tracking-widest text-white/60 block font-mono leading-tight">
                         Cardholder Name
                       </span>
-                      <span className="font-bold text-white tracking-wide uppercase font-mono text-[8.5px] sm:text-[9px] block mt-0.5">
+                      <span className="font-bold text-white tracking-wide uppercase font-mono text-[9.5px] sm:text-[10px] block mt-0.5">
                         {cardData.cardholder}
                       </span>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-[6.5px] uppercase tracking-widest text-white/60 block font-mono leading-tight">
+                      <span className="text-[7px] uppercase tracking-widest text-white/60 block font-mono leading-tight">
                         Expires
                       </span>
-                      <span className="font-bold text-amber-300 font-mono text-[8.5px] sm:text-[9px] block mt-0.5">
+                      <span className="font-bold text-amber-300 font-mono text-[9.5px] sm:text-[10px] block mt-0.5">
                         {cardData.expMonth}/{cardData.expYear.slice(-2)}
                       </span>
                     </div>
@@ -365,7 +360,7 @@ export function PortalMembershipTab({
               </div>
 
               {/* Update Card Button Directly Under the Fake Credit Card */}
-              <div className="w-full max-w-[215px] sm:max-w-[225px] flex flex-col items-center gap-1 pt-0.5">
+              <div className="w-full max-w-[280px] sm:max-w-[295px] flex flex-col items-center gap-1.5 pt-0.5">
                 <Button
                   onClick={() => {
                     setHighlightPaymentMethod(false);
@@ -379,22 +374,22 @@ export function PortalMembershipTab({
                     setEditCardOpen(true);
                   }}
                   className={cn(
-                    "w-full h-8 sm:h-8.5 px-3 rounded-lg font-bold text-xs tracking-wide transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer shadow-md relative overflow-hidden group",
+                    "w-full h-8.5 sm:h-9 px-4 rounded-xl font-bold text-xs tracking-wide transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-md relative overflow-hidden group",
                     highlightPaymentMethod
                       ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] border-2 border-amber-300 shadow-[0_0_35px_rgba(245,181,68,0.95)] scale-[1.03] animate-pulse"
                       : "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#F0CF88] hover:via-[#D6B16A] hover:to-[#AF8E4C] text-[#07162B] border border-[#FFE394]/70 shadow-[0_4px_16px_rgba(0,0,0,0.5),0_0_12px_rgba(197,160,89,0.2)] hover:shadow-[0_6px_20px_rgba(245,181,68,0.35)] hover:scale-[1.01] active:scale-[0.98]"
                   )}
                 >
                   <div className="absolute inset-0 w-1/2 h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-1000 ease-out pointer-events-none" />
-                  <Edit3 className="h-3 w-3 text-[#07162B] shrink-0 stroke-[2.5]" />
-                  <span className="font-extrabold tracking-wide text-[11px] sm:text-xs">Update Payment Method</span>
+                  <Edit3 className="h-3.5 w-3.5 text-[#07162B] shrink-0 stroke-[2.5]" />
+                  <span className="font-extrabold tracking-wide text-xs">Update Payment Method</span>
                 </Button>
 
-                <div className="flex items-center gap-1 text-[9px] text-[#D8C7A5] font-medium bg-[#020A17]/80 px-2 py-0.5 rounded-full border border-[#3A2C18] shadow-inner">
-                  <ShieldCheck className="h-2.5 w-2.5 text-emerald-400 shrink-0" />
-                  <span>Encrypted sync</span>
+                <div className="flex items-center gap-1.5 text-[9.5px] text-[#D8C7A5] font-medium bg-[#020A17]/80 px-2.5 py-0.5 rounded-full border border-[#3A2C18] shadow-inner">
+                  <ShieldCheck className="h-3 w-3 text-emerald-400 shrink-0" />
+                  <span>Instant encrypted sync</span>
                   <span className="text-white/20">•</span>
-                  <span className="text-[#C6B697] font-mono text-[8.5px]">PCI-DSS</span>
+                  <span className="text-[#C6B697] font-mono text-[9px]">PCI-DSS Level 1</span>
                 </div>
               </div>
             </div>
@@ -404,7 +399,7 @@ export function PortalMembershipTab({
         {/* ── Right Box: Enrolled Plan (Compact & Clean — lg:col-span-5) ── */}
         <div className="lg:col-span-5">
           <Card className="border border-blue-900/40 bg-[#06172F] shadow-xl rounded-2xl overflow-hidden text-white">
-            <CardHeader className="bg-[#030C22] border-b border-blue-900/40 px-3.5 py-2.5 sm:px-4 sm:py-3 shrink-0">
+            <CardHeader className="bg-[#030C22] border-b border-blue-900/40 px-3.5 py-2 sm:px-4 sm:py-2.5 shrink-0">
               <div className="flex items-start justify-between gap-2.5">
                 <div className="space-y-0.5">
                   <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[8px] font-bold uppercase font-mono px-1.5 py-0">
@@ -424,7 +419,7 @@ export function PortalMembershipTab({
               </div>
             </CardHeader>
 
-            <CardContent className="p-3 sm:p-3.5 space-y-2.5 text-xs">
+            <CardContent className="px-3.5 py-2.5 sm:px-4 sm:py-3 space-y-2.5 text-xs">
               {/* Clean, Simple Highlights */}
               <div className="space-y-1.5 text-white/85 text-[11px] py-0.5">
                 <div className="flex items-center gap-1.5">
