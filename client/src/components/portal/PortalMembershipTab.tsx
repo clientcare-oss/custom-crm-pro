@@ -236,11 +236,11 @@ export function PortalMembershipTab({
           <Clock className="h-4 w-4" />
         </div>
         <div className="space-y-0.5 text-xs">
-          <h3 className="font-bold text-white">
-            Membership Plan Configured ($55.00 / month per student)
+          <h3 className="font-bold text-white flex items-center gap-1.5">
+            <span>🧭</span> Waypoint Essentials Plan Configured ($55 / month · 12 months)
           </h3>
           <p className="text-blue-200/70 leading-relaxed">
-            Your monthly advocacy membership is staged and active. Auto-billing commences upon conclusion of your scheduled Discovery Call with Waypoint Advocates.
+            Your monthly advocacy membership for <strong className="text-white font-medium">{studentName}</strong> is staged and active. Auto-billing commences upon conclusion of your scheduled Discovery Call with Waypoint Advocates.
           </p>
         </div>
       </div>
@@ -396,7 +396,7 @@ export function PortalMembershipTab({
           </Card>
         </div>
 
-        {/* ── Right Box: Enrolled Plan (Compact & Clean — lg:col-span-5) ── */}
+        {/* ── Right Box: Enrolled Plan (🧭 Waypoint Essentials • $55/mo — lg:col-span-5) ── */}
         <div className="lg:col-span-5">
           <Card className="border border-blue-900/40 bg-[#06172F] shadow-xl rounded-2xl overflow-hidden text-white">
             <CardHeader className="bg-[#030C22] border-b border-blue-900/40 px-3.5 py-2 sm:px-4 sm:py-2.5 shrink-0">
@@ -405,41 +405,53 @@ export function PortalMembershipTab({
                   <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[8px] font-bold uppercase font-mono px-1.5 py-0">
                     Current Plan
                   </Badge>
-                  <CardTitle className="text-xs sm:text-sm font-bold text-white tracking-tight">
-                    Essential Continuity & IEP Advisory
+                  <CardTitle className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+                    <span>🧭</span> Waypoint Essentials
                   </CardTitle>
-                  <CardDescription className="text-[10.5px] text-blue-200/70">
-                    Student: <strong className="text-white font-semibold">{studentName}</strong>
+                  <CardDescription className="text-[10px] text-blue-200/70 italic">
+                    For support at the important moments.
                   </CardDescription>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="text-lg sm:text-xl font-black text-amber-300 font-mono block leading-none">$55.00</span>
+                  <span className="text-lg sm:text-xl font-black text-amber-300 font-mono block leading-none">$55</span>
                   <span className="text-[9px] text-white/50 block font-medium mt-0.5">/ month</span>
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="px-3.5 py-2.5 sm:px-4 sm:py-3 space-y-2.5 text-xs">
-              {/* Clean, Simple Highlights */}
-              <div className="space-y-1.5 text-white/85 text-[11px] py-0.5">
+            <CardContent className="px-3.5 py-2.5 sm:px-4 sm:py-3 space-y-2 text-xs">
+              {/* Official Waypoint Essentials Plan Features */}
+              <div className="space-y-1 text-white/90 text-[11px]">
                 <div className="flex items-center gap-1.5">
-                  <Check className="h-3 w-3 text-emerald-400 shrink-0" />
-                  <span>Unlimited IEP & 504 document audits</span>
+                  <span className="text-xs shrink-0">📄</span>
+                  <span>IEP/504 document review</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Check className="h-3 w-3 text-emerald-400 shrink-0" />
-                  <span>Quarterly IEP compliance monitoring</span>
+                  <span className="text-xs shrink-0">🎯</span>
+                  <span>Meeting preparation</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Check className="h-3 w-3 text-emerald-400 shrink-0" />
-                  <span>Direct advocate strategy & Document Vault</span>
+                  <span className="text-xs shrink-0">👥</span>
+                  <span className="font-semibold text-white">4 IEP/504 meetings per year</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs shrink-0">📊</span>
+                  <span>Evaluation & data review</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs shrink-0">🧭</span>
+                  <span>Advocacy strategy & guidance</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs shrink-0">⚖️</span>
+                  <span className="text-amber-300/90 font-medium">State complaint preparation: $200</span>
                 </div>
               </div>
 
-              {/* Clean compact renewal status */}
-              <div className="py-1.5 px-2.5 rounded-lg bg-[#030C22] border border-blue-900/40 flex items-center justify-between text-[11px]">
-                <span className="text-white/60">Renews: <strong className="text-amber-300 font-mono">June 1, 2026</strong></span>
-                <span className="text-emerald-400 font-semibold text-[10.5px] flex items-center gap-1">
+              {/* Clean compact renewal & term bar */}
+              <div className="py-1.5 px-2.5 rounded-lg bg-[#030C22] border border-blue-900/40 flex items-center justify-between text-[10.5px]">
+                <span className="text-white/60">Term: <strong className="text-amber-300 font-mono">12 mos · $660</strong></span>
+                <span className="text-emerald-400 font-semibold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Auto-Pay Active
                 </span>
