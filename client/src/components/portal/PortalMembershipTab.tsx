@@ -245,70 +245,84 @@ export function PortalMembershipTab({
         </div>
       </div>
 
-      {/* ── Two-Box Grid: Saved Payment Method (Left) + Enrolled Plan (Smaller & Decluttered Right) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      {/* ── Two-Box Grid: Saved Payment Method & Enrolled Plan (Equal 50/50 Width, Equal Height, Rich Admiralty Gradients) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         
-        {/* ── Left Box: Saved Payment Method (Button Under Fake Credit Card) ── */}
+        {/* ── Left Box: Saved Payment Method ── */}
         <div 
           id="saved-payment-method"
           ref={paymentMethodCardRef}
-          className="lg:col-span-7 scroll-mt-24"
+          className="h-full scroll-mt-24"
         >
           <Card 
             className={cn(
-              "border bg-[#06172F] shadow-xl rounded-2xl overflow-hidden text-white transition-all duration-500 relative",
+              "h-full flex flex-col justify-between border bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] shadow-2xl rounded-3xl overflow-hidden text-white transition-all duration-500 relative group",
               highlightPaymentMethod 
                 ? "border-amber-400 ring-4 ring-amber-400/40 shadow-[0_0_50px_rgba(245,181,68,0.7),inset_0_0_20px_rgba(245,181,68,0.25)] animate-[pulse_1.5s_cubic-bezier(0.4,0,0.6,1)_infinite]" 
-                : "border-blue-900/40"
+                : "border-amber-400/30 hover:border-amber-400/60"
             )}
           >
+            {/* Top gold accent line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/70 to-transparent pointer-events-none" />
+
+            {/* Ambient gold glow */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-[#F5B544]/10 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16 group-hover:bg-[#F5B544]/15 transition-all duration-700" />
+
             {/* Illuminated Radiant Aura when focused */}
             {highlightPaymentMethod && (
-              <div className="absolute inset-0 rounded-2xl pointer-events-none z-20 border-2 border-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.8)]" />
+              <div className="absolute inset-0 rounded-3xl pointer-events-none z-20 border-2 border-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.8)]" />
             )}
 
             {/* Header Row */}
             <div className={cn(
-              "border-b px-3.5 py-2 sm:px-4 sm:py-2.5 flex items-center justify-between transition-colors duration-500 shrink-0",
+              "border-b p-4 sm:p-4.5 flex items-center justify-between transition-colors duration-500 shrink-0 relative z-10",
               highlightPaymentMethod 
                 ? "bg-gradient-to-r from-[#1c1303] via-[#352303] to-[#1c1303] border-amber-400/60" 
-                : "bg-[#030C22] border-blue-900/40"
+                : "bg-[#030C22]/80 backdrop-blur-sm border-blue-900/40"
             )}>
-              <div className="flex items-center gap-2">
-                <CreditCard className={cn(
-                  "h-4 w-4 transition-colors",
-                  highlightPaymentMethod ? "text-amber-300 animate-bounce" : "text-[#F5B544]"
-                )} />
-                <h3 className="text-xs sm:text-sm font-bold text-white tracking-wide flex items-center gap-2">
-                  Saved Payment Method
-                  {highlightPaymentMethod && (
-                    <Badge className="bg-amber-400 text-slate-950 font-extrabold text-[8px] uppercase tracking-wider font-mono shadow-md animate-pulse py-0 px-1.5">
-                      Update Required
-                    </Badge>
-                  )}
-                </h3>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#07162B] border border-[#3A2C18] flex items-center justify-center shadow-inner">
+                  <CreditCard className={cn(
+                    "h-4 w-4 transition-colors",
+                    highlightPaymentMethod ? "text-amber-300 animate-bounce" : "text-[#F5B544]"
+                  )} />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-bold text-white tracking-wide flex items-center gap-2">
+                    Saved Payment Method
+                    {highlightPaymentMethod && (
+                      <Badge className="bg-amber-400 text-slate-950 font-extrabold text-[8px] uppercase tracking-wider font-mono shadow-md animate-pulse py-0 px-1.5">
+                        Update Required
+                      </Badge>
+                    )}
+                  </h3>
+                  <p className="text-[10.5px] text-blue-200/60">
+                    Primary card for monthly membership billing
+                  </p>
+                </div>
               </div>
 
-              <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-mono py-0.5 px-2">
+              <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[9.5px] font-mono py-1 px-2.5 shadow-sm flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Default Auto-Pay
               </Badge>
             </div>
 
-            {/* Content: Fake Credit Card with Update Button Directly Underneath - Positioned at Top */}
-            <div className="px-3.5 pt-1.5 pb-3 sm:px-4 sm:pt-2 sm:pb-3.5 flex flex-col items-center justify-start gap-2 relative z-10">
+            {/* Content: Fake Credit Card with Update Button Directly Underneath */}
+            <div className="p-5 sm:p-6 flex-1 flex flex-col items-center justify-between gap-4 relative z-10">
               {/* Fake Credit Card Graphic */}
-              <div className="w-full max-w-[280px] sm:max-w-[295px]">
+              <div className="w-full max-w-[290px] sm:max-w-[310px]">
                 <div 
                   style={{ aspectRatio: "85.6 / 53.98" }}
-                  className="relative aspect-[85.6/53.98] w-full rounded-xl bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/40 p-3.5 sm:p-4 text-white shadow-xl overflow-hidden flex flex-col justify-between group select-none"
+                  className="relative aspect-[85.6/53.98] w-full rounded-2xl bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] border border-amber-400/40 p-4 sm:p-4.5 text-white shadow-2xl overflow-hidden flex flex-col justify-between group/card select-none"
                 >
                   {/* Gold accent sheen */}
-                  <div className="absolute top-0 right-0 w-36 h-36 bg-[#F5B544]/10 rounded-full blur-2xl pointer-events-none -mr-14 -mt-14 group-hover:bg-[#F5B544]/20 transition-all duration-700" />
+                  <div className="absolute top-0 right-0 w-36 h-36 bg-[#F5B544]/15 rounded-full blur-2xl pointer-events-none -mr-14 -mt-14 group-hover/card:bg-[#F5B544]/25 transition-all duration-700" />
                   
                   {/* Card Top Row: Chip & Wireless icon */}
                   <div className="flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-7 h-5 rounded bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 border border-amber-700/60 shadow-inner flex items-center justify-center p-0.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-6 rounded bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 border border-amber-700/60 shadow-inner flex items-center justify-center p-0.5">
                         <div className="w-full h-full border border-amber-900/40 rounded-2xs grid grid-cols-2 gap-0.5 opacity-60">
                           <div className="border-r border-b border-amber-900/40" />
                           <div className="border-b border-amber-900/40" />
@@ -316,22 +330,22 @@ export function PortalMembershipTab({
                           <div />
                         </div>
                       </div>
-                      <Radio className="h-3 w-3 text-amber-300/70 rotate-90" />
+                      <Radio className="h-3.5 w-3.5 text-amber-300/80 rotate-90" />
                     </div>
 
                     <div className="text-right">
                       <span className="text-xs sm:text-sm font-black italic tracking-wider text-amber-300 font-mono drop-shadow-sm block leading-none">
                         {cardData.brand.toUpperCase()}
                       </span>
-                      <span className="text-[7px] uppercase tracking-widest text-white/50 block font-mono mt-0.5">
+                      <span className="text-[7.5px] uppercase tracking-widest text-white/50 block font-mono mt-0.5">
                         Executive Debit
                       </span>
                     </div>
                   </div>
 
                   {/* Card Number */}
-                  <div className="py-0 relative z-10">
-                    <span className="text-sm sm:text-base font-mono tracking-widest text-white font-bold drop-shadow">
+                  <div className="py-0.5 relative z-10">
+                    <span className="text-base sm:text-lg font-mono tracking-widest text-white font-bold drop-shadow">
                       •••• •••• •••• {cardData.last4}
                     </span>
                   </div>
@@ -339,19 +353,19 @@ export function PortalMembershipTab({
                   {/* Card Bottom Row */}
                   <div className="flex items-end justify-between relative z-10 text-xs">
                     <div>
-                      <span className="text-[7px] uppercase tracking-widest text-white/60 block font-mono leading-tight">
+                      <span className="text-[7.5px] uppercase tracking-widest text-white/60 block font-mono leading-tight">
                         Cardholder Name
                       </span>
-                      <span className="font-bold text-white tracking-wide uppercase font-mono text-[9.5px] sm:text-[10px] block mt-0.5">
+                      <span className="font-bold text-white tracking-wide uppercase font-mono text-[10px] sm:text-[11px] block mt-0.5">
                         {cardData.cardholder}
                       </span>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-[7px] uppercase tracking-widest text-white/60 block font-mono leading-tight">
+                      <span className="text-[7.5px] uppercase tracking-widest text-white/60 block font-mono leading-tight">
                         Expires
                       </span>
-                      <span className="font-bold text-amber-300 font-mono text-[9.5px] sm:text-[10px] block mt-0.5">
+                      <span className="font-bold text-amber-300 font-mono text-[10px] sm:text-[11px] block mt-0.5">
                         {cardData.expMonth}/{cardData.expYear.slice(-2)}
                       </span>
                     </div>
@@ -360,7 +374,7 @@ export function PortalMembershipTab({
               </div>
 
               {/* Update Card Button Directly Under the Fake Credit Card */}
-              <div className="w-full max-w-[280px] sm:max-w-[295px] flex flex-col items-center gap-1.5 pt-0.5">
+              <div className="w-full max-w-[290px] sm:max-w-[310px] flex flex-col items-center gap-2 pt-0.5">
                 <Button
                   onClick={() => {
                     setHighlightPaymentMethod(false);
@@ -374,89 +388,98 @@ export function PortalMembershipTab({
                     setEditCardOpen(true);
                   }}
                   className={cn(
-                    "w-full h-8.5 sm:h-9 px-4 rounded-xl font-bold text-xs tracking-wide transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-md relative overflow-hidden group",
+                    "w-full h-10 sm:h-11 px-4 rounded-xl font-extrabold text-xs sm:text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg relative overflow-hidden group/btn",
                     highlightPaymentMethod
                       ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] border-2 border-amber-300 shadow-[0_0_35px_rgba(245,181,68,0.95)] scale-[1.03] animate-pulse"
-                      : "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#F0CF88] hover:via-[#D6B16A] hover:to-[#AF8E4C] text-[#07162B] border border-[#FFE394]/70 shadow-[0_4px_16px_rgba(0,0,0,0.5),0_0_12px_rgba(197,160,89,0.2)] hover:shadow-[0_6px_20px_rgba(245,181,68,0.35)] hover:scale-[1.01] active:scale-[0.98]"
+                      : "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#F0CF88] hover:via-[#D6B16A] hover:to-[#AF8E4C] text-[#07162B] border border-[#FFE394]/70 shadow-[0_6px_20px_rgba(0,0,0,0.6),0_0_16px_rgba(197,160,89,0.3)] hover:shadow-[0_8px_26px_rgba(245,181,68,0.45)] hover:scale-[1.01] active:scale-[0.98]"
                   )}
                 >
-                  <div className="absolute inset-0 w-1/2 h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-1000 ease-out pointer-events-none" />
-                  <Edit3 className="h-3.5 w-3.5 text-[#07162B] shrink-0 stroke-[2.5]" />
-                  <span className="font-extrabold tracking-wide text-xs">Update Payment Method</span>
+                  <div className="absolute inset-0 w-1/2 h-full bg-white/20 skew-x-12 -translate-x-full group-hover/btn:translate-x-[300%] transition-transform duration-1000 ease-out pointer-events-none" />
+                  <Edit3 className="h-4 w-4 text-[#07162B] shrink-0 stroke-[2.5]" />
+                  <span className="font-extrabold tracking-wide">Update Payment Method</span>
                 </Button>
 
-                <div className="flex items-center gap-1.5 text-[9.5px] text-[#D8C7A5] font-medium bg-[#020A17]/80 px-2.5 py-0.5 rounded-full border border-[#3A2C18] shadow-inner">
-                  <ShieldCheck className="h-3 w-3 text-emerald-400 shrink-0" />
+                <div className="flex items-center gap-1.5 text-[10px] text-[#D8C7A5] font-medium bg-[#020A17]/80 px-3 py-1 rounded-full border border-[#3A2C18] shadow-inner">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                   <span>Instant encrypted sync</span>
                   <span className="text-white/20">•</span>
-                  <span className="text-[#C6B697] font-mono text-[9px]">PCI-DSS Level 1</span>
+                  <span className="text-[#C6B697] font-mono text-[9.5px]">PCI-DSS Level 1</span>
                 </div>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* ── Right Box: Enrolled Plan (🧭 Waypoint Essentials • $55/mo — lg:col-span-5) ── */}
-        <div className="lg:col-span-5">
-          <Card className="border border-blue-900/40 bg-[#06172F] shadow-xl rounded-2xl overflow-hidden text-white">
-            <CardHeader className="bg-[#030C22] border-b border-blue-900/40 px-3.5 py-2 sm:px-4 sm:py-2.5 shrink-0">
-              <div className="flex items-start justify-between gap-2.5">
-                <div className="space-y-0.5">
-                  <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[8px] font-bold uppercase font-mono px-1.5 py-0">
-                    Current Plan
-                  </Badge>
-                  <CardTitle className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
-                    <span>🧭</span> Waypoint Essentials
-                  </CardTitle>
-                  <CardDescription className="text-[10px] text-blue-200/70 italic">
-                    For support at the important moments.
-                  </CardDescription>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-lg sm:text-xl font-black text-amber-300 font-mono block leading-none">$55</span>
-                  <span className="text-[9px] text-white/50 block font-medium mt-0.5">/ month</span>
-                </div>
-              </div>
-            </CardHeader>
+        {/* ── Right Box: Enrolled Plan (🧭 Waypoint Essentials • $55/mo) ── */}
+        <div className="h-full">
+          <Card className="h-full flex flex-col justify-between border border-amber-400/30 hover:border-amber-400/60 bg-gradient-to-br from-[#0B2553] via-[#071D40] to-[#04122C] shadow-2xl rounded-3xl overflow-hidden text-white transition-all duration-500 relative group">
+            {/* Top gold accent line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/70 to-transparent pointer-events-none" />
 
-            <CardContent className="px-3.5 py-2.5 sm:px-4 sm:py-3 space-y-2 text-xs">
-              {/* Official Waypoint Essentials Plan Features */}
-              <div className="space-y-1 text-white/90 text-[11px]">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs shrink-0">📄</span>
+            {/* Ambient gold glow */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-[#F5B544]/10 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16 group-hover:bg-[#F5B544]/15 transition-all duration-700" />
+
+            {/* Header Row */}
+            <div className="bg-[#030C22]/80 backdrop-blur-sm border-b border-blue-900/40 p-4 sm:p-4.5 flex items-center justify-between shrink-0 relative z-10">
+              <div className="space-y-0.5">
+                <Badge className="bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[8.5px] font-bold uppercase font-mono px-2 py-0.5 shadow-sm">
+                  Current Enrolled Plan
+                </Badge>
+                <CardTitle className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-1.5">
+                  <span>🧭</span> Waypoint Essentials
+                </CardTitle>
+                <CardDescription className="text-[10.5px] text-blue-200/70 italic">
+                  For support at the important moments.
+                </CardDescription>
+              </div>
+
+              <div className="text-right shrink-0">
+                <span className="text-2xl font-black text-amber-300 font-mono block leading-none">$55</span>
+                <span className="text-[9.5px] text-white/50 block font-medium mt-1">/ month</span>
+              </div>
+            </div>
+
+            {/* Content: Official Waypoint Essentials Features + Term Bar */}
+            <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between gap-4 relative z-10 text-xs">
+              {/* Recessed Benefits Container */}
+              <div className="bg-[#020A17]/70 border border-[#3A2C18]/80 rounded-2xl p-4 space-y-2.5 shadow-inner">
+                <div className="flex items-center gap-2 text-white/90 text-xs">
+                  <span className="text-sm shrink-0">📄</span>
                   <span>IEP/504 document review</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs shrink-0">🎯</span>
+                <div className="flex items-center gap-2 text-white/90 text-xs">
+                  <span className="text-sm shrink-0">🎯</span>
                   <span>Meeting preparation</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs shrink-0">👥</span>
-                  <span className="font-semibold text-white">4 IEP/504 meetings per year</span>
+                <div className="flex items-center gap-2 text-amber-200 font-semibold text-xs bg-amber-400/10 px-2 py-1 rounded-lg border border-amber-400/20">
+                  <span className="text-sm shrink-0">👥</span>
+                  <span>4 IEP/504 meetings per year</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs shrink-0">📊</span>
+                <div className="flex items-center gap-2 text-white/90 text-xs">
+                  <span className="text-sm shrink-0">📊</span>
                   <span>Evaluation & data review</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs shrink-0">🧭</span>
-                  <span>Advocacy strategy & guidance</span>
+                <div className="flex items-center gap-2 text-white/90 text-xs">
+                  <span className="text-sm shrink-0">🧭</span>
+                  <span>Advocacy strategy & services guidance</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs shrink-0">⚖️</span>
-                  <span className="text-amber-300/90 font-medium">State complaint preparation: $200</span>
+                <div className="flex items-center gap-2 text-white/90 text-xs">
+                  <span className="text-sm shrink-0">⚖️</span>
+                  <span>State complaint preparation: <strong className="text-amber-300 font-mono">$200</strong></span>
                 </div>
               </div>
 
               {/* Clean compact renewal & term bar */}
-              <div className="py-1.5 px-2.5 rounded-lg bg-[#030C22] border border-blue-900/40 flex items-center justify-between text-[10.5px]">
-                <span className="text-white/60">Term: <strong className="text-amber-300 font-mono">12 mos · $660</strong></span>
-                <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="py-2.5 px-3.5 rounded-xl bg-[#020A17]/90 border border-[#3A2C18] flex items-center justify-between text-xs shadow-inner">
+                <span className="text-white/70">
+                  Investment: <strong className="text-amber-300 font-mono font-bold">12 mos · $660 total</strong>
+                </span>
+                <span className="text-emerald-400 font-semibold text-[11px] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   Auto-Pay Active
                 </span>
               </div>
-            </CardContent>
+            </div>
           </Card>
         </div>
 
