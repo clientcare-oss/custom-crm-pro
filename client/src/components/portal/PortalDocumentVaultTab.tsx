@@ -15,11 +15,14 @@ import {
   Circle,
   Sparkles, 
   FileCode, 
+  FileCheck,
   MoreVertical,
   UploadCloud, 
   RefreshCw,
   Camera,
   HardDrive,
+  TrendingUp,
+  ScrollText,
   ChevronDown,
   X,
   ArrowRight
@@ -80,9 +83,9 @@ const INITIAL_WORKSPACES: VaultWorkspace[] = [
     name: "IEPs & 504s",
     fileCount: 12,
     description: "Current & historical IEPs, 504 plans, and amendments",
-    iconSrc: "/assets/vault/folder_ieps.png",
+    iconSrc: "/assets/vault/folder_ieps_3d.png",
     accentBorder: "border-amber-400/50 hover:border-amber-300",
-    accentGlow: "hover:shadow-[0_0_24px_rgba(245,181,68,0.25)]",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(245,181,68,0.35)]",
     accentText: "text-amber-400",
     extraInfo: "Current IEP updated\nSep 10, 2026"
   },
@@ -91,9 +94,9 @@ const INITIAL_WORKSPACES: VaultWorkspace[] = [
     name: "Evaluations",
     fileCount: 10,
     description: "Psycho-ed evals, speech-language, OT, and PT assessments",
-    iconSrc: "/assets/vault/folder_evals.png",
+    iconSrc: "/assets/vault/folder_evals_3d.png",
     accentBorder: "border-sky-500/50 hover:border-sky-400",
-    accentGlow: "hover:shadow-[0_0_24px_rgba(56,189,248,0.25)]",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(56,189,248,0.35)]",
     accentText: "text-sky-400"
   },
   {
@@ -101,9 +104,9 @@ const INITIAL_WORKSPACES: VaultWorkspace[] = [
     name: "School Records",
     fileCount: 9,
     description: "Report cards, standardized test results, and attendance records",
-    iconSrc: "/assets/vault/folder_school.png",
+    iconSrc: "/assets/vault/folder_school_3d.png",
     accentBorder: "border-teal-400/50 hover:border-teal-300",
-    accentGlow: "hover:shadow-[0_0_24px_rgba(45,212,191,0.25)]",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(45,212,191,0.35)]",
     accentText: "text-teal-400"
   },
   {
@@ -111,9 +114,9 @@ const INITIAL_WORKSPACES: VaultWorkspace[] = [
     name: "Communication",
     fileCount: 7,
     description: "Teacher emails, PWN notices, and meeting invites",
-    iconSrc: "/assets/vault/folder_comm.png",
+    iconSrc: "/assets/vault/folder_comm_3d.png",
     accentBorder: "border-purple-400/50 hover:border-purple-300",
-    accentGlow: "hover:shadow-[0_0_24px_rgba(192,132,252,0.25)]",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(192,132,252,0.35)]",
     accentText: "text-purple-400"
   },
   {
@@ -121,9 +124,9 @@ const INITIAL_WORKSPACES: VaultWorkspace[] = [
     name: "Medical & Therapy",
     fileCount: 6,
     description: "Physician letters, clinical diagnosis notes, and private therapy reports",
-    iconSrc: "/assets/vault/folder_medical.png",
+    iconSrc: "/assets/vault/folder_medical_3d.png",
     accentBorder: "border-rose-400/50 hover:border-rose-300",
-    accentGlow: "hover:shadow-[0_0_24px_rgba(251,113,133,0.25)]",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(251,113,133,0.35)]",
     accentText: "text-rose-400"
   },
   {
@@ -131,9 +134,9 @@ const INITIAL_WORKSPACES: VaultWorkspace[] = [
     name: "Behavior / FBA / BIP",
     fileCount: 5,
     description: "Functional behavioral assessments and behavior intervention plans",
-    iconSrc: "/assets/vault/folder_behavior.png",
+    iconSrc: "/assets/vault/folder_behavior_3d.png",
     accentBorder: "border-amber-500/50 hover:border-orange-400",
-    accentGlow: "hover:shadow-[0_0_24px_rgba(251,146,60,0.25)]",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(251,146,60,0.35)]",
     accentText: "text-orange-400"
   },
   {
@@ -141,9 +144,9 @@ const INITIAL_WORKSPACES: VaultWorkspace[] = [
     name: "Progress Reports",
     fileCount: 6,
     description: "Quarterly IEP goal tracking and special education progress marks",
-    iconSrc: "/assets/vault/folder_progress.png",
+    iconSrc: "/assets/vault/folder_progress_3d.png",
     accentBorder: "border-indigo-400/50 hover:border-indigo-300",
-    accentGlow: "hover:shadow-[0_0_24px_rgba(129,140,248,0.25)]",
+    accentGlow: "hover:shadow-[0_0_24px_rgba(129,140,248,0.35)]",
     accentText: "text-indigo-400"
   },
 ];
@@ -398,6 +401,7 @@ export default function PortalDocumentVaultTab({
       hasCurrent504: documents.some((d) => d.title.toLowerCase().includes("504") || d.documentType === "504 Plan"),
       hasEvaluation: documents.some((d) => d.workspaceId === "evaluations" || d.documentType?.includes("Evaluation") || d.title.toLowerCase().includes("evaluation")),
       hasProgressReport: documents.some((d) => d.workspaceId === "progress-reports" || d.documentType?.includes("Progress") || d.title.toLowerCase().includes("progress")),
+      hasPwn: documents.some((d) => d.workspaceId === "pwn" || d.documentType?.includes("PWN") || d.title.toLowerCase().includes("prior written") || d.title.toLowerCase().includes("pwn")),
     };
   }, [vaultStatus, documents, currentIepDate]);
 
@@ -505,12 +509,13 @@ export default function PortalDocumentVaultTab({
           <div className="md:col-span-5 lg:col-span-5 rounded-2xl bg-gradient-to-br from-[#07162B] to-[#030E1F] border border-blue-900/60 p-4 sm:p-5 flex items-center justify-between gap-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden group">
             <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
             
-            {/* Visual IEP Document Stack */}
-            <div className="relative shrink-0 flex items-center justify-center pl-1">
+            {/* Visual IEP Document Stack with Unchopped 3D Gold Folio */}
+            <div className="relative shrink-0 flex items-center justify-center p-1">
+              <div className="absolute inset-0 bg-radial from-amber-400/20 to-transparent blur-xl pointer-events-none opacity-40 group-hover:opacity-80 transition-opacity" />
               <img 
-                src="/assets/vault/iep_booklet_exact.png" 
-                alt="Current IEP Booklet" 
-                className="w-24 sm:w-28 md:w-32 h-auto object-contain drop-shadow-[0_6px_20px_rgba(0,0,0,0.7)] group-hover:scale-105 transition-transform duration-300"
+                src="/assets/vault/iep_booklet_3d.png?v=4" 
+                alt="Current IEP / 504 Dossier" 
+                className="w-28 sm:w-32 md:w-36 h-auto object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform duration-300 relative z-10"
               />
             </div>
 
@@ -542,26 +547,30 @@ export default function PortalDocumentVaultTab({
             </div>
           </div>
 
-          {/* Panel B: NEED TO UPDATE? */}
-          <div className="md:col-span-4 lg:col-span-4 rounded-2xl bg-gradient-to-br from-[#07162B] to-[#030E1F] border border-blue-900/60 p-4 sm:p-5 flex items-center gap-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          {/* Panel B: NEED TO UPDATE? (Compact 3-Col Layout) */}
+          <div 
+            onClick={handleInitiateUpload}
+            className="md:col-span-3 lg:col-span-3 rounded-2xl bg-gradient-to-br from-[#07162B] to-[#030E1F] border border-blue-900/60 hover:border-cyan-500/50 p-3 sm:p-3.5 lg:p-4 flex items-center gap-2.5 sm:gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] cursor-pointer transition-all hover:scale-[1.01] group"
+          >
             {/* Circular Blue Refresh Icon */}
-            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#0A2347] border border-cyan-400/40 text-cyan-400 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(56,189,248,0.25)]">
-              <RefreshCw className="w-6 h-6 text-cyan-400" />
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#0A2347] border border-cyan-400/40 text-cyan-400 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.25)] group-hover:scale-105 transition-transform">
+              <RefreshCw className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-cyan-400 group-hover:rotate-45 transition-transform duration-300" />
             </div>
 
-            {/* Explanatory Friendly Text */}
+            {/* Compact IEP/504 Text */}
             <div className="min-w-0">
-              <h4 className="text-sm font-extrabold uppercase tracking-wide text-cyan-400 leading-tight mb-1">
-                NEED TO<br />UPDATE?
+              <h4 className="text-xs sm:text-[13px] font-extrabold uppercase tracking-wide text-cyan-400 leading-tight mb-0.5">
+                NEW IEP OR 504?
               </h4>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                If you receive a newer IEP from the school, please upload it here so we can keep {studentFirstName}’s file current.
+              <p className="text-[11px] sm:text-xs text-slate-300 leading-snug">
+                Upload new copies to keep {studentFirstName}’s file current.
               </p>
             </div>
           </div>
 
-          {/* Panel C: UPLOAD */}
+          {/* Panel C: UPLOAD DROPZONE (Expanded 4-Col Layout) */}
           <div 
+            onClick={handleInitiateUpload}
             onDragOver={(e) => {
               e.preventDefault();
               setIsDragOverUpload(true);
@@ -572,27 +581,48 @@ export default function PortalDocumentVaultTab({
               setIsDragOverUpload(false);
               handleInitiateUpload();
             }}
-            className={`md:col-span-3 lg:col-span-3 rounded-2xl bg-gradient-to-br from-[#07162B] to-[#030E1F] border p-4 sm:p-5 flex flex-col items-center justify-center text-center shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all ${
-              isDragOverUpload ? "border-amber-400 bg-amber-400/10 scale-[1.02]" : "border-blue-900/60"
+            className={`md:col-span-4 lg:col-span-4 rounded-2xl bg-gradient-to-br from-[#07162B] to-[#030E1F] border p-4 sm:p-5 flex flex-col items-center justify-center text-center shadow-[0_8px_32px_rgba(0,0,0,0.5)] cursor-pointer group transition-all relative overflow-hidden ${
+              isDragOverUpload 
+                ? "border-amber-400 bg-amber-400/15 scale-[1.02] shadow-[0_0_30px_rgba(245,181,68,0.35)]" 
+                : "border-blue-900/60 hover:border-amber-400/50 hover:shadow-[0_8px_32px_rgba(0,0,0,0.7),0_0_20px_rgba(245,181,68,0.15)]"
             }`}
           >
-            {/* Large Gold Button */}
+            {/* Ambient gold glow */}
+            <div className="absolute inset-0 bg-radial from-amber-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+            {/* 3D Upload Cloud Graphic */}
+            <div className="relative w-16 h-14 sm:w-18 sm:h-16 flex items-center justify-center mb-2">
+              <div className="absolute inset-0 bg-radial from-amber-400/20 to-transparent blur-lg opacity-40 group-hover:opacity-80 transition-opacity pointer-events-none" />
+              <img 
+                src="/assets/vault/upload_cloud_3d.png" 
+                alt="Upload to Document Vault" 
+                className="max-h-14 sm:max-h-16 w-auto object-contain drop-shadow-[0_6px_16px_rgba(0,0,0,0.7)] group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300"
+              />
+            </div>
+
+            {/* Full-width Pristine Gold Button (Read in full, no truncation) */}
             <Button
               type="button"
-              onClick={handleInitiateUpload}
-              className="w-full h-11 sm:h-12 rounded-xl bg-gradient-to-r from-[#F6B738] via-[#FAD36B] to-[#E5A425] hover:from-[#FAD36B] hover:to-[#F6B738] text-slate-950 font-extrabold text-sm sm:text-base shadow-[0_4px_24px_rgba(246,183,56,0.35)] gap-2 cursor-pointer transition-all active:scale-[0.99] border border-amber-200/40"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleInitiateUpload();
+              }}
+              className="w-full max-w-[240px] h-10 px-4 rounded-xl bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-bold text-xs sm:text-sm tracking-wide shadow-[0_4px_16px_rgba(0,0,0,0.6)] cursor-pointer transition-all border border-[#FFE394]/60 flex items-center justify-center gap-2 active:scale-[0.98] shrink-0"
             >
-              <UploadCloud className="w-5 h-5 text-slate-950 stroke-[2.5]" />
-              <span>Upload Documents</span>
+              <UploadCloud className="w-4 h-4 text-[#07162B] stroke-[2.5] shrink-0" />
+              <span className="font-extrabold whitespace-nowrap">Upload Documents</span>
             </Button>
 
             {/* Subtext */}
-            <p className="text-xs text-slate-300 font-medium mt-2.5">
-              Drag and drop files or click to browse
+            <p className="text-xs text-slate-300 font-medium mt-2 leading-snug">
+              Drag & drop files or click to browse
             </p>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              PDF, JPG, PNG, DOC accepted
-            </p>
+            <div className="flex items-center justify-center gap-1 mt-1.5 text-[9.5px] text-slate-400 font-mono">
+              <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">PDF</span>
+              <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">DOC</span>
+              <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">JPG</span>
+              <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">PNG</span>
+            </div>
           </div>
         </section>
 
@@ -625,46 +655,53 @@ export default function PortalDocumentVaultTab({
           </div>
 
           {/* Horizontal Folder Cards Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3.5">
             {dynamicWorkspaces.map((folder) => {
               return (
                 <div
                   key={folder.id}
                   onClick={() => setActiveWorkspaceModal(folder)}
-                  className={`group relative rounded-2xl bg-[#051329] border p-3 flex flex-col justify-between transition-all duration-200 cursor-pointer hover:-translate-y-1 ${folder.accentBorder} ${folder.accentGlow}`}
+                  className={`group relative rounded-2xl bg-gradient-to-b from-[#06152B] to-[#030D1B] border p-3.5 flex flex-col justify-between transition-all duration-300 cursor-pointer hover:-translate-y-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.06)] ${folder.accentBorder} ${folder.accentGlow}`}
                 >
-                  {/* Prominent 3D Folder Graphic */}
-                  <div className="w-full flex items-center justify-center py-2">
+                  {/* Prominent 3D Folder Graphic with Ambient Themed Glow */}
+                  <div className="relative w-full h-24 sm:h-28 flex items-center justify-center py-1">
+                    <div className={`absolute inset-0 rounded-2xl bg-radial from-current to-transparent opacity-0 group-hover:opacity-25 blur-xl transition-opacity duration-300 pointer-events-none ${folder.accentText}`} />
                     <img 
                       src={folder.iconSrc} 
                       alt={folder.name} 
-                      className="w-16 h-13 sm:w-18 sm:h-14 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-200"
+                      className="max-h-20 sm:max-h-24 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.65)] group-hover:scale-110 group-hover:-translate-y-1.5 transition-all duration-300 ease-out"
                     />
                   </div>
 
-                  {/* Card Details */}
-                  <div className="mt-1 flex items-end justify-between gap-1">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-bold text-xs sm:text-[13px] text-white tracking-tight leading-tight truncate">
+                  {/* Card Details: Full Non-Truncated Typography & Admiralty Badges */}
+                  <div className="mt-2 flex flex-col justify-between flex-1">
+                    <div>
+                      <h3 className="font-bold text-xs sm:text-[13px] text-white tracking-tight leading-snug group-hover:text-amber-200 transition-colors line-clamp-2 min-h-[2rem]">
                         {folder.name}
                       </h3>
                       
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        {folder.fileCount} documents
+                      <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1 font-medium">
+                        <span>{folder.fileCount} documents</span>
                       </p>
-
-                      {/* Folder 1 Extra Line: Current IEP updated */}
-                      {folder.extraInfo && (
-                        <p className="text-[10px] text-amber-400/90 leading-tight mt-1 whitespace-pre-line font-medium">
-                          {folder.extraInfo}
-                        </p>
-                      )}
                     </div>
 
-                    {/* Small Circular Arrow Action Button */}
-                    <div className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-white/60 group-hover:border-white/60 group-hover:text-white transition-all shrink-0">
-                      <ChevronRight className="w-3 h-3 stroke-[2.5]" />
-                    </div>
+                    {/* Footer Row: Status Pill or Action Chevron */}
+                    {folder.extraInfo ? (
+                      <div className="mt-2 pt-2 border-t border-amber-400/20 flex items-center justify-between gap-1">
+                        <span className="text-[10px] font-semibold text-amber-300 leading-tight">
+                          Current IEP on file
+                        </span>
+                        <div className="w-5 h-5 rounded-full border border-amber-400/40 bg-amber-400/10 flex items-center justify-center text-amber-300 group-hover:bg-amber-400 group-hover:text-[#051329] group-hover:border-amber-300 transition-all shrink-0">
+                          <ChevronRight className="w-3 h-3 stroke-[2.5]" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-end">
+                        <div className="w-5 h-5 rounded-full border border-white/20 bg-white/5 flex items-center justify-center text-white/60 group-hover:border-[#C5A059] group-hover:bg-[#C5A059] group-hover:text-[#051329] transition-all shrink-0">
+                          <ChevronRight className="w-3 h-3 stroke-[2.5]" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -804,142 +841,174 @@ export default function PortalDocumentVaultTab({
             </div>
           </div>
 
-          {/* RIGHT: LIAM'S FILE LOOKS GOOD (~42% width) */}
-          <div className="lg:col-span-5 rounded-2xl bg-[#051329] border border-blue-900/60 p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col justify-between">
+          {/* RIGHT: COMMON DOCUMENTS ON FILE & UPDATED (~42% width) */}
+          <div className="lg:col-span-5 rounded-2xl bg-gradient-to-br from-[#06152B] via-[#041021] to-[#020A17] border border-[#1E3A5F] hover:border-[#C5A059]/40 p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.6)] relative overflow-hidden flex flex-col justify-between transition-all">
             
-            {/* Background Archival Books & Clock Art on Far-Right */}
-            <div className="absolute right-0 bottom-0 top-0 w-[42%] pointer-events-none select-none z-0">
+            {/* Abstract Luxury Midnight Navy & Gold Flowing Ambient Background */}
+            <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
               <img 
-                src="/assets/vault/archive_books_clean.png" 
-                alt="Archive Binders and Astrolabe" 
-                className="w-full h-full object-cover object-left-bottom opacity-85"
-                style={{
-                  maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 20%, black 50%, black 100%)",
-                  WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 20%, black 50%, black 100%)"
-                }}
+                src="/assets/vault/vault_abstract_card_bg.jpg" 
+                alt="" 
+                className="w-full h-full object-cover opacity-40 mix-blend-screen"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#020A17] via-[#041021]/80 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#06152B]/90 via-[#06152B]/40 to-transparent" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-radial from-amber-400/10 via-transparent to-transparent blur-2xl" />
             </div>
 
             {/* Front Reassuring Information */}
-            <div className="relative z-10 max-w-xs sm:max-w-sm">
+            <div className="relative z-10">
               
-              {/* Gold Shield Emblem */}
-              <div className="w-11 h-11 rounded-2xl bg-amber-400/15 border-2 border-amber-400/50 text-amber-400 flex items-center justify-center shadow-[0_0_20px_rgba(245,181,68,0.25)] mb-3">
-                <Lock className="w-5 h-5 text-amber-400" />
+              {/* Header Badge & Title */}
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-extrabold uppercase tracking-wider bg-amber-400/15 border border-amber-400/40 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.15)]">
+                  <FileCheck className="w-3.5 h-3.5 text-amber-400" />
+                  Common Documents
+                </span>
+                <span className="text-[11px] font-mono text-slate-300">
+                  {documents.length} Vault Records
+                </span>
               </div>
 
-              {/* Title & Human Copy */}
-              <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight leading-tight">
-                {studentFirstName}’s file looks good
+              <h3 className="text-lg sm:text-xl font-extrabold text-white tracking-tight leading-tight">
+                Documents We Keep On File & Updated
               </h3>
-              <p className="text-xs text-slate-300 leading-relaxed mt-1 mb-4">
-                We have a current IEP on file. If you have any of the documents below, they are helpful to keep on file.
+              <p className="text-xs text-slate-300 leading-relaxed mt-1 mb-3.5 max-w-sm">
+                Key records {studentFirstName}’s advocate team reviews and keeps updated to protect educational rights.
               </p>
 
-              {/* Status Checklist Rows */}
-              <div className="space-y-2.5">
+              {/* Modern Record Status Cards: Unified Front Icon, Zero Overlap */}
+              <div className="space-y-3 sm:space-y-3.5">
                 
-                {/* 1. Current IEP */}
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    {documentsSummary.hasCurrentIep ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                {/* 1. Current IEP / 504 Plan (ALWAYS ON THE SAME LINE) */}
+                <div 
+                  onClick={handleInitiateUpload}
+                  className="rounded-xl bg-[#020A17]/85 hover:bg-[#071933] border border-[#1E3A5F]/70 hover:border-[#C5A059]/60 p-3 sm:p-3.5 flex items-center gap-3.5 transition-all cursor-pointer group shadow-sm"
+                >
+                  {/* Front Status Indicator */}
+                  <div className="shrink-0">
+                    {(documentsSummary.hasCurrentIep || documentsSummary.hasCurrent504) ? (
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shadow-[0_0_12px_rgba(52,211,153,0.25)] group-hover:scale-105 transition-transform">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 stroke-[2.4]" />
+                      </div>
                     ) : (
-                      <Circle className="w-4 h-4 text-slate-500" />
+                      <div className="w-9 h-9 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-400/80 flex items-center justify-center group-hover:border-amber-400/60 transition-colors">
+                        <Circle className="w-4.5 h-4.5 text-amber-400/70 stroke-[2]" />
+                      </div>
                     )}
-                    <span className="text-slate-200 font-medium">Current IEP</span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    {documentsSummary.hasCurrentIep ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400 font-semibold">On file</span>
-                      </>
-                    ) : (
-                      <>
-                        <Circle className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-slate-400">Not on file</span>
-                      </>
-                    )}
+                  {/* Clean Text Block with 100% Horizontal Clearance - No Truncate/Trailing Off */}
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs sm:text-[13px] font-bold text-white whitespace-nowrap block">
+                      Current IEP / 504 Plan
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] leading-snug">
+                      {(documentsSummary.hasCurrentIep || documentsSummary.hasCurrent504) ? (
+                        <span className="font-semibold text-emerald-400 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span>On file · Updated {currentIepDate}</span>
+                        </span>
+                      ) : (
+                        <span className="font-medium text-amber-400/90 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                          <span>Needed · Annual IEP / 504 plan</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Trigger Arrow */}
+                  <div className="shrink-0 text-slate-500 group-hover:text-amber-300 transition-colors pl-1">
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
 
-                {/* 2. Latest Evaluation */}
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
+                {/* 2. Latest Evaluation Report */}
+                <div 
+                  onClick={handleInitiateUpload}
+                  className="rounded-xl bg-[#020A17]/85 hover:bg-[#071933] border border-[#1E3A5F]/70 hover:border-[#C5A059]/60 p-3 sm:p-3.5 flex items-center gap-3.5 transition-all cursor-pointer group shadow-sm"
+                >
+                  {/* Front Status Indicator */}
+                  <div className="shrink-0">
                     {documentsSummary.hasEvaluation ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shadow-[0_0_12px_rgba(52,211,153,0.25)] group-hover:scale-105 transition-transform">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 stroke-[2.4]" />
+                      </div>
                     ) : (
-                      <Circle className="w-4 h-4 text-slate-500" />
-                    )}
-                    <span className="text-slate-200 font-medium">Latest Evaluation</span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    {documentsSummary.hasEvaluation ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400 font-semibold">On file</span>
-                      </>
-                    ) : (
-                      <>
-                        <Circle className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-slate-400">Not on file</span>
-                      </>
+                      <div className="w-9 h-9 rounded-xl bg-white/5 border border-slate-700/70 text-slate-500 flex items-center justify-center group-hover:border-slate-500 transition-colors">
+                        <Circle className="w-4.5 h-4.5 text-slate-500 stroke-[2]" />
+                      </div>
                     )}
                   </div>
-                </div>
 
-                {/* 3. 504 Plan */}
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    {documentsSummary.hasCurrent504 ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
-                    ) : (
-                      <Circle className="w-4 h-4 text-slate-400" />
-                    )}
-                    <span className="text-slate-300">504 Plan</span>
+                  {/* Clean Text Block with 100% Horizontal Clearance - No Truncate/Trailing Off */}
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs sm:text-[13px] font-bold text-white whitespace-nowrap block">
+                      Latest Evaluation Report
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] leading-snug">
+                      {documentsSummary.hasEvaluation ? (
+                        <span className="font-semibold text-emerald-400 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span>On file · Evaluation on record</span>
+                        </span>
+                      ) : (
+                        <span className="font-medium text-slate-400 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-500 shrink-0" />
+                          <span>Recommended · Speech, Psych, or OT</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    {documentsSummary.hasCurrent504 ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400 font-semibold">On file</span>
-                      </>
-                    ) : (
-                      <>
-                        <Circle className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-slate-400">Not on file (if applicable)</span>
-                      </>
-                    )}
+                  {/* Right Trigger Arrow */}
+                  <div className="shrink-0 text-slate-500 group-hover:text-amber-300 transition-colors pl-1">
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
 
-                {/* 4. Recent Progress Report */}
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
+                {/* 3. Recent Progress Report */}
+                <div 
+                  onClick={handleInitiateUpload}
+                  className="rounded-xl bg-[#020A17]/85 hover:bg-[#071933] border border-[#1E3A5F]/70 hover:border-[#C5A059]/60 p-3 sm:p-3.5 flex items-center gap-3.5 transition-all cursor-pointer group shadow-sm"
+                >
+                  {/* Front Status Indicator */}
+                  <div className="shrink-0">
                     {documentsSummary.hasProgressReport ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shadow-[0_0_12px_rgba(52,211,153,0.25)] group-hover:scale-105 transition-transform">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 stroke-[2.4]" />
+                      </div>
                     ) : (
-                      <Circle className="w-4 h-4 text-slate-500" />
+                      <div className="w-9 h-9 rounded-xl bg-white/5 border border-slate-700/70 text-slate-500 flex items-center justify-center group-hover:border-slate-500 transition-colors">
+                        <Circle className="w-4.5 h-4.5 text-slate-500 stroke-[2]" />
+                      </div>
                     )}
-                    <span className="text-slate-200 font-medium">Recent Progress Report</span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    {documentsSummary.hasProgressReport ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400 font-semibold">On file</span>
-                      </>
-                    ) : (
-                      <>
-                        <Circle className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-slate-400">Not on file</span>
-                      </>
-                    )}
+                  {/* Clean Text Block with 100% Horizontal Clearance - No Truncate/Trailing Off */}
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs sm:text-[13px] font-bold text-white whitespace-nowrap block">
+                      Recent Progress Report
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] leading-snug">
+                      {documentsSummary.hasProgressReport ? (
+                        <span className="font-semibold text-emerald-400 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span>On file · Benchmark progress reports</span>
+                        </span>
+                      ) : (
+                        <span className="font-medium text-slate-400 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-500 shrink-0" />
+                          <span>Recommended · Goal progress updates</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Trigger Arrow */}
+                  <div className="shrink-0 text-slate-500 group-hover:text-amber-300 transition-colors pl-1">
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
 
@@ -951,13 +1020,13 @@ export default function PortalDocumentVaultTab({
               <Button
                 type="button"
                 onClick={handleInitiateUpload}
-                className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-400/10 via-amber-400/15 to-amber-500/10 hover:bg-amber-400/25 text-amber-300 border border-amber-400/60 font-bold text-xs sm:text-sm shadow-[0_0_20px_rgba(245,181,68,0.15)] gap-2 cursor-pointer transition-all active:scale-[0.99]"
+                className="w-full h-10 rounded-xl bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs sm:text-[13px] shadow-[0_4px_16px_rgba(0,0,0,0.6)] border border-[#FFE394]/60 gap-2 cursor-pointer transition-all active:scale-[0.99]"
               >
-                <UploadCloud className="w-4 h-4 text-amber-400" />
-                <span>Upload More Documents</span>
+                <UploadCloud className="w-4 h-4 text-[#07162B] stroke-[2.5]" />
+                <span>Upload New Document</span>
               </Button>
-              <p className="text-[11px] text-slate-400 text-center mt-1.5">
-                Help us keep {studentFirstName}’s file complete.
+              <p className="text-[11px] text-slate-400 text-center mt-1.5 font-medium">
+                Keep {studentFirstName}’s records complete and advocate-ready.
               </p>
             </div>
           </div>
@@ -1043,7 +1112,7 @@ export default function PortalDocumentVaultTab({
           <DialogContent className="max-w-2xl bg-[#07162B] border-blue-900/60 text-white rounded-2xl p-6 shadow-2xl">
             <DialogHeader>
               <div className="flex items-center gap-2.5">
-                <img src={activeWorkspaceModal.iconSrc} alt="" className="w-7 h-6 object-contain" />
+                <img src={activeWorkspaceModal.iconSrc} alt="" className="w-10 h-10 object-contain drop-shadow-md" />
                 <DialogTitle className="text-lg font-bold text-white">
                   {activeWorkspaceModal.name}
                 </DialogTitle>
@@ -1131,7 +1200,7 @@ export default function PortalDocumentVaultTab({
                 }}
                 className="p-3.5 rounded-xl bg-[#030E1F] hover:bg-blue-950/40 border border-blue-900/50 flex items-center gap-3 cursor-pointer group transition-all"
               >
-                <img src={ws.iconSrc} alt="" className="w-10 h-9 object-contain shrink-0" />
+                <img src={ws.iconSrc} alt="" className="w-12 h-12 object-contain shrink-0 drop-shadow-md group-hover:scale-110 transition-transform" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
                     {ws.name}

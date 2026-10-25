@@ -42,14 +42,14 @@ interface ConsolidatedDoc {
 }
 
 const VAULT_CATEGORIES = [
-  { id: "all", name: "All Records", iconSrc: "/assets/vault/all_folders.png", accent: "border-amber-400/50" },
-  { id: "ieps-504s", name: "IEPs & 504s", iconSrc: "/assets/vault/folder_ieps.png", accent: "border-amber-400/50" },
-  { id: "evaluations", name: "Evaluations", iconSrc: "/assets/vault/folder_evals.png", accent: "border-sky-500/50" },
-  { id: "school-records", name: "School Records", iconSrc: "/assets/vault/folder_school.png", accent: "border-teal-400/50" },
-  { id: "communication", name: "PWN & Comm", iconSrc: "/assets/vault/folder_comm.png", accent: "border-purple-400/50" },
-  { id: "medical-therapy", name: "Medical", iconSrc: "/assets/vault/folder_medical.png", accent: "border-rose-400/50" },
-  { id: "behavior-fba", name: "Behavior / BIP", iconSrc: "/assets/vault/folder_behavior.png", accent: "border-orange-500/50" },
-  { id: "progress-reports", name: "Progress", iconSrc: "/assets/vault/folder_progress.png", accent: "border-indigo-400/50" },
+  { id: "all", name: "All Records", iconSrc: "/assets/vault/folder_all_3d.png", accent: "border-amber-400/50" },
+  { id: "ieps-504s", name: "IEPs & 504s", iconSrc: "/assets/vault/folder_ieps_3d.png", accent: "border-amber-400/50" },
+  { id: "evaluations", name: "Evaluations", iconSrc: "/assets/vault/folder_evals_3d.png", accent: "border-sky-500/50" },
+  { id: "school-records", name: "School Records", iconSrc: "/assets/vault/folder_school_3d.png", accent: "border-teal-400/50" },
+  { id: "communication", name: "PWN & Comm", iconSrc: "/assets/vault/folder_comm_3d.png", accent: "border-purple-400/50" },
+  { id: "medical-therapy", name: "Medical", iconSrc: "/assets/vault/folder_medical_3d.png", accent: "border-rose-400/50" },
+  { id: "behavior-fba", name: "Behavior / BIP", iconSrc: "/assets/vault/folder_behavior_3d.png", accent: "border-orange-500/50" },
+  { id: "progress-reports", name: "Progress", iconSrc: "/assets/vault/folder_progress_3d.png", accent: "border-indigo-400/50" },
 ];
 
 export function StudentDocumentVaultMirror({
@@ -294,11 +294,12 @@ export function StudentDocumentVaultMirror({
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4">
         {/* Panel A: Current Authoritative IEP */}
         <div className="md:col-span-5 rounded-2xl bg-[#05142B]/90 border border-[#3A2C18] p-4 sm:p-5 flex items-center justify-between gap-4 shadow-[0_8px_24px_rgba(0,0,0,0.85)] relative overflow-hidden group">
-          <div className="shrink-0 flex items-center justify-center pl-1">
+          <div className="relative shrink-0 flex items-center justify-center p-1">
+            <div className="absolute inset-0 bg-radial from-amber-400/20 to-transparent blur-xl pointer-events-none opacity-40 group-hover:opacity-80 transition-opacity" />
             <img 
-              src="/assets/vault/iep_booklet_exact.png" 
-              alt="Current IEP" 
-              className="w-20 sm:w-24 h-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.7)] group-hover:scale-105 transition-transform"
+              src="/assets/vault/iep_booklet_3d.png?v=4" 
+              alt="Current IEP / 504 Dossier" 
+              className="w-24 sm:w-28 md:w-32 h-auto object-contain drop-shadow-[0_6px_20px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform relative z-10"
             />
           </div>
           <div className="flex-1 min-w-0 pr-1">
@@ -347,26 +348,27 @@ export function StudentDocumentVaultMirror({
           </div>
         </div>
 
-        {/* Panel B: Connected Student Storage Space */}
-        <div className="md:col-span-4 rounded-2xl bg-[#05142B]/90 border border-[#3A2C18] p-4 sm:p-5 flex items-center gap-3.5 shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
-          <div className="w-12 h-12 rounded-full bg-[#020A17] border border-cyan-400/40 text-cyan-300 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
-            <HardDrive className="w-5 h-5 text-cyan-300" />
+        {/* Panel B: Connected Student Storage Space (Compact 3-Col Layout) */}
+        <div className="md:col-span-3 rounded-2xl bg-[#05142B]/90 border border-[#3A2C18] p-3 sm:p-3.5 lg:p-4 flex items-center gap-2.5 sm:gap-3 shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#020A17] border border-cyan-400/40 text-cyan-300 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(56,189,248,0.2)]">
+            <HardDrive className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-cyan-300" />
           </div>
           <div className="min-w-0">
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-cyan-300 mb-0.5">
+            <h4 className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-cyan-300 mb-0.5">
               CLOUD STORAGE
             </h4>
-            <div className="text-sm font-bold text-[#FFF4D4]">
+            <div className="text-xs sm:text-sm font-bold text-[#FFF4D4]">
               {consolidatedDocs.length} Total Records
             </div>
-            <p className="text-[11px] text-[#C6B697] leading-relaxed mt-0.5">
-              Cloudflare R2 bucket linked to Case #{student?.caseId || studentId}. All revisions preserved.
+            <p className="text-[10px] sm:text-[11px] text-[#C6B697] leading-snug mt-0.5">
+              Case #{student?.caseId || studentId}
             </p>
           </div>
         </div>
 
-        {/* Panel C: Rapid Upload Dropzone */}
+        {/* Panel C: Rapid Upload Dropzone (Expanded 4-Col Layout) */}
         <div 
+          onClick={() => setUploadModalOpen(true)}
           onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
           onDragLeave={() => setIsDragOver(false)}
           onDrop={(e) => {
@@ -374,24 +376,42 @@ export function StudentDocumentVaultMirror({
             setIsDragOver(false);
             setUploadModalOpen(true);
           }}
-          className={`md:col-span-3 rounded-2xl bg-[#05142B]/90 border p-4 sm:p-5 flex flex-col items-center justify-center text-center shadow-[0_8px_24px_rgba(0,0,0,0.85)] transition-all ${
-            isDragOver ? "border-amber-400 bg-amber-400/10 scale-[1.02]" : "border-[#3A2C18]"
+          className={`md:col-span-4 rounded-2xl bg-[#05142B]/90 border p-4 sm:p-5 flex flex-col items-center justify-center text-center shadow-[0_8px_24px_rgba(0,0,0,0.85)] cursor-pointer group transition-all relative overflow-hidden ${
+            isDragOver ? "border-amber-400 bg-amber-400/15 scale-[1.02] shadow-[0_0_30px_rgba(245,181,68,0.35)]" : "border-[#3A2C18] hover:border-amber-400/50"
           }`}
         >
+          {/* Ambient gold glow */}
+          <div className="absolute inset-0 bg-radial from-amber-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+          {/* 3D Upload Cloud Graphic */}
+          <div className="relative w-14 h-12 flex items-center justify-center mb-2">
+            <div className="absolute inset-0 bg-radial from-amber-400/20 to-transparent blur-lg opacity-40 group-hover:opacity-80 transition-opacity pointer-events-none" />
+            <img 
+              src="/assets/vault/upload_cloud_3d.png" 
+              alt="Upload File" 
+              className="max-h-12 w-auto object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.7)] group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300"
+            />
+          </div>
+
           <Button
             type="button"
-            onClick={() => setUploadModalOpen(true)}
-            className="w-full h-9 rounded-xl bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs shadow-md border border-[#FFE394]/50 cursor-pointer gap-1.5"
+            onClick={(e) => {
+              e.stopPropagation();
+              setUploadModalOpen(true);
+            }}
+            className="w-full max-w-[240px] h-9.5 px-4 rounded-xl bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-bold text-xs sm:text-[13px] shadow-md border border-[#FFE394]/50 cursor-pointer gap-2 shrink-0"
           >
             <UploadCloud className="w-4 h-4 stroke-[2.5]" />
-            <span>Select File</span>
+            <span className="font-extrabold whitespace-nowrap">Upload Records</span>
           </Button>
-          <p className="text-[11px] text-[#C6B697] font-medium mt-2">
+          <p className="text-[11px] text-[#C6B697] font-medium mt-2 leading-snug">
             Drag & drop files to ingest
           </p>
-          <p className="text-[10px] text-white/40">
-            PDF, DOCX, EML, XLSX
-          </p>
+          <div className="flex items-center justify-center gap-1 mt-1 text-[9px] text-slate-400 font-mono">
+            <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">PDF</span>
+            <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">DOC</span>
+            <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">XLSX</span>
+          </div>
         </div>
       </div>
 
@@ -426,24 +446,25 @@ export function StudentDocumentVaultMirror({
               <div
                 key={cat.id}
                 onClick={() => setSelectedFolder(cat.id)}
-                className={`group relative rounded-xl bg-[#05142B] border p-2.5 flex flex-col justify-between transition-all duration-150 cursor-pointer hover:-translate-y-0.5 ${
+                className={`group relative rounded-xl bg-[#05142B] border p-2.5 flex flex-col justify-between transition-all duration-200 cursor-pointer hover:-translate-y-1 ${
                   isSelected 
-                    ? "border-[#FFE394] shadow-[0_0_15px_rgba(245,181,68,0.3)] bg-[#071C38]" 
-                    : "border-[#3A2C18] hover:border-[#C5A059]/60"
+                    ? "border-[#FFE394] shadow-[0_0_20px_rgba(245,181,68,0.35)] bg-gradient-to-b from-[#0A2246] to-[#05142B]" 
+                    : "border-[#3A2C18] hover:border-[#C5A059]/70 hover:shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
                 }`}
               >
-                <div className="w-full flex items-center justify-center py-1">
+                <div className="w-full h-16 flex items-center justify-center py-1 relative">
+                  <div className="absolute inset-0 bg-radial from-amber-400/20 to-transparent opacity-0 group-hover:opacity-40 blur-lg transition-opacity pointer-events-none" />
                   <img 
                     src={cat.iconSrc} 
                     alt={cat.name} 
-                    className="w-12 h-10 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform"
+                    className="max-h-14 w-auto object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.7)] group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-200"
                   />
                 </div>
-                <div className="mt-1 text-center">
-                  <div className={`font-bold text-[11px] truncate ${isSelected ? "text-[#FFE394]" : "text-white"}`}>
+                <div className="mt-1 text-center flex-1 flex flex-col justify-between">
+                  <div className={`font-bold text-[11px] leading-tight line-clamp-2 min-h-[1.75rem] flex items-center justify-center ${isSelected ? "text-[#FFE394]" : "text-white group-hover:text-amber-200 transition-colors"}`}>
                     {cat.name}
                   </div>
-                  <div className="text-[10px] text-[#C6B697] mt-0.5">
+                  <div className="text-[10px] text-[#C6B697] mt-1 font-medium">
                     {count} {count === 1 ? "file" : "files"}
                   </div>
                 </div>
