@@ -188,6 +188,10 @@ export const contacts = mysqlTable("contacts", {
   referralCode: varchar("referralCode", { length: 50 }), // Permanent unique referral code e.g. WP-7K4M9
   stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  defaultPaymentMethodBrand: varchar("defaultPaymentMethodBrand", { length: 50 }),
+  defaultPaymentMethodLast4: varchar("defaultPaymentMethodLast4", { length: 10 }),
+  defaultPaymentMethodExp: varchar("defaultPaymentMethodExp", { length: 20 }),
+  defaultPaymentMethodId: varchar("defaultPaymentMethodId", { length: 255 }),
   enrollmentOfferId: int("enrollmentOfferId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -352,6 +356,8 @@ export const invoices = mysqlTable("invoices", {
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 12, scale: 2 }).default("0"),
   total: decimal("total", { precision: 12, scale: 2 }).notNull(),
+  title: varchar("title", { length: 255 }),
+  serviceDescription: text("serviceDescription"),
   status: mysqlEnum("status", [
     "Draft",
     "Sent",
@@ -359,6 +365,7 @@ export const invoices = mysqlTable("invoices", {
     "Overdue",
     "Cancelled",
     "Voided",
+    "Uncollectible",
   ])
     .default("Draft")
     .notNull(),
@@ -370,6 +377,13 @@ export const invoices = mysqlTable("invoices", {
   discountAmount: decimal("discountAmount", { precision: 12, scale: 2 }).default("0.00"),
   discountNote: varchar("discountNote", { length: 255 }),
   notes: text("notes"),
+  internalNotes: text("internalNotes"),
+  clientNotes: text("clientNotes"),
+  amountPaid: decimal("amountPaid", { precision: 12, scale: 2 }).default("0.00"),
+  externalPaymentMethod: varchar("externalPaymentMethod", { length: 100 }),
+  externalPaymentReference: varchar("externalPaymentReference", { length: 100 }),
+  externalPaymentRecordedBy: int("externalPaymentRecordedBy"),
+  externalPaymentRecordedAt: datetime("externalPaymentRecordedAt"),
   sentAt: datetime("sentAt"),
   sentToEmail: varchar("sentToEmail", { length: 320 }),
   refundedAmount: decimal("refundedAmount", { precision: 12, scale: 2 }).default("0.00"),
@@ -404,6 +418,27 @@ export const invoiceLineItems = mysqlTable("invoiceLineItems", {
 
 export type InvoiceLineItem = typeof invoiceLineItems.$inferSelect;
 export type InsertInvoiceLineItem = typeof invoiceLineItems.$inferInsert;
+
+/**
+ * Saved Payment Methods for family accounts.
+ */
+export const savedPaymentMethods = mysqlTable("saved_payment_methods", {
+  id: int("id").autoincrement().primaryKey(),
+  clientId: int("clientId").notNull(),
+  stripePaymentMethodId: varchar("stripePaymentMethodId", { length: 255 }).notNull(),
+  brand: varchar("brand", { length: 50 }).notNull(),
+  last4: varchar("last4", { length: 10 }).notNull(),
+  expMonth: int("expMonth"),
+  expYear: int("expYear"),
+  isDefault: boolean("isDefault").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  clientIdIdx: index("saved_payment_methods_clientId_idx").on(t.clientId),
+}));
+
+export type SavedPaymentMethod = typeof savedPaymentMethods.$inferSelect;
+export type InsertSavedPaymentMethod = typeof savedPaymentMethods.$inferInsert;
 
 /**
  * Contracts table for managing agreements and proposals.

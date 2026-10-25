@@ -28,6 +28,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 interface InvoicesTableProps {
@@ -51,6 +59,38 @@ export function InvoicesTable({
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
+  // External Payment Dialog State
+  const [externalPaymentOpen, setExternalPaymentOpen] = useState(false);
+  const [targetInvoiceForPayment, setTargetInvoiceForPayment] = useState<any>(null);
+  const [extMethod, setExtMethod] = useState("Check");
+  const [extReference, setExtReference] = useState("");
+  const [extNotes, setExtNotes] = useState("");
+  const [extAmount, setExtAmount] = useState("");
+
+  // Payment History Modal State
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyInvoiceId, setHistoryInvoiceId] = useState<number | null>(null);
+
+  const { data: historyEvents = [], isLoading: historyLoading } = trpc.invoices.getPaymentHistory.useQuery(
+    { invoiceId: historyInvoiceId || 0 },
+    { enabled: !!historyInvoiceId }
+  );
+
+  const recordExternalMutation = trpc.invoices.recordExternalPayment.useMutation({
+    onSuccess: (data) => {
+      toast.success(`External payment recorded for invoice #${data.invoiceNumber}`);
+      setExternalPaymentOpen(false);
+      setTargetInvoiceForPayment(null);
+      setExtReference("");
+      setExtNotes("");
+      setExtAmount("");
+      onRefresh();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to record payment");
+    },
+  });
+
   const sendMutation = trpc.invoices.send.useMutation({
     onSuccess: () => {
       toast.success("Invoice sent to client by email!");
@@ -70,6 +110,32 @@ export function InvoicesTable({
       toast.error(err.message || "Failed to void invoice");
     },
   });
+
+  const handleOpenExternalPayment = (inv: any) => {
+    setTargetInvoiceForPayment(inv);
+    setExtAmount(String(inv.total || ""));
+    setExtReference("");
+    setExtNotes("");
+    setExtMethod("Check");
+    setExternalPaymentOpen(true);
+  };
+
+  const handleOpenHistory = (inv: any) => {
+    setHistoryInvoiceId(inv.id);
+    setHistoryOpen(true);
+  };
+
+  const handleRecordExternalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetInvoiceForPayment) return;
+    recordExternalMutation.mutate({
+      invoiceId: targetInvoiceForPayment.id,
+      paymentMethod: extMethod,
+      reference: extReference.trim() || undefined,
+      notes: extNotes.trim() || undefined,
+      amountPaid: extAmount.trim() || undefined,
+    });
+  };
 
   const handleCopyPayLink = (inv: any) => {
     if (inv.stripePaymentUrl) {
@@ -372,6 +438,14 @@ export function InvoicesTable({
                                   <span>View & Print</span>
                                 </DropdownMenuItem>
 
+                                <DropdownMenuItem
+                                  onClick={() => handleOpenHistory(inv)}
+                                  className="hover:bg-[#142642] cursor-pointer flex items-center gap-2 text-cyan-300"
+                                >
+                                  <Clock className="w-3.5 h-3.5" />
+                                  <span>Payment History</span>
+                                </DropdownMenuItem>
+
                                 {inv.stripePaymentUrl && (
                                   <DropdownMenuItem
                                     onClick={() => handleCopyPayLink(inv)}
@@ -383,13 +457,23 @@ export function InvoicesTable({
                                 )}
 
                                 {inv.status !== "Paid" && inv.status !== "Voided" && (
-                                  <DropdownMenuItem
-                                    onClick={() => sendMutation.mutate({ id: inv.id })}
-                                    className="hover:bg-[#142642] cursor-pointer flex items-center gap-2 text-blue-300"
-                                  >
-                                    <Send className="w-3.5 h-3.5" />
-                                    <span>{inv.sentAt ? "Resend Email" : "Send Email"}</span>
-                                  </DropdownMenuItem>
+                                  <>
+                                    <DropdownMenuItem
+                                      onClick={() => handleOpenExternalPayment(inv)}
+                                      className="hover:bg-[#142642] cursor-pointer flex items-center gap-2 text-emerald-300"
+                                    >
+                                      <DollarSign className="w-3.5 h-3.5" />
+                                      <span>Record External Payment</span>
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem
+                                      onClick={() => sendMutation.mutate({ id: inv.id })}
+                                      className="hover:bg-[#142642] cursor-pointer flex items-center gap-2 text-blue-300"
+                                    >
+                                      <Send className="w-3.5 h-3.5" />
+                                      <span>{inv.sentAt ? "Resend Notification" : "Send Notification"}</span>
+                                    </DropdownMenuItem>
+                                  </>
                                 )}
 
                                 {inv.status === "Paid" && (
@@ -428,6 +512,143 @@ export function InvoicesTable({
 
         </div>
       </div>
+
+      {/* ── Record External Payment Dialog ── */}
+      <Dialog open={externalPaymentOpen} onOpenChange={setExternalPaymentOpen}>
+        <DialogContent className="max-w-md bg-[#07162B] border border-[#DFBE77]/40 text-white rounded-2xl p-6 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-serif text-[#FFF4D4] flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-emerald-400" />
+              Record External Payment
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#C6B697]">
+              Record an offline payment (check, wire transfer, cash) for invoice #{targetInvoiceForPayment?.invoiceNumber}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleRecordExternalSubmit} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono text-[#C5A059] uppercase block font-bold">
+                Payment Method *
+              </label>
+              <select
+                value={extMethod}
+                onChange={(e) => setExtMethod(e.target.value)}
+                className="w-full bg-[#020A17] border border-[#DFBE77]/40 rounded-xl px-3 py-2 text-sm text-[#FFF4D4] focus:border-[#FFE394]"
+              >
+                <option value="Check">Check</option>
+                <option value="Wire Transfer">Wire Transfer</option>
+                <option value="Cash">Cash</option>
+                <option value="Offline Card">Offline Card Processing</option>
+                <option value="Money Order">Money Order</option>
+                <option value="Grant / Sponsor">Grant / Sponsor Payment</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono text-[#C5A059] uppercase block font-bold">
+                Amount Paid ($) *
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={extAmount}
+                onChange={(e) => setExtAmount(e.target.value)}
+                className="bg-[#020A17] border border-[#DFBE77]/40 text-[#FFF4D4] font-mono text-sm"
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono text-[#A69371] uppercase block">
+                Reference / Check # (Optional)
+              </label>
+              <Input
+                placeholder="e.g. Check #4029 or Wire Conf #8821"
+                value={extReference}
+                onChange={(e) => setExtReference(e.target.value)}
+                className="bg-[#020A17] border border-[#DFBE77]/40 text-[#FFF4D4] text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono text-[#A69371] uppercase block">
+                Staff Notes (Optional)
+              </label>
+              <Input
+                placeholder="e.g. Received in-office by advocate"
+                value={extNotes}
+                onChange={(e) => setExtNotes(e.target.value)}
+                className="bg-[#020A17] border border-[#DFBE77]/40 text-[#FFF4D4] text-xs"
+              />
+            </div>
+
+            <DialogFooter className="pt-2 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setExternalPaymentOpen(false)}
+                className="text-white/70 hover:text-white text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={recordExternalMutation.isPending}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-9 px-4 rounded-xl cursor-pointer"
+              >
+                {recordExternalMutation.isPending ? "Recording..." : "Confirm Payment"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Payment History Modal ── */}
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-w-md bg-[#07162B] border border-[#DFBE77]/40 text-white rounded-2xl p-6 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-serif text-[#FFF4D4] flex items-center gap-2">
+              <Clock className="w-5 h-5 text-cyan-400" />
+              Invoice Payment &amp; Audit History
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#C6B697]">
+              Complete chronological timeline of events for this invoice.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-3 max-h-[350px] overflow-y-auto">
+            {historyLoading ? (
+              <p className="text-xs text-slate-400 text-center py-6">Loading audit timeline...</p>
+            ) : historyEvents.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-6">No lifecycle events recorded yet.</p>
+            ) : (
+              historyEvents.map((evt: any) => (
+                <div key={evt.id} className="p-3 rounded-xl bg-[#020A17]/80 border border-[#DFBE77]/25 space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#FFF4D4]">{evt.title}</span>
+                    <span className="text-[10px] font-mono text-[#A69371]">
+                      {new Date(evt.date).toLocaleDateString()} {new Date(evt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#C6B697]">{evt.description}</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              onClick={() => setHistoryOpen(false)}
+              className="w-full bg-[#142642] hover:bg-[#1a3258] text-[#FFF4D4] text-xs h-9 rounded-xl border border-[#DFBE77]/30"
+            >
+              Close History
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

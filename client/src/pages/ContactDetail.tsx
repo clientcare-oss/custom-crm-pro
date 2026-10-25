@@ -51,6 +51,7 @@ import { StudentReferralTab } from "@/components/contact/workspace/StudentReferr
 import { LegalInvolvementWarning } from "@/components/contact/lawyer-prep/LegalInvolvementWarning";
 import { LegalInvolvementModal } from "@/components/contact/lawyer-prep/LegalInvolvementModal";
 import { LawyerPrepWorkspace } from "@/components/contact/lawyer-prep/LawyerPrepWorkspace";
+import { CreateInvoiceModal } from "@/components/invoices/CreateInvoiceModal";
 
 // ─── Client Portal Card ───────────────────────────────────────────────────────
 function ClientPortalCard({ contact, parentContactId }: { contact: any; parentContactId?: number | null }) {
@@ -365,6 +366,7 @@ export default function ContactDetail() {
   const utils = trpc.useUtils();
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [archiveReason, setArchiveReason] = useState("");
+  const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(false);
 
   const [showEditStudentModal, setShowEditStudentModal] = useState(false);
   const [studentForm, setStudentForm] = useState({
@@ -568,6 +570,11 @@ export default function ContactDetail() {
 
   const isParent = contact.jobTitle !== "Student";
 
+  const { data: familyBilling, refetch: refetchBilling } = trpc.invoices.getFamilyOutstandingBalance.useQuery(
+    { contactId: contactId },
+    { enabled: !!contactId && isParent }
+  );
+
   const handleCompassSave = () => {
     const effectiveCaseId = contact.caseId || `WP-${contact.id}`;
     compassUpsert.mutate({
@@ -617,6 +624,41 @@ export default function ContactDetail() {
                   <Eye className="h-3.5 w-3.5" />
                   Preview Parent Portal
                 </Button>
+
+                {/* Create Invoice Action for Family */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCreateInvoiceModal(true)}
+                  className="inline-flex items-center gap-1.5 text-xs text-[#FFE394] border-[#C5A059]/50 bg-[#07162B] hover:bg-[#C5A059]/20 font-semibold shadow-sm cursor-pointer"
+                  title="Create a one-time invoice for this family account"
+                >
+                  <DollarSign className="h-3.5 w-3.5 text-[#C5A059]" />
+                  Create Invoice
+                </Button>
+
+                {/* Billing Status Indicator */}
+                {familyBilling && familyBilling.totalBalance > 0 ? (
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                      familyBilling.hasOverdue
+                        ? "bg-red-500/15 text-red-300 border-red-500/40"
+                        : "bg-amber-500/15 text-amber-300 border-amber-500/35"
+                    }`}
+                    title={familyBilling.hasOverdue ? "Overdue invoice requiring payment" : "Outstanding balance awaiting payment"}
+                  >
+                    <Clock className="h-3 w-3" />
+                    ${familyBilling.totalBalance.toFixed(2)} Due ({familyBilling.count} {familyBilling.count === 1 ? 'inv' : 'invs'})
+                  </span>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25"
+                    title="All invoices up to date"
+                  >
+                    <CheckCircle2 className="h-3 w-3" />
+                    Billing Current
+                  </span>
+                )}
                 {/* Primary Enrollment Approval Action Placement (Phase 2 Architecture) */}
                 <Button
                   variant="outline"
@@ -982,6 +1024,18 @@ export default function ContactDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Direct Staff Invoice Creation for this Family */}
+      <CreateInvoiceModal
+        open={showCreateInvoiceModal}
+        onOpenChange={setShowCreateInvoiceModal}
+        preselectedClientId={contactId}
+        onSuccess={() => {
+          utils.contacts.detail.invalidate({ id: contactId });
+          utils.invoices.getFamilyOutstandingBalance.invalidate();
+          toast.success("Invoice created successfully");
+        }}
+      />
     </div>
   );
 }

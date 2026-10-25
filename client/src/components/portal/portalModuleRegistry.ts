@@ -287,7 +287,7 @@ export const PORTAL_MODULE_REGISTRY: PortalModuleDefinition[] = [
   },
   {
     id: "financials",
-    name: "Membership",
+    name: "Billing & Payments",
     icon: CreditCard,
     sidebarGroup: "account",
     displayOrder: 40,

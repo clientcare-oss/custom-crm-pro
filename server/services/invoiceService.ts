@@ -66,7 +66,7 @@ export async function generateStripeInvoicePaymentLink(params: {
   if (!stripe) {
     // Graceful test/mock fallback when Stripe key is not injected (e.g. CI/local dev)
     const mockSessionId = `cs_test_mock_${params.invoiceId}_${Date.now()}`;
-    const testUrl = `${origin}/portal?tab=membership&payInvoice=${params.invoiceId}`;
+    const testUrl = `${origin}/portal?tab=billing&invoiceId=${params.invoiceId}`;
     return { url: testUrl, stripeSessionId: mockSessionId };
   }
 
@@ -113,14 +113,14 @@ export async function generateStripeInvoicePaymentLink(params: {
         customer_name: params.customerName,
         is_one_time_invoice: "true"
       },
-      success_url: `${origin}/portal?payment=success&invoiceId=${params.invoiceId}`,
-      cancel_url: `${origin}/portal?payment=cancelled&invoiceId=${params.invoiceId}`,
+      success_url: `${origin}/portal?tab=billing&payment=success&invoiceId=${params.invoiceId}`,
+      cancel_url: `${origin}/portal?tab=billing&payment=cancelled&invoiceId=${params.invoiceId}`,
     });
 
-    return { url: session.url || `${origin}/portal?tab=membership`, stripeSessionId: session.id };
+    return { url: session.url || `${origin}/portal?tab=billing&invoiceId=${params.invoiceId}`, stripeSessionId: session.id };
   } catch (err: any) {
     console.error("[Invoice Stripe] Checkout session generation error:", err.message);
-    const fallbackUrl = `${origin}/portal?tab=membership&payInvoice=${params.invoiceId}`;
+    const fallbackUrl = `${origin}/portal?tab=billing&invoiceId=${params.invoiceId}`;
     return { url: fallbackUrl };
   }
 }
@@ -179,36 +179,30 @@ export async function sendInvoiceEmailNotification(params: {
     return { sent: false };
   }
 
-  const subject = `Invoice ${invoice.invoiceNumber} from Waypoint Advocates ($${Number(invoice.total).toFixed(2)})`;
+  const subject = `New Invoice from Waypoint Advocates: ${invoice.title || invoice.invoiceNumber}`;
   
   // Format items summary
   const itemsSummary = (invoice.lineItems && invoice.lineItems.length > 0)
     ? invoice.lineItems.map((item: any) => `• ${item.description} (Qty: ${item.quantity}) — $${Number(item.total).toFixed(2)}`).join("\n")
-    : `• Professional Advocacy Services — $${Number(invoice.total).toFixed(2)}`;
+    : `• ${invoice.title || "Professional Advocacy Services"} — $${Number(invoice.total).toFixed(2)}`;
+
+  const formattedDueDate = invoice.dueDate
+    ? new Date(invoice.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "Due Upon Receipt";
 
   const body = `Dear ${clientName},
 
-Your invoice from Waypoint Advocates is ready for review.
+You have a new invoice available in your Waypoint client portal.
 
-==================================================
-INVOICE DETAILS
-==================================================
-Invoice Number: ${invoice.invoiceNumber}
+Invoice: ${invoice.title || invoice.invoiceNumber}
 Amount Due: $${Number(invoice.total).toFixed(2)}
-Payment Due Date: ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Due Upon Receipt"}
+Due Date: ${formattedDueDate}
 
-SERVICES:
+${invoice.serviceDescription ? `Description of Service:\n${invoice.serviceDescription}\n\n` : ""}SERVICES & LINE ITEMS:
 ${itemsSummary}
 
-${Number(invoice.discountAmount || 0) > 0 ? `Discount Applied: -$${Number(invoice.discountAmount).toFixed(2)} (${invoice.discountNote || "Authorized Discount"})\n` : ""}
-==================================================
-
-You can review your full itemized invoice and complete payment securely online using the link below:
-
-👉 PAY INVOICE:
+${Number(invoice.discountAmount || 0) > 0 ? `Discount Applied: -$${Number(invoice.discountAmount).toFixed(2)} (${invoice.discountNote || "Authorized Discount"})\n` : ""}${invoice.clientNotes ? `Notes from Advocate:\n${invoice.clientNotes}\n\n` : ""}👉 View & Pay Invoice:
 ${paymentUrl}
-
-If you have any questions or require an itemized breakdown for documentation, please contact your Lead Special Education Advocate.
 
 Warm regards,
 Waypoint Advocates Team

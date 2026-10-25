@@ -32,7 +32,7 @@ export const NAV_ITEMS = [
   { id: "tools",         icon: Wrench,        label: "Tools" },
   { id: "cases",         icon: Briefcase,     label: "Cases" },
   { id: "voyage-log",    icon: Video,         label: "Voyage Log" },
-  { id: "financials",    icon: CreditCard,    label: "Membership" },
+  { id: "financials",    icon: CreditCard,    label: "Billing & Payments" },
   { id: "referrals",     icon: Gift,          label: "Referrals" },
   { id: "renewal",       icon: Sparkles,      label: "Plan Renewal" },
   { id: "notes",         icon: StickyNote,    label: "Notes" },

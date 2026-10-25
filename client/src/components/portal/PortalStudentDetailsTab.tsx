@@ -49,6 +49,7 @@ import {
 import { toast } from "sonner";
 import { WaypointCompassRose } from "@/components/portal/PlanTransitionExperience";
 import { FolioCornerBrackets } from "@/components/students/FolioCornerBrackets";
+import { trpc } from "@/lib/trpc";
 
 interface PortalStudentDetailsTabProps {
   effectiveStudent?: any;
@@ -180,6 +181,19 @@ export function PortalStudentDetailsTab({
     effectiveStudent?.phone || 
     effectiveStudent?.parentPhone || 
     (portalUser?.phone || "4786960726");
+
+  // ── FAMILY INVOICE & BILLING BALANCE (PG-023-STU Alert) ──
+  const familyContactId = 
+    parentContact?.id ||
+    effectiveStudent?.clientId || 
+    studentDetail?.contact?.clientId || 
+    effectiveStudent?.contactId || 
+    (typeof effectiveStudent?.id === "number" ? effectiveStudent.id : undefined);
+
+  const { data: balanceData } = trpc.invoices.getFamilyOutstandingBalance.useQuery(
+    { contactId: familyContactId || 0 },
+    { enabled: !!familyContactId }
+  );
 
   // Dossier Record Attributes
   const displayState = 
@@ -394,6 +408,62 @@ export function PortalStudentDetailsTab({
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ── PG-023-STU Contextual Invoice Waiting Alert ── */}
+      {balanceData && balanceData.count > 0 && (
+        <div 
+          className={`relative overflow-hidden rounded-xl p-3.5 sm:p-4 transition-all duration-200 ${
+            balanceData.invoices.some((inv: any) => inv.status === "Overdue")
+              ? "bg-[#000820] border border-[#FFE394]/60 shadow-[0_4px_20px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,227,148,0.25)]"
+              : "bg-[#000820] border border-[#3A2C18] shadow-[0_4px_16px_rgba(0,0,0,0.7)]"
+          }`}
+        >
+          {/* Subtle gold specular hairline */}
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#DFBE77]/60 to-transparent" />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#05142B] border border-[#DFBE77]/40 flex items-center justify-center shrink-0 shadow-inner">
+                <CreditCard className="w-4 h-4 text-[#FAD77B]" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-serif font-bold text-[#FFF4D4]">
+                    {balanceData.count === 1
+                      ? `Invoice Ready · $${balanceData.totalBalance.toFixed(2)}`
+                      : `${balanceData.count} Invoices Waiting · $${balanceData.totalBalance.toFixed(2)} Total`}
+                  </span>
+                  {balanceData.invoices.some((inv: any) => inv.status === "Overdue") && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#142642] text-[#FFE394] border border-[#DFBE77]/50">
+                      Payment Overdue
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#C6B697]">
+                  {balanceData.count === 1
+                    ? `You have an invoice waiting for payment: ${balanceData.invoices[0].title}`
+                    : `You have ${balanceData.count} invoices awaiting family payment.`}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => {
+                if (balanceData.invoices[0]) {
+                  try {
+                    sessionStorage.setItem("waypoint_target_invoice_id", String(balanceData.invoices[0].id));
+                  } catch {}
+                }
+                onNavigateTab("billing");
+              }}
+              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs h-8 px-4 rounded-lg border border-[#FFE394]/70 shadow-sm cursor-pointer flex items-center gap-1.5 shrink-0 transition-transform hover:scale-[1.02]"
+            >
+              <span>View &amp; Pay</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
           </div>
         </div>
       )}

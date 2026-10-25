@@ -29,8 +29,12 @@ export function CreateInvoiceModal({
 }: CreateInvoiceModalProps) {
   const { data: contacts = [] } = trpc.contacts.list.useQuery();
   const { data: services = [] } = trpc.services.list.useQuery();
+  const { data: allProjects = [] } = trpc.projects.list.useQuery();
 
   const [clientId, setClientId] = useState<number | undefined>(preselectedClientId);
+  const [projectId, setProjectId] = useState<number | undefined>(undefined);
+  const [title, setTitle] = useState<string>("");
+  const [serviceDescription, setServiceDescription] = useState<string>("");
   const [dueDate, setDueDate] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() + 14); // 14 days out
@@ -41,7 +45,9 @@ export function CreateInvoiceModal({
   ]);
   const [discountAmount, setDiscountAmount] = useState<string>("");
   const [discountNote, setDiscountNote] = useState<string>("");
-  const [notes, setNotes] = useState<string>("");
+  const [internalNotes, setInternalNotes] = useState<string>("");
+  const [clientNotes, setClientNotes] = useState<string>("");
+  const [showPreview, setShowPreview] = useState<boolean>(false);
 
   // Sync preselected client if passed
   React.useEffect(() => {
@@ -51,6 +57,10 @@ export function CreateInvoiceModal({
   }, [preselectedClientId]);
 
   const selectedContact = contacts.find((c) => c.id === clientId);
+  const availableStudents = clientId 
+    ? allProjects.filter((p: any) => p.clientId === clientId) 
+    : allProjects;
+  const selectedStudent = allProjects.find((p: any) => p.id === projectId);
 
   // Line item handlers
   const handleAddLineItem = () => {
@@ -90,6 +100,13 @@ export function CreateInvoiceModal({
       };
       return next;
     });
+
+    if (!title) {
+      setTitle(service.name);
+    }
+    if (!serviceDescription && service.description) {
+      setServiceDescription(service.description);
+    }
   };
 
   // Calculations
@@ -115,10 +132,15 @@ export function CreateInvoiceModal({
 
   const resetForm = () => {
     if (!preselectedClientId) setClientId(undefined);
+    setProjectId(undefined);
+    setTitle("");
+    setServiceDescription("");
     setLineItems([{ description: "", quantity: 1, unitPrice: 0 }]);
     setDiscountAmount("");
     setDiscountNote("");
-    setNotes("");
+    setInternalNotes("");
+    setClientNotes("");
+    setShowPreview(false);
   };
 
   const handleSubmit = (sendImmediately: boolean) => {
@@ -135,6 +157,9 @@ export function CreateInvoiceModal({
 
     createMutation.mutate({
       clientId,
+      projectId: projectId || undefined,
+      title: title.trim() || undefined,
+      serviceDescription: serviceDescription.trim() || undefined,
       status: sendImmediately ? "Sent" : "Draft",
       dueDate: dueDate ? new Date(dueDate) : undefined,
       lineItems: validItems.map((i) => ({
@@ -146,10 +171,13 @@ export function CreateInvoiceModal({
       })),
       discountAmount: discount > 0 ? discount : undefined,
       discountNote: discountNote.trim() || undefined,
-      notes: notes.trim() || undefined,
+      notes: internalNotes.trim() || undefined,
+      internalNotes: internalNotes.trim() || undefined,
+      clientNotes: clientNotes.trim() || undefined,
       sendEmailImmediately: sendImmediately,
     });
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -178,8 +206,8 @@ export function CreateInvoiceModal({
 
         <div className="space-y-6 pt-3">
           
-          {/* 1. Client & Due Date Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 1. Client, Student & Due Date Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             {/* Family / Client Account */}
             <div className="space-y-1.5">
@@ -189,7 +217,11 @@ export function CreateInvoiceModal({
               </label>
               <select
                 value={clientId || ""}
-                onChange={(e) => setClientId(Number(e.target.value) || undefined)}
+                onChange={(e) => {
+                  const newClientId = Number(e.target.value) || undefined;
+                  setClientId(newClientId);
+                  setProjectId(undefined);
+                }}
                 disabled={!!preselectedClientId}
                 className="w-full bg-[#020A17]/90 border border-[#DFBE77]/40 rounded-xl px-3.5 py-2.5 text-sm text-[#FFF4D4] focus:outline-none focus:border-[#FFE394] focus:ring-1 focus:ring-[#FFE394]/50"
               >
@@ -204,9 +236,32 @@ export function CreateInvoiceModal({
               </select>
               {selectedContact?.email && (
                 <p className="text-[11px] text-[#A69371] font-mono pl-1">
-                  Recipient email: <span className="text-[#FFF4D4]">{selectedContact.email}</span>
+                  Recipient: <span className="text-[#FFF4D4]">{selectedContact.email}</span>
                 </p>
               )}
+            </div>
+
+            {/* Student (Optional, for reference only) */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono uppercase tracking-wider text-[#C5A059] font-bold flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5" />
+                Student (Optional)
+              </label>
+              <select
+                value={projectId || ""}
+                onChange={(e) => setProjectId(Number(e.target.value) || undefined)}
+                className="w-full bg-[#020A17]/90 border border-[#DFBE77]/40 rounded-xl px-3.5 py-2.5 text-sm text-[#FFF4D4] focus:outline-none focus:border-[#FFE394] focus:ring-1 focus:ring-[#FFE394]/50"
+              >
+                <option value="">-- None / General Account --</option>
+                {availableStudents.map((p: any) => (
+                  <option key={p.id} value={p.id} className="bg-[#07162B] text-white">
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-[#A69371] font-mono pl-1">
+                For student case reference only
+              </p>
             </div>
 
             {/* Payment Due Date */}
@@ -224,12 +279,38 @@ export function CreateInvoiceModal({
             </div>
           </div>
 
+          {/* 1b. Invoice Title & Service Description */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-5 space-y-1.5">
+              <label className="text-xs font-mono uppercase tracking-wider text-[#C5A059] font-bold block">
+                Invoice Title *
+              </label>
+              <Input
+                placeholder="e.g. State Complaint Preparation"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="bg-[#020A17]/90 border border-[#DFBE77]/40 rounded-xl text-sm text-[#FFF4D4] focus:border-[#FFE394]"
+              />
+            </div>
+            <div className="md:col-span-7 space-y-1.5">
+              <label className="text-xs font-mono uppercase tracking-wider text-[#C5A059] font-bold block">
+                Description of Service (Client-Facing)
+              </label>
+              <Input
+                placeholder="e.g. Formal Georgia DOE complaint drafting, exhibits index, and filing"
+                value={serviceDescription}
+                onChange={(e) => setServiceDescription(e.target.value)}
+                className="bg-[#020A17]/90 border border-[#DFBE77]/40 rounded-xl text-sm text-[#FFF4D4] focus:border-[#FFE394]"
+              />
+            </div>
+          </div>
+
           {/* 2. Line Items Table */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-mono uppercase tracking-wider text-[#C5A059] font-bold flex items-center gap-1.5">
                 <BookOpen className="w-3.5 h-3.5" />
-                Invoice Line Items *
+                Line Items, Quantity &amp; Price *
               </label>
               <Button
                 type="button"
@@ -239,7 +320,7 @@ export function CreateInvoiceModal({
                 className="text-xs h-7 border border-[#DFBE77]/50 text-[#DFBE77] hover:bg-[#FFE394]/10 bg-transparent"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" />
-                Add Item
+                Add Line Item
               </Button>
             </div>
 
@@ -280,7 +361,7 @@ export function CreateInvoiceModal({
                   <div className="grid grid-cols-12 gap-2 pt-1">
                     <div className="col-span-12 sm:col-span-7">
                       <Input
-                        placeholder="Service or item description..."
+                        placeholder="Service line item description..."
                         value={item.description}
                         onChange={(e) => handleItemChange(idx, "description", e.target.value)}
                         className="bg-[#020A17]/90 border border-[#DFBE77]/30 text-xs text-[#FFF4D4] h-8"
@@ -319,7 +400,7 @@ export function CreateInvoiceModal({
             </div>
           </div>
 
-          {/* 3. Discount & Internal Notes */}
+          {/* 3. Discount & Total Summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Discount Section */}
@@ -365,29 +446,52 @@ export function CreateInvoiceModal({
             </div>
           </div>
 
-          {/* Internal Memo */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-mono uppercase tracking-wider text-[#A69371] font-semibold block">
-              Internal Advocate Memo / Notes
-            </label>
-            <Textarea
-              placeholder="Private notes regarding this invoice (not printed on client view)..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="bg-[#020A17]/80 border border-[#DFBE77]/25 text-xs text-[#FFF4D4] min-h-[50px] resize-none"
-            />
+          {/* 4. Notes: Client-Facing vs Internal Notes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono uppercase tracking-wider text-[#C5A059] font-semibold block">
+                Client-Facing Notes (Printed on Invoice)
+              </label>
+              <Textarea
+                placeholder="Notes visible to parent (e.g. Includes 3 hours of document preparation)..."
+                value={clientNotes}
+                onChange={(e) => setClientNotes(e.target.value)}
+                className="bg-[#020A17]/80 border border-[#DFBE77]/25 text-xs text-[#FFF4D4] min-h-[50px] resize-none"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono uppercase tracking-wider text-[#A69371] font-semibold block">
+                Internal Advocate Memo (Private)
+              </label>
+              <Textarea
+                placeholder="Internal notes not visible to clients..."
+                value={internalNotes}
+                onChange={(e) => setInternalNotes(e.target.value)}
+                className="bg-[#020A17]/80 border border-[#DFBE77]/25 text-xs text-[#FFF4D4] min-h-[50px] resize-none"
+              />
+            </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#DFBE77]/30">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              className="text-white/70 hover:text-white text-xs"
-            >
-              Cancel
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="text-white/70 hover:text-white text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowPreview(!showPreview)}
+                className="border border-[#DFBE77]/40 text-[#DFBE77] hover:bg-[#FFE394]/10 bg-transparent text-xs h-9 px-3 rounded-xl"
+              >
+                {showPreview ? "Hide Preview" : "Preview Invoice"}
+              </Button>
+            </div>
 
             <div className="flex items-center gap-2.5">
               {/* Draft */}
@@ -414,6 +518,79 @@ export function CreateInvoiceModal({
               </Button>
             </div>
           </div>
+
+          {/* 5. Live Invoice Preview Drawer */}
+          {showPreview && (
+            <div className="mt-4 p-5 rounded-xl bg-[#010814] border-2 border-[#DFBE77]/50 shadow-2xl text-left space-y-4 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between border-b border-[#DFBE77]/30 pb-3">
+                <div>
+                  <h3 className="text-base font-serif font-bold text-[#FFF4D4]">
+                    {title || "Custom Special Education Advocacy Invoice"}
+                  </h3>
+                  {serviceDescription && (
+                    <p className="text-xs text-[#C6B697] mt-0.5">{serviceDescription}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-mono text-[#FAD77B] block font-bold">PREVIEW ONLY</span>
+                  <span className="text-[11px] text-[#A69371] font-mono">Due: {dueDate}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 text-xs text-[#D8C7A5] gap-2">
+                <div>
+                  <span className="text-[#A69371] uppercase font-mono text-[10px] block">Billed To</span>
+                  <strong className="text-white">{selectedContact?.name || "Client Account"}</strong>
+                  {selectedContact?.email && <div className="text-[#A69371]">{selectedContact.email}</div>}
+                </div>
+                {selectedStudent && (
+                  <div>
+                    <span className="text-[#A69371] uppercase font-mono text-[10px] block">Student Reference</span>
+                    <strong className="text-white">{selectedStudent.name}</strong>
+                  </div>
+                )}
+              </div>
+
+              {/* Items List */}
+              <div className="border border-[#DFBE77]/20 rounded-lg overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-[#05142B] text-[#DFBE77] font-mono">
+                    <tr>
+                      <th className="text-left p-2">Item Description</th>
+                      <th className="text-center p-2 w-16">Qty</th>
+                      <th className="text-right p-2 w-24">Price</th>
+                      <th className="text-right p-2 w-24">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#DFBE77]/10">
+                    {lineItems.map((li, i) => (
+                      <tr key={i} className="text-white/90">
+                        <td className="p-2">{li.description || "Advocacy Item"}</td>
+                        <td className="p-2 text-center font-mono">{li.quantity}</td>
+                        <td className="p-2 text-right font-mono">${Number(li.unitPrice).toFixed(2)}</td>
+                        <td className="p-2 text-right font-mono">${(Number(li.quantity) * Number(li.unitPrice)).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="text-right space-y-1 text-xs">
+                <div className="text-[#A69371]">Subtotal: <span className="font-mono text-white">${subtotal.toFixed(2)}</span></div>
+                {discount > 0 && <div className="text-emerald-400">Discount: <span className="font-mono">-${discount.toFixed(2)}</span></div>}
+                <div className="text-base font-bold text-[#FFE394] pt-1">
+                  Amount Due: <span className="font-mono text-[#FFF4D4]">${total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {clientNotes && (
+                <div className="text-xs p-2.5 rounded bg-[#031124] border border-[#DFBE77]/20 text-[#D8C7A5]">
+                  <span className="font-mono text-[10px] uppercase text-[#C5A059] block font-bold mb-1">Notes to Client:</span>
+                  {clientNotes}
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
       </DialogContent>
