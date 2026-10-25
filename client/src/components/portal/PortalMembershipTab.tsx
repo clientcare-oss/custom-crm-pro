@@ -230,20 +230,6 @@ export function PortalMembershipTab({
         </div>
       </div>
 
-      {/* ── Pre-Activation / Discovery Call Context Notice ── */}
-      <div className="p-4 rounded-2xl bg-[#06172F] border border-blue-900/40 flex items-start gap-3 shadow-lg">
-        <div className="p-2 rounded-xl bg-[#030C22] text-[#F5B544] border border-blue-900/40 shrink-0 mt-0.5">
-          <Clock className="h-4 w-4" />
-        </div>
-        <div className="space-y-0.5 text-xs">
-          <h3 className="font-bold text-white flex items-center gap-1.5">
-            <span>🧭</span> Waypoint Essentials Plan Configured ($55 / month · 12 months)
-          </h3>
-          <p className="text-blue-200/70 leading-relaxed">
-            Your monthly advocacy membership for <strong className="text-white font-medium">{studentName}</strong> is staged and active. Auto-billing commences upon conclusion of your scheduled Discovery Call with Waypoint Advocates.
-          </p>
-        </div>
-      </div>
 
       {/* ── Two-Box Grid: Saved Payment Method & Enrolled Plan (Compact Height, Equal 50/50 Split, Rich Admiralty Gradients) ── */}
       <div className="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
