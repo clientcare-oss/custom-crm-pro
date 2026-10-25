@@ -50,11 +50,31 @@ export function registerStripeRoutes(app: Router) {
         const invoiceId = session.metadata?.invoice_id;
         if (invoiceId) {
           try {
-            await db.processScheduledPayment({
-              invoiceId: parseInt(invoiceId),
-              paymentId: (session.payment_intent as string) || session.id,
+            const paymentId = (session.payment_intent as string) || session.id;
+            await db.recordInvoicePayment(parseInt(invoiceId), {
+              stripePaymentIntentId: paymentId,
+              paymentNote: `Paid via Stripe Checkout (${session.id})`,
             });
-            console.log(`[Stripe] Invoice #${invoiceId} marked as Paid with processed referral credits`);
+            console.log(`[Stripe] One-time Invoice #${invoiceId} marked as Paid`);
+          } catch (err) {
+            console.error(`[Stripe] Failed to update invoice #${invoiceId}:`, err);
+          }
+        }
+        break;
+      }
+      case "invoice.paid":
+      case "invoice.payment_succeeded": {
+        const inv = event.data.object as Stripe.Invoice;
+        console.log(`[Stripe] ${event.type}:`, inv.id);
+        const invoiceId = (inv.metadata as any)?.invoice_id;
+        if (invoiceId) {
+          try {
+            await db.recordInvoicePayment(parseInt(invoiceId), {
+              stripeInvoiceId: inv.id,
+              stripePaymentIntentId: ((inv as any).payment_intent as string) || undefined,
+              paymentNote: `Paid via Stripe Hosted Invoice (${inv.number || inv.id})`,
+            });
+            console.log(`[Stripe] One-time Invoice #${invoiceId} marked as Paid via invoice event`);
           } catch (err) {
             console.error(`[Stripe] Failed to update invoice #${invoiceId}:`, err);
           }
@@ -64,6 +84,17 @@ export function registerStripeRoutes(app: Router) {
       case "payment_intent.succeeded": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         console.log("[Stripe] Payment succeeded:", paymentIntent.id);
+        const invoiceId = paymentIntent.metadata?.invoice_id;
+        if (invoiceId) {
+          try {
+            await db.recordInvoicePayment(parseInt(invoiceId), {
+              stripePaymentIntentId: paymentIntent.id,
+              paymentNote: `Paid via Stripe PaymentIntent (${paymentIntent.id})`,
+            });
+          } catch (err) {
+            console.error(`[Stripe] Failed to update invoice #${invoiceId}:`, err);
+          }
+        }
         break;
       }
       case "customer.subscription.created":

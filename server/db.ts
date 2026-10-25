@@ -140,6 +140,7 @@ export * from "./db/giving";
 export * from "./db/caseActivity";
 export * from "./db/guidance";
 export * from "./db/services";
+export * from "./db/billing";
 
 // ============ CONTACTS ============
 // Contact functions are imported and re-exported from ./db/contacts

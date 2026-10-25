@@ -1123,7 +1123,7 @@ function ParentTabs({
 
       {/* BILLING / FINANCIALS TAB */}
       <TabsContent value="financials" className="mt-4 space-y-3">
-        <ContactFinancialsTab invoices={invoices} contracts={contracts} />
+        <ContactFinancialsTab contactId={contactId} invoices={invoices} contracts={contracts} />
       </TabsContent>
 
       {/* ACTIVITY & COMMUNICATIONS */}

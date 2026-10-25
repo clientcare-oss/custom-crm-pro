@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import PageIdBadge from "@/components/PageIdBadge";
 import VaultSafeIcon from "@/components/ui/VaultSafeIcon";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc";
 
 interface PortalMembershipTabProps {
   displayName?: string;
@@ -122,8 +123,17 @@ export function PortalMembershipTab({
     zipCode: "30303"
   });
 
-  // Invoice Ledger State (Featuring the $75 State Complaint item as requested)
-  const [invoices] = useState<InvoiceItem[]>([
+  // Real database invoices
+  const contactId = effectiveStudent?.contactId || effectiveStudent?.clientId || (typeof effectiveStudent?.id === "number" ? effectiveStudent.id : undefined);
+  const { data: dbInvoices = [] } = trpc.invoices.clientList.useQuery(
+    { contactId: contactId || 0 },
+    { enabled: !!contactId }
+  );
+
+  const unpaidInvoices = dbInvoices.filter((inv: any) => inv.status === "Sent" || inv.status === "Overdue");
+
+  // Fallback default ledger items
+  const [defaultInvoices] = useState<InvoiceItem[]>([
     {
       id: "inv-sc-75",
       invoiceNumber: "INV-2026-SC75",
@@ -149,6 +159,19 @@ export function PortalMembershipTab({
       status: "Paid"
     }
   ]);
+
+  // Combined Invoices
+  const formattedDbInvoices: (InvoiceItem & { stripePaymentUrl?: string })[] = dbInvoices.map((inv: any) => ({
+    id: `db-${inv.id}`,
+    invoiceNumber: inv.invoiceNumber || `INV-${inv.id}`,
+    date: inv.createdAt ? new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Recent",
+    description: inv.notes || "One-Time Special Education Advocacy Statement",
+    amount: Number(inv.total || inv.amount || 0),
+    status: inv.status === "Paid" ? "Paid" : "Pending",
+    stripePaymentUrl: inv.stripePaymentUrl,
+  }));
+
+  const invoices = [...formattedDbInvoices, ...defaultInvoices];
 
   const handleUpdateCard = (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,6 +253,42 @@ export function PortalMembershipTab({
         </div>
       </div>
 
+      {/* ── Unpaid Advocacy Invoices Notification Banner ── */}
+      {unpaidInvoices.length > 0 && (
+        <div className="relative rounded-2xl p-[1px] bg-gradient-to-b from-[#FFE394] via-[#DFBE77] to-[#9E7D3B] shadow-[0_12px_32px_rgba(245,181,68,0.25)]">
+          <div className="bg-gradient-to-r from-[#0B1E38] via-[#07162B] to-[#040D1A] rounded-[15px] p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  Action Required · Outstanding Advocacy Invoice
+                </span>
+                <span className="text-xs text-[#A69371] font-mono">
+                  #{unpaidInvoices[0].invoiceNumber}
+                </span>
+              </div>
+              <h3 className="text-lg font-serif font-bold text-[#FFF4D4]">
+                Invoice #{unpaidInvoices[0].invoiceNumber} — ${Number(unpaidInvoices[0].total || unpaidInvoices[0].amount || 0).toFixed(2)} USD
+              </h3>
+              <p className="text-xs text-[#D8C7A5]">
+                {unpaidInvoices[0].notes || "One-Time Special Education Advocacy Statement"}
+                {unpaidInvoices[0].dueDate ? ` · Due ${new Date(unpaidInvoices[0].dueDate).toLocaleDateString()}` : ""}
+              </p>
+            </div>
+
+            {unpaidInvoices[0].stripePaymentUrl && (
+              <Button
+                onClick={() => window.open(unpaidInvoices[0].stripePaymentUrl!, "_blank")}
+                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-sm h-11 px-6 rounded-xl border border-[#FFE394]/70 shadow-[0_4px_16px_rgba(0,0,0,0.6)] cursor-pointer flex items-center gap-2 shrink-0 transition-transform hover:scale-[1.02]"
+              >
+                <CreditCard className="w-4 h-4 text-[#07162B]" />
+                <span>Pay Invoice (${Number(unpaidInvoices[0].total || unpaidInvoices[0].amount || 0).toFixed(2)})</span>
+                <ArrowRight className="w-4 h-4 text-[#07162B]" />
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Two-Box Grid: Saved Payment Method & Enrolled Plan (Compact Height, Equal 50/50 Split, Rich Admiralty Gradients) ── */}
       <div className="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
@@ -385,7 +444,7 @@ export function PortalMembershipTab({
                   <span className="font-extrabold tracking-wide text-[10.5px]">Update Payment Method</span>
                 </Button>
 
-                <div className="flex items-center gap-1 text-[8.5px] text-[#D8C7A5] font-medium bg-[#020A17]/80 px-2 py-0.5 rounded-full border border-[#3A2C18] shadow-inner">
+                <div className="flex items-center gap-1 text-[8.5px] text-[#D8C7A5] font-medium bg-[#020A17]/80 px-2 py-0.5 rounded-full border border-[#DFBE77]/40 shadow-inner">
                   <ShieldCheck className="h-2.5 w-2.5 text-emerald-400 shrink-0" />
                   <span>Instant encrypted sync</span>
                   <span className="text-white/20">•</span>
@@ -428,7 +487,7 @@ export function PortalMembershipTab({
             {/* Content: Official Waypoint Essentials Features + Term Bar */}
             <div className="px-4 py-2.5 sm:px-4.5 sm:py-2.5 flex-1 flex flex-col justify-between gap-2 relative z-10 text-xs">
               {/* Recessed 2-Column Benefits Grid (Significantly cuts vertical height) */}
-              <div className="bg-[#020A17]/70 border border-[#3A2C18]/80 rounded-xl p-2.5 shadow-inner">
+              <div className="bg-[#020A17]/70 border border-[#DFBE77]/40 rounded-xl p-2.5 shadow-inner">
                 <div className="grid grid-cols-2 gap-x-2.5 gap-y-1.5 text-[10.5px]">
                   <div className="flex items-center gap-1 text-white/90">
                     <span className="text-[11px] shrink-0">📄</span>
@@ -450,7 +509,7 @@ export function PortalMembershipTab({
                     <span className="text-[11px] shrink-0">🧭</span>
                     <span className="truncate">Advocacy strategy</span>
                   </div>
-                  <div className="flex items-center gap-1 text-white/90 col-span-2 pt-0.5 border-t border-[#3A2C18]/60">
+                  <div className="flex items-center gap-1 text-white/90 col-span-2 pt-0.5 border-t border-[#DFBE77]/30">
                     <span className="text-[11px] shrink-0">⚖️</span>
                     <span>State complaint prep: <strong className="text-amber-300 font-mono font-bold">$200</strong></span>
                   </div>
@@ -458,7 +517,7 @@ export function PortalMembershipTab({
               </div>
 
               {/* Clean compact renewal & term bar */}
-              <div className="py-1.5 px-2.5 rounded-lg bg-[#020A17]/90 border border-[#3A2C18] flex items-center justify-between text-[10px] shadow-inner mt-auto">
+              <div className="py-1.5 px-2.5 rounded-lg bg-[#020A17]/90 border border-[#DFBE77]/40 flex items-center justify-between text-[10px] shadow-inner mt-auto">
                 <span className="text-white/70">
                   Term: <strong className="text-amber-300 font-mono font-bold">12 mos · $660 total</strong>
                 </span>
@@ -609,22 +668,39 @@ export function PortalMembershipTab({
 
                       {/* Status */}
                       <td className="py-4 px-4 text-center whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                          <CheckCircle2 className="h-3 w-3" /> Paid
-                        </span>
+                        {inv.status === "Paid" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            <CheckCircle2 className="h-3 w-3" /> Paid
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono">
+                            <Clock className="h-3 w-3" /> Due / Pending
+                          </span>
+                        )}
                       </td>
 
                       {/* Action */}
                       <td className="py-4 px-4 sm:px-6 text-right whitespace-nowrap">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDownloadReceipt(inv)}
-                          className="h-8 text-xs text-blue-300 hover:text-white hover:bg-blue-900/40 rounded-lg gap-1.5 cursor-pointer font-medium"
-                        >
-                          <Download className="h-3.5 w-3.5 text-[#F5B544]" />
-                          <span>Receipt</span>
-                        </Button>
+                        {inv.status !== "Paid" && (inv as any).stripePaymentUrl ? (
+                          <Button
+                            size="sm"
+                            onClick={() => window.open((inv as any).stripePaymentUrl, "_blank")}
+                            className="h-8 text-xs bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-extrabold rounded-lg gap-1.5 cursor-pointer shadow-md hover:brightness-110"
+                          >
+                            <CreditCard className="h-3.5 w-3.5" />
+                            <span>Pay Now</span>
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDownloadReceipt(inv)}
+                            className="h-8 text-xs text-blue-300 hover:text-white hover:bg-blue-900/40 rounded-lg gap-1.5 cursor-pointer font-medium"
+                          >
+                            <Download className="h-3.5 w-3.5 text-[#F5B544]" />
+                            <span>Receipt</span>
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   );
