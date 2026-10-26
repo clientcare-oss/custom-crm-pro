@@ -92,6 +92,12 @@ export default function StudentWorkspace() {
     } catch {}
   }
 
+  // Active State Complaint Draft query for this student
+  const complaintDraftQuery = trpc.stateComplaint.getDraft.useQuery(
+    { studentId: effectiveStudentId },
+    { enabled: !!effectiveStudentId }
+  );
+
   // Toggle action checkbox
   const toggleAction = (key: string) => {
     setCheckedActions(prev => ({ ...prev, [key]: !prev[key] }));
@@ -365,11 +371,19 @@ export default function StudentWorkspace() {
                   window.dispatchEvent(new CustomEvent("waypoint:collapse-sidebar"));
                   setLocation(`/state-complaint-builder?studentId=${studentId}`);
                 }}
-                className="bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-100 text-xs font-semibold rounded-lg h-8 px-3 gap-1.5 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
-                title="Open State Complaint Builder (PG-020)"
+                className={cn(
+                  "border text-xs font-semibold rounded-lg h-8 px-3 gap-1.5 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer",
+                  complaintDraftQuery.data
+                    ? "bg-[#DFBE77]/20 hover:bg-[#DFBE77]/30 border-[#DFBE77]/60 text-[#FFE394]"
+                    : "bg-[#071d3a]/75 hover:bg-[#0c2950] border-sky-400/35 hover:border-sky-300 text-sky-100"
+                )}
+                title={complaintDraftQuery.data ? "Open State Complaint Draft (Active Filing on File)" : "Open State Complaint Builder (PG-020)"}
               >
-                <Landmark className="h-3.5 w-3.5 text-sky-300" />
+                <Landmark className={cn("h-3.5 w-3.5", complaintDraftQuery.data ? "text-[#F1CB6C]" : "text-sky-300")} />
                 <span className="hidden sm:inline">State Complaint</span>
+                {complaintDraftQuery.data && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" title="Draft on File" />
+                )}
               </Button>
 
               <Button

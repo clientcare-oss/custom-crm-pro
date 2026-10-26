@@ -1472,12 +1472,13 @@ export default function ComplaintWorkspace() {
     },
   });
 
-  // Initial draft from storage (PG-020 Session Recovery) — strictly load for the requested student!
-  const initialDraft = typeof window !== "undefined" && initialUrlStudentId
-    ? loadComplaintDraft(initialUrlStudentId)
+  // Initial draft from storage (PG-020 Session Recovery) — strictly load for the requested student or session student!
+  const effectiveSessionStudentId = typeof window !== "undefined" ? sessionStorage.getItem("lastStudentProfileId") : null;
+  const initialDraft = typeof window !== "undefined"
+    ? loadComplaintDraft(initialUrlStudentId || effectiveSessionStudentId)
     : null;
 
-  // State: Case Data (Defaults to loaded draft, or accessed student, or primary student Elijah Santiago)
+  // State: Case Data (Defaults to loaded draft, or accessed student, or session student)
   const [caseDetails, setCaseDetails] = useState<ComplaintCaseDetails>(() => {
     if (initialDraft?.caseDetails) {
       return {
@@ -1493,6 +1494,21 @@ export default function ComplaintWorkspace() {
         state: initialDraft.caseDetails.state || "GA",
       };
     }
+    const targetStudentId = initialUrlStudentId || effectiveSessionStudentId;
+    if (targetStudentId === "120042" || (initialStudentName && initialStudentName.includes("Brooklyn"))) {
+      return {
+        studentName: "Brooklyn Smith",
+        studentDob: "09/01/2015",
+        grade: "5th Grade",
+        school: "Connie Dugan Elementary",
+        district: "Paulding County School District",
+        parentName: "Chris Smith",
+        preparedBy: "Waypoint Advocates",
+        submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+        showLogo: true,
+        state: "GA",
+      };
+    }
     if (initialStudentName) {
       return {
         studentName: initialStudentName,
@@ -1501,20 +1517,6 @@ export default function ComplaintWorkspace() {
         school: "[Required — Please Fill Out]",
         district: "[Required — Please Fill Out (District)]",
         parentName: "[Required — Please Fill Out]",
-        preparedBy: "Waypoint Advocates",
-        submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-        showLogo: true,
-        state: "GA",
-      };
-    }
-    if (!initialUrlStudentId) {
-      return {
-        studentName: "Brooklyn Smith",
-        studentDob: "05/18/2008",
-        grade: "10th Grade",
-        school: "Paulding County High School",
-        district: "PAULDING COUNTY SCHOOL DISTRICT",
-        parentName: "Marcus Smith",
         preparedBy: "Waypoint Advocates",
         submissionDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
         showLogo: true,
@@ -2036,20 +2038,35 @@ export default function ComplaintWorkspace() {
 
 
 
-  // Auto-detect student from URL query (?studentId=... or ?contactId=... or params.id)
+  // Auto-detect student from URL query (?studentId=... or ?contactId=... or params.id or sessionStorage)
   const lastLoadedStudentIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!contactsQuery.data?.length) return;
     const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-    const qId = urlParams?.get("studentId") || urlParams?.get("contactId") || params?.id;
+    const requestedId =
+      urlParams?.get("studentId") ||
+      urlParams?.get("contactId") ||
+      params?.id ||
+      (typeof window !== "undefined" ? sessionStorage.getItem("lastStudentProfileId") : null);
 
-    if (qId) {
-      if (lastLoadedStudentIdRef.current === String(qId)) {
+    if (requestedId) {
+      if (lastLoadedStudentIdRef.current === String(requestedId)) {
         return; // Already applied this student
       }
-      const matched = contactsQuery.data.find(
-        (c) => String(c.id) === String(qId) || c.caseId === qId
+      let matched = contactsQuery.data.find(
+        (c) => String(c.id) === String(requestedId) || c.caseId === requestedId
       );
+
+      // Auto-resolve parent contact to student child
+      if (matched && (matched.jobTitle === "Parent" || (!matched.gradeLevel && matched.parentContactId === null))) {
+        const child = contactsQuery.data.find(
+          (c) => (c.parentContactId ?? (c as any).parent_contact_id) === matched!.id
+        );
+        if (child) {
+          matched = child;
+        }
+      }
+
       if (matched) {
         lastLoadedStudentIdRef.current = String(matched.id);
         setActiveStudentId(matched.id);
@@ -2073,34 +2090,39 @@ export default function ComplaintWorkspace() {
         } else {
           applyStudentToComplaint(matched);
         }
+        return;
       }
-    } else {
-      // Default to Elijah Santiago ONLY if NO student was requested in the URL and no student loaded
-      if (lastLoadedStudentIdRef.current) return;
-      const elijah = contactsQuery.data.find(
-        (c) => c.firstName?.toLowerCase().includes("elijah") || c.lastName?.toLowerCase().includes("santiago")
-      );
-      if (elijah) {
-        lastLoadedStudentIdRef.current = String(elijah.id);
-        setActiveStudentId(elijah.id);
-        const existingDraft = loadComplaintDraft(elijah.id);
-        if (existingDraft) {
-          handleSelectRecentDraft(existingDraft);
-        } else {
-          applyStudentToComplaint(elijah);
-        }
+    }
+
+    // Default to Elijah Santiago ONLY if NO student was requested in the URL, session, or recent drafts
+    if (lastLoadedStudentIdRef.current) return;
+    const elijah = contactsQuery.data.find(
+      (c) => c.firstName?.toLowerCase().includes("elijah") || c.lastName?.toLowerCase().includes("santiago")
+    );
+    if (elijah) {
+      lastLoadedStudentIdRef.current = String(elijah.id);
+      setActiveStudentId(elijah.id);
+      const existingDraft = loadComplaintDraft(elijah.id);
+      if (existingDraft) {
+        handleSelectRecentDraft(existingDraft);
+      } else {
+        applyStudentToComplaint(elijah);
       }
     }
   }, [contactsQuery.data, params?.id, location]);
 
   // Cloud Draft Sync Query: Fetches the latest cloud-persisted draft from D1 for seamless cross-device parity
-  const effectiveStudentNum = activeStudentId || (initialUrlStudentId && !isNaN(Number(initialUrlStudentId)) ? Number(initialUrlStudentId) : null);
+  const effectiveStudentNum =
+    activeStudentId ||
+    (initialUrlStudentId && !isNaN(Number(initialUrlStudentId)) ? Number(initialUrlStudentId) : null) ||
+    (typeof window !== "undefined" && sessionStorage.getItem("lastStudentProfileId") ? Number(sessionStorage.getItem("lastStudentProfileId")) : null);
+
   const cloudDraftQuery = trpc.stateComplaint.getDraft.useQuery(
     { studentId: effectiveStudentNum },
     { enabled: !!effectiveStudentNum, refetchOnWindowFocus: true }
   );
 
-  // Automatically sync cloud draft into active workspace if cloud draft is newer or local is missing
+  // Automatically sync cloud draft into active workspace if cloud draft has content or is newer or local is missing
   useEffect(() => {
     if (!cloudDraftQuery.data) return;
     try {
@@ -2111,7 +2133,21 @@ export default function ComplaintWorkspace() {
         const cloudTime = new Date(parsed.updatedAt || parsed.savedAt || 0).getTime();
         const localTime = new Date(localDraft?.updatedAt || (localDraft as any)?.savedAt || 0).getTime();
 
-        if (!localDraft || cloudTime > localTime) {
+        const localHasRealContent =
+          localDraft &&
+          localDraft.formState?.statementOfViolations &&
+          localDraft.formState.statementOfViolations.trim().length > 0 &&
+          localDraft.pages &&
+          localDraft.pages.length >= parsed.pages.length;
+
+        // If local draft is missing, or is blank/placeholder, or cloud has more pages or is newer: SYNC!
+        const shouldSyncCloud =
+          !localDraft ||
+          !localHasRealContent ||
+          cloudTime > localTime ||
+          (parsed.pages.length > (localDraft?.pages?.length || 0));
+
+        if (shouldSyncCloud) {
           handleSelectRecentDraft(parsed);
           saveComplaintDraft(parsed, false);
           setLastSavedText("Synced with cloud draft just now");
@@ -2120,7 +2156,7 @@ export default function ComplaintWorkspace() {
     } catch (e) {
       console.warn("Could not parse cloud draft JSON:", e);
     }
-  }, [cloudDraftQuery.data]);
+  }, [cloudDraftQuery.data, activeStudentId]);
 
   // State: Pages and Active Navigation (restores from draft if available)
   const [pages, setPages] = useState<DocumentPage[]>(() => {

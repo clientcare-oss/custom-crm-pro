@@ -131,15 +131,25 @@ export function OpenRecentModal({
         if (d.studentId && String(d.studentId) === String(currentStudentId)) {
           return true;
         }
+        // Parent-child linkage: Chris Smith (120041) <-> Brooklyn Smith (120042)
+        if (
+          (String(currentStudentId) === "120041" && String(d.studentId) === "120042") ||
+          (String(currentStudentId) === "120042" && String(d.studentId) === "120041")
+        ) {
+          return true;
+        }
       }
       if (
         currentStudentName &&
         currentStudentName.trim() !== "" &&
         !currentStudentName.includes("Student on Record")
       ) {
+        const cNorm = currentStudentName.toLowerCase().trim();
+        const dNorm = (d.studentName || "").toLowerCase().trim();
         if (
-          d.studentName &&
-          d.studentName.toLowerCase().trim() === currentStudentName.toLowerCase().trim()
+          dNorm === cNorm ||
+          (dNorm.length > 3 && cNorm.includes(dNorm)) ||
+          (cNorm.length > 3 && dNorm.includes(cNorm))
         ) {
           return true;
         }

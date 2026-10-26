@@ -34,6 +34,7 @@ interface WorkspaceItem {
   icon: React.ComponentType<{ className?: string }>;
   onClick: () => void;
   external?: boolean;
+  badge?: string;
 }
 
 /**
@@ -102,6 +103,20 @@ export function StudentWorkspaceMoreTab({
   const effectiveParentPhone = parentPhone || contactDetail?.parentContact?.phone || contactDetail?.contact?.phone;
   const effectiveCaseId = caseId || contactDetail?.contact?.caseId;
   const effectiveGrade = studentGrade || contactDetail?.contact?.gradeLevel;
+  // Active State Complaint Draft query for this student
+  const complaintDraftQuery = trpc.stateComplaint.getDraft.useQuery(
+    { studentId: !isNaN(numericStudentId) && numericStudentId > 0 ? numericStudentId : undefined },
+    { enabled: !isNaN(numericStudentId) && numericStudentId > 0 }
+  );
+
+  const parsedComplaint = useMemo(() => {
+    if (!complaintDraftQuery.data) return null;
+    try {
+      return JSON.parse(complaintDraftQuery.data);
+    } catch {
+      return null;
+    }
+  }, [complaintDraftQuery.data]);
 
   // Build the strict Phase 2 portal preview URL
   const portalPreviewPath = `/portal?preview=true&contactId=${studentId}${effectiveParentId ? `&parentContactId=${effectiveParentId}` : ""}${effectiveCaseId ? `&caseId=${effectiveCaseId}` : ""}`;
@@ -171,7 +186,10 @@ export function StudentWorkspaceMoreTab({
     {
       id: "state-complaint",
       title: "State Complaint",
-      description: "Build the complaint and evidence.",
+      description: parsedComplaint
+        ? `Active draft: ${parsedComplaint.title} (${parsedComplaint.pages?.length || 6} pages)`
+        : "Build the complaint and evidence.",
+      badge: parsedComplaint ? `${parsedComplaint.pages?.length || 6} Pages` : undefined,
       icon: Landmark,
       onClick: () => {
         setSelectedId("state-complaint");
@@ -380,12 +398,19 @@ export function StudentWorkspaceMoreTab({
 
               {/* ─── Content Area: Left-aligned, refined serif title & muted blue description ─── */}
               <div className="min-w-0 flex-1 flex flex-col justify-center text-left">
-                <h4
-                  className="font-medium text-[15.5px] lg:text-[16px] text-[#F7F2E8] tracking-normal leading-tight whitespace-nowrap drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.85)] group-hover:text-[#FFF8EE] transition-colors"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                >
-                  {item.title}
-                </h4>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4
+                    className="font-medium text-[15.5px] lg:text-[16px] text-[#F7F2E8] tracking-normal leading-tight whitespace-nowrap drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.85)] group-hover:text-[#FFF8EE] transition-colors"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  >
+                    {item.title}
+                  </h4>
+                  {item.badge && (
+                    <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-[#DFBE77]/20 border border-[#DFBE77]/40 text-[#FFE394] shrink-0">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
                 <p className="text-[12px] lg:text-[12.5px] text-[#93AECD] leading-[1.35] mt-1 line-clamp-2 group-hover:text-[#A8C4E6] transition-colors">
                   {item.description}
                 </p>
