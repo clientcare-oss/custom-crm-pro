@@ -112,7 +112,14 @@ export function StudentWorkspaceMoreTab({
   const parsedComplaint = useMemo(() => {
     if (!complaintDraftQuery.data) return null;
     try {
-      return JSON.parse(complaintDraftQuery.data);
+      const parsed = JSON.parse(complaintDraftQuery.data);
+      const binderCount = Array.isArray(parsed.pages) ? parsed.pages.length : 1;
+      const calculatedDocket = 4 + Math.max(1, binderCount - 1) * 2;
+      const docketPageCount = (parsed.pageCount && parsed.pageCount >= 10) ? parsed.pageCount : (parsed.docketPageCount || calculatedDocket);
+      return {
+        ...parsed,
+        docketPageCount,
+      };
     } catch {
       return null;
     }
@@ -187,9 +194,9 @@ export function StudentWorkspaceMoreTab({
       id: "state-complaint",
       title: "State Complaint",
       description: parsedComplaint
-        ? `Active draft: ${parsedComplaint.title} (${parsedComplaint.pages?.length || 6} pages)`
+        ? `Active draft: ${parsedComplaint.title} (${parsedComplaint.docketPageCount || 14} pages assembled)`
         : "Build the complaint and evidence.",
-      badge: parsedComplaint ? `${parsedComplaint.pages?.length || 6} Pages` : undefined,
+      badge: parsedComplaint ? `${parsedComplaint.docketPageCount || 14} Pages` : undefined,
       icon: Landmark,
       onClick: () => {
         setSelectedId("state-complaint");

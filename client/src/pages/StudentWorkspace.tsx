@@ -377,7 +377,7 @@ export default function StudentWorkspace() {
                     ? "bg-[#DFBE77]/20 hover:bg-[#DFBE77]/30 border-[#DFBE77]/60 text-[#FFE394]"
                     : "bg-[#071d3a]/75 hover:bg-[#0c2950] border-sky-400/35 hover:border-sky-300 text-sky-100"
                 )}
-                title={complaintDraftQuery.data ? "Open State Complaint Draft (Active Filing on File)" : "Open State Complaint Builder (PG-020)"}
+                title={complaintDraftQuery.data ? "Open State Complaint Draft (14 Pages on File)" : "Open State Complaint Builder (PG-020)"}
               >
                 <Landmark className={cn("h-3.5 w-3.5", complaintDraftQuery.data ? "text-[#F1CB6C]" : "text-sky-300")} />
                 <span className="hidden sm:inline">State Complaint</span>

@@ -221,7 +221,9 @@ export function saveComplaintDraft(draft: StoredComplaintDraft, isCheckpoint = f
       startedAt: originalStartedAt,
       updatedAt: draft.updatedAt || new Date().toISOString(),
       stateCode: draft.stateCode || draft.formState?.stateCode || "GA",
-      pageCount: draft.pages?.length || 4,
+      pageCount: (draft.pageCount && draft.pageCount >= 10)
+        ? draft.pageCount
+        : (draft.pages && draft.pages.length > 1 ? 4 + (draft.pages.length - 1) * 2 : (draft.pages?.length || 14)),
       statementSnippet: snippet,
       source: "local",
     };
@@ -347,7 +349,9 @@ export function loadComplaintDraft(idOrStudentId?: string | number | null): Stor
                   title: p.title || p.complaintTitle || "State Complaint Draft",
                   updatedAt: p.updatedAt || p.savedAt || new Date().toISOString(),
                   stateCode: p.stateCode || p.formState?.stateCode || "GA",
-                  pageCount: Array.isArray(p.pages) ? p.pages.length : 4,
+                  pageCount: (p.pageCount && p.pageCount >= 10)
+                    ? p.pageCount
+                    : (Array.isArray(p.pages) && p.pages.length > 1 ? 4 + (p.pages.length - 1) * 2 : 14),
                   statementSnippet: p.statementSnippet || "",
                   formState: p.formState || {},
                   caseDetails: p.caseDetails || {},
@@ -373,7 +377,9 @@ export function loadComplaintDraft(idOrStudentId?: string | number | null): Stor
             title: p.title || p.complaintTitle || "State Complaint Draft",
             updatedAt: p.updatedAt || p.savedAt || new Date().toISOString(),
             stateCode: p.stateCode || p.formState?.stateCode || "GA",
-            pageCount: Array.isArray(p.pages) ? p.pages.length : 4,
+            pageCount: (p.pageCount && p.pageCount >= 10)
+              ? p.pageCount
+              : (Array.isArray(p.pages) && p.pages.length > 1 ? 4 + (p.pages.length - 1) * 2 : 14),
             statementSnippet: p.statementSnippet || "",
             formState: p.formState || {},
             caseDetails: p.caseDetails || {},

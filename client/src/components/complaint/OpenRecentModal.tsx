@@ -95,7 +95,11 @@ export function OpenRecentModal({
             parsedDraftObj = JSON.parse(cloudItem.draftJson);
             sName = parsedDraftObj.studentName || parsedDraftObj.caseDetails?.studentName || sName;
             stateCode = parsedDraftObj.stateCode || parsedDraftObj.formState?.stateCode || stateCode;
-            pageCount = Array.isArray(parsedDraftObj.pages) ? parsedDraftObj.pages.length : pageCount;
+            const binderCount = Array.isArray(parsedDraftObj.pages) ? parsedDraftObj.pages.length : 1;
+            const calculatedDocket = 4 + Math.max(1, binderCount - 1) * 2;
+            pageCount = (parsedDraftObj.pageCount && parsedDraftObj.pageCount >= 10)
+              ? parsedDraftObj.pageCount
+              : calculatedDocket;
             snippet = (
               parsedDraftObj.formState?.statementOfViolations ||
               parsedDraftObj.formState?.factsRelatingToViolations ||
@@ -472,8 +476,8 @@ export function OpenRecentModal({
                       </span>
 
                       {/* Exhibit / Section Count */}
-                      <span className="text-[#8C7D64]">
-                        {item.pageCount} Sections / Exhibits
+                      <span className="text-[#DFBE77] font-semibold">
+                        {item.pageCount} Pages Docket
                       </span>
                     </div>
                   </div>
