@@ -5,7 +5,8 @@ import {
   UsersRound, ClipboardCheck, Landmark, Wrench, 
   CalendarDays, Clock, Coins, Link2, Eye,
   ExternalLink, Copy, Check, ShieldCheck, Lock,
-  CheckCircle2, Loader2
+  CheckCircle2, Loader2, Scale, Folder, School,
+  Shield, GitCompare, FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
@@ -158,9 +159,47 @@ export function StudentWorkspaceMoreTab({
       },
     },
     {
+      id: "meeting-workspace",
+      title: "Meeting Workspace",
+      description: "Live IEP meeting strategy, targets & notes.",
+      icon: UsersRound,
+      onClick: () => {
+        setSelectedId("meeting-workspace");
+        setLocation(`/meeting-workspace/${studentId}`);
+      },
+    },
+    {
+      id: "state-complaint",
+      title: "State Complaint",
+      description: "Build the complaint and evidence.",
+      icon: Landmark,
+      onClick: () => {
+        setSelectedId("state-complaint");
+        if (studentId) {
+          sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}`);
+          sessionStorage.setItem("lastStudentProfileId", String(studentId));
+          if (studentName) {
+            sessionStorage.setItem("lastStudentProfileName", studentName);
+          }
+        }
+        window.dispatchEvent(new CustomEvent("waypoint:collapse-sidebar"));
+        setLocation(studentId ? `/state-complaint-builder?studentId=${studentId}` : `/state-complaint-builder`);
+      },
+    },
+    {
+      id: "post-meeting-review",
+      title: "Post-Meeting Review",
+      description: "Confirm decisions and verify draft IEP.",
+      icon: ClipboardCheck,
+      onClick: () => {
+        setSelectedId("post-meeting-review");
+        setLocation(`/post-meeting-review/${studentId}`);
+      },
+    },
+    {
       id: "voyage-log",
       title: "Voyage Log",
-      description: "Record case updates.",
+      description: "Record case updates & audio notes.",
       icon: SquarePen,
       onClick: () => {
         setSelectedId("voyage-log");
@@ -181,7 +220,7 @@ export function StudentWorkspaceMoreTab({
       id: "lawyer-status",
       title: "Lawyer Status",
       description: "Legal representation details.",
-      icon: UsersRound,
+      icon: Scale,
       onClick: () => {
         setSelectedId("lawyer-status");
         setLocation(`/contacts/${studentId}?tab=legal`);
@@ -191,7 +230,7 @@ export function StudentWorkspaceMoreTab({
       id: "iep-binder",
       title: "IEP Binder",
       description: "Documents, goals, and history.",
-      icon: ClipboardCheck,
+      icon: Folder,
       onClick: () => {
         setSelectedId("iep-binder");
         setLocation(`/contacts/${studentId}?tab=documents`);
@@ -201,7 +240,7 @@ export function StudentWorkspaceMoreTab({
       id: "school-district",
       title: "School & District",
       description: "School contacts and policies.",
-      icon: Landmark,
+      icon: School,
       onClick: () => {
         setSelectedId("school-district");
         setLocation(`/contacts/${studentId}?tab=overview`);
@@ -213,8 +252,38 @@ export function StudentWorkspaceMoreTab({
       description: "Open your advocacy toolkit.",
       icon: Wrench,
       onClick: () => {
-        setSelectedId("tools");
+        setSelectedId("advocacy-tools");
         setLocation(`/tools`);
+      },
+    },
+    {
+      id: "pwn-decoder",
+      title: "PWN Decoder",
+      description: "Decode prior written notices.",
+      icon: Shield,
+      onClick: () => {
+        setSelectedId("pwn-decoder");
+        setLocation(`/tools/pwn-decoder`);
+      },
+    },
+    {
+      id: "iep-comparator",
+      title: "IEP Comparator",
+      description: "Compare IEP draft versions.",
+      icon: GitCompare,
+      onClick: () => {
+        setSelectedId("iep-comparator");
+        setLocation(`/tools/iep-comparator`);
+      },
+    },
+    {
+      id: "worksheet-builder",
+      title: "Worksheet Studio",
+      description: "Advocacy worksheets & forms.",
+      icon: FileText,
+      onClick: () => {
+        setSelectedId("worksheet-builder");
+        setLocation(`/tools/worksheet-builder`);
       },
     },
     {
@@ -267,7 +336,7 @@ export function StudentWorkspaceMoreTab({
         setLocation(`/contacts/${studentId}?tab=referral`);
       },
     },
-  ], [studentId, setLocation]);
+  ], [studentId, studentName, caseId, setLocation]);
 
   return (
     <div className="w-full min-h-[500px] p-5 sm:p-7 md:p-8 select-none">

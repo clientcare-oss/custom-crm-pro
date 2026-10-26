@@ -32,11 +32,31 @@ export const meetingWorkspaceRouter = router({
       })
     )
     .query(async ({ input }) => {
-      let workspace = await db.getWorkspaceByStudentId(input.studentContactId);
+      let resolvedStudentId = input.studentContactId;
+
+      // Smart Parent-to-Student auto-resolution guard:
+      // If a parent ID was passed, find their student child so the meeting workspace
+      // is always linked to the student record and never splits.
+      if (input.studentContactId > 0) {
+        try {
+          const contact = await db.getContactById(input.studentContactId);
+          if (contact && (contact.jobTitle === "Parent" || (!contact.gradeLevel && contact.parentContactId === null))) {
+            const allContacts = await db.getContactsByOwner();
+            const child = allContacts.find((c: any) => (c.parentContactId ?? c.parent_contact_id) === input.studentContactId);
+            if (child) {
+              resolvedStudentId = child.id;
+            }
+          }
+        } catch (e) {
+          console.warn("[meetingWorkspace.getOrCreate] Auto-resolve parent error:", e);
+        }
+      }
+
+      let workspace = await db.getWorkspaceByStudentId(resolvedStudentId);
 
       if (!workspace) {
         // Fetch student contact details to generate friendly title/date
-        const contact = await db.getContactById(input.studentContactId);
+        const contact = await db.getContactById(resolvedStudentId);
         const studentName = contact ? `${contact.firstName} ${contact.lastName}` : "Student";
         const today = new Date().toLocaleDateString("en-US", {
           month: "long",
@@ -45,7 +65,7 @@ export const meetingWorkspaceRouter = router({
         });
 
         workspace = await db.createWorkspace({
-          studentContactId: input.studentContactId,
+          studentContactId: resolvedStudentId,
           appointmentId: input.appointmentId,
           title: `${studentName} — Annual IEP Meeting`,
           meetingDate: `${today} · 10:00 AM`,
@@ -102,7 +122,16 @@ export const meetingWorkspaceRouter = router({
   listByStudent: protectedProcedure
     .input(z.object({ studentContactId: z.number() }))
     .query(async ({ input }) => {
-      return db.listWorkspacesByStudentId(input.studentContactId);
+      let resolvedId = input.studentContactId;
+      try {
+        const contact = await db.getContactById(input.studentContactId);
+        if (contact && (contact.jobTitle === "Parent" || (!contact.gradeLevel && contact.parentContactId === null))) {
+          const allContacts = await db.getContactsByOwner();
+          const child = allContacts.find((c: any) => (c.parentContactId ?? c.parent_contact_id) === input.studentContactId);
+          if (child) resolvedId = child.id;
+        }
+      } catch {}
+      return db.listWorkspacesByStudentId(resolvedId);
     }),
 
   /**

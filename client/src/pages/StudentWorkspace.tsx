@@ -8,7 +8,7 @@ import {
   Pencil, Move, Check, Undo2, Mic, Compass, 
   FileSearch, GitCompare, Gavel, BookOpen, FileSignature, 
   DollarSign, PhoneCall, Layers, ArrowUpRight,
-  Copy
+  Copy, UsersRound, Landmark, Zap
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -339,7 +339,39 @@ export default function StudentWorkspace() {
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLocation(`/meeting-workspace/${studentId}`)}
+                className="bg-gradient-to-r from-[#DFBE77]/20 via-[#C5A059]/30 to-[#9E7D3B]/20 hover:from-[#DFBE77]/35 hover:to-[#C5A059]/45 border border-[#F1CB6C]/50 text-[#FCE6A8] text-xs font-semibold rounded-lg h-8 px-3 gap-1.5 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
+                title="Launch Live Meeting Workspace (PG-043)"
+              >
+                <Zap className="h-3.5 w-3.5 text-[#F1CB6C]" />
+                <span className="hidden sm:inline">Meeting Workspace</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (studentId) {
+                    sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}`);
+                    sessionStorage.setItem("lastStudentProfileId", String(studentId));
+                    if (fullName) {
+                      sessionStorage.setItem("lastStudentProfileName", fullName);
+                    }
+                  }
+                  window.dispatchEvent(new CustomEvent("waypoint:collapse-sidebar"));
+                  setLocation(`/state-complaint-builder?studentId=${studentId}`);
+                }}
+                className="bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-100 text-xs font-semibold rounded-lg h-8 px-3 gap-1.5 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
+                title="Open State Complaint Builder (PG-020)"
+              >
+                <Landmark className="h-3.5 w-3.5 text-sky-300" />
+                <span className="hidden sm:inline">State Complaint</span>
+              </Button>
+
               <Button
                 variant="outline"
                 size="sm"
@@ -348,10 +380,10 @@ export default function StudentWorkspace() {
                   const targetUrl = `/portal?preview=true&contactId=${effectiveStudentId}${parentId ? `&parentContactId=${parentId}` : ""}${student?.caseId ? `&caseId=${student.caseId}` : ""}`;
                   window.open(targetUrl, "_blank");
                 }}
-                className="bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-100 text-xs font-semibold rounded-lg h-8 px-3.5 gap-2 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
+                className="bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-100 text-xs font-semibold rounded-lg h-8 px-3 gap-1.5 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
               >
                 <Eye className="h-3.5 w-3.5 text-sky-300" />
-                <span>Preview Parent Portal</span>
+                <span className="hidden md:inline">Preview Parent Portal</span>
               </Button>
 
               <Button

@@ -67,18 +67,29 @@ export default function MeetingWorkspace() {
       Boolean(c.gradeLevel) ||
       c.id === 120040 ||
       c.id === 120038 ||
+      c.id === 120036 ||
       c.id === 120034;
 
     const students = contacts.filter(isStudentContact);
-    const others = contacts.filter((c) => !isStudentContact(c));
-    return [...students, ...others];
+    return students.length > 0 ? students : contacts;
   }, [contacts]);
 
   // Active student selection
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(parsedStudentId);
 
   useEffect(() => {
-    if (parsedStudentId) {
+    if (parsedStudentId && contacts && contacts.length > 0) {
+      // If a parent ID was passed in route/search, auto-resolve to their student child
+      const direct = contacts.find((c) => c.id === parsedStudentId);
+      if (direct && (direct.jobTitle === "Parent" || (!direct.gradeLevel && direct.parentContactId === null))) {
+        const child = contacts.find((c) => c.parentContactId === parsedStudentId);
+        if (child) {
+          setSelectedStudentId(child.id);
+          return;
+        }
+      }
+      setSelectedStudentId(parsedStudentId);
+    } else if (parsedStudentId) {
       setSelectedStudentId(parsedStudentId);
     } else if (contacts && contacts.length > 0 && !selectedStudentId) {
       const jeremiah = contacts.find(
@@ -86,9 +97,9 @@ export default function MeetingWorkspace() {
           c.firstName?.trim().toLowerCase() === "jeremiah" &&
           c.lastName?.trim().toLowerCase() === "mitchell"
       );
-      setSelectedStudentId(jeremiah ? jeremiah.id : contacts[0].id);
+      setSelectedStudentId(jeremiah ? jeremiah.id : (studentList[0]?.id || contacts[0].id));
     }
-  }, [parsedStudentId, contacts, selectedStudentId]);
+  }, [parsedStudentId, contacts, selectedStudentId, studentList]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
