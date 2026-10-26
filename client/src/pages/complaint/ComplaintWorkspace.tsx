@@ -1969,7 +1969,7 @@ export default function ComplaintWorkspace() {
   // Draft selection and session recovery handlers
   const handleSelectRecentDraft = (draft: StoredComplaintDraft) => {
     if (draft.pages && Array.isArray(draft.pages) && draft.pages.length > 0) {
-      setPages(ensureRequiredBinders(draft.pages));
+      setPages(ensureRequiredBinders(draft.pages).map((p) => ({ ...p, isRenderingPdf: false })));
     }
     if (draft.caseDetails) {
       setCaseDetails((prev) => ({ ...prev, ...draft.caseDetails }));
@@ -2009,6 +2009,7 @@ export default function ComplaintWorkspace() {
   const handleSaveCurrentNow = () => {
     const studentKey = activeStudentId || params?.id || "active";
     const numStudentId = activeStudentId || (params?.id && !isNaN(Number(params?.id)) ? Number(params?.id) : null);
+    const sanitizedPages = pages.map(({ isRenderingPdf, ...rest }) => ({ ...rest, isRenderingPdf: false }));
     const draftData: StoredComplaintDraft = {
       id: `draft_${studentKey}`,
       studentId: numStudentId,
@@ -2017,10 +2018,10 @@ export default function ComplaintWorkspace() {
       startedAt: complaintStartedAt,
       updatedAt: new Date().toISOString(),
       stateCode: officialFormState.stateCode || "GA",
-      pageCount: getDocketTotalPages(pages, caseDetails),
+      pageCount: getDocketTotalPages(sanitizedPages, caseDetails),
       formState: officialFormState,
       caseDetails,
-      pages,
+      pages: sanitizedPages,
     };
 
     saveComplaintDraft(draftData, false);
@@ -2162,7 +2163,7 @@ export default function ComplaintWorkspace() {
   // State: Pages and Active Navigation (restores from draft if available)
   const [pages, setPages] = useState<DocumentPage[]>(() => {
     if (initialDraft?.pages && Array.isArray(initialDraft.pages) && initialDraft.pages.length > 0) {
-      return ensureRequiredBinders(initialDraft.pages);
+      return ensureRequiredBinders(initialDraft.pages).map((p) => ({ ...p, isRenderingPdf: false }));
     }
     return DEFAULT_PAGES;
   });
@@ -2184,6 +2185,7 @@ export default function ComplaintWorkspace() {
   const handleUpdateSavePointOnly = () => {
     const studentKey = activeStudentId || params?.id || "active";
     const numStudentId = activeStudentId || (params?.id && !isNaN(Number(params?.id)) ? Number(params?.id) : null);
+    const sanitizedPages = pages.map(({ isRenderingPdf, ...rest }) => ({ ...rest, isRenderingPdf: false }));
     const draftData: StoredComplaintDraft = {
       id: `draft_${studentKey}`,
       studentId: numStudentId,
@@ -2192,10 +2194,10 @@ export default function ComplaintWorkspace() {
       startedAt: complaintStartedAt,
       updatedAt: new Date().toISOString(),
       stateCode: officialFormState.stateCode || "GA",
-      pageCount: getDocketTotalPages(pages, caseDetails),
+      pageCount: getDocketTotalPages(sanitizedPages, caseDetails),
       formState: officialFormState,
       caseDetails,
-      pages,
+      pages: sanitizedPages,
     };
 
     try {
@@ -2445,6 +2447,7 @@ export default function ComplaintWorkspace() {
     const numStudentId = activeStudentId || (initialUrlStudentId && !isNaN(Number(initialUrlStudentId)) ? Number(initialUrlStudentId) : null);
     const timer = setTimeout(() => {
       try {
+        const sanitizedPages = pages.map(({ isRenderingPdf, ...rest }) => ({ ...rest, isRenderingPdf: false }));
         const draftObj: StoredComplaintDraft = {
           id: `draft_${studentKey}`,
           studentId: numStudentId,
@@ -2453,10 +2456,10 @@ export default function ComplaintWorkspace() {
           startedAt: complaintStartedAt,
           updatedAt: new Date().toISOString(),
           stateCode: officialFormState.stateCode || "GA",
-          pageCount: getDocketTotalPages(pages, caseDetails),
+          pageCount: getDocketTotalPages(sanitizedPages, caseDetails),
           formState: officialFormState,
           caseDetails,
-          pages,
+          pages: sanitizedPages,
         };
 
         saveComplaintDraft(draftObj, false);
@@ -2474,7 +2477,7 @@ export default function ComplaintWorkspace() {
           JSON.stringify({
             complaintTitle,
             caseDetails,
-            pages,
+            pages: sanitizedPages,
             formState: officialFormState,
             startedAt: complaintStartedAt,
             savedAt: new Date().toISOString(),
@@ -3069,6 +3072,8 @@ export default function ComplaintWorkspace() {
     };
   }, []);
 
+  const convertingPageIdsRef = useRef<Set<string>>(new Set());
+
   // Auto-convert any exhibit page that has a fileUrl but missing rendered page images or stripped dataUrls
   useEffect(() => {
     pages.forEach((p) => {
@@ -3078,10 +3083,13 @@ export default function ComplaintWorkspace() {
         (!p.renderedPages ||
           p.renderedPages.length === 0 ||
           p.renderedPages.some((rp) => !rp.dataUrl)) &&
-        !p.isRenderingPdf;
+        !convertingPageIdsRef.current.has(p.id);
 
       if (needsRendering) {
-        loadAndConvertPdfForPage(p.id, p.fileUrl!, p.fileName);
+        convertingPageIdsRef.current.add(p.id);
+        loadAndConvertPdfForPage(p.id, p.fileUrl!, p.fileName).finally(() => {
+          convertingPageIdsRef.current.delete(p.id);
+        });
       }
     });
   }, [pages]);

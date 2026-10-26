@@ -460,29 +460,24 @@ export function ExhibitPdfSheetsView({
 
   return (
     <div className="w-full flex flex-col items-center select-none pb-6 relative">
-      {/* ── RENDERING / CONVERSION LOADER ────────────────────────────────────── */}
-      {isRendering && !hasPages && (
+      {/* ── TOP BANNER: BACKGROUND RENDERING STATUS (NON-BLOCKING) ── */}
+      {isRendering && page.fileUrl && !hasPages && (
         <div
           style={{
             width: viewMode === "actual" ? "816px" : "100%",
             maxWidth: "816px",
-            minHeight: "520px",
-            transform: containerTransform,
-            transformOrigin: "top center",
           }}
-          className="rounded-xs bg-[#041633] text-[#FFE394] border border-[#C5A059]/60 shadow-2xl p-12 flex flex-col items-center justify-center text-center my-3"
+          className="mb-3 px-4 py-2.5 rounded-sm bg-[#041633] text-[#FFE394] border border-[#C5A059]/50 flex items-center justify-between shadow-md"
         >
-          <Loader2 className="w-10 h-10 animate-spin text-[#DFBE77] mb-4" />
-          <h3 className="font-serif text-lg font-bold text-[#FFF4D4] mb-2">
-            Inserting Real Exhibit File
-          </h3>
-          <p className="font-sans text-xs text-[#C6B697] max-w-md leading-relaxed">
-            Loading all pages of{" "}
-            <span className="text-[#FFE394] font-semibold">
-              {page.fileName || "exhibit file"}
+          <div className="flex items-center gap-2.5">
+            <Loader2 className="w-4 h-4 text-[#DFBE77] animate-spin shrink-0" />
+            <span className="text-xs font-sans text-[#FFF4D4]">
+              Authentic original exhibit active · Rendering high-resolution continuous sheets for annotation...
             </span>
-            . Every page will be inserted directly in full fidelity with zero modifications.
-          </p>
+          </div>
+          <span className="text-[11px] font-mono text-[#DFBE77] font-semibold truncate max-w-[240px]">
+            {page.fileName || "Original Document"}
+          </span>
         </div>
       )}
 
@@ -638,26 +633,8 @@ export function ExhibitPdfSheetsView({
             </div>
           ))}
         </div>
-      ) : isRendering ? (
-        <div
-          style={{
-            width: viewMode === "actual" ? "816px" : "100%",
-            maxWidth: "816px",
-            transform: containerTransform,
-            transformOrigin: "top center",
-          }}
-          className="rounded-xs bg-[#05142B] border border-[#C5A059]/60 shadow-2xl p-10 flex flex-col items-center justify-center text-center my-4"
-        >
-          <Loader2 className="w-9 h-9 text-[#DFBE77] animate-spin mb-3" />
-          <h4 className="font-serif text-[#FFF4D4] font-bold text-base">
-            Pulling Most Recent IEP from Document Vault...
-          </h4>
-          <p className="font-sans text-xs text-[#C6B697] max-w-md leading-relaxed mt-1">
-            Rendering authentic document pages in high resolution for continuous filing docket...
-          </p>
-        </div>
       ) : page.fileUrl ? (
-        /* Actual PDF Viewer: Displays the real file directly with zero modifications */
+        /* Actual PDF Viewer: Displays the real file directly in full fidelity with zero modifications */
         <div
           style={{
             width: viewMode === "actual" ? "816px" : "100%",
@@ -666,15 +643,55 @@ export function ExhibitPdfSheetsView({
             transform: containerTransform,
             transformOrigin: "top center",
           }}
-          className="relative rounded-xs bg-white border border-[#D1D5DB] shadow-2xl p-0 my-2 shrink-0 overflow-hidden"
+          className="relative rounded-xs bg-white border border-[#D1D5DB] shadow-2xl p-0 my-2 shrink-0 overflow-hidden w-full"
         >
           <iframe
             src={`${page.fileUrl}#toolbar=0&navpanes=0&view=FitH`}
-            className="w-full h-[1056px] border-0 bg-white"
+            className="w-full h-[1056px] border-0 bg-white block"
             title={page.fileName || "Exhibit Document"}
           />
         </div>
-      ) : null}
+      ) : isRendering ? (
+        <div
+          style={{
+            width: viewMode === "actual" ? "816px" : "100%",
+            maxWidth: "816px",
+            minHeight: "420px",
+            transform: containerTransform,
+            transformOrigin: "top center",
+          }}
+          className="rounded-xs bg-[#041633] text-[#FFE394] border border-[#C5A059]/60 shadow-2xl p-10 flex flex-col items-center justify-center text-center my-4"
+        >
+          <Loader2 className="w-9 h-9 text-[#DFBE77] animate-spin mb-3" />
+          <h4 className="font-serif text-[#FFF4D4] font-bold text-base">
+            Pulling Evidentiary Record from Document Vault...
+          </h4>
+          <p className="font-sans text-xs text-[#C6B697] max-w-md leading-relaxed mt-1">
+            Loading document in full fidelity with zero modifications...
+          </p>
+        </div>
+      ) : (
+        <div
+          style={{
+            width: viewMode === "actual" ? "816px" : "100%",
+            maxWidth: "816px",
+            minHeight: "360px",
+            transform: containerTransform,
+            transformOrigin: "top center",
+          }}
+          className="rounded-xs bg-[#05142B]/90 border border-[#3A2C18] border-dashed shadow-xl p-10 flex flex-col items-center justify-center text-center my-4"
+        >
+          <div className="w-12 h-12 rounded-full bg-[#020A17] border border-[#C5A059]/40 flex items-center justify-center mb-3">
+            <FileText className="w-6 h-6 text-[#DFBE77]" />
+          </div>
+          <h4 className="font-serif text-[#FFF4D4] font-bold text-base">
+            No Evidentiary Document Attached
+          </h4>
+          <p className="font-sans text-xs text-[#C6B697] max-w-md leading-relaxed mt-1">
+            Attach a real IEP, evaluation report, PWN, or communication record from the student vault or drop a file to insert it in full fidelity.
+          </p>
+        </div>
+      )}
 
       {/* ── FLOATING TEXT SELECTION HIGHLIGHT POPUP ── */}
       {selectionPopup && (

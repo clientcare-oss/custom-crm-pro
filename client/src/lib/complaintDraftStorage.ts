@@ -144,15 +144,23 @@ export function saveComplaintDraft(draft: StoredComplaintDraft, isCheckpoint = f
     const primaryKey = getDraftStorageKey(studentId);
     const draftEntryId = draft.id || `draft_${studentId}`;
 
+    const cleanDraft: StoredComplaintDraft = {
+      ...draft,
+      pages: (draft.pages || []).map((p: any) => ({
+        ...p,
+        isRenderingPdf: false,
+      })),
+    };
+
     const writeKeys = (serializedData: string) => {
       // 1. Primary student key
       localStorage.setItem(primaryKey, serializedData);
       // 2. Draft entry key
       localStorage.setItem(draftEntryId, serializedData);
       // 3. Direct numeric/id student key (matching ComplaintWorkspace auto-save)
-      if (draft.studentId) {
-        localStorage.setItem(`complaint_draft_${draft.studentId}`, serializedData);
-        localStorage.setItem(`complaint_draft_student_${draft.studentId}`, serializedData);
+      if (cleanDraft.studentId) {
+        localStorage.setItem(`complaint_draft_${cleanDraft.studentId}`, serializedData);
+        localStorage.setItem(`complaint_draft_student_${cleanDraft.studentId}`, serializedData);
       }
       if (studentId !== "active") {
         localStorage.setItem(`complaint_draft_${studentId}`, serializedData);
@@ -161,23 +169,23 @@ export function saveComplaintDraft(draft: StoredComplaintDraft, isCheckpoint = f
       localStorage.setItem("complaint_draft_active", serializedData);
 
       // 5. Form states
-      if (draft.formState) {
-        const formSerialized = JSON.stringify(draft.formState);
+      if (cleanDraft.formState) {
+        const formSerialized = JSON.stringify(cleanDraft.formState);
         localStorage.setItem(`complaint_form_state_${studentId}`, formSerialized);
-        if (draft.studentId) {
-          localStorage.setItem(`complaint_form_state_${draft.studentId}`, formSerialized);
+        if (cleanDraft.studentId) {
+          localStorage.setItem(`complaint_form_state_${cleanDraft.studentId}`, formSerialized);
         }
         localStorage.setItem("complaint_form_state_active", formSerialized);
       }
     };
 
     try {
-      writeKeys(JSON.stringify(draft));
+      writeKeys(JSON.stringify(cleanDraft));
     } catch (quotaErr) {
       console.warn("[saveComplaintDraft] LocalStorage quota reached on full draft. Saving text & form state without large image buffers:", quotaErr);
       const lightweightDraft = {
-        ...draft,
-        pages: (draft.pages || []).map((p: any) => {
+        ...cleanDraft,
+        pages: (cleanDraft.pages || []).map((p: any) => {
           if (p.renderedPages && Array.isArray(p.renderedPages)) {
             return {
               ...p,
