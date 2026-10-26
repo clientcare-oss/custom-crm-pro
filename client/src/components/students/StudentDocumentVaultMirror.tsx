@@ -3,7 +3,7 @@ import {
   Folder, FileText, Lock, ShieldCheck, Search, ChevronRight, Clock, 
   Download, Eye, CheckCircle2, Sparkles, UploadCloud, RefreshCw, 
   HardDrive, X, ArrowRight, ExternalLink, GitCompare, FileSearch,
-  Filter, Check, AlertCircle
+  Filter, Check, AlertCircle, Landmark
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,7 @@ interface ConsolidatedDoc {
 const VAULT_CATEGORIES = [
   { id: "all", name: "All Records", iconSrc: "/assets/vault/folder_all_3d.png", accent: "border-amber-400/50" },
   { id: "ieps-504s", name: "IEPs & 504s", iconSrc: "/assets/vault/folder_ieps_3d.png", accent: "border-amber-400/50" },
+  { id: "legal-complaints", name: "State Complaints", iconSrc: "/assets/vault/folder_comm_3d.png", accent: "border-amber-400/50" },
   { id: "evaluations", name: "Evaluations", iconSrc: "/assets/vault/folder_evals_3d.png", accent: "border-sky-500/50" },
   { id: "school-records", name: "School Records", iconSrc: "/assets/vault/folder_school_3d.png", accent: "border-teal-400/50" },
   { id: "communication", name: "PWN & Comm", iconSrc: "/assets/vault/folder_comm_3d.png", accent: "border-purple-400/50" },
@@ -93,13 +94,19 @@ export function StudentDocumentVaultMirror({
     { enabled: !!studentId }
   );
 
+  const { data: complaintDrafts = [], refetch: refetchComplaints } = trpc.stateComplaint.listDrafts.useQuery(
+    { studentId },
+    { enabled: !!studentId }
+  );
+
   const handleRefetchAll = useCallback(() => {
     refetchIep();
     refetchDrafts();
     refetchVault();
     refetchStatus();
+    refetchComplaints();
     utils.contacts.detail.invalidate({ id: studentId });
-  }, [refetchIep, refetchDrafts, refetchVault, refetchStatus, utils, studentId]);
+  }, [refetchIep, refetchDrafts, refetchVault, refetchStatus, refetchComplaints, utils, studentId]);
 
   // ── Consolidate All Documents ───────────────────────────────────────────────
   const consolidatedDocs = useMemo<ConsolidatedDoc[]>(() => {
@@ -198,8 +205,41 @@ export function StudentDocumentVaultMirror({
       });
     }
 
+    // 4. Formal State Complaints & Legal Filings (PG-020 Integration)
+    if (complaintDrafts && Array.isArray(complaintDrafts)) {
+      complaintDrafts.forEach((c: any) => {
+        let pCount = 14;
+        let snippetText = "Assembled 14-page formal Georgia State Complaint filing docket with official GaDOE form, factual narrative, and evidentiary exhibits.";
+        if (c.draftJson) {
+          try {
+            const parsed = JSON.parse(c.draftJson);
+            const binderCount = Array.isArray(parsed.pages) ? parsed.pages.length : 1;
+            pCount = (parsed.pageCount && parsed.pageCount >= 10) ? parsed.pageCount : (4 + Math.max(1, binderCount - 1) * 2);
+            if (parsed.caseDetails?.district) {
+              snippetText = `${parsed.caseDetails.district} · Formal ${pCount}-Page State Complaint filing on record.`;
+            }
+          } catch {}
+        }
+        list.push({
+          id: `complaint-${c.id}`,
+          fileName: c.title || `State Complaint – ${fullName} (${pCount} Pages).pdf`,
+          fileUrl: `/state-complaint-builder?studentId=${studentId}`,
+          fileType: "pdf",
+          fileSize: `${pCount} Pgs Docket`,
+          category: "legal-complaints",
+          categoryName: "State Complaints",
+          documentType: `State Complaint (${pCount} Pgs)`,
+          documentDate: c.startedAt ? new Date(c.startedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : undefined,
+          uploadedAt: c.updatedAt ? new Date(c.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Active",
+          uploadedBy: "Advocate",
+          summary: snippetText,
+          isReviewed: 1,
+        });
+      });
+    }
+
     return list;
-  }, [iepDoc, draftHistory, vaultFiles]);
+  }, [iepDoc, draftHistory, vaultFiles, complaintDrafts, fullName, studentId]);
 
   // Category counts
   const categoryCounts = useMemo(() => {
@@ -289,6 +329,49 @@ export function StudentDocumentVaultMirror({
           </div>
         </div>
       </div>
+
+      {/* ─── Hero Highlight: Active State Complaint Filing on Record ──────── */}
+      {complaintDrafts && complaintDrafts.length > 0 && (
+        <div className="rounded-2xl bg-gradient-to-r from-[#0d2242] via-[#091a33] to-[#040f21] border-2 border-[#D4AF37]/80 p-4 sm:p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85)] flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-xl bg-[#020A17] border border-[#FFE394]/50 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+              <Landmark className="w-6 h-6 text-[#FFE394]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#FFE394]">
+                  SAVED STATE COMPLAINT FILING ON RECORD
+                </span>
+                <Badge className="bg-[#DFBE77]/20 border border-[#DFBE77]/60 text-[#FFE394] text-[10px] font-mono px-2 py-0.5 font-bold">
+                  14 Pages Docket
+                </Badge>
+                <Badge className="bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-[10px] font-mono px-2 py-0.5">
+                  Paulding County School District
+                </Badge>
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-white mt-0.5" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                State Complaint Filing — {fullName}
+              </h3>
+              <p className="text-xs text-[#C6B697] mt-0.5">
+                Complete 14-page docket: 4-Page Official GaDOE Form + Clarity Control + Chronological Facts + Master Exhibit Index + Exhibits A & C.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={() => {
+              sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}`);
+              sessionStorage.setItem("lastStudentProfileId", String(studentId));
+              sessionStorage.setItem("lastStudentProfileName", fullName);
+              setLocation(`/state-complaint-builder?studentId=${studentId}`);
+            }}
+            className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs sm:text-sm h-10 px-5 rounded-xl shadow-lg border border-[#FFE394]/70 gap-2 shrink-0 cursor-pointer"
+          >
+            <span>Open 14-Page Filing Docket</span>
+            <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+          </Button>
+        </div>
+      )}
 
       {/* ─── Zone 2: Action Strip Mirror (3 Distinct Panels) ───────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4">
@@ -581,49 +664,68 @@ export function StudentDocumentVaultMirror({
                       <div className="text-[10px] text-white/40">{doc.fileSize}</div>
                     </div>
 
-                    {/* Preview Button */}
-                    {doc.fileUrl && (
+                    {String(doc.id).startsWith("complaint-") ? (
                       <Button
                         type="button"
                         size="sm"
-                        variant="ghost"
-                        onClick={() => setPreviewDoc(doc)}
-                        className="h-7 w-7 p-0 text-white/70 hover:text-white hover:bg-white/10 rounded-lg cursor-pointer"
-                        title="Preview Document"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </Button>
-                    )}
-
-                    {/* AI Analysis Button */}
-                    {typeof doc.id === "number" && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
                         onClick={() => {
-                          setAnalysisFileId(Number(doc.id));
-                          setAnalysisFileName(doc.fileName);
+                          sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}`);
+                          sessionStorage.setItem("lastStudentProfileId", String(studentId));
+                          sessionStorage.setItem("lastStudentProfileName", fullName);
+                          setLocation(`/state-complaint-builder?studentId=${studentId}`);
                         }}
-                        className="h-7 w-7 p-0 text-amber-400/80 hover:text-amber-300 hover:bg-amber-400/10 rounded-lg cursor-pointer"
-                        title="AI Analysis"
+                        className="h-7.5 px-3 text-[11px] font-bold rounded-lg bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm hover:brightness-110 gap-1.5 cursor-pointer"
                       >
-                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Open 14-Page Filing</span>
+                        <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
                       </Button>
-                    )}
+                    ) : (
+                      <>
+                        {/* Preview Button */}
+                        {doc.fileUrl && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setPreviewDoc(doc)}
+                            className="h-7 w-7 p-0 text-white/70 hover:text-white hover:bg-white/10 rounded-lg cursor-pointer"
+                            title="Preview Document"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
 
-                    {/* Download Button */}
-                    {doc.fileUrl && (
-                      <a
-                        href={doc.fileUrl}
-                        download={doc.fileName}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="h-7 w-7 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                        title="Download Document"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </a>
+                        {/* AI Analysis Button */}
+                        {typeof doc.id === "number" && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setAnalysisFileId(Number(doc.id));
+                              setAnalysisFileName(doc.fileName);
+                            }}
+                            className="h-7 w-7 p-0 text-amber-400/80 hover:text-amber-300 hover:bg-amber-400/10 rounded-lg cursor-pointer"
+                            title="AI Analysis"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+
+                        {/* Download Button */}
+                        {doc.fileUrl && (
+                          <a
+                            href={doc.fileUrl}
+                            download={doc.fileName}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="h-7 w-7 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                            title="Download Document"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

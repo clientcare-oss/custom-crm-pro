@@ -407,6 +407,32 @@ export function OpenRecentModal({
               className="w-full bg-[#020A17] border border-[#3A2C18] focus:border-[#C5A059] rounded-lg pl-9 pr-3 py-1.5 text-xs text-[#FFF4D4] placeholder:text-[#6C5B3E] focus:outline-none"
             />
           </div>
+
+          {/* Quick-Access Highlight for Brooklyn Smith / Featured Active Filing */}
+          {allDrafts.some((d) => d.studentName.toLowerCase().includes("brooklyn")) && (
+            <div className="mt-2.5 p-2.5 rounded-lg bg-gradient-to-r from-[#DFBE77]/15 via-[#C5A059]/10 to-transparent border border-[#DFBE77]/50 flex items-center justify-between gap-2 shadow-sm">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-6 h-6 rounded-full bg-[#DFBE77]/20 border border-[#DFBE77]/60 flex items-center justify-center shrink-0">
+                  <User className="w-3.5 h-3.5 text-[#FFE394]" />
+                </div>
+                <div className="text-xs truncate">
+                  <span className="font-bold text-[#FFF4D4]">Brooklyn Smith</span>
+                  <span className="text-[#DFBE77] ml-1.5 font-mono text-[10px] font-semibold">· 14 Pages Docket (Paulding County)</span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  const bDraft = allDrafts.find((d) => d.studentName.toLowerCase().includes("brooklyn"));
+                  if (bDraft) handleOpenDraft(bDraft);
+                }}
+                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-7 px-3 rounded shadow-sm hover:brightness-110 cursor-pointer shrink-0"
+              >
+                <span>Resume 14-Page Filing</span>
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Drafts List Body (Consolidated & Deduplicated) */}

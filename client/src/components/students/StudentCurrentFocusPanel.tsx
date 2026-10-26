@@ -3,7 +3,7 @@ import {
   Calendar, CheckSquare, FileText, Clock, CheckCircle2, 
   ShieldCheck, ArrowRight, ExternalLink, Send, AlertCircle, 
   Sparkles, RefreshCw, Lock, Award, Compass, PhoneCall,
-  UserCheck, AlertTriangle
+  UserCheck, AlertTriangle, Landmark
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -174,6 +174,30 @@ export function StudentCurrentFocusPanel({
     { enabled: !!parent?.id || !!student?.id }
   );
 
+  // Active State Complaint Draft on file for this student
+  const complaintDraftQuery = trpc.stateComplaint.getDraft.useQuery(
+    { studentId: student?.id },
+    { enabled: !!student?.id }
+  );
+
+  const complaintDraftInfo = useMemo(() => {
+    if (!complaintDraftQuery.data) return null;
+    try {
+      const parsed = JSON.parse(complaintDraftQuery.data);
+      const binderCount = Array.isArray(parsed.pages) ? parsed.pages.length : 1;
+      const pageCount = (parsed.pageCount && parsed.pageCount >= 10) ? parsed.pageCount : (4 + Math.max(1, binderCount - 1) * 2);
+      return {
+        title: parsed.title || "State Complaint",
+        pageCount,
+        district: parsed.caseDetails?.district || parsed.formState?.district || "Paulding County School District",
+        startedAt: parsed.startedAt,
+        updatedAt: parsed.updatedAt,
+      };
+    } catch {
+      return null;
+    }
+  }, [complaintDraftQuery.data]);
+
 
   const resendEnrollmentMutation = trpc.familyEnrollment.resendInvitation.useMutation({
     onSuccess: (data) => {
@@ -327,7 +351,52 @@ export function StudentCurrentFocusPanel({
               <Send className="h-3.5 w-3.5 text-sky-300" />
               <span>{resendPortalMutation.isPending ? "Sending..." : "Send Portal Access"}</span>
             </Button>
+
+            {complaintDraftInfo && (
+              <Button
+                onClick={() => onNavigate(`/state-complaint-builder?studentId=${student?.id || 0}`)}
+                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs rounded-xl h-10 px-5 gap-2 shadow-md border border-[#FFE394]/70 cursor-pointer"
+              >
+                <Landmark className="h-4 w-4 text-[#07162B]" />
+                <span>State Complaint ({complaintDraftInfo.pageCount} Pages)</span>
+              </Button>
+            )}
           </div>
+
+          {/* Prominent Saved Complaint Filing Card (Discovery View) */}
+          {complaintDraftInfo && (
+            <div className="rounded-xl bg-[#05142B]/95 border-2 border-[#D4AF37]/80 p-4 mt-4 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-[#020A17] border border-[#FFE394]/40 text-[#FFE394] shrink-0">
+                  <Landmark className="h-5 w-5 text-[#FFE394]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-[#FFF4D4] uppercase tracking-wider">
+                      SAVED STATE COMPLAINT ON RECORD
+                    </span>
+                    <Badge className="bg-[#DFBE77]/20 border border-[#DFBE77]/60 text-[#FFE394] text-[10px] font-mono px-2 py-0.5 font-bold">
+                      {complaintDraftInfo.pageCount} Pages Docket
+                    </Badge>
+                    <Badge className="bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-[10px] font-mono px-2 py-0.5">
+                      {complaintDraftInfo.district}
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] text-[#C6B697] mt-0.5">
+                    Complete assembled filing docket with GaDOE official form, Clarity Control, chronological facts, and exhibits.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => onNavigate(`/state-complaint-builder?studentId=${student?.id || 0}`)}
+                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs h-9 px-4 gap-1.5 shrink-0 shadow-md cursor-pointer border border-[#FFE394]/60"
+              >
+                <span>Open {complaintDraftInfo.pageCount}-Page Filing</span>
+                <ArrowRight className="h-3.5 w-3.5 stroke-[2.5]" />
+              </Button>
+            </div>
+          )}
 
           {/* Contextual Middle Cards: Discovery Session Status & Enrollment Bridge */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
@@ -921,7 +990,52 @@ export function StudentCurrentFocusPanel({
             <FileText className="h-4 w-4 text-white/75" />
             <span>Post-Meeting Review</span>
           </Button>
+
+          {complaintDraftInfo && (
+            <Button
+              onClick={() => onNavigate(`/state-complaint-builder?studentId=${student?.id || 0}`)}
+              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs rounded-xl h-10 px-5 gap-2 shadow-md border border-[#FFE394]/70 cursor-pointer"
+            >
+              <Landmark className="h-4 w-4 text-[#07162B]" />
+              <span>State Complaint ({complaintDraftInfo.pageCount} Pages)</span>
+            </Button>
+          )}
         </div>
+
+        {/* Prominent Saved Complaint Filing Card (Active View) */}
+        {complaintDraftInfo && (
+          <div className="rounded-xl bg-[#05142B]/95 border-2 border-[#D4AF37]/80 p-4 mt-4 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-[#020A17] border border-[#FFE394]/40 text-[#FFE394] shrink-0">
+                <Landmark className="h-5 w-5 text-[#FFE394]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-[#FFF4D4] uppercase tracking-wider">
+                    SAVED STATE COMPLAINT ON RECORD
+                  </span>
+                  <Badge className="bg-[#DFBE77]/20 border border-[#DFBE77]/60 text-[#FFE394] text-[10px] font-mono px-2 py-0.5 font-bold">
+                    {complaintDraftInfo.pageCount} Pages Docket
+                  </Badge>
+                  <Badge className="bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-[10px] font-mono px-2 py-0.5">
+                    {complaintDraftInfo.district}
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-[#C6B697] mt-0.5">
+                  Complete assembled filing docket with GaDOE official form, Clarity Control, chronological facts, and exhibits.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => onNavigate(`/state-complaint-builder?studentId=${student?.id || 0}`)}
+              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs h-9 px-4 gap-1.5 shrink-0 shadow-md cursor-pointer border border-[#FFE394]/60"
+            >
+              <span>Open {complaintDraftInfo.pageCount}-Page Filing</span>
+              <ArrowRight className="h-3.5 w-3.5 stroke-[2.5]" />
+            </Button>
+          </div>
+        )}
 
         {/* Middle Cards: Next Meeting & Next Actions (Preserved exactly) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">

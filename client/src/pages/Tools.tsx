@@ -9,7 +9,7 @@ import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import {
   Wand2, Search, Star, Calendar, Video, FileText, CheckCircle2, Play, Lock,
   PenTool, ShieldCheck, Target, Puzzle, LineChart, Compass, Sparkles,
-  ArrowLeft, GitCompare, Loader2, ArrowRight, Mic, Settings2, Monitor, Check, Square
+  ArrowLeft, GitCompare, Loader2, ArrowRight, Mic, Settings2, Monitor, Check, Square, Landmark
 } from "lucide-react";
 
 export default function Tools() {
@@ -175,6 +175,44 @@ export default function Tools() {
                 <Monitor className="h-3 w-3" />
                 Pop-out
               </button>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: "state-complaint-builder",
+      title: "🏛️ State Complaint Builder",
+      subtitle: "Formal IDEA & GaDOE State Administrative Complaint Generator (14 Pages Docket).",
+      description: "Structured legal filing studio. Generates official state forms, Clarity Control restatements, chronological facts, and multi-page continuous PDF exhibit indexes.",
+      btnText: "Open Complaint Builder →",
+      disabled: false,
+      featured: true,
+      onClick: () => {
+        setLocation(contactId ? `/state-complaint-builder?studentId=${contactId}` : "/state-complaint-builder");
+      },
+      preview: (
+        <div className="relative w-full h-full flex items-center justify-center bg-slate-950/40 border-b border-white/5 group overflow-hidden">
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider shadow-sm">
+            <Landmark className="h-3 w-3 text-amber-400" />
+            PG-020 Docket
+          </div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.12)_0,transparent_70%)]" />
+          <div className="relative z-10 w-full max-w-[270px] flex items-center justify-between px-3 gap-3">
+            <div className="flex-1 space-y-2">
+              <div className="p-2 rounded-lg bg-[#000820]/90 border border-amber-500/30 shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-amber-300">GaDOE State Form</span>
+                  <span className="text-[8px] font-mono text-emerald-400">14 PGS TOTAL</span>
+                </div>
+                <div className="text-[9px] text-slate-300 mt-1 line-clamp-1">Active: Brooklyn Smith (Paulding Co.)</div>
+              </div>
+              <div className="p-2 rounded-lg bg-[#000820]/90 border border-emerald-500/30 shadow-md">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] font-bold text-emerald-300">Continuous Docket Ready</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
