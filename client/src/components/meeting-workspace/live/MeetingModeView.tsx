@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Check, CheckSquare, Square, ChevronRight, X, XCircle, Plus, AlertCircle, PlayCircle, Shield, FileCheck, HelpCircle, Flag, ArrowRight, CornerDownRight, CheckCircle2, RotateCcw, Pencil, Sparkles, MessageSquare, Trash2, Printer, Video, Mic, ExternalLink, Radio } from "lucide-react";
+import { Check, CheckSquare, Square, ChevronRight, X, XCircle, Plus, AlertCircle, PlayCircle, Shield, FileCheck, HelpCircle, Flag, ArrowRight, CornerDownRight, CheckCircle2, RotateCcw, Pencil, Sparkles, MessageSquare, Trash2, Printer, Video, Mic, ExternalLink, Radio, Calendar as CalendarIcon, FileText, FileCheck2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import type { MeetingTarget, TargetMeetingStatus, ParkingLotItem, AdditionalItem, CloseoutChecks } from "../types";
+import type { MeetingTarget, TargetMeetingStatus, ParkingLotItem, AdditionalItem, CloseoutChecks, ScratchNote, BeforeWeEndItem, MeetingTimelineEvent } from "../types";
 import { TargetTagsControl, isTargetStruckThrough } from "../tags/TargetTagsControl";
 import { DeleteTargetModal } from "../DeleteTargetModal";
 import { openPrintDialog } from "../print/PrintableMeetingDocument";
+import { ScratchPadDrawer } from "./ScratchPadDrawer";
+import { BeforeWeEndSection } from "./BeforeWeEndSection";
+import { MeetingMinutesAndDocCheckModal } from "./MeetingMinutesAndDocCheckModal";
+import { recordApproval, withdrawApproval, updateApprovalMetadata, formatMeetingTime } from "./approvalEngine";
 import { toast } from "sonner";
 
 interface MeetingModeViewProps {
@@ -184,11 +188,189 @@ export function MeetingModeView({
     );
   };
 
-  // Change meeting status
-  const handleStatusChange = (id: string, meetingStatus: TargetMeetingStatus) => {
-    onUpdateTargets(
-      targets.map((t) => (t.id === id ? { ...t, meetingStatus } : t))
+  // Live Scratch Pad & Minutes / Doc Check Modal States
+  const [isScratchPadOpen, setIsScratchPadOpen] = useState(false);
+  const [isMinutesDocCheckOpen, setIsMinutesDocCheckOpen] = useState(false);
+
+  // Target-level Contextual Popovers (Calendar & Note)
+  const [targetCalendarOpenId, setTargetCalendarOpenId] = useState<string | null>(null);
+  const [targetNoteOpenId, setTargetNoteOpenId] = useState<string | null>(null);
+  const [targetMetaPerson, setTargetMetaPerson] = useState("");
+  const [targetMetaDeadline, setTargetMetaDeadline] = useState("");
+  const [targetMetaNote, setTargetMetaNote] = useState("");
+
+  // Derived live collections with fallbacks to preserve state and backward-compatibility
+  const scratchNotes = closeoutChecks.scratchNotes || [];
+  const beforeWeEndItems: BeforeWeEndItem[] =
+    closeoutChecks.beforeWeEndItems && closeoutChecks.beforeWeEndItems.length > 0
+      ? closeoutChecks.beforeWeEndItems
+      : additionalItems.map((item) => ({
+          id: item.id,
+          text: item.text,
+          status: item.status === "discussed" ? "DISCUSSED" : "UNRESOLVED",
+          createdAt: "Pre-meeting",
+        }));
+  const minutesEntries = closeoutChecks.minutesEntries || [];
+  const documentCheckItems = closeoutChecks.documentCheckItems || [];
+  const timelineEvents = closeoutChecks.timelineEvents || [];
+
+  const handleUpdateScratchNotes = (newNotes: ScratchNote[]) => {
+    onUpdateCloseoutChecks({
+      ...closeoutChecks,
+      scratchNotes: newNotes,
+    });
+  };
+
+  const handleUpdateBeforeWeEnd = (newItems: BeforeWeEndItem[]) => {
+    onUpdateCloseoutChecks({
+      ...closeoutChecks,
+      beforeWeEndItems: newItems,
+    });
+    // Keep legacy additionalItems in sync for backwards compatibility
+    onUpdateAdditionalItems(
+      newItems.map((i) => ({
+        id: i.id,
+        text: i.text,
+        status: i.status === "DISCUSSED" || i.status === "APPROVED" ? "discussed" : "open",
+      }))
     );
+  };
+
+  const handleApproveItem = (
+    sourceType: "before_we_end",
+    sourceId: string,
+    title: string,
+    details?: string
+  ) => {
+    const updated = recordApproval(closeoutChecks, {
+      sourceType,
+      sourceId,
+      title,
+      details,
+    });
+    onUpdateCloseoutChecks(updated);
+    toast.success("Approved — recorded into Meeting Minutes & Document Check!");
+  };
+
+  const handleWithdrawItemApproval = (sourceId: string, newStatus: string) => {
+    const updated = withdrawApproval(closeoutChecks, sourceId, newStatus);
+    onUpdateCloseoutChecks(updated);
+    toast.info("Approval withdrawn — updated in Minutes & Document Check");
+  };
+
+  const handleUpdateItemMetadata = (
+    sourceId: string,
+    metadata: {
+      responsiblePerson?: string;
+      deadlineDate?: string;
+      conditionNote?: string;
+    }
+  ) => {
+    const updated = updateApprovalMetadata(closeoutChecks, sourceId, metadata);
+    onUpdateCloseoutChecks(updated);
+    toast.success("Details updated in Minutes & Document Check");
+  };
+
+  const handleAddTimelineEvent = (event: MeetingTimelineEvent) => {
+    onUpdateCloseoutChecks({
+      ...closeoutChecks,
+      timelineEvents: [event, ...(closeoutChecks.timelineEvents || [])],
+    });
+  };
+
+  // Change meeting status with automated Minutes + Doc Check synchronization
+  const handleStatusChange = (id: string, meetingStatus: TargetMeetingStatus) => {
+    const target = targets.find((t) => t.id === id);
+    if (!target) return;
+
+    const prevStatus = target.meetingStatus;
+    const isNowApproved = meetingStatus === "APPROVED";
+    const wasApproved = prevStatus === "APPROVED";
+
+    const updatedTargets = targets.map((t) => {
+      if (t.id === id) {
+        return {
+          ...t,
+          meetingStatus,
+          approvedAt: isNowApproved ? (t.approvedAt || formatMeetingTime()) : undefined,
+        };
+      }
+      return t;
+    });
+
+    onUpdateTargets(updatedTargets);
+
+    if (isNowApproved) {
+      const updatedChecks = recordApproval(closeoutChecks, {
+        sourceType: "target",
+        sourceId: target.id,
+        title: target.targetName,
+        details: target.quickAdvocateSayThis || target.possibleIepWording || target.whyWeWantIt,
+        responsiblePerson: target.responsiblePerson,
+        deadlineDate: target.deadlineDate,
+        conditionNote: target.conditionNote,
+      });
+      onUpdateCloseoutChecks(updatedChecks);
+      toast.success("Target Approved — recorded into Minutes & Document Check!");
+    } else if (wasApproved && !isNowApproved) {
+      const updatedChecks = withdrawApproval(closeoutChecks, target.id, meetingStatus);
+      onUpdateCloseoutChecks(updatedChecks);
+      toast.info("Target approval withdrawn — updated in Minutes & Document Check");
+    }
+  };
+
+  const handleUpdateTargetMetadata = (
+    id: string,
+    metadata: {
+      responsiblePerson?: string;
+      deadlineDate?: string;
+      conditionNote?: string;
+    }
+  ) => {
+    const updatedTargets = targets.map((t) => {
+      if (t.id === id) {
+        return {
+          ...t,
+          responsiblePerson: metadata.responsiblePerson !== undefined ? metadata.responsiblePerson : t.responsiblePerson,
+          deadlineDate: metadata.deadlineDate !== undefined ? metadata.deadlineDate : t.deadlineDate,
+          conditionNote: metadata.conditionNote !== undefined ? metadata.conditionNote : t.conditionNote,
+        };
+      }
+      return t;
+    });
+    onUpdateTargets(updatedTargets);
+
+    const updatedChecks = updateApprovalMetadata(closeoutChecks, id, metadata);
+    onUpdateCloseoutChecks(updatedChecks);
+    toast.success("Target follow-through details saved");
+  };
+
+  const handleOpenTargetCalendar = (target: MeetingTarget) => {
+    setTargetCalendarOpenId(targetCalendarOpenId === target.id ? null : target.id);
+    setTargetNoteOpenId(null);
+    setTargetMetaPerson(target.responsiblePerson || "");
+    setTargetMetaDeadline(target.deadlineDate || "");
+  };
+
+  const handleSaveTargetCalendar = (target: MeetingTarget) => {
+    handleUpdateTargetMetadata(target.id, {
+      responsiblePerson: targetMetaPerson.trim() || undefined,
+      deadlineDate: targetMetaDeadline.trim() || undefined,
+    });
+    setTargetCalendarOpenId(null);
+  };
+
+  const handleOpenTargetNote = (target: MeetingTarget) => {
+    setTargetNoteOpenId(targetNoteOpenId === target.id ? null : target.id);
+    setTargetCalendarOpenId(null);
+    setTargetMetaNote(target.conditionNote || "");
+  };
+
+  const handleSaveTargetNote = (target: MeetingTarget) => {
+    handleUpdateTargetMetadata(target.id, {
+      conditionNote: targetMetaNote.trim() || undefined,
+    });
+    setTargetNoteOpenId(null);
   };
 
   // Update specific target flags inside drawer
@@ -297,13 +479,15 @@ export function MeetingModeView({
   // Progress metrics
   const totalTargets = targets.length;
   const raisedCount = targets.filter((t) => t.requestRaised).length;
-  const agreedCount = targets.filter((t) => t.meetingStatus === "AGREED" || t.addedToIep).length;
+  const agreedCount = targets.filter(
+    (t) => t.meetingStatus === "AGREED" || t.meetingStatus === "APPROVED" || t.addedToIep
+  ).length;
   const unresolvedTargets = targets.filter(
     (t) =>
       t.meetingStatus === "NOT_DISCUSSED" ||
       t.meetingStatus === "FOLLOW_UP" ||
       t.meetingStatus === "DEFERRED" ||
-      (!t.requestRaised && t.meetingStatus !== "AGREED" && t.meetingStatus !== "DENIED")
+      (!t.requestRaised && t.meetingStatus !== "AGREED" && t.meetingStatus !== "APPROVED" && t.meetingStatus !== "DENIED")
   );
   const unresolvedCount = unresolvedTargets.length;
 
@@ -318,6 +502,8 @@ export function MeetingModeView({
 
   const getStatusBadgeStyle = (status: TargetMeetingStatus) => {
     switch (status) {
+      case "APPROVED":
+        return "bg-emerald-950 text-emerald-200 border-emerald-400 font-bold shadow-[0_0_8px_rgba(16,185,129,0.3)]";
       case "AGREED":
         return "bg-emerald-950/80 border-emerald-500/60 text-emerald-300 font-bold";
       case "DENIED":
@@ -454,6 +640,40 @@ export function MeetingModeView({
 
         {/* Action controls */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Scratch Pad Trigger */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsScratchPadOpen(true)}
+            className="text-xs font-bold border border-[#3A2C18] bg-[#020A17] text-[#FFE394] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#DFBE77] cursor-pointer inline-flex items-center gap-1.5 shadow-md transition-colors"
+            title="Open quick note-taking scratch pad"
+          >
+            <FileText className="h-3.5 w-3.5 text-[#DFBE77]" />
+            <span>Scratch Pad</span>
+            {scratchNotes.length > 0 && (
+              <Badge className="text-[10px] px-1.5 py-0 bg-[#05142B] border border-[#3A2C18] text-[#DFBE77] font-mono">
+                {scratchNotes.length}
+              </Badge>
+            )}
+          </Button>
+
+          {/* Minutes & Document Check Console Trigger */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsMinutesDocCheckOpen(true)}
+            className="text-xs font-bold border border-[#3A2C18] bg-[#020A17] text-emerald-200 hover:bg-[#07162B] hover:text-emerald-100 hover:border-emerald-500/60 cursor-pointer inline-flex items-center gap-1.5 shadow-md transition-colors"
+            title="View auto-logged Meeting Minutes, Document Check, and Timeline"
+          >
+            <FileCheck2 className="h-3.5 w-3.5 text-emerald-400" />
+            <span>Minutes & Doc Check</span>
+            {minutesEntries.filter((m) => m.status === "APPROVED").length > 0 && (
+              <Badge className="text-[10px] px-1.5 py-0 bg-emerald-950 text-emerald-300 border border-emerald-500/40 font-mono">
+                {minutesEntries.filter((m) => m.status === "APPROVED").length}
+              </Badge>
+            )}
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -636,6 +856,32 @@ export function MeetingModeView({
                             }}
                           />
 
+                          {target.meetingStatus === "APPROVED" && (
+                            <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/90 border border-emerald-500/50 px-2 py-0.5 rounded flex items-center gap-1 shrink-0 shadow-sm">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              <span>Approved</span>
+                            </span>
+                          )}
+
+                          {target.deadlineDate && (
+                            <span className="text-[10px] font-bold text-[#FFE394] bg-[#020A17] border border-[#3A2C18] px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
+                              <CalendarIcon className="w-3 h-3 text-[#DFBE77]" />
+                              <span>by {target.deadlineDate}</span>
+                            </span>
+                          )}
+
+                          {target.responsiblePerson && (
+                            <span className="text-[10px] font-bold text-blue-200 bg-[#020A17] border border-[#3A2C18] px-2 py-0.5 rounded shrink-0">
+                              Lead: {target.responsiblePerson}
+                            </span>
+                          )}
+
+                          {target.conditionNote && (
+                            <span className="text-[10px] text-slate-300 italic bg-[#020A17] border border-[#3A2C18] px-2 py-0.5 rounded shrink-0">
+                              "{target.conditionNote}"
+                            </span>
+                          )}
+
                           {target.pwnNeeded && (
                             <span className="text-[10px] font-bold text-rose-300 bg-rose-950/70 border border-rose-500/40 px-1.5 py-0.2 rounded shrink-0">
                               PWN Flagged
@@ -674,8 +920,8 @@ export function MeetingModeView({
                       </div>
                     </div>
 
-                    {/* Right: Status Dropdown + Edit Ask (Pencil) + Details Drawer Trigger */}
-                    <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                    {/* Right: Status Dropdown + Contextual Actions + Edit Ask + Details Trigger */}
+                    <div className="flex items-center gap-2 shrink-0 self-end md:self-center flex-wrap">
                       <select
                         value={target.meetingStatus}
                         onChange={(e) => handleStatusChange(target.id, e.target.value as TargetMeetingStatus)}
@@ -685,12 +931,48 @@ export function MeetingModeView({
                         )}
                       >
                         <option value="NOT_DISCUSSED" className="bg-[#07162B] text-slate-300">NOT DISCUSSED</option>
+                        <option value="APPROVED" className="bg-[#07162B] text-emerald-300 font-bold">APPROVED</option>
                         <option value="DISCUSSED" className="bg-[#07162B] text-blue-300">DISCUSSED</option>
                         <option value="AGREED" className="bg-[#07162B] text-emerald-300">AGREED</option>
                         <option value="DENIED" className="bg-[#07162B] text-rose-300">DENIED</option>
                         <option value="DEFERRED" className="bg-[#07162B] text-purple-300">DEFERRED</option>
                         <option value="FOLLOW_UP" className="bg-[#07162B] text-amber-300">FOLLOW-UP</option>
                       </select>
+
+                      {/* Contextual actions after approval: Calendar & Note */}
+                      {target.meetingStatus === "APPROVED" && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenTargetCalendar(target)}
+                            className={cn(
+                              "h-8 px-2 rounded-lg border text-xs font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors shadow-sm",
+                              targetCalendarOpenId === target.id || target.deadlineDate || target.responsiblePerson
+                                ? "bg-amber-950/80 border-amber-500/70 text-[#FFE394]"
+                                : "bg-[#0A2B52] border-[#13497F] text-blue-200 hover:text-white"
+                            )}
+                            title="Optionally add/edit responsible person and deadline"
+                          >
+                            <CalendarIcon className="h-3.5 w-3.5 text-[#DFBE77]" />
+                            <span className="hidden lg:inline">{target.deadlineDate ? target.deadlineDate : "+ Date"}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenTargetNote(target)}
+                            className={cn(
+                              "h-8 px-2 rounded-lg border text-xs font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors shadow-sm",
+                              targetNoteOpenId === target.id || target.conditionNote
+                                ? "bg-blue-950/80 border-blue-500/70 text-blue-200"
+                                : "bg-[#0A2B52] border-[#13497F] text-blue-200 hover:text-white"
+                            )}
+                            title="Optionally capture details, conditions, or exact wording"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5 text-blue-400" />
+                            <span className="hidden lg:inline">{target.conditionNote ? "Condition" : "+ Note"}</span>
+                          </button>
+                        </>
+                      )}
 
                       <Button
                         variant="outline"
@@ -723,6 +1005,80 @@ export function MeetingModeView({
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
+
+                    {/* Contextual Calendar Popover for Target */}
+                    {targetCalendarOpenId === target.id && (
+                      <div className="mt-2 p-3 rounded-lg bg-[#000820] border border-amber-500/40 space-y-2 animate-in fade-in duration-150 w-full">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-[#FFE394]">
+                            📅 Assign Follow-Through & Deadline for "{target.targetName}"
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setTargetCalendarOpenId(null)}
+                            className="text-slate-400 hover:text-white cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <Input
+                            value={targetMetaPerson}
+                            onChange={(e) => setTargetMetaPerson(e.target.value)}
+                            placeholder="Responsible Person (e.g. Lead Teacher, SLP)..."
+                            className="h-8 text-xs bg-[#020A17] border-[#3A2C18] text-white"
+                          />
+                          <Input
+                            value={targetMetaDeadline}
+                            onChange={(e) => setTargetMetaDeadline(e.target.value)}
+                            placeholder="Deadline or Start Date (e.g. Nov 15, 2026)..."
+                            className="h-8 text-xs bg-[#020A17] border-[#3A2C18] text-white"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-1.5 pt-1">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveTargetCalendar(target)}
+                            className="h-7 px-3 text-[11px] bg-gradient-to-r from-[#DFBE77] to-[#C5A059] text-[#07162B] font-bold cursor-pointer"
+                          >
+                            Save Deadline
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Contextual Note Popover for Target */}
+                    {targetNoteOpenId === target.id && (
+                      <div className="mt-2 p-3 rounded-lg bg-[#000820] border border-blue-500/40 space-y-2 animate-in fade-in duration-150 w-full">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-blue-200">
+                            📝 Conditions or Team's Exact Phrasing for "{target.targetName}"
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setTargetNoteOpenId(null)}
+                            className="text-slate-400 hover:text-white cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <Input
+                          value={targetMetaNote}
+                          onChange={(e) => setTargetMetaNote(e.target.value)}
+                          placeholder="Enter conditions, exact IEP phrasing agreed, or details..."
+                          className="h-8 text-xs bg-[#020A17] border-[#3A2C18] text-white"
+                        />
+                        <div className="flex justify-end gap-1.5 pt-1">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveTargetNote(target)}
+                            className="h-7 px-3 text-[11px] bg-blue-600 hover:bg-blue-500 text-white font-bold cursor-pointer"
+                          >
+                            Save Note
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -731,76 +1087,15 @@ export function MeetingModeView({
         })}
       </div>
 
-      {/* Before We Close Section */}
-      <div className="rounded-2xl bg-[#071A33] border border-[#0F3D70] p-4 sm:p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">🚦</span>
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              Before We Close — Additional Things to Discuss
-            </h3>
-          </div>
-          <span className="text-[11px] text-blue-300/60">
-            {parkingLot.length} Parked · {additionalItems.length} Notes
-          </span>
-        </div>
-
-        {/* Parked Items list */}
-        {parkingLot.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-[10.5px] font-bold text-[#F5B544] uppercase tracking-wider">
-              Parked During Session:
-            </p>
-            {parkingLot.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[#051426] border border-[#0F355E] text-xs text-white"
-              >
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="font-bold text-[#F5B544]">🅿</span>
-                  <span className="truncate">{item.note}</span>
-                  <span className="text-[10px] text-blue-300/50 font-mono">({item.createdAt})</span>
-                </div>
-                <Badge className="text-[10px] bg-[#0E427B] text-blue-200 border-none">
-                  {item.status.toUpperCase()}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Additional items quick entry */}
-        <div className="flex items-center gap-2 pt-1">
-          <Input
-            value={additionalInput}
-            onChange={(e) => setAdditionalInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAddAdditionalItem()}
-            placeholder="Add a final point to clarify before adjourning..."
-            className="h-8 text-xs bg-[#051426] border-[#0E3560] text-white"
-          />
-          <Button
-            size="sm"
-            onClick={handleAddAdditionalItem}
-            className="h-8 text-xs bg-[#0E427B] text-blue-100 font-bold shrink-0 cursor-pointer"
-          >
-            Add
-          </Button>
-        </div>
-
-        {additionalItems.length > 0 && (
-          <div className="space-y-1.5 pt-1">
-            {additionalItems.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center gap-2 p-2 rounded-lg bg-[#051426] border border-[#0F355E] text-xs text-blue-100"
-              >
-                <span className="text-blue-400">☐</span>
-                <span>{item.text}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* ── BEFORE WE END — Final Items to Resolve (Enhanced Area) ── */}
+      <BeforeWeEndSection
+        items={beforeWeEndItems}
+        parkingLot={parkingLot}
+        onUpdateItems={handleUpdateBeforeWeEnd}
+        onApproveItem={handleApproveItem}
+        onWithdrawApproval={handleWithdrawItemApproval}
+        onUpdateItemMetadata={handleUpdateItemMetadata}
+      />
 
 
       {/* Slide-over Target Details Drawer (Preserves Scroll Position) */}
@@ -884,7 +1179,7 @@ export function MeetingModeView({
             <div className="rounded-xl bg-[#092244] border border-[#144A7E] p-3.5 space-y-2.5">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-bold text-[#F5B544] uppercase tracking-wider">
-                  Meeting Tracking (6 Working Controls)
+                  Meeting Tracking & Status Controls
                 </p>
                 <Badge variant="outline" className={cn("text-[10px]", getStatusBadgeStyle(selectedTarget.meetingStatus))}>
                   {selectedTarget.meetingStatus}
@@ -892,6 +1187,24 @@ export function MeetingModeView({
               </div>
               
               <div className="grid grid-cols-2 gap-2">
+                {/* 0. Approved (Automated Minutes + Doc Check) */}
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange(selectedTarget.id, selectedTarget.meetingStatus === "APPROVED" ? "NOT_DISCUSSED" : "APPROVED")}
+                  className={cn(
+                    "p-2.5 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all col-span-2",
+                    selectedTarget.meetingStatus === "APPROVED"
+                      ? "bg-emerald-950 text-emerald-200 border-emerald-400 font-bold shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                      : "bg-[#051426] border-[#0E3560] text-slate-300 hover:border-emerald-500/50 hover:text-emerald-300"
+                  )}
+                >
+                  <CheckCircle2 className={cn("h-4 w-4 shrink-0", selectedTarget.meetingStatus === "APPROVED" ? "text-emerald-400" : "text-slate-500")} />
+                  <div className="flex-1">
+                    <span className="font-bold">Approved</span>
+                    <span className="block text-[10px] text-emerald-300/80 font-normal">Records immediately in Minutes & Document Check</span>
+                  </div>
+                </button>
+
                 {/* 1. Discussed */}
                 <button
                   type="button"
@@ -983,6 +1296,43 @@ export function MeetingModeView({
                   <span>Deferred</span>
                 </button>
               </div>
+
+              {/* Contextual Follow-Through Details (if Approved) */}
+              {selectedTarget.meetingStatus === "APPROVED" && (
+                <div className="p-3.5 rounded-xl bg-[#021815] border border-emerald-500/40 space-y-2.5 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                      <CalendarIcon className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Approved Follow-Through & Timeline</span>
+                    </span>
+                    {selectedTarget.approvedAt && (
+                      <span className="text-[10px] font-mono text-emerald-400">
+                        Approved at {selectedTarget.approvedAt}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Input
+                      value={selectedTarget.responsiblePerson || ""}
+                      onChange={(e) => handleUpdateTargetMetadata(selectedTarget.id, { responsiblePerson: e.target.value })}
+                      placeholder="Responsible Lead (e.g. SLP)..."
+                      className="h-8 text-xs bg-[#051426] border-[#13497F] text-white"
+                    />
+                    <Input
+                      value={selectedTarget.deadlineDate || ""}
+                      onChange={(e) => handleUpdateTargetMetadata(selectedTarget.id, { deadlineDate: e.target.value })}
+                      placeholder="Deadline or Start Date..."
+                      className="h-8 text-xs bg-[#051426] border-[#13497F] text-white"
+                    />
+                  </div>
+                  <Input
+                    value={selectedTarget.conditionNote || ""}
+                    onChange={(e) => handleUpdateTargetMetadata(selectedTarget.id, { conditionNote: e.target.value })}
+                    placeholder="Conditions, exact phrasing, or agreed terms..."
+                    className="h-8 text-xs bg-[#051426] border-[#13497F] text-white"
+                  />
+                </div>
+              )}
             </div>
 
             {/* 📝 My Notes on this Target (Live Advocate Notes) */}
@@ -1406,6 +1756,46 @@ export function MeetingModeView({
         target={targetToDelete}
         onConfirmDelete={handleConfirmDeleteTarget}
       />
+
+      {/* ── LIVE SCRATCH PAD DRAWER ── */}
+      <ScratchPadDrawer
+        isOpen={isScratchPadOpen}
+        onClose={() => setIsScratchPadOpen(false)}
+        scratchNotes={scratchNotes}
+        beforeWeEndItems={beforeWeEndItems}
+        onUpdateScratchNotes={handleUpdateScratchNotes}
+        onUpdateBeforeWeEndItems={handleUpdateBeforeWeEnd}
+        onAddTimelineEvent={handleAddTimelineEvent}
+      />
+
+      {/* ── MEETING MINUTES & DOCUMENT CHECK CONSOLE MODAL ── */}
+      <MeetingMinutesAndDocCheckModal
+        isOpen={isMinutesDocCheckOpen}
+        onClose={() => setIsMinutesDocCheckOpen(false)}
+        studentName={studentName}
+        meetingType={meetingType}
+        meetingDate={meetingDate}
+        checks={closeoutChecks}
+        onUpdateChecks={onUpdateCloseoutChecks}
+      />
+
+      {/* ── FLOATING ADHD-FRIENDLY SCRATCH PAD QUICK ACCESS ── */}
+      <div className="fixed bottom-5 right-5 z-40">
+        <button
+          type="button"
+          onClick={() => setIsScratchPadOpen(!isScratchPadOpen)}
+          className="h-11 px-4 rounded-full bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs shadow-[0_4px_20px_rgba(0,0,0,0.85)] border border-[#FFE394]/60 hover:brightness-110 cursor-pointer flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+          title="Open Scratch Pad for rapid note taking"
+        >
+          <FileText className="w-4 h-4 text-[#07162B]" />
+          <span>Scratch Pad</span>
+          {scratchNotes.length > 0 && (
+            <span className="w-5 h-5 rounded-full bg-[#07162B] text-[#FFE394] text-[10px] font-mono flex items-center justify-center font-bold">
+              {scratchNotes.length}
+            </span>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

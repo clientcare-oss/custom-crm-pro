@@ -25,7 +25,7 @@ export interface ParentIntelConcern {
   isCustom?: boolean;
 }
 
-export type TargetMeetingStatus = "NOT_DISCUSSED" | "DISCUSSED" | "AGREED" | "DENIED" | "DEFERRED" | "FOLLOW_UP";
+export type TargetMeetingStatus = "NOT_DISCUSSED" | "DISCUSSED" | "APPROVED" | "AGREED" | "DENIED" | "DEFERRED" | "FOLLOW_UP";
 
 export type TargetTagType = "ADVOCATE_REPAIR" | "IMPORTANT" | "PARENT_DOESNT_WANT" | "SKIP";
 
@@ -71,6 +71,12 @@ export interface MeetingTarget {
   followUpOwnerDate?: string;
   notes?: string;
   isCustom?: boolean;
+
+  // Contextual post-approval fields
+  approvedAt?: string;
+  responsiblePerson?: string;
+  deadlineDate?: string;
+  conditionNote?: string;
 }
 
 export interface AdvocateReadyImportItem extends MeetingTarget {
@@ -98,10 +104,91 @@ export interface AdditionalItem {
   status: "open" | "discussed";
 }
 
+// ─── Live Meeting Follow-Through & Quick Note Taking Engine ───
+
+export interface ScratchNote {
+  id: string;
+  text: string;
+  createdAt: string; // e.g. "10:14 AM"
+  movedToBeforeWeEnd?: boolean;
+}
+
+export type BeforeWeEndStatus =
+  | "UNRESOLVED"
+  | "APPROVED"
+  | "DISCUSSED"
+  | "DENIED"
+  | "DEFERRED"
+  | "FOLLOW_UP";
+
+export interface BeforeWeEndItem {
+  id: string;
+  text: string;
+  status: BeforeWeEndStatus;
+  sourceNoteId?: string; // If converted from Scratch Pad note
+  createdAt: string;
+  approvedAt?: string;
+  responsiblePerson?: string;
+  deadlineDate?: string;
+  conditionNote?: string;
+}
+
+export interface MeetingMinutesHistoryItem {
+  action: string;
+  timestamp: string;
+  note?: string;
+}
+
+export interface MeetingMinutesEntry {
+  id: string;
+  sourceType: "target" | "before_we_end";
+  sourceId: string;
+  title: string;
+  details?: string;
+  status: "APPROVED" | "WITHDRAWN" | "MODIFIED";
+  approvedAt: string;
+  responsiblePerson?: string;
+  deadlineDate?: string;
+  notes?: string;
+  history?: MeetingMinutesHistoryItem[];
+}
+
+export interface DocumentCheckItem {
+  id: string;
+  sourceType: "target" | "before_we_end";
+  sourceId: string;
+  title: string;
+  expectedWordingOrDetails?: string;
+  iepSectionOrLocation?: string;
+  verified: boolean; // Verification against revised IEP document
+  verifiedAt?: string;
+  verifiedBy?: string;
+  verificationNotes?: string;
+  status: "ACTIVE_AGREEMENT" | "WITHDRAWN";
+  approvedAt: string;
+}
+
+export interface MeetingTimelineEvent {
+  id: string;
+  sourceId?: string;
+  sourceType?: "target" | "before_we_end" | "meeting" | "scratch";
+  timestamp: string; // e.g. "10:14 AM"
+  type: "APPROVAL" | "APPROVAL_WITHDRAWN" | "STATUS_CHANGE" | "NOTE_CONVERTED" | "SESSION_START";
+  title: string;
+  description?: string;
+}
+
 export interface CloseoutChecks {
   allRequestsRaised: boolean;
   pwnIdentified: boolean;
   agreedLocationsClear: boolean;
   followUpAssigned: boolean;
   nextMeetingDiscussed: boolean;
+  parentDoesntWant?: string;
+  // Live Meeting Extension State
+  scratchNotes?: ScratchNote[];
+  beforeWeEndItems?: BeforeWeEndItem[];
+  minutesEntries?: MeetingMinutesEntry[];
+  documentCheckItems?: DocumentCheckItem[];
+  timelineEvents?: MeetingTimelineEvent[];
 }
