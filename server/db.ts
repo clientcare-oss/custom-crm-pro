@@ -1308,9 +1308,9 @@ export async function getOwnerUser() {
   return await getUserByOpenId(ENV.ownerOpenId);
 }
 
-// Return the insertId from a MySQL insert result
+// Return the insertId from a MySQL / D1 / SQLite insert result
 export function getInsertId(result: any): number {
-  return result[0]?.insertId ?? result?.insertId ?? 0;
+  return result?.[0]?.insertId ?? result?.insertId ?? result?.meta?.last_row_id ?? result?.lastInsertRowid ?? (Array.isArray(result) && result[0]?.id ? result[0].id : 0);
 }
 
 // ============ LEAD FORMS ============

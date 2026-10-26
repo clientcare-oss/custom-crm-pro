@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { Folder, LayoutGrid, List, Plus, Search, X } from "lucide-react";
+import { Folder, LayoutGrid, List, Plus, Search, X, Sparkles, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -150,6 +150,105 @@ export default function Students() {
     },
     onError: (e) => toast.error(e.message || "Failed to add student"),
   });
+
+  const createSamplePairMutation = trpc.contacts.createSamplePair.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message || "Sample student & parent added to active cabinet!");
+      if (data?.studentId) {
+        const sampleMarkers: MarkerType[] = ["star", "violet_bookmark", "paperclip", "green_bookmark"];
+        const randomMarker = sampleMarkers[Math.floor(Math.random() * sampleMarkers.length)];
+        handleMarkerChange(data.studentId, randomMarker);
+      }
+      refetch();
+      setNewStudentOpen(false);
+    },
+    onError: (e) => toast.error(e.message || "Failed to add sample persons"),
+  });
+
+  const quickAddParentMutation = trpc.contacts.create.useMutation({
+    onSuccess: (data: any) => {
+      toast.success("Sample parent contact created!");
+      refetch().then((res) => {
+        const newId = data?.id || (res.data && (res.data as any)[0]?.id);
+        if (newId) {
+          setFormData((prev) => ({ ...prev, parentContactId: newId.toString() }));
+        }
+      });
+    },
+    onError: (e) => toast.error(e.message || "Failed to create sample parent"),
+  });
+
+  const handleQuickAddSampleParent = () => {
+    const parentLastName = formData.lastName.trim() || "Sterling";
+    quickAddParentMutation.mutate({
+      firstName: "Sarah",
+      lastName: parentLastName,
+      company: `${parentLastName} Family`,
+      jobTitle: "Parent / Guardian",
+      phone: "(404) 555-0182",
+      email: `sarah.${parentLastName.toLowerCase()}@sample.waypointadvocates.com`,
+      notes: "Sample parent contact record.",
+      bestTimeToCall: "Mornings before 11:00 AM",
+    });
+  };
+
+  const handleFillSampleData = () => {
+    const SAMPLE_STUDENTS = [
+      {
+        firstName: "Lucas",
+        lastName: "Sterling",
+        schoolName: "North Atlanta High",
+        gradeLevel: "10th Grade",
+        company: "Sterling Family",
+        planType: "IEP",
+        phone: "(404) 555-0182",
+        markerType: "star" as MarkerType,
+      },
+      {
+        firstName: "Maya",
+        lastName: "Vance",
+        schoolName: "Decatur High School",
+        gradeLevel: "8th Grade",
+        company: "Vance Family",
+        planType: "504",
+        phone: "(404) 555-0194",
+        markerType: "violet_bookmark" as MarkerType,
+      },
+      {
+        firstName: "Elijah",
+        lastName: "Mitchell",
+        schoolName: "Walton High School",
+        gradeLevel: "11th Grade",
+        company: "Mitchell Family",
+        planType: "IEP",
+        phone: "(770) 555-0138",
+        markerType: "paperclip" as MarkerType,
+      },
+      {
+        firstName: "Caleb",
+        lastName: "Davis",
+        schoolName: "Riverwood High School",
+        gradeLevel: "6th Grade",
+        company: "Davis Family",
+        planType: "No IEP/504 Yet",
+        phone: "(678) 555-0177",
+        markerType: "calendar" as MarkerType,
+      },
+    ];
+
+    const pick = SAMPLE_STUDENTS[Math.floor(Math.random() * SAMPLE_STUDENTS.length)];
+    const matchingParent = parents.find((p: any) =>
+      p.lastName?.toLowerCase() === pick.lastName.toLowerCase() ||
+      p.company?.toLowerCase()?.includes(pick.lastName.toLowerCase())
+    );
+
+    setFormData((prev) => ({
+      ...prev,
+      ...pick,
+      parentContactId: matchingParent ? matchingParent.id.toString() : prev.parentContactId,
+    }));
+    toast.info(`Filled sample student data for ${pick.firstName} ${pick.lastName}`);
+  };
 
   // ─── Parents Lookup Map ───
   const allContacts = rawContacts ?? [];
@@ -340,6 +439,8 @@ export default function Students() {
               sortOrder={sortOrder}
               onSortChange={setSortOrder}
               onNewStudentClick={() => setNewStudentOpen(true)}
+              onQuickSample={() => createSamplePairMutation.mutate({})}
+              isCreatingSample={createSamplePairMutation.isPending}
               selectedPlanFilter={selectedPlanFilter}
               onPlanFilterChange={setSelectedPlanFilter}
               selectedGradeFilter={selectedGradeFilter}
@@ -598,14 +699,27 @@ export default function Students() {
 
         {/* ─── Add New Student Modal Workflow ─── */}
         <Dialog open={newStudentOpen} onOpenChange={setNewStudentOpen}>
-          <DialogContent className="max-w-md bg-[#0A1729] border border-[#B88943]/50 text-[#F0DFC5] rounded-2xl shadow-2xl p-6">
-            <DialogHeader className="pb-2 border-b border-[#B88943]/25">
-              <DialogTitle className="font-serif text-lg font-bold text-white flex items-center gap-2">
-                <Folder className="w-5 h-5 text-[#E9BA6B]" />
-                Add Student Archival File
+          <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden bg-[#0A1729] border border-[#B88943]/50 text-[#F0DFC5] rounded-2xl shadow-2xl">
+            {/* Pinned Header */}
+            <div className="p-4 sm:p-5 pb-3 border-b border-[#B88943]/25 shrink-0 flex items-center justify-between gap-2 bg-[#091526]">
+              <DialogTitle className="font-serif text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <Folder className="w-5 h-5 text-[#E9BA6B] shrink-0" />
+                <span>Add Student Archival File</span>
               </DialogTitle>
-            </DialogHeader>
+              <button
+                type="button"
+                onClick={handleFillSampleData}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-serif font-bold bg-[#E9BA6B]/15 text-[#FCE09E] border border-[#E9BA6B]/40 hover:bg-[#E9BA6B]/25 transition-all cursor-pointer shadow-xs"
+                title="Autofill realistic sample student data into this form"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#FCE09E]" />
+                <span>Fill Sample</span>
+              </button>
+            </div>
+
+            {/* Scrollable Form Body */}
             <form
+              id="new-student-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!formData.firstName.trim() || !formData.lastName.trim()) {
@@ -624,7 +738,7 @@ export default function Students() {
                   ...(parentContactId ? { parentContactId: parseInt(parentContactId, 10) } : {}),
                 });
               }}
-              className="space-y-4 pt-3"
+              className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 min-h-0"
             >
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -632,7 +746,7 @@ export default function Students() {
                   <VoiceInput
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    placeholder="e.g. Jeremiah"
+                    placeholder="e.g. Lucas"
                     className="bg-[#050D1A] border-[#B88943]/30 text-white"
                     required
                   />
@@ -642,7 +756,7 @@ export default function Students() {
                   <VoiceInput
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    placeholder="e.g. Mitchell"
+                    placeholder="e.g. Sterling"
                     className="bg-[#050D1A] border-[#B88943]/30 text-white"
                     required
                   />
@@ -655,7 +769,7 @@ export default function Students() {
                   <VoiceInput
                     value={formData.schoolName}
                     onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
-                    placeholder="e.g. Jackson High"
+                    placeholder="e.g. North Atlanta High"
                     className="bg-[#050D1A] border-[#B88943]/30 text-white"
                   />
                 </div>
@@ -664,14 +778,26 @@ export default function Students() {
                   <VoiceInput
                     value={formData.gradeLevel}
                     onChange={(e) => setFormData({ ...formData, gradeLevel: e.target.value })}
-                    placeholder="e.g. 11th Grade"
+                    placeholder="e.g. 10th Grade"
                     className="bg-[#050D1A] border-[#B88943]/30 text-white"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#CBD7E8]">Parent / Family Contact</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-[#CBD7E8]">Parent / Family Contact</label>
+                  <button
+                    type="button"
+                    onClick={handleQuickAddSampleParent}
+                    disabled={quickAddParentMutation.isPending}
+                    className="text-[11px] text-[#E9BA6B] hover:underline flex items-center gap-1 cursor-pointer font-medium"
+                    title="Create and link a sample parent contact"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>{quickAddParentMutation.isPending ? "Adding..." : "Quick Sample Parent"}</span>
+                  </button>
+                </div>
                 <Select
                   value={formData.parentContactId || "none"}
                   onValueChange={(val) => setFormData({ ...formData, parentContactId: val === "none" ? "" : val })}
@@ -713,7 +839,7 @@ export default function Students() {
                   <VoiceInput
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    placeholder="e.g. Mitchell Family"
+                    placeholder="e.g. Sterling Family"
                     className="bg-[#050D1A] border-[#B88943]/30 text-white"
                   />
                 </div>
@@ -736,7 +862,7 @@ export default function Students() {
                   </label>
                   <span className="text-[10px] text-[#8AA2C0] font-normal">Optional file clip</span>
                 </div>
-                <div className="grid grid-cols-2 gap-1.5 p-2 bg-[#050D1A] border border-[#B88943]/30 rounded-xl max-h-36 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-1.5 p-2 bg-[#050D1A] border border-[#B88943]/30 rounded-xl max-h-32 overflow-y-auto">
                   {MARKER_OPTIONS.map((opt) => {
                     const isSelected = formData.markerType === opt.id;
                     return (
@@ -763,17 +889,41 @@ export default function Students() {
                   })}
                 </div>
               </div>
+            </form>
 
-              <div className="pt-2">
+            {/* Pinned Footer: Guaranteed Always Visible */}
+            <div className="p-3.5 sm:p-4 border-t border-[#B88943]/25 bg-[#06101D] shrink-0 flex items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={createSamplePairMutation.isPending}
+                onClick={() => createSamplePairMutation.mutate({})}
+                className="h-9 px-3 text-xs font-serif font-semibold bg-[#11233D] border-[#2A446B] text-[#F3C876] hover:text-white hover:bg-[#183156] cursor-pointer flex items-center gap-1.5 shadow-sm"
+                title="1-Click create both a sample student and a linked sample parent"
+              >
+                <Zap className="w-3.5 h-3.5 text-[#E9BA6B]" />
+                <span>{createSamplePairMutation.isPending ? "Adding..." : "1-Click Sample Pair"}</span>
+              </Button>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setNewStudentOpen(false)}
+                  className="h-9 px-3 text-xs text-[#9BB1CF] hover:text-white hover:bg-white/5 cursor-pointer"
+                >
+                  Cancel
+                </Button>
                 <Button
                   type="submit"
+                  form="new-student-form"
                   disabled={createMutation.isPending}
-                  className="w-full bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#B88943] text-[#1A1208] font-bold py-2.5 rounded-xl shadow-lg hover:brightness-110 cursor-pointer"
+                  className="h-9 px-4 bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#B88943] text-[#1A1208] text-xs font-serif font-bold rounded-lg shadow-md hover:brightness-110 cursor-pointer"
                 >
-                  {createMutation.isPending ? "Archiving File..." : "Create Student File"}
+                  {createMutation.isPending ? "Archiving..." : "Create Student File"}
                 </Button>
               </div>
-            </form>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

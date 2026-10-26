@@ -39,11 +39,185 @@ export const contactsRouter = router({
           notes: z.string().optional(),
           parentContactId: z.number().optional(),
           bestTimeToCall: z.string().optional(),
+          schoolName: z.string().optional(),
+          gradeLevel: z.string().optional(),
+          planType: z.string().optional(),
+          diagnosis: z.string().optional(),
+          dateOfBirth: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const ownerId = ctx.user?.id || 1;
         return await db.createContact(input, ownerId);
+      }),
+
+    createSamplePair: publicProcedure
+      .input(
+        z.object({
+          pairIndex: z.number().optional(),
+        }).optional()
+      )
+      .mutation(async ({ ctx, input }) => {
+        const ownerId = ctx.user?.id || 1;
+
+        const SAMPLE_PAIRS = [
+          {
+            parent: {
+              firstName: "Sarah",
+              lastName: "Sterling",
+              email: "sarah.sterling@sample.waypointadvocates.com",
+              phone: "(404) 555-0182",
+              company: "Sterling Family",
+              jobTitle: "Parent / Guardian",
+              city: "Atlanta",
+              state: "GA",
+              zipCode: "30309",
+              notes: "Sample parent record. Prefers morning contact before 11:00 AM.",
+              bestTimeToCall: "Mornings before 11:00 AM",
+            },
+            student: {
+              firstName: "Lucas",
+              lastName: "Sterling",
+              schoolName: "North Atlanta High",
+              gradeLevel: "10th Grade",
+              planType: "IEP",
+              company: "Sterling Family",
+              phone: "(404) 555-0182",
+              city: "Atlanta",
+              state: "GA",
+              zipCode: "30309",
+              notes: "Sample student file. Focus on executive functioning accommodations and math progress monitoring.",
+            }
+          },
+          {
+            parent: {
+              firstName: "David",
+              lastName: "Vance",
+              email: "david.vance@sample.waypointadvocates.com",
+              phone: "(404) 555-0194",
+              company: "Vance Family",
+              jobTitle: "Parent / Guardian",
+              city: "Decatur",
+              state: "GA",
+              zipCode: "30030",
+              notes: "Sample parent record. Collaborative 504 plan review.",
+              bestTimeToCall: "Afternoons after 2:00 PM",
+            },
+            student: {
+              firstName: "Maya",
+              lastName: "Vance",
+              schoolName: "Decatur High School",
+              gradeLevel: "8th Grade",
+              planType: "504",
+              company: "Vance Family",
+              phone: "(404) 555-0194",
+              city: "Decatur",
+              state: "GA",
+              zipCode: "30030",
+              notes: "Sample student file. Extended time accommodations and sensory regulation plan.",
+            }
+          },
+          {
+            parent: {
+              firstName: "Kendra",
+              lastName: "Mitchell",
+              email: "kendra.mitchell@sample.waypointadvocates.com",
+              phone: "(770) 555-0138",
+              company: "Mitchell Family",
+              jobTitle: "Parent / Guardian",
+              city: "Marietta",
+              state: "GA",
+              zipCode: "30062",
+              notes: "Sample parent record. Seeking annual IEP review advocacy support.",
+              bestTimeToCall: "Mid-day 12:00 PM - 1:00 PM",
+            },
+            student: {
+              firstName: "Elijah",
+              lastName: "Mitchell",
+              schoolName: "Walton High School",
+              gradeLevel: "11th Grade",
+              planType: "IEP",
+              company: "Mitchell Family",
+              phone: "(770) 555-0138",
+              city: "Marietta",
+              state: "GA",
+              zipCode: "30062",
+              notes: "Sample student file. Transition planning, reading goals, and testing accommodations.",
+            }
+          },
+          {
+            parent: {
+              firstName: "Marcus",
+              lastName: "Davis",
+              email: "marcus.davis@sample.waypointadvocates.com",
+              phone: "(678) 555-0177",
+              company: "Davis Family",
+              jobTitle: "Parent / Guardian",
+              city: "Sandy Springs",
+              state: "GA",
+              zipCode: "30328",
+              notes: "Sample parent record. Initial comprehensive evaluation in progress.",
+              bestTimeToCall: "Fridays anytime",
+            },
+            student: {
+              firstName: "Caleb",
+              lastName: "Davis",
+              schoolName: "Riverwood High School",
+              gradeLevel: "6th Grade",
+              planType: "No IEP/504 Yet",
+              company: "Davis Family",
+              phone: "(678) 555-0177",
+              city: "Sandy Springs",
+              state: "GA",
+              zipCode: "30328",
+              notes: "Sample student file. Multidisciplinary psychoeducational evaluation request.",
+            }
+          }
+        ];
+
+        const selected = input?.pairIndex != null 
+          ? SAMPLE_PAIRS[input.pairIndex % SAMPLE_PAIRS.length] 
+          : SAMPLE_PAIRS[Math.floor(Math.random() * SAMPLE_PAIRS.length)];
+
+        const suffix = Math.floor(Math.random() * 9000 + 1000);
+        const parentEmail = selected.parent.email.replace("@", `+${suffix}@`);
+
+        // 1. Create parent
+        const parentRes = await db.createContact({
+          ...selected.parent,
+          email: parentEmail,
+        }, ownerId);
+        let parentId = db.getInsertId(parentRes);
+
+        if (!parentId || parentId <= 0) {
+          const list = await db.getContactsByOwner(ownerId);
+          const found = list.find((c: any) => c.email === parentEmail);
+          if (found?.id) parentId = found.id;
+        }
+
+        // 2. Create student linked to parent
+        const studentRes = await db.createContact({
+          ...selected.student,
+          jobTitle: "Student",
+          parentContactId: parentId > 0 ? parentId : undefined,
+        }, ownerId);
+        let studentId = db.getInsertId(studentRes);
+
+        if (!studentId || studentId <= 0) {
+          const list = await db.getContactsByOwner(ownerId);
+          const found = list.find((c: any) => c.firstName === selected.student.firstName && c.lastName === selected.student.lastName);
+          if (found?.id) studentId = found.id;
+        }
+
+        return {
+          success: true,
+          parentId,
+          studentId,
+          parentName: `${selected.parent.firstName} ${selected.parent.lastName}`,
+          studentName: `${selected.student.firstName} ${selected.student.lastName}`,
+          planType: selected.student.planType,
+          message: `Sample student "${selected.student.firstName} ${selected.student.lastName}" & parent "${selected.parent.firstName} ${selected.parent.lastName}" created!`,
+        };
       }),
 
     bulkImport: publicProcedure
