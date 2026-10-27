@@ -1,4 +1,6 @@
 import type { Express } from "express";
+import fs from "fs";
+import path from "path";
 import { getR2SignedDownloadUrl } from "./r2Client";
 
 export function registerStorageProxy(app: Express) {
@@ -10,6 +12,26 @@ export function registerStorageProxy(app: Express) {
     }
 
     try {
+      // 0. Check local disk in uploads/
+      const localFilePath = path.resolve(process.cwd(), "uploads", key);
+      if (fs.existsSync(localFilePath) && fs.statSync(localFilePath).isFile()) {
+        const ext = path.extname(localFilePath).toLowerCase();
+        const mimeTypes: Record<string, string> = {
+          ".pdf": "application/pdf",
+          ".png": "image/png",
+          ".jpg": "image/jpeg",
+          ".jpeg": "image/jpeg",
+          ".webp": "image/webp",
+          ".txt": "text/plain",
+        };
+        res.set("Content-Type", mimeTypes[ext] || "application/octet-stream");
+        res.set("Access-Control-Allow-Origin", "*");
+        res.set("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+        res.set("Cache-Control", "public, max-age=86400");
+        res.sendFile(localFilePath);
+        return;
+      }
+
       // 1. Check Cloudflare D1 / SQLite file_blobs
       const { queryCloudflareD1 } = await import("./d1Client");
       const rows = await queryCloudflareD1(

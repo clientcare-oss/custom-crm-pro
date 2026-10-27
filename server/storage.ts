@@ -2,6 +2,8 @@
 // Uploads directly to Cloudflare R2 bucket.
 // Downloads return /storage/{key} paths or signed R2 URLs.
 
+import fs from "fs";
+import path from "path";
 import { uploadToR2, getR2SignedDownloadUrl } from "./_core/r2Client";
 
 function normalizeKey(relKey: string): string {
@@ -22,6 +24,16 @@ export async function storagePut(
 ): Promise<{ key: string; url: string }> {
   const key = appendHashSuffix(normalizeKey(relKey));
   
+  // 0. Persist to local disk under uploads/ for instantaneous, uncompressed local serving
+  try {
+    const localPath = path.resolve(process.cwd(), "uploads", key);
+    fs.mkdirSync(path.dirname(localPath), { recursive: true });
+    const buffer = typeof data === "string" ? Buffer.from(data) : Buffer.from(data);
+    fs.writeFileSync(localPath, buffer);
+  } catch (localErr) {
+    console.warn("[storagePut] Notice: could not persist to local disk:", localErr);
+  }
+
   // 1. Save to Cloudflare D1 / SQLite file_blobs for guaranteed cross-device availability
   try {
     const base64Data = typeof data === "string"

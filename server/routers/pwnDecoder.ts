@@ -75,6 +75,11 @@ async function analyzePriorWrittenNotice(
 ): Promise<DecodedAnalysisResult> {
   const cleanText = pwnText.trim();
 
+  // In test environment, immediately use deterministic heuristic engine to ensure fast, offline unit test execution
+  if (process.env.NODE_ENV === "test") {
+    return runHeuristicPwnAnalysis(cleanText, studentInfo);
+  }
+
   // Try Cloudflare Workers AI with fallback
   let llmResult: DecodedAnalysisResult | null = null;
   try {
