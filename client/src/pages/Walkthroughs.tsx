@@ -8,13 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import VoiceTextarea from "@/components/VoiceTextarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Plus, Trash2, ChevronUp, ChevronDown, Play, CheckCircle2,
   Circle, Pencil, X, BookOpen, ListChecks, ArrowLeft, GripVertical,
   ClipboardList, Loader2, CheckCheck, RotateCcw
 } from "lucide-react";
+import PageIdBadge from "@/components/PageIdBadge";
 
 const CATEGORIES = ["All", "General", "Intake", "Discovery Call", "Follow-Up", "Meetings", "Compliance", "Billing", "Other"];
 
@@ -24,14 +24,14 @@ function uid() { return Math.random().toString(36).slice(2, 10); }
 // ─── Category badge color ─────────────────────────────────────────────────────
 function catColor(cat: string) {
   const map: Record<string, string> = {
-    "Discovery Call": "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
-    "Follow-Up": "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300",
-    "Intake": "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300",
-    "Meetings": "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300",
-    "Compliance": "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300",
-    "Billing": "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300",
+    "Discovery Call": "border border-[#3A2C18] bg-[#020A17] text-[#93C5FD]",
+    "Follow-Up": "border border-[#3A2C18] bg-[#020A17] text-[#FDE047]",
+    "Intake": "border border-[#3A2C18] bg-[#020A17] text-[#C4B5FD]",
+    "Meetings": "border border-[#3A2C18] bg-[#020A17] text-[#86EFAC]",
+    "Compliance": "border border-[#3A2C18] bg-[#020A17] text-[#FCA5A5]",
+    "Billing": "border border-[#3A2C18] bg-[#020A17] text-[#6EE7B7]",
   };
-  return map[cat] ?? "bg-muted text-muted-foreground";
+  return map[cat] ?? "border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5]";
 }
 
 type Step = { id: string; title: string; instructions: string; script?: string; notes?: string; order: number; };
@@ -82,19 +82,27 @@ export default function Walkthroughs() {
   }
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-4 pb-4 border-b border-[#3A2C18]">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-            <ClipboardList className="h-8 w-8 text-accent" />
-            Walkthroughs (SOP)
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Step-by-step guides to maintain quality and consistency across every client interaction</p>
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl sm:text-2xl font-serif font-bold tracking-tight text-[#FFF4D4] flex items-center gap-2.5">
+              <ClipboardList className="h-6 w-6 text-[#C5A059]" />
+              Standard Operating Procedures (SOPs)
+            </h2>
+            <PageIdBadge id="PG-017" name="System Walkthroughs" />
+          </div>
+          <p className="text-xs sm:text-sm text-[#C6B697] mt-1 font-medium">
+            Step-by-step interactive guides to maintain quality, legal rigor, and consistency across client operations.
+          </p>
         </div>
-        <Button className="gap-2" onClick={() => { setEditing(null); setView("builder"); }}>
-          <Plus className="h-4 w-4" /> New Walkthrough
-        </Button>
+        <button
+          onClick={() => { setEditing(null); setView("builder"); }}
+          className="h-9 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-md hover:brightness-110 cursor-pointer"
+        >
+          <Plus className="h-4 w-4" /> New SOP Walkthrough
+        </button>
       </div>
 
       {/* Category filter */}
@@ -103,10 +111,10 @@ export default function Walkthroughs() {
           <button
             key={cat}
             onClick={() => setSelectedCat(cat)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
               selectedCat === cat
-                ? "bg-accent text-accent-foreground border-accent"
-                : "bg-muted text-muted-foreground border-border hover:border-accent/50"
+                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border-[#FFE394]/50 shadow-md font-bold"
+                : "bg-[#020A17] text-[#D8C7A5] border-[#3A2C18] hover:border-[#C5A059] hover:text-[#FFF4D4]"
             }`}
           >
             {cat}
@@ -116,71 +124,101 @@ export default function Walkthroughs() {
 
       {/* Walkthrough list */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-[#C5A059]" />
+        </div>
       ) : walkthroughs.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center py-20 border-dashed text-center">
-          <ClipboardList className="h-12 w-12 text-muted-foreground/30 mb-4" />
-          <p className="text-lg font-semibold text-foreground">No walkthroughs yet</p>
-          <p className="text-sm text-muted-foreground mt-1 mb-6">Create your first SOP to guide your team through key processes</p>
-          <Button onClick={() => setView("builder")} className="gap-2"><Plus className="h-4 w-4" /> Create Walkthrough</Button>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-[#3A2C18] rounded-2xl bg-[#020A17]/40 text-center p-8">
+          <div className="p-3 rounded-2xl bg-[#07162B] text-[#C5A059] border border-[#3A2C18] mb-3">
+            <ClipboardList className="h-8 w-8" />
+          </div>
+          <p className="text-base font-serif font-bold text-[#FFF4D4]">No walkthroughs found</p>
+          <p className="text-xs text-[#C6B697] mt-1 mb-5 max-w-sm">Create your first SOP to guide advocates through intake, live meetings, or post-meeting review.</p>
+          <button
+            onClick={() => setView("builder")}
+            className="h-9 px-4 rounded-xl text-xs font-bold flex items-center gap-2 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-md cursor-pointer hover:brightness-110"
+          >
+            <Plus className="h-4 w-4" /> Create Walkthrough
+          </button>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {(walkthroughs as any[]).map((wt) => (
-            <Card key={wt.id} className="p-5 rounded-xl border hover:border-accent/40 transition-colors group flex flex-col gap-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mb-2 ${catColor(wt.category)}`}>{wt.category}</span>
-                  <h3 className="font-bold text-foreground text-base leading-tight">{wt.title}</h3>
-                  {wt.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{wt.description}</p>}
+            <div
+              key={wt.id}
+              className="relative rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 hover:border-[#C5A059]/80 p-5 transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.25)] flex flex-col justify-between group min-h-[200px]"
+            >
+              <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all duration-300" />
+              <div>
+                <div className="relative z-10 flex items-start justify-between gap-2 mb-2">
+                  <span className={`inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${catColor(wt.category)}`}>
+                    {wt.category}
+                  </span>
+                </div>
+                <h3 className="relative z-10 font-serif font-bold text-[#FFF4D4] group-hover:text-[#FFE394] text-base leading-snug">
+                  {wt.title}
+                </h3>
+                {wt.description && (
+                  <p className="relative z-10 text-xs text-[#C6B697] mt-1.5 leading-relaxed line-clamp-2">
+                    {wt.description}
+                  </p>
+                )}
+              </div>
+
+              <div className="relative z-10 mt-4 pt-3 border-t border-[#3A2C18]/60 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-mono text-[#C6B697]">
+                  <ListChecks className="h-3.5 w-3.5 text-[#C5A059]" />
+                  <span>{(wt.steps as Step[]).length} step{(wt.steps as Step[]).length !== 1 ? "s" : ""}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    className="h-8 px-3 rounded-lg text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-sm hover:brightness-110 flex items-center gap-1 cursor-pointer"
+                    onClick={() => startRunMutation.mutate({ walkthroughId: wt.id })}
+                    disabled={startRunMutation.isPending}
+                  >
+                    <Play className="h-3 w-3" /> Run
+                  </button>
+                  <button
+                    className="h-8 px-2.5 rounded-lg text-xs font-semibold bg-[#020A17] text-[#D8C7A5] hover:text-[#FFF4D4] border border-[#3A2C18] hover:border-[#C5A059] flex items-center gap-1 cursor-pointer"
+                    onClick={() => { setEditing(wt as any); setView("builder"); }}
+                    title="Edit Walkthrough"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                  <button
+                    className="h-8 px-2 rounded-lg text-xs text-red-400 hover:text-red-200 bg-[#020A17] border border-[#3A2C18] hover:border-red-400/50 flex items-center cursor-pointer"
+                    onClick={() => setDeleteConfirm(wt.id)}
+                    title="Delete Walkthrough"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <ListChecks className="h-3.5 w-3.5" />
-                <span>{(wt.steps as Step[]).length} step{(wt.steps as Step[]).length !== 1 ? "s" : ""}</span>
-              </div>
-              <div className="flex items-center gap-2 mt-auto pt-2 border-t border-border">
-                <Button
-                  size="sm"
-                  className="flex-1 gap-1.5 bg-accent hover:bg-accent/90 text-accent-foreground"
-                  onClick={() => startRunMutation.mutate({ walkthroughId: wt.id })}
-                  disabled={startRunMutation.isPending}
-                >
-                  <Play className="h-3.5 w-3.5" /> Run
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5"
-                  onClick={() => { setEditing(wt as any); setView("builder"); }}
-                >
-                  <Pencil className="h-3.5 w-3.5" /> Edit
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => setDeleteConfirm(wt.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}
 
       {/* Delete confirm dialog */}
       <Dialog open={deleteConfirm !== null} onOpenChange={() => setDeleteConfirm(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Delete Walkthrough?</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">This will permanently delete the walkthrough and all its run history. This cannot be undone.</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => deleteConfirm && deleteMutation.mutate({ id: deleteConfirm })} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+        <DialogContent className="max-w-md bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] rounded-2xl shadow-2xl">
+          <DialogHeader><DialogTitle className="text-lg font-serif font-bold text-[#FFF4D4]">Delete Walkthrough SOP?</DialogTitle></DialogHeader>
+          <p className="text-xs text-[#C6B697]">This will permanently delete this procedure and its execution history. This action cannot be undone.</p>
+          <DialogFooter className="gap-2 pt-2">
+            <button
+              onClick={() => setDeleteConfirm(null)}
+              className="h-9 px-4 rounded-xl text-xs font-semibold bg-[#020A17] text-[#D8C7A5] hover:text-[#FFF4D4] border border-[#3A2C18]"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => deleteConfirm && deleteMutation.mutate({ id: deleteConfirm })}
+              disabled={deleteMutation.isPending}
+              className="h-9 px-4 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-500 text-white shadow-md disabled:opacity-50"
+            >
+              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
               Delete
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -218,14 +256,15 @@ function WalkthroughBuilder({
   }
 
   function removeStep(id: string) {
-    const updated = steps.filter((s) => s.id !== id).map((s, i) => ({ ...s, order: i }));
-    setSteps(updated);
-    if (expandedStep === id) setExpandedStep(updated[0]?.id ?? null);
+    if (steps.length <= 1) { toast.error("A walkthrough must have at least one step"); return; }
+    const filtered = steps.filter((s) => s.id !== id).map((s, i) => ({ ...s, order: i }));
+    setSteps(filtered);
+    if (expandedStep === id) setExpandedStep(filtered[0]?.id ?? null);
   }
 
   function moveStep(id: string, dir: -1 | 1) {
     const idx = steps.findIndex((s) => s.id === id);
-    if (idx + dir < 0 || idx + dir >= steps.length) return;
+    if (idx < 0 || idx + dir < 0 || idx + dir >= steps.length) return;
     const updated = [...steps];
     [updated[idx], updated[idx + dir]] = [updated[idx + dir], updated[idx]];
     setSteps(updated.map((s, i) => ({ ...s, order: i })));
@@ -249,128 +288,164 @@ function WalkthroughBuilder({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="space-y-6 p-8 max-w-3xl mx-auto">
+    <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={onBack} className="gap-1.5">
+        <button
+          onClick={onBack}
+          className="h-8 px-3 rounded-lg text-xs font-semibold bg-[#020A17] text-[#D8C7A5] hover:text-[#FFF4D4] border border-[#3A2C18] hover:border-[#C5A059] flex items-center gap-1.5 transition-all cursor-pointer"
+        >
           <ArrowLeft className="h-4 w-4" /> Back
-        </Button>
-        <h1 className="text-2xl font-bold text-foreground">{initial ? "Edit Walkthrough" : "New Walkthrough"}</h1>
+        </button>
+        <h1 className="text-xl sm:text-2xl font-serif font-bold text-[#FFF4D4]">
+          {initial ? "Edit Walkthrough SOP" : "Create New Walkthrough SOP"}
+        </h1>
       </div>
 
-      {/* Meta */}
-      <Card className="p-6 space-y-4 rounded-xl border">
+      {/* Meta Card */}
+      <div className="p-6 space-y-4 rounded-2xl border border-[#3A2C18] bg-[#05142B]/95 shadow-xl">
         <div className="grid sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">Title *</label>
-            <VoiceInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Discovery Call SOP" className="text-base font-semibold" />
+          <div className="sm:col-span-2 space-y-1">
+            <label className="text-xs font-bold uppercase tracking-wider text-[#C6B697] block">SOP Title *</label>
+            <VoiceInput
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Discovery Call Intake & PWN Preparation"
+              className="text-sm font-semibold bg-[#020A17] border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#C6B697]/50 rounded-xl"
+            />
           </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">Category</label>
+          <div className="space-y-1">
+            <label className="text-xs font-bold uppercase tracking-wider text-[#C6B697] block">Category</label>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
+              <SelectTrigger className="bg-[#020A17] border-[#3A2C18] text-[#FFF4D4] rounded-xl text-xs sm:text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4]">
                 {CATEGORIES.filter((c) => c !== "All").map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                  <SelectItem key={c} value={c} className="focus:bg-[#07162B] focus:text-[#FFE394]">{c}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">Description</label>
-            <VoiceInput value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief summary of this SOP..." />
+          <div className="space-y-1">
+            <label className="text-xs font-bold uppercase tracking-wider text-[#C6B697] block">Description</label>
+            <VoiceInput
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Brief summary of this operational protocol…"
+              className="bg-[#020A17] border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#C6B697]/50 rounded-xl text-xs sm:text-sm"
+            />
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* Steps */}
+      {/* Steps List */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Steps ({steps.length})</h2>
-          <Button size="sm" variant="outline" onClick={addStep} className="gap-1.5">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#C6B697]">Sequence Steps ({steps.length})</h2>
+          <button
+            onClick={addStep}
+            className="h-8 px-3 rounded-lg text-xs font-bold bg-[#020A17] text-[#C5A059] border border-[#3A2C18] hover:border-[#C5A059] hover:text-[#FFF4D4] flex items-center gap-1.5 transition-all cursor-pointer"
+          >
             <Plus className="h-3.5 w-3.5" /> Add Step
-          </Button>
+          </button>
         </div>
 
         <div className="space-y-3">
           {steps.map((step, idx) => (
-            <Card key={step.id} className="rounded-xl border overflow-hidden">
-              {/* Step header */}
+            <div key={step.id} className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 overflow-hidden shadow-md">
+              {/* Step Header */}
               <div
-                className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
+                className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#07162B]/80 transition-colors"
                 onClick={() => setExpandedStep(expandedStep === step.id ? null : step.id)}
               >
-                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-bold flex-shrink-0">
+                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[#020A17] text-[#C5A059] border border-[#3A2C18] text-xs font-bold flex-shrink-0 font-mono">
                   {idx + 1}
                 </div>
-                <span className="flex-1 text-sm font-semibold text-foreground truncate">
-                  {step.title || <span className="text-muted-foreground italic">Untitled step</span>}
+                <span className="flex-1 text-sm font-serif font-bold text-[#FFF4D4] truncate">
+                  {step.title || <span className="text-[#C6B697]/60 italic font-sans font-normal">Untitled step</span>}
                 </span>
                 <div className="flex items-center gap-1">
-                  <button onClick={(e) => { e.stopPropagation(); moveStep(step.id, -1); }} disabled={idx === 0} className="p-1 rounded hover:bg-muted disabled:opacity-30">
+                  <button onClick={(e) => { e.stopPropagation(); moveStep(step.id, -1); }} disabled={idx === 0} className="p-1 rounded text-[#C6B697] hover:text-[#FFF4D4] disabled:opacity-30">
                     <ChevronUp className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); moveStep(step.id, 1); }} disabled={idx === steps.length - 1} className="p-1 rounded hover:bg-muted disabled:opacity-30">
+                  <button onClick={(e) => { e.stopPropagation(); moveStep(step.id, 1); }} disabled={idx === steps.length - 1} className="p-1 rounded text-[#C6B697] hover:text-[#FFF4D4] disabled:opacity-30">
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); removeStep(step.id); }} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
+                  <button onClick={(e) => { e.stopPropagation(); removeStep(step.id); }} className="p-1 rounded text-red-400 hover:text-red-200 hover:bg-red-500/20">
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
 
-              {/* Step body */}
+              {/* Step Body */}
               {expandedStep === step.id && (
-                <div className="px-4 pb-4 space-y-3 border-t border-border bg-muted/10">
-                  <div className="pt-3">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">Step Title *</label>
-                    <VoiceInput value={step.title} onChange={(e) => updateStep(step.id, "title", e.target.value)} placeholder="e.g. Introduce yourself and the company" />
+                <div className="px-4 pb-4 space-y-3 border-t border-[#3A2C18] bg-[#020A17]/60 pt-3">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#C6B697] mb-1 block">Step Title *</label>
+                    <VoiceInput
+                      value={step.title}
+                      onChange={(e) => updateStep(step.id, "title", e.target.value)}
+                      placeholder="e.g. Confirm student evaluations and review IEP eligibility dates"
+                      className="bg-[#020A17] border-[#3A2C18] text-[#FFF4D4] rounded-xl text-xs sm:text-sm"
+                    />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">Instructions</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#C6B697] mb-1 block">Instructions</label>
                     <VoiceTextarea
                       rows={3}
                       value={step.instructions}
                       onChange={(e) => updateStep(step.id, "instructions", e.target.value)}
-                      placeholder="What should the advocate do in this step? Be specific."
+                      placeholder="Specific operational instructions for the advocate or case worker…"
+                      className="bg-[#020A17] border-[#3A2C18] text-[#FFF4D4] rounded-xl text-xs sm:text-sm"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">
-                      Script / What to Say <span className="font-normal text-muted-foreground">(optional)</span>
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#C6B697] mb-1 block">
+                      Script / Verbatim Talking Points <span className="font-normal opacity-60">(optional)</span>
                     </label>
                     <VoiceTextarea
                       rows={3}
                       value={step.script ?? ""}
                       onChange={(e) => updateStep(step.id, "script", e.target.value)}
-                      placeholder="Hi [Name], this is [Advocate] from Waypoint Advocates. I'm calling about..."
-                      className="font-mono text-sm"
+                      placeholder="Verbatim script to read to parents, school psychologists, or LEA representatives…"
+                      className="bg-[#020A17] border-[#3A2C18] text-[#FFE394] font-mono rounded-xl text-xs"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">
-                      Notes / If-Then Guidance <span className="font-normal text-muted-foreground">(optional)</span>
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#C6B697] mb-1 block">
+                      Notes & Exception Guidance <span className="font-normal opacity-60">(optional)</span>
                     </label>
                     <VoiceTextarea
                       rows={2}
                       value={step.notes ?? ""}
                       onChange={(e) => updateStep(step.id, "notes", e.target.value)}
-                      placeholder="e.g. If no answer → leave voicemail using the script above. If voicemail full → send email."
+                      placeholder="e.g. If school denies evaluation, cite 34 CFR § 300.503 prior written notice timeline."
+                      className="bg-[#020A17] border-[#3A2C18] text-[#FFF4D4] rounded-xl text-xs sm:text-sm"
                     />
                   </div>
                 </div>
               )}
-            </Card>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Save */}
+      {/* Save Actions */}
       <div className="flex justify-end gap-3 pt-2">
-        <Button variant="outline" onClick={onBack}>Cancel</Button>
-        <Button onClick={handleSave} disabled={isPending} className="gap-2 min-w-32">
+        <button
+          onClick={onBack}
+          className="h-10 px-4 rounded-xl text-xs font-semibold bg-[#020A17] text-[#D8C7A5] hover:text-[#FFF4D4] border border-[#3A2C18]"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={isPending}
+          className="h-10 px-5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-md hover:brightness-110 flex items-center gap-2 disabled:opacity-50"
+        >
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {initial ? "Save Changes" : "Create Walkthrough"}
-        </Button>
+          <span>{initial ? "Save Changes" : "Create SOP Walkthrough"}</span>
+        </button>
       </div>
     </div>
   );
@@ -401,7 +476,6 @@ function WalkthroughRunner({
     if (updated.has(id)) { updated.delete(id); } else { updated.add(id); }
     setCompletedSteps(updated);
     updateRun.mutate({ runId, completedSteps: Array.from(updated) });
-    // Auto-advance to next uncompleted step
     if (!updated.has(id)) return;
     const nextStep = steps.find((s) => !updated.has(s.id) && s.id !== id);
     if (nextStep) setActiveStep(nextStep.id);
@@ -427,139 +501,162 @@ function WalkthroughRunner({
 
   if (finished) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 p-8">
-        <div className="flex items-center justify-center w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-          <CheckCheck className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-5 p-8 text-center">
+        <div className="flex items-center justify-center w-20 h-20 rounded-full bg-[#020A17] border-2 border-[#C5A059] shadow-xl text-[#C5A059]">
+          <CheckCheck className="h-10 w-10 text-[#C5A059]" />
         </div>
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground">Walkthrough Complete!</h2>
-          <p className="text-muted-foreground mt-1">"{walkthrough.title}" — {completedSteps.size} of {steps.length} steps completed</p>
+        <div>
+          <h2 className="text-2xl font-serif font-bold text-[#FFF4D4]">SOP Walkthrough Completed!</h2>
+          <p className="text-xs sm:text-sm text-[#C6B697] mt-1 font-medium">
+            "{walkthrough.title}" — {completedSteps.size} of {steps.length} steps certified
+          </p>
         </div>
-        <Button onClick={onBack} className="gap-2"><ArrowLeft className="h-4 w-4" /> Back to Walkthroughs</Button>
+        <button
+          onClick={onBack}
+          className="h-10 px-5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-md hover:brightness-110 flex items-center gap-2 cursor-pointer"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Walkthroughs</span>
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-8 max-w-3xl mx-auto">
+    <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={handleAbandon} className="gap-1.5">
+        <button
+          onClick={handleAbandon}
+          className="h-8 px-3 rounded-lg text-xs font-semibold bg-[#020A17] text-[#D8C7A5] hover:text-[#FFF4D4] border border-[#3A2C18] hover:border-[#C5A059] flex items-center gap-1.5 transition-all cursor-pointer"
+        >
           <ArrowLeft className="h-4 w-4" /> Exit
-        </Button>
+        </button>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-foreground">{walkthrough.title}</h1>
-          <p className="text-xs text-muted-foreground">{walkthrough.category}</p>
+          <h1 className="text-lg sm:text-xl font-serif font-bold text-[#FFF4D4]">{walkthrough.title}</h1>
+          <p className="text-xs font-mono text-[#C5A059] uppercase tracking-wider">{walkthrough.category}</p>
         </div>
       </div>
 
-      {/* Progress bar */}
+      {/* Progress Bar */}
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{completedSteps.size} of {steps.length} steps complete</span>
-          <span className="font-semibold">{progress}%</span>
+        <div className="flex items-center justify-between text-xs text-[#C6B697] font-mono">
+          <span>{completedSteps.size} of {steps.length} steps certified</span>
+          <span className="font-bold text-[#FFE394]">{progress}%</span>
         </div>
-        <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div className="h-2 rounded-full bg-[#020A17] border border-[#3A2C18] overflow-hidden">
           <div
-            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
-      {/* Step list */}
+      {/* Step List */}
       <div className="space-y-3">
         {steps.map((step, idx) => {
           const isDone = completedSteps.has(step.id);
           const isActive = activeStep === step.id;
           return (
-            <Card
+            <div
               key={step.id}
-              className={`rounded-xl border transition-all overflow-hidden ${
-                isDone ? "opacity-60 border-emerald-200 dark:border-emerald-800" :
-                isActive ? "border-accent shadow-md" : "border-border"
+              className={`rounded-2xl border transition-all overflow-hidden bg-[#05142B]/90 shadow-md ${
+                isDone
+                  ? "opacity-60 border-[#3A2C18]"
+                  : isActive
+                  ? "border-[#C5A059] shadow-[0_4px_16px_rgba(197,160,89,0.2)]"
+                  : "border-[#3A2C18]"
               }`}
             >
-              {/* Step header */}
+              {/* Step Header */}
               <div
-                className={`flex items-center gap-3 px-4 py-3 cursor-pointer ${isActive ? "bg-accent/5" : "hover:bg-muted/20"}`}
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer ${
+                  isActive ? "bg-[#07162B]" : "hover:bg-[#07162B]/50"
+                }`}
                 onClick={() => setActiveStep(isActive ? "" : step.id)}
               >
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleStep(step.id); }}
-                  className="flex-shrink-0"
+                  className="flex-shrink-0 cursor-pointer"
                 >
-                  {isDone
-                    ? <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                    : <Circle className="h-5 w-5 text-muted-foreground hover:text-accent transition-colors" />
-                  }
+                  {isDone ? (
+                    <CheckCircle2 className="h-5 w-5 text-[#C5A059]" />
+                  ) : (
+                    <Circle className="h-5 w-5 text-[#C6B697] hover:text-[#FFF4D4] transition-colors" />
+                  )}
                 </button>
-                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-muted text-muted-foreground text-xs font-bold flex-shrink-0">
+                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#020A17] text-[#C5A059] border border-[#3A2C18] text-xs font-bold flex-shrink-0 font-mono">
                   {idx + 1}
                 </div>
-                <span className={`flex-1 text-sm font-semibold ${isDone ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                <span className={`flex-1 text-sm font-serif font-bold ${isDone ? "line-through text-[#C6B697]" : "text-[#FFF4D4]"}`}>
                   {step.title}
                 </span>
               </div>
 
-              {/* Step detail — shown when active and not done */}
+              {/* Step Details */}
               {isActive && !isDone && (
-                <div className="px-4 pb-4 space-y-3 border-t border-border bg-muted/5">
+                <div className="px-4 pb-4 space-y-3 border-t border-[#3A2C18] bg-[#020A17]/60 pt-3">
                   {step.instructions && (
-                    <div className="pt-3">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Instructions</p>
-                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{step.instructions}</p>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#C6B697] mb-1">Operational Instructions</p>
+                      <p className="text-xs sm:text-sm text-[#FFF4D4] whitespace-pre-wrap leading-relaxed">{step.instructions}</p>
                     </div>
                   )}
                   {step.script && (
-                    <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-3">
-                      <p className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1.5">Script / What to Say</p>
-                      <p className="text-sm text-foreground font-mono whitespace-pre-wrap leading-relaxed">{step.script}</p>
+                    <div className="rounded-xl border border-[#3A2C18] bg-[#07162B] p-3 shadow-inner">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#C5A059] mb-1">Verbatim Talking Points</p>
+                      <p className="text-xs text-[#FFE394] font-mono whitespace-pre-wrap leading-relaxed">{step.script}</p>
                     </div>
                   )}
                   {step.notes && (
-                    <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-3">
-                      <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1.5">If-Then Guidance</p>
-                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{step.notes}</p>
+                    <div className="rounded-xl border border-[#3A2C18] bg-[#020A17] p-3">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#FDBA74] mb-1">Exception / If-Then Guidance</p>
+                      <p className="text-xs text-[#FFF4D4] whitespace-pre-wrap leading-relaxed">{step.notes}</p>
                     </div>
                   )}
-                  <Button
-                    className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white mt-2"
+                  <button
+                    className="w-full mt-2 h-9 rounded-xl text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-md hover:brightness-110 flex items-center justify-center gap-2 cursor-pointer"
                     onClick={() => toggleStep(step.id)}
                   >
-                    <CheckCircle2 className="h-4 w-4" /> Mark Step Complete
-                  </Button>
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Certify Step Complete</span>
+                  </button>
                 </div>
               )}
-            </Card>
+            </div>
           );
         })}
       </div>
 
-      {/* Run notes */}
-      <div>
-        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block">Session Notes (optional)</label>
+      {/* Run Notes */}
+      <div className="space-y-1">
+        <label className="text-xs font-bold uppercase tracking-wider text-[#C6B697] block">Session Logs / Advocate Notes</label>
         <VoiceTextarea
           rows={3}
           value={runNotes}
           onChange={(e) => setRunNotes(e.target.value)}
-          placeholder="Any notes about this walkthrough session..."
+          placeholder="Any operational observations or follow-ups from this walkthrough…"
+          className="bg-[#020A17] border-[#3A2C18] text-[#FFF4D4] rounded-xl text-xs sm:text-sm"
         />
       </div>
 
-      {/* Complete button */}
+      {/* Completion Buttons */}
       <div className="flex gap-3">
-        <Button
-          className={`flex-1 gap-2 ${allDone ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}`}
+        <button
+          className={`flex-1 h-10 rounded-xl text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-md hover:brightness-110 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50`}
           onClick={handleComplete}
           disabled={updateRun.isPending}
         >
           {updateRun.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCheck className="h-4 w-4" />}
-          {allDone ? "Complete Walkthrough" : `Complete (${completedSteps.size}/${steps.length} done)`}
-        </Button>
-        <Button variant="outline" onClick={handleAbandon} className="gap-1.5">
-          <RotateCcw className="h-4 w-4" /> Abandon
-        </Button>
+          <span>{allDone ? "Certify SOP Complete" : `Complete (${completedSteps.size}/${steps.length} done)`}</span>
+        </button>
+        <button
+          onClick={handleAbandon}
+          className="h-10 px-4 rounded-xl text-xs font-semibold bg-[#020A17] text-[#D8C7A5] hover:text-[#FFF4D4] border border-[#3A2C18] flex items-center gap-1.5 cursor-pointer"
+        >
+          <RotateCcw className="h-4 w-4" />
+          <span>Abandon</span>
+        </button>
       </div>
     </div>
   );
