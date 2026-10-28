@@ -69,8 +69,10 @@ import { agreementsRouter } from "./routers/agreements";
 import { receiptsRouter } from "./routers/receipts";
 import { familyEnrollmentRouter } from "./routers/familyEnrollment";
 import { stateLawLibraryRouter } from "./routers/stateLawLibrary";
+import { reviewTrackerRouter } from "./routers/reviewTracker";
 
 export const appRouter = router({
+  reviewTracker: reviewTrackerRouter,
   familyEnrollment: familyEnrollmentRouter,
   receipts: receiptsRouter,
 

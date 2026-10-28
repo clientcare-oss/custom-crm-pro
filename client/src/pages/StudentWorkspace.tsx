@@ -36,6 +36,7 @@ export default function StudentWorkspace() {
 
   // Active top index tab
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "communication" | "tasks" | "notes" | "documents" | "more">("overview");
+  const [moreSubView, setMoreSubView] = useState<"grid" | "reviews">("grid");
 
   // Local checklist state for default actions
   const [checkedActions, setCheckedActions] = useState<Record<string, boolean>>({
@@ -96,6 +97,12 @@ export default function StudentWorkspace() {
   const complaintDraftQuery = trpc.stateComplaint.getDraft.useQuery(
     { studentId: effectiveStudentId },
     { enabled: !!effectiveStudentId }
+  );
+
+  // Review tracker query for this student (resolved at parent account level)
+  const reviewTrackerQuery = trpc.reviewTracker.getByStudent.useQuery(
+    { studentId: effectiveStudentId },
+    { enabled: !!effectiveStudentId && effectiveStudentId > 0 }
   );
 
   // Toggle action checkbox
@@ -560,6 +567,11 @@ export default function StudentWorkspace() {
                     displayEligibility={displayEligibility}
                     displayMedicalDiagnoses={displayMedicalDiagnoses}
                     clientTime={clientTime}
+                    reviewStatus={reviewTrackerQuery.data?.status || "none"}
+                    onOpenReviews={() => {
+                      setActiveTab("more");
+                      setMoreSubView("reviews");
+                    }}
                     onEditDetails={() => setDetailsModalOpen(true)}
                   />
 
@@ -614,6 +626,7 @@ export default function StudentWorkspace() {
                 parentEmail={parent?.email}
                 parentPhone={parentPhone}
                 studentGrade={student?.gradeLevel}
+                initialSubView={moreSubView}
               />
             )}
 

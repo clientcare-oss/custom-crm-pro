@@ -2,7 +2,7 @@ import React from "react";
 import { 
   User, Pencil, GraduationCap, School, 
   ArrowRight, ShieldCheck, Award, Activity, Globe,
-  Landmark
+  Landmark, Star
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -24,6 +24,8 @@ export interface StudentProfileDossierProps {
   clientTime: string;
   onEditDetails: () => void;
   offset?: { x: number; y: number };
+  reviewStatus?: "none" | "requested" | "followup_due" | "verified";
+  onOpenReviews?: () => void;
 }
 
 export function StudentProfileDossier({
@@ -44,6 +46,8 @@ export function StudentProfileDossier({
   clientTime,
   onEditDetails,
   offset = { x: -34, y: -10 },
+  reviewStatus = "none",
+  onOpenReviews,
 }: StudentProfileDossierProps) {
   return (
     <div 
@@ -69,7 +73,7 @@ export function StudentProfileDossier({
         </h2>
 
         {/* Pill Badges */}
-        <div className="flex items-center gap-1.5 mt-1.5">
+        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap justify-center">
           <Badge className="bg-[#123159]/85 text-sky-200 border border-sky-400/40 text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full">
             IEP
           </Badge>
@@ -77,6 +81,39 @@ export function StudentProfileDossier({
             <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
             <span>{student?.studentStatus || "Active"}</span>
           </Badge>
+
+          {/* Contextual Review Status Pill */}
+          {reviewStatus === "verified" && (
+            <button
+              type="button"
+              onClick={onOpenReviews}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/15 border border-[#F1CB6C]/40 text-[#FFE394] hover:bg-amber-500/25 transition-all shadow-[0_0_8px_rgba(241,203,108,0.2)] cursor-pointer"
+              title="Google Review Verified — Click to view Reviews"
+            >
+              <Star className="w-2.5 h-2.5 fill-[#F1CB6C] text-[#F1CB6C]" />
+              <span>Review Verified</span>
+            </button>
+          )}
+          {reviewStatus === "requested" && (
+            <button
+              type="button"
+              onClick={onOpenReviews}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-sky-500/15 border border-sky-400/35 text-sky-200 hover:bg-sky-500/25 transition-all cursor-pointer"
+              title="Review Requested — Click to view Reviews"
+            >
+              <span>Review Requested</span>
+            </button>
+          )}
+          {reviewStatus === "followup_due" && (
+            <button
+              type="button"
+              onClick={onOpenReviews}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/20 border border-amber-500/50 text-amber-200 hover:bg-amber-500/30 transition-all cursor-pointer animate-pulse"
+              title="Follow-Up Due — Click to view Reviews"
+            >
+              <span>Follow-Up Due</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -228,14 +265,54 @@ export function StudentProfileDossier({
         </div>
 
         {/* Parent / Guardian Row */}
-        <div className="pt-1.5 border-t border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-1 text-slate-400">
-            <User className="h-3 w-3 text-white/50" />
-            <span>Parent: <strong className="text-white">{parentName}</strong></span>
+        <div className="pt-1.5 border-t border-white/10 space-y-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1 text-slate-400">
+              <User className="h-3 w-3 text-white/50" />
+              <span>Parent: <strong className="text-white">{parentName}</strong></span>
+            </div>
+            <a href={`tel:${parentPhone}`} className="text-sky-300 hover:text-amber-300 transition-colors font-medium">
+              {parentPhone}
+            </a>
           </div>
-          <a href={`tel:${parentPhone}`} className="text-sky-300 hover:text-amber-300 transition-colors font-medium">
-            {parentPhone}
-          </a>
+
+          {/* Contextual Account Review Status Pill */}
+          {reviewStatus && reviewStatus !== "none" && (
+            <div className="flex items-center justify-between pt-0.5 text-[10px]">
+              <span className="text-slate-400">Account Review:</span>
+              {reviewStatus === "verified" && (
+                <button
+                  type="button"
+                  onClick={onOpenReviews}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/15 border border-[#F1CB6C]/40 text-[#FFE394] hover:bg-amber-500/25 transition-all shadow-[0_0_8px_rgba(241,203,108,0.2)] cursor-pointer"
+                  title="Google Review Verified — Click to view in Reviews"
+                >
+                  <Star className="w-2.5 h-2.5 fill-[#F1CB6C] text-[#F1CB6C]" />
+                  <span>Review Verified</span>
+                </button>
+              )}
+              {reviewStatus === "requested" && (
+                <button
+                  type="button"
+                  onClick={onOpenReviews}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-sky-500/15 border border-sky-400/35 text-sky-200 hover:bg-sky-500/25 transition-all cursor-pointer"
+                  title="Review Requested — Click to view in Reviews"
+                >
+                  <span>Review Requested</span>
+                </button>
+              )}
+              {reviewStatus === "followup_due" && (
+                <button
+                  type="button"
+                  onClick={onOpenReviews}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/20 border border-amber-500/50 text-amber-200 hover:bg-amber-500/30 transition-all cursor-pointer animate-pulse"
+                  title="Follow-Up Due — Click to view in Reviews"
+                >
+                  <span>Follow-Up Due</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

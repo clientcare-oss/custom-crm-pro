@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import { 
   SquarePen, Compass, Users, 
   UsersRound, ClipboardCheck, Landmark, Wrench, 
-  CalendarDays, Clock, Coins, Link2 
+  CalendarDays, Clock, Coins, Link2, Star
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StudentReviewTrackerView } from "./reviews/StudentReviewTrackerView";
 
 interface StudentWorkspaceMoreTabProps {
   studentId: string | number;
@@ -16,6 +17,7 @@ interface StudentWorkspaceMoreTabProps {
   parentEmail?: string;
   parentPhone?: string;
   studentGrade?: string;
+  initialSubView?: "grid" | "reviews";
 }
 
 interface WorkspaceItem {
@@ -66,11 +68,34 @@ export function StudentWorkspaceMoreTab({
   studentId,
   caseId,
   studentName,
+  parentContactId,
+  parentName,
+  parentEmail,
+  parentPhone,
+  studentGrade,
+  initialSubView = "grid",
 }: StudentWorkspaceMoreTabProps) {
   const [, setLocation] = useLocation();
   const [selectedId, setSelectedId] = useState<string>("activity-timeline");
+  const [activeSubView, setActiveSubView] = useState<"grid" | "reviews">(initialSubView);
+
+  useEffect(() => {
+    if (initialSubView) {
+      setActiveSubView(initialSubView);
+    }
+  }, [initialSubView]);
 
   const items: WorkspaceItem[] = useMemo(() => [
+    {
+      id: "reviews",
+      title: "Reviews",
+      description: "Request tracker & Google verification.",
+      icon: Star,
+      onClick: () => {
+        setSelectedId("reviews");
+        setActiveSubView("reviews");
+      },
+    },
     {
       id: "activity-timeline",
       title: "Activity Timeline",
@@ -212,6 +237,20 @@ export function StudentWorkspaceMoreTab({
       },
     },
   ], [studentId, caseId, studentName, setLocation]);
+
+  if (activeSubView === "reviews") {
+    return (
+      <StudentReviewTrackerView
+        studentId={studentId}
+        studentName={studentName}
+        parentContactId={parentContactId}
+        parentName={parentName}
+        parentEmail={parentEmail}
+        parentPhone={parentPhone}
+        onBackToMore={() => setActiveSubView("grid")}
+      />
+    );
+  }
 
   return (
     <div className="w-full min-h-[500px] p-5 sm:p-7 md:p-8 select-none">

@@ -3394,3 +3394,46 @@ export const familyEnrollmentPaymentLedger = mysqlTable(
 export type FamilyEnrollmentPaymentLedger = typeof familyEnrollmentPaymentLedger.$inferSelect;
 export type InsertFamilyEnrollmentPaymentLedger = typeof familyEnrollmentPaymentLedger.$inferInsert;
 
+// ── Review Tracker (PG-030-REV) ───────────────────────────────────────────────
+export const clientReviewTrackers = mysqlTable(
+  "client_review_trackers",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    parentContactId: int("parentContactId").notNull(), // Account-level key: all children share this review tracker
+    studentContactId: int("studentContactId"), // primary/originating student contact ID
+    status: varchar("status", { length: 50 }).default("none").notNull(), // "none" | "requested" | "followup_due" | "verified"
+    requestedAt: timestamp("requestedAt"),
+    requestedBy: varchar("requestedBy", { length: 150 }),
+    requestChannel: varchar("requestChannel", { length: 50 }).default("email"), // "email" | "sms" | "portal"
+    followUpDueAt: timestamp("followUpDueAt"),
+    lastFollowUpSentAt: timestamp("lastFollowUpSentAt"),
+    followUpCount: int("followUpCount").default(0).notNull(),
+    googleReviewDetected: boolean("googleReviewDetected").default(false).notNull(),
+    googleReviewUrl: text("googleReviewUrl"),
+    googleReviewRating: int("googleReviewRating"),
+    googleReviewAuthor: varchar("googleReviewAuthor", { length: 150 }),
+    googleReviewSnippet: text("googleReviewSnippet"),
+    googleReviewDate: varchar("googleReviewDate", { length: 100 }),
+    verifiedAt: timestamp("verifiedAt"),
+    verifiedBy: varchar("verifiedBy", { length: 150 }),
+    verificationNotes: text("verificationNotes"),
+    thankYouStatus: varchar("thankYouStatus", { length: 50 }).default("not_prepared").notNull(), // "not_prepared" | "pending_approval" | "approved" | "sent"
+    thankYouPreparedAt: timestamp("thankYouPreparedAt"),
+    thankYouSubject: text("thankYouSubject"),
+    thankYouBody: text("thankYouBody"),
+    thankYouSentAt: timestamp("thankYouSentAt"),
+    thankYouSentBy: varchar("thankYouSentBy", { length: 150 }),
+    internalNotes: text("internalNotes"),
+    auditTrail: text("auditTrail"), // JSON array of { id, timestamp, action, employee, details }
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (t) => ({
+    parentContactIdIdx: index("client_review_trackers_parent_idx").on(t.parentContactId),
+    statusIdx: index("client_review_trackers_status_idx").on(t.status),
+  })
+);
+
+export type ClientReviewTracker = typeof clientReviewTrackers.$inferSelect;
+export type InsertClientReviewTracker = typeof clientReviewTrackers.$inferInsert;
+
