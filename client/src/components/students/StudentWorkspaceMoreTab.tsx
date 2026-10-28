@@ -3,9 +3,11 @@ import { useLocation } from "wouter";
 import { 
   SquarePen, Compass, Users, 
   UsersRound, ClipboardCheck, Landmark, Wrench, 
-  CalendarDays, Clock, Coins, Link2, Star, Shield
+  CalendarDays, Clock, Coins, Link2, Star, Shield,
+  MoreHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import PageIdBadge from "@/components/PageIdBadge";
 import { StudentReviewTrackerView } from "./reviews/StudentReviewTrackerView";
 
 interface StudentWorkspaceMoreTabProps {
@@ -18,6 +20,7 @@ interface StudentWorkspaceMoreTabProps {
   parentPhone?: string;
   studentGrade?: string;
   initialSubView?: "grid" | "reviews";
+  onSubViewChange?: (subView: "grid" | "reviews") => void;
   onOpenContactHistory?: () => void;
 }
 
@@ -75,6 +78,7 @@ export function StudentWorkspaceMoreTab({
   parentPhone,
   studentGrade,
   initialSubView = "grid",
+  onSubViewChange,
   onOpenContactHistory,
 }: StudentWorkspaceMoreTabProps) {
   const [, setLocation] = useLocation();
@@ -106,6 +110,7 @@ export function StudentWorkspaceMoreTab({
       onClick: () => {
         setSelectedId("reviews");
         setActiveSubView("reviews");
+        onSubViewChange?.("reviews");
       },
     },
     {
@@ -248,7 +253,7 @@ export function StudentWorkspaceMoreTab({
         setLocation(`/contacts/${studentId}?tab=referral`);
       },
     },
-  ], [studentId, caseId, studentName, setLocation]);
+  ], [studentId, caseId, studentName, setLocation, onOpenContactHistory, onSubViewChange]);
 
   if (activeSubView === "reviews") {
     return (
@@ -259,13 +264,44 @@ export function StudentWorkspaceMoreTab({
         parentName={parentName}
         parentEmail={parentEmail}
         parentPhone={parentPhone}
-        onBackToMore={() => setActiveSubView("grid")}
+        onBackToMore={() => {
+          setActiveSubView("grid");
+          onSubViewChange?.("grid");
+        }}
       />
     );
   }
 
   return (
     <div className="w-full min-h-[500px] p-5 sm:p-7 md:p-8 select-none">
+      {/* ─── Page ID Displayer Hook ─── */}
+      <PageIdBadge id="PG-030-MORE" name="Student Workspace → More Hub" />
+
+      {/* ─── Header & Sub-ID Banner ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-5 border-b border-[#3A2C18]/60">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0c2449] to-[#030e20] border border-[#2b5894]/80 flex items-center justify-center text-[#F1CB6C] shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+            <MoreHorizontal className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 
+                className="text-lg sm:text-xl font-bold text-[#F7F2E8] tracking-tight"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              >
+                More Hub & Case Extensions
+              </h3>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-[#C5A059]/15 text-[#FFE394] border border-[#C5A059]/40 shadow-sm">
+                PG-030-MORE
+              </span>
+            </div>
+            <p className="text-xs text-[#93AECD] mt-0.5">
+              Extended advocacy tools, review management, timelines, and specialized case extensions.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* ─── Grid: Responsive columns allowing long titles like "Activity Timeline" to fit on 1 line ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3.5 sm:gap-4">
         {items.map((item) => {

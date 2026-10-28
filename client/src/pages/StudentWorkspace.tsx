@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -27,6 +27,7 @@ import { StudentWorkspaceMoreTab } from "@/components/students/StudentWorkspaceM
 import { IepProfileUpdateBubble } from "@/components/students/IepProfileUpdateBubble";
 import { StudentCurrentFocusPanel } from "@/components/students/StudentCurrentFocusPanel";
 import { ParentContactHistoryDrawer } from "@/components/contact/ParentContactHistoryDrawer";
+import { broadcastPageId } from "@/lib/pageIdRegistry";
 
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
@@ -35,9 +36,111 @@ export default function StudentWorkspace() {
   const studentId = typeof routeIdentifier === "number" ? routeIdentifier : 0;
   const [, setLocation] = useLocation();
 
-  // Active top index tab
-  const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "communication" | "tasks" | "notes" | "documents" | "more">("overview");
-  const [moreSubView, setMoreSubView] = useState<"grid" | "reviews">("grid");
+  // Active top index tab (hydrated from ?tab= URL param if present)
+  const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "communication" | "tasks" | "notes" | "documents" | "more">(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get("tab");
+      if (tabParam && ["overview", "timeline", "communication", "tasks", "notes", "documents", "more"].includes(tabParam)) {
+        return tabParam as any;
+      }
+    }
+    return "overview";
+  });
+
+  const [moreSubView, setMoreSubView] = useState<"grid" | "reviews">(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const subParam = urlParams.get("sub");
+      if (subParam === "reviews" || subParam === "review") {
+        return "reviews";
+      }
+    }
+    return "grid";
+  });
+
+  // Switch tabs and synchronize URL search params
+  const handleSelectTab = (tab: "overview" | "timeline" | "communication" | "tasks" | "notes" | "documents" | "more") => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tab === "overview") {
+        url.searchParams.delete("tab");
+        url.searchParams.delete("sub");
+      } else {
+        url.searchParams.set("tab", tab);
+        if (tab !== "more") {
+          url.searchParams.delete("sub");
+        }
+      }
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
+
+  const handleMoreSubViewChange = (subView: "grid" | "reviews") => {
+    setMoreSubView(subView);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", "more");
+      if (subView === "reviews") {
+        url.searchParams.set("sub", "reviews");
+      } else {
+        url.searchParams.delete("sub");
+      }
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
+
+  // Broadcast Page ID to FloatingUtilityDock whenever tab or subview changes
+  useEffect(() => {
+    if (activeTab === "more") {
+      if (moreSubView === "reviews") {
+        broadcastPageId({
+          id: "PG-030-REV",
+          name: "Student Dossier → Reviews",
+          category: "Advocacy",
+          description: "Review request tracking, verification, and thank-you workflow",
+        });
+      } else {
+        broadcastPageId({
+          id: "PG-030-MORE",
+          name: "Student Workspace → More Hub",
+          category: "Advocacy",
+          description: "Extended advocacy tools, review management, and case extensions",
+        });
+      }
+    } else if (activeTab === "communication") {
+      broadcastPageId({
+        id: "PG-030-COM",
+        name: "Student Workspace → Communication",
+        category: "Communications",
+      });
+    } else if (activeTab === "tasks") {
+      broadcastPageId({
+        id: "PG-030-TSK",
+        name: "Student Workspace → Tasks",
+        category: "Productivity",
+      });
+    } else if (activeTab === "notes") {
+      broadcastPageId({
+        id: "PG-030-NTE",
+        name: "Student Workspace → Notes",
+        category: "Productivity",
+      });
+    } else if (activeTab === "documents") {
+      broadcastPageId({
+        id: "PG-030-DOC",
+        name: "Student Workspace → Documents",
+        category: "Vault",
+      });
+    } else {
+      broadcastPageId({
+        id: "PG-030",
+        name: "Student Workspace",
+        category: "CRM",
+      });
+    }
+  }, [activeTab, moreSubView]);
 
   // Local checklist state for default actions
   const [checkedActions, setCheckedActions] = useState<Record<string, boolean>>({
@@ -462,7 +565,7 @@ export default function StudentWorkspace() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => handleSelectTab(tab.id as any)}
                   className={cn(
                     "relative flex items-center gap-2.5 px-4.5 sm:px-5.5 py-2.5 rounded-t-[3.5px] text-xs sm:text-[13.5px] transition-colors cursor-pointer select-none",
                     "border border-b-0",
@@ -582,8 +685,8 @@ export default function StudentWorkspace() {
                     clientTime={clientTime}
                     reviewStatus={reviewTrackerQuery.data?.status || "none"}
                     onOpenReviews={() => {
-                      setActiveTab("more");
-                      setMoreSubView("reviews");
+                      handleSelectTab("more");
+                      handleMoreSubViewChange("reviews");
                     }}
                     onEditDetails={() => setDetailsModalOpen(true)}
                     contactConcernStatus={isContactConcernActive ? "active" : null}
@@ -625,7 +728,7 @@ export default function StudentWorkspace() {
                     onToggleAction={toggleAction}
                     onOpenScheduleModal={() => setScheduleModalOpen(true)}
                     onNavigate={(path) => setLocation(path)}
-                    onSetActiveTab={(tab) => setActiveTab(tab as any)}
+                    onSetActiveTab={(tab) => handleSelectTab(tab as any)}
                   />
                 </div>
               </div>
@@ -644,6 +747,7 @@ export default function StudentWorkspace() {
                 parentPhone={parentPhone}
                 studentGrade={student?.gradeLevel}
                 initialSubView={moreSubView}
+                onSubViewChange={handleMoreSubViewChange}
                 onOpenContactHistory={() => setParentContactDrawerOpen(true)}
               />
             )}
@@ -670,7 +774,7 @@ export default function StudentWorkspace() {
                   student={student}
                   studentId={effectiveStudentId}
                   fullName={fullName}
-                  onReturnToOverview={() => setActiveTab("overview")}
+                  onReturnToOverview={() => handleSelectTab("overview")}
                 />
               </div>
             )}
@@ -683,7 +787,7 @@ export default function StudentWorkspace() {
                 caseId={student?.caseId || String(studentId)}
                 parentContactId={parent?.id || (student as any)?.parentId}
                 projectId={projects[0]?.id || effectiveProjectId}
-                onReturnToOverview={() => setActiveTab("overview")}
+                onReturnToOverview={() => handleSelectTab("overview")}
               />
             )}
 
@@ -697,7 +801,7 @@ export default function StudentWorkspace() {
                 parentEmail={parent?.email || (student as any)?.parentEmail}
                 caseId={student?.caseId || String(studentId)}
                 parentContactId={parent?.id || (student as any)?.parentId}
-                onReturnToOverview={() => setActiveTab("overview")}
+                onReturnToOverview={() => handleSelectTab("overview")}
               />
             )}
 
@@ -717,7 +821,7 @@ export default function StudentWorkspace() {
                 </div>
                 <div className="flex items-center gap-3 pt-2">
                   <Button
-                    onClick={() => setActiveTab("overview")}
+                    onClick={() => handleSelectTab("overview")}
                     className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl h-9 px-4 cursor-pointer"
                   >
                     Return to Overview Desk

@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import PageIdBadge from "@/components/PageIdBadge";
 
 interface StudentReviewTrackerViewProps {
   studentId: number | string;
@@ -182,6 +183,9 @@ export function StudentReviewTrackerView({
 
   return (
     <div className="w-full min-h-[540px] p-4 sm:p-6 md:p-8 space-y-6 text-[#FFF4D4]">
+      {/* ─── Page ID Displayer Hook ─── */}
+      <PageIdBadge id="PG-030-REV" name="Student Dossier → Reviews" />
+
       {/* ─── Top Header Navigation ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#3A2C18]/80">
         <div className="flex items-center gap-3">
@@ -197,7 +201,7 @@ export function StudentReviewTrackerView({
           )}
 
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2
                 className="text-xl sm:text-2xl font-bold tracking-tight text-[#FFF4D4]"
                 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
@@ -208,6 +212,10 @@ export function StudentReviewTrackerView({
               <Badge className="bg-[#102B4E]/80 border border-[#C5A059]/40 text-[#FFE394] text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5">
                 Account Level
               </Badge>
+              {/* Sub-Page ID Pill */}
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-[#C5A059]/15 text-[#FFE394] border border-[#C5A059]/40 shadow-sm">
+                PG-030-REV
+              </span>
             </div>
             <p className="text-xs text-[#C6B697] mt-0.5">
               Google review requests, verification audit trail, and thank-you correspondence.

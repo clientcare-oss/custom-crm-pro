@@ -109,6 +109,8 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/smart-files":                     { id: "PG-033", name: "Smart Files (Redirects to /agreements)", category: "Business" },
   "/guidance":                        { id: "PG-030-GCL", name: "Guide Client Live", category: "Advocacy", description: "Real-time Point Only co-browsing console" },
   "/portal/guidance":                 { id: "PG-030-GCL", name: "Client Portal Guidance Session", category: "Portal", description: "Active Waypoint guidance co-browsing session" },
+  "/students/more":                   { id: "PG-030-MORE", name: "Student Workspace → More Hub", category: "Advocacy", description: "Extended advocacy tools, review management, and case extensions" },
+  "/students/reviews":                { id: "PG-030-REV", name: "Student Dossier → Reviews", category: "Advocacy", description: "Review request tracking, verification, and thank-you workflow" },
   
   // Settings & System
   "/settings":                        { id: "PG-024", name: "Settings & Practice Profile", category: "Settings" },
@@ -375,6 +377,24 @@ export function resolveAutomationsTabId(tabId: string): PageIdInfo | null {
   return AUTOMATIONS_TAB_IDS[tabId] || null;
 }
 
+// ─── Student Workspace Sub-ID Mappings ────────────────────────────────────────
+export const STUDENT_WORKSPACE_TAB_IDS: Record<string, PageIdInfo> = {
+  "overview":      { id: "PG-030", name: "Student Workspace", category: "CRM", description: "Student case files and IEP advocacy roster" },
+  "more":          { id: "PG-030-MORE", name: "Student Workspace → More Hub", category: "Advocacy", description: "Extended advocacy tools, review management, and case extensions" },
+  "reviews":       { id: "PG-030-REV", name: "Student Dossier → Reviews", category: "Advocacy", description: "Review request tracking, verification, and thank-you workflow" },
+  "communication": { id: "PG-030-COM", name: "Student Workspace → Communication", category: "Communications", description: "Quo telephony, client message threads, and email exchange" },
+  "tasks":         { id: "PG-030-TSK", name: "Student Workspace → Tasks", category: "Productivity", description: "Case action items, IEP review milestones, and to-dos" },
+  "notes":         { id: "PG-030-NTE", name: "Student Workspace → Notes", category: "Productivity", description: "Tactile sticky notes, clinical observations, and case notes" },
+  "documents":     { id: "PG-030-DOC", name: "Student Workspace → Documents", category: "Vault", description: "Case document vault and student files mirror" },
+};
+
+/**
+ * Resolves a Student Workspace tab identifier (e.g. 'more', 'reviews', 'communication') to its specific Sub-Page ID.
+ */
+export function resolveStudentWorkspaceTabId(tabId: string): PageIdInfo | null {
+  return STUDENT_WORKSPACE_TAB_IDS[tabId] || null;
+}
+
 /**
  * Resolves a Crew Quarters tab identifier (e.g. 'messages', 'tasks', 'schedule', 'resources') to its specific Sub-Page ID.
  */
@@ -507,6 +527,20 @@ export function resolvePageId(pathname: string, search = ""): PageIdInfo {
     if (tabParam === "walkthroughs" || tabParam === "sop") {
       return PAGE_IDS["/walkthroughs"];
     }
+  }
+
+  // Check Student Workspace sub-tabs (/students/:id?tab=..., /contacts/:id?tab=...)
+  if (/^\/(?:students|contacts)\/[^/]+/.test(cleanPath)) {
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const tabParam = urlParams.get("tab");
+    const subParam = urlParams.get("sub");
+    if (tabParam === "more" && (subParam === "reviews" || subParam === "review")) {
+      return STUDENT_WORKSPACE_TAB_IDS["reviews"];
+    }
+    if (tabParam && STUDENT_WORKSPACE_TAB_IDS[tabParam]) {
+      return STUDENT_WORKSPACE_TAB_IDS[tabParam];
+    }
+    return STUDENT_WORKSPACE_TAB_IDS["overview"];
   }
 
   // 1. Direct exact match

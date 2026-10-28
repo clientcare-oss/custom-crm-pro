@@ -117,6 +117,8 @@ Welcome! This repository contains **Waypoint Advocates — Custom CRM Pro**, an 
   - `PG-028`: Intake & Dynamic Forms (`/intake`, `/form/:slug`)
   - `PG-029`: Booking Page (`/book`, `/portal/book`)
   - `PG-030`: Student Workspace (`/contacts/:id`, `/students/:id`)
+  - `PG-030-MORE`: Student Workspace → More Hub (`/students/:id?tab=more`)
+  - `PG-030-REV`: Student Dossier → Reviews (`/students/:id?tab=more&sub=reviews`, `/students/:id?tab=reviews`)
   - `PG-031`: Advocate Case Workspace (`/workspace`)
   - `PG-032`: AI Connections (`/ai-connections`)
   - `PG-033`: Smart Files Suite (`/smart-files`)
