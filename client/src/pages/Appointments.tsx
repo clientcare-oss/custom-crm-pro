@@ -23,6 +23,7 @@ import ProposedMeetingDetailModal from "@/components/calendar/ProposedMeetingDet
 import MasterScheduleModal, { ScheduleActionType } from "@/components/calendar/MasterScheduleModal";
 import ScheduleDispatchConsole from "@/components/calendar/ScheduleDispatchConsole";
 import OperationalBlockDetailDrawer from "@/components/calendar/OperationalBlockDetailDrawer";
+import AppointmentDetailDrawer from "@/components/calendar/AppointmentDetailDrawer";
 import { CalendarPatternLegendBar } from "@/components/calendar/CalendarPatternStyles";
 import CalendarConsoleHeader from "@/components/calendar/CalendarConsoleHeader";
 import CalendarScheduleLegendBar from "@/components/calendar/CalendarScheduleLegendBar";
@@ -881,587 +882,76 @@ export default function Appointments() {
             {/* ── Main Workspace Body (Padded) ── */}
             <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
 
-        {/* ── Event Detail Popup ── */}
-        {selectedApt && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setSelectedApt(null)}
-        >
-          <div
-            className="bg-[#05142B] text-[#FFF4D4] rounded-xl shadow-[0_16px_40px_rgba(0,0,0,0.95)] border border-[#3A2C18] w-full max-w-sm mx-4 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={`h-1.5 w-full ${getStatusBarColor(selectedApt.status)}`} />
-            <div className="p-5 space-y-4">
-              {/* Title + close */}
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-serif font-bold text-[#FFF4D4] leading-tight">{isEditingApt ? 'Edit Appointment' : selectedApt.title}</h2>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {!isEditingApt && (
-                    <>
-                      <button
-                        onClick={() => openEditMode(selectedApt)}
-                        className="text-xs px-2.5 py-1 rounded-md bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold hover:brightness-110 transition-colors shadow-sm"
-                      >
-                        Edit
-                      </button>
-                      {/* Cancel Meeting button */}
-                      {selectedApt.status !== "Cancelled" && !isCancellingApt && !isDeletingApt && (
-                        <button
-                          onClick={() => setIsCancellingApt(true)}
-                          className="text-[#C6B697] hover:text-orange-400 transition-colors"
-                          title="Cancel meeting"
-                        >
-                          <Ban className="h-4 w-4" />
-                        </button>
-                      )}
-                      {isCancellingApt && (
-                        <div className="flex flex-col gap-1.5 items-end">
-                          <div className="flex items-center gap-1.5">
-                            <Checkbox
-                              id="notifyParent"
-                              checked={notifyParentOnCancel}
-                              onCheckedChange={(v) => setNotifyParentOnCancel(!!v)}
-                            />
-                            <label htmlFor="notifyParent" className="text-xs text-[#C6B697] cursor-pointer whitespace-nowrap">Notify parent</label>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => cancelWithNotifyMutation.mutate({ id: selectedApt.id, notifyParent: notifyParentOnCancel })}
-                              disabled={cancelWithNotifyMutation.isPending}
-                              className="text-xs px-2 py-0.5 rounded bg-orange-600 text-white hover:bg-orange-700 transition-colors font-medium disabled:opacity-50"
-                            >
-                              {cancelWithNotifyMutation.isPending ? '...' : 'Cancel Mtg'}
-                            </button>
-                            <button
-                              onClick={() => setIsCancellingApt(false)}
-                              className="text-xs px-2 py-0.5 rounded border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] transition-colors"
-                            >
-                              No
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      {!isDeletingApt && !isCancellingApt ? (
-                        <button
-                          onClick={() => setIsDeletingApt(true)}
-                          className="text-[#C6B697] hover:text-rose-400 transition-colors"
-                          title="Delete appointment"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      ) : !isCancellingApt ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-rose-400 font-medium">Delete?</span>
-                          <button
-                            onClick={() => deleteMutation.mutate({ id: selectedApt.id })}
-                            disabled={deleteMutation.isPending}
-                            className="text-xs px-2 py-0.5 rounded bg-rose-700 text-white hover:bg-rose-600 transition-colors font-medium disabled:opacity-50"
-                          >
-                            {deleteMutation.isPending ? '...' : 'Yes'}
-                          </button>
-                          <button
-                            onClick={() => setIsDeletingApt(false)}
-                            className="text-xs px-2 py-0.5 rounded border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] transition-colors"
-                          >
-                            No
-                          </button>
-                        </div>
-                      ) : null}
-                    </>
-                  )}
-                  <button
-                    onClick={() => { setSelectedApt(null); setIsEditingApt(false); }}
-                    className="text-[#C6B697] hover:text-[#FFF4D4] transition-colors"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-
-              {isEditingApt && editAptData ? (
-                /* ── Edit Form ── */
-                <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-                  <div>
-                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Auto-fill from Contact</label>
-                    <Select onValueChange={(v) => autoFillFromContact(v, setEditAptData)}>
-                      <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
-                        <SelectValue placeholder="Pick a contact to auto-fill parent/student…" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
-                        {(contacts as any[]).map((c: any) => (
-                          <SelectItem key={c.id} value={c.id.toString()}>
-                            {c.firstName} {c.lastName}{c.jobTitle === 'Student' ? ' (Student)' : ''}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Title *</label>
-                    <VoiceInput
-                      value={editAptData.title}
-                      onChange={(e) => setEditAptData(d => d ? { ...d, title: e.target.value } : d)}
-                      placeholder="Appointment title"
-                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Start *</label>
-                      <input
-                        type="datetime-local"
-                        value={editAptData.startTime}
-                        onChange={(e) => setEditAptData(d => d ? { ...d, startTime: e.target.value } : d)}
-                        className="mt-1 w-full h-8 text-xs rounded-md border border-[#3A2C18] bg-[#020A17] text-[#FFF4D4] px-2 focus:outline-none focus:border-[#C5A059]"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">End *</label>
-                      <input
-                        type="datetime-local"
-                        value={editAptData.endTime}
-                        onChange={(e) => setEditAptData(d => d ? { ...d, endTime: e.target.value } : d)}
-                        className="mt-1 w-full h-8 text-xs rounded-md border border-[#3A2C18] bg-[#020A17] text-[#FFF4D4] px-2 focus:outline-none focus:border-[#C5A059]"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider flex items-center gap-1">
-                      <Globe className="h-3 w-3 text-[#C5A059]" /> Client Time Zone
-                    </label>
-                    <Select
-                      value={editAptData.clientTimeZone}
-                      onValueChange={(v) => setEditAptData(d => d ? { ...d, clientTimeZone: v } : d)}
-                    >
-                      <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
-                        {SIX_CORE_ZONES.map((z) => (
-                          <SelectItem key={z.id} value={z.id}>
-                            {z.name} ({z.code})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider flex items-center gap-1">
-                      <User className="h-3 w-3 text-cyan-400" /> Assigned Advocate
-                    </label>
-                    <Select
-                      value={editAptData.assignedAdvocateName}
-                      onValueChange={(v) => setEditAptData(d => d ? { ...d, assignedAdvocateName: v } : d)}
-                    >
-                      <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
-                        {staffList.map((s) => (
-                          <SelectItem key={s.id} value={s.name}>
-                            {s.name} ({s.status})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Status</label>
-                    <Select
-                      value={editAptData.status}
-                      onValueChange={(v) => setEditAptData(d => d ? { ...d, status: v } : d)}
-                    >
-                      <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
-                        <SelectItem value="Scheduled">Scheduled</SelectItem>
-                        <SelectItem value="Confirmed">Confirmed</SelectItem>
-                        <SelectItem value="Completed">Completed</SelectItem>
-                        <SelectItem value="Cancelled">Cancelled</SelectItem>
-                        <SelectItem value="Needs Coverage">🚨 Needs Coverage</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Video / Meeting Link</label>
-                    <VoiceInput
-                      value={editAptData.videoLink}
-                      onChange={(e) => setEditAptData(d => d ? { ...d, videoLink: e.target.value } : d)}
-                      placeholder="https://..."
-                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Location</label>
-                    <VoiceInput
-                      value={editAptData.location}
-                      onChange={(e) => setEditAptData(d => d ? { ...d, location: e.target.value } : d)}
-                      placeholder="Location"
-                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Parent Name</label>
-                    <VoiceInput
-                      value={editAptData.parentName}
-                      onChange={(e) => setEditAptData(d => d ? { ...d, parentName: e.target.value } : d)}
-                      placeholder="Parent name"
-                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Parent Phone</label>
-                    <VoiceInput
-                      value={editAptData.parentPhone}
-                      onChange={(e) => setEditAptData(d => d ? { ...d, parentPhone: e.target.value } : d)}
-                      placeholder="(xxx) xxx-xxxx"
-                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Student Name</label>
-                    <VoiceInput
-                      value={editAptData.studentName}
-                      onChange={(e) => setEditAptData(d => d ? { ...d, studentName: e.target.value } : d)}
-                      placeholder="Student name"
-                      className="mt-1 h-8 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">Description</label>
-                    <VoiceTextarea
-                      value={editAptData.description}
-                      onChange={(e) => setEditAptData(d => d ? { ...d, description: e.target.value } : d)}
-                      placeholder="Notes about this appointment..."
-                      rows={3}
-                      className="mt-1 text-sm bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    <Button
-                      size="sm"
-                      onClick={handleSaveEdit}
-                      disabled={updateMutation.isPending}
-                      className="flex-1 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold hover:brightness-110"
-                    >
-                      {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setIsEditingApt(false)}
-                      className="flex-1 border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B]"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                /* ── View Mode ── */
-                <>
-              {/* Meeting Type + Participants */}
-              <div className="space-y-1.5">
-                {selectedApt.meetingType && (
-                  <div>
-                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                      {selectedApt.meetingType}
-                    </span>
-                  </div>
-                )}
-                {(selectedApt.parentName || selectedApt.parentPhone || selectedApt.studentName) && (
-                  <div className="text-sm space-y-0.5 pt-1 text-[#FFF4D4]">
-                    {selectedApt.parentName && (
-                      <p>
-                        <span className="font-medium text-[#C6B697]">Parent:</span>{" "}
-                        {selectedApt.parentName}
-                        {selectedApt.parentPhone && (
-                          <> · <a href={`tel:${selectedApt.parentPhone}`} className="text-[#FFE394] hover:underline">{selectedApt.parentPhone}</a></>
-                        )}
-                      </p>
-                    )}
-                    {selectedApt.studentName && (
-                      <p>
-                        <span className="font-medium text-[#C6B697]">Student:</span>{" "}
-                        {selectedApt.studentName}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Contextual Calling Safety */}
-                <div className="mt-2.5 p-2.5 rounded-lg border border-[#3A2C18] bg-[#020A17]/80">
-                  <ClientCallingSafetyBadge
-                    timeZone={selectedApt.clientTimeZone}
-                  />
-                </div>
-
-                {/* Unified Family & Discovery Call Connections */}
-                {(() => {
-                  let resolvedParentId = selectedApt.parentContactId || null;
-                  if (!resolvedParentId && selectedApt.clientId) {
-                    const c = (contacts as any[]).find((x) => x.id === selectedApt.clientId);
-                    if (c?.jobTitle === "Student" && c.parentContactId) {
-                      resolvedParentId = c.parentContactId;
-                    } else if (c?.jobTitle === "Parent") {
-                      resolvedParentId = c.id;
-                    }
-                  }
-                  if (!resolvedParentId && selectedApt.parentPhone) {
-                    const normPhone = selectedApt.parentPhone.replace(/\D/g, "");
-                    const c = (contacts as any[]).find((x) => (x.phone || "").replace(/\D/g, "") === normPhone && x.jobTitle !== "Student");
-                    if (c) resolvedParentId = c.id;
-                  }
-
-                  let resolvedLeadId = selectedApt.leadId || null;
-                  if (!resolvedLeadId && resolvedParentId) {
-                    const l = (leads as any[]).find((x) => x.contactId === resolvedParentId);
-                    if (l) resolvedLeadId = l.id;
-                  }
-                  if (!resolvedLeadId && selectedApt.parentPhone) {
-                    const normPhone = selectedApt.parentPhone.replace(/\D/g, "");
-                    const l = (leads as any[]).find((x) => (x.parentPhone || "").replace(/\D/g, "") === normPhone);
-                    if (l) resolvedLeadId = l.id;
-                  }
-
-                  const isDiscovery = selectedApt.meetingType === "Discovery Call" || selectedApt.title?.toLowerCase().includes("discovery") || !!resolvedLeadId;
-
-                  return (
-                    <div className="mt-2.5 p-3 rounded-lg border border-[#3A2C18] bg-[#020A17]/80 space-y-2">
-                      <div className="flex items-center justify-between text-xs font-semibold text-[#FFF4D4]">
-                        <span className="flex items-center gap-1.5 text-[#C6B697]">
-                          <UserCheck className="w-3.5 h-3.5 text-[#C5A059]" /> Connected Family Record
-                        </span>
-                        {isDiscovery && (
-                          <span className="text-[10px] text-[#FFE394] bg-[#FFE394]/10 border border-[#FFE394]/30 px-2 py-0.5 rounded-full font-medium">
-                            Discovery Session
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                        {isDiscovery && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={!resolvedLeadId}
-                            onClick={() => {
-                              if (resolvedLeadId) {
-                                setSelectedApt(null);
-                                setLocation(`/leads/${resolvedLeadId}/discovery`);
-                              }
-                            }}
-                            className="w-full text-xs font-semibold border-[#C5A059]/60 bg-[#07162B] text-[#FFE394] hover:bg-[#102B4E] hover:text-white transition-all justify-center gap-1.5 disabled:opacity-50"
-                          >
-                            <CalendarClock className="w-3.5 h-3.5 text-[#C5A059]" /> Open Discovery Call
-                          </Button>
-                        )}
-                        {(resolvedParentId || selectedApt.clientId) && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedApt(null);
-                              setLocation(`/contacts/${resolvedParentId || selectedApt.clientId}`);
-                            }}
-                            className="w-full text-xs font-semibold border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] transition-all justify-center gap-1.5"
-                          >
-                            <User className="w-3.5 h-3.5 text-[#C5A059]" /> View Family Profile
-                          </Button>
-                        )}
-                      </div>
-                    </div>
+        {/* ── Slide-Out Appointment Detail Drawer (PG-007) ── */}
+        <AppointmentDetailDrawer
+          appointment={selectedApt}
+          isOpen={!!selectedApt}
+          onClose={() => {
+            setSelectedApt(null);
+            setIsEditingApt(false);
+          }}
+          onSaveEdit={(data) => {
+            updateMutation.mutate(
+              {
+                id: data.id,
+                title: data.title,
+                description: data.description,
+                startTime: data.startTime,
+                endTime: data.endTime,
+                location: data.location,
+                videoLink: data.videoLink,
+                parentName: data.parentName,
+                parentPhone: data.parentPhone,
+                studentName: data.studentName,
+                assignedAdvocateName: data.assignedAdvocateName,
+                status: data.status as any,
+                clientTimeZone: data.clientTimeZone,
+              },
+              {
+                onSuccess: () => {
+                  setSelectedApt((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          title: data.title,
+                          description: data.description || null,
+                          startTime: data.startTime,
+                          endTime: data.endTime,
+                          location: data.location || null,
+                          videoLink: data.videoLink || null,
+                          parentName: data.parentName || null,
+                          parentPhone: data.parentPhone || null,
+                          studentName: data.studentName || null,
+                          assignedAdvocateName: data.assignedAdvocateName,
+                          status: data.status,
+                          clientTimeZone: data.clientTimeZone,
+                        }
+                      : null
                   );
-                })()}
-              </div>
-
-              {/* Multi-Zone Schedule Alignment (Red for Client, Green for Waypoint Advocate) */}
-              {(() => {
-                const dualTime = formatDualTimes(
-                  selectedApt.startTime,
-                  selectedApt.endTime,
-                  selectedApt.clientTimeZone,
-                  selectedApt.originalTimeZone || "America/New_York"
-                );
-                return (
-                  <div className="rounded-[5px] border border-[#3A2C18] bg-[#020A17]/80 p-3.5 space-y-3 shadow-md">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-[#C6B697] flex items-center gap-1.5">
-                        <Globe className="h-3.5 w-3.5 text-[#C5A059]" /> Multi-Zone Alignment
-                      </span>
-                      {dualTime.clientTime.isDifferent ? (
-                        <span className="text-[11px] font-semibold text-rose-300 bg-rose-950/60 border border-rose-500/40 px-2 py-0.5 rounded-[5px]">
-                          {dualTime.clientTime.friendlyName} vs Eastern
-                        </span>
-                      ) : (
-                        <span className="text-[11px] font-medium text-emerald-300 bg-emerald-950/50 border border-emerald-500/40 px-2 py-0.5 rounded-[5px]">
-                          Synchronized
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {/* 🔴 CLIENT'S SCHEDULED TIME (RED) */}
-                      <div className="rounded-[5px] border-2 border-rose-500/70 bg-rose-950/40 p-3 flex flex-col justify-between shadow-sm">
-                        <div className="flex items-center justify-between text-xs text-rose-300 font-semibold mb-1">
-                          <span className="flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse inline-block" />
-                            Client Time
-                          </span>
-                          <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-[5px] bg-rose-500/20 text-rose-200 border border-rose-500/40">
-                            {dualTime.clientTime.tzAbbr}
-                          </span>
-                        </div>
-                        <p className="text-base sm:text-lg font-bold text-rose-100 font-mono tracking-tight">
-                          {dualTime.clientTime.timeRange}
-                        </p>
-                        <p className="text-[11px] text-rose-300/90 mt-1">
-                          {dualTime.clientTime.dateFormatted} · {dualTime.clientTime.friendlyName}
-                        </p>
-                      </div>
-
-                      {/* 🟢 WAYPOINT / ADVOCATE TIME (GREEN) */}
-                      <div className="rounded-[5px] border-2 border-emerald-500/70 bg-emerald-950/40 p-3 flex flex-col justify-between shadow-sm">
-                        <div className="flex items-center justify-between text-xs text-emerald-300 font-semibold mb-1">
-                          <span className="flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                            Waypoint Time
-                          </span>
-                          <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-[5px] bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
-                            {dualTime.waypointTime.tzAbbr}
-                          </span>
-                        </div>
-                        <p className="text-base sm:text-lg font-bold text-emerald-100 font-mono tracking-tight">
-                          {dualTime.waypointTime.timeRange}
-                        </p>
-                        <p className="text-[11px] text-emerald-300/90 mt-1">
-                          {dualTime.waypointTime.dateFormatted} · Atlanta (EDT)
-                        </p>
-                      </div>
-                    </div>
-
-                    {dualTime.clientTime.isDifferent && (
-                      <div className="text-xs text-[#C6B697] bg-[#05142B] rounded-[5px] p-2.5 border border-[#3A2C18] flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-[#C5A059] shrink-0" />
-                        <span>{dualTime.explanation}</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* Assigned Advocate */}
-              {selectedApt.assignedAdvocateName && (
-                <div className="flex items-center justify-between p-2.5 rounded-[5px] border border-[#3A2C18] bg-[#020A17]/80">
-                  <span className="text-xs text-[#C6B697] flex items-center gap-1.5">
-                    <UserCheck className="h-3.5 w-3.5 text-cyan-400" />
-                    Assigned Advocate:
-                  </span>
-                  <span className="text-xs font-semibold text-[#FFF4D4]">
-                    {selectedApt.assignedAdvocateName}
-                  </span>
-                </div>
-              )}
-
-              {/* Needs Coverage Alert Banner if flagged */}
-              {selectedApt.status === "Needs Coverage" && (
-                <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-500/60 flex items-start gap-2.5">
-                  <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-bold text-rose-300">Coverage Required</p>
-                    <p className="text-[11px] text-rose-300/80">
-                      Assigned advocate is unavailable. Use Reassign to delegate to another team advocate.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Join Meeting */}
-              {selectedApt.videoLink && (
-                <a
-                  href={selectedApt.videoLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 w-full justify-center px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-md"
-                >
-                  <Video className="h-4 w-4" />
-                  Join Meeting
-                  <ExternalLink className="h-3.5 w-3.5 opacity-70" />
-                </a>
-              )}
-
-              {/* IEP Meeting Link status */}
-              {selectedApt.meetingType === 'IEP Meeting' && (
-                <div className="rounded-lg border border-[#3A2C18] bg-[#020A17]/60 p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">IEP Meeting Link</span>
-                    {selectedApt.clientMeetingLink ? (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30">
-                        Link Received
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400/80 border border-red-500/20">
-                        Link Not Received
-                      </span>
-                    )}
-                  </div>
-                  {selectedApt.clientMeetingLink && (
-                    <>
-                      <p className="text-xs text-[#C6B697] break-all">{selectedApt.clientMeetingLink}</p>
-                      <a
-                        href={selectedApt.clientMeetingLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 w-full justify-center px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        Go to Meeting
-                      </a>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Location */}
-              {selectedApt.location && (
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-[#C5A059] shrink-0" />
-                  <p className="text-sm text-[#FFF4D4]">{selectedApt.location}</p>
-                </div>
-              )}
-
-              {/* Description */}
-              {selectedApt.description && (
-                <p className="text-sm text-[#C6B697] border-t border-[#3A2C18] pt-3">{selectedApt.description}</p>
-              )}
-
-              {/* Status change */}
-              <div className="flex items-center gap-2 border-t border-[#3A2C18] pt-3">
-                <span className="text-xs text-[#C6B697] shrink-0">Status:</span>
-                <Select
-                  value={selectedApt.status}
-                  onValueChange={(v) => handleStatusChange(selectedApt.id, v)}
-                >
-                  <SelectTrigger className="h-8 text-xs flex-1 bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4]">
-                    <SelectItem value="Scheduled">Scheduled</SelectItem>
-                    <SelectItem value="Confirmed">Confirmed</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+                },
+              }
+            );
+          }}
+          onCancelAppointment={(id, notifyParent) => {
+            cancelWithNotifyMutation.mutate({ id, notifyParent });
+          }}
+          onDeleteAppointment={(id) => {
+            deleteMutation.mutate({ id });
+          }}
+          onStatusChange={(id, status) => {
+            handleStatusChange(id, status);
+          }}
+          onReschedule={(apt) => {
+            handleOpenSchedule(new Date(apt.startTime));
+          }}
+          onReassign={(apt) => {
+            setReassignApt(apt as any);
+          }}
+          contacts={contacts as any[]}
+          leads={leads as any[]}
+          staffList={staffList}
+          isSaving={updateMutation.isPending}
+        />
 
       {/* ── Deprecated Schedule Dialog (superseded by MasterScheduleModal + SCHEDULE workflow) ── */}
       <Dialog open={false} onOpenChange={setShowCreate}>
