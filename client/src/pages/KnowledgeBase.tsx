@@ -229,12 +229,9 @@ export default function KnowledgeBase() {
 
   return (
     <div
-      className="min-h-full bg-[#07162B] text-[#FFF4D4] p-4 sm:p-6 lg:p-8 space-y-6 relative overflow-hidden"
-      style={{
-        background:
-          "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
-      }}
+      className="min-h-screen w-full bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] pb-12 flex flex-col"
     >
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto w-full flex-1">
       {/* ── Top Hero Banner (Matching PG-038 Crew Quarters Depth) ── */}
       <div className="relative rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] overflow-hidden">
         {/* Ambient Maritime Radial Glow */}
@@ -716,6 +713,7 @@ export default function KnowledgeBase() {
           </div>
         </div>
       )}
+      </div>
 
       {/* ── Admiralty Upload Document Dialog ── */}
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>

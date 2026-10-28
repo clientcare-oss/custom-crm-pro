@@ -1647,8 +1647,6 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai") ||
         location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics") ||
         location === "/settings" || location.startsWith("/settings") ||
-        location === "/knowledge-base" || location.startsWith("/knowledge-base") ||
-        location === "/walkthroughs" || location.startsWith("/walkthroughs") ||
         location === "/messages" || location.startsWith("/messages")
       ) && "bg-[#000820]")}>
         {isMobile && (
@@ -1670,6 +1668,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location.startsWith("/call-center") || location.startsWith("/call-logs")) && "p-0 bg-[#07162B]",
           (location === "/calendar" || location.startsWith("/calendar") || location === "/appointments" || location.startsWith("/appointments")) && "p-0 bg-[#07162B]",
           (location === "/" || location.startsWith("/crew-quarters")) && "p-0 bg-[#07162B]",
+          (location === "/knowledge-base" || location.startsWith("/knowledge-base") || location === "/walkthroughs" || location.startsWith("/walkthroughs")) && "p-0 bg-[#07162B]",
           (location === "/leads" || location.startsWith("/leads")) && "p-0 bg-[#000820]",
           (location === "/advocacy-pipeline" || location.startsWith("/advocacy-pipeline") || location === "/pipeline" || location.startsWith("/pipeline")) && "p-0 bg-[#000820]",
           (location === "/templates" || location.startsWith("/templates")) && "p-0 bg-[#000820]",
