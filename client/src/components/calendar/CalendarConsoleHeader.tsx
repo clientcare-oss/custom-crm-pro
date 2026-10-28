@@ -285,7 +285,25 @@ export default function CalendarConsoleHeader({
               <span>Calendar</span>
             </button>
 
-            {/* Active Sub-Console Pill (if not on base calendar) */}
+            {/* Session Types (Scheduler Tool) */}
+            <button
+              type="button"
+              onClick={() => {
+                onNavTabChange(activeNavTab === "session-types" ? "calendar" : "session-types");
+              }}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                activeNavTab === "session-types"
+                  ? "border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
+                  : "border border-[#3A2C18] bg-[#05142B]/90 text-[#D8C7A5] hover:bg-[#0A2244] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 shadow-sm backdrop-blur-sm"
+              )}
+              title="Configure Session Types & Durations (1:1 Advocate 1 hr, IEP 3 hrs, etc.)"
+            >
+              <Clock className="h-3.5 w-3.5" />
+              <span>Session Types</span>
+            </button>
+
+            {/* Active Sub-Console Pill (if on dispatch) */}
             {activeNavTab === "dispatch" && (
               <button
                 type="button"
@@ -295,18 +313,6 @@ export default function CalendarConsoleHeader({
               >
                 <Sparkles className="h-3.5 w-3.5 text-[#07162B]" />
                 <span>Schedule Dispatch</span>
-                <span className="ml-1 text-[10px] opacity-75">✕</span>
-              </button>
-            )}
-            {activeNavTab === "session-types" && (
-              <button
-                type="button"
-                onClick={() => onNavTabChange("calendar")}
-                className="flex items-center gap-1.5 rounded-xl border border-[#FFE394]/70 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] px-3.5 py-1.5 text-xs font-serif font-bold text-[#07162B] shadow-md transition-all cursor-pointer whitespace-nowrap"
-                title="Click to return to Calendar"
-              >
-                <Clock className="h-3.5 w-3.5 text-[#07162B]" />
-                <span>Session Types</span>
                 <span className="ml-1 text-[10px] opacity-75">✕</span>
               </button>
             )}

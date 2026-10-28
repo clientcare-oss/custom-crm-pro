@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -928,6 +929,7 @@ function SessionEditForm({
 
 // ── Main Scheduler Page ────────────────────────────────────────────────────
 export default function Scheduler() {
+  const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const { data: sessions = [], isLoading } = trpc.sessionTypes.list.useQuery();
 
@@ -1043,7 +1045,7 @@ export default function Scheduler() {
           <Button variant="outline" size="sm" onClick={() => window.open("/book", "_blank")} className="text-xs gap-1.5 cursor-pointer">
             <ExternalLink className="h-3.5 w-3.5" /> View Live Scheduler
           </Button>
-          <Button variant="outline" size="sm" onClick={() => window.location.href = "/calendar"} className="text-xs gap-1.5 cursor-pointer">
+          <Button variant="outline" size="sm" onClick={() => setLocation("/calendar")} className="text-xs gap-1.5 cursor-pointer">
             <Calendar className="h-3.5 w-3.5" /> Go to Calendar
           </Button>
         </div>
