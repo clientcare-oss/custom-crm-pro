@@ -3,18 +3,9 @@ import { useLocation } from "wouter";
 import { 
   SquarePen, Compass, Users, 
   UsersRound, ClipboardCheck, Landmark, Wrench, 
-  CalendarDays, Clock, Coins, Link2, Eye,
-  ExternalLink, Copy, Check, ShieldCheck, Lock,
-  CheckCircle2, Loader2, Scale, Folder, School,
-  Shield, GitCompare, FileText
+  CalendarDays, Clock, Coins, Link2 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { trpc } from "@/lib/trpc";
-import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
 
 interface StudentWorkspaceMoreTabProps {
   studentId: string | number;
@@ -34,7 +25,6 @@ interface WorkspaceItem {
   icon: React.ComponentType<{ className?: string }>;
   onClick: () => void;
   external?: boolean;
-  badge?: string;
 }
 
 /**
@@ -76,98 +66,9 @@ export function StudentWorkspaceMoreTab({
   studentId,
   caseId,
   studentName,
-  parentContactId,
-  parentName,
-  parentEmail,
-  parentPhone,
-  studentGrade,
 }: StudentWorkspaceMoreTabProps) {
   const [, setLocation] = useLocation();
   const [selectedId, setSelectedId] = useState<string>("activity-timeline");
-  const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
-
-  const utils = trpc.useUtils();
-  const ensureDevParentMutation = trpc.portal.ensureDevParentForStudent.useMutation();
-
-  // If parent info is not directly passed, query contact detail as resilient fallback
-  const numericStudentId = Number(studentId);
-  const { data: contactDetail } = trpc.contacts.detail.useQuery(
-    { id: numericStudentId },
-    { enabled: (!parentContactId || !parentName) && !isNaN(numericStudentId) && numericStudentId > 0 }
-  );
-
-  const effectiveParentId = parentContactId || contactDetail?.parentContact?.id || contactDetail?.contact?.parentContactId;
-  const effectiveParentName = parentName || (contactDetail?.parentContact ? `${contactDetail.parentContact.firstName} ${contactDetail.parentContact.lastName}` : (contactDetail?.contact?.parentName || "Parent on File"));
-  const effectiveParentEmail = parentEmail || contactDetail?.parentContact?.email || contactDetail?.contact?.email;
-  const effectiveParentPhone = parentPhone || contactDetail?.parentContact?.phone || contactDetail?.contact?.phone;
-  const effectiveCaseId = caseId || contactDetail?.contact?.caseId;
-  const effectiveGrade = studentGrade || contactDetail?.contact?.gradeLevel;
-  // Active State Complaint Draft query for this student
-  const complaintDraftQuery = trpc.stateComplaint.getDraft.useQuery(
-    { studentId: !isNaN(numericStudentId) && numericStudentId > 0 ? numericStudentId : undefined },
-    { enabled: !isNaN(numericStudentId) && numericStudentId > 0 }
-  );
-
-  const parsedComplaint = useMemo(() => {
-    if (!complaintDraftQuery.data) return null;
-    try {
-      const parsed = JSON.parse(complaintDraftQuery.data);
-      const binderCount = Array.isArray(parsed.pages) ? parsed.pages.length : 1;
-      const calculatedDocket = 4 + Math.max(1, binderCount - 1) * 2;
-      const docketPageCount = (parsed.pageCount && parsed.pageCount >= 10) ? parsed.pageCount : (parsed.docketPageCount || calculatedDocket);
-      return {
-        ...parsed,
-        docketPageCount,
-      };
-    } catch {
-      return null;
-    }
-  }, [complaintDraftQuery.data]);
-
-  // Build the strict Phase 2 portal preview URL
-  const portalPreviewPath = `/portal?preview=true&contactId=${studentId}${effectiveParentId ? `&parentContactId=${effectiveParentId}` : ""}${effectiveCaseId ? `&caseId=${effectiveCaseId}` : ""}`;
-  const fullPreviewUrl = typeof window !== "undefined" ? `${window.location.origin}${portalPreviewPath}` : portalPreviewPath;
-
-  const handleOpenParentPortal = async () => {
-    let parentId = effectiveParentId;
-    if (!parentId && numericStudentId > 0) {
-      try {
-        const res = await ensureDevParentMutation.mutateAsync({ studentContactId: numericStudentId });
-        if (res?.parentId) {
-          parentId = res.parentId;
-          utils.contacts.detail.invalidate({ id: numericStudentId });
-        }
-      } catch (err: any) {
-        console.error("Failed to ensure dev parent:", err);
-      }
-    }
-    const finalUrl = `/portal?preview=true&contactId=${studentId}${parentId ? `&parentContactId=${parentId}` : ""}${effectiveCaseId ? `&caseId=${effectiveCaseId}` : ""}`;
-    window.open(finalUrl, "_blank");
-  };
-
-  const handleCopyPortalLink = async () => {
-    let parentId = effectiveParentId;
-    if (!parentId && numericStudentId > 0) {
-      try {
-        const res = await ensureDevParentMutation.mutateAsync({ studentContactId: numericStudentId });
-        if (res?.parentId) {
-          parentId = res.parentId;
-          utils.contacts.detail.invalidate({ id: numericStudentId });
-        }
-      } catch (err: any) {
-        console.error("Failed to ensure dev parent for link copy:", err);
-      }
-    }
-    const finalPath = `/portal?preview=true&contactId=${studentId}${parentId ? `&parentContactId=${parentId}` : ""}${effectiveCaseId ? `&caseId=${effectiveCaseId}` : ""}`;
-    const targetUrl = typeof window !== "undefined" ? `${window.location.origin}${finalPath}` : finalPath;
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(targetUrl);
-      setCopiedLink(true);
-      toast.success("Parent portal preview link copied to clipboard");
-      setTimeout(() => setCopiedLink(false), 2000);
-    }
-  };
 
   const items: WorkspaceItem[] = useMemo(() => [
     {
@@ -181,50 +82,9 @@ export function StudentWorkspaceMoreTab({
       },
     },
     {
-      id: "meeting-workspace",
-      title: "Meeting Workspace",
-      description: "Live IEP meeting strategy, targets & notes.",
-      icon: UsersRound,
-      onClick: () => {
-        setSelectedId("meeting-workspace");
-        setLocation(`/meeting-workspace/${studentId}`);
-      },
-    },
-    {
-      id: "state-complaint",
-      title: "State Complaint",
-      description: parsedComplaint
-        ? `Active draft: ${parsedComplaint.title} (${parsedComplaint.docketPageCount || 14} pages assembled)`
-        : "Build the complaint and evidence.",
-      badge: parsedComplaint ? `${parsedComplaint.docketPageCount || 14} Pages` : undefined,
-      icon: Landmark,
-      onClick: () => {
-        setSelectedId("state-complaint");
-        if (studentId) {
-          sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}`);
-          sessionStorage.setItem("lastStudentProfileId", String(studentId));
-          if (studentName) {
-            sessionStorage.setItem("lastStudentProfileName", studentName);
-          }
-        }
-        window.dispatchEvent(new CustomEvent("waypoint:collapse-sidebar"));
-        setLocation(studentId ? `/state-complaint-builder?studentId=${studentId}` : `/state-complaint-builder`);
-      },
-    },
-    {
-      id: "post-meeting-review",
-      title: "Post-Meeting Review",
-      description: "Confirm decisions and verify draft IEP.",
-      icon: ClipboardCheck,
-      onClick: () => {
-        setSelectedId("post-meeting-review");
-        setLocation(`/post-meeting-review/${studentId}`);
-      },
-    },
-    {
       id: "voyage-log",
       title: "Voyage Log",
-      description: "Record case updates & audio notes.",
+      description: "Record case updates.",
       icon: SquarePen,
       onClick: () => {
         setSelectedId("voyage-log");
@@ -244,71 +104,59 @@ export function StudentWorkspaceMoreTab({
     {
       id: "lawyer-status",
       title: "Lawyer Status",
-      description: "Legal representation details.",
-      icon: Scale,
+      description: "Track legal involvement.",
+      icon: Users,
       onClick: () => {
         setSelectedId("lawyer-status");
-        setLocation(`/contacts/${studentId}?tab=legal`);
+        setLocation(`/contacts/${studentId}?tab=details`);
       },
     },
     {
-      id: "iep-binder",
-      title: "IEP Binder",
-      description: "Documents, goals, and history.",
-      icon: Folder,
+      id: "meeting-workspace",
+      title: "Meeting Workspace",
+      description: "Prepare and guide the meeting.",
+      icon: UsersRound,
       onClick: () => {
-        setSelectedId("iep-binder");
-        setLocation(`/contacts/${studentId}?tab=documents`);
+        setSelectedId("meeting-workspace");
+        setLocation(`/meeting-workspace/${studentId}`);
       },
     },
     {
-      id: "school-district",
-      title: "School & District",
-      description: "School contacts and policies.",
-      icon: School,
+      id: "post-meeting-review",
+      title: "Post-Meeting Review",
+      description: "Confirm decisions and follow-up.",
+      icon: ClipboardCheck,
       onClick: () => {
-        setSelectedId("school-district");
-        setLocation(`/contacts/${studentId}?tab=overview`);
+        setSelectedId("post-meeting-review");
+        setLocation(`/post-meeting-review/${studentId}`);
       },
     },
     {
-      id: "advocacy-tools",
-      title: "Advocacy Tools",
+      id: "state-complaint",
+      title: "State Complaint",
+      description: "Build the complaint and evidence.",
+      icon: Landmark,
+      onClick: () => {
+        setSelectedId("state-complaint");
+        if (studentId) {
+          sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}`);
+          sessionStorage.setItem("lastStudentProfileId", String(studentId));
+          if (studentName) {
+            sessionStorage.setItem("lastStudentProfileName", studentName);
+          }
+        }
+        window.dispatchEvent(new CustomEvent("waypoint:collapse-sidebar"));
+        setLocation(studentId ? `/state-complaint-builder?studentId=${studentId}` : `/state-complaint-builder`);
+      },
+    },
+    {
+      id: "tools",
+      title: "Tools",
       description: "Open your advocacy toolkit.",
       icon: Wrench,
       onClick: () => {
-        setSelectedId("advocacy-tools");
+        setSelectedId("tools");
         setLocation(`/tools`);
-      },
-    },
-    {
-      id: "pwn-decoder",
-      title: "PWN Decoder",
-      description: "Decode prior written notices.",
-      icon: Shield,
-      onClick: () => {
-        setSelectedId("pwn-decoder");
-        setLocation(`/tools/pwn-decoder`);
-      },
-    },
-    {
-      id: "iep-comparator",
-      title: "IEP Comparator",
-      description: "Compare IEP draft versions.",
-      icon: GitCompare,
-      onClick: () => {
-        setSelectedId("iep-comparator");
-        setLocation(`/tools/iep-comparator`);
-      },
-    },
-    {
-      id: "worksheet-builder",
-      title: "Worksheet Studio",
-      description: "Advocacy worksheets & forms.",
-      icon: FileText,
-      onClick: () => {
-        setSelectedId("worksheet-builder");
-        setLocation(`/tools/worksheet-builder`);
       },
     },
     {
@@ -338,8 +186,10 @@ export function StudentWorkspaceMoreTab({
       icon: Users,
       onClick: () => {
         setSelectedId("parent-portal-controls");
-        setIsPortalModalOpen(true);
+        const targetUrl = caseId ? `/portal?caseId=${caseId}` : `/portal`;
+        window.open(targetUrl, "_blank");
       },
+      external: true,
     },
     {
       id: "billing",
@@ -361,7 +211,7 @@ export function StudentWorkspaceMoreTab({
         setLocation(`/contacts/${studentId}?tab=referral`);
       },
     },
-  ], [studentId, studentName, caseId, setLocation]);
+  ], [studentId, caseId, studentName, setLocation]);
 
   return (
     <div className="w-full min-h-[500px] p-5 sm:p-7 md:p-8 select-none">
@@ -405,19 +255,12 @@ export function StudentWorkspaceMoreTab({
 
               {/* ─── Content Area: Left-aligned, refined serif title & muted blue description ─── */}
               <div className="min-w-0 flex-1 flex flex-col justify-center text-left">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h4
-                    className="font-medium text-[15.5px] lg:text-[16px] text-[#F7F2E8] tracking-normal leading-tight whitespace-nowrap drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.85)] group-hover:text-[#FFF8EE] transition-colors"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                  >
-                    {item.title}
-                  </h4>
-                  {item.badge && (
-                    <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-[#DFBE77]/20 border border-[#DFBE77]/40 text-[#FFE394] shrink-0">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
+                <h4
+                  className="font-medium text-[15.5px] lg:text-[16px] text-[#F7F2E8] tracking-normal leading-tight whitespace-nowrap drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.85)] group-hover:text-[#FFF8EE] transition-colors"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  {item.title}
+                </h4>
                 <p className="text-[12px] lg:text-[12.5px] text-[#93AECD] leading-[1.35] mt-1 line-clamp-2 group-hover:text-[#A8C4E6] transition-colors">
                   {item.description}
                 </p>
@@ -426,161 +269,6 @@ export function StudentWorkspaceMoreTab({
           );
         })}
       </div>
-
-      {/* ─── PARENT PORTAL CONTROLS MODAL (Admiralty Theme) ─── */}
-      <Dialog open={isPortalModalOpen} onOpenChange={setIsPortalModalOpen}>
-        <DialogContent className="max-w-xl bg-[#05142B] border border-[#3A2C18] text-white p-0 overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl">
-          {/* Header Banner */}
-          <div className="bg-gradient-to-b from-[#102B4E]/90 to-[#07162B] p-6 border-b border-[#3A2C18] relative">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-xl bg-[#092244] border border-[#C5A059]/40 flex items-center justify-center text-[#F1CB6C] shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),0_4px_12px_rgba(0,0,0,0.6)]">
-                  <Users className="w-6 h-6 stroke-[2]" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] tracking-widest font-mono font-bold uppercase text-[#DFBE77] bg-[#DFBE77]/10 border border-[#DFBE77]/30 px-2 py-0.5 rounded">
-                      PG-023-CTL
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Portal Active
-                    </span>
-                  </div>
-                  <h3
-                    className="text-xl sm:text-2xl font-bold text-[#FFF4D4] mt-1 tracking-tight"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                  >
-                    Parent Portal Controls
-                  </h3>
-                </div>
-              </div>
-            </div>
-            <p className="text-xs text-[#C6B697] mt-2.5 leading-relaxed">
-              Manage and preview how this case appears to the family in the Client Portal (PG-023).
-            </p>
-          </div>
-
-          <div className="p-6 space-y-5">
-            {/* Client & Family Identity Card */}
-            <div className="bg-[#020A17]/85 border border-[#3A2C18]/80 rounded-xl p-4 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
-              <div className="text-[11px] font-mono uppercase tracking-wider text-[#A69371] font-semibold mb-3 flex items-center justify-between">
-                <span>Family Record Association</span>
-                {effectiveCaseId && (
-                  <span className="text-[#DFBE77] font-mono">{effectiveCaseId}</span>
-                )}
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <span className="text-xs text-[#8A9EB5] block">Student</span>
-                  <span className="font-semibold text-white text-[15px]">{studentName || "Student Record"}</span>
-                  {effectiveGrade && (
-                    <span className="text-xs text-[#A69371] block mt-0.5">{effectiveGrade}</span>
-                  )}
-                </div>
-                <div>
-                  <span className="text-xs text-[#8A9EB5] block">Parent / Guardian</span>
-                  <span className="font-semibold text-white text-[15px]">{effectiveParentName}</span>
-                  <span className="text-xs text-[#A69371] block mt-0.5 truncate">
-                    {effectiveParentEmail || effectiveParentPhone || "On record"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Primary Action Button: View Parent Portal */}
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={handleOpenParentPortal}
-                disabled={ensureDevParentMutation.isPending}
-                className="w-full py-3.5 px-5 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_16px_rgba(197,160,89,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] hover:brightness-110 active:scale-[0.99] transition-all cursor-pointer select-none disabled:opacity-60"
-              >
-                {ensureDevParentMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-5 h-5 text-[#07162B] animate-spin" />
-                    <span>Preparing Portal Access...</span>
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-5 h-5 text-[#07162B] stroke-[2.2]" />
-                    <span>View Parent Portal</span>
-                    <ExternalLink className="w-4 h-4 ml-1 opacity-75" />
-                  </>
-                )}
-              </button>
-              <p className="text-[11px] text-center text-[#93AECD]">
-                Opens an isolated staff preview for <strong className="text-[#FFE394]">{studentName}</strong> and the <strong className="text-[#FFE394]">{effectiveParentName}</strong> family.
-              </p>
-            </div>
-
-            {/* Direct Portal Link Sharing */}
-            <div className="bg-[#020A17]/60 border border-[#3A2C18]/60 rounded-xl p-3.5 space-y-2">
-              <div className="flex items-center justify-between text-xs text-[#C6B697]">
-                <span className="font-medium flex items-center gap-1.5">
-                  <Link2 className="w-3.5 h-3.5 text-[#DFBE77]" />
-                  Direct Portal URL
-                </span>
-                <span className="text-[10px] text-[#8A9EB5] font-mono">Staff Preview Route</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={fullPreviewUrl}
-                  className="flex-1 bg-[#05142B] border border-[#1d3f6d] rounded-lg px-3 py-1.5 text-xs text-[#D8C7A5] font-mono truncate focus:outline-none focus:border-[#C59E45]"
-                />
-                <button
-                  type="button"
-                  onClick={handleCopyPortalLink}
-                  className="px-3 py-1.5 rounded-lg border border-[#3A2C18] bg-[#092244] hover:bg-[#0c2e5c] text-xs font-semibold text-[#FFE394] flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm shrink-0"
-                >
-                  {copiedLink ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Read-Only Safety Banner */}
-            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#07162B] border border-[#3A2C18]/60 text-xs text-[#C6B697]">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-              <span>
-                <strong>Read-Only Safety Guard:</strong> Staff preview mode allows complete inspection of student documents, case compass, and invoice status, while payment actions remain strictly disabled.
-              </span>
-            </div>
-          </div>
-
-          {/* Modal Footer */}
-          <div className="bg-[#020A17] px-6 py-3.5 border-t border-[#3A2C18] flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => {
-                setIsPortalModalOpen(false);
-                setLocation("/portal-management");
-              }}
-              className="text-xs text-[#93AECD] hover:text-[#FFE394] transition-colors cursor-pointer"
-            >
-              Open Portal Management →
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsPortalModalOpen(false)}
-              className="px-4 py-1.5 rounded-lg border border-[#3A2C18] bg-[#07162B] hover:bg-[#0c2449] text-xs font-medium text-[#D8C7A5] hover:text-white transition-colors cursor-pointer"
-            >
-              Close
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
