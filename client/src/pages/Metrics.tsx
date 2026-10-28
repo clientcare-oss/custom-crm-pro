@@ -15,6 +15,7 @@ import ClientReadinessSection from "@/components/metrics/ClientReadinessSection"
 import ClientContinuitySection from "@/components/metrics/ClientContinuitySection";
 import FamilyExperienceSection from "@/components/metrics/FamilyExperienceSection";
 import MetricDrilldownModal from "@/components/metrics/MetricDrilldownModal";
+import TaxEstimatesSection from "@/components/metrics/TaxEstimatesSection";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +55,7 @@ export default function Metrics() {
     snapshot: true,
     leadJourney: true,
     plansRevenue: true,
+    taxEstimates: true,
     timeWorkload: true,
     servicesDelivered: true,
     advocacyOutcomes: true,
@@ -242,6 +244,21 @@ export default function Metrics() {
           <PlansRevenueSection data={plansRevenueData} />
         )}
 
+        {/* ── Section 4b: Tax Liability & Escrow Estimates (PG-042-TAX) ── */}
+        {visibleSections.taxEstimates && (
+          <TaxEstimatesSection
+            clients55Count={clients55.length}
+            clients105Count={clients105.length}
+            payPerUseMonthly={
+              plansRevenueData?.planBreakdown?.payPerUse?.mrr ||
+              (plansRevenueData?.planBreakdown?.payPerUse?.totalRevenue
+                ? Math.round(plansRevenueData.planBreakdown.payPerUse.totalRevenue / 12)
+                : 650)
+            }
+            annualPaidInFullRevenue={plansRevenueData?.billingCadence?.paidInFullRevenue || 0}
+          />
+        )}
+
         {/* ── Section 5: Team Time and Workload ── */}
         {visibleSections.timeWorkload && timeWorkloadData && (
           <TimeWorkloadSection
@@ -309,6 +326,7 @@ export default function Metrics() {
                 { key: "snapshot", label: "Top-Level Snapshot (6 Cards)" },
                 { key: "leadJourney", label: "Lead Journey (7-Stage Funnel & Demographics)" },
                 { key: "plansRevenue", label: "Plans & Revenue (Matrix & Profitability)" },
+                { key: "taxEstimates", label: "Tax Liability & Escrow Estimates (PG-042-TAX)" },
                 { key: "timeWorkload", label: "Where Our Time Goes (12 Work Types & Capacity)" },
                 { key: "servicesDelivered", label: "Services Delivered (Clickable Volume)" },
                 { key: "advocacyOutcomes", label: "Advocacy Outcomes (Goals & IDEA Risk)" },
