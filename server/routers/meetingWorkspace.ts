@@ -823,6 +823,19 @@ Build 5-8 distinct meeting targets.`;
         }
       }
 
+      // 5. Intelligent Review Opportunity Automation (Trigger A: First Completed Advocacy Meeting)
+      try {
+        await db.evaluateAndTriggerMeetingReviewOpportunity({
+          studentContactId,
+          meetingWorkspaceId: id,
+          meetingTitle: `IEP Meeting: ${studentName}`,
+          meetingType: "IEP Meeting",
+          assignedAdvocate: "Byron Honea",
+        });
+      } catch (revErr) {
+        console.warn("[meetingWorkspace] Review opportunity trigger warning:", revErr);
+      }
+
       return { success: true };
     }),
 

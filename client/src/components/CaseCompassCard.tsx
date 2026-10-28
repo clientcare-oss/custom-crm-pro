@@ -2,8 +2,9 @@ import { trpc } from "@/lib/trpc";
 import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Clock, Settings, MapPin, Target, User, Scale, Dribbble } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, Settings, MapPin, Target, User, Scale, Dribbble, Sliders } from "lucide-react";
 import PageIdBadge from "@/components/PageIdBadge";
+import CompassSettingsModal from "@/components/students/compass/CompassSettingsModal";
 
 // ─── Compass Config and Calculations ──────────────────────────────────────────
 
@@ -153,6 +154,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
   const [activeSection, setActiveSection] = useState<SectionKey>("currentStatus");
   const [hoveredSection, setHoveredSection] = useState<SectionKey | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [showSourcesModal, setShowSourcesModal] = useState(false);
 
   // Background positioning settings state
   const [bgSettings, setBgSettings] = useState({
@@ -210,6 +212,12 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
   const isLoading = caseId ? (isAdminView ? loadingAdmin : loadingStudent) : loadingMy;
   const compass = rawCompass || DEFAULT_DEMO_COMPASS;
 
+  const resolvedStudentId = (compass as any)?.studentId || (caseId?.startsWith("CASE-") ? Number(caseId.replace("CASE-", "")) : undefined);
+  const { data: transcriptsData } = trpc.caseCompass.getAvailableTranscripts.useQuery(
+    { studentId: resolvedStudentId || 0 },
+    { enabled: !!resolvedStudentId && isAdminView }
+  );
+
   const activeSectionObj = useMemo(() => {
     return SECTIONS.find((s) => s.key === activeSection) || SECTIONS[0];
   }, [activeSection]);
@@ -247,7 +255,7 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
             })
           : "";
       case "ideaRiskLevel":
-        return compass.lastMeetingSummary || "";
+        return (compass as any).ideaRiskLevel || compass.lastMeetingSummary || "Moderate";
       default:
         return "";
     }
@@ -296,6 +304,26 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
               </p>
             </div>
           </div>
+
+          {isAdminView && resolvedStudentId && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSourcesModal(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-colors shadow-sm cursor-pointer"
+                title="View Connected Intake & Meeting Transcripts"
+              >
+                <Sliders className="h-3 w-3 text-amber-400" />
+                <span className="hidden sm:inline">Settings & Sources</span>
+                <span className="sm:hidden">Sources</span>
+                {transcriptsData && transcriptsData.totalAvailable > 0 && (
+                  <span className="ml-1 px-1.5 py-0.2 rounded-full bg-amber-400/20 text-[10px] text-amber-200 font-bold border border-amber-400/30">
+                    {transcriptsData.totalAvailable}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Dial Body Area: Contains background image below header */}
@@ -704,6 +732,15 @@ export default function CaseCompassCard({ caseId, isAdminView = false }: CaseCom
         </div>
       </div>
     </Card>
+
+    {resolvedStudentId && (
+      <CompassSettingsModal
+        open={showSourcesModal}
+        onOpenChange={setShowSourcesModal}
+        studentId={resolvedStudentId}
+        transcripts={transcriptsData?.sessions || []}
+      />
+    )}
   </div>
 );
 }

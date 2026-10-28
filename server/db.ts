@@ -47,12 +47,25 @@ export * from "./db/familyEnrollment";
 export * from "./db/reviewTrackers";
 export * from "./db/parentProfile";
 export * from "./db/federalLaw";
+export * from "./db/compass";
 
 import { ENV } from './_core/env';
 
 import { getDb } from "./db/connection";
 import { upsertUser, getUserByOpenId, getUserByEmail, getUserById } from "./db/users";
-import { getCaseCompass, updateCaseCompass, upsertCaseCompass, getCaseCompassHistory } from "./db/compass";
+import {
+  getCaseCompass,
+  updateCaseCompass,
+  upsertCaseCompass,
+  getCaseCompassHistory,
+  getCaseCompassByStudent,
+  getCaseCompassDrafts,
+  getCaseCompassDraftById,
+  createCaseCompassDraft,
+  updateCaseCompassDraft,
+  rejectCaseCompassDraft,
+  approveAndPublishCaseCompass,
+} from "./db/compass";
 import {
   getContactsByOwner,
   getContactById,

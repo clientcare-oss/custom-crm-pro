@@ -118,3 +118,5 @@ drizzle/d1_export.sql
 client/public/__manus__/version.json
 .project-config.json
 .wrangler/
+uploads/
+

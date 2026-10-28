@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 import PageIdBadge from "@/components/PageIdBadge";
 import { StudentReviewTrackerView } from "./reviews/StudentReviewTrackerView";
+import StudentCaseCompassConsole from "./compass/StudentCaseCompassConsole";
 
 interface StudentWorkspaceMoreTabProps {
   studentId: string | number;
@@ -19,8 +20,8 @@ interface StudentWorkspaceMoreTabProps {
   parentEmail?: string;
   parentPhone?: string;
   studentGrade?: string;
-  initialSubView?: "grid" | "reviews";
-  onSubViewChange?: (subView: "grid" | "reviews") => void;
+  initialSubView?: "grid" | "reviews" | "compass";
+  onSubViewChange?: (subView: "grid" | "reviews" | "compass") => void;
   onOpenContactHistory?: () => void;
 }
 
@@ -83,7 +84,7 @@ export function StudentWorkspaceMoreTab({
 }: StudentWorkspaceMoreTabProps) {
   const [, setLocation] = useLocation();
   const [selectedId, setSelectedId] = useState<string>("activity-timeline");
-  const [activeSubView, setActiveSubView] = useState<"grid" | "reviews">(initialSubView);
+  const [activeSubView, setActiveSubView] = useState<"grid" | "reviews" | "compass">(initialSubView);
 
   useEffect(() => {
     if (initialSubView) {
@@ -100,17 +101,6 @@ export function StudentWorkspaceMoreTab({
       onClick: () => {
         setSelectedId("parent-profile-history");
         onOpenContactHistory?.();
-      },
-    },
-    {
-      id: "reviews",
-      title: "Reviews",
-      description: "Request tracker & Google verification.",
-      icon: Star,
-      onClick: () => {
-        setSelectedId("reviews");
-        setActiveSubView("reviews");
-        onSubViewChange?.("reviews");
       },
     },
     {
@@ -140,7 +130,8 @@ export function StudentWorkspaceMoreTab({
       icon: Compass,
       onClick: () => {
         setSelectedId("case-compass");
-        setLocation(`/case-compass`);
+        setActiveSubView("compass");
+        onSubViewChange?.("compass");
       },
     },
     {
@@ -253,6 +244,17 @@ export function StudentWorkspaceMoreTab({
         setLocation(`/contacts/${studentId}?tab=referral`);
       },
     },
+    {
+      id: "reviews",
+      title: "Reviews",
+      description: "Request tracker & Google verification.",
+      icon: Star,
+      onClick: () => {
+        setSelectedId("reviews");
+        setActiveSubView("reviews");
+        onSubViewChange?.("reviews");
+      },
+    },
   ], [studentId, caseId, studentName, setLocation, onOpenContactHistory, onSubViewChange]);
 
   if (activeSubView === "reviews") {
@@ -264,6 +266,20 @@ export function StudentWorkspaceMoreTab({
         parentName={parentName}
         parentEmail={parentEmail}
         parentPhone={parentPhone}
+        onBackToMore={() => {
+          setActiveSubView("grid");
+          onSubViewChange?.("grid");
+        }}
+      />
+    );
+  }
+
+  if (activeSubView === "compass") {
+    return (
+      <StudentCaseCompassConsole
+        studentId={typeof studentId === "string" ? parseInt(studentId, 10) || 0 : studentId}
+        studentName={studentName || "Student"}
+        caseId={caseId}
         onBackToMore={() => {
           setActiveSubView("grid");
           onSubViewChange?.("grid");

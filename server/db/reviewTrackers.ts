@@ -33,11 +33,39 @@ export interface ReviewTrackerWithDetails {
     caseId: string | null;
   }[];
   effectiveAccountId: number;
-  status: "none" | "requested" | "followup_due" | "verified";
+  status:
+    | "none"
+    | "eligible"
+    | "scheduled"
+    | "draft"
+    | "requested"
+    | "sent"
+    | "awaiting_confirmation"
+    | "review_confirmed"
+    | "verified"
+    | "declined"
+    | "suppressed"
+    | "delivery_failed"
+    | "followup_due";
+  hasActiveOpportunity: boolean;
+  opportunityMilestone: string | null;
+  reminderDue: boolean;
+  isSuppressed: boolean;
+  suppressionReason: string | null;
+  suppressionNotes: string | null;
 }
 
 // Local in-memory fallback store to ensure seamless unit testing and offline resilience
 const memoryTrackers = new Map<number, ClientReviewTracker>();
+(globalThis as any).__waypointMemoryTrackers = memoryTrackers;
+
+export function getMemoryTracker(accountId: number): ClientReviewTracker | undefined {
+  return memoryTrackers.get(accountId);
+}
+
+export function setMemoryTracker(accountId: number, tracker: ClientReviewTracker): void {
+  memoryTrackers.set(accountId, tracker);
+}
 
 /**
  * Resolves the account-level parentContactId for any given student ID.
@@ -117,18 +145,47 @@ export async function getReviewTrackerByAccountId(
       .where(eq(contacts.parentContactId, accountId));
   } catch {}
 
-  // Determine computed status: if tracker status is requested but past followUpDueAt, return followup_due
-  let computedStatus: "none" | "requested" | "followup_due" | "verified" = "none";
+  // Determine computed status:
+  const now = new Date();
+  let computedStatus: ReviewTrackerWithDetails["status"] = "none";
+  let hasActiveOpportunity = false;
+  let reminderDue = false;
+
   if (tracker) {
-    if (tracker.status === "verified") {
+    if (tracker.status === "verified" || tracker.verifiedAt) {
       computedStatus = "verified";
-    } else if (tracker.status === "requested" || tracker.status === "followup_due") {
-      const now = new Date();
+    } else if (tracker.status === "review_confirmed" || tracker.clientConfirmedAt) {
+      computedStatus = "review_confirmed";
+    } else if (tracker.status === "suppressed") {
+      computedStatus = "suppressed";
+    } else if (tracker.status === "declined") {
+      computedStatus = "declined";
+    } else if (tracker.status === "eligible") {
+      computedStatus = "eligible";
+      hasActiveOpportunity = true;
+    } else if (tracker.status === "scheduled") {
+      if (tracker.reminderDate && new Date(tracker.reminderDate) <= now) {
+        computedStatus = "eligible"; // Reminder is due! Surface as active opportunity
+        hasActiveOpportunity = true;
+        reminderDue = true;
+      } else {
+        computedStatus = "scheduled";
+      }
+    } else if (
+      tracker.status === "requested" ||
+      tracker.status === "sent" ||
+      tracker.status === "awaiting_confirmation" ||
+      tracker.status === "followup_due"
+    ) {
       if (tracker.followUpDueAt && new Date(tracker.followUpDueAt) <= now) {
         computedStatus = "followup_due";
       } else {
         computedStatus = "requested";
       }
+    } else if (tracker.status === "delivery_failed") {
+      computedStatus = "delivery_failed";
+    } else if (tracker.status === "draft") {
+      computedStatus = "draft";
     }
   }
 
@@ -138,6 +195,12 @@ export async function getReviewTrackerByAccountId(
     students: siblingStudents,
     effectiveAccountId: accountId,
     status: computedStatus,
+    hasActiveOpportunity,
+    opportunityMilestone: tracker?.triggerMilestone || null,
+    reminderDue,
+    isSuppressed: tracker?.status === "suppressed",
+    suppressionReason: tracker?.suppressionReason || null,
+    suppressionNotes: tracker?.suppressionNotes || null,
   };
 }
 
@@ -159,11 +222,26 @@ export async function recordReviewRequest(params: {
   studentId?: number;
   requestedBy: string;
   requestChannel?: "email" | "sms" | "portal";
+  customSubject?: string;
+  customBody?: string;
+  reviewUrl?: string;
   customNotes?: string;
+  followUpDays?: number;
 }): Promise<ClientReviewTracker> {
+  // Security guardrail: Confidential student disability details must not be in review request
+  if (params.customBody) {
+    const sensitive = /\b(adhd|autis|dyslex|bipolar|depression|iep dispute|manifestation|state complaint|ferpa)\b/i;
+    if (sensitive.test(params.customBody)) {
+      throw new Error(
+        "Security guardrail: Confidential student disability or dispute details must not be included in review requests."
+      );
+    }
+  }
+
   const db = await getDb();
   const now = new Date();
-  const followUpDue = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days out
+  const followUpDays = params.followUpDays && params.followUpDays > 0 ? params.followUpDays : 14; // Default 14 days per Section 7
+  const followUpDue = new Date(now.getTime() + followUpDays * 24 * 60 * 60 * 1000);
 
   let dbExisting: ClientReviewTracker | undefined;
   try {
@@ -183,8 +261,8 @@ export async function recordReviewRequest(params: {
     action: "REVIEW_REQUESTED",
     employee: params.requestedBy,
     details: `Review request sent via ${params.requestChannel || "email"}.${
-      params.customNotes ? ` Notes: ${params.customNotes}` : ""
-    }`,
+      params.customSubject ? ` Subject: "${params.customSubject}".` : ""
+    }${params.customNotes ? ` Notes: ${params.customNotes}` : ""}`,
   };
 
   const auditList: AuditTrailEntry[] = existing?.auditTrail
@@ -256,9 +334,16 @@ export async function recordReviewRequest(params: {
         parentContactId: params.accountId,
         studentContactId: params.studentId || null,
         status: "requested",
+        triggerMilestone: null,
+        milestoneEventId: null,
+        opportunityCreatedAt: null,
+        assignedEmployee: params.requestedBy,
+        reminderDate: null,
         requestedAt: now,
         requestedBy: params.requestedBy,
         requestChannel: params.requestChannel || "email",
+        clientConfirmedAt: null,
+        clientConfirmedBy: null,
         followUpDueAt: followUpDue,
         lastFollowUpSentAt: null,
         followUpCount: 0,
@@ -271,6 +356,10 @@ export async function recordReviewRequest(params: {
         verifiedAt: null,
         verifiedBy: null,
         verificationNotes: null,
+        suppressionReason: null,
+        suppressionNotes: null,
+        suppressedAt: null,
+        suppressedBy: null,
         thankYouStatus: "none",
         thankYouPreparedAt: null,
         thankYouSubject: null,
@@ -285,7 +374,7 @@ export async function recordReviewRequest(params: {
     }
   }
 
-  memoryTrackers.set(params.accountId, resultTracker);
+  memoryTrackers.set(params.accountId, resultTracker!);
 
   // Record to Case Activity Timeline for student if available
   if (params.studentId) {
@@ -306,7 +395,7 @@ export async function recordReviewRequest(params: {
     }
   }
 
-  return resultTracker;
+  return resultTracker!;
 }
 
 /**
@@ -498,9 +587,16 @@ export async function detectOrMatchGoogleReview(params: {
         parentContactId: params.accountId,
         studentContactId: null,
         status: "none",
+        triggerMilestone: null,
+        milestoneEventId: null,
+        opportunityCreatedAt: null,
+        assignedEmployee: null,
+        reminderDate: null,
         requestedAt: null,
         requestedBy: null,
         requestChannel: null,
+        clientConfirmedAt: null,
+        clientConfirmedBy: null,
         followUpDueAt: null,
         lastFollowUpSentAt: null,
         followUpCount: 0,
@@ -514,6 +610,10 @@ export async function detectOrMatchGoogleReview(params: {
         verifiedAt: null,
         verifiedBy: null,
         verificationNotes: null,
+        suppressionReason: null,
+        suppressionNotes: null,
+        suppressedAt: null,
+        suppressedBy: null,
         thankYouStatus: "none",
         thankYouPreparedAt: null,
         thankYouSubject: null,
@@ -528,8 +628,8 @@ export async function detectOrMatchGoogleReview(params: {
     }
   }
 
-  memoryTrackers.set(params.accountId, resultTracker);
-  return resultTracker;
+  memoryTrackers.set(params.accountId, resultTracker!);
+  return resultTracker!;
 }
 
 /**
@@ -678,9 +778,16 @@ export async function verifyReviewByEmployee(params: {
         parentContactId: params.accountId,
         studentContactId: params.studentId || null,
         status: "verified",
+        triggerMilestone: null,
+        milestoneEventId: null,
+        opportunityCreatedAt: null,
+        assignedEmployee: params.verifiedBy,
+        reminderDate: null,
         requestedAt: null,
         requestedBy: null,
         requestChannel: null,
+        clientConfirmedAt: null,
+        clientConfirmedBy: null,
         followUpDueAt: null,
         lastFollowUpSentAt: null,
         followUpCount: 0,
@@ -693,6 +800,10 @@ export async function verifyReviewByEmployee(params: {
         verifiedAt: now,
         verifiedBy: params.verifiedBy,
         verificationNotes: params.notes || null,
+        suppressionReason: null,
+        suppressionNotes: null,
+        suppressedAt: null,
+        suppressedBy: null,
         thankYouStatus: "pending_approval",
         thankYouPreparedAt: now,
         thankYouSubject: defaultSubject,
@@ -707,7 +818,7 @@ export async function verifyReviewByEmployee(params: {
     }
   }
 
-  memoryTrackers.set(params.accountId, resultTracker);
+  memoryTrackers.set(params.accountId, resultTracker!);
 
   // Save activity to the account's Activity Timeline (Requirement 4)
   const targetStudentId = params.studentId || existing?.studentContactId;
@@ -727,7 +838,7 @@ export async function verifyReviewByEmployee(params: {
     }
   }
 
-  return resultTracker;
+  return resultTracker!;
 }
 
 /**
@@ -941,3 +1052,5 @@ export async function updateReviewInternalNotes(params: {
   memoryTrackers.set(params.accountId, updated);
   return updated;
 }
+
+export * from "./reviewOpportunities";

@@ -26,10 +26,32 @@ import {
   Plus,
   Save,
   Link as LinkIcon,
+  PhoneCall,
+  Phone,
+  Mail,
+  Headset,
+  ArrowRight,
+  ArrowUpRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { ParentContactHistoryDrawer } from "@/components/contact/ParentContactHistoryDrawer";
+import { trpc } from "@/lib/trpc";
 import {
   Select,
   SelectContent,
@@ -169,6 +191,10 @@ export default function AppointmentDetailDrawer({
   // Inline Note Editor state
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [quickNoteText, setQuickNoteText] = useState("");
+
+  // Parent interaction dialogs
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [parentDetailsDrawerOpen, setParentDetailsDrawerOpen] = useState(false);
 
   // Edit form state
   const [editFormData, setEditFormData] = useState<{
@@ -363,30 +389,92 @@ export default function AppointmentDetailDrawer({
     });
   };
 
+  // Query contacts from server if props not populated
+  const { data: serverContacts } = trpc.contacts.list.useQuery(undefined, {
+    enabled: isOpen,
+  });
+
+  const allContacts = useMemo(() => {
+    if (contacts && contacts.length > 0) return contacts;
+    return serverContacts || [];
+  }, [contacts, serverContacts]);
+
+  // Student contact detector helper
+  const isStudent = (c: any) => {
+    if (!c) return false;
+    const title = (c.jobTitle || "").toLowerCase().trim();
+    if (title.includes("student")) return true;
+    if (c.parentContactId != null && c.parentContactId > 0) return true;
+    if (c.studentStatus || c.gradeLevel || c.schoolName || c.caseId) return true;
+    return false;
+  };
+
   // Resolved relationship links (family contact, student contact, lead)
   const resolvedRelationships = useMemo(() => {
-    if (!appointment) return { parentId: null, studentId: null, leadId: null };
+    if (!appointment) return { parentId: null, studentId: null, leadId: null, isDiscovery: false };
 
     let parentId = appointment.parentContactId || null;
     let studentId: number | null = null;
 
+    // 1. Direct match by clientId
     if (appointment.clientId) {
-      const c = contacts.find((x: any) => x.id === appointment.clientId);
-      if (c?.jobTitle === "Student") {
+      const c = allContacts.find((x: any) => x.id === appointment.clientId);
+      if (c && isStudent(c)) {
         studentId = c.id;
         if (!parentId && c.parentContactId) parentId = c.parentContactId;
-      } else if (c?.jobTitle === "Parent") {
+      } else if (c) {
         parentId = c.id;
       }
     }
 
+    // 2. Try finding student by studentName in contacts
+    if (!studentId && appointment.studentName) {
+      const targetStudentName = appointment.studentName.trim().toLowerCase();
+      const match = allContacts.find((x: any) => {
+        const full = `${x.firstName || ""} ${x.lastName || ""}`.trim().toLowerCase();
+        return isStudent(x) && full === targetStudentName;
+      });
+      if (match) {
+        studentId = match.id;
+        if (!parentId && match.parentContactId) parentId = match.parentContactId;
+      }
+    }
+
+    // 3. Try finding parent by parentName
+    if (!parentId && appointment.parentName) {
+      const targetParentName = appointment.parentName.trim().toLowerCase();
+      const match = allContacts.find((x: any) => {
+        const full = `${x.firstName || ""} ${x.lastName || ""}`.trim().toLowerCase();
+        return !isStudent(x) && full === targetParentName;
+      });
+      if (match) {
+        parentId = match.id;
+      }
+    }
+
+    // 4. Try finding parent by parentPhone
     if (!parentId && appointment.parentPhone) {
       const normPhone = appointment.parentPhone.replace(/\D/g, "");
-      const c = contacts.find(
-        (x: any) =>
-          (x.phone || "").replace(/\D/g, "") === normPhone && x.jobTitle !== "Student"
-      );
-      if (c) parentId = c.id;
+      if (normPhone) {
+        const c = allContacts.find(
+          (x: any) =>
+            (x.phone || "").replace(/\D/g, "") === normPhone && !isStudent(x)
+        );
+        if (c) parentId = c.id;
+      }
+    }
+
+    // 5. If parentId known, find student among linked children
+    if (!studentId && parentId) {
+      const child = allContacts.find((x: any) => x.parentContactId === parentId);
+      if (child) {
+        studentId = child.id;
+      }
+    }
+
+    // 6. Fallback studentId to clientId
+    if (!studentId && appointment.clientId) {
+      studentId = appointment.clientId;
     }
 
     let leadId = appointment.leadId || null;
@@ -406,7 +494,67 @@ export default function AppointmentDetailDrawer({
       !!leadId;
 
     return { parentId, studentId, leadId, isDiscovery };
-  }, [appointment, contacts, leads]);
+  }, [appointment, allContacts, leads]);
+
+  // Resolved phone and email for parent
+  const clientPhone = useMemo(() => {
+    if (appointment?.parentPhone) return appointment.parentPhone;
+    if (resolvedRelationships.parentId) {
+      const p = allContacts.find((c: any) => c.id === resolvedRelationships.parentId);
+      if (p?.phone) return p.phone;
+    }
+    return null;
+  }, [appointment?.parentPhone, resolvedRelationships.parentId, allContacts]);
+
+  const clientEmail = useMemo(() => {
+    if (appointment?.parentEmail) return appointment.parentEmail;
+    if (resolvedRelationships.parentId) {
+      const p = allContacts.find((c: any) => c.id === resolvedRelationships.parentId);
+      if (p?.email) return p.email;
+    }
+    return null;
+  }, [appointment?.parentEmail, resolvedRelationships.parentId, allContacts]);
+
+  // Direct action handlers
+  const handleContactClient = () => {
+    setContactModalOpen(true);
+  };
+
+  const handleViewParentDetails = () => {
+    if (resolvedRelationships.parentId) {
+      setParentDetailsDrawerOpen(true);
+    } else {
+      onClose();
+      setLocation(`/contacts?search=${encodeURIComponent(appointment?.parentName || "")}`);
+    }
+  };
+
+  const handleOpenStudentWorkspace = () => {
+    const targetStudentId =
+      resolvedRelationships.studentId ||
+      appointment?.clientId;
+
+    if (targetStudentId) {
+      onClose();
+      setLocation(`/contacts/${targetStudentId}`);
+    } else if (appointment?.studentName) {
+      const targetName = appointment.studentName.trim().toLowerCase();
+      const match = allContacts.find((c: any) => {
+        const full = `${c.firstName || ""} ${c.lastName || ""}`.trim().toLowerCase();
+        return full === targetName;
+      });
+      if (match?.id) {
+        onClose();
+        setLocation(`/contacts/${match.id}`);
+      } else {
+        onClose();
+        setLocation(`/students?search=${encodeURIComponent(appointment.studentName)}`);
+      }
+    } else {
+      onClose();
+      setLocation("/students");
+    }
+  };
 
   // Dual time zone calculation
   const dualTime = useMemo(() => {
@@ -1006,59 +1154,104 @@ export default function AppointmentDetailDrawer({
                     </div>
                   )}
 
-                  {/* Parent / Client */}
+                  {/* Parent / Client (Click name to show Contact Client or View Details) */}
                   {appointment.parentName && (
                     <div className="flex items-center justify-between pt-1.5 border-t border-[#3A2C18]/60">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-[#102B4E] border border-[#3A2C18] flex items-center justify-center text-[#FFE394] font-bold text-[10px]">
-                          {appointment.parentName.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="text-[#FFF4D4] font-medium">
-                            {appointment.parentName}
-                          </div>
-                          <div className="text-[10px] text-[#A69371]">Parent / Client</div>
-                        </div>
-                      </div>
-
-                      {appointment.parentPhone && (
-                        <a
-                          href={`tel:${appointment.parentPhone}`}
-                          className="text-xs text-[#FFE394] hover:underline font-mono"
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex items-center gap-2 text-left group hover:bg-[#102B4E]/50 px-2 py-1 -ml-2 rounded-lg transition-colors cursor-pointer select-none"
+                            title="Click for parent actions (Contact Client, View Details)"
+                          >
+                            <div className="w-6 h-6 rounded-full bg-[#102B4E] border border-[#3A2C18] flex items-center justify-center text-[#FFE394] font-bold text-[10px] group-hover:border-[#C5A059] group-hover:shadow-[0_0_8px_rgba(197,160,89,0.3)] transition-all">
+                              {appointment.parentName.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="text-[#FFF4D4] font-medium group-hover:text-[#FFE394] flex items-center gap-1.5 transition-colors">
+                                <span>{appointment.parentName}</span>
+                                <ChevronDown className="w-3.5 h-3.5 text-[#A69371] group-hover:text-[#FFE394] transition-colors" />
+                              </div>
+                              <div className="text-[10px] text-[#A69371] group-hover:text-[#C6B697] transition-colors">
+                                Parent / Client • Click for choices
+                              </div>
+                            </div>
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="start"
+                          className="w-56 bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-[0_16px_40px_rgba(0,0,0,0.95)] z-50 p-1.5 rounded-xl animate-in fade-in zoom-in-95"
                         >
-                          {appointment.parentPhone}
+                          <DropdownMenuItem
+                            onClick={handleContactClient}
+                            className="flex items-center gap-2.5 px-3 py-2 text-xs text-[#FFF4D4] hover:bg-[#102B4E] hover:text-[#FFE394] rounded-lg cursor-pointer transition-colors"
+                          >
+                            <PhoneCall className="w-4 h-4 text-[#C5A059] shrink-0" />
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-[#FFE394]">Contact Client</span>
+                              <span className="text-[10px] text-[#A69371]">Call, email, or message</span>
+                            </div>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator className="my-1 bg-[#3A2C18]/60" />
+
+                          <DropdownMenuItem
+                            onClick={handleViewParentDetails}
+                            className="flex items-center gap-2.5 px-3 py-2 text-xs text-[#FFF4D4] hover:bg-[#102B4E] hover:text-[#FFE394] rounded-lg cursor-pointer transition-colors"
+                          >
+                            <User className="w-4 h-4 text-[#C5A059] shrink-0" />
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-[#FFF4D4]">View Details</span>
+                              <span className="text-[10px] text-[#A69371]">Profile & contact history</span>
+                            </div>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      {clientPhone && (
+                        <a
+                          href={`tel:${clientPhone}`}
+                          className="text-xs text-[#FFE394] hover:underline font-mono"
+                          title="Call parent phone"
+                        >
+                          {clientPhone}
                         </a>
                       )}
                     </div>
                   )}
 
-                  {/* Student */}
+                  {/* Student (Click to navigate to Student Workspace) */}
                   {appointment.studentName && (
                     <div className="flex items-center justify-between pt-1.5 border-t border-[#3A2C18]/60">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-indigo-950/80 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-bold text-[10px]">
+                      <button
+                        type="button"
+                        onClick={handleOpenStudentWorkspace}
+                        className="flex items-center gap-2 text-left group hover:bg-[#102B4E]/50 px-2 py-1.5 -ml-2 rounded-lg transition-colors cursor-pointer flex-1"
+                        title={`Open Student Workspace for ${appointment.studentName}`}
+                      >
+                        <div className="w-6 h-6 rounded-full bg-indigo-950/80 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-bold text-[10px] group-hover:border-indigo-400 group-hover:bg-indigo-900 group-hover:shadow-[0_0_8px_rgba(99,102,241,0.35)] transition-all">
                           {appointment.studentName.charAt(0)}
                         </div>
-                        <div>
-                          <div className="text-[#FFF4D4] font-medium">
-                            {appointment.studentName}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[#FFF4D4] font-medium group-hover:text-indigo-200 flex items-center gap-1.5 transition-colors">
+                            <span className="truncate">{appointment.studentName}</span>
+                            <ArrowUpRight className="w-3.5 h-3.5 text-[#C5A059] opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
                           </div>
-                          <div className="text-[10px] text-[#A69371]">Student</div>
+                          <div className="text-[10px] text-[#A69371] group-hover:text-[#C6B697] transition-colors">
+                            Student • Click to open Workspace
+                          </div>
                         </div>
-                      </div>
+                      </button>
 
-                      {resolvedRelationships.studentId && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onClose();
-                            setLocation(`/contacts/${resolvedRelationships.studentId}`);
-                          }}
-                          className="text-[11px] text-[#C5A059] hover:underline"
-                        >
-                          Workspace →
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={handleOpenStudentWorkspace}
+                        className="text-[11px] text-[#C5A059] hover:text-[#FFE394] hover:underline flex items-center gap-1 shrink-0 ml-2"
+                        title={`Open Student Workspace for ${appointment.studentName}`}
+                      >
+                        <span>Workspace</span>
+                        <ArrowUpRight className="w-3 h-3" />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -1109,14 +1302,11 @@ export default function AppointmentDetailDrawer({
                   )}
 
                   {/* Open Student Workspace */}
-                  {resolvedRelationships.studentId && (
+                  {(resolvedRelationships.studentId || appointment.studentName || appointment.clientId) && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        onClose();
-                        setLocation(`/contacts/${resolvedRelationships.studentId}`);
-                      }}
+                      onClick={handleOpenStudentWorkspace}
                       className="w-full text-xs font-semibold border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] transition-all justify-start gap-1.5"
                     >
                       <User className="w-3.5 h-3.5 text-[#C5A059]" />
@@ -1348,6 +1538,170 @@ export default function AppointmentDetailDrawer({
           )}
         </div>
       </div>
+
+      {/* ── CONTACT CLIENT MODAL (Triggered from Parent Name > Contact Client) ── */}
+      <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>
+        <DialogContent className="max-w-md bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-[0_20px_50px_rgba(0,0,0,0.95)] z-[90]">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-[#FFF4D4] text-lg flex items-center gap-2">
+              <PhoneCall className="w-5 h-5 text-[#C5A059]" />
+              <span>Contact Client</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#A69371]">
+              Direct outreach channels for {appointment.parentName || "Client"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-2">
+            {/* Phone Outreach */}
+            <div className="p-3 rounded-xl bg-[#020A17] border border-[#3A2C18] space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-[#FFE394] font-medium">
+                  <Phone className="w-4 h-4 text-[#C5A059]" />
+                  <span>Phone Call</span>
+                </div>
+                {clientPhone && (
+                  <span className="text-xs font-mono text-[#D8C7A5]">{clientPhone}</span>
+                )}
+              </div>
+              {clientPhone ? (
+                <div className="flex items-center gap-2 pt-1">
+                  <Button
+                    size="sm"
+                    onClick={() => window.open(`tel:${clientPhone}`)}
+                    className="flex-1 h-8 text-xs font-bold bg-[#C5A059] hover:bg-[#FFE394] text-[#07162B] gap-1.5"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Call Now</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(clientPhone);
+                      toast.success("Phone number copied to clipboard");
+                    }}
+                    className="h-8 text-xs border-[#3A2C18] bg-[#07162B] text-[#D8C7A5] hover:bg-[#102B4E]"
+                    title="Copy phone number"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setContactModalOpen(false);
+                      onClose();
+                      setLocation(
+                        `/call-center${
+                          resolvedRelationships.parentId ? `?contactId=${resolvedRelationships.parentId}` : ""
+                        }`
+                      );
+                    }}
+                    className="h-8 text-xs border-[#3A2C18] bg-[#07162B] text-[#D8C7A5] hover:bg-[#102B4E] gap-1"
+                    title="Open in Call Center"
+                  >
+                    <Headset className="w-3.5 h-3.5 text-[#C5A059]" />
+                    <span>Dialer</span>
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-[11px] text-[#A69371] italic">
+                  No phone number on file for this client.
+                </p>
+              )}
+            </div>
+
+            {/* Email Outreach */}
+            <div className="p-3 rounded-xl bg-[#020A17] border border-[#3A2C18] space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-[#FFE394] font-medium">
+                  <Mail className="w-4 h-4 text-[#C5A059]" />
+                  <span>Email Outreach</span>
+                </div>
+                {clientEmail && (
+                  <span className="text-xs text-[#D8C7A5] truncate max-w-[200px]">{clientEmail}</span>
+                )}
+              </div>
+              {clientEmail ? (
+                <div className="flex items-center gap-2 pt-1">
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      window.open(
+                        `mailto:${clientEmail}?subject=Waypoint Advocates: Follow-up regarding ${
+                          appointment.studentName || "your student"
+                        }`
+                      )
+                    }
+                    className="flex-1 h-8 text-xs font-bold bg-[#102B4E] hover:bg-[#1A3D6E] text-[#FFE394] border border-[#3A2C18] gap-1.5"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-[#C5A059]" />
+                    <span>Compose Email</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(clientEmail);
+                      toast.success("Email address copied to clipboard");
+                    }}
+                    className="h-8 text-xs border-[#3A2C18] bg-[#07162B] text-[#D8C7A5] hover:bg-[#102B4E]"
+                    title="Copy email address"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-[11px] text-[#A69371] italic">
+                  No email address on file for this client.
+                </p>
+              )}
+            </div>
+
+            {/* CRM Client Messages */}
+            <div className="p-3 rounded-xl bg-[#020A17] border border-[#3A2C18] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-[#C5A059]" />
+                <div>
+                  <div className="text-xs font-medium text-[#FFF4D4]">Client Messages</div>
+                  <div className="text-[10px] text-[#A69371]">Send secure in-portal message</div>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setContactModalOpen(false);
+                  onClose();
+                  setLocation(
+                    `/messages${
+                      resolvedRelationships.parentId ? `?client=${resolvedRelationships.parentId}` : ""
+                    }`
+                  );
+                }}
+                className="h-8 text-xs border-[#3A2C18] bg-[#07162B] text-[#FFE394] hover:bg-[#102B4E] gap-1"
+              >
+                <span>Open Messages</span>
+                <ArrowRight className="w-3 h-3 text-[#C5A059]" />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── PARENT PROFILE & CONTACT HISTORY DRAWER (Triggered from Parent Name > View Details) ── */}
+      <ParentContactHistoryDrawer
+        isOpen={parentDetailsDrawerOpen}
+        onClose={() => setParentDetailsDrawerOpen(false)}
+        parentContactId={resolvedRelationships.parentId || undefined}
+        parentName={appointment.parentName || undefined}
+        onOpenStudentWorkspace={(stId) => {
+          setParentDetailsDrawerOpen(false);
+          onClose();
+          setLocation(`/students/${stId}`);
+        }}
+      />
     </>
   );
 }

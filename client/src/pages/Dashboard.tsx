@@ -2,14 +2,19 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, CheckSquare, TrendingUp, FileText, Loader2, Sparkles, AlertTriangle, CalendarClock, Clock, MessageSquare, Banknote, ArrowRight } from "lucide-react";
+import { BarChart3, CheckSquare, TrendingUp, FileText, Loader2, Sparkles, AlertTriangle, CalendarClock, Clock, MessageSquare, Banknote, ArrowRight, Star } from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
 import { ClientPortalPreview } from "@/components/ClientPortalPreview";
 import { useTerminology } from "@/contexts/TerminologyContext";
+import { ReviewOpportunityDrawer } from "@/components/students/reviews/ReviewOpportunityDrawer";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { projectLabel, projectLabelPlural } = useTerminology();
+  const [selectedOpportunity, setSelectedOpportunity] = useState<any>(null);
+  const [showReviewDrawer, setShowReviewDrawer] = useState(false);
+
   const { data: leads, isLoading: leadsLoading } = trpc.leads.list.useQuery(undefined, {
     enabled: user?.role === "admin",
   });
@@ -27,6 +32,9 @@ export default function Dashboard() {
     enabled: user?.role === "admin",
     refetchInterval: 5 * 60 * 1000,
     refetchIntervalInBackground: false,
+  });
+  const { data: pendingOpportunities } = trpc.reviewTracker.listPendingOpportunities.useQuery(undefined, {
+    enabled: user?.role === "admin",
   });
 
   // Calculate metrics
@@ -119,6 +127,47 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Review Opportunity Attention Banner (Section 5.A) */}
+      {pendingOpportunities && pendingOpportunities.length > 0 && (
+        <div className="rounded-xl border border-[#C5A059]/50 bg-gradient-to-r from-[#07162B] via-[#0D2545] to-[#07162B] p-4 text-[#FFF4D4] shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/20 text-[#FFE394] border border-[#C5A059]/50 shrink-0">
+              <Star className="h-5 w-5 fill-[#FFE394]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-[#FFF4D4]">
+                  ⭐ Review Opportunity ({pendingOpportunities.length})
+                </p>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#C5A059]/20 text-[#FFE394] font-bold border border-[#C5A059]/50 uppercase tracking-wider">
+                  Actionable
+                </span>
+              </div>
+              <p className="text-xs text-[#D8C7A5] mt-0.5">
+                {pendingOpportunities[0].parentContact?.firstName || "Family"} reached milestone:{" "}
+                <span className="text-[#FFE394] font-medium">{pendingOpportunities[0].milestone}</span>
+                {pendingOpportunities[0].studentContact?.firstName && (
+                  <span> (re: {pendingOpportunities[0].studentContact.firstName})</span>
+                )}.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              onClick={() => {
+                setSelectedOpportunity(pendingOpportunities[0]);
+                setShowReviewDrawer(true);
+              }}
+              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 shadow-sm text-xs hover:brightness-110"
+            >
+              <Star className="w-3.5 h-3.5 mr-1.5 fill-[#07162B]" />
+              Review Opportunity
+            </Button>
+          </div>
         </div>
       )}
 
@@ -279,6 +328,26 @@ export default function Dashboard() {
         <div className="flex items-center justify-center rounded-lg border border-border bg-muted/50 p-8">
           <Loader2 className="h-6 w-6 animate-spin text-accent" />
         </div>
+      )}
+
+      {/* Review Opportunity Drawer */}
+      {selectedOpportunity && (
+        <ReviewOpportunityDrawer
+          isOpen={showReviewDrawer}
+          onClose={() => setShowReviewDrawer(false)}
+          accountId={selectedOpportunity.tracker.parentContactId}
+          studentId={selectedOpportunity.tracker.studentContactId || undefined}
+          studentName={selectedOpportunity.studentContact?.firstName || "Student"}
+          parentName={
+            selectedOpportunity.parentContact
+              ? `${selectedOpportunity.parentContact.firstName} ${selectedOpportunity.parentContact.lastName}`
+              : "Family"
+          }
+          parentEmail={selectedOpportunity.parentContact?.email || ""}
+          milestoneTitle={selectedOpportunity.milestone}
+          currentStatus={selectedOpportunity.tracker.status}
+          initialMode="composer"
+        />
       )}
     </div>
   );

@@ -445,37 +445,38 @@ export default function StudentWorkspace() {
       {/* ─── Interactive Desk Workspace Canvas ────────────────────────────── */}
       <div className="relative z-10 w-full min-h-screen flex flex-col justify-start pb-16">
         
-        {/* Top Section: Invisible Header Bar sitting above the glowing blue line, bounded between vines and lamp */}
+        {/* Top Section: Invisible Header Bar sitting cleanly above the glowing blue line, bounded between vines and lamp */}
+        {/* Top Section: Invisible Header Bar sitting cleanly above the glowing blue line, bounded between vines and lamp */}
         <div 
-          className="w-full pt-3 sm:pt-4 md:pt-5 pb-2 relative z-20"
+          className="w-full pt-1 sm:pt-1.5 md:pt-2 pb-0.5 relative z-20"
           style={{
             paddingLeft: "max(110px, 13%)",
             paddingRight: "max(110px, 14%)",
           }}
         >
-          <header className="flex items-center justify-between w-full bg-transparent border-0 shadow-none px-0 py-1">
+          <header className="flex items-center justify-between w-full bg-transparent border-0 shadow-none px-0 py-0.5">
             
             {/* Left: Back to List + Student Workspace Title */}
-            <div className="flex items-center gap-3 sm:gap-3.5">
+            <div className="flex items-center gap-3 sm:gap-3.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setLocation("/students")}
-                className="flex flex-col items-center justify-center group cursor-pointer select-none bg-transparent p-0 border-0 transition-all text-center"
+                className="flex items-center gap-1.5 group cursor-pointer select-none bg-transparent px-2 py-1 -ml-1 rounded-lg transition-all text-left whitespace-nowrap hover:bg-white/5"
                 title="Back to Student Workspaces list"
               >
+                <Undo2 className="w-4 h-4 text-amber-300/90 group-hover:text-[#F2CD80] group-hover:-translate-x-0.5 transition-all shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
                 <span 
-                  className="text-base sm:text-lg md:text-xl font-medium tracking-tight text-white/90 group-hover:text-[#F2CD80] transition-colors leading-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                  className="text-base sm:text-lg md:text-xl font-medium tracking-tight text-white/90 group-hover:text-[#F2CD80] transition-colors whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                   style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                 >
                   Back to list
                 </span>
-                <Undo2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-300/90 group-hover:text-[#F2CD80] group-hover:-translate-x-0.5 transition-all mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
               </button>
 
               <span className="text-sky-300/40 text-lg sm:text-xl font-light select-none pb-0.5">|</span>
 
               <h1 
-                className="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
+                className="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] whitespace-nowrap"
                 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
               >
                 Student Workspace
@@ -483,47 +484,7 @@ export default function StudentWorkspace() {
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setLocation(`/meeting-workspace/${studentId}`)}
-                className="bg-gradient-to-r from-[#DFBE77]/20 via-[#C5A059]/30 to-[#9E7D3B]/20 hover:from-[#DFBE77]/35 hover:to-[#C5A059]/45 border border-[#F1CB6C]/50 text-[#FCE6A8] text-xs font-semibold rounded-lg h-8 px-3 gap-1.5 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
-                title="Launch Live Meeting Workspace (PG-043)"
-              >
-                <Zap className="h-3.5 w-3.5 text-[#F1CB6C]" />
-                <span className="hidden sm:inline">Meeting Workspace</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (studentId) {
-                    sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}`);
-                    sessionStorage.setItem("lastStudentProfileId", String(studentId));
-                    if (fullName) {
-                      sessionStorage.setItem("lastStudentProfileName", fullName);
-                    }
-                  }
-                  window.dispatchEvent(new CustomEvent("waypoint:collapse-sidebar"));
-                  setLocation(`/state-complaint-builder?studentId=${studentId}`);
-                }}
-                className={cn(
-                  "border text-xs font-semibold rounded-lg h-8 px-3 gap-1.5 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer",
-                  complaintDraftQuery.data
-                    ? "bg-[#DFBE77]/20 hover:bg-[#DFBE77]/30 border-[#DFBE77]/60 text-[#FFE394]"
-                    : "bg-[#071d3a]/75 hover:bg-[#0c2950] border-sky-400/35 hover:border-sky-300 text-sky-100"
-                )}
-                title={complaintDraftQuery.data ? "Open State Complaint Draft (14 Pages on File)" : "Open State Complaint Builder (PG-020)"}
-              >
-                <Landmark className={cn("h-3.5 w-3.5", complaintDraftQuery.data ? "text-[#F1CB6C]" : "text-sky-300")} />
-                <span className="hidden sm:inline">State Complaint</span>
-                {complaintDraftQuery.data && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" title="Draft on File" />
-                )}
-              </Button>
-
+            <div className="flex items-center gap-2.5 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
@@ -532,10 +493,10 @@ export default function StudentWorkspace() {
                   const targetUrl = `/portal?preview=true&contactId=${effectiveStudentId}${parentId ? `&parentContactId=${parentId}` : ""}${student?.caseId ? `&caseId=${student.caseId}` : ""}`;
                   window.open(targetUrl, "_blank");
                 }}
-                className="bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-100 text-xs font-semibold rounded-lg h-8 px-3 gap-1.5 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
+                className="bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-100 text-xs font-semibold rounded-lg h-8 px-3.5 gap-2 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
               >
                 <Eye className="h-3.5 w-3.5 text-sky-300" />
-                <span className="hidden md:inline">Preview Parent Portal</span>
+                <span>Preview Parent Portal</span>
               </Button>
 
               <Button

@@ -19,6 +19,7 @@ import {
   Edit3,
   Users,
   Check,
+  Ban,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import PageIdBadge from "@/components/PageIdBadge";
+import { ReviewOpportunityDrawer } from "./ReviewOpportunityDrawer";
 
 interface StudentReviewTrackerViewProps {
   studentId: number | string;
@@ -118,7 +120,38 @@ export function StudentReviewTrackerView({
     onError: (err) => toast.error(err.message),
   });
 
-  // Local state for modals & editors
+  const reconsiderMutation = trpc.reviewTracker.reconsiderSuppression.useMutation({
+    onSuccess: () => {
+      toast.success("Review opportunity re-opened!");
+      utils.reviewTracker.getByStudent.invalidate({ studentId: numStudentId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const confirmClientMutation = trpc.reviewTracker.confirmClientReview.useMutation({
+    onSuccess: () => {
+      toast.success("Review confirmed by client! Reminders stopped.");
+      utils.reviewTracker.getByStudent.invalidate({ studentId: numStudentId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const createOpportunityMutation = trpc.reviewTracker.createOpportunity.useMutation({
+    onSuccess: () => {
+      toast.success("Review opportunity created!");
+      utils.reviewTracker.getByStudent.invalidate({ studentId: numStudentId });
+      setShowMilestoneModal(false);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  // Local state for Opportunity Drawer & Modals
+  const [showOpportunityDrawer, setShowOpportunityDrawer] = useState(false);
+  const [opportunityDrawerMode, setOpportunityDrawerMode] = useState<"composer" | "remind" | "suppress">("composer");
+  const [showMilestoneModal, setShowMilestoneModal] = useState(false);
+  const [customMilestoneTitle, setCustomMilestoneTitle] = useState("Significant IEP Issue Resolved");
+  const [customMilestoneNotes, setCustomMilestoneNotes] = useState("");
+
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestChannel, setRequestChannel] = useState<"email" | "sms" | "portal">("email");
   const [requestNotes, setRequestNotes] = useState("");
@@ -224,23 +257,47 @@ export function StudentReviewTrackerView({
         </div>
 
         {/* Status Display Pill */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {status === "eligible" && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/25 to-yellow-500/15 border border-[#F1CB6C]/80 text-[#FFE394] text-xs font-bold shadow-[0_0_15px_rgba(241,203,108,0.3)] animate-pulse">
+              <Star className="w-3.5 h-3.5 fill-[#F1CB6C] text-[#F1CB6C]" />
+              <span>⭐ Review Opportunity</span>
+            </div>
+          )}
           {status === "verified" && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border border-[#F1CB6C]/60 text-[#FFE394] text-xs font-semibold shadow-[0_0_12px_rgba(241,203,108,0.25)]">
               <Star className="w-3.5 h-3.5 fill-[#F1CB6C] text-[#F1CB6C]" />
-              <span>Review Verified</span>
+              <span>⭐ Review Verified</span>
+            </div>
+          )}
+          {status === "review_confirmed" && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 text-xs font-semibold">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>⭐ Review Confirmed</span>
             </div>
           )}
           {status === "requested" && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/15 border border-sky-400/40 text-sky-200 text-xs font-semibold">
               <Clock className="w-3.5 h-3.5 text-sky-400" />
-              <span>Review Requested</span>
+              <span>⭐ Request Sent</span>
+            </div>
+          )}
+          {status === "scheduled" && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/50 text-indigo-200 text-xs font-semibold">
+              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+              <span>⭐ Reminder Scheduled</span>
+            </div>
+          )}
+          {status === "suppressed" && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-950/40 border border-rose-900/60 text-rose-300 text-xs font-medium">
+              <Ban className="w-3.5 h-3.5 text-rose-400" />
+              <span>Suppressed by Staff</span>
             </div>
           )}
           {status === "followup_due" && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/50 text-amber-200 text-xs font-semibold animate-pulse">
               <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
-              <span>Follow-Up Due</span>
+              <span>⭐ Follow-Up Due</span>
             </div>
           )}
           {status === "none" && (
@@ -248,6 +305,17 @@ export function StudentReviewTrackerView({
               <span>No Review Requested</span>
             </div>
           )}
+
+          {/* Quick Trigger Milestone Button (Trigger B) */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowMilestoneModal(true)}
+            className="border-[#3A2C18] bg-[#020A17] text-[#FFE394] hover:bg-[#07162B] text-xs h-8 ml-1"
+          >
+            <Sparkles className="w-3 h-3 mr-1 text-[#C5A059]" />
+            New Milestone
+          </Button>
         </div>
       </div>
 
@@ -293,6 +361,159 @@ export function StudentReviewTrackerView({
           </div>
         )}
       </div>
+
+      {/* ─── Active Review Opportunity Banner (Section 4 Staff Notification Experience) ─── */}
+      {(status === "eligible" || data?.hasActiveOpportunity) && (
+        <div className="rounded-xl border border-[#C5A059]/80 bg-gradient-to-r from-[#102B4E]/95 via-[#0A1F3A]/95 to-[#07162B]/95 p-5 shadow-[0_4px_24px_rgba(197,160,89,0.2)] flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in duration-300">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="p-1 rounded-md bg-amber-500/20 text-[#FFE394]">
+                <Star className="w-4 h-4 fill-[#FFE394]" />
+              </span>
+              <h3
+                className="text-base font-bold text-[#FFF4D4]"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              >
+                ⭐ A Good Moment to Request a Review?
+              </h3>
+              <Badge className="bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/50 text-[10px] uppercase font-bold tracking-wider">
+                Actionable Milestone
+              </Badge>
+            </div>
+            <p className="text-xs text-[#D8C7A5] leading-relaxed">
+              This family has reached milestone:{" "}
+              <strong className="text-[#FFE394]">{data?.opportunityMilestone || "First advocacy meeting with Waypoint"}</strong>.
+              Would you like to request an honest review of their experience?
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <Button
+              onClick={() => {
+                setOpportunityDrawerMode("composer");
+                setShowOpportunityDrawer(true);
+              }}
+              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 shadow-md text-xs hover:brightness-110"
+            >
+              <Send className="w-3.5 h-3.5 mr-1.5" />
+              Prepare Review Request
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOpportunityDrawerMode("remind");
+                setShowOpportunityDrawer(true);
+              }}
+              className="border-[#3A2C18] bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] text-xs"
+            >
+              <Clock className="w-3.5 h-3.5 mr-1.5" />
+              Remind Me Later
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOpportunityDrawerMode("suppress");
+                setShowOpportunityDrawer(true);
+              }}
+              className="border-rose-900/60 bg-rose-950/20 text-rose-200 hover:bg-rose-950/40 text-xs"
+            >
+              <Ban className="w-3.5 h-3.5 mr-1.5" />
+              Not Appropriate Right Now
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Suppressed Opportunity Inset ─── */}
+      {status === "suppressed" && (
+        <div className="rounded-xl border border-rose-900/50 bg-rose-950/20 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="space-y-0.5">
+            <span className="font-semibold text-rose-200 flex items-center gap-1.5">
+              <Ban className="w-3.5 h-3.5 text-rose-400" />
+              Review Opportunity Dismissed: {data?.suppressionReason || "Not appropriate right now"}
+            </span>
+            {data?.suppressionNotes && (
+              <p className="text-rose-300/80 italic text-[11px]">
+                Private note: "{data.suppressionNotes}"
+              </p>
+            )}
+            <p className="text-[#C6B697] text-[10px]">
+              Dismissals are non-judgmental and can be reconsidered whenever client conditions improve.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              reconsiderMutation.mutate({
+                accountId: effectiveAccountId,
+                studentId: numStudentId,
+              })
+            }
+            disabled={reconsiderMutation.isPending}
+            className="border-[#3A2C18] bg-[#020A17] text-[#FFE394] hover:text-[#FFF4D4] text-xs shrink-0 self-start sm:self-auto"
+          >
+            <RotateCcw className="w-3 h-3 mr-1" />
+            {reconsiderMutation.isPending ? "Reopening..." : "Reconsider Opportunity"}
+          </Button>
+        </div>
+      )}
+
+      {/* ─── Scheduled Reminder Inset ─── */}
+      {status === "scheduled" && tracker?.reminderDate && (
+        <div className="rounded-xl border border-indigo-900/50 bg-indigo-950/20 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="space-y-0.5">
+            <span className="font-semibold text-indigo-200 flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+              Review Reminder Scheduled for:{" "}
+              {new Date(tracker.reminderDate).toLocaleDateString(undefined, {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+            <p className="text-indigo-300/80 text-[11px]">
+              The opportunity will reappear as actionable when the scheduled date arrives.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => {
+              setOpportunityDrawerMode("composer");
+              setShowOpportunityDrawer(true);
+            }}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shrink-0 self-start sm:self-auto"
+          >
+            <Send className="w-3 h-3 mr-1" />
+            Prepare Request Now
+          </Button>
+        </div>
+      )}
+
+      {/* ─── Review Confirmed By Client Inset ─── */}
+      {status === "review_confirmed" && (
+        <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="space-y-0.5">
+            <span className="font-semibold text-emerald-200 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              Parent Confirmed Posting a Review
+            </span>
+            <p className="text-emerald-300/80 text-[11px]">
+              Review reminders have been stopped. A personalized thank-you message is prepared for staff approval.
+            </p>
+          </div>
+          {tracker?.thankYouStatus !== "sent" && (
+            <Button
+              size="sm"
+              onClick={() => setShowThankYouModal(true)}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shrink-0 self-start sm:self-auto"
+            >
+              <Send className="w-3 h-3 mr-1" />
+              Review & Send Thank-You
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* ─── Main Grid: Review Workflow & Status Panels ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -1013,6 +1234,98 @@ export function StudentReviewTrackerView({
                 </Button>
               </>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Intelligent Review Opportunity Drawer (Slide-Over Panel) ─── */}
+      <ReviewOpportunityDrawer
+        isOpen={showOpportunityDrawer}
+        onClose={() => setShowOpportunityDrawer(false)}
+        accountId={effectiveAccountId}
+        studentId={numStudentId}
+        studentName={studentName}
+        parentName={parentName}
+        parentEmail={parentEmail}
+        milestoneTitle={data?.opportunityMilestone || "First Advocacy Meeting Completed"}
+        currentStatus={status}
+        initialMode={opportunityDrawerMode}
+        onSuccess={() => {
+          utils.reviewTracker.getByStudent.invalidate({ studentId: numStudentId });
+        }}
+      />
+
+      {/* ─── Trigger B: Successful Advocacy Milestone Modal (Staff Initiated) ─── */}
+      <Dialog open={showMilestoneModal} onOpenChange={setShowMilestoneModal}>
+        <DialogContent className="max-w-md bg-[#07162B] border border-[#3A2C18] text-[#FFF4D4]">
+          <DialogHeader>
+            <DialogTitle
+              className="text-lg font-bold text-[#FFF4D4] flex items-center gap-2"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              <Sparkles className="w-5 h-5 text-[#FFE394]" />
+              Trigger Milestone Review Opportunity
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 text-xs text-[#C6B697] py-2">
+            <p>
+              Initiate a review opportunity following meaningful progress for{" "}
+              <strong className="text-[#FFF4D4]">{studentName}</strong>.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[#FFE394] uppercase tracking-wider">
+                Select Milestone Type
+              </label>
+              <select
+                value={customMilestoneTitle}
+                onChange={(e) => setCustomMilestoneTitle(e.target.value)}
+                className="w-full px-3 py-2 rounded-md border border-[#3A2C18] bg-[#020A17] text-[#FFF4D4] text-xs focus:outline-none focus:border-[#C5A059]"
+              >
+                <option value="Important Accommodation Approved">Important Accommodation Approved</option>
+                <option value="Significant IEP Issue Resolved">Significant IEP Issue Resolved</option>
+                <option value="Successful Advocacy Outcome">Successful Advocacy Outcome</option>
+                <option value="Parent Expressed High Satisfaction">Parent Expressed High Satisfaction</option>
+                <option value="Custom Advocacy Milestone">Custom Advocacy Milestone</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[#FFE394] uppercase tracking-wider">
+                Internal Context Notes (Optional)
+              </label>
+              <textarea
+                rows={3}
+                value={customMilestoneNotes}
+                onChange={(e) => setCustomMilestoneNotes(e.target.value)}
+                placeholder="Brief notes on what was accomplished..."
+                className="w-full p-2.5 rounded-md border border-[#3A2C18] bg-[#020A17] text-[#FFF4D4] text-xs focus:outline-none focus:border-[#C5A059]"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowMilestoneModal(false)}
+              className="border-[#3A2C18] bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4]"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                createOpportunityMutation.mutate({
+                  studentId: numStudentId,
+                  milestoneTitle: customMilestoneTitle,
+                  notes: customMilestoneNotes || undefined,
+                })
+              }
+              disabled={createOpportunityMutation.isPending}
+              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold"
+            >
+              {createOpportunityMutation.isPending ? "Evaluating..." : "Create Opportunity"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

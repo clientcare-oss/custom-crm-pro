@@ -20,6 +20,7 @@ import {
   deleteFirstMateSessionRun,
 } from "../db";
 import { contacts, leads, projects, projectNotes } from "../../drizzle/schema";
+import { generateAndSaveCompassDraftFromMeeting } from "../compassAi";
 import {
   isSilenceHallucination,
   type FirstMateSession,
@@ -843,6 +844,32 @@ ${transcriptFormatted}
         });
       } catch (recErr) {
         console.warn("[FirstMate] Failed to archive session run:", recErr);
+      }
+
+      // 10. Automatic Meeting Transcription Handoff (Workflow 5)
+      // Generates a reviewable pending Case Compass draft for the assigned advocate
+      try {
+        if (resolvedStudentId && resolvedStudentId > 0) {
+          const transcriptText = (session.transcript || [])
+            .map((t) => `${t.speakerRole || 'Speaker'}: ${t.text}`)
+            .join("\n");
+
+          await generateAndSaveCompassDraftFromMeeting({
+            studentId: resolvedStudentId,
+            caseId: studentRecord.caseId || `WP-${resolvedStudentId}`,
+            meetingId: effectiveSessionId,
+            meetingTitle: session.title || `Meeting with ${resolvedStudentName}`,
+            transcriptText,
+            sourceReferences: (session.requests || []).concat(session.refusals || []).map((r: any) => ({
+              label: r.type || "Substantive Meeting Detection",
+              quote: r.text || "",
+              timestamp: r.timestamp ? new Date(r.timestamp).toLocaleTimeString() : undefined,
+              source: session.title || "Meeting Transcript",
+            })),
+          });
+        }
+      } catch (compassHandoffErr) {
+        console.warn("[FirstMate] Case Compass meeting handoff notice:", compassHandoffErr);
       }
 
       return {

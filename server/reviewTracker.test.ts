@@ -43,6 +43,7 @@ describe("Review Tracker & Overview Indicator — PG-030-REV Engine", () => {
       requestedBy: "Byron Honea",
       requestChannel: "email",
       customNotes: "Sent post-IEP annual meeting review invite",
+      followUpDays: 7,
     });
 
     expect(record).toBeDefined();

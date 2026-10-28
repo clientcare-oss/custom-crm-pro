@@ -27,7 +27,20 @@ export interface StudentProfileDossierProps {
   clientTime: string;
   onEditDetails?: () => void;
   offset?: { x: number; y: number };
-  reviewStatus?: "none" | "requested" | "followup_due" | "verified";
+  reviewStatus?:
+    | "none"
+    | "eligible"
+    | "scheduled"
+    | "draft"
+    | "requested"
+    | "sent"
+    | "awaiting_confirmation"
+    | "review_confirmed"
+    | "verified"
+    | "declined"
+    | "suppressed"
+    | "delivery_failed"
+    | "followup_due";
   onOpenReviews?: () => void;
   contactConcernStatus?: "active" | "resolved" | null;
   hasPendingVerification?: boolean;
@@ -441,26 +454,49 @@ export function StudentProfileDossier({
             </button>
           )}
 
-          {/* Contextual Review Status Pill */}
-          {reviewStatus === "verified" && (
+          {/* Contextual Review Status Pill (Section 5.C) */}
+          {reviewStatus === "eligible" && (
+            <button
+              type="button"
+              onClick={onOpenReviews}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 border border-[#F1CB6C]/60 text-[#FFE394] hover:bg-amber-500/30 transition-all shadow-[0_0_10px_rgba(241,203,108,0.25)] cursor-pointer"
+              title="Review Opportunity — Click to view Reviews"
+            >
+              <Star className="w-2.5 h-2.5 fill-[#F1CB6C] text-[#F1CB6C]" />
+              <span>Review Opportunity</span>
+            </button>
+          )}
+          {(reviewStatus === "verified" || reviewStatus === "review_confirmed") && (
             <button
               type="button"
               onClick={onOpenReviews}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/15 border border-[#F1CB6C]/40 text-[#FFE394] hover:bg-amber-500/25 transition-all shadow-[0_0_8px_rgba(241,203,108,0.2)] cursor-pointer"
-              title="Google Review Verified — Click to view Reviews"
+              title="Review Confirmed — Click to view Reviews"
             >
               <Star className="w-2.5 h-2.5 fill-[#F1CB6C] text-[#F1CB6C]" />
-              <span>Review Verified</span>
+              <span>Review Confirmed</span>
             </button>
           )}
-          {reviewStatus === "requested" && (
+          {(reviewStatus === "requested" || reviewStatus === "sent") && (
             <button
               type="button"
               onClick={onOpenReviews}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-sky-500/15 border border-sky-400/35 text-sky-200 hover:bg-sky-500/25 transition-all cursor-pointer"
-              title="Review Requested — Click to view Reviews"
+              title="Request Sent — Click to view Reviews"
             >
-              <span>Review Requested</span>
+              <Star className="w-2.5 h-2.5 fill-[#38BDF8] text-[#38BDF8]" />
+              <span>Request Sent</span>
+            </button>
+          )}
+          {reviewStatus === "awaiting_confirmation" && (
+            <button
+              type="button"
+              onClick={onOpenReviews}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-indigo-500/15 border border-indigo-400/35 text-indigo-200 hover:bg-indigo-500/25 transition-all cursor-pointer"
+              title="Awaiting Confirmation — Click to view Reviews"
+            >
+              <Star className="w-2.5 h-2.5 fill-[#818CF8] text-[#818CF8]" />
+              <span>Awaiting Confirmation</span>
             </button>
           )}
           {reviewStatus === "followup_due" && (
@@ -470,6 +506,7 @@ export function StudentProfileDossier({
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/20 border border-amber-500/50 text-amber-200 hover:bg-amber-500/30 transition-all cursor-pointer animate-pulse"
               title="Follow-Up Due — Click to view Reviews"
             >
+              <Star className="w-2.5 h-2.5 fill-[#FBBF24] text-[#FBBF24]" />
               <span>Follow-Up Due</span>
             </button>
           )}
@@ -852,29 +889,52 @@ export function StudentProfileDossier({
             </a>
           </div>
 
-          {/* Contextual Account Review Status Pill */}
+          {/* Contextual Account Review Status Pill (Section 5.C) */}
           {reviewStatus && reviewStatus !== "none" && (
             <div className="flex items-center justify-between pt-0.5 text-[10px]">
               <span className="text-slate-400">Account Review:</span>
-              {reviewStatus === "verified" && (
+              {reviewStatus === "eligible" && (
+                <button
+                  type="button"
+                  onClick={onOpenReviews}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 border border-[#F1CB6C]/60 text-[#FFE394] hover:bg-amber-500/30 transition-all shadow-[0_0_10px_rgba(241,203,108,0.25)] cursor-pointer"
+                  title="Review Opportunity — Click to view in Reviews"
+                >
+                  <Star className="w-2.5 h-2.5 fill-[#F1CB6C] text-[#F1CB6C]" />
+                  <span>Review Opportunity</span>
+                </button>
+              )}
+              {(reviewStatus === "verified" || reviewStatus === "review_confirmed") && (
                 <button
                   type="button"
                   onClick={onOpenReviews}
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/15 border border-[#F1CB6C]/40 text-[#FFE394] hover:bg-amber-500/25 transition-all shadow-[0_0_8px_rgba(241,203,108,0.2)] cursor-pointer"
-                  title="Google Review Verified — Click to view in Reviews"
+                  title="Review Confirmed — Click to view in Reviews"
                 >
                   <Star className="w-2.5 h-2.5 fill-[#F1CB6C] text-[#F1CB6C]" />
-                  <span>Review Verified</span>
+                  <span>Review Confirmed</span>
                 </button>
               )}
-              {reviewStatus === "requested" && (
+              {(reviewStatus === "requested" || reviewStatus === "sent") && (
                 <button
                   type="button"
                   onClick={onOpenReviews}
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-sky-500/15 border border-sky-400/35 text-sky-200 hover:bg-sky-500/25 transition-all cursor-pointer"
-                  title="Review Requested — Click to view in Reviews"
+                  title="Request Sent — Click to view in Reviews"
                 >
-                  <span>Review Requested</span>
+                  <Star className="w-2.5 h-2.5 fill-[#38BDF8] text-[#38BDF8]" />
+                  <span>Request Sent</span>
+                </button>
+              )}
+              {reviewStatus === "awaiting_confirmation" && (
+                <button
+                  type="button"
+                  onClick={onOpenReviews}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-indigo-500/15 border border-indigo-400/35 text-indigo-200 hover:bg-indigo-500/25 transition-all cursor-pointer"
+                  title="Awaiting Confirmation — Click to view in Reviews"
+                >
+                  <Star className="w-2.5 h-2.5 fill-[#818CF8] text-[#818CF8]" />
+                  <span>Awaiting Confirmation</span>
                 </button>
               )}
               {reviewStatus === "followup_due" && (
@@ -884,6 +944,7 @@ export function StudentProfileDossier({
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/20 border border-amber-500/50 text-amber-200 hover:bg-amber-500/30 transition-all cursor-pointer animate-pulse"
                   title="Follow-Up Due — Click to view in Reviews"
                 >
+                  <Star className="w-2.5 h-2.5 fill-[#FBBF24] text-[#FBBF24]" />
                   <span>Follow-Up Due</span>
                 </button>
               )}

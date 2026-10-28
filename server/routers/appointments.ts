@@ -397,6 +397,25 @@ export const appointmentsRouter = router({
           }
         }
 
+        // When appointment is marked Completed, evaluate Review Opportunity trigger (Trigger A)
+        if (data.status === "Completed") {
+          try {
+            const apts = await db.getAppointmentsByOwner(ctx.user.id);
+            const apt = (apts as any[]).find((a: any) => a.id === id);
+            if (apt && apt.clientId) {
+              await db.evaluateAndTriggerMeetingReviewOpportunity({
+                studentContactId: apt.clientId,
+                appointmentId: id,
+                meetingTitle: apt.title,
+                meetingType: apt.meetingType || data.meetingType,
+                assignedAdvocate: apt.assignedAdvocateName || "Byron Honea",
+              });
+            }
+          } catch (revErr) {
+            console.warn("[Appointment] Review opportunity evaluation warning:", revErr);
+          }
+        }
+
         return result;
       }),
 
