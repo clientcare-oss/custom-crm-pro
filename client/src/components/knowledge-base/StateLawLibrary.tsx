@@ -25,6 +25,7 @@ import {
 } from "../../../../shared/stateEducationLawData";
 import LegalReferenceReader from "./LegalReferenceReader";
 import LegalReferenceEditorModal from "./LegalReferenceEditorModal";
+import USLegalAtlasMap from "./USLegalAtlasMap";
 import PageIdBadge from "@/components/PageIdBadge";
 
 interface StateLawLibraryProps {
@@ -67,6 +68,7 @@ export default function StateLawLibrary({
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
   const [selectedSourceType, setSelectedSourceType] = useState<string>("All");
   const [showBookmarksOnly, setShowBookmarksOnly] = useState<boolean>(false);
+  const [isMapExpanded, setIsMapExpanded] = useState<boolean>(true);
   const [selectedLetter, setSelectedLetter] = useState<string>("All");
   const [activeReferenceId, setActiveReferenceId] = useState<string | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
@@ -271,6 +273,15 @@ export default function StateLawLibrary({
           ))}
         </div>
       </div>
+
+      {/* ── National Legal Atlas: Interactive United States Map ── */}
+      <USLegalAtlasMap
+        selectedStateCode={selectedState}
+        onSelectState={handleSelectState}
+        statesList={statesList}
+        isExpanded={isMapExpanded}
+        onToggleExpand={() => setIsMapExpanded((prev) => !prev)}
+      />
 
       {/* ── Active Jurisdiction Dossier Card ── */}
       {currentJurisdiction && (

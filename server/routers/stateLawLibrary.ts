@@ -201,19 +201,24 @@ export const stateLawLibraryRouter = router({
           studentContactId: input.studentContactId,
           caseId: student.caseId || `WP-${input.studentContactId}`,
           eventType: "note",
-          summary: `Legal Citation Referenced: ${ref.citation} (${ref.state})`,
-          detailMarkdown: `**${ref.title}**\n\n${ref.plainLanguageExplanation}${
-            input.advocateCustomNote ? `\n\n*Advocate Note:* ${input.advocateCustomNote}` : ""
-          }\n\n[Official Law](${ref.officialUrl})`,
-          metadata: {
-            legalReferenceId: ref.id,
-            citation: ref.citation,
-            state: ref.state,
-            category: ref.category,
-            officialUrl: ref.officialUrl,
-          },
+          title: `Legal Citation Referenced: ${ref.citation} (${ref.state})`,
+          description: `${ref.title}\n\n${ref.plainLanguageExplanation}${
+            input.advocateCustomNote ? `\n\nAdvocate Note: ${input.advocateCustomNote}` : ""
+          }\n\nOfficial Law: ${ref.officialUrl}`,
+          whyReason: `Referenced official ${ref.state} statutory authority in student workspace.`,
+          ownerName: "Lead Advocate",
+          ownerRole: "Special Education Advocate",
+          sources: [
+            {
+              type: "document",
+              label: `${ref.state} Legal Code`,
+              url: ref.officialUrl,
+              excerpt: ref.citation,
+            },
+          ],
           isActionNeeded: false,
           isCompleted: true,
+          categoryColor: "amber",
         });
       } catch (err) {
         console.warn("[stateLawLibrary.saveToCaseNote] Timeline record warning:", err);
