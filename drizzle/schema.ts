@@ -193,6 +193,27 @@ export const contacts = mysqlTable("contacts", {
   defaultPaymentMethodExp: varchar("defaultPaymentMethodExp", { length: 20 }),
   defaultPaymentMethodId: varchar("defaultPaymentMethodId", { length: 255 }),
   enrollmentOfferId: int("enrollmentOfferId"),
+  // Parent Profile Management & Contact Protection (PG-023-PRF)
+  preferredName: varchar("preferredName", { length: 100 }),
+  altPhone: varchar("altPhone", { length: 50 }),
+  emergencyContactName: varchar("emergencyContactName", { length: 150 }),
+  emergencyContactRelationship: varchar("emergencyContactRelationship", { length: 100 }),
+  emergencyContactPhone: varchar("emergencyContactPhone", { length: 50 }),
+  pendingEmail: varchar("pendingEmail", { length: 320 }),
+  emailVerificationToken: varchar("emailVerificationToken", { length: 255 }),
+  emailVerificationExpiresAt: timestamp("emailVerificationExpiresAt"),
+  pendingPhone: varchar("pendingPhone", { length: 50 }),
+  phoneVerificationCode: varchar("phoneVerificationCode", { length: 10 }),
+  phoneVerificationExpiresAt: timestamp("phoneVerificationExpiresAt"),
+  contactConcernStatus: varchar("contactConcernStatus", { length: 50 }).default("none"), // "none" | "active" | "resolved"
+  contactConcernReason: varchar("contactConcernReason", { length: 100 }),
+  contactConcernNotes: text("contactConcernNotes"),
+  contactConcernFollowUpDate: varchar("contactConcernFollowUpDate", { length: 100 }),
+  contactConcernAssignedTo: varchar("contactConcernAssignedTo", { length: 150 }),
+  contactConcernReportedBy: varchar("contactConcernReportedBy", { length: 150 }),
+  contactConcernReportedAt: timestamp("contactConcernReportedAt"),
+  contactConcernResolvedAt: timestamp("contactConcernResolvedAt"),
+  contactConcernResolvedBy: varchar("contactConcernResolvedBy", { length: 150 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -3436,4 +3457,60 @@ export const clientReviewTrackers = mysqlTable(
 
 export type ClientReviewTracker = typeof clientReviewTrackers.$inferSelect;
 export type InsertClientReviewTracker = typeof clientReviewTrackers.$inferInsert;
+
+// ── Parent Profile Change History (PG-023-PRF) ──────────────────────────────
+export const parentProfileChangeHistory = mysqlTable(
+  "parent_profile_change_history",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    parentContactId: int("parentContactId").notNull(),
+    fieldModified: varchar("fieldModified", { length: 100 }).notNull(),
+    previousValue: text("previousValue"),
+    newValue: text("newValue"),
+    changedAt: timestamp("changedAt").defaultNow().notNull(),
+    actorId: varchar("actorId", { length: 100 }),
+    actorName: varchar("actorName", { length: 150 }).notNull(),
+    actorRole: varchar("actorRole", { length: 50 }).notNull(), // "client" | "staff" | "admin" | "system"
+    source: varchar("source", { length: 50 }).notNull(), // "client_portal" | "internal_crm" | "verification_service"
+    verificationStatus: varchar("verificationStatus", { length: 50 }).default("verified").notNull(), // "verified" | "pending_verification" | "staff_review_required" | "rejected"
+    approvalStatus: varchar("approvalStatus", { length: 50 }).default("auto_approved").notNull(), // "auto_approved" | "pending_approval" | "approved" | "rejected"
+    approvalNotes: text("approvalNotes"),
+    ipAddress: varchar("ipAddress", { length: 100 }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (t) => ({
+    parentIdx: index("parent_change_history_parent_idx").on(t.parentContactId),
+    fieldIdx: index("parent_change_history_field_idx").on(t.fieldModified),
+    changedAtIdx: index("parent_change_history_date_idx").on(t.changedAt),
+  })
+);
+
+export type ParentProfileChangeHistory = typeof parentProfileChangeHistory.$inferSelect;
+export type InsertParentProfileChangeHistory = typeof parentProfileChangeHistory.$inferInsert;
+
+// ── Staff Notifications (Parent Contact & Account Alerts) ─────────────────────
+export const staffNotifications = mysqlTable(
+  "staff_notifications",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    type: varchar("type", { length: 100 }).notNull(), // "parent_contact_updated" | "email_verification_requested" | "legal_name_change_requested" | "contact_concern_raised"
+    title: varchar("title", { length: 255 }).notNull(),
+    message: text("message").notNull(),
+    parentContactId: int("parentContactId"),
+    studentContactId: int("studentContactId"),
+    severity: varchar("severity", { length: 50 }).default("info").notNull(), // "info" | "warning" | "urgent"
+    isRead: boolean("isRead").default(false).notNull(),
+    metadata: text("metadata"), // JSON string containing diff, previous/new, etc.
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (t) => ({
+    parentIdx: index("staff_notifications_parent_idx").on(t.parentContactId),
+    typeIdx: index("staff_notifications_type_idx").on(t.type),
+    isReadIdx: index("staff_notifications_read_idx").on(t.isRead),
+  })
+);
+
+export type StaffNotification = typeof staffNotifications.$inferSelect;
+export type InsertStaffNotification = typeof staffNotifications.$inferInsert;
 

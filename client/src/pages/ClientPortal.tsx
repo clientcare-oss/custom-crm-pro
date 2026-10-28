@@ -27,6 +27,7 @@ import PortalDocumentVaultTab from "@/components/portal/PortalDocumentVaultTab";
 import PortalParkingLotTab from "@/components/portal/PortalParkingLotTab";
 import { PortalStudentDetailsTab } from "@/components/portal/PortalStudentDetailsTab";
 import { CameraScannerModal } from "@/components/portal/CameraScannerModal";
+import { ParentProfileDrawer } from "@/components/portal/ParentProfileDrawer";
 import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1192,6 +1193,14 @@ export default function ClientPortal() {
   const advocateDisplayName = user?.name ? "Waypoint Lead Advocate" : "Waypoint Advocate";
   const displayName = isAdminView ? advocateDisplayName : parentDisplayName;
   const parentContactId = isAdminView ? null : (studentDetail?.contact?.parentContactId ?? effectiveStudent?.parentContactId);
+  const effectiveParentContactId = Number(
+    studentDetail?.contact?.parentContactId ?? 
+    effectiveStudent?.parentContactId ?? 
+    (portalUser as any)?.contactId ?? 
+    (portalUser as any)?.parentContactId ?? 
+    0
+  ) || undefined;
+  const [isParentProfileOpen, setIsParentProfileOpen] = useState(false);
 
   const handleOpenScheduler = (sessionTypeId: number, sessionTypeName: string) => { 
     setSchedulerSessionTypeId(sessionTypeId); 
@@ -2076,6 +2085,7 @@ export default function ClientPortal() {
           onEndExploration={handleEndExploration}
           onResetTour={handleResetTour}
           daysUntilPlanEnd={daysUntilPlanEnd}
+          onOpenProfile={() => setIsParentProfileOpen(true)}
         />
       </div>
 
@@ -2104,6 +2114,10 @@ export default function ClientPortal() {
               onEndExploration={handleEndExploration}
               onResetTour={handleResetTour}
               daysUntilPlanEnd={daysUntilPlanEnd}
+              onOpenProfile={() => {
+                setSidebarOpen(false);
+                setIsParentProfileOpen(true);
+              }}
             />
           </div>
         </div>
@@ -2988,6 +3002,14 @@ export default function ClientPortal() {
           currentPath={typeof window !== "undefined" ? window.location.pathname + window.location.search : "/portal"}
         />
       )}
+
+      {/* Parent Profile Sliding Drawer */}
+      <ParentProfileDrawer
+        isOpen={isParentProfileOpen}
+        onClose={() => setIsParentProfileOpen(false)}
+        parentContactId={effectiveParentContactId}
+        clientName={parentDisplayName}
+      />
     </div>
   </div>
   );

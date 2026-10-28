@@ -2,7 +2,7 @@ import React from "react";
 import { 
   User, Pencil, GraduationCap, School, 
   ArrowRight, ShieldCheck, Award, Activity, Globe,
-  Landmark, Star
+  Landmark, Star, AlertTriangle, CheckCircle2, Clock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,6 +26,10 @@ export interface StudentProfileDossierProps {
   offset?: { x: number; y: number };
   reviewStatus?: "none" | "requested" | "followup_due" | "verified";
   onOpenReviews?: () => void;
+  contactConcernStatus?: "active" | "resolved" | null;
+  hasPendingVerification?: boolean;
+  isContactUpdated?: boolean;
+  onOpenContactHistory?: () => void;
 }
 
 export function StudentProfileDossier({
@@ -48,6 +52,10 @@ export function StudentProfileDossier({
   offset = { x: -34, y: -10 },
   reviewStatus = "none",
   onOpenReviews,
+  contactConcernStatus = null,
+  hasPendingVerification = false,
+  isContactUpdated = false,
+  onOpenContactHistory,
 }: StudentProfileDossierProps) {
   return (
     <div 
@@ -81,6 +89,45 @@ export function StudentProfileDossier({
             <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
             <span>{student?.studentStatus || "Active"}</span>
           </Badge>
+
+          {/* Contextual Contact Concern Pill */}
+          {contactConcernStatus === "active" && (
+            <button
+              type="button"
+              onClick={onOpenContactHistory}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-rose-500/20 border border-rose-500/50 text-rose-200 hover:bg-rose-500/30 transition-all cursor-pointer animate-pulse"
+              title="Active Contact Concern — Click to open Contact History"
+            >
+              <AlertTriangle className="w-2.5 h-2.5 text-rose-400" />
+              <span>Contact Concern</span>
+            </button>
+          )}
+
+          {/* Contextual Verification Pending Pill */}
+          {hasPendingVerification && contactConcernStatus !== "active" && (
+            <button
+              type="button"
+              onClick={onOpenContactHistory}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-sky-500/20 border border-sky-400/40 text-sky-200 hover:bg-sky-500/30 transition-all cursor-pointer"
+              title="Verification Pending — Proposed email/phone change requires verification"
+            >
+              <Clock className="w-2.5 h-2.5 text-sky-300" />
+              <span>Verification Pending</span>
+            </button>
+          )}
+
+          {/* Contextual Contact Updated Pill */}
+          {isContactUpdated && !hasPendingVerification && contactConcernStatus !== "active" && (
+            <button
+              type="button"
+              onClick={onOpenContactHistory}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/30 transition-all cursor-pointer"
+              title="Contact Updated — Recent contact changes recorded"
+            >
+              <CheckCircle2 className="w-2.5 h-2.5 text-emerald-300" />
+              <span>Contact Updated</span>
+            </button>
+          )}
 
           {/* Contextual Review Status Pill */}
           {reviewStatus === "verified" && (
@@ -267,10 +314,15 @@ export function StudentProfileDossier({
         {/* Parent / Guardian Row */}
         <div className="pt-1.5 border-t border-white/10 space-y-1">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 text-slate-400">
-              <User className="h-3 w-3 text-white/50" />
-              <span>Parent: <strong className="text-white">{parentName}</strong></span>
-            </div>
+            <button
+              type="button"
+              onClick={onOpenContactHistory}
+              title="Click to view Parent Profile, Contact History & Concerns"
+              className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors text-left group cursor-pointer"
+            >
+              <User className="h-3 w-3 text-white/50 group-hover:text-[#D4AF37] transition-colors" />
+              <span>Parent: <strong className="text-white group-hover:text-[#FFE394] transition-colors underline decoration-dotted decoration-white/30">{parentName}</strong></span>
+            </button>
             <a href={`tel:${parentPhone}`} className="text-sky-300 hover:text-amber-300 transition-colors font-medium">
               {parentPhone}
             </a>

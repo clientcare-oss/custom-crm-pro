@@ -4,7 +4,7 @@ import {
   Compass, MessageSquare, CheckSquare, FileText, FolderOpen, Wrench,
   Briefcase, DollarSign, Calendar, StickyNote, Info, Sun, Moon, LogOut, X, Scale,
   ChevronLeft, ChevronRight, Home, Video, Sparkles, CheckCircle2, Lock, PenTool, GraduationCap,
-  MapPin, RotateCcw, CreditCard, PenLine, FileSignature, CircleParking, RefreshCw, Gift, Star, PanelLeft
+  MapPin, RotateCcw, CreditCard, PenLine, FileSignature, CircleParking, RefreshCw, Gift, Star, PanelLeft, Pencil
 } from "lucide-react";
 import { VaultSafeIcon } from "@/components/ui/VaultSafeIcon";
 import { ActionCenterIcon } from "@/components/ui/ActionCenterIcon";
@@ -64,6 +64,7 @@ interface ClientPortalSidebarProps {
   onEndExploration?: () => void;
   onResetTour?: () => void;
   daysUntilPlanEnd?: number;
+  onOpenProfile?: () => void;
 }
 
 export function ClientPortalSidebar({
@@ -87,7 +88,8 @@ export function ClientPortalSidebar({
   onStartTour,
   onEndExploration,
   onResetTour,
-  daysUntilPlanEnd
+  daysUntilPlanEnd,
+  onOpenProfile
 }: ClientPortalSidebarProps) {
   const [location, setLocation] = useLocation();
   const isWorkspace = location.startsWith("/projects/");
@@ -632,19 +634,31 @@ export function ClientPortalSidebar({
 
         {(!isCollapsed || mobile) ? (
           <div className="space-y-1.5">
-            {/* Client Name Pill (exact match to Advocate Side Employee Pill) */}
-            <div className={cn(
-              "flex items-center h-8.5 rounded-md border transition-all flex-1 text-left overflow-hidden shadow-sm group relative",
-              isLight
-                ? "border-slate-300 bg-white"
-                : "border-[#172D4D] bg-[#07172E]/90 hover:bg-[#0B1E38] hover:border-[#D4AF37]/50"
-            )}>
+            {/* Client Name Pill (Clickable Parent Profile Trigger) */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={onOpenProfile}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onOpenProfile?.();
+                }
+              }}
+              title="Click to view and edit your Parent Profile"
+              className={cn(
+                "flex items-center h-8.5 rounded-md border transition-all flex-1 text-left overflow-hidden shadow-sm group relative cursor-pointer select-none",
+                isLight
+                  ? "border-slate-300 bg-white hover:border-[#D4AF37] hover:bg-amber-50/40"
+                  : "border-[#172D4D] bg-[#07172E]/90 hover:bg-[#0B1E38] hover:border-[#D4AF37]/70 hover:shadow-[0_0_12px_rgba(212,175,55,0.18)]"
+              )}
+            >
               {/* Left Star compartment matching advocate reference */}
               <div className={cn(
                 "h-full px-2.5 flex items-center justify-center border-r shrink-0",
                 isLight ? "border-slate-200 bg-slate-50" : "border-[#152B4B] bg-[#051122]/60 group-hover:bg-[#07172E]/80 transition-colors"
               )}>
-                <Star className="h-3.5 w-3.5 text-[#D8B467] fill-[#D8B467]/20 shrink-0" />
+                <Star className="h-3.5 w-3.5 text-[#D8B467] fill-[#D8B467]/20 shrink-0 group-hover:scale-110 transition-transform" />
               </div>
 
               {/* Client Name & Golden Glint */}
@@ -655,6 +669,11 @@ export function ClientPortalSidebar({
                 )}>
                   {displayName}
                 </span>
+
+                {/* Optional subtle pencil indicator on hover */}
+                <div className="flex items-center gap-1 shrink-0 ml-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Pencil className="h-3 w-3 text-[#D8B467]" />
+                </div>
 
                 {/* Subtle golden underline glint matching advocate image */}
                 {!isLight && (
@@ -699,12 +718,14 @@ export function ClientPortalSidebar({
         ) : (
           /* Collapsed Footer */
           <div className="flex flex-col items-center gap-1.5 w-full">
-            <div 
-              title={displayName}
-              className="w-8 h-8 rounded-md border border-[#172D4D] bg-[#07172E] flex items-center justify-center text-[#D8B467] shadow-sm"
+            <button 
+              type="button"
+              onClick={onOpenProfile}
+              title={`My Profile - ${displayName}`}
+              className="w-8 h-8 rounded-md border border-[#172D4D] bg-[#07172E] hover:border-[#D4AF37]/70 hover:bg-[#0B1E38] flex items-center justify-center text-[#D8B467] shadow-sm cursor-pointer transition-colors group"
             >
-              <Star className="h-3.5 w-3.5 text-[#D8B467] fill-[#D8B467]/20" />
-            </div>
+              <Star className="h-3.5 w-3.5 text-[#D8B467] fill-[#D8B467]/20 group-hover:scale-110 transition-transform" />
+            </button>
             <button
               onClick={onLogout}
               title="Logout"

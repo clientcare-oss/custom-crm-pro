@@ -45,6 +45,7 @@ import {
 } from "../drizzle/schema";
 export * from "./db/familyEnrollment";
 export * from "./db/reviewTrackers";
+export * from "./db/parentProfile";
 
 import { ENV } from './_core/env';
 

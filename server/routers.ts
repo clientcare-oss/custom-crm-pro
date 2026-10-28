@@ -70,8 +70,10 @@ import { receiptsRouter } from "./routers/receipts";
 import { familyEnrollmentRouter } from "./routers/familyEnrollment";
 import { stateLawLibraryRouter } from "./routers/stateLawLibrary";
 import { reviewTrackerRouter } from "./routers/reviewTracker";
+import { parentProfileRouter } from "./routers/parentProfile";
 
 export const appRouter = router({
+  parentProfile: parentProfileRouter,
   reviewTracker: reviewTrackerRouter,
   familyEnrollment: familyEnrollmentRouter,
   receipts: receiptsRouter,

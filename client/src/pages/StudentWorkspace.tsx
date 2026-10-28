@@ -26,6 +26,7 @@ import { StudentDocumentVaultMirror } from "@/components/students/StudentDocumen
 import { StudentWorkspaceMoreTab } from "@/components/students/StudentWorkspaceMoreTab";
 import { IepProfileUpdateBubble } from "@/components/students/IepProfileUpdateBubble";
 import { StudentCurrentFocusPanel } from "@/components/students/StudentCurrentFocusPanel";
+import { ParentContactHistoryDrawer } from "@/components/contact/ParentContactHistoryDrawer";
 
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
@@ -104,6 +105,18 @@ export default function StudentWorkspace() {
     { studentId: effectiveStudentId },
     { enabled: !!effectiveStudentId && effectiveStudentId > 0 }
   );
+
+  // Parent Profile & Contact Protection Query
+  const parentContactId = parent?.id || student?.parentContactId || undefined;
+  const parentProfileQuery = trpc.parentProfile.getProfile.useQuery(
+    { parentContactId },
+    { enabled: !!parentContactId && parentContactId > 0 }
+  );
+  const [parentContactDrawerOpen, setParentContactDrawerOpen] = useState(false);
+  const parentProfile = parentProfileQuery.data;
+  const hasPendingVerification = !!(parentProfile?.pendingEmail || parentProfile?.pendingPhone);
+  const isContactConcernActive = parentProfile?.contactConcernStatus === "active";
+  const hasRecentContactUpdate = (parentProfile?.changeHistoryCount ?? 0) > 0;
 
   // Toggle action checkbox
   const toggleAction = (key: string) => {
@@ -573,6 +586,10 @@ export default function StudentWorkspace() {
                       setMoreSubView("reviews");
                     }}
                     onEditDetails={() => setDetailsModalOpen(true)}
+                    contactConcernStatus={isContactConcernActive ? "active" : null}
+                    hasPendingVerification={hasPendingVerification}
+                    isContactUpdated={hasRecentContactUpdate}
+                    onOpenContactHistory={() => setParentContactDrawerOpen(true)}
                   />
 
                   {/* ─── Authentic Leather Folio Spine / Vertical Seam Divider ─── */}
@@ -627,6 +644,7 @@ export default function StudentWorkspace() {
                 parentPhone={parentPhone}
                 studentGrade={student?.gradeLevel}
                 initialSubView={moreSubView}
+                onOpenContactHistory={() => setParentContactDrawerOpen(true)}
               />
             )}
 
@@ -846,6 +864,18 @@ export default function StudentWorkspace() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Parent Contact History & Protection Drawer */}
+      <ParentContactHistoryDrawer
+        isOpen={parentContactDrawerOpen}
+        onClose={() => setParentContactDrawerOpen(false)}
+        parentContactId={parentContactId}
+        parentName={parentName}
+        onOpenStudentWorkspace={(stId) => {
+          setParentContactDrawerOpen(false);
+          setLocation(`/students/${stId}`);
+        }}
+      />
     </div>
   );
 }

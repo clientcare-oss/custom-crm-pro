@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { 
   SquarePen, Compass, Users, 
   UsersRound, ClipboardCheck, Landmark, Wrench, 
-  CalendarDays, Clock, Coins, Link2, Star
+  CalendarDays, Clock, Coins, Link2, Star, Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StudentReviewTrackerView } from "./reviews/StudentReviewTrackerView";
@@ -18,6 +18,7 @@ interface StudentWorkspaceMoreTabProps {
   parentPhone?: string;
   studentGrade?: string;
   initialSubView?: "grid" | "reviews";
+  onOpenContactHistory?: () => void;
 }
 
 interface WorkspaceItem {
@@ -74,6 +75,7 @@ export function StudentWorkspaceMoreTab({
   parentPhone,
   studentGrade,
   initialSubView = "grid",
+  onOpenContactHistory,
 }: StudentWorkspaceMoreTabProps) {
   const [, setLocation] = useLocation();
   const [selectedId, setSelectedId] = useState<string>("activity-timeline");
@@ -86,6 +88,16 @@ export function StudentWorkspaceMoreTab({
   }, [initialSubView]);
 
   const items: WorkspaceItem[] = useMemo(() => [
+    {
+      id: "parent-profile-history",
+      title: "Parent Profile & History",
+      description: "Audit trail, verification & contact concerns.",
+      icon: Shield,
+      onClick: () => {
+        setSelectedId("parent-profile-history");
+        onOpenContactHistory?.();
+      },
+    },
     {
       id: "reviews",
       title: "Reviews",
