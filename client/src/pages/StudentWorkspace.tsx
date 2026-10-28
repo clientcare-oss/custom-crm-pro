@@ -48,12 +48,15 @@ export default function StudentWorkspace() {
     return "overview";
   });
 
-  const [moreSubView, setMoreSubView] = useState<"grid" | "reviews">(() => {
+  const [moreSubView, setMoreSubView] = useState<"grid" | "reviews" | "compass">(() => {
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       const subParam = urlParams.get("sub");
       if (subParam === "reviews" || subParam === "review") {
         return "reviews";
+      }
+      if (subParam === "compass" || subParam === "case-compass") {
+        return "compass";
       }
     }
     return "grid";
@@ -77,13 +80,15 @@ export default function StudentWorkspace() {
     }
   };
 
-  const handleMoreSubViewChange = (subView: "grid" | "reviews") => {
+  const handleMoreSubViewChange = (subView: "grid" | "reviews" | "compass") => {
     setMoreSubView(subView);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("tab", "more");
       if (subView === "reviews") {
         url.searchParams.set("sub", "reviews");
+      } else if (subView === "compass") {
+        url.searchParams.set("sub", "compass");
       } else {
         url.searchParams.delete("sub");
       }
@@ -100,6 +105,13 @@ export default function StudentWorkspace() {
           name: "Student Dossier → Reviews",
           category: "Advocacy",
           description: "Review request tracking, verification, and thank-you workflow",
+        });
+      } else if (moreSubView === "compass") {
+        broadcastPageId({
+          id: "PG-025",
+          name: "Case Compass Console",
+          category: "Advocacy",
+          description: "Internal Case Compass management, AI draft synthesis, and permanent history",
         });
       } else {
         broadcastPageId({
@@ -150,7 +162,6 @@ export default function StudentWorkspace() {
   });
 
   // Modal dialog states
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
   // ─── Locked Folio Index Tab Coordinates ───
@@ -363,6 +374,10 @@ export default function StudentWorkspace() {
   }, [student]);
 
   const gtidValue = useMemo(() => {
+    if (student?.notes) {
+      const match = student.notes.match(/\[GTID:\s*([^\]]+)\]/i);
+      if (match) return match[1].trim();
+    }
     return (student as any)?.gtid || (student as any)?.studentIdNumber || (student?.caseId ? student.caseId.replace(/[^0-9]/g, "") : "1");
   }, [student]);
 
@@ -688,7 +703,6 @@ export default function StudentWorkspace() {
                       handleSelectTab("more");
                       handleMoreSubViewChange("reviews");
                     }}
-                    onEditDetails={() => setDetailsModalOpen(true)}
                     contactConcernStatus={isContactConcernActive ? "active" : null}
                     hasPendingVerification={hasPendingVerification}
                     isContactUpdated={hasRecentContactUpdate}
@@ -842,91 +856,6 @@ export default function StudentWorkspace() {
           </div>
         </motion.div>
       </div>
-
-      {/* ─── Student Details Modal ─────────────────────────────────────────── */}
-      <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
-        <DialogContent className="max-w-xl bg-[#09182d] border border-white/20 text-white p-6 rounded-2xl shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-              <span>🪪</span>
-              <span>Student & Case Profile</span>
-            </DialogTitle>
-            <DialogDescription className="text-xs text-white/60">
-              Complete advocacy file details for {fullName}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 pt-4 text-xs">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-black/30 border border-white/10">
-              <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">Age</span>
-                <span className="text-amber-300 font-bold text-sm">{calculatedAge} yrs</span>
-              </div>
-              <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">Date of Birth</span>
-                <span className="text-white font-medium">{student?.dateOfBirth || "Not recorded"}</span>
-              </div>
-              <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">Grade</span>
-                <span className="text-white font-medium">{student?.gradeLevel || "5th Grade"}</span>
-              </div>
-              <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">Current School</span>
-                <span className="text-white font-medium">{currentSchool}</span>
-              </div>
-              <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">Original School</span>
-                <span className="text-white font-medium">{originalSchool}</span>
-              </div>
-              <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">District</span>
-                <span className="text-sky-300 font-medium">{displayDistrict}</span>
-              </div>
-              <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">State</span>
-                <span className="text-white font-medium">{student?.state || "Georgia"}</span>
-              </div>
-              <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">Case ID</span>
-                <span className="text-amber-300 font-mono font-medium">#{student?.caseId || studentId}</span>
-              </div>
-              <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">Status</span>
-                <span className="text-emerald-300 font-medium">{student?.studentStatus || "Active"}</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-xl bg-black/30 border border-white/10">
-              <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">Primary Eligibility</span>
-                <span className="text-white font-medium">{displayEligibility}</span>
-              </div>
-              <div>
-                <span className="text-white/40 block text-[10px] uppercase font-bold">Medical Diagnoses</span>
-                <span className="text-white font-medium">{displayMedicalDiagnoses}</span>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-black/30 border border-white/10 space-y-2">
-              <span className="text-white/40 block text-[10px] uppercase font-bold">Parent Contact</span>
-              <p className="text-white font-medium">{parentName}</p>
-              <p className="text-white/70">{parentPhone}</p>
-              {parent?.email && <p className="text-white/70">{parent.email}</p>}
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDetailsModalOpen(false)}
-                className="border-white/20 text-white bg-white/5"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* ─── Schedule Meeting Modal ────────────────────────────────────────── */}
       <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>

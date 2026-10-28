@@ -368,6 +368,116 @@ export const contactsRouter = router({
         return await db.updateContact(id, ownerId, data);
       }),
 
+    updateStudentProfile: publicProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          firstName: z.string().optional(),
+          lastName: z.string().optional(),
+          dateOfBirth: z.string().optional(),
+          gradeLevel: z.string().optional(),
+          state: z.string().optional(),
+          countyDistrict: z.string().optional(),
+          schoolName: z.string().optional(),
+          previousSchool: z.string().optional(),
+          gtid: z.string().optional(),
+          iepEligibility: z.string().optional(),
+          medicalDiagnoses: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { id, gtid, ...fields } = input;
+        const ownerId = ctx.user?.id || 1;
+        const editorName = ctx.user?.name || "Byron Honea";
+
+        // Fetch existing contact
+        const existing = await db.getContactById(id, ownerId);
+        if (!existing) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Student record not found" });
+        }
+
+        const updateData: Record<string, any> = { ...fields };
+
+        // Handle GTID preserving leading zeros via notes
+        if (gtid !== undefined) {
+          const cleanGtid = gtid.trim();
+          let currentNotes = existing.notes || "";
+          if (/\[GTID:\s*[^\]]+\]/i.test(currentNotes)) {
+            currentNotes = currentNotes.replace(/\[GTID:\s*[^\]]+\]/i, `[GTID: ${cleanGtid}]`);
+          } else if (cleanGtid) {
+            currentNotes = currentNotes ? `${currentNotes}\n[GTID: ${cleanGtid}]` : `[GTID: ${cleanGtid}]`;
+          }
+          updateData.notes = currentNotes;
+        }
+
+        // Save update
+        await db.updateContact(id, ownerId, updateData);
+
+        // Audit Logging: Compare previous and new values, record in case activity timeline
+        const fieldLabels: Record<string, string> = {
+          firstName: "First Name",
+          lastName: "Last Name",
+          dateOfBirth: "Date of Birth",
+          gradeLevel: "Grade Level",
+          state: "State",
+          countyDistrict: "District",
+          schoolName: "Current School",
+          previousSchool: "Original School",
+          iepEligibility: "Eligibility",
+          medicalDiagnoses: "Medical Diagnoses",
+          gtid: "GTID",
+        };
+
+        const changedEntries: Array<{ field: string; prev: string; next: string }> = [];
+
+        for (const [k, label] of Object.entries(fieldLabels)) {
+          if (k === "gtid") {
+            if (gtid !== undefined) {
+              const oldGtidMatch = (existing.notes || "").match(/\[GTID:\s*([^\]]+)\]/i);
+              const oldGtid = oldGtidMatch ? oldGtidMatch[1].trim() : (existing.caseId ? existing.caseId.replace(/[^0-9]/g, "") : "");
+              if (oldGtid !== gtid.trim()) {
+                changedEntries.push({ field: label, prev: oldGtid || "(none)", next: gtid.trim() || "(cleared)" });
+              }
+            }
+          } else if ((fields as any)[k] !== undefined) {
+            const oldVal = String((existing as any)?.[k] || "").trim();
+            const newVal = String((fields as any)[k] || "").trim();
+            if (oldVal !== newVal) {
+              changedEntries.push({ field: label, prev: oldVal || "(empty)", next: newVal || "(cleared)" });
+            }
+          }
+        }
+
+        if (changedEntries.length > 0) {
+          const desc = changedEntries.map(c => `${c.field}: "${c.prev}" → "${c.next}"`).join("; ");
+          try {
+            await recordCaseActivity({
+              studentContactId: id,
+              caseId: existing.caseId || `WP-${id}`,
+              eventType: "profile_update",
+              title: `Student Profile Updated (${changedEntries.map(c => c.field).join(", ")})`,
+              description: `Inline profile edit by ${editorName}: ${desc}`,
+              ownerName: editorName,
+              ownerRole: "Advocate",
+              sources: [{
+                type: "note",
+                label: "Student Dossier Edit",
+                excerpt: desc,
+              }],
+              eventDate: new Date(),
+            });
+          } catch (e: any) {
+            console.warn("[Audit Log] Failed to record case activity for student profile update:", e.message);
+          }
+        }
+
+        return {
+          success: true,
+          updatedFields: Object.keys(updateData),
+          changedCount: changedEntries.length,
+        };
+      }),
+
     updateJourneyState: protectedProcedure
       .input(
         z.object({

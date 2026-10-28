@@ -341,6 +341,12 @@ export async function updateContact(id: number, ownerId: number, data: any): Pro
 
   let updateData = { ...data };
 
+  // Keep in-memory cache synchronized (essential for tests and fast reads)
+  if (inMemoryContacts.has(id)) {
+    const mem = inMemoryContacts.get(id);
+    inMemoryContacts.set(id, { ...mem, ...updateData });
+  }
+
   // Recalculate location when location fields change (PG-041)
   if (
     data.city !== undefined ||
@@ -443,6 +449,12 @@ export async function updateContactById(id: number, data: any): Promise<any> {
   if (!db) throw new Error("Database not available");
 
   let updateData = { ...data };
+
+  // Keep in-memory cache synchronized
+  if (inMemoryContacts.has(id)) {
+    const mem = inMemoryContacts.get(id);
+    inMemoryContacts.set(id, { ...mem, ...updateData });
+  }
 
   // Recalculate location when location fields change (PG-041)
   if (
