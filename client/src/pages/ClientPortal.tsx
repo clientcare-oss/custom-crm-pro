@@ -608,7 +608,7 @@ export default function ClientPortal() {
 
   const [clientStage, setClientStage] = useState<ClientStage>(() => {
     if (stageFromUrl) return stageFromUrl;
-    return "DISCOVERY_SCHEDULED";
+    return "ACTIVE";
   });
 
   const [completedOnboardingSteps, setCompletedOnboardingSteps] = useState<string[]>(() => {
@@ -631,7 +631,7 @@ export default function ClientPortal() {
   const [activeTab, setActiveTab] = useState<NavId>(() => {
     if (tabFromUrl) return tabFromUrl;
     if (stageFromUrl) return getDefaultModuleForStage(stageFromUrl);
-    return "discovery-call";
+    return "compass";
   });
 
   // Sync specific page sub-ID and browser URL with active portal tab
@@ -809,6 +809,39 @@ export default function ClientPortal() {
     enabled: !isPreviewMode && (!!portalUser || user?.role === "client"),
   });
 
+  // Staff and admin view access: fetch all contacts to identify CRM students
+  const { data: allContacts = [] } = trpc.contacts.list.useQuery(undefined, {
+    enabled: isAdmin || isPreviewMode,
+  });
+
+  const crmStudents = useMemo(() => {
+    if (!isAdmin && !isPreviewMode) return [];
+    return allContacts.filter((c: any) => 
+      c.parentContactId != null || 
+      c.caseId != null || 
+      c.gradeLevel != null || 
+      c.schoolName != null ||
+      c.jobTitle === "Student" ||
+      c.type === "student"
+    );
+  }, [isAdmin, isPreviewMode, allContacts]);
+
+  const fallbackStudent = useMemo(() => ({
+    id: 101,
+    firstName: "Liam",
+    lastName: "Jenkins",
+    gradeLevel: "4th Grade",
+    caseId: "WP-2026-0001",
+    parentContactId: 1,
+    parentName: "Jennifer Jenkins",
+    parentFirstName: "Jennifer",
+    schoolName: "Bentonville High School",
+    previousSchool: "The Lovett School",
+    planType: "IEP (Full Representation)",
+    dateOfBirth: "2012-05-14",
+    phone: "404-555-0144",
+  }), []);
+
   const previewStudentContactId = routeStudentId || (() => {
     if (typeof window === "undefined" || !isPreviewMode) return null;
     const params = new URLSearchParams(window.location.search);
@@ -816,39 +849,12 @@ export default function ClientPortal() {
     return v ? parseInt(v, 10) : null;
   })();
 
-  const { data: studentDetail } = trpc.contacts.detail.useQuery(
-    { id: previewStudentContactId! },
-    { enabled: isPreviewMode && !!previewStudentContactId }
-  );
-
   const ensureDevParentMutation = trpc.portal.ensureDevParentForStudent.useMutation();
-
-  useEffect(() => {
-    if (
-      isPreviewMode &&
-      previewStudentContactId &&
-      studentDetail?.contact &&
-      !studentDetail.contact.parentContactId &&
-      !ensureDevParentMutation.isPending &&
-      !ensureDevParentMutation.isSuccess
-    ) {
-      ensureDevParentMutation.mutate(
-        { studentContactId: previewStudentContactId },
-        {
-          onSuccess: (res) => {
-            utils.contacts.detail.invalidate({ id: previewStudentContactId });
-            utils.portal.getStudentsForParent.invalidate({ parentContactId: res.parentId });
-          },
-        }
-      );
-    }
-  }, [isPreviewMode, previewStudentContactId, studentDetail?.contact?.parentContactId]);
 
   const previewParentContactId = (() => {
     if (typeof window === "undefined" || !isPreviewMode) return null;
     const parentId = new URLSearchParams(window.location.search).get("parentContactId");
     if (parentId) return parseInt(parentId, 10);
-    if (studentDetail?.contact?.parentContactId) return studentDetail.contact.parentContactId;
     if (ensureDevParentMutation.data?.parentId) return ensureDevParentMutation.data.parentId;
     return null;
   })();
@@ -856,6 +862,34 @@ export default function ClientPortal() {
   const { data: previewStudents = [] } = trpc.portal.getStudentsForParent.useQuery(
     { parentContactId: previewParentContactId! },
     { enabled: isPreviewMode && !!previewParentContactId }
+  );
+
+  // Selected student state: auto-select originating student if specified in URL or route or sessionStorage
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const v = params.get("contactId") || params.get("studentId");
+      if (v) return parseInt(v, 10);
+      const sessId = sessionStorage.getItem("lastStudentProfileId");
+      if (sessId) {
+        const parsed = parseInt(sessId, 10);
+        if (!isNaN(parsed) && parsed > 0) return parsed;
+      }
+    }
+    return routeStudentId || null;
+  });
+
+  useEffect(() => {
+    if (previewStudentContactId && selectedStudentId !== previewStudentContactId) {
+      setSelectedStudentId(previewStudentContactId);
+    }
+  }, [previewStudentContactId]);
+
+  const targetStudentIdForDetail = previewStudentContactId || selectedStudentId;
+
+  const { data: studentDetail } = trpc.contacts.detail.useQuery(
+    { id: targetStudentIdForDetail! },
+    { enabled: (isPreviewMode || isAdmin) && !!targetStudentIdForDetail && targetStudentIdForDetail !== 101 }
   );
 
   // Workspace Student payload reconstruction
@@ -881,22 +915,18 @@ export default function ClientPortal() {
   const resolvedPreviewStudents = useMemo(() => {
     if (!isPreviewMode) return [];
     if (previewStudents.length > 0) {
-      if (studentDetail?.contact && !previewStudents.some((s: any) => s.id === studentDetail.contact.id)) {
-        return [studentDetail.contact, ...previewStudents];
-      }
       return previewStudents;
     }
-    if (studentDetail?.contact) {
-      return [studentDetail.contact];
-    }
     return [];
-  }, [isPreviewMode, previewStudents, studentDetail]);
+  }, [isPreviewMode, previewStudents]);
 
-  const portalStudents = isWorkspaceMode 
-    ? workspaceStudents 
-    : isPreviewMode 
-      ? resolvedPreviewStudents 
-      : myStudents;
+  const portalStudents = useMemo(() => {
+    if (isWorkspaceMode && workspaceStudents.length > 0) return workspaceStudents;
+    if (isPreviewMode && resolvedPreviewStudents.length > 0) return resolvedPreviewStudents;
+    if (myStudents.length > 0) return myStudents;
+    if (crmStudents.length > 0) return crmStudents;
+    return [fallbackStudent];
+  }, [isWorkspaceMode, workspaceStudents, isPreviewMode, resolvedPreviewStudents, myStudents, crmStudents, fallbackStudent]);
 
   const headerStudents: StudentOption[] = useMemo(() => {
     return portalStudents.map((s: any) => ({
@@ -908,33 +938,39 @@ export default function ClientPortal() {
     }));
   }, [portalStudents]);
 
-  // Selected student state: auto-select originating student if specified in URL or route
-  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(() => {
-    if (typeof window !== "undefined") {
-      const v = new URLSearchParams(window.location.search).get("contactId");
-      if (v) return parseInt(v, 10);
-    }
-    return routeStudentId || null;
-  });
-
-  useEffect(() => {
-    if (previewStudentContactId && selectedStudentId !== previewStudentContactId) {
-      setSelectedStudentId(previewStudentContactId);
-    }
-  }, [previewStudentContactId]);
-
-  // Resolve effective student: strictly from portalStudents without Liam Jenkins fallback
+  // Resolve effective student: strictly guaranteed from portalStudents or fallback
   const effectiveStudent = useMemo(() => {
-    if (portalStudents.length === 0) return null;
+    const list = portalStudents.length > 0 ? portalStudents : [fallbackStudent];
     if (selectedStudentId) {
-      const found = portalStudents.find((s: any) => s.id === selectedStudentId);
+      const found = list.find((s: any) => s.id === selectedStudentId);
       if (found) return found;
     }
-    return portalStudents[0] || null;
-  }, [portalStudents, selectedStudentId]);
+    return list[0] || fallbackStudent;
+  }, [portalStudents, selectedStudentId, fallbackStudent]);
 
   const effectiveCaseId = effectiveStudent?.caseId ?? null;
   const effectiveStudentContactId = effectiveStudent?.id ?? null;
+
+  useEffect(() => {
+    if (
+      isPreviewMode &&
+      previewStudentContactId &&
+      studentDetail?.contact &&
+      !studentDetail.contact.parentContactId &&
+      !ensureDevParentMutation.isPending &&
+      !ensureDevParentMutation.isSuccess
+    ) {
+      ensureDevParentMutation.mutate(
+        { studentContactId: previewStudentContactId },
+        {
+          onSuccess: (res) => {
+            utils.contacts.detail.invalidate({ id: previewStudentContactId });
+            utils.portal.getStudentsForParent.invalidate({ parentContactId: res.parentId });
+          },
+        }
+      );
+    }
+  }, [isPreviewMode, previewStudentContactId, studentDetail?.contact?.parentContactId]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1340,7 +1376,7 @@ export default function ClientPortal() {
       "advocacy-intake"
     ];
 
-    if (!effectiveStudent && !onboardingModuleIds.includes(activeTab) && activeTab !== "compass" && activeTab !== "communication" && activeTab !== "files" && activeTab !== "smart-docs" && activeTab !== "parking-lot") {
+    if (!effectiveStudent && !onboardingModuleIds.includes(activeTab) && activeTab !== "compass" && activeTab !== "communication" && activeTab !== "files" && activeTab !== "smart-docs" && activeTab !== "parking-lot" && activeTab !== "details") {
       return (
         <LockedModulePreview
           moduleId={activeTab}
