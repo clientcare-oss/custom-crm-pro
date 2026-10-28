@@ -407,7 +407,14 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       icon: Wrench,
       label: "Tools",
       path: "/tools",
-      isActive: (loc) => loc === "/tools" || (loc.startsWith("/tools/") && !loc.startsWith("/tools/state-complaint")) || loc === "/first-mate" || loc === "/knowledge-base" || loc === "/walkthroughs",
+      isActive: (loc) => loc === "/tools" || (loc.startsWith("/tools/") && !loc.startsWith("/tools/state-complaint")) || loc === "/first-mate",
+    },
+    {
+      id: "knowledge-base",
+      icon: BookOpen,
+      label: "Knowledge Base",
+      path: "/knowledge-base",
+      isActive: (loc) => loc === "/knowledge-base" || loc.startsWith("/knowledge-base") || loc === "/walkthroughs" || loc.startsWith("/walkthroughs"),
     },
     {
       id: "automations",
@@ -1640,6 +1647,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai") ||
         location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics") ||
         location === "/settings" || location.startsWith("/settings") ||
+        location === "/knowledge-base" || location.startsWith("/knowledge-base") ||
+        location === "/walkthroughs" || location.startsWith("/walkthroughs") ||
         location === "/messages" || location.startsWith("/messages")
       ) && "bg-[#000820]")}>
         {isMobile && (
