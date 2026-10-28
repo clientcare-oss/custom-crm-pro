@@ -12,6 +12,7 @@ import { DeleteTargetModal } from "../DeleteTargetModal";
 import { openPrintDialog } from "../print/PrintableMeetingDocument";
 import { ScratchPadDrawer } from "./ScratchPadDrawer";
 import { BeforeWeEndSection } from "./BeforeWeEndSection";
+import { MeetingScratchpadSection } from "./MeetingScratchpadSection";
 import { MeetingMinutesAndDocCheckModal } from "./MeetingMinutesAndDocCheckModal";
 import { recordApproval, withdrawApproval, updateApprovalMetadata, formatMeetingTime } from "./approvalEngine";
 import { toast } from "sonner";
@@ -218,6 +219,13 @@ export function MeetingModeView({
     onUpdateCloseoutChecks({
       ...closeoutChecks,
       scratchNotes: newNotes,
+    });
+  };
+
+  const handleUpdateScratchpadText = (newText: string) => {
+    onUpdateCloseoutChecks({
+      ...closeoutChecks,
+      scratchpadText: newText,
     });
   };
 
@@ -1086,6 +1094,16 @@ export function MeetingModeView({
           );
         })}
       </div>
+
+      {/* ── ✏️ MEETING SCRATCHPAD (Dedicated In-Flow Live Section) ── */}
+      <MeetingScratchpadSection
+        scratchpadText={closeoutChecks.scratchpadText}
+        scratchNotes={scratchNotes}
+        beforeWeEndItems={beforeWeEndItems}
+        onUpdateScratchpadText={handleUpdateScratchpadText}
+        onUpdateScratchNotes={handleUpdateScratchNotes}
+        onUpdateBeforeWeEndItems={handleUpdateBeforeWeEnd}
+      />
 
       {/* ── BEFORE WE END — Final Items to Resolve (Enhanced Area) ── */}
       <BeforeWeEndSection

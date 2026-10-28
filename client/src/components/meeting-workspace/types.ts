@@ -125,6 +125,7 @@ export interface BeforeWeEndItem {
   id: string;
   text: string;
   status: BeforeWeEndStatus;
+  completed?: boolean; // Checkbox completion state: true when addressed/classified
   sourceNoteId?: string; // If converted from Scratch Pad note
   createdAt: string;
   approvedAt?: string;
@@ -187,6 +188,7 @@ export interface CloseoutChecks {
   parentDoesntWant?: string;
   // Live Meeting Extension State
   scratchNotes?: ScratchNote[];
+  scratchpadText?: string;
   beforeWeEndItems?: BeforeWeEndItem[];
   minutesEntries?: MeetingMinutesEntry[];
   documentCheckItems?: DocumentCheckItem[];

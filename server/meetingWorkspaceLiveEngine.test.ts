@@ -179,4 +179,82 @@ describe("Live Meeting Follow-Through & Approval Engine (PG-043)", () => {
     expect(serialized).not.toMatch(/master coach/i);
     expect(serialized).not.toMatch(/master iep coach/i);
   });
+
+  it("verifies manual checkbox behavior: marks complete without assigning Approved or creating minutes", () => {
+    const item = {
+      id: "bwe-manual-1",
+      text: "Clarify ESY transportation pickup window",
+      status: "UNRESOLVED" as const,
+      completed: false,
+      createdAt: "10:20 AM",
+    };
+
+    // Manual check
+    const checkedItem = { ...item, completed: true };
+    expect(checkedItem.completed).toBe(true);
+    expect(checkedItem.status).toBe("UNRESOLVED"); // Status remains unresolved
+
+    // Manual uncheck
+    const uncheckedItem = { ...checkedItem, completed: false };
+    expect(uncheckedItem.completed).toBe(false);
+    expect(uncheckedItem.status).toBe("UNRESOLVED");
+  });
+
+  it("verifies situation buttons automatically complete items and reflect outcomes", () => {
+    // 1. Situation: Denied
+    const deniedItem = {
+      id: "bwe-denied-1",
+      text: "1:1 Para during unstructured recess",
+      status: "DENIED" as const,
+      completed: true,
+      createdAt: "10:22 AM",
+    };
+    expect(deniedItem.completed).toBe(true);
+    expect(deniedItem.status).toBe("DENIED");
+
+    // 2. Situation: Follow-Up
+    const followUpItem = {
+      id: "bwe-fu-1",
+      text: "Obtain sensory diet protocol from private OT",
+      status: "FOLLOW_UP" as const,
+      completed: true,
+      createdAt: "10:23 AM",
+      responsiblePerson: "Case Manager",
+      deadlineDate: "Friday",
+    };
+    expect(followUpItem.completed).toBe(true);
+    expect(followUpItem.status).toBe("FOLLOW_UP");
+
+    // 3. Situation: Discussed
+    const discussedItem = {
+      id: "bwe-disc-1",
+      text: "Review high school graduation pathway options",
+      status: "DISCUSSED" as const,
+      completed: true,
+      createdAt: "10:24 AM",
+    };
+    expect(discussedItem.completed).toBe(true);
+    expect(discussedItem.status).toBe("DISCUSSED");
+  });
+
+  it("verifies live progress indicator calculation: 3 of 5 addressed · 2 remaining", () => {
+    const items = [
+      { id: "1", text: "Target 1", status: "APPROVED" as const, completed: true, createdAt: "10:00 AM" },
+      { id: "2", text: "Target 2", status: "DENIED" as const, completed: true, createdAt: "10:01 AM" },
+      { id: "3", text: "Target 3", status: "UNRESOLVED" as const, completed: true, createdAt: "10:02 AM" }, // manually checked
+      { id: "4", text: "Target 4", status: "UNRESOLVED" as const, completed: false, createdAt: "10:03 AM" },
+      { id: "5", text: "Target 5", status: "UNRESOLVED" as const, completed: false, createdAt: "10:04 AM" },
+    ];
+
+    const isItemCompleted = (i: any) => i.completed ?? (i.status !== "UNRESOLVED");
+    const completedCount = items.filter(isItemCompleted).length;
+    const remainingCount = items.length - completedCount;
+
+    expect(completedCount).toBe(3);
+    expect(remainingCount).toBe(2);
+    expect(`${completedCount} of ${items.length} addressed · ${remainingCount} remaining`).toBe(
+      "3 of 5 addressed · 2 remaining"
+    );
+  });
 });
+

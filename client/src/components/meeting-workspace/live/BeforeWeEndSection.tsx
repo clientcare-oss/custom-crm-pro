@@ -25,7 +25,6 @@ import type {
   BeforeWeEndItem,
   BeforeWeEndStatus,
   ParkingLotItem,
-  CloseoutChecks,
 } from "../types";
 import { formatMeetingTime } from "./approvalEngine";
 
@@ -60,7 +59,7 @@ export function BeforeWeEndSection({
 }: BeforeWeEndSectionProps) {
   const [inputVal, setInputVal] = useState("");
   const [filterTab, setFilterTab] = useState<"NEEDS_RESOLUTION" | "ALL" | "APPROVED" | "OTHER">("NEEDS_RESOLUTION");
-  
+
   // Inline edit state
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemText, setEditingItemText] = useState("");
@@ -74,6 +73,12 @@ export function BeforeWeEndSection({
   const [metaDeadline, setMetaDeadline] = useState("");
   const [metaNote, setMetaNote] = useState("");
 
+  // Helper to determine if an item is completed / addressed
+  const isItemCompleted = (item: BeforeWeEndItem): boolean => {
+    if (typeof item.completed === "boolean") return item.completed;
+    return item.status !== "UNRESOLVED";
+  };
+
   const handleAddItem = () => {
     const text = inputVal.trim();
     if (!text) return;
@@ -82,6 +87,7 @@ export function BeforeWeEndSection({
       id: `bwe-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       text,
       status: "UNRESOLVED",
+      completed: false,
       createdAt: formatMeetingTime(),
     };
 
@@ -89,15 +95,43 @@ export function BeforeWeEndSection({
     setInputVal("");
   };
 
+  /**
+   * Manual Checkbox Toggle:
+   * Clicking the checkbox directly toggles completion state.
+   * If checking: marks item completed with green check & strikethrough. Does NOT assign Approved or trigger automations.
+   * If unchecking: restores text, marks incomplete, preserves previously selected situation status and existing downstream records.
+   */
+  const handleToggleComplete = (item: BeforeWeEndItem) => {
+    const currentCompleted = isItemCompleted(item);
+    const nextCompleted = !currentCompleted;
+
+    const updated = items.map((i) =>
+      i.id === item.id ? { ...i, completed: nextCompleted } : i
+    );
+
+    onUpdateItems(updated);
+  };
+
+  /**
+   * Situation Button Click:
+   * 1. Saves situation status using existing logic.
+   * 2. Automatically marks that item's checkbox as checked (completed: true).
+   * 3. Turns checkbox green and applies strikethrough.
+   * 4. Updates completion count.
+   * 5. Preserves all downstream automations (Approved triggers Minutes & Doc Check; Denied/Deferred/Follow-Up do not).
+   */
   const handleStatusClick = (item: BeforeWeEndItem, newStatus: BeforeWeEndStatus) => {
     const previousStatus = item.status;
     const finalStatus = previousStatus === newStatus ? "UNRESOLVED" : newStatus;
+    // When a situation status is active, it is addressed (completed: true). If toggled back to UNRESOLVED, completed becomes false.
+    const isNowCompleted = finalStatus !== "UNRESOLVED";
 
     const updated = items.map((i) => {
       if (i.id === item.id) {
         return {
           ...i,
           status: finalStatus,
+          completed: isNowCompleted,
           approvedAt: finalStatus === "APPROVED" ? formatMeetingTime() : undefined,
         };
       }
@@ -181,34 +215,41 @@ export function BeforeWeEndSection({
     setOpenNoteId(null);
   };
 
-  // Status counts for tab filters
-  const unresolvedCount = items.filter(
-    (i) => i.status === "UNRESOLVED" || i.status === "FOLLOW_UP" || i.status === "DEFERRED"
-  ).length;
+  // Completion counts based on checkbox completion states
+  const completedCount = items.filter(isItemCompleted).length;
+  const remainingCount = items.length - completedCount;
+
+  // Filter tabs logic
+  const unresolvedCount = items.filter((i) => !isItemCompleted(i)).length;
   const approvedCount = items.filter((i) => i.status === "APPROVED").length;
   const otherCount = items.filter(
-    (i) => i.status === "DISCUSSED" || i.status === "DENIED"
+    (i) => i.status === "DISCUSSED" || i.status === "DENIED" || i.status === "DEFERRED" || i.status === "FOLLOW_UP"
   ).length;
 
   const filteredItems = items.filter((item) => {
     if (filterTab === "NEEDS_RESOLUTION") {
-      return item.status === "UNRESOLVED" || item.status === "FOLLOW_UP" || item.status === "DEFERRED";
+      return !isItemCompleted(item);
     }
     if (filterTab === "APPROVED") {
       return item.status === "APPROVED";
     }
     if (filterTab === "OTHER") {
-      return item.status === "DISCUSSED" || item.status === "DENIED";
+      return (
+        item.status === "DISCUSSED" ||
+        item.status === "DENIED" ||
+        item.status === "DEFERRED" ||
+        item.status === "FOLLOW_UP"
+      );
     }
     return true; // "ALL"
   });
 
   return (
     <div className="rounded-xl bg-[#05142B]/90 border border-[#3A2C18] p-4 sm:p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85)] space-y-4">
-      {/* Header and Filter Tabs */}
+      {/* ─── Header, Progress Counter & Filter Tabs ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#3A2C18] pb-3">
-        <div>
-          <div className="flex items-center gap-2">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-base font-serif font-black text-[#FFF4D4] tracking-wide">
               ⚓ Before We End — Final Items to Resolve
             </span>
@@ -216,12 +257,35 @@ export function BeforeWeEndSection({
               {items.length} Total
             </Badge>
           </div>
+
+          {/* Live Progress Counter: X of Y addressed · Z remaining */}
+          <div className="flex items-center gap-2 text-xs font-mono font-medium pt-0.5">
+            <span className="text-[#FFE394] font-bold">
+              {completedCount} of {items.length} addressed
+            </span>
+            <span className="text-[#A69371]">·</span>
+            <span
+              className={cn(
+                "font-semibold",
+                remainingCount === 0 && items.length > 0
+                  ? "text-emerald-400 font-bold"
+                  : remainingCount > 0
+                  ? "text-amber-300"
+                  : "text-[#A69371]"
+              )}
+            >
+              {remainingCount === 0 && items.length > 0
+                ? "All items addressed! ✨"
+                : `${remainingCount} remaining`}
+            </span>
+          </div>
+
           <p className="text-xs text-[#C6B697] mt-0.5">
-            Clarify and record agreements before adjourning. Approvals automatically flow to Meeting Minutes & Document Check.
+            Clarify and record agreements before adjourning. Check off items as they are addressed. Approvals automatically flow to Meeting Minutes & Document Check.
           </p>
         </div>
 
-        {/* Filter Tabs for quick ADHD navigation */}
+        {/* Filter Tabs for ADHD clarity */}
         <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#020A17] border border-[#3A2C18] self-start sm:self-auto overflow-x-auto">
           <button
             type="button"
@@ -287,7 +351,7 @@ export function BeforeWeEndSection({
         </div>
       </div>
 
-      {/* Quick Add Bar */}
+      {/* ─── Quick Add Bar ─── */}
       <div className="flex items-center gap-2">
         <Input
           value={inputVal}
@@ -318,335 +382,384 @@ export function BeforeWeEndSection({
         </div>
       )}
 
-      {/* Items List */}
+      {/* ─── Items List with Far-Left Checkbox ─── */}
       <div className="space-y-3">
         {filteredItems.length === 0 ? (
           <div className="p-6 rounded-xl border border-dashed border-[#3A2C18]/60 bg-[#020A17]/40 text-center">
             <p className="text-xs font-semibold text-[#FFF4D4]">
               {filterTab === "NEEDS_RESOLUTION"
-                ? "No unresolved items remaining! Everything is either Approved or Discussed."
+                ? "No unresolved items remaining! Everything has been addressed."
                 : "No items in this view."}
             </p>
             <p className="text-[11px] text-[#A69371] mt-1">
-              Add items above or convert scratch notes from the Scratch Pad.
+              Add items above or convert notes from the Meeting Scratchpad.
             </p>
           </div>
         ) : (
-          filteredItems.map((item) => (
-            <div
-              key={item.id}
-              className={cn(
-                "p-3.5 rounded-xl border transition-all space-y-2.5",
-                item.status === "APPROVED"
-                  ? "bg-[#021815]/80 border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.12)]"
-                  : item.status === "DENIED"
-                  ? "bg-[#18080C]/80 border-rose-500/40"
-                  : item.status === "FOLLOW_UP"
-                  ? "bg-[#1A1205]/80 border-amber-500/40"
-                  : "bg-[#020A17] border-[#3A2C18] hover:border-[#DFBE77]/40"
-              )}
-            >
-              {/* Top row: Item Text & Actions */}
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
-                <div className="flex-1 min-w-0">
-                  {editingItemId === item.id ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={editingItemText}
-                        onChange={(e) => setEditingItemText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSaveEdit(item.id);
-                          if (e.key === "Escape") setEditingItemId(null);
-                        }}
-                        className="h-8 text-xs bg-[#000820] border-[#DFBE77] text-white"
-                        autoFocus
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => handleSaveEdit(item.id)}
-                        className="h-8 px-2.5 text-xs bg-emerald-600 text-white"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingItemId(null)}
-                        className="h-8 px-2 text-xs text-slate-400"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-[13px] font-bold text-[#FFF4D4] leading-snug">
-                          {item.text}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleStartEdit(item)}
-                          className="text-[#A69371] hover:text-[#DFBE77] p-0.5 rounded cursor-pointer transition-colors"
-                          title="Edit text"
-                        >
-                          <Pencil className="w-3 h-3" />
-                        </button>
-                      </div>
+          filteredItems.map((item) => {
+            const isCompleted = isItemCompleted(item);
 
-                      {/* Display assigned deadline or responsible person clearly beside item */}
-                      {(item.deadlineDate || item.responsiblePerson || item.conditionNote) && (
-                        <div className="flex items-center gap-2 text-[11px] text-[#FFE394] font-medium flex-wrap pt-0.5">
-                          {item.deadlineDate && (
-                            <span className="inline-flex items-center gap-1 bg-[#05142B] border border-[#3A2C18] px-2 py-0.5 rounded text-[#DFBE77]">
-                              <CalendarIcon className="w-3 h-3" />
-                              <span>by {item.deadlineDate}</span>
+            return (
+              <div
+                key={item.id}
+                className={cn(
+                  "p-3.5 rounded-xl border transition-all space-y-2.5",
+                  isCompleted
+                    ? "bg-[#031124]/90 border-[#2A2315] opacity-95"
+                    : "bg-[#020A17] border-[#3A2C18] hover:border-[#DFBE77]/40",
+                  item.status === "APPROVED" && "border-emerald-500/50 bg-[#021815]/80",
+                  item.status === "DENIED" && "border-rose-500/40 bg-[#18080C]/80",
+                  item.status === "FOLLOW_UP" && "border-amber-500/40 bg-[#1A1205]/80"
+                )}
+              >
+                {/* Top row: Checkbox on far left + Item Text & Controls */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    {/* Far Left Checkbox: Independently Clickable */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleComplete(item)}
+                      className={cn(
+                        "w-5 h-5 min-w-[20px] rounded flex items-center justify-center cursor-pointer transition-all border mt-0.5 shrink-0",
+                        isCompleted
+                          ? "bg-emerald-600 border-emerald-400 text-white shadow-[0_0_8px_rgba(16,185,129,0.35)]"
+                          : "bg-[#000820] border-[#3A2C18] hover:border-[#DFBE77] text-transparent"
+                      )}
+                      title={isCompleted ? "Mark item incomplete" : "Mark item complete (addressed)"}
+                      aria-label={isCompleted ? "Mark item incomplete" : "Mark item complete"}
+                    >
+                      {isCompleted && <Check className="w-3.5 h-3.5 stroke-[2.75]" />}
+                    </button>
+
+                    <div className="flex-1 min-w-0">
+                      {editingItemId === item.id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={editingItemText}
+                            onChange={(e) => setEditingItemText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveEdit(item.id);
+                              if (e.key === "Escape") setEditingItemId(null);
+                            }}
+                            className="h-8 text-xs bg-[#000820] border-[#DFBE77] text-white"
+                            autoFocus
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveEdit(item.id)}
+                            className="h-8 px-2.5 text-xs bg-emerald-600 text-white cursor-pointer"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingItemId(null)}
+                            className="h-8 px-2 text-xs text-slate-400 cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className={cn(
+                                "text-xs sm:text-[13px] leading-snug transition-all",
+                                isCompleted
+                                  ? "line-through decoration-emerald-500/80 decoration-2 text-slate-400 opacity-80 font-medium"
+                                  : "text-[#FFF4D4] font-bold"
+                              )}
+                            >
+                              {item.text}
                             </span>
-                          )}
-                          {item.responsiblePerson && (
-                            <span className="inline-flex items-center gap-1 bg-[#05142B] border border-[#3A2C18] px-2 py-0.5 rounded text-blue-200">
-                              <span>Lead: {item.responsiblePerson}</span>
-                            </span>
-                          )}
-                          {item.conditionNote && (
-                            <span className="inline-flex items-center gap-1 bg-[#05142B] border border-[#3A2C18] px-2 py-0.5 rounded text-slate-300 italic">
-                              <MessageSquare className="w-3 h-3 text-[#DFBE77]" />
-                              <span>"{item.conditionNote}"</span>
-                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleStartEdit(item)}
+                              className="text-[#A69371] hover:text-[#DFBE77] p-0.5 rounded cursor-pointer transition-colors"
+                              title="Edit text"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+
+                            {/* Status badge reflecting situation outcome clearly */}
+                            {item.status !== "UNRESOLVED" && (
+                              <span
+                                className={cn(
+                                  "px-1.5 py-0.2 rounded text-[10px] font-bold font-mono uppercase tracking-wider border",
+                                  item.status === "APPROVED"
+                                    ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/50"
+                                    : item.status === "DENIED"
+                                    ? "bg-rose-950/80 text-rose-300 border-rose-500/50"
+                                    : item.status === "FOLLOW_UP"
+                                    ? "bg-amber-950/80 text-amber-300 border-amber-500/50"
+                                    : item.status === "DEFERRED"
+                                    ? "bg-purple-950/80 text-purple-300 border-purple-500/50"
+                                    : "bg-blue-950/80 text-blue-300 border-blue-500/50"
+                                )}
+                              >
+                                {item.status.replace("_", " ")}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Display assigned deadline or responsible person clearly beside item */}
+                          {(item.deadlineDate || item.responsiblePerson || item.conditionNote) && (
+                            <div className="flex items-center gap-2 text-[11px] text-[#FFE394] font-medium flex-wrap pt-0.5">
+                              {item.deadlineDate && (
+                                <span className="inline-flex items-center gap-1 bg-[#05142B] border border-[#3A2C18] px-2 py-0.5 rounded text-[#DFBE77]">
+                                  <CalendarIcon className="w-3 h-3" />
+                                  <span>by {item.deadlineDate}</span>
+                                </span>
+                              )}
+                              {item.responsiblePerson && (
+                                <span className="inline-flex items-center gap-1 bg-[#05142B] border border-[#3A2C18] px-2 py-0.5 rounded text-blue-200">
+                                  <span>Lead: {item.responsiblePerson}</span>
+                                </span>
+                              )}
+                              {item.conditionNote && (
+                                <span className="inline-flex items-center gap-1 bg-[#05142B] border border-[#3A2C18] px-2 py-0.5 rounded text-slate-300 italic">
+                                  <MessageSquare className="w-3 h-3 text-[#DFBE77]" />
+                                  <span>"{item.conditionNote}"</span>
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Right controls: Contextual Icons (Calendar, Note) + Delete */}
+                  <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-start">
+                    {item.status === "APPROVED" && (
+                      <>
+                        {/* Contextual Calendar Trigger */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCalendar(item)}
+                          className={cn(
+                            "px-2 py-1 rounded text-[11px] font-semibold border inline-flex items-center gap-1 cursor-pointer transition-all",
+                            openCalendarId === item.id || item.deadlineDate || item.responsiblePerson
+                              ? "bg-amber-950/70 border-amber-500/60 text-[#FFE394]"
+                              : "bg-[#05142B] border-[#3A2C18] text-[#C6B697] hover:border-[#DFBE77]"
+                          )}
+                          title="Add/edit responsible person & deadline"
+                        >
+                          <CalendarIcon className="w-3 h-3 text-[#DFBE77]" />
+                          <span>{item.deadlineDate ? item.deadlineDate : "+ Deadline"}</span>
+                        </button>
+
+                        {/* Contextual Note Trigger */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenNote(item)}
+                          className={cn(
+                            "px-2 py-1 rounded text-[11px] font-semibold border inline-flex items-center gap-1 cursor-pointer transition-all",
+                            openNoteId === item.id || item.conditionNote
+                              ? "bg-blue-950/70 border-blue-500/60 text-blue-200"
+                              : "bg-[#05142B] border-[#3A2C18] text-[#C6B697] hover:border-[#DFBE77]"
+                          )}
+                          title="Add/edit conditions or team's exact wording"
+                        >
+                          <MessageSquare className="w-3 h-3 text-blue-400" />
+                          <span>{item.conditionNote ? "Condition" : "+ Note"}</span>
+                        </button>
+                      </>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteItem(item.id)}
+                      className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
+                      title="Delete item"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Right controls: Contextual Icons (Calendar, Note) + Delete */}
-                <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-start">
-                  {item.status === "APPROVED" && (
-                    <>
-                      {/* Contextual Calendar Trigger */}
+                {/* Contextual Calendar Form Popover/Expander */}
+                {openCalendarId === item.id && (
+                  <div className="p-3 rounded-lg bg-[#000820] border border-amber-500/40 space-y-2 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-[#FFE394]">
+                        📅 Assign Follow-Through & Deadline
+                      </span>
                       <button
                         type="button"
-                        onClick={() => handleOpenCalendar(item)}
-                        className={cn(
-                          "px-2 py-1 rounded text-[11px] font-semibold border inline-flex items-center gap-1 cursor-pointer transition-all",
-                          openCalendarId === item.id || item.deadlineDate || item.responsiblePerson
-                            ? "bg-amber-950/70 border-amber-500/60 text-[#FFE394]"
-                            : "bg-[#05142B] border-[#3A2C18] text-[#C6B697] hover:border-[#DFBE77]"
-                        )}
-                        title="Add/edit responsible person & deadline"
+                        onClick={() => setOpenCalendarId(null)}
+                        className="text-slate-400 hover:text-white cursor-pointer"
                       >
-                        <CalendarIcon className="w-3 h-3 text-[#DFBE77]" />
-                        <span>{item.deadlineDate ? item.deadlineDate : "+ Deadline"}</span>
+                        <X className="w-3.5 h-3.5" />
                       </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Input
+                        value={metaPerson}
+                        onChange={(e) => setMetaPerson(e.target.value)}
+                        placeholder="Responsible Person (e.g. Case Manager, OT)..."
+                        className="h-8 text-xs bg-[#020A17] border-[#3A2C18] text-white"
+                      />
+                      <Input
+                        value={metaDeadline}
+                        onChange={(e) => setMetaDeadline(e.target.value)}
+                        placeholder="Deadline or Start Date (e.g. Oct 30, 2026)..."
+                        className="h-8 text-xs bg-[#020A17] border-[#3A2C18] text-white"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-1.5 pt-1">
+                      <Button
+                        size="sm"
+                        onClick={() => handleSaveCalendar(item)}
+                        className="h-7 px-3 text-[11px] bg-gradient-to-r from-[#DFBE77] to-[#C5A059] text-[#07162B] font-bold cursor-pointer"
+                      >
+                        Save Deadline
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
-                      {/* Contextual Note Trigger */}
+                {/* Contextual Note Form Popover/Expander */}
+                {openNoteId === item.id && (
+                  <div className="p-3 rounded-lg bg-[#000820] border border-blue-500/40 space-y-2 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-blue-200">
+                        📝 Capture Conditions or Exact Phrasing
+                      </span>
                       <button
                         type="button"
-                        onClick={() => handleOpenNote(item)}
-                        className={cn(
-                          "px-2 py-1 rounded text-[11px] font-semibold border inline-flex items-center gap-1 cursor-pointer transition-all",
-                          openNoteId === item.id || item.conditionNote
-                            ? "bg-blue-950/70 border-blue-500/60 text-blue-200"
-                            : "bg-[#05142B] border-[#3A2C18] text-[#C6B697] hover:border-[#DFBE77]"
-                        )}
-                        title="Add/edit conditions or team's exact wording"
+                        onClick={() => setOpenNoteId(null)}
+                        className="text-slate-400 hover:text-white cursor-pointer"
                       >
-                        <MessageSquare className="w-3 h-3 text-blue-400" />
-                        <span>{item.conditionNote ? "Condition" : "+ Note"}</span>
+                        <X className="w-3.5 h-3.5" />
                       </button>
-                    </>
-                  )}
+                    </div>
+                    <Input
+                      value={metaNote}
+                      onChange={(e) => setMetaNote(e.target.value)}
+                      placeholder="Enter conditions, exact IEP phrasing agreed, or details..."
+                      className="h-8 text-xs bg-[#020A17] border-[#3A2C18] text-white"
+                    />
+                    <div className="flex justify-end gap-1.5 pt-1">
+                      <Button
+                        size="sm"
+                        onClick={() => handleSaveNote(item)}
+                        className="h-7 px-3 text-[11px] bg-blue-600 hover:bg-blue-500 text-white font-bold cursor-pointer"
+                      >
+                        Save Note
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
+                {/* Bottom Situation Buttons — Automatically check off item when chosen */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-[#3A2C18]/40">
+                  {/* 1. APPROVED (Immediate Minutes + Doc Check Entry) */}
                   <button
                     type="button"
-                    onClick={() => handleDeleteItem(item.id)}
-                    className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
-                    title="Delete item"
+                    onClick={() => handleStatusClick(item, "APPROVED")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md border text-[11px] font-bold flex items-center gap-1.5 cursor-pointer transition-all",
+                      item.status === "APPROVED"
+                        ? "bg-emerald-950 text-emerald-200 border-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
+                        : "bg-[#020A17] border-[#3A2C18] text-slate-300 hover:border-emerald-500/50 hover:text-emerald-300"
+                    )}
+                    title="Team agreed to this item (instantly records into Minutes & Document Check)"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <CheckCircle2
+                      className={cn(
+                        "w-3.5 h-3.5",
+                        item.status === "APPROVED" ? "text-emerald-400" : "text-slate-500"
+                      )}
+                    />
+                    <span>Approved</span>
+                  </button>
+
+                  {/* 2. DISCUSSED */}
+                  <button
+                    type="button"
+                    onClick={() => handleStatusClick(item, "DISCUSSED")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all",
+                      item.status === "DISCUSSED"
+                        ? "bg-blue-950 text-blue-200 border-blue-400 font-bold"
+                        : "bg-[#020A17] border-[#3A2C18] text-slate-400 hover:border-blue-400/50 hover:text-blue-200"
+                    )}
+                  >
+                    <CheckSquare
+                      className={cn(
+                        "w-3.5 h-3.5",
+                        item.status === "DISCUSSED" ? "text-blue-400" : "text-slate-500"
+                      )}
+                    />
+                    <span>Discussed</span>
+                  </button>
+
+                  {/* 3. DENIED */}
+                  <button
+                    type="button"
+                    onClick={() => handleStatusClick(item, "DENIED")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all",
+                      item.status === "DENIED"
+                        ? "bg-rose-950 text-rose-200 border-rose-400 font-bold"
+                        : "bg-[#020A17] border-[#3A2C18] text-slate-400 hover:border-rose-400/50 hover:text-rose-200"
+                    )}
+                    title="District refused or denied this point (recorded as addressed)"
+                  >
+                    <XCircle
+                      className={cn(
+                        "w-3.5 h-3.5",
+                        item.status === "DENIED" ? "text-rose-400" : "text-slate-500"
+                      )}
+                    />
+                    <span>Denied</span>
+                  </button>
+
+                  {/* 4. DEFERRED */}
+                  <button
+                    type="button"
+                    onClick={() => handleStatusClick(item, "DEFERRED")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all",
+                      item.status === "DEFERRED"
+                        ? "bg-purple-950 text-purple-200 border-purple-400 font-bold"
+                        : "bg-[#020A17] border-[#3A2C18] text-slate-400 hover:border-purple-400/50 hover:text-purple-200"
+                    )}
+                  >
+                    <RotateCcw
+                      className={cn(
+                        "w-3.5 h-3.5",
+                        item.status === "DEFERRED" ? "text-purple-400" : "text-slate-500"
+                      )}
+                    />
+                    <span>Deferred</span>
+                  </button>
+
+                  {/* 5. FOLLOW-UP */}
+                  <button
+                    type="button"
+                    onClick={() => handleStatusClick(item, "FOLLOW_UP")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all",
+                      item.status === "FOLLOW_UP"
+                        ? "bg-amber-950 text-amber-200 border-amber-400 font-bold"
+                        : "bg-[#020A17] border-[#3A2C18] text-slate-400 hover:border-amber-400/50 hover:text-amber-200"
+                    )}
+                  >
+                    <ArrowRight
+                      className={cn(
+                        "w-3.5 h-3.5",
+                        item.status === "FOLLOW_UP" ? "text-amber-400" : "text-slate-500"
+                      )}
+                    />
+                    <span>Follow-Up</span>
                   </button>
                 </div>
               </div>
-
-              {/* Contextual Calendar Form Popover/Expander */}
-              {openCalendarId === item.id && (
-                <div className="p-3 rounded-lg bg-[#000820] border border-amber-500/40 space-y-2 animate-in fade-in duration-150">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-[#FFE394]">
-                      📅 Assign Follow-Through & Deadline
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setOpenCalendarId(null)}
-                      className="text-slate-400 hover:text-white"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <Input
-                      value={metaPerson}
-                      onChange={(e) => setMetaPerson(e.target.value)}
-                      placeholder="Responsible Person (e.g. Case Manager, OT)..."
-                      className="h-8 text-xs bg-[#020A17] border-[#3A2C18] text-white"
-                    />
-                    <Input
-                      value={metaDeadline}
-                      onChange={(e) => setMetaDeadline(e.target.value)}
-                      placeholder="Deadline or Start Date (e.g. Oct 30, 2026)..."
-                      className="h-8 text-xs bg-[#020A17] border-[#3A2C18] text-white"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-1.5 pt-1">
-                    <Button
-                      size="sm"
-                      onClick={() => handleSaveCalendar(item)}
-                      className="h-7 px-3 text-[11px] bg-gradient-to-r from-[#DFBE77] to-[#C5A059] text-[#07162B] font-bold"
-                    >
-                      Save Deadline
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Contextual Note Form Popover/Expander */}
-              {openNoteId === item.id && (
-                <div className="p-3 rounded-lg bg-[#000820] border border-blue-500/40 space-y-2 animate-in fade-in duration-150">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-blue-200">
-                      📝 Capture Conditions or Exact Phrasing
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setOpenNoteId(null)}
-                      className="text-slate-400 hover:text-white"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <Input
-                    value={metaNote}
-                    onChange={(e) => setMetaNote(e.target.value)}
-                    placeholder="Enter conditions, exact IEP phrasing agreed, or details..."
-                    className="h-8 text-xs bg-[#020A17] border-[#3A2C18] text-white"
-                  />
-                  <div className="flex justify-end gap-1.5 pt-1">
-                    <Button
-                      size="sm"
-                      onClick={() => handleSaveNote(item)}
-                      className="h-7 px-3 text-[11px] bg-blue-600 hover:bg-blue-500 text-white font-bold"
-                    >
-                      Save Note
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Bottom Situation / Status Buttons — Consistent with IEP targets */}
-              <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-[#3A2C18]/40">
-                {/* 1. APPROVED (Immediate Minutes + Doc Check Entry) */}
-                <button
-                  type="button"
-                  onClick={() => handleStatusClick(item, "APPROVED")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md border text-[11px] font-bold flex items-center gap-1.5 cursor-pointer transition-all",
-                    item.status === "APPROVED"
-                      ? "bg-emerald-950 text-emerald-200 border-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
-                      : "bg-[#020A17] border-[#3A2C18] text-slate-300 hover:border-emerald-500/50 hover:text-emerald-300"
-                  )}
-                  title="Team agreed to this item (instantly records into Minutes & Document Check)"
-                >
-                  <CheckCircle2
-                    className={cn(
-                      "w-3.5 h-3.5",
-                      item.status === "APPROVED" ? "text-emerald-400" : "text-slate-500"
-                    )}
-                  />
-                  <span>Approved</span>
-                </button>
-
-                {/* 2. DISCUSSED */}
-                <button
-                  type="button"
-                  onClick={() => handleStatusClick(item, "DISCUSSED")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all",
-                    item.status === "DISCUSSED"
-                      ? "bg-blue-950 text-blue-200 border-blue-400 font-bold"
-                      : "bg-[#020A17] border-[#3A2C18] text-slate-400 hover:border-blue-400/50 hover:text-blue-200"
-                  )}
-                >
-                  <CheckSquare
-                    className={cn(
-                      "w-3.5 h-3.5",
-                      item.status === "DISCUSSED" ? "text-blue-400" : "text-slate-500"
-                    )}
-                  />
-                  <span>Discussed</span>
-                </button>
-
-                {/* 3. DENIED */}
-                <button
-                  type="button"
-                  onClick={() => handleStatusClick(item, "DENIED")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all",
-                    item.status === "DENIED"
-                      ? "bg-rose-950 text-rose-200 border-rose-400 font-bold"
-                      : "bg-[#020A17] border-[#3A2C18] text-slate-400 hover:border-rose-400/50 hover:text-rose-200"
-                  )}
-                >
-                  <XCircle
-                    className={cn(
-                      "w-3.5 h-3.5",
-                      item.status === "DENIED" ? "text-rose-400" : "text-slate-500"
-                    )}
-                  />
-                  <span>Denied</span>
-                </button>
-
-                {/* 4. DEFERRED */}
-                <button
-                  type="button"
-                  onClick={() => handleStatusClick(item, "DEFERRED")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all",
-                    item.status === "DEFERRED"
-                      ? "bg-purple-950 text-purple-200 border-purple-400 font-bold"
-                      : "bg-[#020A17] border-[#3A2C18] text-slate-400 hover:border-purple-400/50 hover:text-purple-200"
-                  )}
-                >
-                  <RotateCcw
-                    className={cn(
-                      "w-3.5 h-3.5",
-                      item.status === "DEFERRED" ? "text-purple-400" : "text-slate-500"
-                    )}
-                  />
-                  <span>Deferred</span>
-                </button>
-
-                {/* 5. FOLLOW-UP */}
-                <button
-                  type="button"
-                  onClick={() => handleStatusClick(item, "FOLLOW_UP")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all",
-                    item.status === "FOLLOW_UP"
-                      ? "bg-amber-950 text-amber-200 border-amber-400 font-bold"
-                      : "bg-[#020A17] border-[#3A2C18] text-slate-400 hover:border-amber-400/50 hover:text-amber-200"
-                  )}
-                >
-                  <ArrowRight
-                    className={cn(
-                      "w-3.5 h-3.5",
-                      item.status === "FOLLOW_UP" ? "text-amber-400" : "text-slate-500"
-                    )}
-                  />
-                  <span>Follow-Up</span>
-                </button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
