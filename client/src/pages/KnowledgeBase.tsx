@@ -50,6 +50,7 @@ import {
 import PageIdBadge from "@/components/PageIdBadge";
 import Walkthroughs from "./Walkthroughs";
 import StateLawLibrary from "@/components/knowledge-base/StateLawLibrary";
+import EducationLawHub from "@/components/knowledge-base/EducationLawHub";
 import { WaypointWaveIcon } from "@/components/portal/WaypointWavyBackdrop";
 import { cn } from "@/lib/utils";
 
@@ -462,12 +463,12 @@ export default function KnowledgeBase() {
             )}
           >
             <Scale className="w-4 h-4" />
-            <span>⚖️ State Education Law Library</span>
+            <span>⚖️ Education Law Collection</span>
             <span className={cn(
               "text-[11px] font-mono px-1.5 py-0.2 rounded-full",
               activeTab === "law-library" ? "bg-[#07162B]/20 text-[#07162B] font-bold" : "bg-[#020A17] text-[#C5A059] border border-[#3A2C18]"
             )}>
-              50 States + Fed
+              50 States + Federal Law & Guidance
             </span>
           </button>
         </div>
@@ -477,7 +478,7 @@ export default function KnowledgeBase() {
           <span className="font-mono text-[11px] uppercase tracking-wider text-[#C5A059]">Active Filter:</span>
           <span className="px-2 py-0.5 rounded-md bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] font-medium">
             {activeTab === "law-library"
-              ? "All 50 States & Federal Jurisdiction"
+              ? "Unified Education Law Collection (State, Federal, Guidance)"
               : selectedCategory === "All"
               ? "All Compendium Records"
               : selectedCategory}
@@ -487,14 +488,14 @@ export default function KnowledgeBase() {
 
       {/* ── Main Content Area ── */}
       {activeTab === "law-library" ? (
-        <StateLawLibrary />
+        <EducationLawHub />
       ) : activeTab === "walkthroughs" ? (
         <div className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 p-4 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
           <Walkthroughs />
         </div>
       ) : (
         <div className="space-y-6">
-          {/* ── Prominent Entry Point: State Education Law Library ── */}
+          {/* ── Prominent Entry Point: Education Law Collection ── */}
           <div
             onClick={() => handleTabChange("law-library")}
             className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#3A2C18] bg-gradient-to-r from-[#05142B] via-[#0B213D] to-[#05142B] p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059] transition-all duration-300"
@@ -509,14 +510,14 @@ export default function KnowledgeBase() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <h2 className="text-xl sm:text-2xl font-serif text-[#FFF4D4] font-bold group-hover:text-[#FFE394] transition-colors">
-                      ⚖️ State Education Law Library
+                      ⚖️ Education Law Collection
                     </h2>
                     <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#C5A059]/20 text-[#FFE394] border border-[#C5A059]/40">
-                      All 50 States + D.C. + Federal
+                      50 States + Federal Law + Guidance Archive
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-[#C6B697] leading-relaxed">
-                    Explore education laws, special education regulations, and parent rights across all 50 states.
+                    Explore state education regulations, federal statutes (IDEA Part B, Section 504, ADA), and official Dear Colleague &amp; OSEP policy guidance.
                   </p>
                 </div>
               </div>

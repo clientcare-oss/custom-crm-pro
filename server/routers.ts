@@ -71,6 +71,7 @@ import { familyEnrollmentRouter } from "./routers/familyEnrollment";
 import { stateLawLibraryRouter } from "./routers/stateLawLibrary";
 import { reviewTrackerRouter } from "./routers/reviewTracker";
 import { parentProfileRouter } from "./routers/parentProfile";
+import { federalLawRouter } from "./routers/federalLaw";
 
 export const appRouter = router({
   parentProfile: parentProfileRouter,
@@ -146,6 +147,7 @@ export const appRouter = router({
   quo: quoRouter,
   giving: givingRouter,
   stateLaw: stateLawLibraryRouter,
+  federalLaw: federalLawRouter,
 });
 
 export type AppRouter = typeof appRouter;

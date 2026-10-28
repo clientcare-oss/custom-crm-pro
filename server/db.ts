@@ -46,6 +46,7 @@ import {
 export * from "./db/familyEnrollment";
 export * from "./db/reviewTrackers";
 export * from "./db/parentProfile";
+export * from "./db/federalLaw";
 
 import { ENV } from './_core/env';
 

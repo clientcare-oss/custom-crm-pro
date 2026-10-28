@@ -3514,3 +3514,93 @@ export const staffNotifications = mysqlTable(
 export type StaffNotification = typeof staffNotifications.$inferSelect;
 export type InsertStaffNotification = typeof staffNotifications.$inferInsert;
 
+// ── Federal Education Law Provisions (IDEA, 504, ADA, FERPA, ESSA) ─────────────
+export const federalLegalProvisions = mysqlTable(
+  "federal_legal_provisions",
+  {
+    id: varchar("id", { length: 100 }).primaryKey(), // e.g. "idea-300-324", "idea-300-111", "sec504-104-33"
+    act: varchar("act", { length: 100 }).notNull(), // "IDEA Part B", "IDEA Part C", "Section 504", "ADA Title II", "FERPA", "ESSA"
+    subpart: varchar("subpart", { length: 150 }).notNull(), // "Subpart D — Children with Disabilities", etc.
+    sectionCitation: varchar("sectionCitation", { length: 150 }).notNull(), // "34 CFR § 300.324" or "20 U.S.C. § 1414(d)"
+    title: varchar("title", { length: 255 }).notNull(), // "Development, review, and revision of IEP"
+    plainLanguageExplanation: text("plainLanguageExplanation").notNull(),
+    keyPoints: text("keyPoints"), // JSON array of string points
+    advocacyTips: text("advocacyTips"),
+    statutoryTimeline: varchar("statutoryTimeline", { length: 255 }),
+    officialUrl: text("officialUrl").notNull(),
+    authorityType: varchar("authorityType", { length: 50 }).default("Federal Regulation").notNull(), // "Statute" | "Federal Regulation"
+    topics: text("topics").notNull(), // JSON array of category topics
+    relatedCitations: text("relatedCitations"), // JSON array
+    lastVerifiedDate: varchar("lastVerifiedDate", { length: 50 }).notNull(),
+    verificationStatus: varchar("verificationStatus", { length: 50 }).default("Verified").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (t) => ({
+    actIdx: index("federal_provisions_act_idx").on(t.act),
+    citationIdx: index("federal_provisions_citation_idx").on(t.sectionCitation),
+  })
+);
+
+export type FederalLegalProvision = typeof federalLegalProvisions.$inferSelect;
+export type InsertFederalLegalProvision = typeof federalLegalProvisions.$inferInsert;
+
+// ── Federal Guidance Archive Documents (Dear Colleague Letters, OSEP, OCR) ──────
+export const federalGuidanceDocuments = mysqlTable(
+  "federal_guidance_documents",
+  {
+    id: varchar("id", { length: 100 }).primaryKey(), // e.g. "dcl-2016-08-01-behavior", "osep-letter-zirkel-2019"
+    documentNumber: varchar("documentNumber", { length: 100 }), // "OSEP 16-07", "DCL-2015-10"
+    title: varchar("title", { length: 300 }).notNull(),
+    issuingOffice: varchar("issuingOffice", { length: 100 }).notNull(), // "OSEP", "OSERS", "OCR", "ED Office of the Secretary"
+    dateIssued: varchar("dateIssued", { length: 50 }).notNull(), // "2016-08-01"
+    publicationYear: int("publicationYear").notNull(), // 2016
+    documentType: varchar("documentType", { length: 100 }).notNull(), // "Dear Colleague Letter", "Policy Letter", "Questions and Answers", "Policy Guidance Document", "Resource Guide"
+    relatedLaws: text("relatedLaws").notNull(), // JSON array: ["IDEA Part B", "Section 504"]
+    relatedCitations: text("relatedCitations").notNull(), // JSON array: ["34 CFR § 300.324(a)(2)(i)", "34 CFR § 300.530"]
+    summary: text("summary").notNull(),
+    keyPoints: text("keyPoints"), // JSON array of string key points
+    officialSourceUrl: text("officialSourceUrl").notNull(),
+    pdfUrl: text("pdfUrl"),
+    topics: text("topics").notNull(), // JSON array of topic categories
+    guidanceStatus: varchar("guidanceStatus", { length: 50 }).default("Current / Verified").notNull(), // "Current / Verified" | "Historical" | "Superseded" | "Withdrawn or Rescinded" | "Status Unconfirmed" | "Source Unavailable"
+    statusNotice: text("statusNotice"), // explanation of status or withdrawal notice
+    supersededBy: varchar("supersededBy", { length: 255 }),
+    rescissionDate: varchar("rescissionDate", { length: 50 }),
+    lastVerifiedDate: varchar("lastVerifiedDate", { length: 50 }).notNull(),
+    verificationNotes: text("verificationNotes"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (t) => ({
+    officeIdx: index("federal_guidance_office_idx").on(t.issuingOffice),
+    yearIdx: index("federal_guidance_year_idx").on(t.publicationYear),
+    statusIdx: index("federal_guidance_status_idx").on(t.guidanceStatus),
+  })
+);
+
+export type FederalGuidanceDocument = typeof federalGuidanceDocuments.$inferSelect;
+export type InsertFederalGuidanceDocument = typeof federalGuidanceDocuments.$inferInsert;
+
+// ── Guidance Law Links (Bidirectional mapping) ──────────────────────────────
+export const federalGuidanceLawLinks = mysqlTable(
+  "federal_guidance_law_links",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    guidanceId: varchar("guidanceId", { length: 100 }).notNull(),
+    provisionId: varchar("provisionId", { length: 100 }).notNull(),
+    sectionCitation: varchar("sectionCitation", { length: 150 }).notNull(),
+    relationshipType: varchar("relationshipType", { length: 100 }).default("interprets").notNull(), // "interprets" | "clarifies" | "implements" | "enforces"
+    notes: text("notes"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (t) => ({
+    guidanceIdx: index("guidance_links_guidance_idx").on(t.guidanceId),
+    provisionIdx: index("guidance_links_provision_idx").on(t.provisionId),
+  })
+);
+
+export type FederalGuidanceLawLink = typeof federalGuidanceLawLinks.$inferSelect;
+export type InsertFederalGuidanceLawLink = typeof federalGuidanceLawLinks.$inferInsert;
+
+
