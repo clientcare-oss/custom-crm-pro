@@ -44,9 +44,12 @@ import {
   Library,
   Calendar,
   Filter,
+  Scale,
+  ChevronRight,
 } from "lucide-react";
 import PageIdBadge from "@/components/PageIdBadge";
 import Walkthroughs from "./Walkthroughs";
+import StateLawLibrary from "@/components/knowledge-base/StateLawLibrary";
 import { WaypointWaveIcon } from "@/components/portal/WaypointWavyBackdrop";
 import { cn } from "@/lib/utils";
 
@@ -208,20 +211,21 @@ export default function KnowledgeBase() {
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search)
       : new URLSearchParams();
-  const [activeTab, setActiveTab] = useState<"docs" | "walkthroughs">(
-    searchParams.get("tab") === "walkthroughs" || searchParams.get("tab") === "sop"
-      ? "walkthroughs"
-      : "docs"
-  );
+  const [activeTab, setActiveTab] = useState<"docs" | "walkthroughs" | "law-library">(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "law-library" || tab === "laws" || tab === "legal") return "law-library";
+    if (tab === "walkthroughs" || tab === "sop") return "walkthroughs";
+    return "docs";
+  });
 
-  const handleTabChange = (tab: "docs" | "walkthroughs") => {
+  const handleTabChange = (tab: "docs" | "walkthroughs" | "law-library") => {
     setActiveTab(tab);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
-      if (tab === "walkthroughs") {
-        url.searchParams.set("tab", "walkthroughs");
-      } else {
+      if (tab === "docs") {
         url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", tab);
       }
       window.history.replaceState(null, "", url.toString());
     }
@@ -251,8 +255,20 @@ export default function KnowledgeBase() {
                   Knowledge Base <span className="font-serif italic font-bold text-[#FFE394]">& Compendium</span>
                 </h1>
                 <PageIdBadge
-                  id={activeTab === "walkthroughs" ? "PG-017" : "PG-016"}
-                  name={activeTab === "walkthroughs" ? "System Walkthroughs (SOP)" : "Knowledge Base"}
+                  id={
+                    activeTab === "walkthroughs"
+                      ? "PG-017"
+                      : activeTab === "law-library"
+                      ? "PG-016-LAW"
+                      : "PG-016"
+                  }
+                  name={
+                    activeTab === "walkthroughs"
+                      ? "System Walkthroughs (SOP)"
+                      : activeTab === "law-library"
+                      ? "State Education Law Library"
+                      : "Knowledge Base"
+                  }
                 />
               </div>
 
@@ -434,24 +450,90 @@ export default function KnowledgeBase() {
               {walkthroughs.length}
             </span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("law-library")}
+            className={cn(
+              "flex-1 sm:flex-none h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap",
+              activeTab === "law-library"
+                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
+                : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
+            )}
+          >
+            <Scale className="w-4 h-4" />
+            <span>⚖️ State Education Law Library</span>
+            <span className={cn(
+              "text-[11px] font-mono px-1.5 py-0.2 rounded-full",
+              activeTab === "law-library" ? "bg-[#07162B]/20 text-[#07162B] font-bold" : "bg-[#020A17] text-[#C5A059] border border-[#3A2C18]"
+            )}>
+              50 States + Fed
+            </span>
+          </button>
         </div>
 
         {/* Live Filter / Active Category Indicator */}
         <div className="hidden lg:flex items-center gap-2 pr-2 text-xs text-[#C6B697]">
           <span className="font-mono text-[11px] uppercase tracking-wider text-[#C5A059]">Active Filter:</span>
           <span className="px-2 py-0.5 rounded-md bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] font-medium">
-            {selectedCategory === "All" ? "All Compendium Records" : selectedCategory}
+            {activeTab === "law-library"
+              ? "All 50 States & Federal Jurisdiction"
+              : selectedCategory === "All"
+              ? "All Compendium Records"
+              : selectedCategory}
           </span>
         </div>
       </div>
 
       {/* ── Main Content Area ── */}
-      {activeTab === "walkthroughs" ? (
+      {activeTab === "law-library" ? (
+        <StateLawLibrary />
+      ) : activeTab === "walkthroughs" ? (
         <div className="rounded-2xl border border-[#3A2C18] bg-[#05142B]/90 p-4 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
           <Walkthroughs />
         </div>
       ) : (
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="space-y-6">
+          {/* ── Prominent Entry Point: State Education Law Library ── */}
+          <div
+            onClick={() => handleTabChange("law-library")}
+            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#3A2C18] bg-gradient-to-r from-[#05142B] via-[#0B213D] to-[#05142B] p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059] transition-all duration-300"
+          >
+            <div className="absolute top-0 right-0 w-80 h-full bg-[#C5A059]/10 blur-3xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all" />
+
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-start sm:items-center gap-4">
+                <div className="p-3.5 rounded-2xl bg-[#020A17] text-[#C5A059] border border-[#3A2C18] shadow-[0_4px_16px_rgba(0,0,0,0.8)] group-hover:scale-105 group-hover:border-[#C5A059] transition-all shrink-0">
+                  <Scale className="w-7 h-7 text-[#FFE394]" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h2 className="text-xl sm:text-2xl font-serif text-[#FFF4D4] font-bold group-hover:text-[#FFE394] transition-colors">
+                      ⚖️ State Education Law Library
+                    </h2>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#C5A059]/20 text-[#FFE394] border border-[#C5A059]/40">
+                      All 50 States + D.C. + Federal
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-[#C6B697] leading-relaxed">
+                    Explore education laws, special education regulations, and parent rights across all 50 states.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                <button
+                  type="button"
+                  className="h-10 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_3px_12px_rgba(197,160,89,0.35)] group-hover:brightness-110 transition-all cursor-pointer whitespace-nowrap"
+                >
+                  <span>Open Legal Library</span>
+                  <ChevronRight className="w-4 h-4 text-[#07162B] group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* ── Left Category Rail / Compartments Browser ── */}
           <aside className="w-full lg:w-72 shrink-0 rounded-2xl border border-[#3A2C18] bg-[#05142B]/95 p-4 sm:p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col gap-3">
             <div className="flex items-center justify-between pb-3 border-b border-[#3A2C18]/80">
@@ -712,6 +794,7 @@ export default function KnowledgeBase() {
             )}
           </div>
         </div>
+      </div>
       )}
       </div>
 

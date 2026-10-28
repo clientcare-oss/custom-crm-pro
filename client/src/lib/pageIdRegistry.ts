@@ -58,6 +58,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/settings/integrations/quo":       { id: "PG-014-QUO", name: "Quo Integration Settings", category: "Integrations" },
   "/workflows":                       { id: "PG-015", name: "Workflow Pipelines", category: "Automation" },
   "/knowledge-base":                  { id: "PG-016", name: "Knowledge Base", category: "Advocacy" },
+  "/knowledge-base/state-law":        { id: "PG-016-LAW", name: "State Education Law Library", category: "Advocacy", description: "Searchable education law and parent rights library across all 50 states, DC, and federal law" },
   "/walkthroughs":                    { id: "PG-017", name: "System Walkthroughs", category: "Help" },
   "/call-center":                     { id: "PG-018", name: "Call Center", category: "Communications" },
   "/call-logs":                       { id: "PG-018", name: "Call Center (Redirects to /call-center)", category: "Communications" },
@@ -494,6 +495,18 @@ export function resolvePageId(pathname: string, search = ""): PageIdInfo {
     }
     // Default to Compass tab if no sub-tab specified
     return PORTAL_TAB_IDS["compass"] || { id: "PG-023-CMP", name: "Portal Case Compass", category: "Portal" };
+  }
+
+  // Check Knowledge Base sub-tabs (/knowledge-base?tab=law-library, walkthroughs)
+  if (cleanPath === "/knowledge-base") {
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const tabParam = urlParams.get("tab");
+    if (tabParam === "law-library" || tabParam === "laws" || tabParam === "legal") {
+      return PAGE_IDS["/knowledge-base/state-law"];
+    }
+    if (tabParam === "walkthroughs" || tabParam === "sop") {
+      return PAGE_IDS["/walkthroughs"];
+    }
   }
 
   // 1. Direct exact match
