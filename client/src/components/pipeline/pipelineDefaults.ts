@@ -2,20 +2,210 @@ import type {
   PipelineStageItem,
   PipelineCardItem,
   SavedViewItem,
+  LogicalStageGroup,
+  CaseActionStatus,
 } from "./types";
 
-// ── 16 Unified Default Pipeline Stages (Opportunities + Active Advocacy) ────
+export const LOGICAL_STAGE_GROUPS: {
+  key: LogicalStageGroup;
+  label: string;
+  shortLabel: string;
+  badgeClass: string;
+  barColor: string;
+  accentColor: string;
+}[] = [
+  {
+    key: "opportunities",
+    label: "Opportunities",
+    shortLabel: "Opportunities",
+    badgeClass: "bg-[#191336]/90 border-[#8B5CF6]/40 text-[#DDD6FE]",
+    barColor: "#A78BFA",
+    accentColor: "#A78BFA",
+  },
+  {
+    key: "follow_up",
+    label: "Follow-Up",
+    shortLabel: "Follow-Up",
+    badgeClass: "bg-[#0C1E3B]/90 border-[#60A5FA]/40 text-[#BFDBFE]",
+    barColor: "#60A5FA",
+    accentColor: "#60A5FA",
+  },
+  {
+    key: "onboarding",
+    label: "Onboarding",
+    shortLabel: "Onboarding",
+    badgeClass: "bg-[#082532]/90 border-[#38BDF8]/40 text-[#BAE6FD]",
+    barColor: "#38BDF8",
+    accentColor: "#38BDF8",
+  },
+  {
+    key: "active_advocacy",
+    label: "Active Advocacy",
+    shortLabel: "Active Advocacy",
+    badgeClass: "bg-[#221A0A]/90 border-[#C5A059]/45 text-[#FFE394]",
+    barColor: "#C5A059",
+    accentColor: "#C5A059",
+  },
+  {
+    key: "renewal_closed",
+    label: "Renewal / Closed",
+    shortLabel: "Renewal / Closed",
+    badgeClass: "bg-[#09221C]/90 border-[#34D399]/40 text-[#A7F3D0]",
+    barColor: "#34D399",
+    accentColor: "#34D399",
+  },
+];
+
+export function resolveLogicalStageGroup(
+  stageName: string,
+  category?: string,
+  explicitLogicalGroup?: LogicalStageGroup
+): LogicalStageGroup {
+  if (explicitLogicalGroup) return explicitLogicalGroup;
+  const lower = (stageName || "").trim().toLowerCase();
+
+  if (
+    lower.includes("follow-up") ||
+    lower.includes("follow up") ||
+    lower.includes("reconnect")
+  ) {
+    return "follow_up";
+  }
+  if (
+    lower === "discovery" ||
+    lower === "discovery call" ||
+    lower.includes("free session") ||
+    lower.includes("proposal")
+  ) {
+    return "opportunities";
+  }
+  if (
+    lower.includes("intake") ||
+    lower.includes("onboarding") ||
+    lower.includes("billing") ||
+    lower.includes("authorization") ||
+    lower.includes("upload")
+  ) {
+    return "onboarding";
+  }
+  if (
+    lower.includes("monitoring") ||
+    lower.includes("renewal") ||
+    lower === "closed" ||
+    category === "completed"
+  ) {
+    return "renewal_closed";
+  }
+  return "active_advocacy";
+}
+
+export function resolveCaseActionStatus(card: PipelineCardItem): {
+  status: CaseActionStatus;
+  label: string;
+  badgeClass: string;
+  dotClass: string;
+  isOverdue: boolean;
+} {
+  const stageLower = (card.pipelineStage || "").toLowerCase();
+  const taskLower = `${card.primaryTask || ""} ${card.secondaryTask || ""}`.toLowerCase();
+
+  if (stageLower === "closed" || card.accountStatus === "Closed") {
+    if (card.billingStatus === "Payment Failed" || card.needsAttention) {
+      return {
+        status: "overdue",
+        label: card.attentionReason || "Overdue / Past Due",
+        badgeClass: "bg-rose-950/90 border-rose-500/60 text-rose-200",
+        dotClass: "bg-rose-400 animate-pulse",
+        isOverdue: true,
+      };
+    }
+    return {
+      status: "completed",
+      label: "Completed",
+      badgeClass: "bg-slate-900/90 border-slate-600/50 text-slate-300",
+      dotClass: "bg-slate-400",
+      isOverdue: false,
+    };
+  }
+
+  if (
+    card.needsAttention ||
+    card.billingStatus === "Payment Failed" ||
+    card.compassRiskLevel === "Critical"
+  ) {
+    return {
+      status: "overdue",
+      label: card.attentionReason || "Action Overdue",
+      badgeClass: "bg-rose-950/90 border-rose-500/60 text-rose-200",
+      dotClass: "bg-rose-400 animate-pulse",
+      isOverdue: true,
+    };
+  }
+
+  if (card.accountStatus === "Renewal Needed") {
+    return {
+      status: "renewal_due",
+      label: "Renewal Due",
+      badgeClass: "bg-emerald-950/90 border-emerald-500/50 text-emerald-200",
+      dotClass: "bg-emerald-400",
+      isOverdue: false,
+    };
+  }
+
+  if (
+    stageLower.includes("proposal") ||
+    stageLower.includes("upload") ||
+    stageLower.includes("billing") ||
+    taskLower.includes("awaiting parent") ||
+    taskLower.includes("waiting on parent") ||
+    card.compassWhoHasBall?.toLowerCase() === "parent"
+  ) {
+    return {
+      status: "waiting_family",
+      label: "Waiting on Family",
+      badgeClass: "bg-amber-950/90 border-amber-500/50 text-amber-200",
+      dotClass: "bg-amber-400",
+      isOverdue: false,
+    };
+  }
+
+  if (
+    stageLower.includes("school contact") ||
+    taskLower.includes("district") ||
+    taskLower.includes("school") ||
+    card.compassWhoHasBall?.toLowerCase() === "school"
+  ) {
+    return {
+      status: "waiting_school",
+      label: "Waiting on School",
+      badgeClass: "bg-sky-950/90 border-sky-500/50 text-sky-200",
+      dotClass: "bg-sky-400",
+      isOverdue: false,
+    };
+  }
+
+  return {
+    status: "on_track",
+    label: "On Track",
+    badgeClass: "bg-[#05142B] border-[#3A2C18] text-[#FFE394]",
+    dotClass: "bg-[#34D399]",
+    isOverdue: false,
+  };
+}
+
+// ── 16 Unified Default Pipeline Stages (Opportunities, Follow-Up, Onboarding, Active Advocacy, Renewal/Closed) ──
 export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
-  // Opportunities Group (HoneyBook-inspired lead & follow-up stages)
+  // 1. Opportunities Group (Soft Violet)
   {
     id: 1,
     name: "Discovery",
     slug: "discovery",
     order: 1,
-    accentColor: "#38BDF8",
+    accentColor: "#A78BFA",
     iconName: "Compass",
-    category: "active",
+    category: "opportunity",
     pipelineGroup: "opportunity",
+    logicalGroup: "opportunities",
     isArchived: false,
     isDefault: true,
   },
@@ -24,10 +214,11 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     name: "Free Session",
     slug: "free-session",
     order: 2,
-    accentColor: "#60A5FA",
+    accentColor: "#A78BFA",
     iconName: "Sparkles",
-    category: "active",
+    category: "opportunity",
     pipelineGroup: "opportunity",
+    logicalGroup: "opportunities",
     isArchived: false,
     isDefault: true,
   },
@@ -40,18 +231,22 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     iconName: "FileCheck",
     category: "waiting",
     pipelineGroup: "opportunity",
+    logicalGroup: "opportunities",
     isArchived: false,
     isDefault: true,
   },
+
+  // 2. Follow-Up Group (Muted Blue)
   {
     id: 4,
     name: "2-Week Follow-Up",
     slug: "2-week-follow-up",
     order: 4,
-    accentColor: "#C084FC",
+    accentColor: "#60A5FA",
     iconName: "Clock",
     category: "waiting",
     pipelineGroup: "opportunity",
+    logicalGroup: "follow_up",
     isArchived: false,
     isDefault: true,
   },
@@ -60,10 +255,11 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     name: "30-Day Follow-Up",
     slug: "30-day-follow-up",
     order: 5,
-    accentColor: "#E879F9",
+    accentColor: "#60A5FA",
     iconName: "CalendarClock",
     category: "waiting",
     pipelineGroup: "opportunity",
+    logicalGroup: "follow_up",
     isArchived: false,
     isDefault: true,
   },
@@ -72,10 +268,11 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     name: "3-Month Follow-Up",
     slug: "3-month-follow-up",
     order: 6,
-    accentColor: "#F472B6",
+    accentColor: "#60A5FA",
     iconName: "History",
     category: "waiting",
     pipelineGroup: "opportunity",
+    logicalGroup: "follow_up",
     isArchived: false,
     isDefault: true,
   },
@@ -84,24 +281,26 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     name: "Reconnect Review",
     slug: "reconnect-review",
     order: 7,
-    accentColor: "#FB923C",
+    accentColor: "#60A5FA",
     iconName: "RefreshCw",
     category: "waiting",
     pipelineGroup: "opportunity",
+    logicalGroup: "follow_up",
     isArchived: false,
     isDefault: true,
   },
 
-  // Active Advocacy / Projects Group
+  // 3. Onboarding Group (Cool Cyan)
   {
     id: 8,
     name: "Intake / Onboarding",
     slug: "intake-onboarding",
     order: 8,
-    accentColor: "#34D399",
+    accentColor: "#38BDF8",
     iconName: "FileText",
     category: "active",
     pipelineGroup: "active_project",
+    logicalGroup: "onboarding",
     isArchived: false,
     isDefault: true,
   },
@@ -110,10 +309,11 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     name: "Billing & Authorization",
     slug: "billing-authorization",
     order: 9,
-    accentColor: "#10B981",
+    accentColor: "#38BDF8",
     iconName: "ShieldCheck",
     category: "active",
     pipelineGroup: "active_project",
+    logicalGroup: "onboarding",
     isArchived: false,
     isDefault: true,
   },
@@ -122,22 +322,26 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     name: "Client Upload Tasks",
     slug: "client-upload-tasks",
     order: 10,
-    accentColor: "#14B8A6",
+    accentColor: "#38BDF8",
     iconName: "Upload",
     category: "waiting",
     pipelineGroup: "active_project",
+    logicalGroup: "onboarding",
     isArchived: false,
     isDefault: true,
   },
+
+  // 4. Active Advocacy Group (Sophisticated Gold)
   {
     id: 11,
     name: "Records Review",
     slug: "records-review",
     order: 11,
-    accentColor: "#F59E0B",
+    accentColor: "#C5A059",
     iconName: "FileSearch",
     category: "active",
     pipelineGroup: "active_project",
+    logicalGroup: "active_advocacy",
     isArchived: false,
     isDefault: true,
   },
@@ -146,10 +350,11 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     name: "School Contact",
     slug: "school-contact",
     order: 12,
-    accentColor: "#F5B544",
+    accentColor: "#C5A059",
     iconName: "School",
     category: "active",
     pipelineGroup: "active_project",
+    logicalGroup: "active_advocacy",
     isArchived: false,
     isDefault: true,
   },
@@ -158,10 +363,11 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     name: "Meeting Scheduled",
     slug: "meeting-scheduled",
     order: 13,
-    accentColor: "#818CF8",
+    accentColor: "#C5A059",
     iconName: "Calendar",
     category: "active",
     pipelineGroup: "active_project",
+    logicalGroup: "active_advocacy",
     isArchived: false,
     isDefault: true,
   },
@@ -170,22 +376,26 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     name: "State Complaint",
     slug: "state-complaint",
     order: 14,
-    accentColor: "#F87171",
+    accentColor: "#C5A059",
     iconName: "Scale",
     category: "escalation",
     pipelineGroup: "active_project",
+    logicalGroup: "active_advocacy",
     isArchived: false,
     isDefault: true,
   },
+
+  // 5. Renewal / Closed Group (Muted Green / Neutral Slate)
   {
     id: 15,
     name: "Monitoring",
     slug: "monitoring",
     order: 15,
-    accentColor: "#2DD4BF",
+    accentColor: "#34D399",
     iconName: "Activity",
     category: "active",
     pipelineGroup: "active_project",
+    logicalGroup: "renewal_closed",
     isArchived: false,
     isDefault: true,
   },
@@ -194,10 +404,11 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     name: "Closed",
     slug: "closed",
     order: 16,
-    accentColor: "#94A3B8",
+    accentColor: "#64748B",
     iconName: "CheckCircle2",
     category: "completed",
     pipelineGroup: "active_project",
+    logicalGroup: "renewal_closed",
     isArchived: false,
     isDefault: true,
   },
@@ -247,6 +458,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Navigator ($55)",
     pipelineStage: "Discovery",
     pipelineGroup: "opportunity",
+    logicalGroup: "opportunities",
     isOpportunity: true,
     accountStatus: "Active",
     billingStatus: "Current",
@@ -255,10 +467,12 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     assignedAdvocateInitials: "BH",
     needsAttention: false,
     openTaskCount: 1,
-    primaryTask: "Discovery call scheduled",
+    primaryTask: "Conduct 30-min Discovery Call",
     primaryTaskIcon: "calendar",
     secondaryTask: "Tomorrow, 10:00 AM",
     secondaryTaskIcon: "clock",
+    nextDate: "Oct 31, 2026",
+    meetingDate: "Oct 31, 2026 · 10:00 AM",
     lastActivityText: "Discovery Call Booked",
     lastActivityAt: "2026-10-29T14:00:00.000Z",
     compassRiskLevel: "Medium",
@@ -279,6 +493,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Pay Per Use",
     pipelineStage: "Free Session",
     pipelineGroup: "opportunity",
+    logicalGroup: "opportunities",
     isOpportunity: true,
     accountStatus: "Active",
     billingStatus: "Current",
@@ -287,10 +502,12 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     assignedAdvocateInitials: "MS",
     needsAttention: false,
     openTaskCount: 1,
-    primaryTask: "Free strategy consultation",
+    primaryTask: "Complete free 504 strategy consultation",
     primaryTaskIcon: "calendar",
     secondaryTask: "Nov 2, 2026 · 2:00 PM",
     secondaryTaskIcon: "clock",
+    nextDate: "Nov 2, 2026",
+    meetingDate: "Nov 2, 2026 · 2:00 PM",
     lastActivityText: "Free Session Confirmed",
     lastActivityAt: "2026-10-28T16:30:00.000Z",
     compassRiskLevel: "Low",
@@ -312,18 +529,21 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Scholarship",
     pipelineStage: "Proposal (14-Day Exp)",
     pipelineGroup: "opportunity",
+    logicalGroup: "opportunities",
     isOpportunity: true,
     accountStatus: "Active",
     billingStatus: "Current",
     contractStatus: "Sent",
     assignedAdvocateName: "Kevin Liu",
     assignedAdvocateInitials: "KL",
-    needsAttention: false,
+    needsAttention: true,
+    attentionReason: "Proposal Expiring in 48 Hours",
     openTaskCount: 2,
-    primaryTask: "Proposal sent (expires in 9 days)",
+    primaryTask: "Follow up on 14-day enrollment proposal",
     primaryTaskIcon: "clock",
-    secondaryTask: "Awaiting parent review",
+    secondaryTask: "Awaiting parent signature",
     secondaryTaskIcon: "mail",
+    nextDate: "Nov 1, 2026",
     lastActivityText: "Service Proposal Sent",
     lastActivityAt: "2026-10-25T11:00:00.000Z",
     compassRiskLevel: "Medium",
@@ -345,6 +565,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Family Plan",
     pipelineStage: "Intake / Onboarding",
     pipelineGroup: "active_project",
+    logicalGroup: "onboarding",
     isOpportunity: false,
     accountStatus: "Onboarding",
     billingStatus: "Current",
@@ -353,10 +574,11 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     assignedAdvocateInitials: "ES",
     needsAttention: false,
     openTaskCount: 2,
-    primaryTask: "Onboarding checklist in progress",
+    primaryTask: "Verify family intake questionnaire",
     primaryTaskIcon: "check",
     secondaryTask: "Parent portal activated",
     secondaryTaskIcon: "mail",
+    nextDate: "Nov 3, 2026",
     lastActivityText: "Enrolled in Family Plan",
     lastActivityAt: "2026-10-29T09:15:00.000Z",
     compassRiskLevel: "Medium",
@@ -377,6 +599,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Navigator ($55)",
     pipelineStage: "Billing & Authorization",
     pipelineGroup: "active_project",
+    logicalGroup: "onboarding",
     isOpportunity: false,
     accountStatus: "Onboarding",
     billingStatus: "Current",
@@ -385,10 +608,11 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     assignedAdvocateInitials: "BH",
     needsAttention: false,
     openTaskCount: 1,
-    primaryTask: "FERPA release & authorization",
+    primaryTask: "Collect signed FERPA district release",
     primaryTaskIcon: "check",
-    secondaryTask: "Awaiting district release signature",
+    secondaryTask: "Awaiting parent signature",
     secondaryTaskIcon: "clock",
+    nextDate: "Nov 2, 2026",
     lastActivityText: "Authorization Form Sent",
     lastActivityAt: "2026-10-28T15:00:00.000Z",
     compassRiskLevel: "Low",
@@ -409,18 +633,21 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Anchor ($105)",
     pipelineStage: "Client Upload Tasks",
     pipelineGroup: "active_project",
+    logicalGroup: "onboarding",
     isOpportunity: false,
     accountStatus: "Onboarding",
     billingStatus: "Current",
     contractStatus: "Active",
     assignedAdvocateName: "Jordan Lee",
     assignedAdvocateInitials: "JL",
-    needsAttention: false,
+    needsAttention: true,
+    attentionReason: "Missing Prior IEP Upload (Overdue 3 Days)",
     openTaskCount: 3,
-    primaryTask: "Upload prior IEP & Psych Eval",
+    primaryTask: "Parent to upload prior IEP & Psych Eval",
     primaryTaskIcon: "clock",
     secondaryTask: "2 of 3 files uploaded",
     secondaryTaskIcon: "check",
+    nextDate: "Oct 27, 2026 (Overdue)",
     lastActivityText: "Parent Uploaded Psych Eval",
     lastActivityAt: "2026-10-29T11:45:00.000Z",
     compassRiskLevel: "High",
@@ -431,7 +658,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     lastName: "Robinson",
     fullName: "Ava Robinson",
     parentContactId: 207,
-    parentName: "monique Robinson",
+    parentName: "Monique Robinson",
     parentEmail: "m.robinson@example.com",
     siblingCount: 1,
     schoolName: "Westbrook Elementary",
@@ -441,6 +668,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Anchor ($105)",
     pipelineStage: "Records Review",
     pipelineGroup: "active_project",
+    logicalGroup: "active_advocacy",
     isOpportunity: false,
     accountStatus: "Active",
     billingStatus: "Current",
@@ -449,10 +677,11 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     assignedAdvocateInitials: "MS",
     needsAttention: false,
     openTaskCount: 2,
-    primaryTask: "Comprehensive IEP & ETR audit",
+    primaryTask: "Complete IEP & ETR audit findings memo",
     primaryTaskIcon: "check",
     secondaryTask: "Drafting parent findings memo",
     secondaryTaskIcon: "calendar",
+    nextDate: "Nov 4, 2026",
     lastActivityText: "IEP Comparator Completed",
     lastActivityAt: "2026-10-29T17:20:00.000Z",
     compassRiskLevel: "High",
@@ -473,6 +702,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Navigator ($55)",
     pipelineStage: "School Contact",
     pipelineGroup: "active_project",
+    logicalGroup: "active_advocacy",
     isOpportunity: false,
     accountStatus: "Active",
     billingStatus: "Current",
@@ -481,10 +711,11 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     assignedAdvocateInitials: "KL",
     needsAttention: false,
     openTaskCount: 1,
-    primaryTask: "Formal IEP meeting request sent",
+    primaryTask: "Follow up with school Case Manager on draft IEP",
     primaryTaskIcon: "mail",
-    secondaryTask: "Follow up with Case Manager",
+    secondaryTask: "Waiting on school response",
     secondaryTaskIcon: "clock",
+    nextDate: "Nov 1, 2026",
     lastActivityText: "District Notice Dispatched",
     lastActivityAt: "2026-10-27T13:10:00.000Z",
     compassRiskLevel: "Medium",
@@ -505,6 +736,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Anchor ($105)",
     pipelineStage: "Meeting Scheduled",
     pipelineGroup: "active_project",
+    logicalGroup: "active_advocacy",
     isOpportunity: false,
     accountStatus: "Active",
     billingStatus: "Current",
@@ -513,10 +745,11 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     assignedAdvocateInitials: "ES",
     needsAttention: false,
     openTaskCount: 2,
-    primaryTask: "Nov 5, 2026 · 10:00 AM",
+    primaryTask: "Conduct pre-meeting parent strategy prep call",
     primaryTaskIcon: "calendar",
-    secondaryTask: "Pre-meeting parent prep call",
+    secondaryTask: "IEP Meeting: Nov 5, 2026 · 10:00 AM",
     secondaryTaskIcon: "clock",
+    nextDate: "Nov 5, 2026",
     meetingDate: "Nov 5, 2026 · 10:00 AM",
     lastActivityText: "IEP Meeting Confirmed",
     lastActivityAt: "2026-10-29T18:00:00.000Z",
@@ -528,7 +761,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     lastName: "Brooks",
     fullName: "Amelia Brooks",
     parentContactId: 214,
-    parentName: "angela Brooks",
+    parentName: "Angela Brooks",
     parentEmail: "angela.brooks@example.com",
     siblingCount: 1,
     schoolName: "Summit High School",
@@ -538,6 +771,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Pay Per Use",
     pipelineStage: "State Complaint",
     pipelineGroup: "active_project",
+    logicalGroup: "active_advocacy",
     isOpportunity: false,
     accountStatus: "Active",
     billingStatus: "Current",
@@ -545,12 +779,13 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     assignedAdvocateName: "Byron Honea",
     assignedAdvocateInitials: "BH",
     needsAttention: true,
-    attentionReason: "Systemic IDEA Violation Review",
+    attentionReason: "State Complaint Filing Deadline Approaching",
     openTaskCount: 3,
-    primaryTask: "State complaint exhibit packet",
+    primaryTask: "Finalize State Complaint exhibit packet & file",
     primaryTaskIcon: "alert",
     secondaryTask: "Awaiting final parent signature",
     secondaryTaskIcon: "check",
+    nextDate: "Oct 30, 2026 (Today)",
     lastActivityText: "State Complaint Draft Updated",
     lastActivityAt: "2026-10-29T19:00:00.000Z",
     compassRiskLevel: "Critical",
@@ -571,18 +806,21 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Navigator ($55)",
     pipelineStage: "Monitoring",
     pipelineGroup: "active_project",
+    logicalGroup: "renewal_closed",
     isOpportunity: false,
     accountStatus: "Renewal Needed",
     billingStatus: "Current",
     contractStatus: "Active",
     assignedAdvocateName: "Jordan Lee",
     assignedAdvocateInitials: "JL",
-    needsAttention: false,
+    needsAttention: true,
+    attentionReason: "Annual Plan Renewal Due",
     openTaskCount: 1,
-    primaryTask: "30-day implementation check-in",
+    primaryTask: "Send annual plan renewal & 30-day progress check",
     primaryTaskIcon: "clock",
     secondaryTask: "Annual renewal approaching",
     secondaryTaskIcon: "calendar",
+    nextDate: "Nov 1, 2026",
     lastActivityText: "Progress Report Logged",
     lastActivityAt: "2026-10-24T12:00:00.000Z",
     compassRiskLevel: "Low",
@@ -603,6 +841,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     servicePlanLabel: "Anchor ($105)",
     pipelineStage: "Closed",
     pipelineGroup: "active_project",
+    logicalGroup: "renewal_closed",
     isOpportunity: false,
     accountStatus: "Closed",
     billingStatus: "Current",
@@ -615,9 +854,9 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     primaryTaskIcon: "check",
     secondaryTask: "Completed Oct 15, 2026",
     secondaryTaskIcon: "calendar",
+    nextDate: "Completed",
     lastActivityText: "Case Closed — Goals Met",
     lastActivityAt: "2026-10-15T16:00:00.000Z",
     compassRiskLevel: "Low",
   },
 ];
-

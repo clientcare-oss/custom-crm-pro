@@ -1,14 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { Compass, Briefcase, Layers } from "lucide-react";
-import type { PipelineStageItem, PipelineCardItem, PipelineGroupType } from "./types";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  LOGICAL_STAGE_GROUPS,
+  resolveLogicalStageGroup,
+  resolveCaseActionStatus,
+} from "./pipelineDefaults";
+import type {
+  PipelineStageItem,
+  PipelineCardItem,
+} from "./types";
 
 interface StageOverviewGridProps {
   stages: PipelineStageItem[];
   cards: PipelineCardItem[];
-  activeGroupFilter: "all" | PipelineGroupType;
   selectedStageName: string | null;
-  onSelectGroup: (group: "all" | PipelineGroupType) => void;
   onSelectStage: (stageName: string | null) => void;
   onDropCardOnStage?: (cardId: number, targetStageName: string) => void;
 }
@@ -16,47 +22,105 @@ interface StageOverviewGridProps {
 export function StageOverviewGrid({
   stages,
   cards,
-  activeGroupFilter,
   selectedStageName,
-  onSelectGroup,
   onSelectStage,
   onDropCardOnStage,
 }: StageOverviewGridProps) {
+  const railRef = useRef<HTMLDivElement | null>(null);
+  const stageRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
   const [dragOverStageName, setDragOverStageName] = useState<string | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  // Click-and-drag horizontal rail scrolling state
+  const isPointerDownRef = useRef(false);
+  const didDragRailRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftStartRef = useRef(0);
 
   const activeStages = stages
     .filter((s) => !s.isArchived)
     .sort((a, b) => a.order - b.order);
 
-  // Compute accurate counts per stage from filtered cards
+  // Compute accurate counts & overdue counts per stage from filtered cards
   const countByStage = new Map<string, number>();
+  const overdueByStage = new Map<string, number>();
+
   for (const c of cards) {
     const k = (c.pipelineStage || "Discovery").toLowerCase();
     countByStage.set(k, (countByStage.get(k) || 0) + 1);
+    const statusMeta = resolveCaseActionStatus(c);
+    if (statusMeta.isOverdue || c.needsAttention) {
+      overdueByStage.set(k, (overdueByStage.get(k) || 0) + 1);
+    }
   }
 
-  const opportunityStages = activeStages.filter(
-    (s) => (s.pipelineGroup || (s.category === "opportunity" ? "opportunity" : "active_project")) === "opportunity"
-  );
-  const projectStages = activeStages.filter(
-    (s) => (s.pipelineGroup || (s.category === "opportunity" ? "opportunity" : "active_project")) !== "opportunity"
-  );
+  const updateScrollIndicators = useCallback(() => {
+    const el = railRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
 
-  const opportunityCount = opportunityStages.reduce(
-    (sum, s) => sum + (countByStage.get(s.name.toLowerCase()) || 0),
-    0
-  );
-  const projectCount = projectStages.reduce(
-    (sum, s) => sum + (countByStage.get(s.name.toLowerCase()) || 0),
-    0
-  );
+  useEffect(() => {
+    updateScrollIndicators();
+    window.addEventListener("resize", updateScrollIndicators);
+    return () => window.removeEventListener("resize", updateScrollIndicators);
+  }, [updateScrollIndicators, activeStages.length]);
 
-  const visibleStages =
-    activeGroupFilter === "opportunity"
-      ? opportunityStages
-      : activeGroupFilter === "active_project"
-        ? projectStages
-        : activeStages;
+  // Automatically scroll selected stage into view when selected or restored
+  useEffect(() => {
+    const key = selectedStageName ? selectedStageName.toLowerCase() : "__all__";
+    const targetEl = stageRefs.current[key];
+    if (targetEl && railRef.current) {
+      targetEl.scrollIntoView({
+        behavior: "smooth",
+        inline: "nearest",
+        block: "nearest",
+      });
+    }
+  }, [selectedStageName]);
+
+  const scrollByAmount = (delta: number) => {
+    if (!railRef.current) return;
+    railRef.current.scrollBy({ left: delta, behavior: "smooth" });
+  };
+
+  // Support Shift + wheel and vertical wheel inside rail for smooth horizontal scrolling
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const el = railRef.current;
+    if (!el) return;
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // native trackpad horizontal gesture
+    if (e.shiftKey || el.scrollWidth > el.clientWidth) {
+      el.scrollLeft += e.deltaY;
+      updateScrollIndicators();
+    }
+  };
+
+  // Click-and-drag scrolling on the stage rail
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || !railRef.current) return;
+    isPointerDownRef.current = true;
+    didDragRailRef.current = false;
+    startXRef.current = e.pageX - railRef.current.offsetLeft;
+    scrollLeftStartRef.current = railRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current || !railRef.current) return;
+    const x = e.pageX - railRef.current.offsetLeft;
+    const walk = x - startXRef.current;
+    if (Math.abs(walk) > 6) {
+      didDragRailRef.current = true;
+      railRef.current.scrollLeft = scrollLeftStartRef.current - walk;
+      updateScrollIndicators();
+    }
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isPointerDownRef.current = false;
+  };
 
   const handleDragOverTile = (e: React.DragEvent, stageName: string) => {
     e.preventDefault();
@@ -77,184 +141,207 @@ export function StageOverviewGrid({
   };
 
   return (
-    <div className="rounded-2xl bg-[#05142B]/90 border border-[#3A2C18] p-3 space-y-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
-      {/* Top Group Selector Header (Opportunities vs Active Advocacy Projects — No Horizontal Scroll) */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="relative w-full max-w-full select-none pt-0.5 pb-1">
+      {/* Subtle Left Edge Scroll Button */}
+      {canScrollLeft && (
+        <button
+          type="button"
+          onClick={() => scrollByAmount(-360)}
+          aria-label="Scroll stages left"
+          className="absolute left-0 top-[44px] z-20 h-14 w-6 rounded-r-lg bg-[#051024]/95 hover:bg-[#0D1E38] border border-l-0 border-[#233554] text-[#CBD5E1] hover:text-[#FFF4D4] flex items-center justify-center shadow-lg transition-opacity cursor-pointer"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+      )}
+
+      {/* Subtle Right Edge Scroll Button */}
+      {canScrollRight && (
+        <button
+          type="button"
+          onClick={() => scrollByAmount(360)}
+          aria-label="Scroll stages right"
+          className="absolute right-0 top-[44px] z-20 h-14 w-6 rounded-l-lg bg-[#051024]/95 hover:bg-[#0D1E38] border border-r-0 border-[#233554] text-[#CBD5E1] hover:text-[#FFF4D4] flex items-center justify-center shadow-lg transition-opacity cursor-pointer"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
+
+      {/* ONE Continuous Horizontal Stage Rail (Never wraps onto a second row) */}
+      <div
+        ref={railRef}
+        onScroll={updateScrollIndicators}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUpOrLeave}
+        onMouseLeave={handleMouseUpOrLeave}
+        className="flex flex-nowrap items-end gap-1.5 w-full max-w-full overflow-x-auto pb-2 scroll-smooth"
+        style={{
+          scrollbarWidth: "thin",
+          scrollbarColor: "#233554 #050E1D",
+        }}
+      >
+        {/* 1. Left-Most "All" Summary Segment (Matches HoneyBook's dark "All" block) */}
+        <div className="shrink-0 w-[116px] sm:w-[124px] flex flex-col justify-end">
+          <div className="h-5 mb-1" />
           <button
+            ref={(el) => {
+              stageRefs.current["__all__"] = el;
+            }}
             type="button"
             onClick={() => {
-              onSelectGroup("all");
+              if (didDragRailRef.current) return;
               onSelectStage(null);
             }}
             className={cn(
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer border",
-              activeGroupFilter === "all" && !selectedStageName
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border-[#FFE394]/60 shadow-xs"
-                : "bg-[#020A17] border-[#3A2C18] text-[#C6B697] hover:text-[#FFF4D4] hover:border-[#C5A059]/60"
+              "w-full h-[76px] rounded-lg px-3 py-2.5 text-left transition-all cursor-pointer border flex flex-col justify-between relative overflow-hidden",
+              !selectedStageName
+                ? "bg-[#0D2142] border-[#C5A059] text-[#FFF4D4] shadow-[0_2px_12px_rgba(0,0,0,0.6)]"
+                : "bg-[#051022] hover:bg-[#0A192F] border-[#1E2E48] text-[#94A3B8] hover:text-[#FFF4D4]"
             )}
           >
-            <Layers className="h-3 w-3" />
-            <span>All Pipeline Stages</span>
-            <span
-              className={cn(
-                "px-1.5 py-0.2 rounded-full text-[10px] font-bold",
-                activeGroupFilter === "all" && !selectedStageName
-                  ? "bg-[#07162B] text-[#FFE394]"
-                  : "bg-[#05142B] text-[#A69371]"
-              )}
-            >
+            <div
+              className="absolute top-0 left-0 right-0 h-[3px]"
+              style={{
+                backgroundColor: !selectedStageName ? "#C5A059" : "#334155",
+              }}
+            />
+            <span className="text-xl font-semibold tracking-tight text-[#FFF4D4] leading-none pt-0.5">
               {cards.length}
             </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              onSelectGroup("opportunity");
-              onSelectStage(null);
-            }}
-            className={cn(
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer border",
-              activeGroupFilter === "opportunity"
-                ? "bg-[#1A1238] border-[#A78BFA] text-[#E9D5FF] shadow-[0_0_10px_rgba(167,139,250,0.25)]"
-                : "bg-[#020A17] border-[#3A2C18] text-[#C6B697] hover:text-[#FFF4D4] hover:border-[#A78BFA]/50"
-            )}
-          >
-            <Compass className="h-3 w-3 text-[#A78BFA]" />
-            <span>Opportunities</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#020A17] border border-[#3A2C18] text-[#C084FC]">
-              {opportunityCount}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              onSelectGroup("active_project");
-              onSelectStage(null);
-            }}
-            className={cn(
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer border",
-              activeGroupFilter === "active_project"
-                ? "bg-[#04241B] border-[#34D399] text-[#A7F3D0] shadow-[0_0_10px_rgba(52,211,153,0.25)]"
-                : "bg-[#020A17] border-[#3A2C18] text-[#C6B697] hover:text-[#FFF4D4] hover:border-[#34D399]/50"
-            )}
-          >
-            <Briefcase className="h-3 w-3 text-[#34D399]" />
-            <span>Projects / Active Advocacy</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#020A17] border border-[#3A2C18] text-[#34D399]">
-              {projectCount}
+            <span className="text-xs font-medium text-[#CBD5E1] truncate">
+              All
             </span>
           </button>
         </div>
 
-        {selectedStageName && (
-          <button
-            type="button"
-            onClick={() => onSelectStage(null)}
-            className="text-[11px] font-semibold text-[#FFE394] hover:underline cursor-pointer"
-          >
-            Showing Stage: {selectedStageName} (Click to Show All)
-          </button>
-        )}
-      </div>
-
-      {/* Responsive Wrapping Stage Overview Grid (Zero Horizontal Scrollbar at 100% Zoom) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9 gap-1.5">
-        {/* "All" Summary Card (matches HoneyBook left-most dark summary tile) */}
-        <button
-          type="button"
-          onClick={() => onSelectStage(null)}
-          className={cn(
-            "rounded-xl p-2 text-left transition-all cursor-pointer border flex flex-col justify-between min-h-[58px]",
-            !selectedStageName
-              ? "bg-gradient-to-br from-[#102B4E] to-[#05142B] border-[#C5A059] text-[#FFF4D4] shadow-[0_0_12px_rgba(197,160,89,0.25)]"
-              : "bg-[#020A17]/90 border-[#3A2C18] text-[#C6B697] hover:border-[#C5A059]/60 hover:text-[#FFF4D4]"
-          )}
-        >
-          <span className="text-base font-serif font-bold text-[#FFE394] leading-none">
-            {activeGroupFilter === "opportunity"
-              ? opportunityCount
-              : activeGroupFilter === "active_project"
-                ? projectCount
-                : cards.length}
-          </span>
-          <span className="text-[10px] font-semibold uppercase tracking-wider truncate mt-1">
-            {activeGroupFilter === "opportunity"
-              ? "All Opps"
-              : activeGroupFilter === "active_project"
-                ? "All Projects"
-                : "All Cases"}
-          </span>
-        </button>
-
-        {/* Individual Stage Tiles */}
-        {visibleStages.map((stage) => {
+        {/* 2. Connected Individual Stage Segments in One Horizontal Sequence */}
+        {activeStages.map((stage, idx) => {
           const count = countByStage.get(stage.name.toLowerCase()) || 0;
+          const overdueCount = overdueByStage.get(stage.name.toLowerCase()) || 0;
           const isSelected =
             selectedStageName?.toLowerCase() === stage.name.toLowerCase();
           const isDragOver = dragOverStageName === stage.name;
-          const isOpportunity =
-            (stage.pipelineGroup ||
-              (stage.category === "opportunity" ? "opportunity" : "active_project")) ===
-            "opportunity";
+
+          const logicalGroup = resolveLogicalStageGroup(
+            stage.name,
+            stage.category,
+            stage.logicalGroup
+          );
+          const groupMeta = LOGICAL_STAGE_GROUPS.find(
+            (g) => g.key === logicalGroup
+          );
+
+          // Show subtle non-interactive group label above the first stage of each contiguous group
+          const prevStage = idx > 0 ? activeStages[idx - 1] : null;
+          const prevLogicalGroup = prevStage
+            ? resolveLogicalStageGroup(
+                prevStage.name,
+                prevStage.category,
+                prevStage.logicalGroup
+              )
+            : null;
+          const isFirstInLogicalGroup = logicalGroup !== prevLogicalGroup;
+
+          const topBarColor =
+            stage.accentColor || groupMeta?.barColor || "#60A5FA";
 
           return (
-            <button
+            <div
               key={stage.id}
-              type="button"
-              onClick={() =>
-                onSelectStage(isSelected ? null : stage.name)
-              }
-              onDragOver={(e) => handleDragOverTile(e, stage.name)}
-              onDragLeave={() => setDragOverStageName(null)}
-              onDrop={(e) => handleDropOnTile(e, stage.name)}
-              title={`${stage.name} (${count} ${count === 1 ? "case" : "cases"}) — Click to focus or drop a card here`}
-              className={cn(
-                "rounded-xl p-2 text-left transition-all cursor-pointer border flex flex-col justify-between min-h-[58px] relative overflow-hidden group",
-                isSelected
-                  ? "bg-[#07162B] border-[#C5A059] text-[#FFF4D4] ring-1 ring-[#FFE394]/50 shadow-[0_0_12px_rgba(197,160,89,0.3)]"
-                  : isDragOver
-                    ? "bg-[#102B4E] border-[#FFE394] text-[#FFF4D4] scale-[1.02]"
-                    : "bg-[#020A17]/80 hover:bg-[#07162B] border-[#3A2C18]/90 hover:border-[#C5A059]/60 text-[#C6B697] hover:text-[#FFF4D4]"
-              )}
+              className="shrink-0 w-[132px] sm:w-[142px] flex flex-col justify-end"
             >
-              {/* Top Color Bar */}
-              <div
-                className="absolute top-0 left-0 right-0 h-1"
-                style={{ backgroundColor: stage.accentColor || "#C5A059" }}
-              />
-
-              <div className="flex items-center justify-between gap-1 pt-0.5 w-full">
-                <span
-                  className={cn(
-                    "text-sm font-serif font-bold leading-none",
-                    count > 0 ? "text-[#FFF4D4]" : "text-[#A69371]/70"
-                  )}
-                >
-                  {count}
-                </span>
-                <span
-                  className={cn(
-                    "text-[8px] font-bold uppercase px-1 py-0.2 rounded",
-                    isOpportunity
-                      ? "bg-[#1A1238] text-[#C084FC]"
-                      : "bg-[#04241B] text-[#34D399]"
-                  )}
-                >
-                  {isOpportunity ? "Opp" : "Proj"}
-                </span>
+              {/* Subtle Non-Interactive Group Label Above First Stage in Group */}
+              <div className="h-5 mb-1 flex items-center">
+                {isFirstInLogicalGroup && groupMeta ? (
+                  <span
+                    className={cn(
+                      "text-[10px] font-medium px-2 py-0.5 rounded border truncate",
+                      groupMeta.badgeClass
+                    )}
+                  >
+                    {groupMeta.shortLabel}
+                  </span>
+                ) : null}
               </div>
 
-              <span className="text-[10px] font-medium leading-tight line-clamp-1 mt-1 text-[#D8C7A5] group-hover:text-[#FFF4D4]">
-                {stage.name}
-              </span>
-            </button>
+              <button
+                ref={(el) => {
+                  stageRefs.current[stage.name.toLowerCase()] = el;
+                }}
+                type="button"
+                onClick={() => {
+                  if (didDragRailRef.current) return;
+                  onSelectStage(isSelected ? null : stage.name);
+                }}
+                onDragOver={(e) => handleDragOverTile(e, stage.name)}
+                onDragLeave={() => setDragOverStageName(null)}
+                onDrop={(e) => handleDropOnTile(e, stage.name)}
+                title={`${stage.name} (${count} ${count === 1 ? "case" : "cases"})`}
+                className={cn(
+                  "w-full h-[76px] rounded-lg px-3 py-2.5 text-left transition-all cursor-pointer border flex flex-col justify-between relative overflow-hidden group",
+                  isSelected
+                    ? "bg-[#0D2142] border-[#C5A059] text-[#FFF4D4] shadow-[0_2px_12px_rgba(0,0,0,0.6)]"
+                    : isDragOver
+                      ? "bg-[#102B4E] border-[#C5A059]/80 text-[#FFF4D4]"
+                      : "bg-[#071326] hover:bg-[#0B1C36] border-[#1A2942] hover:border-[#2C4268] text-[#CBD5E1]"
+                )}
+              >
+                {/* Thin Top Colored Border */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-[3px]"
+                  style={{ backgroundColor: topBarColor }}
+                />
+
+                {/* Top Row: Prominent Count + Restrained Overdue Indicator + Subtle Progression Chevron */}
+                <div className="flex items-center justify-between w-full pt-0.5">
+                  <span
+                    className={cn(
+                      "text-xl font-semibold tracking-tight leading-none",
+                      isSelected
+                        ? "text-[#FFE394]"
+                        : count > 0
+                          ? "text-[#FFF4D4]"
+                          : "text-[#64748B]"
+                    )}
+                  >
+                    {count}
+                  </span>
+
+                  <div className="flex items-center gap-1">
+                    {overdueCount > 0 && (
+                      <span
+                        className="w-2 h-2 rounded-full bg-rose-400 shrink-0"
+                        title={`${overdueCount} case(s) need attention`}
+                      />
+                    )}
+                    <ChevronRight
+                      className={cn(
+                        "h-3 w-3 transition-transform group-hover:translate-x-0.5",
+                        isSelected ? "text-[#C5A059]" : "text-[#334155]"
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Bottom Row: Short Stage Name */}
+                <span
+                  className={cn(
+                    "text-[11px] leading-snug line-clamp-2",
+                    isSelected
+                      ? "text-[#FFF4D4] font-semibold"
+                      : count > 0
+                        ? "text-[#CBD5E1] group-hover:text-[#FFF4D4]"
+                        : "text-[#64748B] group-hover:text-[#94A3B8]"
+                  )}
+                >
+                  {stage.name}
+                </span>
+              </button>
+            </div>
           );
         })}
       </div>
     </div>
   );
 }
-

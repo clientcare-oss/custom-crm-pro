@@ -7,8 +7,8 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { ADVOCATE_ROSTER } from "./pipelineDefaults";
-import type { PipelineFilters, PipelineStageItem } from "./types";
+import { ADVOCATE_ROSTER, LOGICAL_STAGE_GROUPS } from "./pipelineDefaults";
+import type { PipelineFilters, PipelineStageItem, LogicalStageGroup } from "./types";
 
 interface FilterPopoverProps {
   filters: PipelineFilters;
@@ -88,21 +88,21 @@ export function FilterPopover({
         <button
           type="button"
           className={cn(
-            "h-8 px-3 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all duration-150 cursor-pointer shrink-0",
+            "h-7 px-2.5 rounded-full text-[11px] font-medium border flex items-center gap-1 transition-all duration-150 cursor-pointer shrink-0",
             activeFilterCount > 0
-              ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394]/60 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
-              : "bg-[#020A17] hover:bg-[#07162B] border-[#3A2C18] hover:border-[#C5A059]/60 text-[#D8C7A5] hover:text-[#FFF4D4] shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+              ? "bg-[#C5A059] text-[#07162B] font-bold border-[#FFE394]/60"
+              : "bg-transparent hover:bg-[#0D1E38] border-transparent text-[#CBD5E1] hover:text-[#FFF4D4]"
           )}
         >
           <Filter
             className={cn(
-              "h-3.5 w-3.5",
-              activeFilterCount > 0 ? "text-[#07162B]" : "text-[#C5A059]"
+              "h-3 w-3",
+              activeFilterCount > 0 ? "text-[#07162B]" : "text-[#94A3B8]"
             )}
           />
-          <span>Filter</span>
+          <span>{activeFilterCount > 0 ? "Filters" : "+ Add filter"}</span>
           {activeFilterCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#07162B] text-[#FFE394] border border-[#FFE394]/40">
+            <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-[#07162B] text-[#FFE394]">
               {activeFilterCount}
             </span>
           )}
@@ -128,36 +128,52 @@ export function FilterPopover({
         </div>
 
         <div className="space-y-3 text-xs">
-          {/* 1. Stage Group */}
+          {/* 1. Logical Stage Group */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
-              Pipeline Group
+              Stage Group
             </label>
-            <div className="grid grid-cols-3 gap-1.5">
-              {[
-                { label: "All", val: undefined },
-                { label: "Opportunities", val: "opportunity" as const },
-                { label: "Active Projects", val: "active_project" as const },
-              ].map((opt) => {
-                const isSelected = draftFilters.pipelineGroup === opt.val;
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() =>
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    logicalGroup: undefined,
+                    pipelineGroup: undefined,
+                  }))
+                }
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer",
+                  !draftFilters.logicalGroup && !draftFilters.pipelineGroup
+                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394]/60"
+                    : "bg-[#020A17]/80 hover:bg-[#07162B] border-[#3A2C18]/80 text-[#D8C7A5] hover:text-[#FFF4D4]"
+                )}
+              >
+                All Groups
+              </button>
+              {LOGICAL_STAGE_GROUPS.map((grp) => {
+                const isSelected = draftFilters.logicalGroup === grp.key;
                 return (
                   <button
-                    key={opt.label}
+                    key={grp.key}
                     type="button"
                     onClick={() =>
                       setDraftFilters((prev) => ({
                         ...prev,
-                        pipelineGroup: opt.val,
+                        logicalGroup: isSelected
+                          ? undefined
+                          : (grp.key as LogicalStageGroup),
                       }))
                     }
                     className={cn(
-                      "px-2 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer",
+                      "px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer",
                       isSelected
                         ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394]/60"
                         : "bg-[#020A17]/80 hover:bg-[#07162B] border-[#3A2C18]/80 text-[#D8C7A5] hover:text-[#FFF4D4]"
                     )}
                   >
-                    {opt.label}
+                    {grp.label}
                   </button>
                 );
               })}

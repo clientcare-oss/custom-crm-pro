@@ -8,6 +8,21 @@ export type StageCategory =
 
 export type PipelineGroupType = "opportunity" | "active_project";
 
+export type LogicalStageGroup =
+  | "opportunities"
+  | "follow_up"
+  | "onboarding"
+  | "active_advocacy"
+  | "renewal_closed";
+
+export type CaseActionStatus =
+  | "overdue"
+  | "waiting_family"
+  | "waiting_school"
+  | "renewal_due"
+  | "on_track"
+  | "completed";
+
 export interface PipelineStageItem {
   id: number;
   name: string;
@@ -17,6 +32,7 @@ export interface PipelineStageItem {
   iconName: string;
   category: StageCategory | string;
   pipelineGroup?: PipelineGroupType;
+  logicalGroup?: LogicalStageGroup;
   isArchived: boolean;
   isDefault?: boolean;
   caseCount?: number;
@@ -45,6 +61,7 @@ export interface PipelineCardItem {
   pipelineStage: string;
   pipelineGroup?: PipelineGroupType;
   stageGroup?: PipelineGroupType;
+  logicalGroup?: LogicalStageGroup;
   isOpportunity?: boolean;
   journeyType?: "opportunity" | "active_advocacy";
   lifecycleStage?: string;
@@ -58,6 +75,9 @@ export interface PipelineCardItem {
   discoveryStatus?: string | null;
   needsAttention: boolean;
   attentionReason?: string;
+  actionStatus?: CaseActionStatus;
+  actionStatusLabel?: string;
+  dueDateLabel?: string;
   openTaskCount?: number;
   primaryTask?: string;
   primaryTaskIcon?: "clock" | "check" | "calendar" | "alert" | "mail";
@@ -100,6 +120,7 @@ export interface PipelineFilters {
   stage?: string;
   pipelineGroup?: "all" | "opportunity" | "active_project";
   stageGroup?: "all" | "opportunity" | "active_project";
+  logicalGroup?: "all" | LogicalStageGroup;
   meetingDate?: string;
   needsAttentionOnly?: boolean;
   accountStatus?: string;

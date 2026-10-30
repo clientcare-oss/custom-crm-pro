@@ -9,6 +9,7 @@ interface KanbanBoardProps {
   cards: PipelineCardItem[];
   onMoveCard: (cardId: number, targetStageName: string) => void;
   onAssignAdvocate?: (cardId: number, advocateName: string) => void;
+  onSelectCard?: (card: PipelineCardItem) => void;
   onReorderCards?: (draggedCardId: number, targetCardId: number, stageName: string) => void;
   onReorderStages?: (draggedStageId: number, targetStageId: number) => void;
   onAddCard: (stageName: string) => void;
@@ -24,6 +25,7 @@ export function KanbanBoard({
   cards,
   onMoveCard,
   onAssignAdvocate,
+  onSelectCard,
   onReorderCards,
   onReorderStages,
   onAddCard,
@@ -94,6 +96,7 @@ export function KanbanBoard({
             onCardDrop={handleCardDrop}
             onMoveCard={onMoveCard}
             onAssignAdvocate={onAssignAdvocate}
+            onSelectCard={onSelectCard}
             onCardReorder={onReorderCards}
             onStageDragStart={handleStageDragStart}
             onStageDrop={handleStageDrop}

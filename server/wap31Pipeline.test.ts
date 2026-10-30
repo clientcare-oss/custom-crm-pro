@@ -463,7 +463,7 @@ describe("WAP 3.1: Advocacy Pipeline Functional Completion & HoneyBook Workflow 
     expect(activeStageNames).toContain(currentStudentStage);
   });
 
-  it("13 & 14. Layout uses responsive wrapping grid with zero horizontal page scrolling and cards link to /students/:id", () => {
+  it("13 & 14. Stage rail uses one continuous horizontal scrolling row while page container enforces overflow-x-hidden and cards link to /students/:id", () => {
     const boardPath = path.resolve(
       __dirname,
       "../client/src/components/pipeline/KanbanBoard.tsx"
@@ -492,14 +492,14 @@ describe("WAP 3.1: Advocacy Pipeline Functional Completion & HoneyBook Workflow 
     );
     expect(boardSrc).not.toContain("overflow-x-auto");
 
-    // StageOverviewGrid wraps cleanly without horizontal scrollbar
-    expect(stageGridSrc).toContain("grid grid-cols-2 sm:grid-cols-4");
-    expect(stageGridSrc).not.toContain("overflow-x-auto");
+    // StageOverviewGrid uses one continuous horizontal row (flex-nowrap + overflow-x-auto) and never wraps to multiple rows
+    expect(stageGridSrc).toContain("flex flex-nowrap");
+    expect(stageGridSrc).toContain("overflow-x-auto");
 
-    // Page container enforces overflow-x-hidden
+    // Page container enforces overflow-x-hidden so only the stage rail scrolls horizontally
     expect(pageSrc).toContain("overflow-x-hidden");
 
-    // Clicking a card navigates to Student Workspace (/students/:id)
+    // Clicking a card / workspace link navigates to Student Workspace (/students/:id)
     expect(cardSrc).toContain("setLocation(`/students/${card.id}`)");
   });
 

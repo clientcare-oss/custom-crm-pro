@@ -8,6 +8,7 @@ import { SavedViewsBar } from "@/components/pipeline/SavedViewsBar";
 import { StageOverviewGrid } from "@/components/pipeline/StageOverviewGrid";
 import { KanbanBoard } from "@/components/pipeline/KanbanBoard";
 import { PipelineListView } from "@/components/pipeline/PipelineListView";
+import { PipelineCaseDrawer } from "@/components/pipeline/PipelineCaseDrawer";
 import { CustomizePipelineModal } from "@/components/pipeline/CustomizePipelineModal";
 import { NewViewModal } from "@/components/pipeline/NewViewModal";
 import { AddStageModal } from "@/components/pipeline/AddStageModal";
@@ -15,6 +16,8 @@ import {
   DEFAULT_PIPELINE_STAGES_CLIENT,
   DEFAULT_SAVED_VIEWS_CLIENT,
   INITIAL_DEMO_CARDS,
+  resolveLogicalStageGroup,
+  resolveCaseActionStatus,
 } from "@/components/pipeline/pipelineDefaults";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import type {
@@ -23,6 +26,7 @@ import type {
   SavedViewItem,
   PipelineFilters,
   PipelineGroupType,
+  LogicalStageGroup,
   PipelineSortField,
   PipelineSortDirection,
 } from "@/components/pipeline/types";
@@ -53,12 +57,18 @@ export default function AdvocacyPipeline() {
 
   // ── Backend Mutations ───────────────────────────────────────────────────────
   const updateStageMutation = trpc.pipeline.cards.updateStage.useMutation({
-    onSuccess: () => utils.pipeline.cards.list.invalidate(),
+    onSuccess: () => {
+      utils.pipeline.cards.list.invalidate();
+      utils.caseActivity.list.invalidate();
+    },
     onError: (err) => toast.error(err.message || "Failed to update pipeline stage"),
   });
 
   const assignAdvocateMutation = trpc.pipeline.cards.assignAdvocate.useMutation({
-    onSuccess: () => utils.pipeline.cards.list.invalidate(),
+    onSuccess: () => {
+      utils.pipeline.cards.list.invalidate();
+      utils.caseActivity.list.invalidate();
+    },
     onError: (err) => toast.error(err.message || "Failed to assign advocate"),
   });
 
@@ -114,17 +124,18 @@ export default function AdvocacyPipeline() {
   const [filters, setFilters] = useState<PipelineFilters>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStageFilter, setSelectedStageFilter] = useState<string | null>(null);
-  const [activeGroupFilter, setActiveGroupFilter] = useState<"all" | PipelineGroupType>("all");
-  const [viewMode, setViewMode] = useState<"board" | "list">("board");
+  const [viewMode, setViewMode] = useState<"board" | "list">("list");
   const [sortField, setSortField] = useState<PipelineSortField>("name");
   const [sortDirection, setSortDirection] = useState<PipelineSortDirection>("asc");
+  const [selectedCaseForDrawer, setSelectedCaseForDrawer] =
+    useState<PipelineCardItem | null>(null);
 
   // Modals
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
   const [showAddStageModal, setShowAddStageModal] = useState(false);
   const [showNewViewModal, setShowNewViewModal] = useState(false);
 
-  // Sync stages from server
+  // Sync stages from server without overwriting existing custom stages
   useEffect(() => {
     if (serverStages && serverStages.length > 0) {
       const normalized = serverStages
@@ -133,10 +144,15 @@ export default function AdvocacyPipeline() {
           name: ss.name,
           slug: ss.slug || ss.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
           order: ss.order ?? idx + 1,
-          accentColor: ss.accentColor || "#38BDF8",
+          accentColor: ss.accentColor || "#60A5FA",
           iconName: ss.iconName || "Compass",
           category: ss.category || "active",
           pipelineGroup: (ss.pipelineGroup || "active_project") as PipelineGroupType,
+          logicalGroup: resolveLogicalStageGroup(
+            ss.name,
+            ss.category,
+            ss.logicalGroup
+          ),
           isArchived: Boolean(ss.isArchived),
           isDefault: Boolean(ss.isDefault),
         }))
@@ -159,12 +175,20 @@ export default function AdvocacyPipeline() {
     }
   }, [serverCards]);
 
-  // Combine default + server + custom views
+  // Combine default + server + custom views (preserving short readable names)
   const allSavedViews: SavedViewItem[] = useMemo(() => {
     const map = new Map<string, SavedViewItem>();
     DEFAULT_SAVED_VIEWS_CLIENT.forEach((v) => map.set(v.slug, v));
     if (serverViews && Array.isArray(serverViews)) {
-      serverViews.forEach((sv: any) => map.set(sv.slug, sv));
+      serverViews.forEach((sv: any) => {
+        const defaultMatch = DEFAULT_SAVED_VIEWS_CLIENT.find(
+          (dv) => dv.slug === sv.slug
+        );
+        map.set(sv.slug, {
+          ...sv,
+          name: defaultMatch ? defaultMatch.name : sv.name,
+        });
+      });
     }
     customViewsState.forEach((cv) => map.set(cv.slug, cv));
     return Array.from(map.values()).sort((a, b) => a.order - b.order);
@@ -184,17 +208,6 @@ export default function AdvocacyPipeline() {
     }
   }, [activeViewObj]);
 
-  // Synchronize group filter when selecting Leads / Active Projects views
-  useEffect(() => {
-    if (viewRules.pipelineGroup === "opportunity") {
-      setActiveGroupFilter("opportunity");
-    } else if (viewRules.pipelineGroup === "active_project") {
-      setActiveGroupFilter("active_project");
-    } else {
-      setActiveGroupFilter("all");
-    }
-  }, [viewRules.pipelineGroup]);
-
   // ── Filtering & Sorting Engine ──────────────────────────────────────────────
   const matchesCardRules = (card: PipelineCardItem, rules: PipelineFilters) => {
     if (rules.isMyWork) {
@@ -210,6 +223,14 @@ export default function AdvocacyPipeline() {
     if (rules.pipelineGroup) {
       const group = card.pipelineGroup || (card.isOpportunity ? "opportunity" : "active_project");
       if (group !== rules.pipelineGroup) return false;
+    }
+    if (rules.logicalGroup) {
+      const lg = resolveLogicalStageGroup(
+        card.pipelineStage,
+        undefined,
+        card.logicalGroup
+      );
+      if (lg !== rules.logicalGroup) return false;
     }
     if (rules.planTier && !matchesPlanFilter(card.planTier, rules.planTier)) {
       return false;
@@ -250,8 +271,11 @@ export default function AdvocacyPipeline() {
     ) {
       return false;
     }
-    if (rules.needsAttentionOnly && !card.needsAttention) {
-      return false;
+    if (rules.needsAttentionOnly) {
+      const statusMeta = resolveCaseActionStatus(card);
+      if (!card.needsAttention && !statusMeta.isOverdue) {
+        return false;
+      }
     }
     return true;
   };
@@ -263,12 +287,6 @@ export default function AdvocacyPipeline() {
     const result = cardsState.filter((card) => {
       if (!matchesCardRules(card, viewRules)) return false;
       if (!matchesCardRules(card, filters)) return false;
-
-      if (activeGroupFilter !== "all") {
-        const cardGroup =
-          card.pipelineGroup || (card.isOpportunity ? "opportunity" : "active_project");
-        if (cardGroup !== activeGroupFilter) return false;
-      }
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
@@ -322,7 +340,6 @@ export default function AdvocacyPipeline() {
     cardsState,
     viewRules,
     filters,
-    activeGroupFilter,
     searchQuery,
     sortField,
     sortDirection,
@@ -340,9 +357,6 @@ export default function AdvocacyPipeline() {
   const displayedStages = useMemo(() => {
     return stagesState.filter((s) => {
       if (s.isArchived) return false;
-      if (activeGroupFilter !== "all" && s.pipelineGroup !== activeGroupFilter) {
-        return false;
-      }
       if (
         selectedStageFilter &&
         s.name.toLowerCase() !== selectedStageFilter.toLowerCase()
@@ -351,7 +365,15 @@ export default function AdvocacyPipeline() {
       }
       return true;
     });
-  }, [stagesState, activeGroupFilter, selectedStageFilter]);
+  }, [stagesState, selectedStageFilter]);
+
+  const attentionCount = useMemo(
+    () =>
+      filteredCards.filter(
+        (c) => resolveCaseActionStatus(c).isOverdue || c.needsAttention
+      ).length,
+    [filteredCards]
+  );
 
   const viewCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -375,21 +397,32 @@ export default function AdvocacyPipeline() {
     );
     const nextGroup: PipelineGroupType =
       targetStageObj?.pipelineGroup || "active_project";
-
-    setCardsState((prev) =>
-      prev.map((c) =>
-        c.id === cardId
-          ? {
-              ...c,
-              pipelineStage: targetStageName,
-              pipelineGroup: nextGroup,
-              isOpportunity: nextGroup === "opportunity",
-            }
-          : c
-      )
+    const nextLogicalGroup: LogicalStageGroup = resolveLogicalStageGroup(
+      targetStageName,
+      targetStageObj?.category,
+      targetStageObj?.logicalGroup
     );
 
-    toast.success(`Moved to ${targetStageName}`);
+    setCardsState((prev) =>
+      prev.map((c) => {
+        if (c.id !== cardId) return c;
+        const updated: PipelineCardItem = {
+          ...c,
+          pipelineStage: targetStageName,
+          pipelineGroup: nextGroup,
+          logicalGroup: nextLogicalGroup,
+          isOpportunity: nextGroup === "opportunity",
+          lastActivityText: `Moved to ${targetStageName}`,
+          lastActivityAt: new Date().toISOString(),
+        };
+        if (selectedCaseForDrawer?.id === cardId) {
+          setSelectedCaseForDrawer(updated);
+        }
+        return updated;
+      })
+    );
+
+    toast.success(`Moved case to ${targetStageName}`);
     updateStageMutation.mutate({
       contactId: cardId,
       stage: targetStageName,
@@ -404,18 +437,21 @@ export default function AdvocacyPipeline() {
       .slice(0, 2);
 
     setCardsState((prev) =>
-      prev.map((c) =>
-        c.id === cardId
-          ? {
-              ...c,
-              assignedAdvocateName: advocateName,
-              assignedAdvocateInitials: initials,
-            }
-          : c
-      )
+      prev.map((c) => {
+        if (c.id !== cardId) return c;
+        const updated: PipelineCardItem = {
+          ...c,
+          assignedAdvocateName: advocateName,
+          assignedAdvocateInitials: initials,
+        };
+        if (selectedCaseForDrawer?.id === cardId) {
+          setSelectedCaseForDrawer(updated);
+        }
+        return updated;
+      })
     );
 
-    toast.success(`Assigned advocate: ${advocateName}`);
+    toast.success(`Assigned employee: ${advocateName}`);
     assignAdvocateMutation.mutate({
       contactId: cardId,
       advocateName,
@@ -468,10 +504,15 @@ export default function AdvocacyPipeline() {
       name: stageData.name,
       slug: stageData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       order: stagesState.length + 1,
-      accentColor: stageData.accentColor || "#38BDF8",
+      accentColor: stageData.accentColor || "#60A5FA",
       iconName: stageData.iconName || "Compass",
       category: stageData.category || "active",
       pipelineGroup: stageData.pipelineGroup || "active_project",
+      logicalGroup: resolveLogicalStageGroup(
+        stageData.name,
+        stageData.category,
+        stageData.logicalGroup
+      ),
       isArchived: false,
       isDefault: false,
     };
@@ -532,28 +573,18 @@ export default function AdvocacyPipeline() {
 
   return (
     <ScopedErrorBoundary moduleName="Advocacy Pipeline">
-      <div className="space-y-3.5 p-3.5 sm:p-5 lg:p-6 min-h-screen text-slate-100 relative bg-[#000820] w-full overflow-x-hidden">
-        {/* 1. Header with Search, Quick Advocate Filter, Board/List Switcher */}
+      <div className="space-y-2.5 p-3 sm:px-5 sm:py-3.5 min-h-screen text-slate-100 relative bg-[#000820] w-full max-w-full overflow-x-hidden">
+        {/* Compact Page Title Bar */}
         <AdvocacyPipelineHeader
-          onCustomizePipeline={() => setShowCustomizeModal(true)}
           onAddStage={() => setShowAddStageModal(true)}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          selectedAdvocate={filters.advocate}
-          onSelectAdvocate={(advocate) =>
-            setFilters((prev) => ({ ...prev, advocate }))
-          }
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
         />
 
-        {/* 2. Saved Views Bar + Sort + Filter Popover */}
+        {/* LEVEL 1: Saved Views + LEVEL 2: Compact Toolbar */}
         <SavedViewsBar
           views={allSavedViews}
           activeViewSlug={activeViewSlug}
           onSelectView={(view) => {
             setActiveViewSlug(view.slug);
-            setSelectedStageFilter(null);
           }}
           onTogglePinView={(view) => {
             setCustomViewsState((prev) =>
@@ -581,6 +612,7 @@ export default function AdvocacyPipeline() {
             setSelectedStageFilter(null);
           }}
           matchingCount={displayedCards.length}
+          attentionCount={attentionCount}
           sortField={sortField}
           sortDirection={sortDirection}
           onChangeSort={(field, dir) => {
@@ -588,44 +620,33 @@ export default function AdvocacyPipeline() {
             if (dir) setSortDirection(dir);
           }}
           stages={stagesState}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedAdvocate={filters.advocate}
+          onSelectAdvocate={(advocate) =>
+            setFilters((prev) => ({ ...prev, advocate }))
+          }
+          onCustomizePipeline={() => setShowCustomizeModal(true)}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
 
-        {/* 3. HoneyBook-Inspired Stage Overview Ribbon (Opportunities + Active Advocacy) */}
+        {/* LEVEL 3: One Continuous Horizontal Pipeline Stage Rail */}
         <StageOverviewGrid
           stages={stagesState}
           cards={filteredCards}
           selectedStageName={selectedStageFilter}
-          activeGroupFilter={activeGroupFilter}
           onSelectStage={setSelectedStageFilter}
-          onSelectGroup={(grp) => {
-            setActiveGroupFilter(grp);
-            setSelectedStageFilter(null);
-          }}
           onDropCardOnStage={handleMoveCard}
         />
 
-        {/* 4. Pipeline Workspace: Responsive Wrapping Board View or Sortable List View */}
-        {viewMode === "board" ? (
-          <KanbanBoard
-            stages={displayedStages}
-            allStages={stagesState}
-            cards={displayedCards}
-            onMoveCard={handleMoveCard}
-            onAssignAdvocate={handleAssignAdvocate}
-            onReorderStages={handleReorderStages}
-            onAddCard={(stageName) => {
-              toast.info(`Opening intake for ${stageName}`);
-              setLocation("/leads");
-            }}
-            onAddCustomStage={() => setShowAddStageModal(true)}
-            onEditStage={() => setShowCustomizeModal(true)}
-            onArchiveStage={(stage) => archiveStageMutation.mutate({ id: stage.id })}
-            onDeleteStage={(stage) => deleteStageMutation.mutate({ id: stage.id })}
-          />
-        ) : (
+        {/* Focused Case Workspace Directly Beneath the Pipeline */}
+        {viewMode === "list" || selectedStageFilter ? (
           <PipelineListView
             cards={displayedCards}
             stages={stagesState}
+            selectedStageName={selectedStageFilter}
+            onClearStageFilter={() => setSelectedStageFilter(null)}
             sortField={sortField}
             sortDirection={sortDirection}
             onSortChange={(field) => {
@@ -638,10 +659,41 @@ export default function AdvocacyPipeline() {
             }}
             onMoveCard={handleMoveCard}
             onAssignAdvocate={handleAssignAdvocate}
+            onSelectCase={(card) => setSelectedCaseForDrawer(card)}
+          />
+        ) : (
+          <KanbanBoard
+            stages={displayedStages}
+            allStages={stagesState}
+            cards={displayedCards}
+            onMoveCard={handleMoveCard}
+            onAssignAdvocate={handleAssignAdvocate}
+            onSelectCard={(card) => setSelectedCaseForDrawer(card)}
+            onReorderStages={handleReorderStages}
+            onAddCard={(stageName) => {
+              toast.info(`Opening intake for ${stageName}`);
+              setLocation("/leads");
+            }}
+            onAddCustomStage={() => setShowAddStageModal(true)}
+            onEditStage={() => setShowCustomizeModal(true)}
+            onArchiveStage={(stage) => archiveStageMutation.mutate({ id: stage.id })}
+            onDeleteStage={(stage) => deleteStageMutation.mutate({ id: stage.id })}
           />
         )}
 
-        {/* 5. Modals */}
+        {/* Contextual Case Details Drawer */}
+        <PipelineCaseDrawer
+          card={selectedCaseForDrawer}
+          open={Boolean(selectedCaseForDrawer)}
+          onOpenChange={(open) => {
+            if (!open) setSelectedCaseForDrawer(null);
+          }}
+          stages={stagesState}
+          onMoveCard={handleMoveCard}
+          onAssignAdvocate={handleAssignAdvocate}
+        />
+
+        {/* Modals */}
         <CustomizePipelineModal
           open={showCustomizeModal}
           onOpenChange={setShowCustomizeModal}

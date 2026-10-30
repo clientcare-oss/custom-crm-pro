@@ -389,7 +389,7 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
     {
       id: "advocacy",
       icon: Workflow,
-      label: "Advocacy",
+      label: "Pipeline",
       path: "/advocacy-pipeline",
       isActive: (loc) => loc === "/advocacy-pipeline" || loc.startsWith("/advocacy-pipeline") || loc === "/meeting-workspace" || loc.startsWith("/meeting-workspace") || loc === "/workspace" || loc.startsWith("/post-meeting-review"),
     },

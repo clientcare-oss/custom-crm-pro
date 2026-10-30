@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { KanbanCard } from "./KanbanCard";
+import { LOGICAL_STAGE_GROUPS, resolveLogicalStageGroup } from "./pipelineDefaults";
 import type { PipelineStageItem, PipelineCardItem } from "./types";
 
 interface KanbanColumnProps {
@@ -27,6 +28,7 @@ interface KanbanColumnProps {
   onCardDrop: (e: React.DragEvent, targetStageName: string) => void;
   onMoveCard?: (cardId: number, targetStageName: string) => void;
   onAssignAdvocate?: (cardId: number, advocateName: string) => void;
+  onSelectCard?: (card: PipelineCardItem) => void;
   onCardReorder?: (draggedCardId: number, targetCardId: number, stageName: string) => void;
   onStageDragStart?: (e: React.DragEvent, stage: PipelineStageItem) => void;
   onStageDragOver?: (e: React.DragEvent, stage: PipelineStageItem) => void;
@@ -47,6 +49,7 @@ export function KanbanColumn({
   onCardDrop,
   onMoveCard,
   onAssignAdvocate,
+  onSelectCard,
   onCardReorder,
   onStageDragStart,
   onStageDrop,
@@ -105,6 +108,14 @@ export function KanbanColumn({
 
   const isStageBeingDragged = draggedStageId === stage.id;
   const isOpportunityStage = stage.pipelineGroup === "opportunity";
+  const logicalGroupKey = resolveLogicalStageGroup(
+    stage.name,
+    stage.category,
+    stage.logicalGroup
+  );
+  const logicalGroupMeta = LOGICAL_STAGE_GROUPS.find(
+    (g) => g.key === logicalGroupKey
+  );
 
   return (
     <div
@@ -156,7 +167,18 @@ export function KanbanColumn({
               </span>
             </div>
             <div className="flex items-center gap-1 mt-0.5">
-              {isOpportunityStage ? (
+              {logicalGroupMeta ? (
+                <span
+                  className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider"
+                  style={{ color: logicalGroupMeta.accentColor }}
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ backgroundColor: logicalGroupMeta.accentColor }}
+                  />
+                  <span>{logicalGroupMeta.label}</span>
+                </span>
+              ) : isOpportunityStage ? (
                 <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wider text-purple-300">
                   <Sparkles className="h-2.5 w-2.5" />
                   <span>Opportunity</span>
@@ -241,6 +263,7 @@ export function KanbanColumn({
               }
             }}
             onAssignAdvocate={onAssignAdvocate}
+            onSelectCard={onSelectCard}
           />
         ))}
 

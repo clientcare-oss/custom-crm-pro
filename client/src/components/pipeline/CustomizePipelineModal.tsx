@@ -20,7 +20,8 @@ import {
   Briefcase,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { PipelineStageItem, PipelineGroupType } from "./types";
+import { LOGICAL_STAGE_GROUPS, resolveLogicalStageGroup } from "./pipelineDefaults";
+import type { PipelineStageItem, PipelineGroupType, LogicalStageGroup } from "./types";
 
 interface CustomizePipelineModalProps {
   open: boolean;
@@ -104,9 +105,15 @@ export function CustomizePipelineModal({
     );
   };
 
-  const handleGroupChange = (id: number, group: PipelineGroupType) => {
+  const handleGroupChange = (id: number, logicalGroup: LogicalStageGroup) => {
+    const pipelineGroup: PipelineGroupType =
+      logicalGroup === "opportunities" || logicalGroup === "follow_up"
+        ? "opportunity"
+        : "active_project";
     setStageList((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, pipelineGroup: group } : s))
+      prev.map((s) =>
+        s.id === id ? { ...s, logicalGroup, pipelineGroup } : s
+      )
     );
   };
 
@@ -186,17 +193,24 @@ export function CustomizePipelineModal({
                       className="h-7 bg-[#000814] border-[#3A2C18] text-[#FFF4D4] text-xs font-serif font-bold px-2 rounded-lg max-w-[210px]"
                     />
                     <select
-                      value={stage.pipelineGroup || "active_project"}
+                      value={resolveLogicalStageGroup(
+                        stage.name,
+                        stage.category,
+                        stage.logicalGroup
+                      )}
                       onChange={(e) =>
                         handleGroupChange(
                           stage.id,
-                          e.target.value as PipelineGroupType
+                          e.target.value as LogicalStageGroup
                         )
                       }
                       className="h-7 rounded-lg bg-[#000814] border border-[#3A2C18] text-[#C6B697] text-[11px] px-2 focus:outline-hidden focus:border-[#C5A059]"
                     >
-                      <option value="opportunity">Opportunities</option>
-                      <option value="active_project">Active Advocacy</option>
+                      {LOGICAL_STAGE_GROUPS.map((grp) => (
+                        <option key={grp.key} value={grp.key}>
+                          {grp.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
