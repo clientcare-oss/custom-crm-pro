@@ -2,7 +2,15 @@ import { z } from "zod";
 import * as db from "../db";
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure, adminProcedure, portalProcedure } from "../_core/trpc";
+import {
+  router,
+  publicProcedure,
+  protectedProcedure,
+  adminProcedure,
+  portalProcedure,
+  assertClientContactOwnership,
+} from "../_core/trpc";
+import { checkBackendCaseAccess, checkBackendActionPermission } from "../_core/staffAccess";
 import { ENV } from "../_core/env";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
@@ -45,6 +53,154 @@ let nextVaultFileId = 1000;
 let nextIepFamilyId = 500;
 let nextAnalysisId = 200;
 
+async function findVaultFileById(fileId: number): Promise<any | null> {
+  for (const files of Array.from(inMemoryVaultFiles.values())) {
+    const found = files.find((f: any) => Number(f.id) === Number(fileId));
+    if (found) return found;
+  }
+  const database = await db.getDb();
+  if (database) {
+    try {
+      const rows = await database
+        .select()
+        .from(clientFiles)
+        .where(eq(clientFiles.id, fileId))
+        .limit(1);
+      if (rows.length > 0) return rows[0];
+    } catch {}
+  }
+  return null;
+}
+
+async function findVaultAnalysisByFileOrId(fileId: number): Promise<any | null> {
+  const mem = inMemoryVaultAnalyses.get(fileId);
+  if (mem) return mem;
+  for (const val of Array.from(inMemoryVaultAnalyses.values())) {
+    if (Number(val?.id) === Number(fileId) || Number(val?.fileId) === Number(fileId)) {
+      return val;
+    }
+  }
+  const database = await db.getDb();
+  if (database) {
+    try {
+      const rows = await database
+        .select()
+        .from(documentVaultAnalyses)
+        .where(eq(documentVaultAnalyses.fileId, fileId))
+        .limit(1);
+      if (rows.length > 0) return rows[0];
+    } catch {}
+  }
+  return null;
+}
+
+async function findIepFamilyById(familyId: number): Promise<any | null> {
+  for (const famList of Array.from(inMemoryIepFamilies.values())) {
+    const found = famList.find((f: any) => Number(f.id) === Number(familyId));
+    if (found) return found;
+  }
+  const database = await db.getDb();
+  if (database) {
+    try {
+      const rows = await database
+        .select()
+        .from(iepFamilies)
+        .where(eq(iepFamilies.id, familyId))
+        .limit(1);
+      if (rows.length > 0) return rows[0];
+    } catch {}
+  }
+  return null;
+}
+
+async function assertVaultAccess(
+  ctx: any,
+  options: {
+    clientId?: number;
+    studentId?: number;
+    fileId?: number;
+    familyId?: number;
+    minStaffLevel: "view" | "edit";
+  }
+): Promise<void> {
+  if (ctx.staffAccess?.isStaff) {
+    const caseLevel = checkBackendCaseAccess(ctx.staffAccess, "files");
+    if (options.minStaffLevel === "view" && caseLevel === "none") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Access to Student Document Vault & IEP files is restricted for your role.",
+      });
+    }
+    if (
+      options.minStaffLevel === "edit" &&
+      caseLevel !== "edit" &&
+      caseLevel !== "manage"
+    ) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Modifying Student Document Vault & IEP files is restricted for your role.",
+      });
+    }
+    return;
+  }
+
+  // Client / Parent caller — enforce strict family ownership (fail-closed)
+  if (options.clientId !== undefined) {
+    await assertClientContactOwnership(ctx, options.clientId);
+  }
+  if (options.studentId !== undefined) {
+    await assertClientContactOwnership(ctx, options.studentId);
+  }
+  if (options.familyId !== undefined) {
+    const fam = await findIepFamilyById(options.familyId);
+    if (!fam || !fam.studentContactId) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to access this IEP family record.",
+      });
+    }
+    await assertClientContactOwnership(ctx, Number(fam.studentContactId));
+  }
+  if (options.fileId !== undefined) {
+    const file = await findVaultFileById(options.fileId);
+    const analysis = await findVaultAnalysisByFileOrId(options.fileId);
+    if (!file && !analysis) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to access this document.",
+      });
+    }
+    if (file) {
+      const uploadedByCaller =
+        ctx.user?.id && Number(file.uploadedBy) === Number(ctx.user.id);
+      const clientMatchesCaller =
+        ctx.user?.id && Number(file.clientId) === Number(ctx.user.id);
+      if (!uploadedByCaller && !clientMatchesCaller) {
+        if (file.studentContactId) {
+          await assertClientContactOwnership(ctx, Number(file.studentContactId));
+        } else if (file.clientId) {
+          await assertClientContactOwnership(ctx, Number(file.clientId));
+        } else {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You do not have permission to access this document.",
+          });
+        }
+      }
+    }
+    if (analysis && !file) {
+      if (analysis.studentContactId) {
+        await assertClientContactOwnership(ctx, Number(analysis.studentContactId));
+      } else {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this document analysis.",
+        });
+      }
+    }
+  }
+}
+
 export const clientFilesRouter = router({
   /**
    * Status-aware Document Vault telemetry:
@@ -60,6 +216,11 @@ export const clientFilesRouter = router({
       }).optional()
     )
     .query(async ({ ctx, input }) => {
+      await assertVaultAccess(ctx, {
+        clientId: input?.clientId,
+        studentId: input?.studentId,
+        minStaffLevel: "view",
+      });
       const targetClientId = input?.clientId || ctx.user.id;
       const targetStudentId = input?.studentId;
 
@@ -257,6 +418,14 @@ export const clientFilesRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.staffAccess?.isStaff) {
+        if (input.clientId !== undefined) {
+          await assertClientContactOwnership(ctx, input.clientId);
+        }
+        if (input.studentId !== undefined) {
+          await assertClientContactOwnership(ctx, input.studentId);
+        }
+      }
       const ackKey = `user-${ctx.user.id}-${input.studentId || "default"}`;
       const record = {
         userId: ctx.user.id,
@@ -339,6 +508,11 @@ export const clientFilesRouter = router({
       }).optional()
     )
     .query(async ({ ctx, input }) => {
+      await assertVaultAccess(ctx, {
+        clientId: input?.clientId,
+        studentId: input?.studentId,
+        minStaffLevel: "view",
+      });
       const targetClientId = input?.studentId || input?.clientId || ctx.user.id;
       let files = await db.getClientFilesByClient(targetClientId);
       if (!files || files.length === 0) {
@@ -391,6 +565,10 @@ export const clientFilesRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await assertVaultAccess(ctx, {
+        studentId: input.studentId,
+        minStaffLevel: "edit",
+      });
       // Validate PDF (preserving existing test suite constraint)
       if (!input.fileName.toLowerCase().endsWith(".pdf")) {
         throw new TRPCError({
@@ -694,6 +872,19 @@ export const clientFilesRouter = router({
         }
       }
 
+      const autoTargetId = targetStudentId || ctx.user.id;
+      if (autoTargetId) {
+        try {
+          const { triggerAutomationFlow } = await import("../db/automations");
+          await triggerAutomationFlow("file_completed", autoTargetId, false, {
+            eventKey: `vault_upload_${fileId}_${autoTargetId}`,
+            fileName: input.fileName,
+          });
+        } catch (autoErr) {
+          console.warn("[DocumentVault] Automation trigger warning on upload:", autoErr);
+        }
+      }
+
       return {
         ...mockRecord,
         schoolYear: aiAnalysis.schoolYear,
@@ -715,6 +906,10 @@ export const clientFilesRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await assertVaultAccess(ctx, {
+        fileId: input.fileId,
+        minStaffLevel: "edit",
+      });
       // 1. Check cached analysis
       if (!input.forceReprocess) {
         const cached = inMemoryVaultAnalyses.get(input.fileId);
@@ -837,6 +1032,11 @@ export const clientFilesRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
+      await assertVaultAccess(ctx, {
+        studentId: input?.studentId,
+        clientId: input?.clientId,
+        minStaffLevel: "view",
+      });
       const studentId = input?.studentId || 0;
       const targetClientId = input?.clientId || ctx.user.id;
 
@@ -915,6 +1115,18 @@ export const clientFilesRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await assertVaultAccess(ctx, {
+        fileId: input.fileId,
+        familyId: input.familyId,
+        studentId: input.studentId,
+        minStaffLevel: "edit",
+      });
+      if (!ctx.staffAccess?.isStaff && input.confirmationStatus === "Waypoint Confirmed") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only Waypoint staff can mark a plan as Waypoint Confirmed.",
+        });
+      }
       const studentId = input.studentId || 0;
       const sFamilies = inMemoryIepFamilies.get(studentId) || [];
 
@@ -969,6 +1181,12 @@ export const clientFilesRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await assertVaultAccess(ctx, {
+        fileId: input.fileId,
+        familyId: input.familyId,
+        studentId: input.studentId,
+        minStaffLevel: "edit",
+      });
       const studentId = input.studentId || 0;
       const sFamilies = inMemoryIepFamilies.get(studentId) || [];
       const family = sFamilies.find((f: any) => f.id === input.familyId);
@@ -999,7 +1217,11 @@ export const clientFilesRouter = router({
    */
   getAnalysis: protectedProcedure
     .input(z.object({ fileId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await assertVaultAccess(ctx, {
+        fileId: input.fileId,
+        minStaffLevel: "view",
+      });
       const cached = inMemoryVaultAnalyses.get(input.fileId);
       if (!cached) return null;
       return {
@@ -1013,7 +1235,11 @@ export const clientFilesRouter = router({
    */
   listIepFamilies: protectedProcedure
     .input(z.object({ studentId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await assertVaultAccess(ctx, {
+        studentId: input.studentId,
+        minStaffLevel: "view",
+      });
       const families = inMemoryIepFamilies.get(input.studentId) || [];
       return families;
     }),
@@ -1021,6 +1247,10 @@ export const clientFilesRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
+      await assertVaultAccess(ctx, {
+        fileId: input.id,
+        minStaffLevel: "edit",
+      });
       return await db.deleteClientFile(input.id, ctx.user.id);
     }),
 

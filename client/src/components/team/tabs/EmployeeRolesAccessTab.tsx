@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Shield,
   Crown,
@@ -42,6 +42,10 @@ import {
 } from "../teamTypes";
 import { toast } from "sonner";
 
+const BACKEND_ENFORCED_MODULES = new Set(["team", "crew_quarters"]);
+const BACKEND_ENFORCED_CASE_TABS = new Set(["compass", "notes"]);
+const BACKEND_ENFORCED_ACTIONS = new Set(["manage_employees", "manage_roles"]);
+
 interface EmployeeRolesAccessTabProps {
   employee: EmployeeRecord;
   onSave: (updated: EmployeeRecord) => void;
@@ -51,7 +55,15 @@ export default function EmployeeRolesAccessTab({
   employee,
   onSave,
 }: EmployeeRolesAccessTabProps) {
-  const [primaryRole, setPrimaryRole] = useState<RoleId>(employee.primaryRole);
+  const isProtectedOwner = Boolean(
+    employee.isProtectedOwner ||
+      employee.id === "emp-byron-honea" ||
+      employee.id === "emp-byron-honea-2"
+  );
+
+  const [primaryRole, setPrimaryRole] = useState<RoleId>(
+    isProtectedOwner ? "management" : employee.primaryRole
+  );
   const [additionalRoles, setAdditionalRoles] = useState<RoleId[]>(employee.additionalRoles || []);
   const [permissionOverrides, setPermissionOverrides] = useState<Record<string, boolean>>(
     employee.permissionOverrides || {}
@@ -63,6 +75,25 @@ export default function EmployeeRolesAccessTab({
     employee.caseWorkspaceAccess || {}
   );
   const [isDirty, setIsDirty] = useState(false);
+
+  // Sync local state whenever authoritative backend `employee` record refreshes
+  useEffect(() => {
+    setPrimaryRole(isProtectedOwner ? "management" : employee.primaryRole);
+    setAdditionalRoles(employee.additionalRoles || []);
+    setPermissionOverrides(employee.permissionOverrides || {});
+    setModulePermissions(employee.modulePermissions || {});
+    setCaseWorkspaceAccess(employee.caseWorkspaceAccess || {});
+    setIsDirty(false);
+  }, [
+    employee.id,
+    employee.userId,
+    employee.primaryRole,
+    isProtectedOwner,
+    JSON.stringify(employee.additionalRoles),
+    JSON.stringify(employee.permissionOverrides),
+    JSON.stringify(employee.modulePermissions),
+    JSON.stringify(employee.caseWorkspaceAccess),
+  ]);
 
   // ── Role Management ──
   const handleToggleAdditionalRole = (roleId: RoleId) => {
@@ -76,6 +107,10 @@ export default function EmployeeRolesAccessTab({
   };
 
   const handleSelectPrimaryRole = (newPrimary: RoleId) => {
+    if (isProtectedOwner && newPrimary !== "management") {
+      toast.error("Protected Owner accounts are locked to Management / Owner primary role.");
+      return;
+    }
     setPrimaryRole(newPrimary);
     setAdditionalRoles((prev) => prev.filter((r) => r !== newPrimary));
     setIsDirty(true);
@@ -83,6 +118,7 @@ export default function EmployeeRolesAccessTab({
 
   // ── System Permissions Inheritance ──
   const isPermissionInherited = (permId: string): boolean => {
+    if (isProtectedOwner || employee.hasAdminAccess) return true;
     const roles = [primaryRole, ...additionalRoles];
     return roles.some((r) => {
       const def = ROLE_DEFINITIONS[r];
@@ -91,6 +127,9 @@ export default function EmployeeRolesAccessTab({
   };
 
   const getEffectivePermission = (permId: string): boolean => {
+    if (isProtectedOwner && (permId === "manage_employees" || permId === "manage_roles")) {
+      return true;
+    }
     if (permId in permissionOverrides) {
       return permissionOverrides[permId];
     }
@@ -98,6 +137,10 @@ export default function EmployeeRolesAccessTab({
   };
 
   const handleTogglePermission = (permId: string) => {
+    if (isProtectedOwner && (permId === "manage_employees" || permId === "manage_roles")) {
+      toast.error("Protected Owner administrative permissions cannot be disabled.");
+      return;
+    }
     const current = getEffectivePermission(permId);
     setPermissionOverrides((prev) => ({
       ...prev,
@@ -118,6 +161,7 @@ export default function EmployeeRolesAccessTab({
 
   // ── CRM Module Access Inheritance ──
   const getInheritedModuleLevel = (moduleId: string): "none" | "view" | "edit" => {
+    if (isProtectedOwner || employee.hasAdminAccess) return "edit";
     const roles = [primaryRole, ...additionalRoles];
     if (roles.includes("management")) return "edit";
     for (const r of roles) {
@@ -130,6 +174,7 @@ export default function EmployeeRolesAccessTab({
   };
 
   const getEffectiveModuleLevel = (moduleId: string): "none" | "view" | "edit" => {
+    if (isProtectedOwner && moduleId === "team") return "edit";
     if (moduleId in modulePermissions) {
       return modulePermissions[moduleId];
     }
@@ -137,6 +182,10 @@ export default function EmployeeRolesAccessTab({
   };
 
   const handleSetModuleLevel = (moduleId: string, level: "none" | "view" | "edit") => {
+    if (isProtectedOwner && moduleId === "team" && level !== "edit") {
+      toast.error("Protected Owner accounts cannot lose Edit access to Team Management.");
+      return;
+    }
     setModulePermissions((prev) => ({
       ...prev,
       [moduleId]: level,
@@ -322,16 +371,56 @@ export default function EmployeeRolesAccessTab({
         </div>
       </div>
 
+      {/* ── Protected Owner Lock Notice ── */}
+      {isProtectedOwner && (
+        <div className="rounded-2xl border border-amber-400/50 bg-amber-950/25 p-4 flex items-start gap-3">
+          <Crown className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <div className="font-bold text-amber-300 text-xs flex items-center gap-2">
+              <span>Protected Owner Account ({employee.userId || employee.id})</span>
+              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[9px] font-bold">
+                Backend Enforced
+              </Badge>
+            </div>
+            <p className="text-[11px] text-amber-100/80 leading-relaxed">
+              This account is a locked Protected Owner account. Primary role (<strong>Management / Owner</strong>), active account status, and administrative ownership cannot be demoted, disabled, or revoked via UI or API.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Backend Enforcement Transparency Notice (Requirement 9) ── */}
+      <div className="rounded-2xl border border-sky-500/40 bg-sky-950/20 p-4 flex items-start gap-3">
+        <Info className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+        <div className="space-y-1.5">
+          <div className="font-bold text-sky-200 text-xs flex items-center gap-2 flex-wrap">
+            <span>Permission Enforcement Status (`staff_access_profiles`)</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
+              Backend Enforced
+            </span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40 font-bold">
+              UI Gated · Partial API
+            </span>
+          </div>
+          <p className="text-[11px] text-blue-200/80 leading-relaxed">
+            All role assignments and overrides below persist in backend <code className="text-amber-300">staff_access_profiles</code>. Items badged <strong>Backend Enforced</strong> are strictly verified by server API procedures (<code className="text-sky-300">staffProcedure</code>, <code className="text-sky-300">adminProcedure</code>, <code className="text-sky-300">team.*</code>, <code className="text-sky-300">crewMessages.*</code>). Items badged <strong>UI Gated · Partial API</strong> are enforced by frontend navigation/tab guards (<code className="text-sky-300">DashboardLayout</code>, <code className="text-sky-300">ContactDetail</code>) and admin route gates, but individual domain routers do not yet enforce per-endpoint read-only vs edit checks.
+          </p>
+        </div>
+      </div>
+
       {/* ── Section 1: Assigned Workforce Roles ── */}
       <div className="rounded-2xl border border-blue-900/50 bg-[#000820] p-4 sm:p-5 space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-blue-900/40">
           <div>
-            <h4 className="font-bold text-white text-sm flex items-center gap-1.5">
+            <h4 className="font-bold text-white text-sm flex items-center gap-1.5 flex-wrap">
               <Crown className="w-4 h-4 text-amber-400" />
               <span>Assigned Workforce Roles &amp; Authority Defaults</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
+                Backend Enforced
+              </span>
             </h4>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Select one <strong>Primary Role</strong> and optional <strong>Additional Roles</strong>. Roles establish default visibility and permissions across the CRM.
+              Select one <strong>Primary Role</strong> and optional <strong>Additional Roles</strong>. Roles establish default visibility and backend <code className="text-sky-300">staffProcedure</code> / <code className="text-sky-300">adminProcedure</code> authority across the CRM.
             </p>
           </div>
         </div>
@@ -466,8 +555,23 @@ export default function EmployeeRolesAccessTab({
                               <ModIcon className="w-4 h-4 text-amber-400" />
                             </div>
                             <div className="min-w-0 space-y-0.5">
-                              <div className="font-bold text-white truncate flex items-center gap-1.5">
+                              <div className="font-bold text-white truncate flex items-center gap-1.5 flex-wrap">
                                 <span>{mod.label}</span>
+                                {BACKEND_ENFORCED_CASE_TABS.has(mod.id) ? (
+                                  <span
+                                    className="text-[8.5px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold"
+                                    title="Enforced by backend API and frontend UI"
+                                  >
+                                    Backend Enforced
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="text-[8.5px] px-1.5 py-0.2 rounded bg-amber-400/15 text-amber-300/90 border border-amber-400/30 font-semibold"
+                                    title="Persisted in staff_access_profiles and enforced by ContactDetail UI tab guard; domain API endpoints do not yet check tab-level access"
+                                  >
+                                    UI Gated · Partial API
+                                  </span>
+                                )}
                               </div>
                               <p className="text-[11px] text-blue-200/70 line-clamp-2 leading-relaxed">
                                 {mod.description}
@@ -626,11 +730,20 @@ export default function EmployeeRolesAccessTab({
                         <div className="flex items-center gap-2.5 min-w-0">
                           <ModIcon className="w-4 h-4 text-sky-400 shrink-0" />
                           <div className="min-w-0">
-                            <div className="font-semibold text-white flex items-center gap-1.5 truncate">
+                            <div className="font-semibold text-white flex items-center gap-1.5 flex-wrap">
                               <span>{mod.label}</span>
                               {mod.isSensitive && (
                                 <span title="Sensitive Module" className="inline-flex">
                                   <Lock className="w-3 h-3 text-amber-400 shrink-0" />
+                                </span>
+                              )}
+                              {BACKEND_ENFORCED_MODULES.has(mod.id) ? (
+                                <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
+                                  Backend Enforced
+                                </span>
+                              ) : (
+                                <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-amber-400/15 text-amber-300/90 border border-amber-400/30 font-semibold">
+                                  UI Gated · Partial API
                                 </span>
                               )}
                             </div>
@@ -753,8 +866,17 @@ export default function EmployeeRolesAccessTab({
                         }`}
                       >
                         <div className="space-y-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-bold text-white truncate">{perm.label}</span>
+                            {BACKEND_ENFORCED_ACTIONS.has(perm.id) ? (
+                              <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
+                                Backend Enforced
+                              </span>
+                            ) : (
+                              <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-amber-400/15 text-amber-300/90 border border-amber-400/30 font-semibold">
+                                UI Gated · Partial API
+                              </span>
+                            )}
                             {hasOverride ? (
                               <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 font-bold border border-amber-400/30">
                                 Override

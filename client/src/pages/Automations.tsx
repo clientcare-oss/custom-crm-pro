@@ -267,9 +267,25 @@ export default function Automations() {
 
   // Load from backend Drizzle D1 via tRPC
   const { data: dbAutomations, refetch } = trpc.automations.list.useQuery();
+  const { data: savedEmailTemplates } = trpc.emailTemplates.list.useQuery();
+  const { data: automationRuns, refetch: refetchRuns } = trpc.automations.listRuns.useQuery({ limit: 50 });
   const saveMutation = trpc.automations.save.useMutation();
   const deleteMutation = trpc.automations.delete.useMutation();
   const simulateMutation = trpc.automations.simulate.useMutation();
+  const retryRunMutation = trpc.automations.retryRun.useMutation({
+    onSuccess: (res) => {
+      if (res.success) {
+        toast.success("Automation run retried and completed!");
+      } else {
+        toast.error("Retry executed; check updated run logs.");
+      }
+      refetchRuns();
+      refetch();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to retry automation run");
+    },
+  });
 
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [pageTab, setPageTab] = useState<"workflows" | "ai-vault">(() => {
@@ -348,7 +364,7 @@ export default function Automations() {
         description: a.description || "",
         triggerEvent: a.triggerEvent,
         isActive: Boolean(a.isActive),
-        activeRunsCount: 0,
+        activeRunsCount: Number(a.activeRunsCount ?? 0),
         triggerConfig: a.triggerConfig || {
           meetingType: "Any Meeting",
           googleReviewUrl: "https://g.page/r/waypoint-advocates/review",
@@ -834,6 +850,98 @@ export default function Automations() {
                   ))}
                 </div>
               )}
+
+              {/* Execution History & Reliability Ledger */}
+              <div className="bg-[#05142B]/90 border border-[#3A2C18] rounded-xl p-5 space-y-4 text-left shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
+                <div className="flex items-center justify-between border-b border-[#3A2C18]/70 pb-3">
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-[#FFF4D4] flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-[#C5A059]" />
+                      Recent Execution History & Retry Queue
+                    </h3>
+                    <p className="text-xs text-[#C6B697]">
+                      Live audit trail of triggered workflows, condition checks, and retry states.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => refetchRuns()}
+                    className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:text-[#FFF4D4] text-xs font-serif px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RefreshCw className="h-3 w-3 text-[#C5A059]" /> Refresh Runs
+                  </button>
+                </div>
+
+                {!automationRuns || automationRuns.length === 0 ? (
+                  <div className="text-xs text-[#A69371] py-6 text-center font-serif">
+                    No automation runs recorded yet. Real CRM events and executed workflows will appear here automatically.
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                    {automationRuns.map((run: any) => (
+                      <div
+                        key={run.id}
+                        className="bg-[#020A17]/80 border border-[#3A2C18]/60 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-serif font-bold text-xs text-[#FFF4D4]">
+                              {run.automationName || `Workflow #${run.automationId}`}
+                            </span>
+                            <span className="text-[10px] font-mono text-[#FFE394] bg-[#05142B] border border-[#3A2C18] px-2 py-0.5 rounded">
+                              {run.contactName || `Contact #${run.contactId}`}
+                            </span>
+                            <span
+                              className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                                run.status === "completed"
+                                  ? "bg-emerald-950/60 border-emerald-500/30 text-emerald-400"
+                                  : run.status === "failed"
+                                    ? "bg-rose-950/60 border-rose-500/30 text-rose-400"
+                                    : "bg-amber-950/60 border-amber-500/30 text-amber-400"
+                              }`}
+                            >
+                              {run.status}
+                            </span>
+                            {run.retryCount > 0 && (
+                              <span className="text-[10px] font-mono text-[#C6B697]">
+                                (Retried {run.retryCount}x)
+                              </span>
+                            )}
+                          </div>
+                          {run.errorMessage && (
+                            <p className="text-[11px] text-rose-400 font-mono">
+                              Error: {run.errorMessage}
+                            </p>
+                          )}
+                          <p className="text-[11px] text-[#A69371] font-mono line-clamp-2 whitespace-pre-line">
+                            {run.logText}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] text-[#8CA4C4] font-mono">
+                            {run.createdAt ? new Date(run.createdAt).toLocaleString() : ""}
+                          </span>
+                          {(run.status === "failed" || run.status === "skipped") && (
+                            <button
+                              type="button"
+                              disabled={retryRunMutation.isPending}
+                              onClick={() =>
+                                retryRunMutation.mutate({
+                                  runId: run.id,
+                                  clearFailureFlags: true,
+                                })
+                              }
+                              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-serif font-bold text-[11px] px-3 py-1 rounded-lg border border-[#FFE394]/50 cursor-pointer flex items-center gap-1"
+                            >
+                              <RefreshCw className="h-3 w-3" /> Retry
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -1398,16 +1506,41 @@ export default function Automations() {
                                   value={step.config.templateId || ""}
                                   onChange={(e) => {
                                     const opt = e.target.selectedOptions[0];
+                                    const matchedSaved = (savedEmailTemplates || []).find(
+                                      (t: any) => String(t.id) === e.target.value
+                                    );
                                     handleUpdateStepConfig(step.id, {
                                       templateId: e.target.value,
-                                      templateName: opt.text
+                                      templateName: opt.text,
+                                      ...(matchedSaved
+                                        ? {
+                                            emailSubject: matchedSaved.subject,
+                                            emailBody: matchedSaved.body,
+                                          }
+                                        : {}),
                                     });
                                   }}
                                   className="w-full bg-slate-900 border border-white/10 text-white rounded-lg p-2.5 text-xs focus:border-indigo-500"
                                 >
-                                  <option value="welcome-email">Advocate Welcome & Calendar Invite</option>
-                                  <option value="iep-parent-prep">IEP Prep: Parent Goal Formulation Guide</option>
-                                  <option value="pwn-review">Post-IEP: PWN Document Review Checklist</option>
+                                  <optgroup label="Starter Automation Templates">
+                                    <option value="tpl_intake_welcome">Lead Inquiry Welcome & Discovery Guide</option>
+                                    <option value="tpl_prep_checklist">IEP Meeting Prep Checklist</option>
+                                    <option value="tpl_post_session">Post-Meeting Action Items</option>
+                                    <option value="tpl_contract_thanks">Signed Contract Confirmation</option>
+                                    <option value="tpl_review_request">Google Review & Testimonial Request</option>
+                                    <option value="welcome-email">Advocate Welcome & Calendar Invite</option>
+                                    <option value="iep-parent-prep">IEP Prep: Parent Goal Formulation Guide</option>
+                                    <option value="pwn-review">Post-IEP: PWN Document Review Checklist</option>
+                                  </optgroup>
+                                  {savedEmailTemplates && savedEmailTemplates.length > 0 && (
+                                    <optgroup label="Saved CRM Email Templates">
+                                      {savedEmailTemplates.map((tpl: any) => (
+                                        <option key={tpl.id} value={String(tpl.id)}>
+                                          {tpl.name} ({tpl.category || "General"})
+                                        </option>
+                                      ))}
+                                    </optgroup>
+                                  )}
                                 </select>
                               </div>
 

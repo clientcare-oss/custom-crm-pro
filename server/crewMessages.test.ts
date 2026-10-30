@@ -217,4 +217,251 @@ describe("PG-038 Crew Messages — Native Employee Messaging & Collaboration Sui
       })
     ).rejects.toThrow();
   });
+
+  describe("WAP 1A.4 End-to-End Internal Messaging & Security Verification", () => {
+    const byronOwnerUser = {
+      id: 9060114,
+      openId: "user_3HamsO4oLoKLKOnDi9BR16e6RZW",
+      name: "Byron Honea",
+      email: "byron@waypointadvocates.com",
+      role: "admin" as const,
+      loginMethod: "clerk",
+      organizationId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+      phone: null,
+      quoWebhookSecret: null,
+      gmailUser: null,
+      gmailAppPassword: null,
+      portalDomain: null,
+      logoUrl: null,
+    };
+
+    const wyattStaffUser = {
+      id: 9060250,
+      openId: "user_3KPhcRBro000000000000000000",
+      name: "Wyatt Smith",
+      email: "wyatt@waypointadvocates.com",
+      role: "user" as const,
+      loginMethod: "clerk",
+      organizationId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+      phone: null,
+      quoWebhookSecret: null,
+      gmailUser: null,
+      gmailAppPassword: null,
+      portalDomain: null,
+      logoUrl: null,
+    };
+
+    const kyleStaffUser = {
+      id: 9060249,
+      openId: "user_3HELy6EVi000000000000000000",
+      name: "Kyle Atkins",
+      email: "kyle@waypointadvocates.com",
+      role: "admin" as const,
+      loginMethod: "clerk",
+      organizationId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+      phone: null,
+      quoWebhookSecret: null,
+      gmailUser: null,
+      gmailAppPassword: null,
+      portalDomain: null,
+      logoUrl: null,
+    };
+
+    const deactivatedStaffUser = {
+      id: 9060031,
+      openId: "katkins-admin-openid",
+      name: "Deactivated Dev Account",
+      email: "dev@waypointadvocates.com",
+      role: "user" as const,
+      loginMethod: "manually_created",
+      organizationId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+      phone: null,
+      quoWebhookSecret: null,
+      gmailUser: null,
+      gmailAppPassword: null,
+      portalDomain: null,
+      logoUrl: null,
+    };
+
+    const byronCaller = appRouter.createCaller({ user: byronOwnerUser });
+    const wyattCaller = appRouter.createCaller({ user: wyattStaffUser });
+    const kyleCaller = appRouter.createCaller({ user: kyleStaffUser });
+    const deactivatedCaller = appRouter.createCaller({ user: deactivatedStaffUser });
+
+    it("WAP 1A.4 (1-4): Employee A sends a DM to Employee B, B sees unread indicator & reads it, both see history on refresh without duplicate threads", async () => {
+      // Directory check: Byron finds Wyatt in real staff directory
+      const directory = await byronCaller.crewMessages.listEmployees();
+      const wyattEntry = directory.find((e: any) => e.id === wyattStaffUser.id);
+      expect(wyattEntry).toBeDefined();
+      expect(wyattEntry?.name).toContain("Wyatt");
+
+      // Self-DM prevention check
+      await expect(
+        byronCaller.crewMessages.getOrCreateDirect({ targetUserId: byronOwnerUser.id })
+      ).rejects.toThrow();
+
+      // Employee A (Byron) starts DM with Employee B (Wyatt)
+      const dmInit = await byronCaller.crewMessages.getOrCreateDirect({
+        targetUserId: wyattStaffUser.id,
+      });
+      expect(dmInit.conversationId).toBeGreaterThan(0);
+      expect(dmInit.displayName).toContain("Wyatt");
+
+      // Employee A sends a message to Employee B
+      const uniqueBody = `WAP 1A.4 Direct Message Check ${Date.now()}`;
+      const sendResult = await byronCaller.crewMessages.sendMessage({
+        conversationId: dmInit.conversationId,
+        body: uniqueBody,
+      });
+      expect(sendResult.success).toBe(true);
+
+      // Employee B checks unread indicators BEFORE marking read
+      const wyattConvsBefore = await wyattCaller.crewMessages.listConversations();
+      const wyattDmBefore = wyattConvsBefore.directMessages.find(
+        (d: any) => d.id === dmInit.conversationId
+      );
+      expect(wyattDmBefore).toBeDefined();
+      expect(wyattDmBefore.displayName).toContain("Byron");
+      expect(wyattDmBefore.unreadCount).toBeGreaterThan(0);
+
+      const wyattStatsBefore = await wyattCaller.crewMessages.getOverviewStats();
+      expect(wyattStatsBefore.unreadTotal).toBeGreaterThan(0);
+
+      // Employee B receives message with accurate timestamp and sender identity
+      const wyattMessages = await wyattCaller.crewMessages.getMessages({
+        conversationId: dmInit.conversationId,
+      });
+      const receivedMsg = wyattMessages.find((m: any) => m.id === sendResult.messageId);
+      expect(receivedMsg).toBeDefined();
+      expect(receivedMsg.body).toBe(uniqueBody);
+      expect(receivedMsg.senderName).toContain("Byron");
+      expect(receivedMsg.isSender).toBe(false);
+      expect(new Date(receivedMsg.createdAt).getTime()).toBeGreaterThan(0);
+
+      // Employee B marks the conversation as read
+      await wyattCaller.crewMessages.markRead({
+        conversationId: dmInit.conversationId,
+        messageId: sendResult.messageId,
+      });
+
+      // Unread indicators update to 0 for Employee B
+      const wyattConvsAfter = await wyattCaller.crewMessages.listConversations();
+      const wyattDmAfter = wyattConvsAfter.directMessages.find(
+        (d: any) => d.id === dmInit.conversationId
+      );
+      expect(wyattDmAfter.unreadCount).toBe(0);
+
+      // Both employees see conversation history after refresh, and read receipt updates for Employee A
+      const byronMessagesAfterRefresh = await byronCaller.crewMessages.getMessages({
+        conversationId: dmInit.conversationId,
+      });
+      const sentMsgAfterRead = byronMessagesAfterRefresh.find(
+        (m: any) => m.id === sendResult.messageId
+      );
+      expect(sentMsgAfterRead).toBeDefined();
+      expect(sentMsgAfterRead.isReadByRecipient).toBe(true);
+
+      // Continuing existing conversation from either side does NOT create duplicate threads
+      const wyattReopen = await wyattCaller.crewMessages.getOrCreateDirect({
+        targetUserId: byronOwnerUser.id,
+      });
+      expect(wyattReopen.conversationId).toBe(dmInit.conversationId);
+    });
+
+    it("WAP 1A.4 (5): A third employee cannot access or post in a private conversation between Employee A and Employee B, and cannot impersonate or edit another employee's message", async () => {
+      const dm = await byronCaller.crewMessages.getOrCreateDirect({
+        targetUserId: wyattStaffUser.id,
+      });
+      const msg = await byronCaller.crewMessages.sendMessage({
+        conversationId: dm.conversationId,
+        body: "Confidential discussion between Byron and Wyatt.",
+      });
+
+      // Third employee (Kyle, even with management role) is NOT a participant in this private 1-on-1 DM
+      await expect(
+        kyleCaller.crewMessages.getMessages({ conversationId: dm.conversationId })
+      ).rejects.toThrow();
+      await expect(
+        kyleCaller.crewMessages.sendMessage({
+          conversationId: dm.conversationId,
+          body: "Intruding into private DM",
+        })
+      ).rejects.toThrow();
+      await expect(
+        kyleCaller.crewMessages.getLinkedContext({ conversationId: dm.conversationId })
+      ).rejects.toThrow();
+      await expect(
+        kyleCaller.crewMessages.markRead({ conversationId: dm.conversationId })
+      ).rejects.toThrow();
+
+      // Employee B (Wyatt) cannot edit or delete Employee A's (Byron's) message
+      await expect(
+        wyattCaller.crewMessages.editMessage({
+          messageId: msg.messageId,
+          body: "Tampered message body",
+        })
+      ).rejects.toThrow();
+      await expect(
+        wyattCaller.crewMessages.deleteMessage({
+          messageId: msg.messageId,
+        })
+      ).rejects.toThrow();
+
+      // Original author (Byron) CAN edit his own message
+      const editRes = await byronCaller.crewMessages.editMessage({
+        messageId: msg.messageId,
+        body: "Confidential discussion between Byron and Wyatt (updated).",
+      });
+      expect(editRes.success).toBe(true);
+    });
+
+    it("WAP 1A.4 (6-8): Clients and deactivated staff are blocked, Crew Messages stays separated from client activity timeline, and existing staff permissions remain intact", async () => {
+      // Deactivated staff cannot access Crew Messages or be messaged
+      await expect(deactivatedCaller.crewMessages.listConversations()).rejects.toThrow();
+      await expect(deactivatedCaller.crewMessages.listEmployees()).rejects.toThrow();
+      await expect(
+        byronCaller.crewMessages.getOrCreateDirect({ targetUserId: deactivatedStaffUser.id })
+      ).rejects.toThrow();
+
+      // Client cannot be targeted for an internal Direct Message
+      await expect(
+        byronCaller.crewMessages.getOrCreateDirect({ targetUserId: mockClientUser.id })
+      ).rejects.toThrow();
+
+      // Crew Messages cannot be pushed to the client activity timeline
+      await expect(
+        byronCaller.crewMessages.addToActivityTimeline({
+          messageId: 1,
+          studentContactId: 1,
+          title: "Should be blocked",
+        })
+      ).rejects.toThrow();
+
+      // Existing staff permissions remain intact for Protected Owner, Kyle, and Wyatt
+      const byronAccess = await byronCaller.team.getMyStaffAccess();
+      expect(byronAccess.isProtectedOwner).toBe(true);
+      expect(byronAccess.hasAdminAccess).toBe(true);
+
+      const kyleAccess = await kyleCaller.team.getMyStaffAccess();
+      expect(kyleAccess.primaryRole).toBe("technology");
+      expect(kyleAccess.hasAdminAccess).toBe(true);
+      expect(kyleAccess.accountStatus).toBe("active");
+
+      const wyattAccess = await wyattCaller.team.getMyStaffAccess();
+      expect(wyattAccess.primaryRole).toBe("call_center");
+      expect(wyattAccess.accountStatus).toBe("active");
+    });
+  });
 });

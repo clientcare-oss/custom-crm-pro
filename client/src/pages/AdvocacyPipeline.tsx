@@ -1,670 +1,179 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { AdvocacyPipelineHeader } from "@/components/pipeline/AdvocacyPipelineHeader";
 import { SavedViewsBar } from "@/components/pipeline/SavedViewsBar";
+import { StageOverviewGrid } from "@/components/pipeline/StageOverviewGrid";
 import { KanbanBoard } from "@/components/pipeline/KanbanBoard";
+import { PipelineListView } from "@/components/pipeline/PipelineListView";
 import { CustomizePipelineModal } from "@/components/pipeline/CustomizePipelineModal";
 import { NewViewModal } from "@/components/pipeline/NewViewModal";
 import { AddStageModal } from "@/components/pipeline/AddStageModal";
+import {
+  DEFAULT_PIPELINE_STAGES_CLIENT,
+  DEFAULT_SAVED_VIEWS_CLIENT,
+  INITIAL_DEMO_CARDS,
+} from "@/components/pipeline/pipelineDefaults";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import type {
   PipelineStageItem,
   PipelineCardItem,
   SavedViewItem,
   PipelineFilters,
+  PipelineGroupType,
+  PipelineSortField,
+  PipelineSortDirection,
 } from "@/components/pipeline/types";
 
-// ── 8 Default Standard Stages ────────────────────────────────────────────────
-const DEFAULT_STAGES: PipelineStageItem[] = [
-  {
-    id: 1,
-    name: "Discovery",
-    slug: "discovery",
-    order: 1,
-    accentColor: "#38BDF8", // Cyan
-    iconName: "Compass",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 2,
-    name: "Intake / Onboarding",
-    slug: "intake-onboarding",
-    order: 2,
-    accentColor: "#34D399", // Emerald
-    iconName: "FileText",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 3,
-    name: "Records Review",
-    slug: "records-review",
-    order: 3,
-    accentColor: "#F59E0B", // Amber
-    iconName: "FileSearch",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 4,
-    name: "School Contact",
-    slug: "school-contact",
-    order: 4,
-    accentColor: "#F5B544", // Gold
-    iconName: "School",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 5,
-    name: "Meeting Scheduled",
-    slug: "meeting-scheduled",
-    order: 5,
-    accentColor: "#818CF8", // Indigo
-    iconName: "Calendar",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 6,
-    name: "State Complaint",
-    slug: "state-complaint",
-    order: 6,
-    accentColor: "#F87171", // Coral
-    iconName: "Scale",
-    category: "escalation",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 7,
-    name: "Monitoring",
-    slug: "monitoring",
-    order: 7,
-    accentColor: "#2DD4BF", // Teal
-    iconName: "Activity",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 8,
-    name: "Closed",
-    slug: "closed",
-    order: 8,
-    accentColor: "#94A3B8", // Slate
-    iconName: "CheckCircle2",
-    category: "completed",
-    isArchived: false,
-    isDefault: true,
-  },
-];
-
-// ── Standard Default Saved Views ─────────────────────────────────────────────
-const DEFAULT_SAVED_VIEWS: SavedViewItem[] = [
-  { id: 1, name: "My Work", slug: "my-work", filtersJson: JSON.stringify({ isMyWork: true }), isPinned: true, isDefault: true, order: 1 },
-  { id: 2, name: "All Clients", slug: "all-clients", filtersJson: "{}", isPinned: true, isDefault: true, order: 2 },
-  { id: 3, name: "$55", slug: "plan-55", filtersJson: JSON.stringify({ planTier: "$55" }), isPinned: true, isDefault: true, order: 3 },
-  { id: 4, name: "$105", slug: "plan-105", filtersJson: JSON.stringify({ planTier: "$105" }), isPinned: true, isDefault: true, order: 4 },
-  { id: 5, name: "Scholarship", slug: "scholarship", filtersJson: JSON.stringify({ planTier: "Scholarship" }), isPinned: true, isDefault: true, order: 5 },
-  { id: 6, name: "Pay Per Use", slug: "pay-per-use", filtersJson: JSON.stringify({ planTier: "Pay Per Use" }), isPinned: false, isDefault: true, order: 6 },
-  { id: 7, name: "Renewals", slug: "renewals", filtersJson: JSON.stringify({ accountStatus: "Renewal Needed" }), isPinned: false, isDefault: true, order: 7 },
-  { id: 8, name: "Nonpay", slug: "nonpay", filtersJson: JSON.stringify({ billingStatus: "Payment Failed" }), isPinned: false, isDefault: true, order: 8 },
-  { id: 9, name: "Tools Only", slug: "tools-only", filtersJson: JSON.stringify({ planTier: "Tools Only" }), isPinned: false, isDefault: true, order: 9 },
-  { id: 10, name: "On Hold", slug: "on-hold", filtersJson: JSON.stringify({ accountStatus: "On Hold" }), isPinned: false, isDefault: true, order: 10 },
-];
-
-// ── 19 Realistic Interactive Demo Cards ──────────────────────────────────────
-const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
-  // 1. Discovery (3 clients)
-  {
-    id: 101,
-    firstName: "Maya",
-    lastName: "Thompson",
-    fullName: "Maya Thompson",
-    schoolName: "Roosevelt Elementary",
-    countyDistrict: "Fulton County",
-    planType: "IEP",
-    planTier: "$55",
-    pipelineStage: "Discovery",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Jordan Lee",
-    assignedAdvocateInitials: "JL",
-    needsAttention: false,
-    primaryTask: "Discovery call pending",
-    primaryTaskIcon: "clock",
-    secondaryTask: "Tomorrow, 10:00 AM",
-    secondaryTaskIcon: "calendar",
-  },
-  {
-    id: 102,
-    firstName: "Ethan",
-    lastName: "Parker",
-    fullName: "Ethan Parker",
-    schoolName: "Lincoln Middle School",
-    countyDistrict: "Cobb County",
-    planType: "504",
-    planTier: "Pay Per Use",
-    pipelineStage: "Discovery",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Maya Singh",
-    assignedAdvocateInitials: "MS",
-    needsAttention: false,
-    primaryTask: "Discovery call pending",
-    primaryTaskIcon: "clock",
-    secondaryTask: "Apr 28, 2025",
-    secondaryTaskIcon: "calendar",
-  },
-  {
-    id: 103,
-    firstName: "Sofia",
-    lastName: "Martinez",
-    fullName: "Sofia Martinez",
-    schoolName: "Cedar Grove Elementary",
-    countyDistrict: "DeKalb County",
-    planType: "IEP",
-    planTier: "Scholarship",
-    pipelineStage: "Discovery",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Kevin Liu",
-    assignedAdvocateInitials: "KL",
-    needsAttention: false,
-    primaryTask: "Parent referral – call to schedule",
-    primaryTaskIcon: "clock",
-    secondaryTask: "Apr 29, 2025",
-    secondaryTaskIcon: "calendar",
-  },
-
-  // 2. Intake / Onboarding (3 clients)
-  {
-    id: 104,
-    firstName: "Noah",
-    lastName: "Williams",
-    fullName: "Noah Williams",
-    schoolName: "Maplewood Elementary",
-    countyDistrict: "Fulton County",
-    planType: "IEP",
-    planTier: "$105",
-    pipelineStage: "Intake / Onboarding",
-    accountStatus: "Onboarding",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Erin Smith",
-    assignedAdvocateInitials: "ES",
-    needsAttention: false,
-    primaryTask: "Agreement sent",
-    primaryTaskIcon: "check",
-    secondaryTask: "Awaiting parent signature",
-    secondaryTaskIcon: "clock",
-  },
-  {
-    id: 105,
-    firstName: "Lily",
-    lastName: "Chen",
-    fullName: "Lily Chen",
-    schoolName: "Riverside Middle School",
-    countyDistrict: "Gwinnett County",
-    planType: "504",
-    planTier: "$55",
-    pipelineStage: "Intake / Onboarding",
-    accountStatus: "Onboarding",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Daniel Torres",
-    assignedAdvocateInitials: "DT",
-    needsAttention: false,
-    primaryTask: "Portal setup",
-    primaryTaskIcon: "check",
-    secondaryTask: "Send welcome email",
-    secondaryTaskIcon: "mail",
-  },
-  {
-    id: 106,
-    firstName: "Lucas",
-    lastName: "Bennett",
-    fullName: "Lucas Bennett",
-    schoolName: "Pine Hill High School",
-    countyDistrict: "Cobb County",
-    planType: "IEP",
-    planTier: "Pay Per Use",
-    pipelineStage: "Intake / Onboarding",
-    accountStatus: "Onboarding",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Jordan Lee",
-    assignedAdvocateInitials: "JL",
-    needsAttention: false,
-    primaryTask: "Intake form in progress",
-    primaryTaskIcon: "clock",
-    secondaryTask: "Follow up with parent",
-    secondaryTaskIcon: "check",
-  },
-
-  // 3. Records Review (3 clients)
-  {
-    id: 107,
-    firstName: "Ava",
-    lastName: "Robinson",
-    fullName: "Ava Robinson",
-    schoolName: "Westbrook Elementary",
-    countyDistrict: "Fulton County",
-    planType: "Records",
-    planTier: "$105",
-    pipelineStage: "Records Review",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Maya Singh",
-    assignedAdvocateInitials: "MS",
-    needsAttention: false,
-    primaryTask: "Records uploaded",
-    primaryTaskIcon: "check",
-    secondaryTask: "Review and summarize",
-    secondaryTaskIcon: "calendar",
-  },
-  {
-    id: 108,
-    firstName: "Mason",
-    lastName: "Clark",
-    fullName: "Mason Clark",
-    schoolName: "Northside Middle School",
-    countyDistrict: "Atlanta Public Schools",
-    planType: "IEP",
-    planTier: "Scholarship",
-    pipelineStage: "Records Review",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Erin Smith",
-    assignedAdvocateInitials: "ES",
-    needsAttention: false,
-    primaryTask: "Comparator needed",
-    primaryTaskIcon: "check",
-    secondaryTask: "Request district data",
-    secondaryTaskIcon: "check",
-  },
-  {
-    id: 109,
-    firstName: "Isabella",
-    lastName: "Green",
-    fullName: "Isabella Green",
-    schoolName: "Fairview High School",
-    countyDistrict: "DeKalb County",
-    planType: "504",
-    planTier: "$55",
-    pipelineStage: "Records Review",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Daniel Torres",
-    assignedAdvocateInitials: "DT",
-    needsAttention: false,
-    primaryTask: "Records uploaded",
-    primaryTaskIcon: "check",
-    secondaryTask: "Identify key issues",
-    secondaryTaskIcon: "calendar",
-  },
-
-  // 4. School Contact (2 clients)
-  {
-    id: 110,
-    firstName: "Oliver",
-    lastName: "Hayes",
-    fullName: "Oliver Hayes",
-    schoolName: "Sunnyvale Elementary",
-    countyDistrict: "Fulton County",
-    planType: "Meeting",
-    planTier: "$55",
-    pipelineStage: "School Contact",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Kevin Liu",
-    assignedAdvocateInitials: "KL",
-    needsAttention: false,
-    primaryTask: "Notify school",
-    primaryTaskIcon: "check",
-    secondaryTask: "Send formal letter",
-    secondaryTaskIcon: "mail",
-  },
-  {
-    id: 111,
-    firstName: "Emma",
-    lastName: "Scott",
-    fullName: "Emma Scott",
-    schoolName: "Lakeview Middle School",
-    countyDistrict: "Cobb County",
-    planType: "IEP",
-    planTier: "$105",
-    pipelineStage: "School Contact",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Maya Singh",
-    assignedAdvocateInitials: "MS",
-    needsAttention: false,
-    primaryTask: "Request draft IEP",
-    primaryTaskIcon: "check",
-    secondaryTask: "Follow up in 2 days",
-    secondaryTaskIcon: "clock",
-  },
-
-  // 5. Meeting Scheduled (2 clients)
-  {
-    id: 112,
-    firstName: "Benjamin",
-    lastName: "Carter",
-    fullName: "Benjamin Carter",
-    schoolName: "Grandview Elementary",
-    countyDistrict: "Fulton County",
-    planType: "IEP",
-    planTier: "$105",
-    pipelineStage: "Meeting Scheduled",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Erin Smith",
-    assignedAdvocateInitials: "ES",
-    needsAttention: false,
-    primaryTask: "May 2, 2025 · 10:00 AM",
-    primaryTaskIcon: "calendar",
-    secondaryTask: "Pre-meeting prep",
-    secondaryTaskIcon: "clock",
-    meetingDate: "May 2, 2025 · 10:00 AM",
-  },
-  {
-    id: 113,
-    firstName: "Chloe",
-    lastName: "Adams",
-    fullName: "Chloe Adams",
-    schoolName: "Willow Creek High School",
-    countyDistrict: "Gwinnett County",
-    planType: "504",
-    planTier: "$55",
-    pipelineStage: "Meeting Scheduled",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Jordan Lee",
-    assignedAdvocateInitials: "JL",
-    needsAttention: false,
-    primaryTask: "May 5, 2025 · 1:00 PM",
-    primaryTaskIcon: "calendar",
-    secondaryTask: "Prepare talking points",
-    secondaryTaskIcon: "check",
-    meetingDate: "May 5, 2025 · 1:00 PM",
-  },
-
-  // 6. State Complaint (2 clients)
-  {
-    id: 114,
-    firstName: "Amelia",
-    lastName: "Brooks",
-    fullName: "Amelia Brooks",
-    schoolName: "Summit High School",
-    countyDistrict: "Atlanta Public Schools",
-    planType: "Complaint",
-    planTier: "Pay Per Use",
-    pipelineStage: "State Complaint",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Kevin Liu",
-    assignedAdvocateInitials: "KL",
-    needsAttention: false,
-    primaryTask: "Drafting",
-    primaryTaskIcon: "clock",
-    secondaryTask: "Review with legal template",
-    secondaryTaskIcon: "check",
-  },
-  {
-    id: 115,
-    firstName: "Caleb",
-    lastName: "Foster",
-    fullName: "Caleb Foster",
-    schoolName: "Brookdale Elementary",
-    countyDistrict: "DeKalb County",
-    planType: "Complaint",
-    planTier: "$105",
-    pipelineStage: "State Complaint",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Erin Smith",
-    assignedAdvocateInitials: "ES",
-    needsAttention: false,
-    primaryTask: "Waiting on parent approval",
-    primaryTaskIcon: "check",
-    secondaryTask: "Share draft for review",
-    secondaryTaskIcon: "mail",
-  },
-
-  // 7. Monitoring (2 clients)
-  {
-    id: 116,
-    firstName: "Harper",
-    lastName: "Lewis",
-    fullName: "Harper Lewis",
-    schoolName: "Meadowlark Elementary",
-    countyDistrict: "Fulton County",
-    planType: "Monitoring",
-    planTier: "$55",
-    pipelineStage: "Monitoring",
-    accountStatus: "Active",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Maya Singh",
-    assignedAdvocateInitials: "MS",
-    needsAttention: false,
-    primaryTask: "Progress monitoring",
-    primaryTaskIcon: "clock",
-    secondaryTask: "Check in with parent",
-    secondaryTaskIcon: "check",
-  },
-  {
-    id: 117,
-    firstName: "Elijah",
-    lastName: "Young",
-    fullName: "Elijah Young",
-    schoolName: "Stonegate High School",
-    countyDistrict: "Cobb County",
-    planType: "IEP",
-    planTier: "Renewal",
-    pipelineStage: "Monitoring",
-    accountStatus: "Renewal Needed",
-    billingStatus: "Current",
-    contractStatus: "Active",
-    assignedAdvocateName: "Jordan Lee",
-    assignedAdvocateInitials: "JL",
-    needsAttention: false,
-    primaryTask: "Waiting on transportation",
-    primaryTaskIcon: "clock",
-    secondaryTask: "Follow up with school",
-    secondaryTaskIcon: "check",
-  },
-
-  // 8. Closed (2 clients)
-  {
-    id: 118,
-    firstName: "Grace",
-    lastName: "Nelson",
-    fullName: "Grace Nelson",
-    schoolName: "Oakridge Elementary",
-    countyDistrict: "Fulton County",
-    planType: "Resolved",
-    planTier: "$105",
-    pipelineStage: "Closed",
-    accountStatus: "Closed",
-    billingStatus: "Current",
-    contractStatus: "Renewed",
-    assignedAdvocateName: "Daniel Torres",
-    assignedAdvocateInitials: "DT",
-    needsAttention: false,
-    primaryTask: "IEP in place",
-    primaryTaskIcon: "check",
-    secondaryTask: "Closed Apr 15, 2025",
-    secondaryTaskIcon: "calendar",
-  },
-  {
-    id: 119,
-    firstName: "Henry",
-    lastName: "Phillips",
-    fullName: "Henry Phillips",
-    schoolName: "Redwood Middle School",
-    countyDistrict: "Gwinnett County",
-    planType: "Vault",
-    planTier: "Nonpay",
-    pipelineStage: "Closed",
-    accountStatus: "Closed",
-    billingStatus: "Payment Failed",
-    contractStatus: "Expired",
-    assignedAdvocateName: "Kevin Liu",
-    assignedAdvocateInitials: "KL",
-    needsAttention: true,
-    attentionReason: "Payment Failed / Past Due",
-    primaryTask: "Vault only: access",
-    primaryTaskIcon: "clock",
-    secondaryTask: "Closed Apr 10, 2025",
-    secondaryTaskIcon: "calendar",
-  },
-];
+function matchesPlanFilter(cardPlan: string, filterPlan: string): boolean {
+  const c = (cardPlan || "").toLowerCase();
+  const f = (filterPlan || "").toLowerCase();
+  if (f === "$55" || f === "navigator") return c === "$55" || c.includes("navigator");
+  if (f === "$105" || f === "anchor") return c === "$105" || c.includes("anchor");
+  if (f === "family") return c.includes("family");
+  if (f === "scholarship") return c.includes("scholarship");
+  if (f === "pay per use") return c.includes("pay per use");
+  if (f === "tools only") return c.includes("tools") || c.includes("vault");
+  if (f === "on hold") return c.includes("hold");
+  return c === f;
+}
 
 export default function AdvocacyPipeline() {
   const utils = trpc.useUtils();
+  const [, setLocation] = useLocation();
   const { user } = useAuth();
   const currentUserName = user?.name || "Byron Honea";
 
-  // ── Database Queries ────────────────────────────────────────────────────────
+  // ── Backend Queries ─────────────────────────────────────────────────────────
   const { data: serverStages } = trpc.pipeline.stages.list.useQuery();
   const { data: serverViews } = trpc.pipeline.views.list.useQuery();
+  const { data: serverCards } = trpc.pipeline.cards.list.useQuery();
 
   // ── Backend Mutations ───────────────────────────────────────────────────────
   const updateStageMutation = trpc.pipeline.cards.updateStage.useMutation({
     onSuccess: () => utils.pipeline.cards.list.invalidate(),
+    onError: (err) => toast.error(err.message || "Failed to update pipeline stage"),
+  });
+
+  const assignAdvocateMutation = trpc.pipeline.cards.assignAdvocate.useMutation({
+    onSuccess: () => utils.pipeline.cards.list.invalidate(),
+    onError: (err) => toast.error(err.message || "Failed to assign advocate"),
   });
 
   const upsertStageMutation = trpc.pipeline.stages.upsert.useMutation({
-    onSuccess: () => utils.pipeline.stages.list.invalidate(),
+    onSuccess: () => {
+      utils.pipeline.stages.list.invalidate();
+      utils.pipeline.cards.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Failed to save stage"),
   });
 
   const reorderStagesMutation = trpc.pipeline.stages.reorder.useMutation({
     onSuccess: () => utils.pipeline.stages.list.invalidate(),
+    onError: (err) => toast.error(err.message || "Failed to reorder stages"),
+  });
+
+  const archiveStageMutation = trpc.pipeline.stages.archive.useMutation({
+    onSuccess: () => {
+      utils.pipeline.stages.list.invalidate();
+      utils.pipeline.cards.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Failed to archive stage"),
+  });
+
+  const deleteStageMutation = trpc.pipeline.stages.delete.useMutation({
+    onSuccess: () => {
+      utils.pipeline.stages.list.invalidate();
+      utils.pipeline.cards.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Failed to delete stage"),
   });
 
   const upsertViewMutation = trpc.pipeline.views.upsert.useMutation({
     onSuccess: () => utils.pipeline.views.list.invalidate(),
+    onError: (err) => toast.error(err.message || "Failed to save pipeline view"),
   });
 
-  // ── Local Persistent State ──────────────────────────────────────────────────
-  const [stagesState, setStagesState] = useState<PipelineStageItem[]>(() => {
-    try {
-      const cached = localStorage.getItem("waypoint_advocacy_pipeline_stages");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // Ignore
-    }
-    return DEFAULT_STAGES;
+  const deleteViewMutation = trpc.pipeline.views.delete.useMutation({
+    onSuccess: () => utils.pipeline.views.list.invalidate(),
+    onError: (err) => toast.error(err.message || "Failed to delete custom view"),
   });
 
-  const [cardsState, setCardsState] = useState<PipelineCardItem[]>(() => {
-    try {
-      const cached = localStorage.getItem("waypoint_advocacy_pipeline_cards");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // Ignore
-    }
-    return INITIAL_DEMO_CARDS;
-  });
+  // ── UI State ────────────────────────────────────────────────────────────────
+  const [stagesState, setStagesState] = useState<PipelineStageItem[]>(
+    DEFAULT_PIPELINE_STAGES_CLIENT
+  );
+  const [cardsState, setCardsState] = useState<PipelineCardItem[]>(
+    INITIAL_DEMO_CARDS
+  );
+  const [customViewsState, setCustomViewsState] = useState<SavedViewItem[]>([]);
 
-  const [customViewsState, setCustomViewsState] = useState<SavedViewItem[]>(() => {
-    try {
-      const cached = localStorage.getItem("waypoint_advocacy_pipeline_views");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // Ignore
-    }
-    return [];
-  });
-
-  // Active View & Filter states
   const [activeViewSlug, setActiveViewSlug] = useState("all-clients");
   const [filters, setFilters] = useState<PipelineFilters>({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStageFilter, setSelectedStageFilter] = useState<string | null>(null);
+  const [activeGroupFilter, setActiveGroupFilter] = useState<"all" | PipelineGroupType>("all");
+  const [viewMode, setViewMode] = useState<"board" | "list">("board");
+  const [sortField, setSortField] = useState<PipelineSortField>("name");
+  const [sortDirection, setSortDirection] = useState<PipelineSortDirection>("asc");
 
-  // Modals state
+  // Modals
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
   const [showAddStageModal, setShowAddStageModal] = useState(false);
   const [showNewViewModal, setShowNewViewModal] = useState(false);
 
-  // Sync server stages if updated
+  // Sync stages from server
   useEffect(() => {
     if (serverStages && serverStages.length > 0) {
-      setStagesState((prev) => {
-        const merged = serverStages.map((ss: any, idx: number) => {
-          const existing = prev.find((p) => p.slug === ss.slug || p.id === ss.id);
-          return {
-            id: ss.id,
-            name: ss.name,
-            slug: ss.slug || ss.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-            order: existing?.order ?? idx + 1,
-            accentColor: ss.accentColor || "#38BDF8",
-            iconName: ss.iconName || "Compass",
-            category: ss.category || "active",
-            isArchived: ss.isArchived ?? false,
-            isDefault: ss.isDefault ?? false,
-          };
-        });
-        merged.sort((a, b) => a.order - b.order);
-        return merged;
-      });
+      const normalized = serverStages
+        .map((ss: any, idx: number) => ({
+          id: ss.id,
+          name: ss.name,
+          slug: ss.slug || ss.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          order: ss.order ?? idx + 1,
+          accentColor: ss.accentColor || "#38BDF8",
+          iconName: ss.iconName || "Compass",
+          category: ss.category || "active",
+          pipelineGroup: (ss.pipelineGroup || "active_project") as PipelineGroupType,
+          isArchived: Boolean(ss.isArchived),
+          isDefault: Boolean(ss.isDefault),
+        }))
+        .sort((a, b) => a.order - b.order);
+      setStagesState(normalized);
     }
   }, [serverStages]);
 
-  // Combine default saved views + server views + custom views (respecting personal scope)
-  const allSavedViews: SavedViewItem[] = useMemo(() => {
-    const list = [...DEFAULT_SAVED_VIEWS];
-    if (serverViews && serverViews.length > 0) {
-      serverViews.forEach((sv: any) => {
-        if (!list.some((v) => v.slug === sv.slug)) {
-          list.push(sv);
-        }
-      });
-    }
-    customViewsState.forEach((cv) => {
-      // Include view if shared or created by current user
-      if (!list.some((v) => v.slug === cv.slug)) {
-        list.push(cv);
+  // Sync real student & family cards from server merged with demo cards
+  useEffect(() => {
+    if (serverCards && Array.isArray(serverCards)) {
+      if (serverCards.length > 0) {
+        const realIds = new Set(serverCards.map((c: any) => Number(c.id)));
+        const merged = [
+          ...(serverCards as PipelineCardItem[]),
+          ...INITIAL_DEMO_CARDS.filter((d) => !realIds.has(d.id)),
+        ];
+        setCardsState(merged);
       }
-    });
-    return list;
+    }
+  }, [serverCards]);
+
+  // Combine default + server + custom views
+  const allSavedViews: SavedViewItem[] = useMemo(() => {
+    const map = new Map<string, SavedViewItem>();
+    DEFAULT_SAVED_VIEWS_CLIENT.forEach((v) => map.set(v.slug, v));
+    if (serverViews && Array.isArray(serverViews)) {
+      serverViews.forEach((sv: any) => map.set(sv.slug, sv));
+    }
+    customViewsState.forEach((cv) => map.set(cv.slug, cv));
+    return Array.from(map.values()).sort((a, b) => a.order - b.order);
   }, [serverViews, customViewsState]);
 
-  // Active View object and rules
-  const activeViewObj = useMemo(() => {
-    return allSavedViews.find((v) => v.slug === activeViewSlug);
-  }, [allSavedViews, activeViewSlug]);
+  const activeViewObj = useMemo(
+    () => allSavedViews.find((v) => v.slug === activeViewSlug),
+    [allSavedViews, activeViewSlug]
+  );
 
   const viewRules = useMemo(() => {
     if (!activeViewObj?.filtersJson) return {};
@@ -675,105 +184,183 @@ export default function AdvocacyPipeline() {
     }
   }, [activeViewObj]);
 
-  // ── Client Filtering Engine (Saved View + Filter Popover) ───────────────────
+  // Synchronize group filter when selecting Leads / Active Projects views
+  useEffect(() => {
+    if (viewRules.pipelineGroup === "opportunity") {
+      setActiveGroupFilter("opportunity");
+    } else if (viewRules.pipelineGroup === "active_project") {
+      setActiveGroupFilter("active_project");
+    } else {
+      setActiveGroupFilter("all");
+    }
+  }, [viewRules.pipelineGroup]);
+
+  // ── Filtering & Sorting Engine ──────────────────────────────────────────────
+  const matchesCardRules = (card: PipelineCardItem, rules: PipelineFilters) => {
+    if (rules.isMyWork) {
+      const adv = (card.assignedAdvocateName || "").toLowerCase();
+      const cur = currentUserName.toLowerCase();
+      const isMatch =
+        adv.includes(cur) ||
+        cur.includes(adv) ||
+        adv === "byron honea" ||
+        adv === "erin smith";
+      if (!isMatch) return false;
+    }
+    if (rules.pipelineGroup) {
+      const group = card.pipelineGroup || (card.isOpportunity ? "opportunity" : "active_project");
+      if (group !== rules.pipelineGroup) return false;
+    }
+    if (rules.planTier && !matchesPlanFilter(card.planTier, rules.planTier)) {
+      return false;
+    }
+    if (
+      rules.accountStatus &&
+      (card.accountStatus || "").toLowerCase() !== rules.accountStatus.toLowerCase()
+    ) {
+      return false;
+    }
+    if (
+      rules.billingStatus &&
+      (card.billingStatus || "").toLowerCase() !== rules.billingStatus.toLowerCase()
+    ) {
+      return false;
+    }
+    if (
+      rules.advocate &&
+      (card.assignedAdvocateName || "").toLowerCase() !== rules.advocate.toLowerCase()
+    ) {
+      return false;
+    }
+    if (
+      rules.district &&
+      !(card.countyDistrict || "").toLowerCase().includes(rules.district.toLowerCase())
+    ) {
+      return false;
+    }
+    if (
+      rules.caseType &&
+      (card.planType || "").toLowerCase() !== rules.caseType.toLowerCase()
+    ) {
+      return false;
+    }
+    if (
+      rules.stage &&
+      (card.pipelineStage || "").toLowerCase() !== rules.stage.toLowerCase()
+    ) {
+      return false;
+    }
+    if (rules.needsAttentionOnly && !card.needsAttention) {
+      return false;
+    }
+    return true;
+  };
+
   const filteredCards = useMemo(() => {
-    return cardsState.filter((card) => {
-      // 1. "My Work" Rule
-      if (viewRules.isMyWork) {
-        // Match advocate name with current user name or default to top advocate assignment in demo mode
-        const adv = card.assignedAdvocateName?.toLowerCase() || "";
-        const cur = currentUserName.toLowerCase();
-        const matchesCurrent = adv.includes(cur) || cur.includes(adv);
-        // For testing "My Work" when user name is Byron or test user, match Byron or first assigned
-        const isMyWorkMatch = matchesCurrent || adv === "byron honea" || adv === "erin smith";
-        if (!isMyWorkMatch) return false;
+    const stageOrderMap = new Map<string, number>();
+    stagesState.forEach((s) => stageOrderMap.set(s.name.toLowerCase(), s.order));
+
+    const result = cardsState.filter((card) => {
+      if (!matchesCardRules(card, viewRules)) return false;
+      if (!matchesCardRules(card, filters)) return false;
+
+      if (activeGroupFilter !== "all") {
+        const cardGroup =
+          card.pipelineGroup || (card.isOpportunity ? "opportunity" : "active_project");
+        if (cardGroup !== activeGroupFilter) return false;
       }
 
-      // 2. Saved View filters
-      if (viewRules.planTier) {
-        const vt = viewRules.planTier.toLowerCase();
-        const ct = card.planTier.toLowerCase();
-        if (vt === "tools only" && !ct.includes("tools") && !ct.includes("vault")) return false;
-        if (vt !== "tools only" && ct !== vt) return false;
-      }
-      if (viewRules.accountStatus && card.accountStatus.toLowerCase() !== viewRules.accountStatus.toLowerCase()) {
-        return false;
-      }
-      if (viewRules.billingStatus && card.billingStatus.toLowerCase() !== viewRules.billingStatus.toLowerCase()) {
-        return false;
-      }
-      if (viewRules.advocate && card.assignedAdvocateName.toLowerCase() !== viewRules.advocate.toLowerCase()) {
-        return false;
-      }
-      if (viewRules.district && !card.countyDistrict?.toLowerCase().includes(viewRules.district.toLowerCase())) {
-        return false;
-      }
-      if (viewRules.caseType && card.planType.toLowerCase() !== viewRules.caseType.toLowerCase()) {
-        return false;
-      }
-      if (viewRules.needsAttentionOnly && !card.needsAttention) {
-        return false;
-      }
-
-      // 3. Filter Popover filters
-      if (filters.planTier) {
-        const ft = filters.planTier.toLowerCase();
-        const ct = card.planTier.toLowerCase();
-        if (ft === "tools only" && !ct.includes("tools") && !ct.includes("vault")) return false;
-        if (ft !== "tools only" && ct !== ft) return false;
-      }
-      if (filters.advocate && card.assignedAdvocateName.toLowerCase() !== filters.advocate.toLowerCase()) {
-        return false;
-      }
-      if (filters.district && !card.countyDistrict?.toLowerCase().includes(filters.district.toLowerCase())) {
-        return false;
-      }
-      if (filters.caseType && card.planType.toLowerCase() !== filters.caseType.toLowerCase()) {
-        return false;
-      }
-      if (filters.needsAttentionOnly && !card.needsAttention) {
-        return false;
-      }
-      if (filters.accountStatus && card.accountStatus.toLowerCase() !== filters.accountStatus.toLowerCase()) {
-        return false;
-      }
-      if (filters.billingStatus && card.billingStatus.toLowerCase() !== filters.billingStatus.toLowerCase()) {
-        return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const hay = [
+          card.fullName,
+          card.parentName,
+          card.parentEmail,
+          card.schoolName,
+          card.countyDistrict,
+          card.caseId,
+          card.pipelineStage,
+          card.assignedAdvocateName,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
       }
 
       return true;
     });
-  }, [cardsState, viewRules, filters, currentUserName]);
 
-  // Compute live card counts per saved view
+    result.sort((a, b) => {
+      const dir = sortDirection === "asc" ? 1 : -1;
+      if (sortField === "name") {
+        return a.fullName.localeCompare(b.fullName) * dir;
+      }
+      if (sortField === "family") {
+        return (a.parentName || a.lastName).localeCompare(b.parentName || b.lastName) * dir;
+      }
+      if (sortField === "stage") {
+        const oa = stageOrderMap.get(a.pipelineStage.toLowerCase()) ?? 99;
+        const ob = stageOrderMap.get(b.pipelineStage.toLowerCase()) ?? 99;
+        return (oa - ob) * dir;
+      }
+      if (sortField === "lastActivity") {
+        const ta = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+        const tb = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+        return (tb - ta) * dir;
+      }
+      if (sortField === "nextDate") {
+        return (a.meetingDate || a.primaryTask || "").localeCompare(
+          b.meetingDate || b.primaryTask || ""
+        ) * dir;
+      }
+      return 0;
+    });
+
+    return result;
+  }, [
+    cardsState,
+    viewRules,
+    filters,
+    activeGroupFilter,
+    searchQuery,
+    sortField,
+    sortDirection,
+    stagesState,
+    currentUserName,
+  ]);
+
+  const displayedCards = useMemo(() => {
+    if (!selectedStageFilter) return filteredCards;
+    return filteredCards.filter(
+      (c) => c.pipelineStage.toLowerCase() === selectedStageFilter.toLowerCase()
+    );
+  }, [filteredCards, selectedStageFilter]);
+
+  const displayedStages = useMemo(() => {
+    return stagesState.filter((s) => {
+      if (s.isArchived) return false;
+      if (activeGroupFilter !== "all" && s.pipelineGroup !== activeGroupFilter) {
+        return false;
+      }
+      if (
+        selectedStageFilter &&
+        s.name.toLowerCase() !== selectedStageFilter.toLowerCase()
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [stagesState, activeGroupFilter, selectedStageFilter]);
+
   const viewCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     allSavedViews.forEach((view) => {
       try {
         const rules = JSON.parse(view.filtersJson || "{}");
-        const count = cardsState.filter((card) => {
-          if (rules.isMyWork) {
-            const adv = card.assignedAdvocateName?.toLowerCase() || "";
-            const cur = currentUserName.toLowerCase();
-            const matchesCurrent = adv.includes(cur) || cur.includes(adv);
-            const isMyWorkMatch = matchesCurrent || adv === "byron honea" || adv === "erin smith";
-            if (!isMyWorkMatch) return false;
-          }
-          if (rules.planTier) {
-            const vt = rules.planTier.toLowerCase();
-            const ct = card.planTier.toLowerCase();
-            if (vt === "tools only" && (ct.includes("tools") || ct.includes("vault"))) return true;
-            if (ct !== vt) return false;
-          }
-          if (rules.accountStatus && card.accountStatus.toLowerCase() !== rules.accountStatus.toLowerCase()) return false;
-          if (rules.billingStatus && card.billingStatus.toLowerCase() !== rules.billingStatus.toLowerCase()) return false;
-          if (rules.advocate && card.assignedAdvocateName.toLowerCase() !== rules.advocate.toLowerCase()) return false;
-          if (rules.district && !card.countyDistrict?.toLowerCase().includes(rules.district.toLowerCase())) return false;
-          if (rules.caseType && card.planType.toLowerCase() !== rules.caseType.toLowerCase()) return false;
-          if (rules.needsAttentionOnly && !card.needsAttention) return false;
-          return true;
-        }).length;
-        counts[view.slug] = count;
+        counts[view.slug] = cardsState.filter((card) =>
+          matchesCardRules(card, rules)
+        ).length;
       } catch {
         counts[view.slug] = cardsState.length;
       }
@@ -781,49 +368,57 @@ export default function AdvocacyPipeline() {
     return counts;
   }, [cardsState, allSavedViews, currentUserName]);
 
-  // ── Drag & Drop Handlers ────────────────────────────────────────────────────
+  // ── Action Handlers ─────────────────────────────────────────────────────────
   const handleMoveCard = (cardId: number, targetStageName: string) => {
-    setCardsState((prev) => {
-      const updated = prev.map((c) =>
-        c.id === cardId ? { ...c, pipelineStage: targetStageName } : c
-      );
-      try {
-        localStorage.setItem("waypoint_advocacy_pipeline_cards", JSON.stringify(updated));
-      } catch {
-        // Ignore
-      }
-      return updated;
-    });
+    const targetStageObj = stagesState.find(
+      (s) => s.name.toLowerCase() === targetStageName.toLowerCase()
+    );
+    const nextGroup: PipelineGroupType =
+      targetStageObj?.pipelineGroup || "active_project";
 
-    toast.success(`Client moved to ${targetStageName}`);
+    setCardsState((prev) =>
+      prev.map((c) =>
+        c.id === cardId
+          ? {
+              ...c,
+              pipelineStage: targetStageName,
+              pipelineGroup: nextGroup,
+              isOpportunity: nextGroup === "opportunity",
+            }
+          : c
+      )
+    );
 
+    toast.success(`Moved to ${targetStageName}`);
     updateStageMutation.mutate({
       contactId: cardId,
       stage: targetStageName,
     });
   };
 
-  const handleReorderCards = (draggedCardId: number, targetCardId: number, stageName: string) => {
-    setCardsState((prev) => {
-      const stageCards = prev.filter((c) => c.pipelineStage.toLowerCase() === stageName.toLowerCase());
-      const otherCards = prev.filter((c) => c.pipelineStage.toLowerCase() !== stageName.toLowerCase());
+  const handleAssignAdvocate = (cardId: number, advocateName: string) => {
+    const initials = advocateName
+      .split(/\s+/)
+      .map((p) => p[0]?.toUpperCase() || "")
+      .join("")
+      .slice(0, 2);
 
-      const draggedIndex = stageCards.findIndex((c) => c.id === draggedCardId);
-      const targetIndex = stageCards.findIndex((c) => c.id === targetCardId);
+    setCardsState((prev) =>
+      prev.map((c) =>
+        c.id === cardId
+          ? {
+              ...c,
+              assignedAdvocateName: advocateName,
+              assignedAdvocateInitials: initials,
+            }
+          : c
+      )
+    );
 
-      if (draggedIndex < 0 || targetIndex < 0) return prev;
-
-      const newStageCards = [...stageCards];
-      const [draggedItem] = newStageCards.splice(draggedIndex, 1);
-      newStageCards.splice(targetIndex, 0, draggedItem);
-
-      const combined = [...otherCards, ...newStageCards];
-      try {
-        localStorage.setItem("waypoint_advocacy_pipeline_cards", JSON.stringify(combined));
-      } catch {
-        // Ignore
-      }
-      return combined;
+    toast.success(`Assigned advocate: ${advocateName}`);
+    assignAdvocateMutation.mutate({
+      contactId: cardId,
+      advocateName,
     });
   };
 
@@ -831,69 +426,39 @@ export default function AdvocacyPipeline() {
     setStagesState((prev) => {
       const draggedIdx = prev.findIndex((s) => s.id === draggedStageId);
       const targetIdx = prev.findIndex((s) => s.id === targetStageId);
-
       if (draggedIdx < 0 || targetIdx < 0) return prev;
 
-      const newStages = [...prev];
-      const [draggedItem] = newStages.splice(draggedIdx, 1);
-      newStages.splice(targetIdx, 0, draggedItem);
-
-      const reordered = newStages.map((s, idx) => ({ ...s, order: idx + 1 }));
-      try {
-        localStorage.setItem("waypoint_advocacy_pipeline_stages", JSON.stringify(reordered));
-      } catch {
-        // Ignore
-      }
+      const copy = [...prev];
+      const [moved] = copy.splice(draggedIdx, 1);
+      copy.splice(targetIdx, 0, moved);
+      const reordered = copy.map((s, idx) => ({ ...s, order: idx + 1 }));
 
       reorderStagesMutation.mutate(
         reordered.map((s) => ({ id: s.id, order: s.order }))
       );
-
       toast.success("Pipeline stages reordered");
       return reordered;
     });
   };
 
-  const handleTogglePinView = (view: SavedViewItem) => {
-    const updated = customViewsState.map((v) =>
-      v.slug === view.slug ? { ...v, isPinned: !v.isPinned } : v
-    );
-    setCustomViewsState(updated);
-    try {
-      localStorage.setItem("waypoint_advocacy_pipeline_views", JSON.stringify(updated));
-    } catch {
-      // Ignore
-    }
-    toast.success(view.isPinned ? `Unpinned "${view.name}"` : `Pinned "${view.name}" to view bar`);
-  };
-
   const handleSaveStages = (updatedStages: PipelineStageItem[]) => {
     setStagesState(updatedStages);
-    try {
-      localStorage.setItem("waypoint_advocacy_pipeline_stages", JSON.stringify(updatedStages));
-    } catch {
-      // Ignore
-    }
-
-    const reorderPayload = updatedStages.map((s, idx) => ({
-      id: s.id,
-      order: idx + 1,
-    }));
-    reorderStagesMutation.mutate(reorderPayload);
-
+    reorderStagesMutation.mutate(
+      updatedStages.map((s, idx) => ({ id: s.id, order: idx + 1 }))
+    );
     updatedStages.forEach((s) => {
       upsertStageMutation.mutate({
-        id: s.isDefault ? undefined : s.id,
+        id: s.id,
         name: s.name,
         order: s.order,
         accentColor: s.accentColor,
         iconName: s.iconName,
         category: s.category,
+        pipelineGroup: s.pipelineGroup,
         isArchived: s.isArchived,
       });
     });
-
-    toast.success("Pipeline configuration saved");
+    toast.success("Pipeline stages saved");
   };
 
   const handleAddCustomStage = (stageData: Partial<PipelineStageItem>) => {
@@ -906,27 +471,20 @@ export default function AdvocacyPipeline() {
       accentColor: stageData.accentColor || "#38BDF8",
       iconName: stageData.iconName || "Compass",
       category: stageData.category || "active",
+      pipelineGroup: stageData.pipelineGroup || "active_project",
       isArchived: false,
       isDefault: false,
     };
 
-    const updated = [...stagesState, newStage];
-    setStagesState(updated);
-    try {
-      localStorage.setItem("waypoint_advocacy_pipeline_stages", JSON.stringify(updated));
-    } catch {
-      // Ignore
-    }
-
+    setStagesState((prev) => [...prev, newStage]);
     upsertStageMutation.mutate({
       name: newStage.name,
       accentColor: newStage.accentColor,
       category: newStage.category,
+      pipelineGroup: newStage.pipelineGroup,
       iconName: newStage.iconName,
       order: newStage.order,
     });
-
-    toast.success(`Stage "${newStage.name}" added to pipeline`);
   };
 
   const handleSaveNewView = (newViewData: {
@@ -947,63 +505,143 @@ export default function AdvocacyPipeline() {
       order: allSavedViews.length + 1,
     };
 
-    const updated = [...customViewsState, newViewItem];
-    setCustomViewsState(updated);
-    try {
-      localStorage.setItem("waypoint_advocacy_pipeline_views", JSON.stringify(updated));
-    } catch {
-      // Ignore
-    }
-
+    setCustomViewsState((prev) => [...prev, newViewItem]);
     upsertViewMutation.mutate({
       name: newViewData.name,
-      filtersJson: JSON.stringify(newViewData.filters),
+      slug,
+      filtersJson: newViewItem.filtersJson,
       isPinned: newViewData.isPinned,
+      isPrivate: newViewData.isPrivate,
       order: newViewItem.order,
     });
-
     setActiveViewSlug(slug);
     toast.success(`Saved view "${newViewData.name}" created`);
+  };
+
+  const handleDeleteView = (view: SavedViewItem) => {
+    if (view.isDefault) return;
+    setCustomViewsState((prev) => prev.filter((v) => v.slug !== view.slug));
+    if (view.id) {
+      deleteViewMutation.mutate({ id: view.id });
+    }
+    if (activeViewSlug === view.slug) {
+      setActiveViewSlug("all-clients");
+    }
+    toast.success(`Deleted custom view "${view.name}"`);
   };
 
   return (
     <ScopedErrorBoundary moduleName="Advocacy Pipeline">
       <div className="space-y-3.5 p-3.5 sm:p-5 lg:p-6 min-h-screen text-slate-100 relative bg-[#000820] w-full overflow-x-hidden">
-        {/* 1. Page Header (Compact) */}
+        {/* 1. Header with Search, Quick Advocate Filter, Board/List Switcher */}
         <AdvocacyPipelineHeader
           onCustomizePipeline={() => setShowCustomizeModal(true)}
           onAddStage={() => setShowAddStageModal(true)}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedAdvocate={filters.advocate}
+          onSelectAdvocate={(advocate) =>
+            setFilters((prev) => ({ ...prev, advocate }))
+          }
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
 
-        {/* 2. Primary Control Row: Saved Views + Compact Filter Button */}
+        {/* 2. Saved Views Bar + Sort + Filter Popover */}
         <SavedViewsBar
           views={allSavedViews}
           activeViewSlug={activeViewSlug}
-          onSelectView={(view) => setActiveViewSlug(view.slug)}
-          onTogglePinView={handleTogglePinView}
+          onSelectView={(view) => {
+            setActiveViewSlug(view.slug);
+            setSelectedStageFilter(null);
+          }}
+          onTogglePinView={(view) => {
+            setCustomViewsState((prev) =>
+              prev.map((v) =>
+                v.slug === view.slug ? { ...v, isPinned: !v.isPinned } : v
+              )
+            );
+            upsertViewMutation.mutate({
+              id: view.id,
+              name: view.name,
+              slug: view.slug,
+              filtersJson: view.filtersJson,
+              isPinned: !view.isPinned,
+              isPrivate: view.isPrivate,
+              order: view.order,
+            });
+          }}
+          onDeleteView={handleDeleteView}
           onNewView={() => setShowNewViewModal(true)}
           viewCounts={viewCounts}
           filters={filters}
           onChangeFilters={setFilters}
-          onClearFilters={() => setFilters({})}
-          matchingCount={filteredCards.length}
+          onClearFilters={() => {
+            setFilters({});
+            setSelectedStageFilter(null);
+          }}
+          matchingCount={displayedCards.length}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onChangeSort={(field, dir) => {
+            setSortField(field);
+            if (dir) setSortDirection(dir);
+          }}
+          stages={stagesState}
         />
 
-        {/* 3. High-Density Kanban Pipeline Board */}
-        <KanbanBoard
+        {/* 3. HoneyBook-Inspired Stage Overview Ribbon (Opportunities + Active Advocacy) */}
+        <StageOverviewGrid
           stages={stagesState}
           cards={filteredCards}
-          onMoveCard={handleMoveCard}
-          onReorderCards={handleReorderCards}
-          onReorderStages={handleReorderStages}
-          onAddCard={(stageName) => {
-            toast.info(`Opening new student intake for stage: ${stageName}`);
+          selectedStageName={selectedStageFilter}
+          activeGroupFilter={activeGroupFilter}
+          onSelectStage={setSelectedStageFilter}
+          onSelectGroup={(grp) => {
+            setActiveGroupFilter(grp);
+            setSelectedStageFilter(null);
           }}
-          onAddCustomStage={() => setShowAddStageModal(true)}
-          onEditStage={() => setShowCustomizeModal(true)}
+          onDropCardOnStage={handleMoveCard}
         />
 
-        {/* 4. Modals */}
+        {/* 4. Pipeline Workspace: Responsive Wrapping Board View or Sortable List View */}
+        {viewMode === "board" ? (
+          <KanbanBoard
+            stages={displayedStages}
+            allStages={stagesState}
+            cards={displayedCards}
+            onMoveCard={handleMoveCard}
+            onAssignAdvocate={handleAssignAdvocate}
+            onReorderStages={handleReorderStages}
+            onAddCard={(stageName) => {
+              toast.info(`Opening intake for ${stageName}`);
+              setLocation("/leads");
+            }}
+            onAddCustomStage={() => setShowAddStageModal(true)}
+            onEditStage={() => setShowCustomizeModal(true)}
+            onArchiveStage={(stage) => archiveStageMutation.mutate({ id: stage.id })}
+            onDeleteStage={(stage) => deleteStageMutation.mutate({ id: stage.id })}
+          />
+        ) : (
+          <PipelineListView
+            cards={displayedCards}
+            stages={stagesState}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSortChange={(field) => {
+              if (sortField === field) {
+                setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+              } else {
+                setSortField(field);
+                setSortDirection("asc");
+              }
+            }}
+            onMoveCard={handleMoveCard}
+            onAssignAdvocate={handleAssignAdvocate}
+          />
+        )}
+
+        {/* 5. Modals */}
         <CustomizePipelineModal
           open={showCustomizeModal}
           onOpenChange={setShowCustomizeModal}

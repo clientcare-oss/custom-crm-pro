@@ -341,7 +341,7 @@ export default function CrewQuarters() {
   const newLeadsCount = (leads as any[]).filter((l) => l.status === "New").length;
   const dbUnreadCount = Array.isArray(unreadMessages) ? (unreadMessages as any[]).length : 0;
   const clientMessagesCount = dbUnreadCount;
-  const newMessagesCount = dbUnreadCount > 0 ? dbUnreadCount : 1;
+  const newMessagesCount = dbUnreadCount;
 
   // Dedicated Full-Viewport Layout for Crew Messages (PG-038-MSG)
   // Ensures the messaging workspace fits 100% inside the view window without page scrolling or clipped headers/footers
@@ -693,7 +693,7 @@ export default function CrewQuarters() {
             {/* Centered Huge Number */}
             <div className="flex-1 flex items-center justify-center my-1 relative z-10">
               <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-                {crewUnreadTotal > 0 ? crewUnreadTotal : (newMessagesCount || 0)}
+                {crewUnreadTotal}
               </div>
             </div>
 

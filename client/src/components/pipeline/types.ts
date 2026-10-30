@@ -1,4 +1,12 @@
-export type StageCategory = "active" | "waiting" | "escalation" | "completed" | "neutral";
+export type StageCategory =
+  | "opportunity"
+  | "active"
+  | "waiting"
+  | "escalation"
+  | "completed"
+  | "neutral";
+
+export type PipelineGroupType = "opportunity" | "active_project";
 
 export interface PipelineStageItem {
   id: number;
@@ -8,8 +16,10 @@ export interface PipelineStageItem {
   accentColor: string;
   iconName: string;
   category: StageCategory | string;
+  pipelineGroup?: PipelineGroupType;
   isArchived: boolean;
   isDefault?: boolean;
+  caseCount?: number;
 }
 
 export interface PipelineCardItem {
@@ -17,25 +27,50 @@ export interface PipelineCardItem {
   firstName: string;
   lastName: string;
   fullName: string;
+  parentContactId?: number | null;
+  parentName?: string;
+  parentEmail?: string | null;
+  parentPhone?: string | null;
+  siblingCount?: number;
+  siblingNames?: string[];
   schoolName: string;
   countyDistrict?: string;
+  gradeLevel?: string | null;
   planType: string; // "IEP", "504", "No IEP/504 Yet", "Evaluation"
-  planTier: string; // "$55", "$105", "Scholarship", "Pay Per Use", "Tools Only", etc.
+  planTier: string; // "Navigator", "Anchor", "Family", "Scholarship", "Pay Per Use", "On Hold", "Tools Only", "$55", "$105"
+  rawPlanTier?: string;
+  servicePlanLabel?: string;
+  isScholarship?: boolean;
+  scholarshipStatus?: string | null;
   pipelineStage: string;
+  pipelineGroup?: PipelineGroupType;
+  stageGroup?: PipelineGroupType;
+  isOpportunity?: boolean;
+  journeyType?: "opportunity" | "active_advocacy";
+  lifecycleStage?: string;
   accountStatus: string; // "Active", "Onboarding", "Renewal Needed", "On Hold", "Offboarding", "Closed"
   billingStatus: string; // "Current", "Payment Failed", "Past Due", "Complimentary", "Not Applicable"
   contractStatus: string; // "Not Started", "Active", "Ending Soon", "Expired", "Renewed"
   assignedAdvocateName: string;
   assignedAdvocateInitials: string;
   caseId?: string;
+  leadId?: number | null;
+  discoveryStatus?: string | null;
   needsAttention: boolean;
   attentionReason?: string;
+  openTaskCount?: number;
   primaryTask?: string;
   primaryTaskIcon?: "clock" | "check" | "calendar" | "alert" | "mail";
   secondaryTask?: string;
   secondaryTaskIcon?: "clock" | "check" | "calendar" | "alert" | "mail";
   nextDate?: string;
   meetingDate?: string;
+  lastActivityAt?: string;
+  lastActivitySummary?: string;
+  lastActivityText?: string;
+  compassRiskLevel?: string | null;
+  compassWhoHasBall?: string | null;
+  compassNextStep?: string | null;
   activeWorkstreams?: string[];
   updatedAt?: string | Date;
 }
@@ -48,9 +83,13 @@ export interface SavedViewItem {
   isPinned: boolean;
   isDefault?: boolean;
   isPrivate?: boolean;
-  createdBy?: string | number;
+  createdBy?: string | number | null;
+  createdByName?: string | null;
   order: number;
 }
+
+export type PipelineSortField = "name" | "family" | "stage" | "lastActivity" | "nextDate";
+export type PipelineSortDirection = "asc" | "desc";
 
 export interface PipelineFilters {
   planTier?: string;
@@ -58,10 +97,14 @@ export interface PipelineFilters {
   district?: string;
   school?: string;
   caseType?: string;
+  stage?: string;
+  pipelineGroup?: "all" | "opportunity" | "active_project";
+  stageGroup?: "all" | "opportunity" | "active_project";
   meetingDate?: string;
   needsAttentionOnly?: boolean;
   accountStatus?: string;
   billingStatus?: string;
   contractStatus?: string;
   searchQuery?: string;
+  isMyWork?: boolean;
 }

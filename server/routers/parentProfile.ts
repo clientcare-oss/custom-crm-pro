@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
+import {
+  router,
+  protectedProcedure,
+  requireStaffModule,
+  assertClientContactOwnership,
+} from "../_core/trpc";
+import { checkBackendModuleAccess } from "../_core/staffAccess";
 import {
   getParentProfile,
   updateParentProfileFields,
@@ -15,12 +22,38 @@ import {
 } from "../db/parentProfile";
 import { resolveAccountContactId } from "../db/reviewTrackers";
 
+async function assertParentProfileAccess(
+  ctx: any,
+  targetContactId: number | undefined,
+  minStaffLevel: "view" | "edit"
+) {
+  if (ctx.staffAccess?.isStaff) {
+    const cLevel = checkBackendModuleAccess(ctx.staffAccess, "contacts");
+    const sLevel = checkBackendModuleAccess(ctx.staffAccess, "students");
+    const allowed =
+      minStaffLevel === "edit"
+        ? cLevel === "edit" || sLevel === "edit"
+        : cLevel !== "none" || sLevel !== "none";
+    if (!allowed) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Access to parent profile records is restricted for your role.",
+      });
+    }
+    return;
+  }
+
+  if (targetContactId !== undefined) {
+    await assertClientContactOwnership(ctx, targetContactId);
+  }
+}
+
 export const parentProfileRouter = router({
   /**
    * Get Parent Profile by parentContactId or studentContactId.
-   * Accessible by authenticated portal clients or CRM staff.
+   * Accessible by authenticated portal clients (own family only) or CRM staff.
    */
-  getProfile: publicProcedure
+  getProfile: protectedProcedure
     .input(
       z.object({
         parentContactId: z.number().optional(),
@@ -28,6 +61,11 @@ export const parentProfileRouter = router({
       })
     )
     .query(async ({ input, ctx }) => {
+      await assertParentProfileAccess(
+        ctx,
+        input.parentContactId ?? input.studentContactId,
+        "view"
+      );
       let targetParentId = input.parentContactId;
 
       if (!targetParentId && input.studentContactId) {
@@ -55,7 +93,7 @@ export const parentProfileRouter = router({
    * Non-restricted fields update immediately and record an audit log.
    * Legal-name changes submitted by clients require staff review before altering contract identity.
    */
-  updateProfile: publicProcedure
+  updateProfile: protectedProcedure
     .input(
       z.object({
         parentContactId: z.number(),
@@ -82,8 +120,9 @@ export const parentProfileRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      await assertParentProfileAccess(ctx, input.parentContactId, "edit");
       const user = (ctx as any)?.user;
-      const isStaff = user?.role === "admin" || input.actorRole === "staff" || input.actorRole === "admin";
+      const isStaff = Boolean(ctx.staffAccess?.isStaff);
       const actorRole = isStaff ? "staff" : "client";
       const actorName = input.actorName || user?.name || (isStaff ? "Waypoint Staff" : "Parent Client");
 
@@ -103,7 +142,7 @@ export const parentProfileRouter = router({
    * Request primary email change with link verification (Requirement 4).
    * Original email remains active until new email is confirmed.
    */
-  requestEmailChange: publicProcedure
+  requestEmailChange: protectedProcedure
     .input(
       z.object({
         parentContactId: z.number(),
@@ -112,9 +151,10 @@ export const parentProfileRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      await assertParentProfileAccess(ctx, input.parentContactId, "edit");
       const user = (ctx as any)?.user;
       const actorName = input.actorName || user?.name || "Parent Client";
-      const isStaff = user?.role === "admin";
+      const isStaff = Boolean(ctx.staffAccess?.isStaff);
 
       return requestEmailChange({
         parentContactId: input.parentContactId,
@@ -131,7 +171,7 @@ export const parentProfileRouter = router({
   /**
    * Verify primary email change via token or staff override.
    */
-  verifyEmailChange: publicProcedure
+  verifyEmailChange: protectedProcedure
     .input(
       z.object({
         token: z.string().optional(),
@@ -141,10 +181,18 @@ export const parentProfileRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (input.staffOverride && !ctx.staffAccess?.isStaff) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Staff override requires authorized staff credentials.",
+        });
+      }
+      await assertParentProfileAccess(ctx, input.parentContactId, "edit");
       const user = (ctx as any)?.user;
-      const verifiedByStaff = input.staffOverride
-        ? input.staffName || user?.name || "Waypoint Lead Advocate"
-        : undefined;
+      const verifiedByStaff =
+        input.staffOverride && ctx.staffAccess?.isStaff
+          ? input.staffName || user?.name || "Waypoint Lead Advocate"
+          : undefined;
 
       return verifyEmailChange({
         token: input.token,
@@ -157,7 +205,7 @@ export const parentProfileRouter = router({
    * Request primary phone change with SMS OTP verification (Requirement 5).
    * Original phone remains active until new phone is confirmed.
    */
-  requestPhoneChange: publicProcedure
+  requestPhoneChange: protectedProcedure
     .input(
       z.object({
         parentContactId: z.number(),
@@ -166,9 +214,10 @@ export const parentProfileRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      await assertParentProfileAccess(ctx, input.parentContactId, "edit");
       const user = (ctx as any)?.user;
       const actorName = input.actorName || user?.name || "Parent Client";
-      const isStaff = user?.role === "admin";
+      const isStaff = Boolean(ctx.staffAccess?.isStaff);
 
       return requestPhoneChange({
         parentContactId: input.parentContactId,
@@ -185,7 +234,7 @@ export const parentProfileRouter = router({
   /**
    * Verify primary phone change via 6-digit code or staff override.
    */
-  verifyPhoneChange: publicProcedure
+  verifyPhoneChange: protectedProcedure
     .input(
       z.object({
         parentContactId: z.number(),
@@ -195,10 +244,18 @@ export const parentProfileRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (input.staffOverride && !ctx.staffAccess?.isStaff) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Staff override requires authorized staff credentials.",
+        });
+      }
+      await assertParentProfileAccess(ctx, input.parentContactId, "edit");
       const user = (ctx as any)?.user;
-      const verifiedByStaff = input.staffOverride
-        ? input.staffName || user?.name || "Waypoint Lead Advocate"
-        : undefined;
+      const verifiedByStaff =
+        input.staffOverride && ctx.staffAccess?.isStaff
+          ? input.staffName || user?.name || "Waypoint Lead Advocate"
+          : undefined;
 
       return verifyPhoneChange({
         parentContactId: input.parentContactId,
@@ -210,20 +267,21 @@ export const parentProfileRouter = router({
   /**
    * Internal CRM: Get permanent Contact Change History (Requirement 7).
    */
-  getHistory: publicProcedure
+  getHistory: protectedProcedure
     .input(
       z.object({
         parentContactId: z.number(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      await assertParentProfileAccess(ctx, input.parentContactId, "view");
       return getParentProfileChangeHistory(input.parentContactId);
     }),
 
   /**
    * Staff-Only: Open a Contact Concern on a parent account (Requirement 9).
    */
-  setContactConcern: publicProcedure
+  setContactConcern: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         parentContactId: z.number(),
@@ -251,7 +309,7 @@ export const parentProfileRouter = router({
   /**
    * Staff-Only: Resolve an active Contact Concern.
    */
-  resolveContactConcern: publicProcedure
+  resolveContactConcern: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         parentContactId: z.number(),
@@ -273,7 +331,7 @@ export const parentProfileRouter = router({
   /**
    * Internal Staff: List notifications for profile and contact alerts (Requirement 6).
    */
-  getStaffNotifications: publicProcedure
+  getStaffNotifications: requireStaffModule("contacts", "view")
     .input(
       z.object({
         unreadOnly: z.boolean().optional(),
@@ -286,7 +344,7 @@ export const parentProfileRouter = router({
   /**
    * Mark a staff notification as read.
    */
-  markNotificationRead: publicProcedure
+  markNotificationRead: requireStaffModule("contacts", "view")
     .input(
       z.object({
         id: z.number(),

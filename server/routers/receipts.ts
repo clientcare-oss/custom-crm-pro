@@ -523,9 +523,13 @@ export const receiptsRouter = router({
       }
 
       // 7. Dispatch Automations
-      if (input.clientId) {
+      const autoContactId = input.studentContactId || input.clientId;
+      if (autoContactId) {
         try {
-          await triggerAutomationFlow("payment_received", input.clientId);
+          const payKey = `tx_${receiptNumber}_${autoContactId}`;
+          await triggerAutomationFlow("payment_received", autoContactId, false, { eventKey: payKey });
+          await triggerAutomationFlow("first_payment_paid", autoContactId, false, { eventKey: payKey });
+          await triggerAutomationFlow("invoice_paid_in_full", autoContactId, false, { eventKey: payKey });
         } catch (e) {}
       }
 

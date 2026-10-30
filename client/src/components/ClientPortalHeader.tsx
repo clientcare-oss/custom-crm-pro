@@ -68,8 +68,11 @@ export function ClientPortalHeader({
 
   // Dynamically resolve available students from props without Liam Jenkins fallback
   const availableStudents: StudentOption[] = React.useMemo(() => {
-    if (students && students.length > 0) return students;
-    if (studentName && studentName.trim() && studentName !== "Student") {
+    const cleaned = (students || []).filter(
+      (s) => !String(s.firstName || "").includes("[DEV Parent]")
+    );
+    if (cleaned.length > 0) return cleaned;
+    if (studentName && studentName.trim() && studentName !== "Student" && !studentName.includes("[DEV Parent]")) {
       const parts = studentName.trim().split(" ");
       const firstName = parts[0] || "Student";
       const lastName = parts.slice(1).join(" ") || "";
@@ -82,7 +85,7 @@ export function ClientPortalHeader({
     }
     return [{
       id: "student",
-      firstName: studentName || "Student",
+      firstName: studentName && !studentName.includes("[DEV Parent]") ? studentName : "Student",
       lastName: "",
       studentIdNumber: studentIdNumber || "",
     }];

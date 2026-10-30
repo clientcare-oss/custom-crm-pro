@@ -303,9 +303,16 @@ export const systemRouter = router({
   // Get Gmail integration status (returns whether configured, and the email address only — not the password)
   getGmailStatus: adminProcedure.query(async ({ ctx }) => {
     const creds = await db.getOwnerGmailCredentials(ctx.user.openId);
+    const { getGmailHubStatus } = await import("../services/gmailCommunicationHub");
+    const hubStatus = await getGmailHubStatus();
+    const configured =
+      Boolean(creds.gmailUser && creds.gmailAppPassword) ||
+      hubStatus.overallStatus === "connected" ||
+      hubStatus.overallStatus === "syncing";
     return {
-      configured: !!(creds.gmailUser && creds.gmailAppPassword),
-      gmailUser: creds.gmailUser ?? null,
+      configured,
+      gmailUser: creds.gmailUser ?? hubStatus.primaryMailbox?.email ?? null,
+      hubStatus,
     };
   }),
 
@@ -317,6 +324,14 @@ export const systemRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       await db.updateOwnerGmailCredentials(ctx.user.openId, input.gmailUser, input.gmailAppPassword);
+      const { connectGmailMailbox } = await import("../services/gmailCommunicationHub");
+      await connectGmailMailbox({
+        email: input.gmailUser,
+        displayName: "Waypoint Advocates Primary Mailbox",
+        authType: "app_password",
+        actorUserId: ctx.user.id,
+        actorName: ctx.user.name || "Byron Honea",
+      });
       return { success: true };
     }),
 
@@ -324,6 +339,11 @@ export const systemRouter = router({
   clearGmailCredentials: adminProcedure
     .mutation(async ({ ctx }) => {
       await db.updateOwnerGmailCredentials(ctx.user.openId, null, null);
+      const { disconnectGmailMailbox } = await import("../services/gmailCommunicationHub");
+      await disconnectGmailMailbox({
+        actorUserId: ctx.user.id,
+        actorName: ctx.user.name || "Byron Honea",
+      });
       return { success: true };
     }),
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 import * as db from "../db";
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure, adminProcedure, portalProcedure } from "../_core/trpc";
+import { router, publicProcedure, protectedProcedure, staffProcedure, adminProcedure, portalProcedure } from "../_core/trpc";
 import { ENV } from "../_core/env";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
@@ -10,14 +10,14 @@ import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
 
 export const workflowsRouter = router({
 
-    list: protectedProcedure.query(async () => {
+    list: staffProcedure.query(async () => {
       const database = await db.getDb();
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
       const { workflows } = await import("../../drizzle/schema");
       return await database.select().from(workflows).orderBy(asc(workflows.createdAt));
     }),
 
-    get: protectedProcedure
+    get: staffProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         const database = await db.getDb();

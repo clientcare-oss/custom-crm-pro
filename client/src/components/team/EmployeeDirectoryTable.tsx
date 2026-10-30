@@ -41,6 +41,9 @@ interface EmployeeDirectoryTableProps {
   onRoleFilterChange: (role: RoleId | "all") => void;
   onDeactivateClick: (emp: EmployeeRecord) => void;
   onReactivateClick: (emp: EmployeeRecord) => void;
+  onResendInviteClick?: (emp: EmployeeRecord) => void;
+  onRevokeInviteClick?: (emp: EmployeeRecord) => void;
+  onAcceptInviteClick?: (emp: EmployeeRecord) => void;
 }
 
 export default function EmployeeDirectoryTable({
@@ -51,6 +54,9 @@ export default function EmployeeDirectoryTable({
   onRoleFilterChange,
   onDeactivateClick,
   onReactivateClick,
+  onResendInviteClick,
+  onRevokeInviteClick,
+  onAcceptInviteClick,
 }: EmployeeDirectoryTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "on_leave" | "inactive">("all");
@@ -82,14 +88,44 @@ export default function EmployeeDirectoryTable({
       if (statusFilter !== "all") {
         if (emp.status !== statusFilter) return false;
       } else if (!includeInactive) {
-        if (emp.status === "inactive") return false;
+        const isPendingOnboarding =
+          emp.invitationStatus === "pending" || emp.invitationStatus === "expired";
+        if (emp.status === "inactive" && !isPendingOnboarding) return false;
       }
 
       return true;
     });
   }, [employees, searchQuery, roleFilter, statusFilter, includeInactive]);
 
-  const getStatusBadge = (status: EmployeeRecord["status"], availability: EmployeeRecord["availabilityStatus"]) => {
+  const getStatusBadge = (
+    status: EmployeeRecord["status"],
+    availability: EmployeeRecord["availabilityStatus"],
+    invitationStatus?: EmployeeRecord["invitationStatus"]
+  ) => {
+    if (invitationStatus === "pending") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-950/70 text-amber-300 border border-amber-500/40">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+          Invite: Pending
+        </span>
+      );
+    }
+    if (invitationStatus === "expired") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-950/70 text-orange-300 border border-orange-500/40">
+          <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+          Invite: Expired
+        </span>
+      );
+    }
+    if (invitationStatus === "revoked") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-950/70 text-rose-300 border border-rose-500/40">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+          Invite: Revoked
+        </span>
+      );
+    }
     if (status === "inactive") {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700">
@@ -253,10 +289,20 @@ export default function EmployeeDirectoryTable({
                           .slice(0, 2)}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-bold text-white group-hover:text-amber-300 transition-colors flex items-center gap-1.5 truncate">
+                        <div className="font-bold text-white group-hover:text-amber-300 transition-colors flex items-center gap-1.5 flex-wrap">
                           <span>{emp.name}</span>
                           {emp.preferredName && emp.preferredName !== emp.name.split(" ")[0] && (
                             <span className="text-[10px] text-slate-400">({emp.preferredName})</span>
+                          )}
+                          {emp.isProtectedOwner && (
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                              Protected Owner
+                            </span>
+                          )}
+                          {emp.userId && (
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/60">
+                              ID: {emp.userId}
+                            </span>
                           )}
                         </div>
                         <div className="text-[11px] text-blue-300/80 truncate">{emp.jobTitle}</div>
@@ -298,7 +344,7 @@ export default function EmployeeDirectoryTable({
 
                   {/* Status */}
                   <td className="py-3 px-4">
-                    {getStatusBadge(emp.status, emp.availabilityStatus)}
+                    {getStatusBadge(emp.status, emp.availabilityStatus, emp.invitationStatus)}
                   </td>
 
                   {/* Normal Schedule */}
@@ -349,7 +395,49 @@ export default function EmployeeDirectoryTable({
                             <Eye className="w-3.5 h-3.5 mr-2 text-sky-400" />
                             Open Employee Record
                           </DropdownMenuItem>
-                          {emp.status === "active" ? (
+                          {emp.isProtectedOwner ||
+                          emp.id === "emp-byron-honea" ||
+                          emp.id === "emp-byron-honea-2" ? (
+                            <DropdownMenuItem
+                              disabled
+                              className="text-amber-300/70 opacity-80 cursor-not-allowed"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-2 text-amber-400" />
+                              Protected Owner (Locked)
+                            </DropdownMenuItem>
+                          ) : emp.invitationStatus === "pending" ||
+                            emp.invitationStatus === "expired" ||
+                            emp.invitationStatus === "revoked" ? (
+                            <>
+                              {emp.invitationStatus === "pending" && onAcceptInviteClick && (
+                                <DropdownMenuItem
+                                  onClick={() => onAcceptInviteClick(emp)}
+                                  className="text-emerald-400 focus:text-emerald-300 cursor-pointer"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5 mr-2" />
+                                  Accept &amp; Activate Account
+                                </DropdownMenuItem>
+                              )}
+                              {onResendInviteClick && (
+                                <DropdownMenuItem
+                                  onClick={() => onResendInviteClick(emp)}
+                                  className="text-amber-300 focus:text-amber-200 cursor-pointer"
+                                >
+                                  <Clock className="w-3.5 h-3.5 mr-2" />
+                                  Resend Invitation
+                                </DropdownMenuItem>
+                              )}
+                              {emp.invitationStatus === "pending" && onRevokeInviteClick && (
+                                <DropdownMenuItem
+                                  onClick={() => onRevokeInviteClick(emp)}
+                                  className="text-red-400 focus:text-red-300 cursor-pointer"
+                                >
+                                  <XCircle className="w-3.5 h-3.5 mr-2" />
+                                  Revoke Invitation
+                                </DropdownMenuItem>
+                              )}
+                            </>
+                          ) : emp.status === "active" ? (
                             <DropdownMenuItem
                               onClick={() => onDeactivateClick(emp)}
                               className="text-red-400 focus:text-red-300 cursor-pointer"

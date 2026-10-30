@@ -56,8 +56,12 @@ export default function DeactivateEmployeeModal({
       return;
     }
 
+    if (employee.id === "emp-byron-honea") {
+      toast.error("Protected Owner accounts cannot be deactivated or locked out.");
+      return;
+    }
+
     onConfirmDeactivate(employee.id, notes);
-    toast.success(`${employee.name} deactivated. Historical data safely preserved.`);
     onClose();
   };
 

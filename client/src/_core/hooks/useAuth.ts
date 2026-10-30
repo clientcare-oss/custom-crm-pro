@@ -6,6 +6,31 @@ type UseAuthOptions = {
   redirectPath?: string;
 };
 
+// Trusted client-side display mapping matching server-side staffAccess.ts (backend enforces all actual authorization)
+const VERIFIED_ADMIN_CLERK_IDS = new Set([
+  "user_3HamsO4oLoKLKOnDi9BR16e6RZW", // Byron Honea (Protected Owner 1)
+  "user_3HEhAHIdXNwvbiK5NSR6RPkTInD", // Byron Honea (Protected Owner 2)
+]);
+
+function resolveClientDisplayRole(clerkUser: any): "admin" | "user" | "client" {
+  const id = String(clerkUser?.id || "");
+  if (id === "katkins-admin-openid") {
+    return "client";
+  }
+  if (VERIFIED_ADMIN_CLERK_IDS.has(id) || id.startsWith("user_3HELy6EVi")) {
+    return "admin";
+  }
+  if (id.startsWith("user_3KPhcRBro")) {
+    return "user";
+  }
+  const metaRole = clerkUser?.publicMetadata?.role;
+  if (metaRole === "client") {
+    return "client";
+  }
+  // Security fix (WAP 1A.1): Never automatically assign "admin" to unknown Clerk users
+  return "user";
+}
+
 export function useAuth(options?: UseAuthOptions) {
   const { isLoaded, isSignedIn, user: clerkUser } = useUser();
   const { signOut } = useClerk();
@@ -19,9 +44,12 @@ export function useAuth(options?: UseAuthOptions) {
 
   const user = useMemo(() => {
     if (!isSignedIn || !clerkUser) {
-      if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+      if (
+        typeof window !== "undefined" &&
+        (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+      ) {
         return {
-          id: "user_test_byron",
+          id: "user_3HamsO4oLoKLKOnDi9BR16e6RZW",
           name: "Byron Honea",
           email: "byron@waypointadvocates.com",
           avatarUrl: undefined,
@@ -32,10 +60,14 @@ export function useAuth(options?: UseAuthOptions) {
     }
     return {
       id: clerkUser.id,
-      name: clerkUser.fullName || clerkUser.firstName || clerkUser.primaryEmailAddress?.emailAddress || "User",
+      name:
+        clerkUser.fullName ||
+        clerkUser.firstName ||
+        clerkUser.primaryEmailAddress?.emailAddress ||
+        "User",
       email: clerkUser.primaryEmailAddress?.emailAddress || "",
       avatarUrl: clerkUser.imageUrl,
-      role: (clerkUser.publicMetadata?.role as string) || "admin",
+      role: resolveClientDisplayRole(clerkUser),
     };
   }, [isSignedIn, clerkUser]);
 
@@ -62,4 +94,3 @@ export function useAuth(options?: UseAuthOptions) {
     refresh: () => {},
   };
 }
-

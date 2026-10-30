@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -44,10 +45,23 @@ import {
   Edit3,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Filter,
   CheckSquare,
+  Reply,
+  Paperclip,
+  Eye,
+  EyeOff,
+  Send,
+  Globe,
+  Lock as LockIcon,
 } from "lucide-react";
 import PageIdBadge from "@/components/PageIdBadge";
+import {
+  GmailComposeModal,
+  GmailThreadViewerModal,
+} from "@/components/contact/GmailComposerAndThreadModals";
 
 interface ActivityTimelineProps {
   contact: any;
@@ -127,7 +141,43 @@ export function ActivityTimeline({ contact, onSwitchTab }: ActivityTimelineProps
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedSourceModal, setSelectedSourceModal] = useState<{ title: string; type: string; excerpt?: string } | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [unifiedCategory, setUnifiedCategory] = useState<"all" | "emails" | "documents" | "meetings" | "notes">("all");
+  const [emailSubFilter, setEmailSubFilter] = useState<"all" | "inbox" | "sent" | "unread" | "needs_review">("all");
   const [searchFilter, setSearchFilter] = useState<string>("");
+  const [visibleLimit, setVisibleLimit] = useState<number>(25);
+  const [expandedEmailIds, setExpandedEmailIds] = useState<Record<string, boolean>>({});
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeDefaults, setComposeDefaults] = useState<{
+    toEmail?: string;
+    parentContactId?: number | null;
+    studentContactId?: number | null;
+    subject?: string;
+    replyThreadId?: string | null;
+    replyToMessageId?: string | null;
+  }>({});
+  const [threadModalId, setThreadModalId] = useState<string | null>(null);
+
+  const { data: unifiedFeedData } = trpc.caseActivity.unifiedFeed.useQuery(
+    {
+      studentContactId,
+      caseId,
+      categoryFilter: unifiedCategory,
+      emailSubFilter: unifiedCategory === "emails" || unifiedCategory === "all" ? emailSubFilter : "all",
+      searchQuery: searchFilter.trim() || undefined,
+      limit: visibleLimit,
+      offset: 0,
+    },
+    { enabled: !!studentContactId }
+  );
+
+  const portalVisMutation = trpc.messages.setEmailPortalVisibility.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success(vars.portalVisible ? "Email published to Parent Portal" : "Email set to Internal Only");
+      utils.caseActivity.unifiedFeed.invalidate();
+      utils.messages.listGmailThreads.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   // ── Form State ──
   const [formTitle, setFormTitle] = useState("");
@@ -380,6 +430,20 @@ export function ActivityTimeline({ contact, onSwitchTab }: ActivityTimelineProps
         {/* Top Action Buttons */}
         <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
           <Button
+            onClick={() => {
+              setComposeDefaults({
+                studentContactId,
+                subject: `${studentName} — Case Correspondence`,
+              });
+              setComposeOpen(true);
+            }}
+            className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl px-4 py-2 shadow-[0_0_15px_rgba(56,189,248,0.25)] flex items-center gap-1.5 cursor-pointer transition-all"
+          >
+            <Send className="w-4 h-4" />
+            <span>Create New Email</span>
+          </Button>
+
+          <Button
             onClick={() => setIsAddModalOpen(true)}
             className="bg-[#F5B544] hover:bg-[#F5B544]/90 text-slate-950 font-bold text-xs sm:text-sm rounded-xl px-4 py-2 shadow-[0_0_15px_rgba(245,181,68,0.25)] flex items-center gap-1.5 cursor-pointer transition-all"
           >
@@ -573,17 +637,252 @@ export function ActivityTimeline({ contact, onSwitchTab }: ActivityTimelineProps
         </div>
       </div>
 
-      {/* ── 5. VERTICAL STORY OF THE CASE TIMELINE ── */}
+      {/* ── 5. VERTICAL STORY OF THE CASE TIMELINE (HONEYBOOK-STYLE CONTINUOUS FEED) ── */}
       <div ref={timelineRef} className="rounded-2xl border border-blue-900/60 bg-[#061830] p-5 sm:p-7 shadow-2xl space-y-6">
-        <div className="flex items-center justify-between border-b border-blue-900/50 pb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-blue-900/50 pb-4 gap-4">
           <div>
-            <h3 className="font-serif font-bold text-xl text-white">The Case Narrative</h3>
-            <p className="text-xs text-blue-300/75 mt-0.5">Chronological milestones, strategic decisions, and evidentiary sources.</p>
+            <h3 className="font-serif font-bold text-xl text-white">The Case Narrative &amp; Communication Feed</h3>
+            <p className="text-xs text-blue-300/75 mt-0.5">
+              Continuous chronological communication, Gmail threads, documents, meetings, and strategic milestones.
+            </p>
           </div>
-          <div className="text-xs text-blue-300/70 font-mono">
-            {filteredEvents.length} {filteredEvents.length === 1 ? "milestone" : "milestones"}
+          <div className="flex items-center gap-3">
+            <div className="relative w-56 sm:w-64">
+              <Search className="w-3.5 h-3.5 text-blue-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                placeholder="Search emails, subjects, notes..."
+                className="w-full rounded-xl bg-[#040E1D] border border-blue-800/80 pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-blue-300/50 outline-none focus:border-sky-400"
+              />
+            </div>
+            <div className="text-xs text-blue-300/70 font-mono shrink-0">
+              {(unifiedFeedData?.totalCount ?? filteredEvents.length)} items
+            </div>
           </div>
         </div>
+
+        {/* Category Filter Bar + Email Sub-Filters */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {([
+              { id: "all", label: "All Activity" },
+              { id: "emails", label: "Emails" },
+              { id: "documents", label: "Documents" },
+              { id: "meetings", label: "Meetings" },
+              { id: "notes", label: "Notes" },
+            ] as const).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setUnifiedCategory(tab.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  unifiedCategory === tab.id
+                    ? "bg-amber-400 text-slate-950 font-bold shadow-md"
+                    : "bg-blue-950/70 text-blue-200 border border-blue-800/70 hover:bg-blue-900/60"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {(unifiedCategory === "all" || unifiedCategory === "emails") && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-blue-300/70 font-medium mr-1">Email view:</span>
+              {([
+                { id: "all", label: "All" },
+                { id: "inbox", label: "Inbox" },
+                { id: "sent", label: "Sent" },
+                { id: "unread", label: "Unread" },
+                { id: "needs_review", label: "Needs Review" },
+              ] as const).map((sub) => (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onClick={() => setEmailSubFilter(sub.id)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                    emailSubFilter === sub.id
+                      ? "bg-sky-500/25 text-sky-300 border border-sky-400/60"
+                      : "bg-blue-950/50 text-blue-300/80 border border-blue-900/60 hover:text-white"
+                  }`}
+                >
+                  {sub.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Continuous Unified Correspondence & Activity Feed Items */}
+        {unifiedFeedData && unifiedFeedData.items.length > 0 && (
+          <div className="space-y-4">
+            {unifiedFeedData.items.map((uItem, idx) => {
+              const prevGroup = idx > 0 ? unifiedFeedData.items[idx - 1].dateSeparatorLabel : null;
+              const showDateHeader = uItem.dateSeparatorLabel !== prevGroup;
+              const email = uItem.emailData;
+
+              if (!email) return null;
+              const isExpanded = !!expandedEmailIds[email.gmailMessageId];
+
+              return (
+                <React.Fragment key={uItem.id}>
+                  {showDateHeader && (
+                    <div className="flex items-center gap-3 pt-2 pb-1">
+                      <span className="px-3 py-0.5 rounded-full bg-blue-950/90 border border-blue-800/80 text-[11px] font-mono font-bold text-sky-300">
+                        {uItem.dateSeparatorLabel}
+                      </span>
+                      <div className="h-[1px] flex-1 bg-blue-900/50" />
+                    </div>
+                  )}
+
+                  <div className="rounded-2xl border border-sky-500/40 bg-[#051429] p-4 sm:p-5 shadow-lg hover:border-sky-400/70 transition-all space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 shrink-0">
+                          <Mail className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-white text-sm sm:text-base">{email.subject}</span>
+                            <Badge
+                              className={`text-[10px] ${
+                                email.direction === "inbound"
+                                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                  : "bg-sky-500/20 text-sky-300 border-sky-500/40"
+                              }`}
+                            >
+                              {email.direction === "inbound" ? "Incoming Email" : "Sent Email"}
+                            </Badge>
+                            {email.portalVisible ? (
+                              <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30 text-[10px] flex items-center gap-1">
+                                <Globe className="w-2.5 h-2.5" /> Portal Visible
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-slate-800 text-slate-300 border-slate-700 text-[10px] flex items-center gap-1">
+                                <LockIcon className="w-2.5 h-2.5" /> Internal Only
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-xs text-blue-200/80 mt-1">
+                            <span className="font-semibold text-white">{email.fromName || email.fromEmail}</span>{" "}
+                            <span className="text-blue-300/70">&lt;{email.fromEmail}&gt;</span> →{" "}
+                            <span>{email.toEmails.join(", ")}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[11px] font-mono text-blue-300/75">
+                          {new Date(uItem.timestamp).toLocaleString([], {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setExpandedEmailIds((prev) => ({
+                              ...prev,
+                              [email.gmailMessageId]: !prev[email.gmailMessageId],
+                            }))
+                          }
+                          className="h-7 px-2.5 text-[11px] border-blue-800 bg-blue-950/60 text-blue-200 hover:text-white"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="w-3 h-3 mr-1" /> Collapse
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-3 h-3 mr-1" /> Expand Email
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Preview or Full Sanitized HTML Body */}
+                    {isExpanded ? (
+                      <div
+                        className="rounded-xl bg-[#040E1D] border border-blue-900/60 p-4 text-xs sm:text-sm text-blue-100 leading-relaxed prose prose-invert max-w-none"
+                        dangerouslySetInnerHTML={{ __html: email.bodyHtml }}
+                      />
+                    ) : (
+                      <p className="text-xs sm:text-[13px] text-blue-100/85 line-clamp-2 leading-relaxed">
+                        {email.snippet || email.bodyText}
+                      </p>
+                    )}
+
+                    {/* Attachments */}
+                    {email.attachments && email.attachments.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        {email.attachments.map((att) => (
+                          <span
+                            key={att.id}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-950/90 border border-blue-800 text-[11px] text-sky-300"
+                          >
+                            <Paperclip className="w-3 h-3" />
+                            <span>{att.fileName}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Bottom Action Bar */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-blue-900/40">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setComposeDefaults({
+                              toEmail: email.direction === "inbound" ? email.fromEmail : email.toEmails[0] || "",
+                              parentContactId: email.parentContactId,
+                              studentContactId: email.studentContactId || studentContactId,
+                              subject: email.subject.startsWith("Re:") ? email.subject : `Re: ${email.subject}`,
+                              replyThreadId: email.gmailThreadId,
+                              replyToMessageId: email.gmailMessageId,
+                            });
+                            setComposeOpen(true);
+                          }}
+                          className="h-7 px-3 text-[11px] bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 rounded-lg"
+                        >
+                          <Reply className="w-3 h-3 mr-1.5" /> Reply
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setThreadModalId(email.gmailThreadId)}
+                          className="h-7 px-3 text-[11px] border-blue-800 bg-blue-950/60 text-blue-200 hover:text-white rounded-lg"
+                        >
+                          <Mail className="w-3 h-3 mr-1.5" /> View Full Thread
+                        </Button>
+                      </div>
+
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          portalVisMutation.mutate({
+                            emailIdOrMessageId: email.gmailMessageId,
+                            portalVisible: !email.portalVisible,
+                          })
+                        }
+                        className="h-7 px-2.5 text-[11px] text-blue-300 hover:text-white"
+                      >
+                        {email.portalVisible ? "Make Internal Only" : "Publish to Parent Portal"}
+                      </Button>
+                    </div>
+                  </div>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        )}
 
         {/* Vertical Timeline Thread */}
         <div className="relative pl-2 sm:pl-4">
@@ -767,6 +1066,20 @@ export function ActivityTimeline({ contact, onSwitchTab }: ActivityTimelineProps
             })}
           </div>
         </div>
+
+        {/* Continuous Scrollable Pagination ("Load Older Activity") */}
+        {unifiedFeedData?.hasMore && (
+          <div className="pt-4 flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setVisibleLimit((prev) => prev + 25)}
+              className="border-blue-800 bg-blue-950/70 hover:bg-blue-900/70 text-blue-200 text-xs font-semibold rounded-xl px-5 py-2"
+            >
+              Load Older Activity &amp; Emails ({unifiedFeedData.totalCount - unifiedFeedData.items.length} remaining)
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* ── 6. ADD ENTRY MODAL ── */}
@@ -1107,6 +1420,40 @@ export function ActivityTimeline({ contact, onSwitchTab }: ActivityTimelineProps
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── 10. GMAIL COMPOSE & THREAD VIEWER MODALS ── */}
+      <GmailComposeModal
+        open={composeOpen}
+        onClose={() => setComposeOpen(false)}
+        defaultToEmail={composeDefaults.toEmail}
+        defaultParentContactId={composeDefaults.parentContactId}
+        defaultStudentContactId={composeDefaults.studentContactId ?? studentContactId}
+        defaultSubject={composeDefaults.subject}
+        replyThreadId={composeDefaults.replyThreadId}
+        replyToMessageId={composeDefaults.replyToMessageId}
+        onSent={() => {
+          utils.caseActivity.unifiedFeed.invalidate();
+          utils.caseActivity.list.invalidate();
+        }}
+      />
+
+      <GmailThreadViewerModal
+        open={!!threadModalId}
+        onClose={() => setThreadModalId(null)}
+        gmailThreadId={threadModalId}
+        onReply={(_thread, msg) => {
+          setThreadModalId(null);
+          setComposeDefaults({
+            toEmail: msg.direction === "inbound" ? msg.fromEmail : msg.toEmails[0] || "",
+            parentContactId: msg.parentContactId,
+            studentContactId: msg.studentContactId ?? studentContactId,
+            subject: msg.subject.startsWith("Re:") ? msg.subject : `Re: ${msg.subject}`,
+            replyThreadId: msg.gmailThreadId,
+            replyToMessageId: msg.rfcMessageId || msg.gmailMessageId,
+          });
+          setComposeOpen(true);
+        }}
+      />
     </div>
   );
 }

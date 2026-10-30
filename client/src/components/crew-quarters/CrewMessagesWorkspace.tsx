@@ -65,6 +65,11 @@ export default function CrewMessagesWorkspace({
   const { data: employees = [] } = trpc.crewMessages.listEmployees.useQuery();
   const { data: contactsList = [] } = trpc.contacts.list.useQuery();
 
+  // Filter out the current employee for New Direct Message selection
+  const dmEmployees = (employees as any[]).filter(
+    (e) => !e.isCurrentUser && Number(e.id) !== currentUserId
+  );
+
   // Extract students
   const students = (contactsList as any[]).filter(
     (c) => c.jobTitle === "Student" || !c.parentContactId
@@ -75,7 +80,7 @@ export default function CrewMessagesWorkspace({
     { enabled: !!activeConv?.id }
   );
 
-  // Set initial active conversation
+  // Set initial active conversation and keep activeConv synced with refreshed conversation metadata
   useEffect(() => {
     if (!convData) return;
 
@@ -88,7 +93,7 @@ export default function CrewMessagesWorkspace({
 
     if (allConvs.length === 0) return;
 
-    if (initialConversationId) {
+    if (initialConversationId && !activeConv) {
       const match = allConvs.find((c) => c.id === initialConversationId);
       if (match) {
         setActiveConv(match);
@@ -96,25 +101,37 @@ export default function CrewMessagesWorkspace({
       }
     }
 
-    if (!activeConv) {
-      // Default to Emily DM or first direct message or first channel
-      const defaultConv =
-        convData.directMessages.find((d) => d.displayName?.toLowerCase().includes("emily")) ||
-        convData.directMessages[0] ||
-        convData.channels[0] ||
-        allConvs[0];
-      setActiveConv(defaultConv);
+    if (activeConv) {
+      const updated = allConvs.find((c) => c.id === activeConv.id);
+      if (updated && (updated.displayName !== activeConv.displayName || updated.unreadCount !== activeConv.unreadCount)) {
+        setActiveConv(updated);
+      }
+      return;
     }
-  }, [convData, initialConversationId]);
+
+    const defaultConv =
+      convData.directMessages[0] ||
+      convData.channels[0] ||
+      allConvs[0];
+    setActiveConv(defaultConv);
+  }, [convData, initialConversationId, activeConv]);
 
   // Mutations for starting new conversations
   const directMutation = trpc.crewMessages.getOrCreateDirect.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       utils.crewMessages.listConversations.invalidate();
+      utils.crewMessages.getOverviewStats.invalidate();
       setNewMessageModalOpen(false);
-      // Switch to new conversation
-      setActiveConv({ id: data.conversationId, type: "direct" });
-      toast.success("Direct message workspace opened");
+      // Switch to new or existing conversation with full partner display info
+      setActiveConv({
+        id: data.conversationId,
+        type: "direct",
+        displayName: data.displayName || "Team Member",
+        partnerUserId: data.partnerUserId,
+        role: data.role || "Special Education Advocate",
+        initials: data.initials || "TM",
+      });
+      toast.success(data.existed ? `Opened conversation with ${data.displayName || "team member"}` : `Started direct message with ${data.displayName || "team member"}`);
     },
     onError: (err) => toast.error(err.message || "Failed to open direct message"),
   });
@@ -133,7 +150,7 @@ export default function CrewMessagesWorkspace({
     onSuccess: (data) => {
       utils.crewMessages.listConversations.invalidate();
       setNewMessageModalOpen(false);
-      setActiveConv({ id: data.conversationId, type: "group", displayName: data.name });
+      setActiveConv({ id: data.conversationId, type: "group", name: data.name, displayName: data.name });
       toast.success(`Group "${data.name}" created`);
     },
     onError: (err) => toast.error(err.message || "Failed to create group"),
@@ -144,7 +161,7 @@ export default function CrewMessagesWorkspace({
     if (newMessageType === "dm") {
       const targetId = selectedTargetUserId
         ? Number(selectedTargetUserId)
-        : employees[0]?.id;
+        : dmEmployees[0]?.id;
       if (!targetId) {
         toast.error("Please choose a team member.");
         return;
@@ -166,7 +183,7 @@ export default function CrewMessagesWorkspace({
       }
       groupMutation.mutate({
         name: groupName.trim(),
-        memberUserIds: employees.map((e) => e.id).slice(0, 3),
+        memberUserIds: dmEmployees.map((e: any) => e.id).slice(0, 5),
       });
     }
   };
@@ -325,14 +342,14 @@ export default function CrewMessagesWorkspace({
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-sky-300">Select Employee</Label>
                 <Select
-                  value={selectedTargetUserId || (employees[0] ? String(employees[0].id) : "")}
+                  value={selectedTargetUserId || (dmEmployees[0] ? String(dmEmployees[0].id) : "")}
                   onValueChange={setSelectedTargetUserId}
                 >
                   <SelectTrigger className="bg-[#000E26] border-sky-500/30 text-white text-xs rounded-xl focus:ring-sky-400">
                     <SelectValue placeholder="Choose active employee" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#001433] border-sky-500/30 text-white">
-                    {employees.map((e) => (
+                    {dmEmployees.map((e: any) => (
                       <SelectItem key={e.id} value={String(e.id)} className="text-xs hover:bg-sky-500/20 focus:bg-sky-500/20">
                         {e.name} ({e.jobTitle || e.role})
                       </SelectItem>

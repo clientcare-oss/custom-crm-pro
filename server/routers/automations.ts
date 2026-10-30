@@ -1,26 +1,26 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import * as dbAutomations from "../db/automations";
-import { router, adminProcedure, protectedProcedure } from "../_core/trpc";
+import { router, requireStaffModule } from "../_core/trpc";
 
 export const automationsRouter = router({
-  
-  list: protectedProcedure.query(async () => {
+  list: requireStaffModule("automations", "view").query(async () => {
     return await dbAutomations.listAutomations();
   }),
 
-  get: protectedProcedure
+  get: requireStaffModule("automations", "view")
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       return await dbAutomations.getAutomationById(input.id);
     }),
 
-  delete: adminProcedure
+  delete: requireStaffModule("automations", "edit")
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
       return await dbAutomations.deleteAutomation(input.id);
     }),
 
-  save: adminProcedure
+  save: requireStaffModule("automations", "edit")
     .input(
       z.object({
         id: z.number().optional(),
@@ -36,25 +36,95 @@ export const automationsRouter = router({
             delayValue: z.number(),
             delayUnit: z.string(),
             delayAnchor: z.string(),
-            config: z.any()
+            config: z.any(),
           })
-        )
+        ),
       })
     )
     .mutation(async ({ input }) => {
       return await dbAutomations.saveAutomation(input);
     }),
 
-  simulate: protectedProcedure
+  toggleActive: requireStaffModule("automations", "edit")
+    .input(z.object({ id: z.number(), isActive: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const existing = await dbAutomations.getAutomationById(input.id);
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Automation workflow not found." });
+      }
+      return await dbAutomations.saveAutomation({
+        id: existing.id,
+        name: existing.name,
+        description: existing.description,
+        triggerEvent: existing.triggerEvent,
+        isActive: input.isActive,
+        triggerConfig: existing.triggerConfig,
+        steps: existing.steps,
+      });
+    }),
+
+  simulate: requireStaffModule("automations", "edit")
     .input(
       z.object({
         triggerEvent: z.string(),
         contactId: z.number(),
-        dryRun: z.boolean().default(true)
+        dryRun: z.boolean().default(true),
+        eventContext: z
+          .object({
+            eventKey: z.string().optional(),
+            meetingType: z.string().optional(),
+            meetingTitle: z.string().optional(),
+            eventDate: z.union([z.string(), z.date()]).optional(),
+            stageFrom: z.string().optional(),
+            stageTo: z.string().optional(),
+            tagAdded: z.string().optional(),
+            fileName: z.string().optional(),
+            forceDuplicate: z.boolean().optional(),
+          })
+          .optional(),
       })
     )
     .mutation(async ({ input }) => {
-      return await dbAutomations.triggerAutomationFlow(input.triggerEvent, input.contactId, input.dryRun);
-    })
+      return await dbAutomations.triggerAutomationFlow(
+        input.triggerEvent,
+        input.contactId,
+        input.dryRun,
+        input.eventContext
+      );
+    }),
 
+  listRuns: requireStaffModule("automations", "view")
+    .input(
+      z
+        .object({
+          automationId: z.number().optional(),
+          contactId: z.number().optional(),
+          status: z.enum(["completed", "failed", "skipped"]).optional(),
+          limit: z.number().min(1).max(250).optional(),
+        })
+        .optional()
+    )
+    .query(async ({ input }) => {
+      return await dbAutomations.listAutomationRuns(input);
+    }),
+
+  retryRun: requireStaffModule("automations", "edit")
+    .input(
+      z.object({
+        runId: z.number(),
+        clearFailureFlags: z.boolean().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        return await dbAutomations.retryAutomationRun(input.runId, {
+          clearFailureFlags: input.clearFailureFlags,
+        });
+      } catch (err: any) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: err?.message || "Failed to retry automation run.",
+        });
+      }
+    }),
 });

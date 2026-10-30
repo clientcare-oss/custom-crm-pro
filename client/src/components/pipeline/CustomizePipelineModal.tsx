@@ -16,9 +16,11 @@ import {
   ArrowUp,
   ArrowDown,
   Check,
+  Sparkles,
+  Briefcase,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { PipelineStageItem } from "./types";
+import type { PipelineStageItem, PipelineGroupType } from "./types";
 
 interface CustomizePipelineModalProps {
   open: boolean;
@@ -57,6 +59,8 @@ export function CustomizePipelineModal({
   const [newStageName, setNewStageName] = useState("");
   const [newStageColor, setNewStageColor] = useState("#38BDF8");
   const [newStageCategory, setNewStageCategory] = useState("active");
+  const [newStageGroup, setNewStageGroup] =
+    useState<PipelineGroupType>("active_project");
 
   React.useEffect(() => {
     setStageList(stages);
@@ -68,7 +72,6 @@ export function CustomizePipelineModal({
     const temp = updated[index - 1];
     updated[index - 1] = updated[index];
     updated[index] = temp;
-    // Re-assign order numbers
     updated.forEach((s, idx) => {
       s.order = idx + 1;
     });
@@ -81,11 +84,30 @@ export function CustomizePipelineModal({
     const temp = updated[index + 1];
     updated[index + 1] = updated[index];
     updated[index] = temp;
-    // Re-assign order numbers
     updated.forEach((s, idx) => {
       s.order = idx + 1;
     });
     setStageList(updated);
+  };
+
+  const handleRenameStage = (id: number, newName: string) => {
+    setStageList((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              name: newName,
+              slug: newName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            }
+          : s
+      )
+    );
+  };
+
+  const handleGroupChange = (id: number, group: PipelineGroupType) => {
+    setStageList((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, pipelineGroup: group } : s))
+    );
   };
 
   const handleAddStage = () => {
@@ -102,18 +124,21 @@ export function CustomizePipelineModal({
       accentColor: newStageColor,
       iconName: "Compass",
       category: newStageCategory,
+      pipelineGroup: newStageGroup,
       isArchived: false,
       isDefault: false,
     };
 
     setStageList([...stageList, newStage]);
     setNewStageName("");
-    toast.success(`Stage "${newStage.name}" added to pipeline`);
+    toast.success(`Stage "${newStage.name}" added to list`);
   };
 
   const handleToggleArchive = (id: number) => {
     setStageList(
-      stageList.map((s) => (s.id === id ? { ...s, isArchived: !s.isArchived } : s))
+      stageList.map((s) =>
+        s.id === id ? { ...s, isArchived: !s.isArchived } : s
+      )
     );
   };
 
@@ -123,7 +148,6 @@ export function CustomizePipelineModal({
 
   const handleSave = () => {
     onSaveStages(stageList);
-    toast.success("Pipeline stages saved successfully");
     onOpenChange(false);
   };
 
@@ -138,29 +162,42 @@ export function CustomizePipelineModal({
         </DialogHeader>
 
         <div className="space-y-5 py-2 max-h-[70vh] overflow-y-auto pr-1">
-          {/* Active Stages Reorder List */}
           <div className="space-y-2">
             <Label className="text-xs font-bold uppercase tracking-wider text-[#C6B697]">
-              Pipeline Stage Order & Settings
+              Pipeline Stage Order, Names & Group Assignment
             </Label>
 
             <div className="space-y-2">
               {stageList.map((stage, idx) => (
                 <div
                   key={stage.id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#020A17]/85 border border-[#3A2C18]"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-2.5 rounded-xl bg-[#020A17]/85 border border-[#3A2C18]"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <span
                       className="w-3 h-3 rounded-full shrink-0 shadow-xs"
                       style={{ backgroundColor: stage.accentColor }}
                     />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold font-serif text-[#FFF4D4] truncate">{stage.name}</p>
-                      <p className="text-[10px] text-[#C6B697] capitalize">
-                        {stage.category} stage {stage.isArchived && "(Archived)"}
-                      </p>
-                    </div>
+                    <Input
+                      value={stage.name}
+                      onChange={(e) =>
+                        handleRenameStage(stage.id, e.target.value)
+                      }
+                      className="h-7 bg-[#000814] border-[#3A2C18] text-[#FFF4D4] text-xs font-serif font-bold px-2 rounded-lg max-w-[210px]"
+                    />
+                    <select
+                      value={stage.pipelineGroup || "active_project"}
+                      onChange={(e) =>
+                        handleGroupChange(
+                          stage.id,
+                          e.target.value as PipelineGroupType
+                        )
+                      }
+                      className="h-7 rounded-lg bg-[#000814] border border-[#3A2C18] text-[#C6B697] text-[11px] px-2 focus:outline-hidden focus:border-[#C5A059]"
+                    >
+                      <option value="opportunity">Opportunities</option>
+                      <option value="active_project">Active Advocacy</option>
+                    </select>
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
@@ -170,7 +207,7 @@ export function CustomizePipelineModal({
                       disabled={idx === 0}
                       onClick={() => handleMoveUp(idx)}
                       className="h-7 w-7 p-0 text-[#A69371] hover:text-[#FFF4D4] hover:bg-[#07162B] cursor-pointer"
-                      title="Move stage left/up"
+                      title="Move stage earlier"
                     >
                       <ArrowUp className="h-3.5 w-3.5" />
                     </Button>
@@ -180,7 +217,7 @@ export function CustomizePipelineModal({
                       disabled={idx === stageList.length - 1}
                       onClick={() => handleMoveDown(idx)}
                       className="h-7 w-7 p-0 text-[#A69371] hover:text-[#FFF4D4] hover:bg-[#07162B] cursor-pointer"
-                      title="Move stage right/down"
+                      title="Move stage later"
                     >
                       <ArrowDown className="h-3.5 w-3.5" />
                     </Button>
@@ -215,9 +252,11 @@ export function CustomizePipelineModal({
               Add Custom Stage
             </h4>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs text-[#C6B697] font-semibold">Stage Name *</Label>
+                <Label className="text-xs text-[#C6B697] font-semibold">
+                  Stage Name *
+                </Label>
                 <Input
                   value={newStageName}
                   onChange={(e) => setNewStageName(e.target.value)}
@@ -227,7 +266,25 @@ export function CustomizePipelineModal({
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs text-[#C6B697] font-semibold">Workflow Category</Label>
+                <Label className="text-xs text-[#C6B697] font-semibold">
+                  Pipeline Group
+                </Label>
+                <select
+                  value={newStageGroup}
+                  onChange={(e) =>
+                    setNewStageGroup(e.target.value as PipelineGroupType)
+                  }
+                  className="w-full h-9 rounded-lg bg-[#000814] border border-[#3A2C18] text-[#FFF4D4] text-xs px-3 focus:outline-hidden focus:border-[#C5A059]"
+                >
+                  <option value="opportunity">Opportunities (Lead / Follow-Up)</option>
+                  <option value="active_project">Projects / Active Advocacy</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs text-[#C6B697] font-semibold">
+                  Workflow Category
+                </Label>
                 <select
                   value={newStageCategory}
                   onChange={(e) => setNewStageCategory(e.target.value)}
@@ -242,9 +299,10 @@ export function CustomizePipelineModal({
               </div>
             </div>
 
-            {/* Color Swatches */}
             <div className="space-y-1.5 pt-1">
-              <Label className="text-xs text-[#C6B697] font-semibold">Accent Color</Label>
+              <Label className="text-xs text-[#C6B697] font-semibold">
+                Accent Color
+              </Label>
               <div className="flex items-center gap-2 flex-wrap">
                 {COLOR_OPTIONS.map((color) => (
                   <button
@@ -254,7 +312,9 @@ export function CustomizePipelineModal({
                     className="w-6 h-6 rounded-full border border-white/20 flex items-center justify-center transition-transform hover:scale-110 cursor-pointer shadow-xs"
                     style={{ backgroundColor: color }}
                   >
-                    {newStageColor === color && <Check className="h-3 w-3 text-black font-bold" />}
+                    {newStageColor === color && (
+                      <Check className="h-3 w-3 text-black font-bold" />
+                    )}
                   </button>
                 ))}
               </div>

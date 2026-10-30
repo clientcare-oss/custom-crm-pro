@@ -202,15 +202,75 @@ function QuoIntegrationCard() {
 }
 
 function GmailIntegrationCard() {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [gmailUser, setGmailUser] = useState("");
   const [gmailAppPassword, setGmailAppPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
-  const utils = trpc.useUtils();
+  const [oauthEmailInput, setOauthEmailInput] = useState("clientcare@waypointadvocates.com");
+  const [syncRangeDays, setSyncRangeDays] = useState<number>(90);
 
   const { data: gmailStatus, refetch: refetchStatus } = trpc.system.getGmailStatus.useQuery(undefined, {
     retry: false,
+  });
+
+  const { data: hubStatus, refetch: refetchHubStatus } = trpc.messages.gmailStatus.useQuery(undefined, {
+    retry: false,
+  });
+
+  const initiateOAuthMutation = trpc.messages.initiateGmailOAuth.useMutation({
+    onSuccess: (res) => {
+      if (res.authUrl) {
+        toast.info("Google OAuth 2.0 URL ready. Opening authorization flow...");
+        window.open(res.authUrl, "_blank", "noopener,noreferrer");
+      } else {
+        toast.warning(res.message);
+      }
+      refetchHubStatus();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const connectMailboxMutation = trpc.messages.connectGmailMailbox.useMutation({
+    onSuccess: (mb) => {
+      toast.success(`Connected mailbox ${mb.email}`);
+      refetchHubStatus();
+      refetchStatus();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const reconnectMailboxMutation = trpc.messages.reconnectGmailMailbox.useMutation({
+    onSuccess: (mb) => {
+      toast.success(`Reconnected mailbox ${mb.email}`);
+      refetchHubStatus();
+      refetchStatus();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const disconnectMailboxMutation = trpc.messages.disconnectGmailMailbox.useMutation({
+    onSuccess: () => {
+      toast.success("Company Gmail mailbox disconnected");
+      refetchHubStatus();
+      refetchStatus();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const updateSettingsMutation = trpc.messages.updateGmailSettings.useMutation({
+    onSuccess: () => {
+      toast.success("Gmail synchronization settings updated");
+      refetchHubStatus();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const syncGmailMutation = trpc.messages.syncGmail.useMutation({
+    onSuccess: (res) => {
+      toast.success(`Sync complete: ${res.syncedCount} new, ${res.matchedCount} matched, ${res.needsReviewCount} in Needs Review`);
+      refetchHubStatus();
+    },
+    onError: (e) => toast.error("Sync failed: " + e.message),
   });
 
   const setCredentialsMutation = trpc.system.setGmailCredentials.useMutation({
@@ -219,6 +279,7 @@ function GmailIntegrationCard() {
       setGmailUser("");
       setGmailAppPassword("");
       refetchStatus();
+      refetchHubStatus();
     },
     onError: (e) => toast.error("Failed to save credentials: " + e.message),
   });
@@ -238,6 +299,7 @@ function GmailIntegrationCard() {
     onSuccess: () => {
       toast.success("Gmail credentials removed");
       refetchStatus();
+      refetchHubStatus();
     },
     onError: (e) => toast.error("Failed to remove credentials: " + e.message),
   });
@@ -250,7 +312,20 @@ function GmailIntegrationCard() {
     setCredentialsMutation.mutate({ gmailUser: gmailUser.trim(), gmailAppPassword: gmailAppPassword.trim() });
   }
 
-  const isConfigured = gmailStatus?.configured ?? false;
+  const primaryMailbox = hubStatus?.primaryMailbox;
+  const overallStatus = hubStatus?.overallStatus || (gmailStatus?.configured ? "connected" : "disconnected");
+  const isConnected = overallStatus === "connected" || overallStatus === "syncing" || Boolean(gmailStatus?.configured);
+  const connectedEmail = primaryMailbox?.email || gmailStatus?.gmailUser || null;
+
+  const statusBadgeConfig: Record<string, { label: string; className: string }> = {
+    connected: { label: "Connected", className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
+    syncing: { label: "Syncing", className: "bg-sky-500/15 text-sky-400 border-sky-500/30" },
+    disconnected: { label: "Disconnected", className: "bg-slate-500/15 text-slate-300 border-slate-500/30" },
+    attention_required: { label: "Attention Required", className: "bg-amber-500/15 text-amber-300 border-amber-500/40" },
+    error: { label: "Error", className: "bg-rose-500/15 text-rose-300 border-rose-500/40" },
+    configuration_required: { label: "Configuration Required", className: "bg-amber-500/15 text-amber-300 border-amber-500/40" },
+  };
+  const currentBadge = statusBadgeConfig[overallStatus] || statusBadgeConfig.disconnected;
 
   return (
     <Card className="p-6 rounded-xl border border-border">
@@ -261,46 +336,187 @@ function GmailIntegrationCard() {
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-base font-semibold text-foreground">Gmail</h3>
-              <Badge variant="outline" className="text-xs">Email</Badge>
+              <h3 className="text-base font-semibold text-foreground">Gmail — Client Communication Hub</h3>
+              <Badge variant="outline" className="text-xs">Two-Way Sync & OAuth 2.0</Badge>
+              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${currentBadge.className}`}>
+                {overallStatus === "connected" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
+                {currentBadge.label}
+              </span>
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Send portal links and notifications to parents directly from your Gmail workspace.
+              Two-way Gmail synchronization, automatic client & student filing, Needs Review queue, and HoneyBook-style case activity feed.
             </p>
-            {isConfigured && gmailStatus?.gmailUser && (
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+            {connectedEmail && (
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1.5 font-medium">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Sending from: {gmailStatus.gmailUser}
+                <span>Connected Mailbox: <strong>{connectedEmail}</strong></span>
+                {primaryMailbox?.lastSyncAt && (
+                  <span className="text-muted-foreground ml-2">
+                    · Last synced {new Date(primaryMailbox.lastSyncAt).toLocaleTimeString()}
+                  </span>
+                )}
               </p>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
-          {isConfigured ? (
-            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="h-4 w-4" />
-              Connected
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">
-              <AlertCircle className="h-4 w-4" />
-              Setup required
-            </div>
-          )}
+        <div className="flex items-center gap-2.5 flex-shrink-0 flex-wrap">
+          <Link href="/messages">
+            <Button variant="outline" size="sm" className="gap-1.5 border-amber-500/40 text-amber-400 hover:bg-amber-500/10">
+              <Mail className="h-3.5 w-3.5" />
+              <span>Open Communication Hub</span>
+            </Button>
+          </Link>
           <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} className="gap-1.5">
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            {expanded ? "Hide" : (isConfigured ? "Manage" : "Setup")}
+            {expanded ? "Hide" : (isConnected ? "Manage" : "Setup")}
           </Button>
         </div>
       </div>
 
       {expanded && (
         <div className="mt-5 space-y-5 border-t border-border pt-5">
+          {/* OAuth 2.0 Connection & Sync Management Panel */}
+          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <span>Google OAuth 2.0 Company Mailbox Connection</span>
+                  {!hubStatus?.oauthConfigured && (
+                    <span className="text-[11px] font-normal px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      OAuth Env Keys Pending
+                    </span>
+                  )}
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Minimum required scopes: <code className="text-[11px]">gmail.readonly</code>, <code className="text-[11px]">gmail.send</code>, <code className="text-[11px]">gmail.modify</code>
+                </p>
+              </div>
+              {hubStatus?.stats && (
+                <div className="flex items-center gap-3 text-xs">
+                  <div className="px-2.5 py-1 rounded-lg bg-background border border-border">
+                    <span className="text-muted-foreground">Synced: </span>
+                    <strong className="text-foreground">{hubStatus.stats.totalSyncedEmails}</strong>
+                  </div>
+                  <div className="px-2.5 py-1 rounded-lg bg-background border border-border">
+                    <span className="text-muted-foreground">Unread: </span>
+                    <strong className="text-sky-400">{hubStatus.stats.unreadInboundCount}</strong>
+                  </div>
+                  <div className="px-2.5 py-1 rounded-lg bg-background border border-border">
+                    <span className="text-muted-foreground">Needs Review: </span>
+                    <strong className="text-amber-400">{hubStatus.stats.needsReviewCount}</strong>
+                  </div>
+                </div>
+              )}
+            </div>
 
-          {/* Step 1 — Get App Password */}
+            {primaryMailbox?.errorMessage && (
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-200 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+                <span>{primaryMailbox.errorMessage}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Company Mailbox Address</Label>
+                <Input
+                  type="email"
+                  value={oauthEmailInput}
+                  onChange={(e) => setOauthEmailInput(e.target.value)}
+                  placeholder="clientcare@waypointadvocates.com"
+                  className="text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Historical Sync Range</Label>
+                <select
+                  value={primaryMailbox?.syncRangeDays ?? syncRangeDays}
+                  onChange={(e) => {
+                    const days = Number(e.target.value);
+                    setSyncRangeDays(days);
+                    if (primaryMailbox) {
+                      updateSettingsMutation.mutate({ mailboxId: primaryMailbox.id, syncRangeDays: days });
+                    }
+                  }}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground"
+                >
+                  <option value={30}>Last 30 Days</option>
+                  <option value={90}>Last 90 Days (Recommended)</option>
+                  <option value={180}>Last 180 Days</option>
+                  <option value={365}>Last 1 Year</option>
+                  <option value={1825}>All History (5 Years)</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {!isConnected ? (
+                  <>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => initiateOAuthMutation.mutate({ emailHint: oauthEmailInput.trim() })}
+                      disabled={initiateOAuthMutation.isPending}
+                      className="gap-1.5"
+                    >
+                      {initiateOAuthMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      Connect with Google OAuth
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        connectMailboxMutation.mutate({
+                          email: oauthEmailInput.trim() || "clientcare@waypointadvocates.com",
+                          syncRangeDays,
+                        })
+                      }
+                      disabled={connectMailboxMutation.isPending}
+                    >
+                      Authorize Mailbox
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => syncGmailMutation.mutate({ mailboxId: primaryMailbox?.id })}
+                      disabled={syncGmailMutation.isPending}
+                      className="gap-1.5"
+                    >
+                      {syncGmailMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wifi className="h-3.5 w-3.5" />}
+                      Sync Now
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => reconnectMailboxMutation.mutate({ mailboxId: primaryMailbox?.id, email: connectedEmail || oauthEmailInput })}
+                      disabled={reconnectMailboxMutation.isPending}
+                    >
+                      Reconnect
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => disconnectMailboxMutation.mutate({ mailboxId: primaryMailbox?.id })}
+                      disabled={disconnectMailboxMutation.isPending}
+                      className="text-destructive hover:text-destructive gap-1"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Disconnect
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Step 1 — Get App Password (SMTP Fallback) */}
           <div>
             <Label className="text-xs font-semibold uppercase tracking-wider text-foreground mb-3 block">
-              Step 1 — Create a Gmail App Password
+              SMTP App Password Fallback — Create a Gmail App Password
             </Label>
             <ol className="space-y-2.5">
               {[
@@ -327,14 +543,14 @@ function GmailIntegrationCard() {
           {/* Step 2 — Enter credentials */}
           <div>
             <Label className="text-xs font-semibold uppercase tracking-wider text-foreground mb-2 block">
-              Step 2 — Enter Your Gmail Credentials
+              Enter Your Gmail App Password Credentials
             </Label>
             <div className="space-y-3">
               <div>
                 <Label className="text-xs text-muted-foreground mb-1 block">Gmail Address</Label>
                 <Input
                   type="email"
-                  placeholder={isConfigured ? (gmailStatus?.gmailUser ?? "your@gmail.com") : "your@gmail.com"}
+                  placeholder={isConnected ? (connectedEmail ?? "your@gmail.com") : "your@gmail.com"}
                   value={gmailUser}
                   onChange={(e) => setGmailUser(e.target.value)}
                   className="text-sm"
@@ -345,7 +561,7 @@ function GmailIntegrationCard() {
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
-                    placeholder={isConfigured ? "Saved — paste new value to update" : "xxxx xxxx xxxx xxxx"}
+                    placeholder={isConnected ? "Saved — paste new value to update" : "xxxx xxxx xxxx xxxx"}
                     value={gmailAppPassword}
                     onChange={(e) => setGmailAppPassword(e.target.value)}
                     className="pr-10 font-mono text-sm"
@@ -380,7 +596,7 @@ function GmailIntegrationCard() {
                 Save Credentials
               </Button>
 
-              {isConfigured && (
+              {gmailStatus?.configured && (
                 <>
                   <Button
                     type="button"
@@ -410,7 +626,7 @@ function GmailIntegrationCard() {
                     ) : (
                       <Trash2 className="h-3.5 w-3.5" />
                     )}
-                    Disconnect
+                    Remove App Password
                   </Button>
                 </>
               )}
@@ -419,11 +635,11 @@ function GmailIntegrationCard() {
 
           {/* How it works */}
           <div className="rounded-lg bg-muted/50 border border-border p-4">
-            <p className="text-xs font-semibold text-foreground mb-2">What Gmail is used for</p>
+            <p className="text-xs font-semibold text-foreground mb-2">How the Gmail-Connected Client Communication Hub works</p>
             <ul className="text-xs text-muted-foreground space-y-1.5">
-              <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />Send client portal links to parent contacts from the Contact Detail page.</li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />Emails are sent from your Gmail workspace address so parents recognize the sender.</li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />Your App Password is stored securely in the database — never exposed to the browser.</li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />Incoming and outgoing client emails automatically synchronize and deduplicate by Gmail Message ID.</li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />Verified parent emails automatically file under the family and student, while multi-student ambiguous or unknown emails route to Needs Review.</li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />Newly synchronized Gmail correspondence defaults to Internal Staff View until explicitly published to the Parent Portal.</li>
             </ul>
           </div>
         </div>

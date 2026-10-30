@@ -7,13 +7,15 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import type { PipelineFilters } from "./types";
+import { ADVOCATE_ROSTER } from "./pipelineDefaults";
+import type { PipelineFilters, PipelineStageItem } from "./types";
 
 interface FilterPopoverProps {
   filters: PipelineFilters;
   onChangeFilters: (filters: PipelineFilters) => void;
   onClearFilters: () => void;
   matchingCount: number;
+  stages?: PipelineStageItem[];
 }
 
 export function FilterPopover({
@@ -21,18 +23,17 @@ export function FilterPopover({
   onChangeFilters,
   onClearFilters,
   matchingCount,
+  stages = [],
 }: FilterPopoverProps) {
   const [open, setOpen] = useState(false);
   const [draftFilters, setDraftFilters] = useState<PipelineFilters>(filters);
 
-  // Sync draft with current filters whenever popover opens
   useEffect(() => {
     if (open) {
       setDraftFilters(filters);
     }
   }, [open, filters]);
 
-  // Count active non-empty filters
   const activeFilterCount = Object.entries(filters).filter(([_, v]) => {
     return v !== undefined && v !== "" && v !== false;
   }).length;
@@ -48,11 +49,38 @@ export function FilterPopover({
     setOpen(false);
   };
 
-  const planOptions = ["$55", "$105", "Scholarship", "Pay Per Use", "Tools Only"];
-  const advocateOptions = ["Byron Honea", "Erin Smith", "Maya Singh", "Kevin Liu", "Daniel Torres", "Jordan Lee"];
-  const districtOptions = ["Fulton County", "Cobb County", "Gwinnett County", "DeKalb County", "Atlanta Public Schools"];
-  const caseTypeOptions = ["IEP", "504", "Evaluation", "State Complaint", "Records"];
-  const accountStatusOptions = ["Active", "Onboarding", "Renewal Needed", "On Hold", "Closed"];
+  const planOptions = [
+    { label: "Navigator ($55)", value: "$55" },
+    { label: "Anchor ($105)", value: "$105" },
+    { label: "Family Plan", value: "Family" },
+    { label: "Scholarship", value: "Scholarship" },
+    { label: "Pay Per Use", value: "Pay Per Use" },
+    { label: "On Hold", value: "On Hold" },
+    { label: "Tools Only", value: "Tools Only" },
+  ];
+
+  const districtOptions = [
+    "Fulton County",
+    "Cobb County",
+    "Gwinnett County",
+    "DeKalb County",
+    "Atlanta Public Schools",
+  ];
+  const caseTypeOptions = [
+    "IEP",
+    "504",
+    "Evaluation",
+    "State Complaint",
+    "Records",
+    "Monitoring",
+  ];
+  const accountStatusOptions = [
+    "Active",
+    "Onboarding",
+    "Renewal Needed",
+    "On Hold",
+    "Closed",
+  ];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -66,7 +94,12 @@ export function FilterPopover({
               : "bg-[#020A17] hover:bg-[#07162B] border-[#3A2C18] hover:border-[#C5A059]/60 text-[#D8C7A5] hover:text-[#FFF4D4] shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
           )}
         >
-          <Filter className={cn("h-3.5 w-3.5", activeFilterCount > 0 ? "text-[#07162B]" : "text-[#C5A059]")} />
+          <Filter
+            className={cn(
+              "h-3.5 w-3.5",
+              activeFilterCount > 0 ? "text-[#07162B]" : "text-[#C5A059]"
+            )}
+          />
           <span>Filter</span>
           {activeFilterCount > 0 && (
             <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#07162B] text-[#FFE394] border border-[#FFE394]/40">
@@ -85,7 +118,9 @@ export function FilterPopover({
         <div className="flex items-center justify-between pb-2 border-b border-[#3A2C18]">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-[#C5A059]" />
-            <h4 className="text-sm font-bold font-serif text-[#FFF4D4]">Filter Clients</h4>
+            <h4 className="text-sm font-bold font-serif text-[#FFF4D4]">
+              Filter Pipeline
+            </h4>
           </div>
           <span className="text-xs text-[#C6B697] font-medium">
             {matchingCount} matching
@@ -93,22 +128,86 @@ export function FilterPopover({
         </div>
 
         <div className="space-y-3 text-xs">
-          {/* 1. Plan Tier */}
+          {/* 1. Stage Group */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
-              Plan Tier
+              Pipeline Group
             </label>
-            <div className="flex flex-wrap gap-1.5">
-              {planOptions.map((plan) => {
-                const isSelected = draftFilters.planTier === plan;
+            <div className="grid grid-cols-3 gap-1.5">
+              {[
+                { label: "All", val: undefined },
+                { label: "Opportunities", val: "opportunity" as const },
+                { label: "Active Projects", val: "active_project" as const },
+              ].map((opt) => {
+                const isSelected = draftFilters.pipelineGroup === opt.val;
                 return (
                   <button
-                    key={plan}
+                    key={opt.label}
                     type="button"
                     onClick={() =>
                       setDraftFilters((prev) => ({
                         ...prev,
-                        planTier: isSelected ? undefined : plan,
+                        pipelineGroup: opt.val,
+                      }))
+                    }
+                    className={cn(
+                      "px-2 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer",
+                      isSelected
+                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394]/60"
+                        : "bg-[#020A17]/80 hover:bg-[#07162B] border-[#3A2C18]/80 text-[#D8C7A5] hover:text-[#FFF4D4]"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Specific Pipeline Stage */}
+          {stages.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
+                Pipeline Stage
+              </label>
+              <select
+                value={draftFilters.stage || ""}
+                onChange={(e) =>
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    stage: e.target.value || undefined,
+                  }))
+                }
+                className="w-full h-8 px-2.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] text-xs focus:outline-hidden focus:border-[#C5A059]"
+              >
+                <option value="">All Stages</option>
+                {stages
+                  .filter((s) => !s.isArchived)
+                  .map((s) => (
+                    <option key={s.id} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
+
+          {/* 3. Service Plan / Membership */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
+              Service Plan
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {planOptions.map((plan) => {
+                const isSelected = draftFilters.planTier === plan.value;
+                return (
+                  <button
+                    key={plan.value}
+                    type="button"
+                    onClick={() =>
+                      setDraftFilters((prev) => ({
+                        ...prev,
+                        planTier: isSelected ? undefined : plan.value,
                       }))
                     }
                     className={cn(
@@ -118,14 +217,14 @@ export function FilterPopover({
                         : "bg-[#020A17]/80 hover:bg-[#07162B] border-[#3A2C18]/80 text-[#D8C7A5] hover:text-[#FFF4D4]"
                     )}
                   >
-                    {plan}
+                    {plan.label}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* 2. Assigned Advocate */}
+          {/* 4. Assigned Advocate */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
               Assigned Advocate
@@ -141,15 +240,15 @@ export function FilterPopover({
               className="w-full h-8 px-2.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] text-xs focus:outline-hidden focus:border-[#C5A059]"
             >
               <option value="">All Advocates</option>
-              {advocateOptions.map((adv) => (
-                <option key={adv} value={adv}>
-                  {adv}
+              {ADVOCATE_ROSTER.map((adv) => (
+                <option key={adv.name} value={adv.name}>
+                  {adv.name}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* 3. School District */}
+          {/* 5. School District */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
               School District
@@ -173,7 +272,7 @@ export function FilterPopover({
             </select>
           </div>
 
-          {/* 4. Case Type */}
+          {/* 6. Case Type */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
               Case Type
@@ -205,7 +304,7 @@ export function FilterPopover({
             </div>
           </div>
 
-          {/* 5. Account Status */}
+          {/* 7. Account Status */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-[#C6B697] uppercase tracking-wider">
               Account Status
@@ -229,11 +328,15 @@ export function FilterPopover({
             </select>
           </div>
 
-          {/* 6. Needs Attention Toggle */}
+          {/* 8. Needs Attention Toggle */}
           <div className="pt-2 border-t border-[#3A2C18]/60 flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-[#FFF4D4]">Needs Attention Only</span>
-              <p className="text-[10px] text-[#A69371]">Filter to flagged / urgent client records</p>
+              <span className="text-xs font-semibold text-[#FFF4D4]">
+                Needs Attention Only
+              </span>
+              <p className="text-[10px] text-[#A69371]">
+                Filter to flagged / urgent client records
+              </p>
             </div>
             <button
               type="button"
@@ -245,7 +348,9 @@ export function FilterPopover({
               }
               className={cn(
                 "w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer flex items-center border border-[#3A2C18]",
-                draftFilters.needsAttentionOnly ? "bg-gradient-to-r from-[#DFBE77] to-[#C5A059] justify-end" : "bg-[#020A17] justify-start"
+                draftFilters.needsAttentionOnly
+                  ? "bg-gradient-to-r from-[#DFBE77] to-[#C5A059] justify-end"
+                  : "bg-[#020A17] justify-start"
               )}
             >
               <span className="w-4 h-4 rounded-full bg-[#07162B] shadow-xs" />

@@ -4,7 +4,7 @@
  */
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { router, protectedProcedure, portalProcedure } from "../\_core/trpc";
+import { router, protectedProcedure, portalProcedure } from "../_core/trpc";
 import * as dbModule from "../db";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -40,27 +40,26 @@ export const smartFilesRouter = router({
 
   // ── Templates ──────────────────────────────────────────────────────────────
 
-  listTemplates: protectedProcedure.query(async ({ ctx }) => {
+  listTemplates: protectedProcedure.query(async () => {
     const { smartFileTemplates: sft } = await import("../../drizzle/schema");
-    const { eq, desc } = await import("drizzle-orm");
+    const { desc } = await import("drizzle-orm");
     const dbConn = await getDbConn();
     return dbConn
       .select()
       .from(sft)
-      .where(eq(sft.ownerId, ctx.user.id))
       .orderBy(desc(sft.updatedAt));
   }),
 
   getTemplate: protectedProcedure
     .input(z.object({ templateId: z.number() }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       const { smartFileTemplates: sft, smartFileBlocks: sfb, smartFileAddOns: sfa } = await import("../../drizzle/schema");
-      const { eq, and, asc } = await import("drizzle-orm");
+      const { eq, asc } = await import("drizzle-orm");
       const dbConn = await getDbConn();
       const [template] = await dbConn
         .select()
         .from(sft)
-        .where(and(eq(sft.id, input.templateId), eq(sft.ownerId, ctx.user.id)))
+        .where(eq(sft.id, input.templateId))
         .limit(1);
       if (!template) throw new TRPCError({ code: "NOT_FOUND" });
       const blocks = await dbConn
@@ -98,16 +97,16 @@ export const smartFilesRouter = router({
       status: z.enum(["draft", "active", "archived"]).optional(),
       settings: z.string().optional().nullable(),
     }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const { smartFileTemplates: sft } = await import("../../drizzle/schema");
-      const { eq, and } = await import("drizzle-orm");
+      const { eq } = await import("drizzle-orm");
       const dbConn = await getDbConn();
       const updates: Record<string, unknown> = {};
       if (input.name !== undefined) updates.name = input.name;
       if (input.description !== undefined) updates.description = input.description;
       if (input.status !== undefined) updates.status = input.status;
       if (input.settings !== undefined) updates.settings = input.settings;
-      await dbConn.update(sft).set(updates).where(and(eq(sft.id, input.templateId), eq(sft.ownerId, ctx.user.id)));
+      await dbConn.update(sft).set(updates).where(eq(sft.id, input.templateId));
       return { success: true };
     }),
 
@@ -116,12 +115,12 @@ export const smartFilesRouter = router({
     .input(z.object({ templateId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const { smartFileTemplates: sft, smartFileBlocks: sfb, smartFileAddOns: sfa } = await import("../../drizzle/schema");
-      const { eq, and, asc } = await import("drizzle-orm");
+      const { eq, asc } = await import("drizzle-orm");
       const dbConn = await getDbConn();
       const [original] = await dbConn
         .select()
         .from(sft)
-        .where(and(eq(sft.id, input.templateId), eq(sft.ownerId, ctx.user.id)))
+        .where(eq(sft.id, input.templateId))
         .limit(1);
       if (!original) throw new TRPCError({ code: "NOT_FOUND" });
       const newResult = await dbConn.insert(sft).values({
@@ -158,11 +157,11 @@ export const smartFilesRouter = router({
 
   deleteTemplate: protectedProcedure
     .input(z.object({ templateId: z.number() }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const { smartFileTemplates: sft } = await import("../../drizzle/schema");
-      const { eq, and } = await import("drizzle-orm");
+      const { eq } = await import("drizzle-orm");
       const dbConn = await getDbConn();
-      await dbConn.update(sft).set({ status: "archived" }).where(and(eq(sft.id, input.templateId), eq(sft.ownerId, ctx.user.id)));
+      await dbConn.update(sft).set({ status: "archived" }).where(eq(sft.id, input.templateId));
       return { success: true };
     }),
 
@@ -173,12 +172,12 @@ export const smartFilesRouter = router({
       templateId: z.number(),
       blocks: z.array(blockSchema),
     }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const { smartFileTemplates: sft, smartFileBlocks: sfb } = await import("../../drizzle/schema");
-      const { eq, and } = await import("drizzle-orm");
+      const { eq } = await import("drizzle-orm");
       const dbConn = await getDbConn();
-      // Verify ownership
-      const [template] = await dbConn.select().from(sft).where(and(eq(sft.id, input.templateId), eq(sft.ownerId, ctx.user.id))).limit(1);
+      // Verify template exists
+      const [template] = await dbConn.select().from(sft).where(eq(sft.id, input.templateId)).limit(1);
       if (!template) throw new TRPCError({ code: "NOT_FOUND" });
       // Delete all existing blocks and re-insert (simplest approach for reordering)
       await dbConn.delete(sfb).where(eq(sfb.templateId, input.templateId));
@@ -201,11 +200,11 @@ export const smartFilesRouter = router({
       templateId: z.number(),
       addOns: z.array(addOnSchema),
     }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const { smartFileTemplates: sft, smartFileAddOns: sfa } = await import("../../drizzle/schema");
-      const { eq, and } = await import("drizzle-orm");
+      const { eq } = await import("drizzle-orm");
       const dbConn = await getDbConn();
-      const [template] = await dbConn.select().from(sft).where(and(eq(sft.id, input.templateId), eq(sft.ownerId, ctx.user.id))).limit(1);
+      const [template] = await dbConn.select().from(sft).where(eq(sft.id, input.templateId)).limit(1);
       if (!template) throw new TRPCError({ code: "NOT_FOUND" });
       await dbConn.delete(sfa).where(eq(sfa.templateId, input.templateId));
       if (input.addOns.length > 0) {
@@ -226,11 +225,11 @@ export const smartFilesRouter = router({
 
   listAssignments: protectedProcedure
     .input(z.object({ contactId: z.number().optional() }).optional())
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       const { smartFileAssignments: sfas, smartFileTemplates: sft, contacts } = await import("../../drizzle/schema");
-      const { eq, and, desc } = await import("drizzle-orm");
+      const { eq, desc } = await import("drizzle-orm");
       const dbConn = await getDbConn();
-      const rows = await dbConn
+      const query = dbConn
         .select({
           assignment: sfas,
           templateName: sft.name,
@@ -239,14 +238,14 @@ export const smartFilesRouter = router({
         })
         .from(sfas)
         .leftJoin(sft, eq(sfas.templateId, sft.id))
-        .leftJoin(contacts, eq(sfas.contactId, contacts.id))
-        .where(
-          input?.contactId
-            ? and(eq(sfas.ownerId, ctx.user.id), eq(sfas.contactId, input.contactId))
-            : eq(sfas.ownerId, ctx.user.id)
-        )
-        .orderBy(desc(sfas.updatedAt));
-      return rows;
+        .leftJoin(contacts, eq(sfas.contactId, contacts.id));
+
+      if (input?.contactId) {
+        return query
+          .where(eq(sfas.contactId, input.contactId))
+          .orderBy(desc(sfas.updatedAt));
+      }
+      return query.orderBy(desc(sfas.updatedAt));
     }),
 
   assignToClient: protectedProcedure
@@ -275,14 +274,14 @@ export const smartFilesRouter = router({
 
   getAssignment: protectedProcedure
     .input(z.object({ assignmentId: z.number() }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       const { smartFileAssignments: sfas, smartFileTemplates: sft, smartFileBlocks: sfb, smartFileAddOns: sfa, contacts } = await import("../../drizzle/schema");
-      const { eq, and, asc } = await import("drizzle-orm");
+      const { eq, asc } = await import("drizzle-orm");
       const dbConn = await getDbConn();
       const [assignment] = await dbConn
         .select()
         .from(sfas)
-        .where(and(eq(sfas.id, input.assignmentId), eq(sfas.ownerId, ctx.user.id)))
+        .where(eq(sfas.id, input.assignmentId))
         .limit(1);
       if (!assignment) throw new TRPCError({ code: "NOT_FOUND" });
       const [template] = await dbConn.select().from(sft).where(eq(sft.id, assignment.templateId)).limit(1);
@@ -299,11 +298,11 @@ export const smartFilesRouter = router({
 
   voidAssignment: protectedProcedure
     .input(z.object({ assignmentId: z.number() }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const { smartFileAssignments: sfas } = await import("../../drizzle/schema");
-      const { eq, and } = await import("drizzle-orm");
+      const { eq } = await import("drizzle-orm");
       const dbConn = await getDbConn();
-      await dbConn.update(sfas).set({ status: "cancelled" }).where(and(eq(sfas.id, input.assignmentId), eq(sfas.ownerId, ctx.user.id)));
+      await dbConn.update(sfas).set({ status: "cancelled" }).where(eq(sfas.id, input.assignmentId));
       return { success: true };
     }),
 
@@ -412,6 +411,24 @@ export const smartFilesRouter = router({
           .where(eq(taskTable.smartFileAssignmentId, input.assignmentId));
       } catch (err) {
         console.error("Error auto-completing task for smart file submission:", err);
+      }
+
+      const targetContactId = assignment.studentContactId || assignment.contactId;
+      if (targetContactId) {
+        try {
+          const { triggerAutomationFlow } = await import("../db/automations");
+          const eventKey = `smartfile_${input.assignmentId}_${targetContactId}`;
+          await triggerAutomationFlow("file_completed", targetContactId, false, {
+            eventKey,
+            fileName: `Smart File #${assignment.templateId}`,
+          });
+          await triggerAutomationFlow("questionnaire_submitted", targetContactId, false, {
+            eventKey,
+            fileName: `Smart File #${assignment.templateId}`,
+          });
+        } catch (autoErr) {
+          console.warn("[SmartFiles] Automation trigger warning:", autoErr);
+        }
       }
 
       return { success: true };

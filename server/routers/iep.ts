@@ -2,7 +2,15 @@ import { z } from "zod";
 import * as db from "../db";
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure, adminProcedure, portalProcedure } from "../_core/trpc";
+import {
+  router,
+  publicProcedure,
+  protectedProcedure,
+  adminProcedure,
+  portalProcedure,
+  assertClientContactOwnership,
+} from "../_core/trpc";
+import { checkBackendCaseAccess } from "../_core/staffAccess";
 import { ENV } from "../_core/env";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
@@ -10,10 +18,20 @@ import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
 
 export const iepRouter = router({
 
-    // Get IEP document record for a student (admin or parent portal)
+    // Get IEP document record for a student (admin/staff with files access or parent portal owner)
     get: protectedProcedure
       .input(z.object({ contactId: z.number() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        if (ctx.staffAccess?.isStaff) {
+          if (checkBackendCaseAccess(ctx.staffAccess, "files") === "none") {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Access to Student IEP records is restricted for your role.",
+            });
+          }
+        } else {
+          await assertClientContactOwnership(ctx, input.contactId);
+        }
         const { iepDocuments } = await import("../../drizzle/schema");
         const { eq } = await import("drizzle-orm");
         const dbConn = await db.getDb();
@@ -26,7 +44,7 @@ export const iepRouter = router({
         return rows[0] ?? null;
       }),
 
-    // Admin or portal user uploads IEP for a student
+    // Admin/authorized staff or portal parent uploads IEP for a student
     upload: protectedProcedure
       .input(z.object({
         contactId: z.number(),
@@ -43,21 +61,16 @@ export const iepRouter = router({
         const { eq } = await import("drizzle-orm");
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
-        // Non-admin: verify student belongs to this portal user's parent
-        if (ctx.user.role !== 'admin') {
-          const parentContact = await dbConn
-            .select()
-            .from(contacts)
-            .where(eq(contacts.portalUserId, ctx.user.id))
-            .limit(1);
-          if (parentContact.length === 0) throw new TRPCError({ code: 'FORBIDDEN' });
-          const students = await dbConn
-            .select()
-            .from(contacts)
-            .where(eq(contacts.parentContactId, parentContact[0].id));
-          if (!students.map(s => s.id).includes(input.contactId)) {
-            throw new TRPCError({ code: 'FORBIDDEN' });
+        if (ctx.staffAccess?.isStaff) {
+          const level = checkBackendCaseAccess(ctx.staffAccess, "files");
+          if (level !== "edit" && level !== "manage") {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Uploading Student IEP records is restricted for your role.",
+            });
           }
+        } else {
+          await assertClientContactOwnership(ctx, input.contactId);
         }
 
         let fileKey = input.fileKey;
@@ -358,7 +371,17 @@ export const iepRouter = router({
     // Query IEP-extracted student demographics (address, dob, gtid, parent details)
     getStudentIepDemographics: protectedProcedure
       .input(z.object({ contactId: z.number() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        if (ctx.staffAccess?.isStaff) {
+          if (checkBackendCaseAccess(ctx.staffAccess, "files") === "none") {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Access to Student IEP demographics is restricted for your role.",
+            });
+          }
+        } else {
+          await assertClientContactOwnership(ctx, input.contactId);
+        }
         const { iepDocuments, clientFiles, documentVaultAnalyses } = await import("../../drizzle/schema");
         const { eq, desc } = await import("drizzle-orm");
         const dbConn = await db.getDb();

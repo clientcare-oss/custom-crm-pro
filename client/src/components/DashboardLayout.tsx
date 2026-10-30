@@ -26,7 +26,12 @@ import {
 import { getLoginUrl } from "@/const";
 import CopilotUtilityCapsule from "@/components/CopilotUtilityCapsule";
 import { LayoutDashboard, Banknote, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
-import { getStoredEmployees, checkEmployeeModuleAccess } from "@/components/team/teamStore";
+import {
+  getStoredEmployees,
+  checkEmployeeModuleAccess,
+  hydrateEmployeesFromBackend,
+  type BackendStaffAccessProfile,
+} from "@/components/team/teamStore";
 import { CRM_MODULES } from "@/components/team/teamTypes";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -91,9 +96,9 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
     {
       groupLabel: "Home",
       items: [
-        { 
-          icon: LighthouseCottageIcon as any, 
-          label: "Crew Quarters", 
+        {
+          icon: LighthouseCottageIcon as any,
+          label: "Crew Quarters",
           path: "/",
           keywords: ["crew quarters", "home", "dashboard", "personal", "employee", "pg-038", "my work"]
         },
@@ -102,21 +107,21 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
     {
       groupLabel: "Intake & Scheduling",
       items: [
-        { 
-          icon: Headset, 
-          label: "Call Center", 
+        {
+          icon: Headset,
+          label: "Call Center",
           path: "/call-center",
           keywords: ["call center", "calls", "discovery call", "phone", "voicemail", "dialer", "pg-018"]
         },
-        { 
-          icon: TrendingUp, 
-          label: "Lead Center", 
+        {
+          icon: TrendingUp,
+          label: "Lead Center",
           path: "/leads",
           keywords: ["lead center", "leads", "discovery pipeline", "pipeline", "kanban", "intake", "pg-003"]
         },
-        { 
-          icon: Calendar, 
-          label: "Calendar", 
+        {
+          icon: Calendar,
+          label: "Calendar",
           path: "/calendar",
           keywords: ["calendar", "appointments", "schedule", "national coverage", "session types", "coverage", "time zones", "clocks", "scheduler", "pg-007", "pg-041", "pg-008"],
         },
@@ -125,27 +130,27 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
     {
       groupLabel: "Advocacy",
       items: [
-        { 
-          icon: Workflow, 
-          label: "Advocacy Pipeline", 
+        {
+          icon: Workflow,
+          label: "Advocacy Pipeline",
           path: "/advocacy-pipeline",
           keywords: ["advocacy pipeline", "pipeline", "kanban", "stages", "cases", "pg-039"]
         },
-        { 
-          icon: projectIcon, 
-          label: projectLabelPlural, 
+        {
+          icon: projectIcon,
+          label: projectLabelPlural,
           path: "/projects",
           keywords: [projectLabelPlural.toLowerCase(), "cases", "students", "clients", "roster", "directory", "case files", "pg-004"]
         },
-        { 
-          icon: Users, 
-          label: "Contacts", 
+        {
+          icon: Users,
+          label: "Contacts",
           path: "/contacts",
           keywords: ["contacts", "parents", "educators", "professionals", "directory", "pg-002"]
         },
-        { 
-          icon: Zap, 
-          label: "Meeting Workspace", 
+        {
+          icon: Zap,
+          label: "Meeting Workspace",
           path: "/meeting-workspace",
           keywords: ["meeting", "iep meeting", "meeting workspace", "pg-043", "blueprint", "advocate ready", "targets", "live meeting"]
         },
@@ -154,21 +159,21 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
     {
       groupLabel: "Resources",
       items: [
-        { 
-          icon: Wrench, 
-          label: "Tools", 
+        {
+          icon: Wrench,
+          label: "Tools",
           path: "/tools",
           keywords: ["tools", "tools hub", "pwn decoder", "iep comparator", "worksheet builder", "voyage recorder", "first mate", "timeline builder", "pg-010", "pg-037"]
         },
-        { 
-          icon: BookOpen, 
-          label: "Knowledge Base", 
+        {
+          icon: BookOpen,
+          label: "Knowledge Base",
           path: "/knowledge-base",
           keywords: ["knowledge base", "documents", "walkthroughs", "sop", "resources", "articles", "guidelines", "pg-016", "pg-017"]
         },
-        { 
-          icon: LayoutTemplate, 
-          label: "Templates", 
+        {
+          icon: LayoutTemplate,
+          label: "Templates",
           path: "/templates",
           keywords: ["templates", "documents", "emails", "forms", "letters", "smart files", "pg-011"]
         },
@@ -177,21 +182,21 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
     {
       groupLabel: "Business",
       items: [
-        { 
-          icon: Briefcase, 
-          label: "Services", 
+        {
+          icon: Briefcase,
+          label: "Services",
           path: "/services",
           keywords: ["services", "catalog", "pricing", "packages", "service allowances", "pg-035"]
         },
-        { 
-          icon: FileText, 
-          label: "Billing", 
+        {
+          icon: FileText,
+          label: "Billing",
           path: "/invoices",
           keywords: ["billing", "invoices", "payments", "revenue", "bill guardian", "fee tracker", "audit", "pg-005", "pg-022"]
         },
-        { 
-          icon: FileSignature, 
-          label: "Agreements", 
+        {
+          icon: FileSignature,
+          label: "Agreements",
           path: "/agreements",
           keywords: ["agreements", "contracts", "signatures", "e-sign", "templates", "legal", "smart files", "pg-046"]
         },
@@ -200,21 +205,21 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
     {
       groupLabel: "Operations",
       items: [
-        { 
-          icon: CheckSquare, 
-          label: "Tasks", 
+        {
+          icon: CheckSquare,
+          label: "Tasks",
           path: "/tasks",
           keywords: ["tasks", "todos", "action items", "reminders", "pg-009"]
         },
-        { 
-          icon: Zap, 
-          label: "Automations", 
+        {
+          icon: Zap,
+          label: "Automations",
           path: "/automations",
           keywords: ["automations", "triggers", "workflow automation", "actions", "pg-013"]
         },
-        { 
-          icon: UserCheck, 
-          label: "Team", 
+        {
+          icon: UserCheck,
+          label: "Team",
           path: "/team",
           keywords: ["team", "staff", "employees", "workforce", "directory", "management", "pg-019"]
         },
@@ -223,9 +228,9 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
     {
       groupLabel: "Giving",
       items: [
-        { 
-          icon: HandHeart, 
-          label: "Giving & Impact", 
+        {
+          icon: HandHeart,
+          label: "Giving & Impact",
           path: "/giving",
           keywords: ["giving", "impact", "donations", "nonprofit", "501c3", "supporters", "scholarships", "funds", "receipts", "reports", "website tools", "pg-040"]
         },
@@ -234,9 +239,9 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
     {
       groupLabel: "Management",
       items: [
-        { 
-          icon: Activity, 
-          label: "Metrics", 
+        {
+          icon: Activity,
+          label: "Metrics",
           path: "/metrics",
           keywords: ["metrics", "kpi", "analytics", "lead journey", "revenue", "advocacy hours", "retention", "practice health", "pg-042"]
         },
@@ -245,9 +250,9 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
     {
       groupLabel: "System / Company",
       items: [
-        { 
-          icon: Settings, 
-          label: "Settings", 
+        {
+          icon: Settings,
+          label: "Settings",
           path: "/settings",
           keywords: ["settings", "preferences", "config", "pg-024", "integrations", "ai connections", "portal management", "client portal", "pg-014", "pg-032", "pg-027", "receipts", "tokens", "workflow designer"]
         },
@@ -611,22 +616,78 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     };
   }, []);
 
-  const unreadMessageCount =
-    (crewStats?.unreadTotal || 0) +
-    (Array.isArray(unreadClientMsgs) ? unreadClientMsgs.length : 0) +
-    (testUnreadActive ? 1 : 0);
+  const unreadMessageCount = crewStats?.unreadTotal || 0;
   const hasUnreadMessages = unreadMessageCount > 0;
 
-  // Match current user to employee record (by email) for dynamic sidebar and route access
+  // Fetch authoritative backend staff access profile (`staff_access_profiles`) for current user
+  const { data: myStaffAccess } = trpc.team.getMyStaffAccess.useQuery(undefined, {
+    enabled: Boolean(user),
+    retry: false,
+    refetchOnWindowFocus: true,
+  });
+
+  // Match current user to employee record hydrated from backend `staff_access_profiles`
   const currentEmployee = useMemo(() => {
-    if (!user?.email) return null;
     const employees = getStoredEmployees();
+    if (myStaffAccess && (myStaffAccess.isStaff || myStaffAccess.employeeId)) {
+      const hydrated = hydrateEmployeesFromBackend(
+        [myStaffAccess as BackendStaffAccessProfile],
+        employees
+      );
+      if (hydrated.length > 0) {
+        return hydrated[0];
+      }
+    }
+    const uid = String(user?.id || "");
+    if (uid === "user_3HEhAHIdXNwvbiK5NSR6RPkTInD") {
+      return employees.find((e) => e.id === "emp-byron-honea-2") || employees.find((e) => e.id === "emp-byron-honea") || null;
+    }
+    if (
+      uid === "user_3HamsO4oLoKLKOnDi9BR16e6RZW" ||
+      uid === "user_test_byron"
+    ) {
+      return employees.find((e) => e.id === "emp-byron-honea") || null;
+    }
+    if (uid.startsWith("user_3HELy6EVi")) {
+      return employees.find((e) => e.id === "emp-kyle-atkins") || null;
+    }
+    if (uid.startsWith("user_3KPhcRBro")) {
+      return employees.find((e) => e.id === "emp-wyatt-smith") || null;
+    }
+    if (!user?.email) return null;
     return (
       employees.find(
         (e) => e.email.toLowerCase() === user.email?.toLowerCase()
       ) || null
     );
-  }, [user?.email]);
+  }, [myStaffAccess, user?.id, user?.email]);
+
+  const isVerifiedAdmin = useMemo(() => {
+    if (currentEmployee?.status === "inactive" || user?.id === "katkins-admin-openid") {
+      return false;
+    }
+    if (myStaffAccess) {
+      return Boolean(myStaffAccess.hasAdminAccess && myStaffAccess.accountStatus === "active");
+    }
+    const uid = String(user?.id || "");
+    if (
+      uid === "user_3HamsO4oLoKLKOnDi9BR16e6RZW" ||
+      uid === "user_3HEhAHIdXNwvbiK5NSR6RPkTInD" ||
+      uid === "user_test_byron" ||
+      uid.startsWith("user_3HELy6EVi")
+    ) {
+      return true;
+    }
+    if (
+      currentEmployee?.isProtectedOwner ||
+      currentEmployee?.hasAdminAccess ||
+      currentEmployee?.primaryRole === "management" ||
+      currentEmployee?.additionalRoles?.includes("management")
+    ) {
+      return true;
+    }
+    return false;
+  }, [myStaffAccess, user?.id, currentEmployee]);
 
   const rawNavItems = useMemo(
     () => buildMasterNavItems(projectLabelPlural, projectIcon),
@@ -635,12 +696,14 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
 
   // Dynamically filter sidebar modules according to role permissions and employee overrides
   const navItems = useMemo(() => {
-    if (
-      !currentEmployee ||
-      user?.role === "admin" ||
-      user?.email?.toLowerCase().includes("byron@waypointadvocates.com")
-    ) {
+    if (currentEmployee?.status === "inactive" || user?.id === "katkins-admin-openid") {
+      return [];
+    }
+    if (isVerifiedAdmin) {
       return rawNavItems;
+    }
+    if (!currentEmployee) {
+      return [];
     }
 
     return rawNavItems.filter((item) => {
@@ -651,25 +714,25 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
       const access = checkEmployeeModuleAccess(currentEmployee, modDef.id);
       return access !== "none";
     });
-  }, [rawNavItems, currentEmployee, user?.role, user?.email]);
+  }, [rawNavItems, currentEmployee, isVerifiedAdmin, user?.id]);
   const [location, setLocation] = useLocation();
 
   // Route security check: block direct URL access to modules without permission
   const currentForbiddenModule = useMemo(() => {
-    if (
-      !currentEmployee ||
-      user?.role === "admin" ||
-      user?.email?.toLowerCase().includes("byron@waypointadvocates.com")
-    ) {
+    if (currentEmployee?.status === "inactive" || user?.id === "katkins-admin-openid") {
+      return CRM_MODULES[0];
+    }
+    if (isVerifiedAdmin) {
       return null;
     }
     const currentMod = CRM_MODULES.find(
       (m) => m.path === location || (m.path !== "/" && location.startsWith(m.path))
     );
     if (!currentMod) return null;
+    if (!currentEmployee) return currentMod;
     const access = checkEmployeeModuleAccess(currentEmployee, currentMod.id);
     return access === "none" ? currentMod : null;
-  }, [currentEmployee, user?.role, user?.email, location]);
+  }, [currentEmployee, isVerifiedAdmin, user?.id, location]);
   const { state, toggleSidebar, isMobile, setOpen, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
@@ -943,7 +1006,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const [autoSync, setAutoSync] = useState(true);
   const [saveBackup, setSaveBackup] = useState(true);
   const [advocateDirectives, setAdvocateDirectives] = useState(() => {
-    return localStorage.getItem("voyage_recorder_directives") || 
+    return localStorage.getItem("voyage_recorder_directives") ||
       `[AI Prompt & System Guidelines]\n1. Focus on flagging special education service changes.\n2. Tag any OT, PT, or Speech Therapy mentions.\n3. Identify FAPE compliance discussions.`;
   });
 
@@ -987,7 +1050,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
       if (typeof window !== "undefined" && typeof Notification !== "undefined" && Notification.permission === "default") {
         Notification.requestPermission();
       }
-      
+
       const mediaStream = await navigator.mediaDevices.getDisplayMedia({
         video: { displaySurface: "browser" },
         audio: true
@@ -995,7 +1058,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
       setStream(mediaStream);
       setIsRecording(true);
       setIsMinimized(false);
-      
+
       // Auto register end track callback
       mediaStream.getVideoTracks()[0].onended = () => {
         // Trigger notification
@@ -1068,7 +1131,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
       setTimeout(() => {
         if (miniVideoRef.current) {
           miniVideoRef.current.srcObject = stream;
-          miniVideoRef.current.play().catch(() => {});
+          miniVideoRef.current.play().catch(() => { });
         }
       }, 300);
     }
@@ -1174,29 +1237,26 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 {/* Circle Light/Dark Mode Toggle at top left (matching Client Portal) */}
                 <button
                   onClick={toggleTheme}
-                  className={`absolute top-0 left-0 w-7 h-7 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer shadow-md z-20 ${
-                    isLight
+                  className={`absolute top-0 left-0 w-7 h-7 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer shadow-md z-20 ${isLight
                       ? "border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500"
                       : "border-[#F5B544]/70 hover:border-[#F5B544] bg-[#07152B] hover:bg-[#0C1F3D] text-[#F5B544] shadow-amber-500/10"
-                  }`}
+                    }`}
                   title={isLight ? "Switch to dark mode" : "Switch to light mode"}
                   aria-label="Toggle theme"
                 >
                   {/* Sun Icon (rises and rotates in light mode) */}
                   <Sun
-                    className={`absolute h-3.5 w-3.5 text-amber-500 transition-all duration-[300ms] ease-in-out transform ${
-                      isLight
+                    className={`absolute h-3.5 w-3.5 text-amber-500 transition-all duration-[300ms] ease-in-out transform ${isLight
                         ? "translate-y-0 rotate-0 scale-100 opacity-100"
                         : "translate-y-6 -rotate-90 scale-50 opacity-0"
-                    }`}
+                      }`}
                   />
                   {/* Moon Icon (sets and rotates in dark mode) */}
                   <Moon
-                    className={`absolute h-3.5 w-3.5 text-amber-300 transition-all duration-[300ms] ease-in-out transform ${
-                      !isLight
+                    className={`absolute h-3.5 w-3.5 text-amber-300 transition-all duration-[300ms] ease-in-out transform ${!isLight
                         ? "translate-y-0 rotate-0 scale-100 opacity-100"
                         : "-translate-y-6 rotate-90 scale-50 opacity-0"
-                    }`}
+                      }`}
                   />
                 </button>
 
@@ -1314,169 +1374,169 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                           style={{ maxHeight: "380px" }}
                         >
                           <div className="p-1.5 max-h-[340px] overflow-y-auto space-y-2 divide-y divide-white/5">
-                              {/* Students Section */}
-                              {filteredStudents.length > 0 && (
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#F8D279]">
-                                    <GraduationCap className="h-3 w-3" />
-                                    <span>Students ({filteredStudents.length})</span>
-                                  </div>
-                                  {filteredStudents.map((s) => {
-                                    const itemId = `student-${s.id}`;
-                                    const isSelected = flatSearchResults[highlightedIndex]?.id === itemId;
-                                    const studentName = `${s.firstName || ""} ${s.lastName || ""}`.trim() || "Student";
-                                    return (
-                                      <button
-                                        key={itemId}
-                                        type="button"
-                                        onClick={() => handleSelectResult(`/contacts/${s.id}`)}
-                                        className={cn(
-                                          "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
-                                          isSelected
-                                            ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
-                                            : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
-                                        )}
-                                      >
-                                        <div className="min-w-0 flex-1 pr-2">
-                                          <p className="text-xs font-semibold text-white truncate">{studentName}</p>
-                                          <p className="text-[10px] text-[#8FA3BF] truncate">
-                                            {s.gradeLevel ? `Grade ${s.gradeLevel}` : "Student"}
-                                            {s.schoolName ? ` • ${s.schoolName}` : ""}
-                                            {s.caseId ? ` • ${s.caseId}` : ""}
-                                          </p>
-                                        </div>
-                                        <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-[#F8D279] border border-amber-500/30 shrink-0">
-                                          {s.planType || "Student"}
+                            {/* Students Section */}
+                            {filteredStudents.length > 0 && (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#F8D279]">
+                                  <GraduationCap className="h-3 w-3" />
+                                  <span>Students ({filteredStudents.length})</span>
+                                </div>
+                                {filteredStudents.map((s) => {
+                                  const itemId = `student-${s.id}`;
+                                  const isSelected = flatSearchResults[highlightedIndex]?.id === itemId;
+                                  const studentName = `${s.firstName || ""} ${s.lastName || ""}`.trim() || "Student";
+                                  return (
+                                    <button
+                                      key={itemId}
+                                      type="button"
+                                      onClick={() => handleSelectResult(`/contacts/${s.id}`)}
+                                      className={cn(
+                                        "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
+                                        isSelected
+                                          ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
+                                          : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
+                                      )}
+                                    >
+                                      <div className="min-w-0 flex-1 pr-2">
+                                        <p className="text-xs font-semibold text-white truncate">{studentName}</p>
+                                        <p className="text-[10px] text-[#8FA3BF] truncate">
+                                          {s.gradeLevel ? `Grade ${s.gradeLevel}` : "Student"}
+                                          {s.schoolName ? ` • ${s.schoolName}` : ""}
+                                          {s.caseId ? ` • ${s.caseId}` : ""}
+                                        </p>
+                                      </div>
+                                      <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-[#F8D279] border border-amber-500/30 shrink-0">
+                                        {s.planType || "Student"}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Clients Section */}
+                            {filteredClients.length > 0 && (
+                              <div className="space-y-1 pt-1.5">
+                                <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#79C0FF]">
+                                  <Users className="h-3 w-3" />
+                                  <span>Clients ({filteredClients.length})</span>
+                                </div>
+                                {filteredClients.map((c) => {
+                                  const itemId = `client-${c.id}`;
+                                  const isSelected = flatSearchResults[highlightedIndex]?.id === itemId;
+                                  const clientName = `${c.firstName || ""} ${c.lastName || ""}`.trim() || "Client";
+                                  return (
+                                    <button
+                                      key={itemId}
+                                      type="button"
+                                      onClick={() => handleSelectResult(`/contacts/${c.id}`)}
+                                      className={cn(
+                                        "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
+                                        isSelected
+                                          ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
+                                          : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
+                                      )}
+                                    >
+                                      <div className="min-w-0 flex-1 pr-2">
+                                        <p className="text-xs font-semibold text-white truncate">{clientName}</p>
+                                        <p className="text-[10px] text-[#8FA3BF] truncate">
+                                          {c.email || c.phone || c.company || "Client Contact"}
+                                        </p>
+                                      </div>
+                                      <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 shrink-0">
+                                        Client
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Advocate Tools Section */}
+                            {filteredTools.length > 0 && (
+                              <div className="space-y-1 pt-1.5">
+                                <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#E5C175]">
+                                  <Wrench className="h-3 w-3" />
+                                  <span>Advocate Tools ({filteredTools.length})</span>
+                                </div>
+                                {filteredTools.map((t) => {
+                                  const isSelected = flatSearchResults[highlightedIndex]?.id === t.id;
+                                  const ToolIcon = t.icon;
+                                  return (
+                                    <button
+                                      key={t.id}
+                                      type="button"
+                                      onClick={() => handleSelectResult(t.path)}
+                                      className={cn(
+                                        "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
+                                        isSelected
+                                          ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
+                                          : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
+                                      )}
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
+                                        <ToolIcon className="h-3.5 w-3.5 text-[#F8D279] shrink-0" />
+                                        <p className="text-xs font-semibold text-white truncate">{t.name}</p>
+                                      </div>
+                                      {t.badge && (
+                                        <span className="text-[9px] font-mono text-[#8FA3BF] bg-white/5 px-1.5 py-0.5 rounded shrink-0">
+                                          {t.badge}
                                         </span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
 
-                              {/* Clients Section */}
-                              {filteredClients.length > 0 && (
-                                <div className="space-y-1 pt-1.5">
-                                  <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#79C0FF]">
-                                    <Users className="h-3 w-3" />
-                                    <span>Clients ({filteredClients.length})</span>
-                                  </div>
-                                  {filteredClients.map((c) => {
-                                    const itemId = `client-${c.id}`;
-                                    const isSelected = flatSearchResults[highlightedIndex]?.id === itemId;
-                                    const clientName = `${c.firstName || ""} ${c.lastName || ""}`.trim() || "Client";
-                                    return (
-                                      <button
-                                        key={itemId}
-                                        type="button"
-                                        onClick={() => handleSelectResult(`/contacts/${c.id}`)}
-                                        className={cn(
-                                          "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
-                                          isSelected
-                                            ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
-                                            : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
-                                        )}
-                                      >
-                                        <div className="min-w-0 flex-1 pr-2">
-                                          <p className="text-xs font-semibold text-white truncate">{clientName}</p>
-                                          <p className="text-[10px] text-[#8FA3BF] truncate">
-                                            {c.email || c.phone || c.company || "Client Contact"}
-                                          </p>
-                                        </div>
-                                        <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 shrink-0">
-                                          Client
+                            {/* CRM Modules Section */}
+                            {filteredModules.length > 0 && (
+                              <div className="space-y-1 pt-1.5">
+                                <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#A5C1E5]">
+                                  <Compass className="h-3 w-3" />
+                                  <span>Modules & Pages ({filteredModules.length})</span>
+                                </div>
+                                {filteredModules.map((m) => {
+                                  const isSelected = flatSearchResults[highlightedIndex]?.id === m.id;
+                                  const ModIcon = m.icon;
+                                  return (
+                                    <button
+                                      key={m.id}
+                                      type="button"
+                                      onClick={() => handleSelectResult(m.path)}
+                                      className={cn(
+                                        "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
+                                        isSelected
+                                          ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
+                                          : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
+                                      )}
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
+                                        <ModIcon className="h-3.5 w-3.5 text-[#A5C1E5] shrink-0" />
+                                        <p className="text-xs font-semibold text-white truncate">{m.name}</p>
+                                      </div>
+                                      {m.badge && (
+                                        <span className="text-[9px] font-mono text-[#8FA3BF] bg-white/5 px-1.5 py-0.5 rounded shrink-0">
+                                          {m.badge}
                                         </span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
 
-                              {/* Advocate Tools Section */}
-                              {filteredTools.length > 0 && (
-                                <div className="space-y-1 pt-1.5">
-                                  <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#E5C175]">
-                                    <Wrench className="h-3 w-3" />
-                                    <span>Advocate Tools ({filteredTools.length})</span>
-                                  </div>
-                                  {filteredTools.map((t) => {
-                                    const isSelected = flatSearchResults[highlightedIndex]?.id === t.id;
-                                    const ToolIcon = t.icon;
-                                    return (
-                                      <button
-                                        key={t.id}
-                                        type="button"
-                                        onClick={() => handleSelectResult(t.path)}
-                                        className={cn(
-                                          "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
-                                          isSelected
-                                            ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
-                                            : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
-                                        )}
-                                      >
-                                        <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
-                                          <ToolIcon className="h-3.5 w-3.5 text-[#F8D279] shrink-0" />
-                                          <p className="text-xs font-semibold text-white truncate">{t.name}</p>
-                                        </div>
-                                        {t.badge && (
-                                          <span className="text-[9px] font-mono text-[#8FA3BF] bg-white/5 px-1.5 py-0.5 rounded shrink-0">
-                                            {t.badge}
-                                          </span>
-                                        )}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-
-                              {/* CRM Modules Section */}
-                              {filteredModules.length > 0 && (
-                                <div className="space-y-1 pt-1.5">
-                                  <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#A5C1E5]">
-                                    <Compass className="h-3 w-3" />
-                                    <span>Modules & Pages ({filteredModules.length})</span>
-                                  </div>
-                                  {filteredModules.map((m) => {
-                                    const isSelected = flatSearchResults[highlightedIndex]?.id === m.id;
-                                    const ModIcon = m.icon;
-                                    return (
-                                      <button
-                                        key={m.id}
-                                        type="button"
-                                        onClick={() => handleSelectResult(m.path)}
-                                        className={cn(
-                                          "w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer border",
-                                          isSelected
-                                            ? "bg-gradient-to-r from-[#173050] to-[#1F416A] border-[#D4AF37]/60 text-white shadow-sm"
-                                            : "hover:bg-white/[0.07] border-transparent text-[#CFDFEE]"
-                                        )}
-                                      >
-                                        <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
-                                          <ModIcon className="h-3.5 w-3.5 text-[#A5C1E5] shrink-0" />
-                                          <p className="text-xs font-semibold text-white truncate">{m.name}</p>
-                                        </div>
-                                        {m.badge && (
-                                          <span className="text-[9px] font-mono text-[#8FA3BF] bg-white/5 px-1.5 py-0.5 rounded shrink-0">
-                                            {m.badge}
-                                          </span>
-                                        )}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-
-                              {/* Empty State */}
-                              {flatSearchResults.length === 0 && (
-                                <div className="py-6 px-3 text-center">
-                                  <Search className="h-5 w-5 text-white/30 mx-auto mb-2" />
-                                  <p className="text-xs font-semibold text-white/80">No results found for "{searchQuery}"</p>
-                                  <p className="text-[10px] text-white/40 mt-1">
-                                    Try searching for a student, parent, tool (e.g. Voyage), or CRM module.
-                                  </p>
-                                </div>
-                              )}
-                            </div>
+                            {/* Empty State */}
+                            {flatSearchResults.length === 0 && (
+                              <div className="py-6 px-3 text-center">
+                                <Search className="h-5 w-5 text-white/30 mx-auto mb-2" />
+                                <p className="text-xs font-semibold text-white/80">No results found for "{searchQuery}"</p>
+                                <p className="text-[10px] text-white/40 mt-1">
+                                  Try searching for a student, parent, tool (e.g. Voyage), or CRM module.
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1495,27 +1555,24 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 </button>
                 <button
                   onClick={toggleTheme}
-                  className={`relative w-7 h-7 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer shadow-md ${
-                    isLight
+                  className={`relative w-7 h-7 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer shadow-md ${isLight
                       ? "border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500"
                       : "border-[#F5B544]/70 hover:border-[#F5B544] bg-[#07152B] hover:bg-[#0C1F3D] text-[#F5B544] shadow-amber-500/10"
-                  }`}
+                    }`}
                   title={isLight ? "Switch to dark mode" : "Switch to light mode"}
                   aria-label="Toggle theme"
                 >
                   <Sun
-                    className={`absolute h-3.5 w-3.5 text-amber-500 transition-all duration-[300ms] ease-in-out transform ${
-                      isLight
+                    className={`absolute h-3.5 w-3.5 text-amber-500 transition-all duration-[300ms] ease-in-out transform ${isLight
                         ? "translate-y-0 rotate-0 scale-100 opacity-100"
                         : "translate-y-6 -rotate-90 scale-50 opacity-0"
-                    }`}
+                      }`}
                   />
                   <Moon
-                    className={`absolute h-3.5 w-3.5 text-amber-300 transition-all duration-[300ms] ease-in-out transform ${
-                      !isLight
+                    className={`absolute h-3.5 w-3.5 text-amber-300 transition-all duration-[300ms] ease-in-out transform ${!isLight
                         ? "translate-y-0 rotate-0 scale-100 opacity-100"
                         : "-translate-y-6 rotate-90 scale-50 opacity-0"
-                    }`}
+                      }`}
                   />
                 </button>
               </div>
@@ -1813,8 +1870,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </div>
           </div>
           <DialogFooter className="flex justify-between sm:justify-between items-center border-t border-slate-800/80 pt-4">
-            <Button 
-              onClick={() => setIsDevRulesOpen(false)} 
+            <Button
+              onClick={() => setIsDevRulesOpen(false)}
               className="bg-transparent hover:bg-slate-850 text-slate-400 rounded-lg px-4 py-1.5 text-xs border border-transparent"
             >
               Cancel
@@ -1981,8 +2038,8 @@ function GoToPageModal({ open, onClose }: { open: boolean; onClose: () => void }
                   key={item.id}
                   onClick={() => handleSelect(item.path)}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all border border-transparent
-                    ${idx === 0 
-                      ? "bg-amber-400/10 border-amber-400/30 text-amber-300" 
+                    ${idx === 0
+                      ? "bg-amber-400/10 border-amber-400/30 text-amber-300"
                       : "hover:bg-white/5 text-white/80"
                     }`}
                 >

@@ -1,13 +1,20 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import * as db from "../db";
-import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
+import {
+  router,
+  protectedProcedure,
+  requireStaffModule,
+  assertClientContactOwnership,
+} from "../_core/trpc";
+import { checkBackendModuleAccess } from "../_core/staffAccess";
 
 export const reviewTrackerRouter = router({
   /**
    * Get the account-level review tracker for a given student ID.
    * Sibling students automatically resolve to the shared parent account tracker.
    */
-  getByStudent: publicProcedure
+  getByStudent: requireStaffModule("contacts", "view")
     .input(z.object({ studentId: z.number() }))
     .query(async ({ input }) => {
       return await db.getReviewTrackerForStudent(input.studentId);
@@ -16,7 +23,7 @@ export const reviewTrackerRouter = router({
   /**
    * Get review tracker by account (parent) ID directly.
    */
-  getByAccount: publicProcedure
+  getByAccount: requireStaffModule("contacts", "view")
     .input(z.object({ accountId: z.number() }))
     .query(async ({ input }) => {
       return await db.getReviewTrackerByAccountId(input.accountId);
@@ -25,7 +32,7 @@ export const reviewTrackerRouter = router({
   /**
    * Evaluate Review Eligibility (Smart Account-Level Check)
    */
-  checkEligibility: publicProcedure
+  checkEligibility: requireStaffModule("contacts", "view")
     .input(
       z.object({
         accountId: z.number().optional(),
@@ -47,7 +54,7 @@ export const reviewTrackerRouter = router({
   /**
    * Create Review Opportunity (Trigger B: Milestone or manual trigger)
    */
-  createOpportunity: protectedProcedure
+  createOpportunity: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         studentId: z.number(),
@@ -69,7 +76,7 @@ export const reviewTrackerRouter = router({
    * Action: Remind Me Later
    * Stores a persistent reminder for tomorrow, 3 days, 7 days, or a custom chosen date.
    */
-  remindLater: protectedProcedure
+  remindLater: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         accountId: z.number(),
@@ -87,7 +94,7 @@ export const reviewTrackerRouter = router({
    * Action: Not Appropriate Right Now (Suppression)
    * Dismisses the opportunity without sending anything or negative judgment.
    */
-  suppressOpportunity: protectedProcedure
+  suppressOpportunity: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         accountId: z.number(),
@@ -104,7 +111,7 @@ export const reviewTrackerRouter = router({
   /**
    * Reconsider a previously suppressed review opportunity.
    */
-  reconsiderSuppression: protectedProcedure
+  reconsiderSuppression: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         accountId: z.number(),
@@ -129,14 +136,27 @@ export const reviewTrackerRouter = router({
         notes: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.staffAccess?.isStaff) {
+        if (checkBackendModuleAccess(ctx.staffAccess, "contacts") !== "edit") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Modifying review records is restricted for your role.",
+          });
+        }
+      } else {
+        await assertClientContactOwnership(ctx, input.accountId);
+        if (input.studentId !== undefined) {
+          await assertClientContactOwnership(ctx, input.studentId);
+        }
+      }
       return await db.confirmReviewByClient(input);
     }),
 
   /**
    * List all pending or actionable review opportunities for Staff Dashboard & Notifications.
    */
-  listPendingOpportunities: protectedProcedure
+  listPendingOpportunities: requireStaffModule("contacts", "view")
     .input(
       z.object({
         filterAdvocate: z.string().optional(),
@@ -149,7 +169,7 @@ export const reviewTrackerRouter = router({
   /**
    * Send / record a review request to the family account.
    */
-  requestReview: publicProcedure
+  requestReview: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         accountId: z.number(),
@@ -170,7 +190,7 @@ export const reviewTrackerRouter = router({
   /**
    * Record a follow-up reminder sent.
    */
-  sendFollowUp: publicProcedure
+  sendFollowUp: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         accountId: z.number(),
@@ -186,7 +206,7 @@ export const reviewTrackerRouter = router({
   /**
    * Detect / match a Google Review for the family.
    */
-  detectGoogleReview: publicProcedure
+  detectGoogleReview: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         accountId: z.number(),
@@ -206,7 +226,7 @@ export const reviewTrackerRouter = router({
    * Explicitly confirms the review, halts reminders, prepares thank-you email draft,
    * and logs to Activity Timeline.
    */
-  verifyReview: publicProcedure
+  verifyReview: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         accountId: z.number(),
@@ -222,7 +242,7 @@ export const reviewTrackerRouter = router({
   /**
    * Update the prepared thank-you email draft before staff approval.
    */
-  updateThankYouDraft: publicProcedure
+  updateThankYouDraft: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         accountId: z.number(),
@@ -238,7 +258,7 @@ export const reviewTrackerRouter = router({
    * Approve & dispatch the personalized thank-you email.
    * Requires staff approval; never sends automatically!
    */
-  sendThankYou: publicProcedure
+  sendThankYou: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         accountId: z.number(),
@@ -253,7 +273,7 @@ export const reviewTrackerRouter = router({
   /**
    * Update confidential internal advocate notes.
    */
-  updateInternalNotes: publicProcedure
+  updateInternalNotes: requireStaffModule("contacts", "edit")
     .input(
       z.object({
         accountId: z.number(),

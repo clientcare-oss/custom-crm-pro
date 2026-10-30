@@ -340,8 +340,17 @@ export function StudentCommunicationWorkspace({
                 </div>
               </div>
 
-              {/* "Send a message ▾" Dropdown Button */}
-              <div className="relative">
+              {/* "Create New Email" + "Send a message ▾" Action Buttons */}
+              <div className="flex items-center gap-2 relative">
+                <Button
+                  type="button"
+                  onClick={() => handleOpenComposer("New Case Email", "")}
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-105 text-[#07162B] font-bold text-xs sm:text-sm h-9 px-3.5 rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Create New Email</span>
+                </Button>
+
                 <Button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="bg-[#07162B] hover:bg-[#0E274A] text-[#FFF4D4] border border-[#3A2C18] hover:border-[#C5A059]/60 font-semibold text-xs sm:text-sm h-9 px-4 rounded-xl flex items-center gap-2 shadow-md cursor-pointer transition-all"
@@ -357,7 +366,7 @@ export function StudentCommunicationWorkspace({
                       className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-[#FFF4D4] hover:bg-[#0E274A] hover:text-[#FFE394] flex items-center gap-2 transition-colors cursor-pointer"
                     >
                       <Mail className="w-3.5 h-3.5 text-[#C5A059]" />
-                      <span>Send New Email</span>
+                      <span>Create New Email</span>
                     </button>
                     <button
                       onClick={() => handleOpenComposer("1:1 Strategy Session Availability", "Please see our open availability for our upcoming strategy call:\n\n")}

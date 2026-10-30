@@ -95,10 +95,17 @@ function getFolderStyle(color?: string | null) {
 
 // ─── Template Form Dialog ─────────────────────────────────────────────────────
 
-type TemplateFormData = { name: string; subject: string; body: string; category: string; folderId: number | null };
+type TemplateFormData = {
+  name: string;
+  subject: string;
+  body: string;
+  category: string;
+  description?: string | null;
+  folderId: number | null;
+};
 
 function EmailTemplateDialog({
-  open, onClose, initial, onSave, saving, folders,
+  open, onClose, initial, onSave, saving, folders, categories,
 }: {
   open: boolean;
   onClose: () => void;
@@ -106,12 +113,14 @@ function EmailTemplateDialog({
   onSave: (data: TemplateFormData) => void;
   saving: boolean;
   folders: any[];
+  categories: any[];
 }) {
   const [form, setForm] = useState<TemplateFormData>({
     name: initial?.name ?? "",
     subject: initial?.subject ?? "",
     body: initial?.body ?? "",
     category: initial?.category ?? "General",
+    description: initial?.description ?? "",
     folderId: initial?.folderId ?? null,
   });
 
@@ -122,10 +131,15 @@ function EmailTemplateDialog({
         subject: initial?.subject ?? "",
         body: initial?.body ?? "",
         category: initial?.category ?? "General",
+        description: initial?.description ?? "",
         folderId: initial?.folderId ?? null,
       });
     }
   }, [open, initial]);
+
+  const categoryOptions = categories.length > 0
+    ? categories.map((c: any) => c.name)
+    : ["Onboarding", "Client Updates", "Resources", "Meetings & Scheduling", "Documents & Records", "Billing & Plans", "Follow-Ups & Reviews", "General"];
 
   return (
     <Dialog open={open} onOpenChange={(v) => {
@@ -141,7 +155,7 @@ function EmailTemplateDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-3">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">Template Name</Label>
               <Input
@@ -150,6 +164,21 @@ function EmailTemplateDialog({
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 className="bg-[#020A17]/90 border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#A69371] focus:border-[#C5A059] focus:ring-1 focus:ring-[#C5A059]"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">Category</Label>
+              <Select value={form.category || "General"} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
+                <SelectTrigger className="bg-[#020A17]/90 border-[#3A2C18] text-[#FFF4D4] focus:border-[#C5A059] focus:ring-1 focus:ring-[#C5A059]">
+                  <SelectValue placeholder="General" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4]">
+                  {categoryOptions.map((catName: string) => (
+                    <SelectItem key={catName} value={catName} className="hover:bg-[#07162B] hover:text-[#FFE394] focus:bg-[#07162B] focus:text-[#FFE394] cursor-pointer">
+                      {catName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">Folder</Label>
@@ -170,15 +199,26 @@ function EmailTemplateDialog({
               </Select>
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">Subject Line</Label>
-            <Input
-              placeholder="e.g. Reminder: IEP Meeting on {{date}}"
-              value={form.subject}
-              onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
-              className="bg-[#020A17]/90 border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#A69371] focus:border-[#C5A059] focus:ring-1 focus:ring-[#C5A059]"
-            />
-            <p className="text-xs text-[#A69371]">Use {"{{name}}"}, {"{{date}}"}, {"{{student}}"} as merge tags</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">Subject Line</Label>
+              <Input
+                placeholder="e.g. Reminder: IEP Meeting on {{date}}"
+                value={form.subject}
+                onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
+                className="bg-[#020A17]/90 border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#A69371] focus:border-[#C5A059] focus:ring-1 focus:ring-[#C5A059]"
+              />
+              <p className="text-xs text-[#A69371]">Use {"{{name}}"}, {"{{date}}"}, {"{{student}}"} as merge tags</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">Description (Optional)</Label>
+              <Input
+                placeholder="Brief summary of when to use this template"
+                value={form.description ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                className="bg-[#020A17]/90 border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#A69371] focus:border-[#C5A059] focus:ring-1 focus:ring-[#C5A059]"
+              />
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">Email Body</Label>
@@ -292,28 +332,39 @@ function FolderDialog({
 
 type FolderFilter = "all" | null | number;
 
-function EmailTemplates({ onBack }: { onBack: () => void }) {
+export function EmailTemplates({ onBack, backLabel = "Back to Hub" }: { onBack: () => void; backLabel?: string }) {
   const utils = trpc.useUtils();
   const { data: folders = [] } = trpc.emailTemplates.folders.list.useQuery();
+  const { data: categories = [] } = trpc.emailTemplates.categories.list.useQuery();
   const [activeFolder, setActiveFolder] = useState<FolderFilter>("all");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const queryInput = activeFolder === "all" ? undefined : { folderId: activeFolder };
   const { data: templates = [], isLoading } = trpc.emailTemplates.list.useQuery(queryInput);
   const { data: automationMap = {} } = trpc.emailTemplates.checkAllAutomationUsage.useQuery();
 
-  const filteredTemplates = searchQuery.trim()
-    ? templates.filter((tpl: any) =>
-        tpl.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tpl.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tpl.category?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : templates;
+  const filteredTemplates = templates.filter((tpl: any) => {
+    if (activeCategory !== "all" && (tpl.category || "General") !== activeCategory) {
+      return false;
+    }
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      tpl.name.toLowerCase().includes(q) ||
+      tpl.subject?.toLowerCase().includes(q) ||
+      tpl.category?.toLowerCase().includes(q) ||
+      tpl.description?.toLowerCase().includes(q)
+    );
+  });
 
   const [templateDialog, setTemplateDialog] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<(TemplateFormData & { id?: number }) | null>(null);
   const [folderDialog, setFolderDialog] = useState(false);
   const [editingFolder, setEditingFolder] = useState<{ id?: number; name: string; color: string } | null>(null);
+  const [categoryDialog, setCategoryDialog] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<{ id?: string; oldName?: string; name: string; description: string } | null>(null);
+  const [deleteCategoryConfirm, setDeleteCategoryConfirm] = useState<{ id: string; name: string; reassignTo: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; name: string; linked: boolean; automationNames: string[] } | null>(null);
 
   const createFolder = trpc.emailTemplates.folders.create.useMutation({
@@ -334,21 +385,83 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
     onError: () => toast.error("Failed to delete folder"),
   });
 
+  const createCategoryMut = trpc.emailTemplates.categories.create.useMutation({
+    onSuccess: () => {
+      utils.emailTemplates.categories.list.invalidate();
+      setCategoryDialog(false);
+      setEditingCategory(null);
+      toast.success("Category created");
+    },
+    onError: (err) => toast.error(err.message || "Failed to create category"),
+  });
+  const renameCategoryMut = trpc.emailTemplates.categories.rename.useMutation({
+    onSuccess: (updated) => {
+      utils.emailTemplates.categories.list.invalidate();
+      utils.emailTemplates.list.invalidate();
+      if (editingCategory?.oldName && activeCategory === editingCategory.oldName) {
+        setActiveCategory(updated.name);
+      }
+      setCategoryDialog(false);
+      setEditingCategory(null);
+      toast.success("Category updated");
+    },
+    onError: (err) => toast.error(err.message || "Failed to rename category"),
+  });
+  const reorderCategoriesMut = trpc.emailTemplates.categories.reorder.useMutation({
+    onSuccess: () => {
+      utils.emailTemplates.categories.list.invalidate();
+      toast.success("Category order updated");
+    },
+  });
+  const deleteCategoryMut = trpc.emailTemplates.categories.delete.useMutation({
+    onSuccess: (res) => {
+      utils.emailTemplates.categories.list.invalidate();
+      utils.emailTemplates.list.invalidate();
+      if (activeCategory === res.deletedCategory) setActiveCategory("all");
+      setDeleteCategoryConfirm(null);
+      toast.success(`Removed "${res.deletedCategory}" — ${res.reassignedCount} template(s) reassigned to ${res.reassignedTo}`);
+    },
+    onError: (err) => toast.error(err.message || "Failed to delete category"),
+  });
+
   const createTemplate = trpc.emailTemplates.create.useMutation({
-    onSuccess: () => { utils.emailTemplates.list.invalidate(); setTemplateDialog(false); setEditingTemplate(null); toast.success("Template created"); },
+    onSuccess: () => {
+      utils.emailTemplates.list.invalidate();
+      utils.emailTemplates.categories.list.invalidate();
+      utils.emailTemplates.recentlyUsed.invalidate();
+      setTemplateDialog(false);
+      setEditingTemplate(null);
+      toast.success("Template created");
+    },
     onError: () => toast.error("Failed to create template"),
   });
   const updateTemplate = trpc.emailTemplates.update.useMutation({
-    onSuccess: () => { utils.emailTemplates.list.invalidate(); setTemplateDialog(false); setEditingTemplate(null); toast.success("Template updated"); },
+    onSuccess: () => {
+      utils.emailTemplates.list.invalidate();
+      utils.emailTemplates.categories.list.invalidate();
+      utils.emailTemplates.recentlyUsed.invalidate();
+      setTemplateDialog(false);
+      setEditingTemplate(null);
+      toast.success("Template updated");
+    },
     onError: () => toast.error("Failed to update template"),
   });
   const deleteTemplate = trpc.emailTemplates.delete.useMutation({
-    onSuccess: () => { utils.emailTemplates.list.invalidate(); toast.success("Template deleted"); },
+    onSuccess: () => {
+      utils.emailTemplates.list.invalidate();
+      utils.emailTemplates.categories.list.invalidate();
+      utils.emailTemplates.recentlyUsed.invalidate();
+      toast.success("Template deleted");
+    },
     onError: () => toast.error("Failed to delete template"),
   });
   const moveTemplate = trpc.emailTemplates.update.useMutation({
-    onSuccess: () => { utils.emailTemplates.list.invalidate(); toast.success("Template moved"); },
-    onError: () => toast.error("Failed to move template"),
+    onSuccess: () => {
+      utils.emailTemplates.list.invalidate();
+      utils.emailTemplates.categories.list.invalidate();
+      toast.success("Template updated");
+    },
+    onError: () => toast.error("Failed to update template"),
   });
 
   const handleSaveFolder = (name: string, color: string) => {
@@ -363,8 +476,22 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
     if (editingTemplate?.id) {
       updateTemplate.mutate({ id: editingTemplate.id, ...data });
     } else {
-      createTemplate.mutate({ ...data, folderId: typeof activeFolder === "number" ? activeFolder : data.folderId });
+      createTemplate.mutate({
+        ...data,
+        category: data.category || (activeCategory !== "all" ? activeCategory : "General"),
+        folderId: typeof activeFolder === "number" ? activeFolder : data.folderId,
+      });
     }
+  };
+
+  const handleMoveCategoryOrder = (index: number, direction: -1 | 1) => {
+    const names = (categories as any[]).map((c) => c.name);
+    const targetIdx = index + direction;
+    if (targetIdx < 0 || targetIdx >= names.length) return;
+    const temp = names[index];
+    names[index] = names[targetIdx];
+    names[targetIdx] = temp;
+    reorderCategoriesMut.mutate({ orderedNames: names });
   };
 
   const folderSaving = createFolder.isPending || renameFolder.isPending;
@@ -383,7 +510,7 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
             onClick={onBack}
             className="inline-flex items-center gap-1 text-[11px] h-8 px-3 bg-[#020A17] border-[#3A2C18] hover:bg-[#07162B] text-[#C6B697] hover:text-[#FFF4D4]"
           >
-            <ChevronRight className="h-4 w-4 rotate-180" /> Back to Hub
+            <ChevronRight className="h-4 w-4 rotate-180" /> {backLabel}
           </Button>
           <span className="text-[#3A2C18]">|</span>
           <div className="flex items-center gap-2.5">
@@ -397,6 +524,9 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
                 </h2>
                 <PageIdBadge id="PG-011" />
               </div>
+              {activeCategory !== "all" && (
+                <p className="text-xs text-[#C6B697]">Category: <span className="text-[#FFE394] font-medium">{activeCategory}</span></p>
+              )}
               {activeFolderObj && (
                 <p className="text-xs text-[#C6B697]">Folder: <span className="text-[#FFE394] font-medium">{activeFolderObj.name}</span></p>
               )}
@@ -406,7 +536,14 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
         <Button
           size="sm"
           className="gap-2 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105"
-          onClick={() => { setEditingTemplate(null); setTemplateDialog(true); }}
+          onClick={() => {
+            setEditingTemplate(
+              activeCategory !== "all"
+                ? { name: "", subject: "", body: "", category: activeCategory, description: "", folderId: null }
+                : null
+            );
+            setTemplateDialog(true);
+          }}
         >
           <PlusCircle className="h-4 w-4" /> New Template
         </Button>
@@ -416,7 +553,7 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A69371]" />
         <Input
-          placeholder="Search templates by name, subject, or category..."
+          placeholder="Search templates by name, subject, description, or category..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 pr-9 py-2 bg-[#020A17]/90 border-[#3A2C18] text-[#FFF4D4] placeholder:text-[#A69371] rounded-xl text-sm focus:border-[#C5A059] focus:ring-1 focus:ring-[#C5A059]"
@@ -430,99 +567,208 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
 
       {/* Layout: sidebar + content */}
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Folder Sidebar */}
-        <div className="w-full md:w-56 shrink-0 space-y-1.5 bg-[#05142B]/90 border border-[#3A2C18] rounded-xl p-3 shadow-[0_8px_24px_rgba(0,0,0,0.85)] self-start">
-          <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-[#3A2C18]/60 pb-2">
-            <span className="text-xs font-semibold text-[#C6B697] uppercase tracking-wider">Folders</span>
+        {/* Categories & Folders Sidebar */}
+        <div className="w-full md:w-64 shrink-0 space-y-4 self-start">
+          {/* Categories Box */}
+          <div className="space-y-1.5 bg-[#05142B]/90 border border-[#3A2C18] rounded-xl p-3 shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
+            <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-[#3A2C18]/60 pb-2">
+              <span className="text-xs font-semibold text-[#C6B697] uppercase tracking-wider">Categories</span>
+              <button
+                onClick={() => {
+                  setEditingCategory({ name: "", description: "" });
+                  setCategoryDialog(true);
+                }}
+                className="p-1 rounded-md bg-[#020A17] border border-[#3A2C18] text-[#FFE394] hover:border-[#C5A059] transition-all"
+                title="New Category"
+              >
+                <PlusCircle className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
             <button
-              onClick={() => { setEditingFolder(null); setFolderDialog(true); }}
-              className="p-1 rounded-md bg-[#020A17] border border-[#3A2C18] text-[#FFE394] hover:border-[#C5A059] transition-all"
-              title="New folder"
+              onClick={() => setActiveCategory("all")}
+              className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-xs transition-all ${
+                activeCategory === "all"
+                  ? "bg-[#020A17] border border-[#C5A059]/60 text-[#FFE394] font-semibold shadow-inner"
+                  : "text-[#C6B697] hover:bg-[#020A17]/60 hover:text-[#FFF4D4] border border-transparent"
+              }`}
             >
-              <FolderPlus className="h-3.5 w-3.5" />
+              <span className="truncate">All Categories</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#020A17] border border-[#3A2C18] text-[#A69371]">
+                {templates.length}
+              </span>
             </button>
+
+            {(categories as any[]).map((cat: any, idx: number) => {
+              const isCatActive = activeCategory === cat.name;
+              return (
+                <div key={cat.id || cat.name} className="group relative flex items-center">
+                  <button
+                    onClick={() => setActiveCategory(cat.name)}
+                    className={`flex-1 flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-xs transition-all pr-7 ${
+                      isCatActive
+                        ? "bg-[#020A17] border border-[#C5A059]/60 text-[#FFE394] font-semibold shadow-inner"
+                        : "text-[#C6B697] hover:bg-[#020A17]/60 hover:text-[#FFF4D4] border border-transparent"
+                    }`}
+                  >
+                    <span className="truncate">{cat.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#020A17] border border-[#3A2C18] text-[#A69371]">
+                      {cat.templateCount ?? 0}
+                    </span>
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="absolute right-1 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[#07162B] text-[#C6B697] hover:text-[#FFF4D4] transition-opacity">
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44 bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-2xl">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setEditingCategory({
+                            id: cat.id,
+                            oldName: cat.name,
+                            name: cat.name,
+                            description: cat.description || "",
+                          });
+                          setCategoryDialog(true);
+                        }}
+                        className="hover:bg-[#07162B] hover:text-[#FFE394] text-xs cursor-pointer"
+                      >
+                        <Pencil className="h-3.5 w-3.5 mr-2" /> Rename / Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={idx === 0}
+                        onClick={() => handleMoveCategoryOrder(idx, -1)}
+                        className="hover:bg-[#07162B] hover:text-[#FFE394] text-xs cursor-pointer"
+                      >
+                        ↑ Move Up
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={idx === (categories as any[]).length - 1}
+                        onClick={() => handleMoveCategoryOrder(idx, 1)}
+                        className="hover:bg-[#07162B] hover:text-[#FFE394] text-xs cursor-pointer"
+                      >
+                        ↓ Move Down
+                      </DropdownMenuItem>
+                      {cat.name !== "General" && (
+                        <>
+                          <DropdownMenuSeparator className="bg-[#3A2C18]" />
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setDeleteCategoryConfirm({
+                                id: cat.id,
+                                name: cat.name,
+                                reassignTo: "General",
+                              })
+                            }
+                            className="text-red-400 focus:text-red-300 focus:bg-red-950/40 text-xs cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete & Reassign
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              );
+            })}
           </div>
 
-          {/* All Templates */}
-          <button
-            onClick={() => setActiveFolder("all")}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${
-              activeFolder === "all"
-                ? "bg-[#020A17] border border-[#C5A059]/60 text-[#FFE394] font-semibold shadow-inner"
-                : "text-[#C6B697] hover:bg-[#020A17]/60 hover:text-[#FFF4D4] border border-transparent"
-            }`}
-          >
-            <LayoutTemplate className="h-4 w-4 shrink-0 text-[#FFE394]" />
-            <span className="truncate">All Templates</span>
-          </button>
+          {/* Folders Box */}
+          <div className="space-y-1.5 bg-[#05142B]/90 border border-[#3A2C18] rounded-xl p-3 shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
+            <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-[#3A2C18]/60 pb-2">
+              <span className="text-xs font-semibold text-[#C6B697] uppercase tracking-wider">Folders</span>
+              <button
+                onClick={() => { setEditingFolder(null); setFolderDialog(true); }}
+                className="p-1 rounded-md bg-[#020A17] border border-[#3A2C18] text-[#FFE394] hover:border-[#C5A059] transition-all"
+                title="New folder"
+              >
+                <FolderPlus className="h-3.5 w-3.5" />
+              </button>
+            </div>
 
-          {/* Unfiled */}
-          <button
-            onClick={() => setActiveFolder(null)}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${
-              activeFolder === null
-                ? "bg-[#020A17] border border-[#C5A059]/60 text-[#FFE394] font-semibold shadow-inner"
-                : "text-[#C6B697] hover:bg-[#020A17]/60 hover:text-[#FFF4D4] border border-transparent"
-            }`}
-          >
-            <Inbox className="h-4 w-4 shrink-0 text-[#FFE394]" />
-            <span className="truncate">Unfiled</span>
-          </button>
+            {/* All Templates */}
+            <button
+              onClick={() => setActiveFolder("all")}
+              className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition-all ${
+                activeFolder === "all"
+                  ? "bg-[#020A17] border border-[#C5A059]/60 text-[#FFE394] font-semibold shadow-inner"
+                  : "text-[#C6B697] hover:bg-[#020A17]/60 hover:text-[#FFF4D4] border border-transparent"
+              }`}
+            >
+              <LayoutTemplate className="h-3.5 w-3.5 shrink-0 text-[#FFE394]" />
+              <span className="truncate">All Folders</span>
+            </button>
 
-          {/* Folder list */}
-          {folders.length > 0 && <div className="border-t border-[#3A2C18]/60 my-2" />}
-          {folders.map((folder: any) => {
-            const style = getFolderStyle(folder.color);
-            const isActive = activeFolder === folder.id;
-            return (
-              <div key={folder.id} className="group relative flex items-center">
-                <button
-                  onClick={() => setActiveFolder(folder.id)}
-                  className={`flex-1 flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${
-                    isActive
-                      ? "bg-[#020A17] border border-[#C5A059]/60 text-[#FFE394] font-semibold shadow-inner"
-                      : "text-[#C6B697] hover:bg-[#020A17]/60 hover:text-[#FFF4D4] border border-transparent"
-                  }`}
-                >
-                  {isActive
-                    ? <FolderOpen className={`h-4 w-4 shrink-0 ${style.text}`} />
-                    : <Folder className={`h-4 w-4 shrink-0 ${style.text}`} />
-                  }
-                  <span className="truncate">{folder.name}</span>
-                </button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="absolute right-1.5 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[#07162B] text-[#C6B697] hover:text-[#FFF4D4] transition-opacity">
-                      <MoreHorizontal className="h-3.5 w-3.5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40 bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-[0_12px_32px_rgba(0,0,0,0.95)]">
-                    <DropdownMenuItem
-                      onClick={() => { setEditingFolder({ id: folder.id, name: folder.name, color: folder.color ?? "blue" }); setFolderDialog(true); }}
-                      className="hover:bg-[#07162B] hover:text-[#FFE394] focus:bg-[#07162B] focus:text-[#FFE394] cursor-pointer"
-                    >
-                      <Pencil className="h-3.5 w-3.5 mr-2" /> Rename
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-[#3A2C18]" />
-                    <DropdownMenuItem
-                      className="text-red-400 focus:text-red-300 focus:bg-red-950/40 cursor-pointer"
-                      onClick={() => {
-                        if (confirm(`Delete folder "${folder.name}"? Templates inside will become unfiled.`)) {
-                          deleteFolder.mutate({ id: folder.id });
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            );
-          })}
+            {/* Unfiled */}
+            <button
+              onClick={() => setActiveFolder(null)}
+              className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition-all ${
+                activeFolder === null
+                  ? "bg-[#020A17] border border-[#C5A059]/60 text-[#FFE394] font-semibold shadow-inner"
+                  : "text-[#C6B697] hover:bg-[#020A17]/60 hover:text-[#FFF4D4] border border-transparent"
+              }`}
+            >
+              <Inbox className="h-3.5 w-3.5 shrink-0 text-[#FFE394]" />
+              <span className="truncate">Unfiled</span>
+            </button>
 
-          {folders.length === 0 && (
-            <p className="px-3 py-2 text-xs text-[#A69371]/80 italic">No folders yet</p>
-          )}
+            {/* Folder list */}
+            {folders.length > 0 && <div className="border-t border-[#3A2C18]/60 my-2" />}
+            {folders.map((folder: any) => {
+              const style = getFolderStyle(folder.color);
+              const isActive = activeFolder === folder.id;
+              return (
+                <div key={folder.id} className="group relative flex items-center">
+                  <button
+                    onClick={() => setActiveFolder(folder.id)}
+                    className={`flex-1 flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition-all ${
+                      isActive
+                        ? "bg-[#020A17] border border-[#C5A059]/60 text-[#FFE394] font-semibold shadow-inner"
+                        : "text-[#C6B697] hover:bg-[#020A17]/60 hover:text-[#FFF4D4] border border-transparent"
+                    }`}
+                  >
+                    {isActive
+                      ? <FolderOpen className={`h-3.5 w-3.5 shrink-0 ${style.text}`} />
+                      : <Folder className={`h-3.5 w-3.5 shrink-0 ${style.text}`} />
+                    }
+                    <span className="truncate">{folder.name}</span>
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="absolute right-1.5 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[#07162B] text-[#C6B697] hover:text-[#FFF4D4] transition-opacity">
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40 bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-[0_12px_32px_rgba(0,0,0,0.95)]">
+                      <DropdownMenuItem
+                        onClick={() => { setEditingFolder({ id: folder.id, name: folder.name, color: folder.color ?? "blue" }); setFolderDialog(true); }}
+                        className="hover:bg-[#07162B] hover:text-[#FFE394] focus:bg-[#07162B] focus:text-[#FFE394] cursor-pointer"
+                      >
+                        <Pencil className="h-3.5 w-3.5 mr-2" /> Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-[#3A2C18]" />
+                      <DropdownMenuItem
+                        className="text-red-400 focus:text-red-300 focus:bg-red-950/40 cursor-pointer"
+                        onClick={() => {
+                          if (confirm(`Delete folder "${folder.name}"? Templates inside will become unfiled.`)) {
+                            deleteFolder.mutate({ id: folder.id });
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              );
+            })}
+
+            {folders.length === 0 && (
+              <p className="px-3 py-2 text-xs text-[#A69371]/80 italic">No folders yet</p>
+            )}
+          </div>
         </div>
 
         {/* Template List */}
@@ -539,7 +785,7 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
                 <Mail className="h-7 w-7 text-[#A69371]" />
               </div>
               <p className="text-base font-serif font-bold text-[#FFF4D4]">
-                {activeFolder === "all" ? "No templates yet" : activeFolder === null ? "No unfiled templates" : "No templates in this folder"}
+                {activeFolder === "all" ? "No templates match this filter" : activeFolder === null ? "No unfiled templates" : "No templates in this folder"}
               </p>
               <p className="text-xs text-[#C6B697] mt-1">Click "New Template" to craft a reusable outreach document</p>
               <Button
@@ -566,7 +812,9 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-serif font-bold text-sm text-[#FFF4D4]">{tpl.name}</p>
-                      <p className="text-xs text-[#C6B697] truncate mt-0.5">Subject: {tpl.subject}</p>
+                      <p className="text-xs text-[#C6B697] truncate mt-0.5">
+                        {tpl.description ? `${tpl.description} · ` : ""}Subject: {tpl.subject}
+                      </p>
                     </div>
 
                     {/* Folder badge */}
@@ -593,11 +841,29 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
                       </Tooltip>
                     )}
 
-                    {tpl.category && (
-                      <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#020A17] border border-[#3A2C18] text-[#C6B697] shrink-0">
-                        {tpl.category}
-                      </span>
-                    )}
+                    {/* Quick Category Badge / Selector */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#020A17] hover:bg-[#0E274A] border border-[#C5A059]/40 text-[#FFE394] shrink-0 cursor-pointer transition-colors"
+                          title="Assign Category"
+                        >
+                          {tpl.category || "General"}
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-2xl">
+                        {(categories as any[]).map((cat: any) => (
+                          <DropdownMenuItem
+                            key={cat.name}
+                            onClick={() => moveTemplate.mutate({ id: tpl.id, category: cat.name })}
+                            className="hover:bg-[#07162B] hover:text-[#FFE394] text-xs cursor-pointer"
+                          >
+                            {cat.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
                     <p className="text-xs text-[#A69371] shrink-0 hidden sm:block">
                       {new Date(tpl.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
@@ -606,7 +872,18 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
                     {/* Actions */}
                     <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        onClick={() => { setEditingTemplate({ id: tpl.id, name: tpl.name, subject: tpl.subject, body: tpl.body, category: tpl.category ?? "General", folderId: tpl.folderId ?? null }); setTemplateDialog(true); }}
+                        onClick={() => {
+                          setEditingTemplate({
+                            id: tpl.id,
+                            name: tpl.name,
+                            subject: tpl.subject,
+                            body: tpl.body,
+                            category: tpl.category ?? "General",
+                            description: tpl.description ?? "",
+                            folderId: tpl.folderId ?? null,
+                          });
+                          setTemplateDialog(true);
+                        }}
                         className="p-1.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#C6B697] hover:border-[#C5A059] hover:text-[#FFF4D4] transition-all"
                         title="Edit"
                       >
@@ -677,6 +954,7 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
         onSave={handleSaveTemplate}
         saving={templateSaving}
         folders={folders}
+        categories={categories as any[]}
       />
       <FolderDialog
         open={folderDialog}
@@ -685,6 +963,122 @@ function EmailTemplates({ onBack }: { onBack: () => void }) {
         onSave={handleSaveFolder}
         saving={folderSaving}
       />
+
+      {/* Category Create/Edit Dialog */}
+      <Dialog open={categoryDialog} onOpenChange={(v) => { if (!v) { setCategoryDialog(false); setEditingCategory(null); } }}>
+        <DialogContent className="max-w-sm bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-2xl rounded-2xl">
+          <DialogHeader className="border-b border-[#3A2C18] pb-3">
+            <DialogTitle className="font-serif text-lg font-bold text-[#FFF4D4]">
+              {editingCategory?.id ? "Rename Category" : "New Category"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">Category Name</Label>
+              <Input
+                value={editingCategory?.name ?? ""}
+                onChange={(e) => setEditingCategory((prev) => prev ? { ...prev, name: e.target.value } : null)}
+                placeholder="e.g. Community Resources"
+                className="bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">Description</Label>
+              <Input
+                value={editingCategory?.description ?? ""}
+                onChange={(e) => setEditingCategory((prev) => prev ? { ...prev, description: e.target.value } : null)}
+                placeholder="Brief summary of templates in this category"
+                className="bg-[#020A17] border-[#3A2C18] text-[#FFF4D4]"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-[#3A2C18]">
+              <Button
+                variant="outline"
+                onClick={() => { setCategoryDialog(false); setEditingCategory(null); }}
+                className="border-[#3A2C18] bg-[#020A17] text-[#C6B697]"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={!editingCategory?.name.trim()}
+                onClick={() => {
+                  if (!editingCategory?.name.trim()) return;
+                  if (editingCategory.id) {
+                    renameCategoryMut.mutate({
+                      id: editingCategory.id,
+                      oldName: editingCategory.oldName,
+                      newName: editingCategory.name.trim(),
+                      description: editingCategory.description,
+                    });
+                  } else {
+                    createCategoryMut.mutate({
+                      name: editingCategory.name.trim(),
+                      description: editingCategory.description,
+                    });
+                  }
+                }}
+                className="bg-gradient-to-r from-[#DFBE77] to-[#C5A059] text-[#07162B] font-bold"
+              >
+                Save Category
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Safe Category Deletion & Template Reassignment Dialog */}
+      <Dialog open={!!deleteCategoryConfirm} onOpenChange={(v) => { if (!v) setDeleteCategoryConfirm(null); }}>
+        <DialogContent className="max-w-sm bg-[#05142B] border border-[#3A2C18] text-[#FFF4D4] shadow-2xl rounded-2xl">
+          <DialogHeader className="border-b border-[#3A2C18] pb-3">
+            <DialogTitle className="font-serif text-lg font-bold text-[#FFF4D4] flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-[#FFE394]" />
+              Delete Category & Reassign
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2 text-xs">
+            <p className="text-[#C6B697]">
+              Removing category <strong className="text-[#FFF4D4]">"{deleteCategoryConfirm?.name}"</strong> will not delete any templates. Choose which category its templates should be reassigned to:
+            </p>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-[#C6B697]">Reassign Templates To</Label>
+              <select
+                value={deleteCategoryConfirm?.reassignTo ?? "General"}
+                onChange={(e) => setDeleteCategoryConfirm((prev) => prev ? { ...prev, reassignTo: e.target.value } : null)}
+                className="w-full h-9 rounded-lg bg-[#020A17] border border-[#3A2C18] px-3 text-xs text-[#FFF4D4]"
+              >
+                {(categories as any[])
+                  .filter((c) => c.name !== deleteCategoryConfirm?.name)
+                  .map((c) => (
+                    <option key={c.name} value={c.name}>{c.name}</option>
+                  ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-[#3A2C18]">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteCategoryConfirm(null)}
+                className="border-[#3A2C18] bg-[#020A17] text-[#C6B697]"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!deleteCategoryConfirm) return;
+                  deleteCategoryMut.mutate({
+                    id: deleteCategoryConfirm.id,
+                    name: deleteCategoryConfirm.name,
+                    reassignToCategory: deleteCategoryConfirm.reassignTo,
+                  });
+                }}
+                className="bg-red-700 hover:bg-red-800 text-white font-bold"
+              >
+                Reassign & Remove Category
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteConfirm} onOpenChange={(v) => { if (!v) setDeleteConfirm(null); }}>

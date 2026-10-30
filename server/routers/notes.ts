@@ -2,7 +2,15 @@ import { z } from "zod";
 import * as db from "../db";
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure, adminProcedure, portalProcedure } from "../_core/trpc";
+import {
+  router,
+  publicProcedure,
+  protectedProcedure,
+  adminProcedure,
+  portalProcedure,
+  assertClientProjectOwnership,
+} from "../_core/trpc";
+import { checkBackendCaseAccess } from "../_core/staffAccess";
 import { ENV } from "../_core/env";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
@@ -25,7 +33,17 @@ export const notesRouter = router({
 
     listForClient: protectedProcedure
       .input(z.object({ projectId: z.number() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        if (ctx.staffAccess?.isStaff) {
+          if (checkBackendCaseAccess(ctx.staffAccess, "notes") === "none") {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Access to project notes is restricted for your role.",
+            });
+          }
+        } else {
+          await assertClientProjectOwnership(ctx, input.projectId);
+        }
         // Client can only see notes marked as visible
         const notes = await db.getProjectNotesForClient(input.projectId);
         return notes.map(n => ({

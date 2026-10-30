@@ -100,15 +100,19 @@ export function PortalStudentDetailsTab({
   
   // Resolve parent info from parent contact on file, or default to Jennifer Jenkins if none in record
   const parentContact = studentDetail?.parentContact;
-  const parentFirstName = 
-    parentContact?.firstName || 
-    effectiveStudent?.parentFirstName ||
-    (effectiveStudent?.parentName ? effectiveStudent.parentName.split(" ")[0] : null) ||
-    (portalUser?.role === "client" && portalUser?.name ? portalUser.name.split(" ")[0] : null) ||
-    "Jennifer";
+  const rawParentFirst = parentContact?.firstName || effectiveStudent?.parentFirstName || "";
+  const isDevPlaceholderParent = String(rawParentFirst).includes("[DEV Parent]");
+  const parentFirstName = isDevPlaceholderParent
+    ? `${parentContact?.lastName || studentLastName || "Client"} Family`
+    : (rawParentFirst ||
+       (effectiveStudent?.parentName ? effectiveStudent.parentName.split(" ")[0] : null) ||
+       (portalUser?.role === "client" && portalUser?.name ? portalUser.name.split(" ")[0] : null) ||
+       "Jennifer");
 
-  const parentFullName = parentContact 
-    ? `${parentContact.firstName} ${parentContact.lastName}`.trim() 
+  const parentFullName = parentContact
+    ? isDevPlaceholderParent
+      ? `${parentContact.lastName || studentLastName || "Client"} Family`
+      : `${parentContact.firstName} ${parentContact.lastName}`.trim()
     : (effectiveStudent?.parentName || (portalUser?.role === "client" && portalUser?.name ? portalUser.name : "Jennifer Jenkins"));
 
   // Initials from actual record name

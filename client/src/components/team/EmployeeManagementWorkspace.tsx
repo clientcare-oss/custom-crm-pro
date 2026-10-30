@@ -276,6 +276,16 @@ export default function EmployeeManagementWorkspace({
                     <UserX className="w-3 h-3 shrink-0" /> Inactive
                   </Badge>
                 )}
+                {employee.isProtectedOwner && (
+                  <Badge className="bg-amber-400/20 text-amber-300 border border-amber-400/40 text-xs font-bold gap-1 px-2.5 py-0.5 whitespace-nowrap">
+                    <Crown className="w-3 h-3 shrink-0 text-amber-400" /> Protected Owner
+                  </Badge>
+                )}
+                {employee.userId && (
+                  <Badge className="bg-slate-900/90 text-slate-300 border border-slate-700/70 font-mono text-[11px] px-2 py-0.5 whitespace-nowrap">
+                    DB ID: {employee.userId}
+                  </Badge>
+                )}
               </div>
 
               {/* Job Title & Contact Details */}
@@ -314,7 +324,17 @@ export default function EmployeeManagementWorkspace({
 
           {/* Right: Quick Operational Badges & Deactivation */}
           <div className="flex items-center gap-2.5 shrink-0 self-start lg:self-center pt-2 lg:pt-0">
-            {employee.status === "active" ? (
+            {employee.isProtectedOwner ||
+            employee.id === "emp-byron-honea" ||
+            employee.id === "emp-byron-honea-2" ? (
+              <div
+                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-xl border border-amber-400/40 bg-amber-400/10 text-amber-300 text-xs font-bold whitespace-nowrap"
+                title="Protected Owner accounts cannot be deactivated or demoted"
+              >
+                <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Protected Owner (Locked)</span>
+              </div>
+            ) : employee.status === "active" ? (
               <Button
                 variant="outline"
                 size="sm"

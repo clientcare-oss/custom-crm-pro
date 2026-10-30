@@ -3662,4 +3662,41 @@ export const federalGuidanceLawLinks = mysqlTable(
 export type FederalGuidanceLawLink = typeof federalGuidanceLawLinks.$inferSelect;
 export type InsertFederalGuidanceLawLink = typeof federalGuidanceLawLinks.$inferInsert;
 
+// ── Trusted Backend Staff Access & Authorization Profiles (WAP 1A.1) ──────────
+export const staffAccessProfiles = mysqlTable(
+  "staff_access_profiles",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().unique(),
+    openId: varchar("openId", { length: 128 }).notNull().unique(),
+    employeeId: varchar("employeeId", { length: 64 }), // e.g. "emp-001", "emp-002"
+    name: varchar("name", { length: 255 }).notNull(),
+    email: varchar("email", { length: 320 }),
+    primaryRole: varchar("primaryRole", { length: 64 }).default("none").notNull(), // "management" | "advocate" | "call_center" | "billing_finance" | "paperwork_admin" | "technology" | "marketing_sponsors" | "none"
+    additionalRoles: text("additionalRoles"), // JSON array of EmployeeRoleId[]
+    isProtectedOwner: boolean("isProtectedOwner").default(false).notNull(),
+    hasAdminAccess: boolean("hasAdminAccess").default(false).notNull(),
+    isStaff: boolean("isStaff").default(false).notNull(),
+    accountStatus: varchar("accountStatus", { length: 32 }).default("active").notNull(), // "active" | "on_leave" | "inactive"
+    modulePermissions: text("modulePermissions"), // JSON Record<CrmModuleId, AccessLevel>
+    caseWorkspaceAccess: text("caseWorkspaceAccess"), // JSON Record<CaseModuleId, AccessLevel>
+    permissionOverrides: text("permissionOverrides"), // JSON Record<string, boolean>
+    deactivatedAt: timestamp("deactivatedAt"),
+    deactivatedBy: int("deactivatedBy"),
+    deactivationNotes: text("deactivationNotes"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (t) => ({
+    userIdIdx: index("staff_access_user_idx").on(t.userId),
+    openIdIdx: index("staff_access_open_idx").on(t.openId),
+    empIdIdx: index("staff_access_emp_idx").on(t.employeeId),
+    statusIdx: index("staff_access_status_idx").on(t.accountStatus),
+  })
+);
+
+export type StaffAccessProfileRecord = typeof staffAccessProfiles.$inferSelect;
+export type InsertStaffAccessProfileRecord = typeof staffAccessProfiles.$inferInsert;
+
+
 

@@ -1,6 +1,7 @@
 import {
   EmployeeRecord,
   INITIAL_EMPLOYEES,
+  FICTIONAL_SEEDED_EMPLOYEE_IDS,
   RoleId,
   ROLE_DEFINITIONS,
   CRM_MODULES,
@@ -9,6 +10,49 @@ import {
 
 const STORAGE_KEY = "waypoint_team_employees";
 const EVENT_NAME = "waypoint_team_updated";
+
+export interface BackendStaffAccessProfile {
+  userId: number;
+  openId: string;
+  employeeId?: string | null;
+  name: string;
+  email: string;
+  primaryRole: string;
+  additionalRoles: string[];
+  isProtectedOwner: boolean;
+  hasAdminAccess: boolean;
+  isStaff: boolean;
+  accountStatus: "active" | "on_leave" | "inactive";
+  modulePermissions: Record<string, "none" | "view" | "edit">;
+  caseWorkspaceAccess: Record<string, CaseAccessLevel>;
+  permissionOverrides: Record<string, boolean>;
+  invitationStatus?: "pending" | "accepted" | "expired" | "revoked";
+  invitationToken?: string | null;
+  invitedAt?: string | null;
+  invitationExpiresAt?: string | null;
+  acceptedAt?: string | null;
+  jobTitle?: string | null;
+  phone?: string | null;
+  employmentType?: string | null;
+  department?: string | null;
+  normalScheduleSummary?: string | null;
+}
+
+function sanitizeLocalHrRecords(records: EmployeeRecord[]): EmployeeRecord[] {
+  // Strip out fictional seeded demo employees while preserving legitimate local HR records
+  const filtered = records.filter((emp) => !FICTIONAL_SEEDED_EMPLOYEE_IDS.has(emp.id));
+  // Ensure baseline HR templates for the 4 confirmed staff accounts exist if missing locally
+  const byId = new Map<string, EmployeeRecord>();
+  for (const emp of filtered) {
+    byId.set(emp.id, emp);
+  }
+  for (const base of INITIAL_EMPLOYEES) {
+    if (!byId.has(base.id)) {
+      byId.set(base.id, base);
+    }
+  }
+  return Array.from(byId.values());
+}
 
 export function getStoredEmployees(): EmployeeRecord[] {
   if (typeof window === "undefined") return INITIAL_EMPLOYEES;
@@ -19,10 +63,158 @@ export function getStoredEmployees(): EmployeeRecord[] {
       return INITIAL_EMPLOYEES;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_EMPLOYEES;
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_EMPLOYEES));
+      return INITIAL_EMPLOYEES;
+    }
+    const sanitized = sanitizeLocalHrRecords(parsed);
+    if (sanitized.length !== parsed.length) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+    }
+    return sanitized;
   } catch {
     return INITIAL_EMPLOYEES;
   }
+}
+
+/**
+ * Merges authoritative backend `staff_access_profiles` records with local HR metadata
+ * (schedule, compensation, documents, equipment, training, notes, activity).
+ * Backend `staff_access_profiles` is ALWAYS the source of truth for identity, roles,
+ * account status, owner protection, and permissions.
+ */
+export function hydrateEmployeesFromBackend(
+  backendProfiles: BackendStaffAccessProfile[],
+  localRecords?: EmployeeRecord[]
+): EmployeeRecord[] {
+  const hrPool = localRecords ?? getStoredEmployees();
+
+  return backendProfiles
+    .filter((bp) => bp.primaryRole !== "none" && bp.userId !== 9060031 && (bp.isStaff || Boolean(bp.employeeId)))
+    .map((bp) => {
+      const targetEmpId =
+        bp.userId === 9060115
+          ? "emp-byron-honea-2"
+          : bp.userId === 9060114
+          ? "emp-byron-honea"
+          : bp.employeeId || `emp-user-${bp.userId}`;
+
+      const localMatch =
+        hrPool.find((e) => e.userId === bp.userId) ||
+        hrPool.find((e) => e.id === targetEmpId) ||
+        INITIAL_EMPLOYEES.find((e) => e.userId === bp.userId || e.id === targetEmpId) ||
+        hrPool.find(
+          (e) =>
+            bp.email &&
+            e.email.toLowerCase() === bp.email.toLowerCase() &&
+            e.id !== "emp-byron-honea"
+        );
+
+      const validRoles: RoleId[] = [
+        "management",
+        "advocate",
+        "call_center",
+        "documentation",
+        "technology",
+        "operations",
+      ];
+      const primaryRole: RoleId = bp.isProtectedOwner
+        ? "management"
+        : validRoles.includes(bp.primaryRole as RoleId)
+        ? (bp.primaryRole as RoleId)
+        : "call_center";
+
+      const additionalRoles: RoleId[] = (bp.additionalRoles || []).filter((r): r is RoleId =>
+        validRoles.includes(r as RoleId)
+      );
+
+      const status: "active" | "on_leave" | "inactive" = bp.isProtectedOwner
+        ? "active"
+        : bp.accountStatus || "active";
+
+      const defaultRoleLabel = ROLE_DEFINITIONS[primaryRole]?.label || "Staff Member";
+
+      const baseRecord: EmployeeRecord = localMatch || {
+        id: targetEmpId,
+        name: bp.name || "Staff Member",
+        email: bp.email || "",
+        avatarColor: "bg-slate-700 text-white",
+        jobTitle: defaultRoleLabel,
+        primaryRole,
+        additionalRoles,
+        status,
+        employmentType: "Full-Time",
+        startDate: "2026",
+        manager: "Byron Honea",
+        department: defaultRoleLabel,
+        workLocation: "Atlanta, GA",
+        emergencyContact: "On File",
+        availabilityStatus: "Available",
+        normalScheduleSummary: "Mon–Fri 9:00 AM – 5:00 PM",
+        activeCaseloadCount: 0,
+        weeklySchedule: INITIAL_EMPLOYEES[0].weeklySchedule,
+        compensation: {
+          payType: "Salary",
+          amount: "Configured in HR",
+          frequency: "Semi-Monthly",
+          effectiveDate: "Jan 01, 2026",
+          history: [],
+        },
+        directDeposit: {
+          maskedAccount: "•••• 0000",
+          accountType: "Checking",
+          routingMasked: "•••• 0000",
+          bankName: "On File",
+          active: false,
+          lastUpdated: "N/A",
+        },
+        modulePermissions: {},
+        caseWorkspaceAccess: {},
+        permissionOverrides: {},
+        documents: [],
+        equipment: [],
+        training: [],
+        notes: [],
+        activity: [],
+      };
+
+      const availabilityStatus: EmployeeRecord["availabilityStatus"] =
+        status === "inactive"
+          ? "Offline"
+          : status === "on_leave"
+          ? "On Leave"
+          : baseRecord.availabilityStatus === "Offline" || baseRecord.availabilityStatus === "On Leave"
+          ? "Available"
+          : baseRecord.availabilityStatus;
+
+      return {
+        ...baseRecord,
+        id: targetEmpId,
+        userId: bp.userId,
+        openId: bp.openId,
+        isProtectedOwner: bp.isProtectedOwner,
+        hasAdminAccess: bp.hasAdminAccess,
+        invitationStatus: bp.invitationStatus || "accepted",
+        invitationToken: bp.invitationToken || null,
+        invitedAt: bp.invitedAt || null,
+        invitationExpiresAt: bp.invitationExpiresAt || null,
+        acceptedAt: bp.acceptedAt || null,
+        name: bp.name || baseRecord.name,
+        email: bp.email || baseRecord.email,
+        phone: bp.phone || baseRecord.phone,
+        jobTitle: bp.jobTitle || baseRecord.jobTitle,
+        employmentType: (bp.employmentType as any) || baseRecord.employmentType,
+        department: bp.department || baseRecord.department,
+        normalScheduleSummary: bp.normalScheduleSummary || baseRecord.normalScheduleSummary,
+        primaryRole,
+        additionalRoles,
+        status,
+        availabilityStatus,
+        modulePermissions: { ...(bp.modulePermissions || {}) },
+        caseWorkspaceAccess: { ...(bp.caseWorkspaceAccess || {}) },
+        permissionOverrides: { ...(bp.permissionOverrides || {}) },
+      };
+    });
 }
 
 export function saveStoredEmployees(employees: EmployeeRecord[]): void {
@@ -265,13 +457,24 @@ export function checkEmployeeModuleAccess(
   employee: EmployeeRecord,
   moduleId: string
 ): "none" | "view" | "edit" {
+  if (employee.status === "inactive") {
+    return "none";
+  }
+  if (employee.isProtectedOwner) {
+    return "edit";
+  }
+
   // If employee has a specific override:
   if (employee.modulePermissions && moduleId in employee.modulePermissions) {
     return employee.modulePermissions[moduleId];
   }
 
-  // Management role gets full access to everything
-  if (employee.primaryRole === "management" || employee.additionalRoles.includes("management")) {
+  // Management role / Admin access gets full access to everything
+  if (
+    employee.hasAdminAccess ||
+    employee.primaryRole === "management" ||
+    employee.additionalRoles.includes("management")
+  ) {
     return "edit";
   }
 
@@ -299,13 +502,24 @@ export function checkEmployeeCaseAccess(
   employee: EmployeeRecord,
   caseModId: string
 ): CaseAccessLevel {
+  if (employee.status === "inactive") {
+    return "none";
+  }
+  if (employee.isProtectedOwner) {
+    return "manage";
+  }
+
   // If employee has a specific override:
   if (employee.caseWorkspaceAccess && caseModId in employee.caseWorkspaceAccess) {
     return employee.caseWorkspaceAccess[caseModId];
   }
 
-  // Management gets full manage privileges
-  if (employee.primaryRole === "management" || employee.additionalRoles?.includes("management")) {
+  // Management / Admin gets full manage privileges
+  if (
+    employee.hasAdminAccess ||
+    employee.primaryRole === "management" ||
+    employee.additionalRoles?.includes("management")
+  ) {
     return "manage";
   }
 
@@ -342,11 +556,22 @@ export function checkEmployeeActionPermission(
   employee: EmployeeRecord,
   permId: string
 ): boolean {
+  if (employee.status === "inactive") {
+    return false;
+  }
+  if (employee.isProtectedOwner) {
+    return true;
+  }
+
   if (employee.permissionOverrides && permId in employee.permissionOverrides) {
     return employee.permissionOverrides[permId];
   }
 
-  if (employee.primaryRole === "management" || employee.additionalRoles?.includes("management")) {
+  if (
+    employee.hasAdminAccess ||
+    employee.primaryRole === "management" ||
+    employee.additionalRoles?.includes("management")
+  ) {
     return true;
   }
 

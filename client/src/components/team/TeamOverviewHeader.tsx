@@ -39,6 +39,7 @@ interface TeamOverviewHeaderProps {
   onSelectEmployeeById: (id: string) => void;
   activeRoleFilter?: RoleId | "all";
   onRoleFilterSelect?: (role: RoleId | "all") => void;
+  employees?: EmployeeRecord[];
 }
 
 export default function TeamOverviewHeader({
@@ -51,6 +52,7 @@ export default function TeamOverviewHeader({
   onSelectEmployeeById,
   activeRoleFilter = "all",
   onRoleFilterSelect,
+  employees = [],
 }: TeamOverviewHeaderProps) {
   const [, setLocation] = useLocation();
 
@@ -323,21 +325,30 @@ export default function TeamOverviewHeader({
               Current active student caseloads distributed across staff advocates.
             </p>
             <div className="space-y-2">
-              {[
-                { name: "Byron Honea", cases: 8, capacity: "80%" },
-                { name: "Sarah Jenkins", cases: 6, capacity: "60%" },
-                { name: "Marcus Vance", cases: 4, capacity: "40%" },
-              ].map((emp, idx) => (
-                <div key={idx} className="p-2.5 rounded-xl bg-[#000821] border border-blue-800/40 flex items-center justify-between text-xs">
-                  <div>
-                    <div className="font-bold text-white">{emp.name}</div>
-                    <div className="text-[10px] text-blue-300/80">{emp.cases} Active Cases</div>
+              {employees.map((emp) => {
+                const cases = emp.activeCaseloadCount ?? 0;
+                const pct = Math.min(100, Math.round((cases / 10) * 100));
+                return (
+                  <div
+                    key={emp.id}
+                    onClick={() => onSelectEmployeeById(emp.id)}
+                    className="p-2.5 rounded-xl bg-[#000821] border border-blue-800/40 hover:border-blue-600/50 flex items-center justify-between text-xs cursor-pointer transition-colors"
+                  >
+                    <div>
+                      <div className="font-bold text-white">
+                        {emp.name}
+                        {emp.userId === 9060115 ? " (Client Care)" : ""}
+                      </div>
+                      <div className="text-[10px] text-blue-300/80">
+                        {cases} Active Cases · {ROLE_DEFINITIONS[emp.primaryRole]?.label || emp.primaryRole}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-mono font-bold text-amber-300">{pct}%</span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs font-mono font-bold text-amber-300">{emp.capacity}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

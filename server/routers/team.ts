@@ -2,11 +2,51 @@ import { z } from "zod";
 import * as db from "../db";
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure, adminProcedure, portalProcedure } from "../_core/trpc";
+import { router, publicProcedure, protectedProcedure, staffProcedure, adminProcedure, portalProcedure } from "../_core/trpc";
 import { ENV } from "../_core/env";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
+import {
+  resolveStaffAccess,
+  listStaffAccessProfiles,
+  deactivateStaffAccount,
+  reactivateStaffAccount,
+  updateStaffAccessPermissions,
+  checkBackendModuleAccess,
+  checkBackendActionPermission,
+  type StaffRoleId,
+  type ModuleAccessLevel,
+  type CaseAccessLevel,
+  type StaffAccountStatus,
+} from "../_core/staffAccess";
+import {
+  onboardStaffEmployee,
+  resendStaffInvitation,
+  revokeStaffInvitation,
+  expireStaffInvitation,
+  getStaffInvitationByToken,
+  acceptStaffInvitation,
+} from "../_core/staffOnboarding";
+
+const staffRoleEnum = z.enum([
+  "management",
+  "advocate",
+  "call_center",
+  "documentation",
+  "technology",
+  "operations",
+  "none",
+]);
+
+const activeStaffRoleEnum = z.enum([
+  "management",
+  "advocate",
+  "call_center",
+  "documentation",
+  "technology",
+  "operations",
+]);
 
 export const teamRouter = router({
 
@@ -232,5 +272,224 @@ export const teamRouter = router({
           ));
         return { success: true };
       }),
-  
+
+    // ── Trusted Backend Staff Access & Deactivation (WAP 1A.1) ──
+    getMyStaffAccess: protectedProcedure.query(async ({ ctx }) => {
+      return await resolveStaffAccess(ctx.user);
+    }),
+
+    getStaffAccessList: staffProcedure.query(async ({ ctx }) => {
+      const canAccessTeam =
+        ctx.staffAccess.hasAdminAccess ||
+        checkBackendModuleAccess(ctx.staffAccess, "team") !== "none" ||
+        checkBackendActionPermission(ctx.staffAccess, "manage_employees") ||
+        checkBackendActionPermission(ctx.staffAccess, "manage_roles");
+      if (!canAccessTeam) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to view the Team Management directory.",
+        });
+      }
+      return await listStaffAccessProfiles();
+    }),
+
+    deactivateEmployee: staffProcedure
+      .input(
+        z.object({
+          targetUserId: z.number().optional(),
+          targetEmployeeId: z.string().optional(),
+          notes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        if (!input.targetUserId && !input.targetEmployeeId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Either targetUserId or targetEmployeeId is required.",
+          });
+        }
+        const updated = await deactivateStaffAccount({
+          actorUser: ctx.user,
+          targetUserId: input.targetUserId,
+          targetEmployeeId: input.targetEmployeeId,
+          notes: input.notes,
+        });
+        return { success: true, profile: updated };
+      }),
+
+    reactivateEmployee: staffProcedure
+      .input(
+        z.object({
+          targetUserId: z.number().optional(),
+          targetEmployeeId: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        if (!input.targetUserId && !input.targetEmployeeId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Either targetUserId or targetEmployeeId is required.",
+          });
+        }
+        const updated = await reactivateStaffAccount({
+          actorUser: ctx.user,
+          targetUserId: input.targetUserId,
+          targetEmployeeId: input.targetEmployeeId,
+        });
+        return { success: true, profile: updated };
+      }),
+
+    updateStaffAccess: staffProcedure
+      .input(
+        z.object({
+          targetUserId: z.number().optional(),
+          targetEmployeeId: z.string().optional(),
+          primaryRole: staffRoleEnum.optional(),
+          additionalRoles: z.array(staffRoleEnum).optional(),
+          hasAdminAccess: z.boolean().optional(),
+          isProtectedOwner: z.boolean().optional(),
+          accountStatus: z.enum(["active", "on_leave", "inactive"]).optional(),
+          modulePermissions: z.record(z.string(), z.enum(["none", "view", "edit"])).optional(),
+          caseWorkspaceAccess: z
+            .record(z.string(), z.enum(["none", "view", "edit", "manage"]))
+            .optional(),
+          permissionOverrides: z.record(z.string(), z.boolean()).optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const updated = await updateStaffAccessPermissions({
+          actorUser: ctx.user,
+          targetUserId: input.targetUserId,
+          targetEmployeeId: input.targetEmployeeId,
+          primaryRole: input.primaryRole as StaffRoleId | undefined,
+          additionalRoles: input.additionalRoles as StaffRoleId[] | undefined,
+          hasAdminAccess: input.hasAdminAccess,
+          isProtectedOwner: input.isProtectedOwner,
+          accountStatus: input.accountStatus as StaffAccountStatus | undefined,
+          modulePermissions: input.modulePermissions as Record<string, ModuleAccessLevel> | undefined,
+          caseWorkspaceAccess: input.caseWorkspaceAccess as Record<string, CaseAccessLevel> | undefined,
+          permissionOverrides: input.permissionOverrides as Record<string, boolean> | undefined,
+        });
+        return { success: true, profile: updated };
+      }),
+
+    // ── Employee Onboarding & Invitation Lifecycle (WAP 1A.3) ──
+    onboardEmployee: staffProcedure
+      .input(
+        z.object({
+          name: z.string().min(1),
+          preferredName: z.string().optional(),
+          email: z.string().email(),
+          phone: z.string().optional(),
+          jobTitle: z.string().min(1),
+          employmentType: z.string().optional(),
+          department: z.string().optional(),
+          normalScheduleSummary: z.string().optional(),
+          primaryRole: activeStaffRoleEnum,
+          additionalRoles: z.array(activeStaffRoleEnum).optional(),
+          modulePermissions: z.record(z.string(), z.enum(["none", "view", "edit"])).optional(),
+          caseWorkspaceAccess: z
+            .record(z.string(), z.enum(["none", "view", "edit", "manage"]))
+            .optional(),
+          permissionOverrides: z.record(z.string(), z.boolean()).optional(),
+          sendInvite: z.boolean().optional(),
+          originUrl: z.string().optional(),
+          expiresInMs: z.number().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await onboardStaffEmployee({
+          actorUser: ctx.user,
+          ...input,
+        });
+      }),
+
+    resendEmployeeInvitation: staffProcedure
+      .input(
+        z.object({
+          targetUserId: z.number().optional(),
+          targetEmployeeId: z.string().optional(),
+          originUrl: z.string().optional(),
+          expiresInMs: z.number().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        if (!input.targetUserId && !input.targetEmployeeId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Either targetUserId or targetEmployeeId is required.",
+          });
+        }
+        return await resendStaffInvitation({
+          actorUser: ctx.user,
+          targetUserId: input.targetUserId,
+          targetEmployeeId: input.targetEmployeeId,
+          originUrl: input.originUrl,
+          expiresInMs: input.expiresInMs,
+        });
+      }),
+
+    revokeEmployeeInvitation: staffProcedure
+      .input(
+        z.object({
+          targetUserId: z.number().optional(),
+          targetEmployeeId: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        if (!input.targetUserId && !input.targetEmployeeId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Either targetUserId or targetEmployeeId is required.",
+          });
+        }
+        return await revokeStaffInvitation({
+          actorUser: ctx.user,
+          targetUserId: input.targetUserId,
+          targetEmployeeId: input.targetEmployeeId,
+        });
+      }),
+
+    expireEmployeeInvitation: staffProcedure
+      .input(
+        z.object({
+          targetUserId: z.number().optional(),
+          targetEmployeeId: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        if (!input.targetUserId && !input.targetEmployeeId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Either targetUserId or targetEmployeeId is required.",
+          });
+        }
+        return await expireStaffInvitation({
+          actorUser: ctx.user,
+          targetUserId: input.targetUserId,
+          targetEmployeeId: input.targetEmployeeId,
+        });
+      }),
+
+    getEmployeeInvitation: publicProcedure
+      .input(z.object({ token: z.string().min(1) }))
+      .query(async ({ input }) => {
+        return await getStaffInvitationByToken(input.token);
+      }),
+
+    acceptEmployeeInvitation: publicProcedure
+      .input(
+        z.object({
+          token: z.string().min(1),
+          acceptingOpenId: z.string().optional(),
+          acceptingEmail: z.string().email().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await acceptStaffInvitation({
+          token: input.token,
+          acceptingOpenId: input.acceptingOpenId || ctx.user?.openId,
+          acceptingEmail: input.acceptingEmail || ctx.user?.email || undefined,
+        });
+      }),
 });

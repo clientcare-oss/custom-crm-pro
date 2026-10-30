@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, publicProcedure } from "../_core/trpc";
+import { router, requireStaffModule } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM, CF_MODELS } from "../_core/llm";
 import {
@@ -517,7 +517,7 @@ export const pwnDecoderRouter = router({
   /**
    * List previous PWN reviews for a specific student.
    */
-  listReviewsByStudent: publicProcedure
+  listReviewsByStudent: requireStaffModule("tools-hub", "view")
     .input(z.object({ studentContactId: z.number() }))
     .query(async ({ input }) => {
       return await getPwnReviewsByStudent(input.studentContactId);
@@ -526,7 +526,7 @@ export const pwnDecoderRouter = router({
   /**
    * Get full details of a specific review.
    */
-  getReview: publicProcedure
+  getReview: requireStaffModule("tools-hub", "view")
     .input(z.object({ reviewId: z.number() }))
     .query(async ({ input }) => {
       const review = await getPwnReviewById(input.reviewId);
@@ -545,7 +545,7 @@ export const pwnDecoderRouter = router({
   /**
    * Get documents from student's Document Vault.
    */
-  getStudentVaultDocuments: publicProcedure
+  getStudentVaultDocuments: requireStaffModule("tools-hub", "view")
     .input(z.object({ studentContactId: z.number() }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -581,7 +581,7 @@ export const pwnDecoderRouter = router({
   /**
    * Upload / associate a PWN document directly into the student's Document Vault.
    */
-  uploadStudentDocument: publicProcedure
+  uploadStudentDocument: requireStaffModule("tools-hub", "edit")
     .input(
       z.object({
         studentContactId: z.number(),
@@ -650,7 +650,7 @@ export const pwnDecoderRouter = router({
       };
     }),
 
-  analyzePwn: publicProcedure
+  analyzePwn: requireStaffModule("tools-hub", "edit")
     .input(
       z.object({
         studentContactId: z.number(),
@@ -806,7 +806,7 @@ export const pwnDecoderRouter = router({
   /**
    * Save review status, advocate notes, and updates.
    */
-  saveReview: publicProcedure
+  saveReview: requireStaffModule("tools-hub", "edit")
     .input(
       z.object({
         reviewId: z.number(),
@@ -828,7 +828,7 @@ export const pwnDecoderRouter = router({
   /**
    * Update an individual finding/concern with advocate decision, note, or authoritative correction.
    */
-  updateConcern: publicProcedure
+  updateConcern: requireStaffModule("tools-hub", "edit")
     .input(
       z.object({
         concernId: z.number(),

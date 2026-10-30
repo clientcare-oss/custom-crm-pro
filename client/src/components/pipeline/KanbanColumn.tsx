@@ -7,6 +7,8 @@ import {
   Pencil,
   Archive,
   Trash2,
+  Sparkles,
+  Briefcase,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -19,9 +21,12 @@ import type { PipelineStageItem, PipelineCardItem } from "./types";
 
 interface KanbanColumnProps {
   stage: PipelineStageItem;
+  allStages?: PipelineStageItem[];
   cards: PipelineCardItem[];
   onCardDragStart: (e: React.DragEvent, card: PipelineCardItem) => void;
   onCardDrop: (e: React.DragEvent, targetStageName: string) => void;
+  onMoveCard?: (cardId: number, targetStageName: string) => void;
+  onAssignAdvocate?: (cardId: number, advocateName: string) => void;
   onCardReorder?: (draggedCardId: number, targetCardId: number, stageName: string) => void;
   onStageDragStart?: (e: React.DragEvent, stage: PipelineStageItem) => void;
   onStageDragOver?: (e: React.DragEvent, stage: PipelineStageItem) => void;
@@ -36,12 +41,14 @@ interface KanbanColumnProps {
 
 export function KanbanColumn({
   stage,
+  allStages = [],
   cards,
   onCardDragStart,
   onCardDrop,
+  onMoveCard,
+  onAssignAdvocate,
   onCardReorder,
   onStageDragStart,
-  onStageDragOver,
   onStageDrop,
   onAddCard,
   onEditStage,
@@ -67,7 +74,6 @@ export function KanbanColumn({
     e.preventDefault();
     setIsCardDragOver(false);
 
-    // Check if dragging a stage column vs a client card
     const stageData = e.dataTransfer.getData("application/waypoint-stage");
     if (stageData && onStageDrop) {
       onStageDrop(e, stage);
@@ -77,7 +83,7 @@ export function KanbanColumn({
     onCardDrop(e, stage.name);
   };
 
-  const handleCardOverCard = (e: React.DragEvent, targetCard: PipelineCardItem) => {
+  const handleCardOverCard = (e: React.DragEvent, _targetCard: PipelineCardItem) => {
     e.preventDefault();
     e.stopPropagation();
   };
@@ -98,6 +104,7 @@ export function KanbanColumn({
   };
 
   const isStageBeingDragged = draggedStageId === stage.id;
+  const isOpportunityStage = stage.pipelineGroup === "opportunity";
 
   return (
     <div
@@ -105,7 +112,7 @@ export function KanbanColumn({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "w-[270px] shrink-0 rounded-2xl bg-[#05142B]/90 border flex flex-col max-h-[calc(100vh-175px)] transition-all duration-150 relative overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]",
+        "w-full rounded-2xl bg-[#05142B]/90 border flex flex-col max-h-[540px] transition-all duration-150 relative overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]",
         isCardDragOver
           ? "border-[#C5A059] bg-[#07162B] shadow-[0_0_24px_rgba(197,160,89,0.25)] ring-1 ring-[#FFE394]/60"
           : "border-[#3A2C18]",
@@ -115,7 +122,10 @@ export function KanbanColumn({
       {/* Top Stage Accent Strip */}
       <div
         className="h-1.5 w-full shrink-0"
-        style={{ backgroundColor: stage.accentColor || "#C5A059" }}
+        style={{
+          backgroundColor:
+            stage.accentColor || (isOpportunityStage ? "#A855F7" : "#C5A059"),
+        }}
       />
 
       {/* Stage Header — Draggable for column reordering */}
@@ -130,12 +140,34 @@ export function KanbanColumn({
         <div className="flex items-center gap-1.5 min-w-0">
           <GripVertical className="h-3.5 w-3.5 text-[#A69371] shrink-0 hover:text-[#FFF4D4] transition-colors" />
           <div className="min-w-0">
-            <h3 className="text-xs font-serif font-bold text-[#FFF4D4] tracking-wider truncate">
-              {stage.name}
-            </h3>
-            <p className="text-[10px] text-[#C6B697] font-medium">
-              {cards.length} {cards.length === 1 ? "client" : "clients"}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-xs font-serif font-bold text-[#FFF4D4] tracking-wider truncate">
+                {stage.name}
+              </h3>
+              <span
+                className={cn(
+                  "px-1.5 py-0.2 rounded-full text-[10px] font-bold shrink-0",
+                  cards.length > 0
+                    ? "bg-[#FFE394]/20 text-[#FFE394] border border-[#C5A059]/40"
+                    : "bg-[#020A17] text-[#A69371] border border-[#3A2C18]"
+                )}
+              >
+                {cards.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 mt-0.5">
+              {isOpportunityStage ? (
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wider text-purple-300">
+                  <Sparkles className="h-2.5 w-2.5" />
+                  <span>Opportunity</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300">
+                  <Briefcase className="h-2.5 w-2.5" />
+                  <span>Active Advocacy</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -148,25 +180,40 @@ export function KanbanColumn({
               <MoreVertical className="h-3.5 w-3.5" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] shadow-2xl text-xs">
-            <DropdownMenuItem onClick={() => onAddCard(stage.name)} className="cursor-pointer gap-2">
+          <DropdownMenuContent
+            align="end"
+            className="bg-[#05142B] border-[#3A2C18] text-[#FFF4D4] shadow-2xl text-xs"
+          >
+            <DropdownMenuItem
+              onClick={() => onAddCard(stage.name)}
+              className="cursor-pointer gap-2"
+            >
               <Plus className="h-3.5 w-3.5 text-[#C5A059]" />
               <span>Add Client to {stage.name}</span>
             </DropdownMenuItem>
             {onEditStage && (
-              <DropdownMenuItem onClick={() => onEditStage(stage)} className="cursor-pointer gap-2">
+              <DropdownMenuItem
+                onClick={() => onEditStage(stage)}
+                className="cursor-pointer gap-2"
+              >
                 <Pencil className="h-3.5 w-3.5 text-[#FFE394]" />
                 <span>Edit Stage Details</span>
               </DropdownMenuItem>
             )}
             {onArchiveStage && (
-              <DropdownMenuItem onClick={() => onArchiveStage(stage)} className="cursor-pointer gap-2 text-[#C6B697]">
+              <DropdownMenuItem
+                onClick={() => onArchiveStage(stage)}
+                className="cursor-pointer gap-2 text-[#C6B697]"
+              >
                 <Archive className="h-3.5 w-3.5" />
                 <span>Archive Stage</span>
               </DropdownMenuItem>
             )}
             {onDeleteStage && !stage.isDefault && (
-              <DropdownMenuItem onClick={() => onDeleteStage(stage)} className="cursor-pointer gap-2 text-rose-400">
+              <DropdownMenuItem
+                onClick={() => onDeleteStage(stage)}
+                className="cursor-pointer gap-2 text-rose-400"
+              >
                 <Trash2 className="h-3.5 w-3.5" />
                 <span>Delete Stage</span>
               </DropdownMenuItem>
@@ -175,24 +222,34 @@ export function KanbanColumn({
         </DropdownMenu>
       </div>
 
-      {/* Cards List Area with clean subtle scroll */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-[120px] focus:outline-hidden no-scrollbar">
+      {/* Cards List Area */}
+      <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-[110px] focus:outline-hidden no-scrollbar">
         {cards.map((card) => (
           <KanbanCard
             key={card.id}
             card={card}
+            allStages={allStages}
             isDragging={draggedCardId === card.id}
             onDragStart={onCardDragStart}
             onDragOver={handleCardOverCard}
             onDrop={handleCardDropOnCard}
-            onMoveStage={(c, nextStage) => onCardDrop({} as any, nextStage)}
+            onMoveStage={(c, nextStage) => {
+              if (onMoveCard) {
+                onMoveCard(c.id, nextStage);
+              } else {
+                onCardDrop({} as any, nextStage);
+              }
+            }}
+            onAssignAdvocate={onAssignAdvocate}
           />
         ))}
 
         {cards.length === 0 && (
-          <div className="h-24 rounded-xl border border-dashed border-[#3A2C18] bg-[#020A17]/40 flex flex-col items-center justify-center text-[#A69371] text-[11px] text-center p-2">
-            <p>No clients in this stage</p>
-            <span className="text-[10px] text-[#A69371]/80 mt-0.5">Drag cards here</span>
+          <div className="h-20 rounded-xl border border-dashed border-[#3A2C18] bg-[#020A17]/40 flex flex-col items-center justify-center text-[#A69371] text-[11px] text-center p-2">
+            <p>No records in {stage.name}</p>
+            <span className="text-[10px] text-[#A69371]/80 mt-0.5">
+              Drag a student card here
+            </span>
           </div>
         )}
       </div>
@@ -205,7 +262,7 @@ export function KanbanColumn({
           className="w-full py-1 px-2.5 rounded-lg text-[11px] font-semibold text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-[#3A2C18]/60 hover:border-[#C5A059]/60 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <Plus className="h-3 w-3 text-[#C5A059]" />
-          <span>Add a card</span>
+          <span>Add to {stage.name}</span>
         </button>
       </div>
     </div>

@@ -1,139 +1,106 @@
 import { z } from "zod";
-import { router, adminProcedure } from "../_core/trpc";
+import { router, staffProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
-import { getDb } from "../db/connection";
-import { contacts, pipelineStages, pipelineSavedViews } from "../../drizzle/schema";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { checkBackendModuleAccess } from "../_core/staffAccess";
+import {
+  DEFAULT_PIPELINE_STAGES,
+  DEFAULT_SAVED_VIEWS,
+  listPipelineStages,
+  upsertPipelineStage,
+  reorderPipelineStages,
+  archiveOrDeletePipelineStage,
+  listPipelineSavedViews,
+  upsertPipelineSavedView,
+  deletePipelineSavedView,
+  listPipelineCards,
+  updatePipelineCardStage,
+  assignPipelineCardAdvocate,
+  transitionOpportunityToActiveAdvocacy,
+} from "../db/pipeline";
 
-// ── Default Pipeline Stages ──────────────────────────────────────────────────
-export const DEFAULT_PIPELINE_STAGES = [
-  {
-    id: 1,
-    name: "Discovery",
-    slug: "discovery",
-    order: 1,
-    accentColor: "#38BDF8", // Cyan / Sky
-    iconName: "Compass",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 2,
-    name: "Intake / Onboarding",
-    slug: "intake-onboarding",
-    order: 2,
-    accentColor: "#34D399", // Emerald
-    iconName: "FileText",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 3,
-    name: "Records Review",
-    slug: "records-review",
-    order: 3,
-    accentColor: "#F59E0B", // Amber
-    iconName: "FileSearch",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 4,
-    name: "School Contact",
-    slug: "school-contact",
-    order: 4,
-    accentColor: "#F5B544", // Gold
-    iconName: "School",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 5,
-    name: "Meeting Scheduled",
-    slug: "meeting-scheduled",
-    order: 5,
-    accentColor: "#818CF8", // Indigo
-    iconName: "Calendar",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 6,
-    name: "State Complaint",
-    slug: "state-complaint",
-    order: 6,
-    accentColor: "#F87171", // Coral / Red
-    iconName: "Scale",
-    category: "escalation",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 7,
-    name: "Monitoring",
-    slug: "monitoring",
-    order: 7,
-    accentColor: "#2DD4BF", // Teal
-    iconName: "Activity",
-    category: "active",
-    isArchived: false,
-    isDefault: true,
-  },
-  {
-    id: 8,
-    name: "Closed",
-    slug: "closed",
-    order: 8,
-    accentColor: "#94A3B8", // Slate
-    iconName: "CheckCircle2",
-    category: "completed",
-    isArchived: false,
-    isDefault: true,
-  },
-];
+function isManagementProfile(profile: any): boolean {
+  if (!profile) return false;
+  return (
+    Boolean(profile.isProtectedOwner) ||
+    Boolean(profile.hasAdminAccess) ||
+    profile.primaryRole === "management" ||
+    (Array.isArray(profile.additionalRoles) &&
+      profile.additionalRoles.includes("management"))
+  );
+}
 
-// ── Default Saved Views ──────────────────────────────────────────────────────
-export const DEFAULT_SAVED_VIEWS = [
-  { id: 1, name: "All Clients", slug: "all-clients", filtersJson: JSON.stringify({}), isPinned: true, isDefault: true, order: 1 },
-  { id: 2, name: "$55 Plan", slug: "plan-55", filtersJson: JSON.stringify({ planTier: "$55" }), isPinned: true, isDefault: true, order: 2 },
-  { id: 3, name: "$105 Plan", slug: "plan-105", filtersJson: JSON.stringify({ planTier: "$105" }), isPinned: true, isDefault: true, order: 3 },
-  { id: 4, name: "Scholarship", slug: "scholarship", filtersJson: JSON.stringify({ planTier: "Scholarship" }), isPinned: true, isDefault: true, order: 4 },
-  { id: 5, name: "Pay Per Use", slug: "pay-per-use", filtersJson: JSON.stringify({ planTier: "Pay Per Use" }), isPinned: true, isDefault: true, order: 5 },
-  { id: 6, name: "Renewals", slug: "renewals", filtersJson: JSON.stringify({ accountStatus: "Renewal Needed" }), isPinned: true, isDefault: true, order: 6 },
-  { id: 7, name: "Nonpay", slug: "nonpay", filtersJson: JSON.stringify({ billingStatus: "Payment Failed" }), isPinned: true, isDefault: true, order: 7 },
-  { id: 8, name: "Tools Only", slug: "tools-only", filtersJson: JSON.stringify({ planTier: "Tools Only" }), isPinned: true, isDefault: true, order: 8 },
-  { id: 9, name: "On Hold", slug: "on-hold", filtersJson: JSON.stringify({ accountStatus: "On Hold" }), isPinned: true, isDefault: true, order: 9 },
-];
+function assertPipelineViewAccess(profile: any): void {
+  if (!profile || !profile.isStaff || profile.accountStatus !== "active") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Staff access is required to view the Advocacy Pipeline.",
+    });
+  }
+  const hasPipeline =
+    checkBackendModuleAccess(profile, "advocacy_pipeline") !== "none";
+  const hasLeads = checkBackendModuleAccess(profile, "leads") !== "none";
+  const hasStudents =
+    checkBackendModuleAccess(profile, "students_cases") !== "none";
+  const hasContacts = checkBackendModuleAccess(profile, "contacts") !== "none";
+  if (
+    !hasPipeline &&
+    !hasLeads &&
+    !hasStudents &&
+    !hasContacts &&
+    !isManagementProfile(profile)
+  ) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You do not have permission to access the Advocacy Pipeline.",
+    });
+  }
+}
+
+function assertPipelineCardEditAccess(profile: any): void {
+  assertPipelineViewAccess(profile);
+  const canEditPipeline =
+    checkBackendModuleAccess(profile, "advocacy_pipeline") === "edit";
+  const canEditLeads = checkBackendModuleAccess(profile, "leads") === "edit";
+  const canEditStudents =
+    checkBackendModuleAccess(profile, "students_cases") === "edit";
+  const canEditContacts =
+    checkBackendModuleAccess(profile, "contacts") === "edit";
+  if (
+    !canEditPipeline &&
+    !canEditLeads &&
+    !canEditStudents &&
+    !canEditContacts &&
+    !isManagementProfile(profile)
+  ) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message:
+        "You do not have permission to modify pipeline cards or assignments.",
+    });
+  }
+}
+
+function assertManagementStageAccess(profile: any): void {
+  if (!isManagementProfile(profile)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message:
+        "Only authorized management can customize pipeline stages or shared team views.",
+    });
+  }
+}
+
+export { DEFAULT_PIPELINE_STAGES, DEFAULT_SAVED_VIEWS };
 
 export const pipelineRouter = router({
   // ── Stages Management ──────────────────────────────────────────────────────
   stages: router({
-    list: adminProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) return DEFAULT_PIPELINE_STAGES;
-
-      try {
-        const rows = await db
-          .select()
-          .from(pipelineStages)
-          .orderBy(asc(pipelineStages.order));
-
-        if (rows.length === 0) {
-          return DEFAULT_PIPELINE_STAGES;
-        }
-
-        return rows;
-      } catch (e) {
-        return DEFAULT_PIPELINE_STAGES;
-      }
+    list: staffProcedure.query(async ({ ctx }) => {
+      assertPipelineViewAccess(ctx.staffAccess);
+      return await listPipelineStages();
     }),
 
-    upsert: adminProcedure
+    upsert: staffProcedure
       .input(
         z.object({
           id: z.number().optional(),
@@ -142,47 +109,17 @@ export const pipelineRouter = router({
           accentColor: z.string().optional(),
           iconName: z.string().optional(),
           category: z.string().optional(),
+          pipelineGroup: z.enum(["opportunity", "active_project"]).optional(),
           isArchived: z.boolean().optional(),
         })
       )
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-        const slug = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-
-        if (input.id) {
-          await db
-            .update(pipelineStages)
-            .set({
-              name: input.name,
-              slug,
-              order: input.order,
-              accentColor: input.accentColor || "#38BDF8",
-              iconName: input.iconName || "Compass",
-              category: input.category || "active",
-              isArchived: input.isArchived ?? false,
-              updatedAt: new Date(),
-            })
-            .where(eq(pipelineStages.id, input.id));
-          return { success: true, id: input.id };
-        } else {
-          const count = await db.select().from(pipelineStages);
-          const [result] = await db.insert(pipelineStages).values({
-            name: input.name,
-            slug,
-            order: input.order ?? count.length + 1,
-            accentColor: input.accentColor || "#38BDF8",
-            iconName: input.iconName || "Compass",
-            category: input.category || "active",
-            isArchived: false,
-            isDefault: false,
-          });
-          return { success: true, id: result.insertId };
-        }
+      .mutation(async ({ ctx, input }) => {
+        assertManagementStageAccess(ctx.staffAccess);
+        const res = await upsertPipelineStage(input);
+        return res.stage;
       }),
 
-    reorder: adminProcedure
+    reorder: staffProcedure
       .input(
         z.array(
           z.object({
@@ -191,186 +128,166 @@ export const pipelineRouter = router({
           })
         )
       )
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) return { success: true };
-
-        try {
-          for (const item of input) {
-            await db
-              .update(pipelineStages)
-              .set({ order: item.order, updatedAt: new Date() })
-              .where(eq(pipelineStages.id, item.id));
-          }
-          return { success: true };
-        } catch (e) {
-          return { success: true };
-        }
+      .mutation(async ({ ctx, input }) => {
+        assertManagementStageAccess(ctx.staffAccess);
+        return await reorderPipelineStages(input);
       }),
 
-    delete: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) return { success: true };
+    archive: staffProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          fallbackStageName: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertManagementStageAccess(ctx.staffAccess);
+        return await archiveOrDeletePipelineStage({
+          id: input.id,
+          archiveOnly: true,
+          fallbackStageName: input.fallbackStageName,
+        });
+      }),
 
-        await db.delete(pipelineStages).where(eq(pipelineStages.id, input.id));
-        return { success: true };
+    delete: staffProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          fallbackStageName: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertManagementStageAccess(ctx.staffAccess);
+        return await archiveOrDeletePipelineStage({
+          id: input.id,
+          archiveOnly: false,
+          fallbackStageName: input.fallbackStageName,
+        });
       }),
   }),
 
   // ── Saved Views Management ─────────────────────────────────────────────────
   views: router({
-    list: adminProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) return DEFAULT_SAVED_VIEWS;
-
-      try {
-        const customRows = await db
-          .select()
-          .from(pipelineSavedViews)
-          .orderBy(asc(pipelineSavedViews.order));
-
-        if (customRows.length === 0) {
-          return DEFAULT_SAVED_VIEWS;
-        }
-
-        const customSlugs = new Set(customRows.map((r) => r.slug));
-        const activeDefaults = DEFAULT_SAVED_VIEWS.filter((d) => !customSlugs.has(d.slug));
-        return [...activeDefaults, ...customRows];
-      } catch (e) {
-        return DEFAULT_SAVED_VIEWS;
-      }
+    list: staffProcedure.query(async ({ ctx }) => {
+      assertPipelineViewAccess(ctx.staffAccess);
+      return await listPipelineSavedViews(ctx.user.id);
     }),
 
-    upsert: adminProcedure
+    upsert: staffProcedure
       .input(
         z.object({
           id: z.number().optional(),
           name: z.string().min(1),
+          slug: z.string().optional(),
           filtersJson: z.string(),
           isPinned: z.boolean().optional(),
+          isPrivate: z.boolean().optional(),
           order: z.number().optional(),
         })
       )
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-        const slug = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-
-        if (input.id) {
-          await db
-            .update(pipelineSavedViews)
-            .set({
-              name: input.name,
-              slug,
-              filtersJson: input.filtersJson,
-              isPinned: input.isPinned ?? true,
-              order: input.order ?? 99,
-              updatedAt: new Date(),
-            })
-            .where(eq(pipelineSavedViews.id, input.id));
-          return { success: true, id: input.id };
-        } else {
-          const [result] = await db.insert(pipelineSavedViews).values({
-            name: input.name,
-            slug,
-            filtersJson: input.filtersJson,
-            isPinned: input.isPinned ?? true,
-            isDefault: false,
-            order: input.order ?? 99,
-          });
-          return { success: true, id: result.insertId };
-        }
+      .mutation(async ({ ctx, input }) => {
+        assertPipelineViewAccess(ctx.staffAccess);
+        return await upsertPipelineSavedView({
+          ...input,
+          userId: ctx.user.id,
+          userName: ctx.staffAccess?.name || ctx.user.name || "Staff",
+        });
       }),
 
-    delete: adminProcedure
+    delete: staffProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) return { success: true };
-
-        await db.delete(pipelineSavedViews).where(eq(pipelineSavedViews.id, input.id));
-        return { success: true };
+      .mutation(async ({ ctx, input }) => {
+        assertPipelineViewAccess(ctx.staffAccess);
+        try {
+          return await deletePipelineSavedView(
+            input.id,
+            ctx.user.id,
+            isManagementProfile(ctx.staffAccess)
+          );
+        } catch (err: any) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: err?.message || "Cannot delete this view.",
+          });
+        }
       }),
   }),
 
-  // ── Kanban Cards & Student Workflow ─────────────────────────────────────────
+  // ── Kanban & List Cards & Student Workflow ─────────────────────────────────
   cards: router({
-    list: adminProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) return [];
+    list: staffProcedure
+      .input(
+        z
+          .object({
+            advocate: z.string().optional(),
+            planTier: z.string().optional(),
+            stage: z.string().optional(),
+            pipelineGroup: z.enum(["opportunity", "active_project"]).optional(),
+            accountStatus: z.string().optional(),
+            search: z.string().optional(),
+            sortField: z
+              .enum(["name", "family", "stage", "lastActivity", "nextDate"])
+              .optional(),
+            sortDirection: z.enum(["asc", "desc"]).optional(),
+          })
+          .optional()
+      )
+      .query(async ({ ctx, input }) => {
+        assertPipelineViewAccess(ctx.staffAccess);
+        return await listPipelineCards(input);
+      }),
 
-      const rows = await db
-        .select()
-        .from(contacts)
-        .where(eq(contacts.jobTitle, "Student"))
-        .orderBy(desc(contacts.updatedAt));
-
-      return rows.map((c: any) => {
-        const advocateName = c.assignedAdvocateName || "Byron Honea";
-        const initials = advocateName
-          .split(" ")
-          .map((n: string) => n[0])
-          .join("")
-          .toUpperCase()
-          .slice(0, 2);
-
-        return {
-          id: c.id,
-          firstName: c.firstName,
-          lastName: c.lastName,
-          fullName: `${c.firstName} ${c.lastName}`.trim(),
-          schoolName: c.schoolName || c.goingToSchool || "School Not Set",
-          countyDistrict: c.countyDistrict || "General",
-          planType: c.planType || "No IEP/504 Yet",
-          planTier: c.planTier || "$55",
-          pipelineStage: c.pipelineStage || "Discovery",
-          accountStatus: c.accountStatus || "Active",
-          billingStatus: c.billingStatus || "Current",
-          contractStatus: c.contractStatus || "Active",
-          assignedAdvocateName: advocateName,
-          assignedAdvocateInitials: initials,
-          caseId: c.caseId,
-          needsAttention: c.billingStatus === "Payment Failed" || c.accountStatus === "Renewal Needed",
-          primaryTask:
-            c.pipelineStage === "Records Review"
-              ? "Review evaluation data"
-              : c.pipelineStage === "State Complaint"
-              ? "Draft complaint filing"
-              : c.pipelineStage === "Meeting Scheduled"
-              ? "Prepare pre-meeting strategy brief"
-              : c.pipelineStage === "Intake / Onboarding"
-              ? "Portal setup & welcome email"
-              : "Discovery call pending",
-          nextDate: "Sep 22, 2026",
-          meetingDate: c.pipelineStage === "Meeting Scheduled" ? "Oct 05, 2026" : undefined,
-          updatedAt: c.updatedAt,
-        };
-      });
-    }),
-
-    updateStage: adminProcedure
+    updateStage: staffProcedure
       .input(
         z.object({
           contactId: z.number(),
-          stage: z.string(),
+          stage: z.string().min(1),
         })
       )
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      .mutation(async ({ ctx, input }) => {
+        assertPipelineCardEditAccess(ctx.staffAccess);
+        return await updatePipelineCardStage({
+          contactId: input.contactId,
+          stage: input.stage,
+          actorName: ctx.staffAccess?.name || ctx.user.name || "Byron Honea",
+          actorRole: ctx.staffAccess?.primaryRole || "Advocate",
+        });
+      }),
 
-        await db
-          .update(contacts)
-          .set({
-            pipelineStage: input.stage,
-            updatedAt: new Date(),
-          })
-          .where(eq(contacts.id, input.contactId));
+    assignAdvocate: staffProcedure
+      .input(
+        z.object({
+          contactId: z.number(),
+          advocateName: z.string().min(1),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertPipelineCardEditAccess(ctx.staffAccess);
+        return await assignPipelineCardAdvocate({
+          contactId: input.contactId,
+          advocateName: input.advocateName,
+          actorName: ctx.staffAccess?.name || ctx.user.name || "Byron Honea",
+          actorRole: ctx.staffAccess?.primaryRole || "Advocate",
+        });
+      }),
 
-        return { success: true, contactId: input.contactId, stage: input.stage };
+    transitionToActiveAdvocacy: staffProcedure
+      .input(
+        z.object({
+          contactId: z.number().optional(),
+          studentContactId: z.number().optional(),
+          parentContactId: z.number().optional(),
+          leadId: z.number().optional(),
+          targetStage: z.string().optional(),
+          assignedAdvocateName: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertPipelineCardEditAccess(ctx.staffAccess);
+        return await transitionOpportunityToActiveAdvocacy({
+          ...input,
+          actorName: ctx.staffAccess?.name || ctx.user.name || "Byron Honea",
+        });
       }),
   }),
 });

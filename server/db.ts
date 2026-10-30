@@ -48,6 +48,7 @@ export * from "./db/reviewTrackers";
 export * from "./db/parentProfile";
 export * from "./db/federalLaw";
 export * from "./db/compass";
+export * from "./db/pipeline";
 
 import { ENV } from './_core/env';
 

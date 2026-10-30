@@ -42,7 +42,9 @@ import { toast } from "sonner";
 interface AddEmployeeModalProps {
   open: boolean;
   onClose: () => void;
-  onAddEmployee: (emp: Omit<EmployeeRecord, "id"> & { id?: string }) => void;
+  onAddEmployee: (
+    emp: Omit<EmployeeRecord, "id"> & { id?: string; sendInvite?: boolean }
+  ) => Promise<void> | void;
 }
 
 export default function AddEmployeeModal({
@@ -51,6 +53,7 @@ export default function AddEmployeeModal({
   onAddEmployee,
 }: AddEmployeeModalProps) {
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Step 1: Person
   const [name, setName] = useState("");
@@ -119,7 +122,8 @@ export default function AddEmployeeModal({
     setStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    if (isSubmitting) return;
     const avatarColors = [
       "bg-sky-600 text-white",
       "bg-emerald-600 text-white",
@@ -129,7 +133,7 @@ export default function AddEmployeeModal({
     ];
     const chosenColor = avatarColors[Math.floor(Math.random() * avatarColors.length)];
 
-    const newEmp: Omit<EmployeeRecord, "id"> = {
+    const newEmp: Omit<EmployeeRecord, "id"> & { sendInvite?: boolean } = {
       name: name.trim(),
       preferredName: preferredName.trim() || undefined,
       email: email.trim().toLowerCase(),
@@ -138,14 +142,16 @@ export default function AddEmployeeModal({
       jobTitle: jobTitle.trim(),
       primaryRole,
       additionalRoles,
-      status: "active",
+      status: "inactive",
+      invitationStatus: "pending",
+      sendInvite: sendInviteEmail,
       employmentType,
       startDate,
       manager,
       department,
       workLocation: "Atlanta, GA (Metro & Hybrid)",
       emergencyContact: "On file in HR records",
-      availabilityStatus: "Available",
+      availabilityStatus: "Offline",
       normalScheduleSummary: scheduleSummary,
       activeCaseloadCount: 0,
       weeklySchedule: [
@@ -184,16 +190,22 @@ export default function AddEmployeeModal({
           id: `act-${Date.now()}`,
           timestamp: new Date().toLocaleString(),
           actor: "Byron Honea",
-          action: "Employee Onboarded",
-          details: `Created new ${primaryRole} record for ${name} (${jobTitle}).`,
+          action: "Employee Invitation Sent",
+          details: `Created onboarding record and sent invitation for ${name} (${jobTitle}).`,
         },
       ],
     };
 
-    onAddEmployee(newEmp);
-    toast.success(`Employee ${name} added! Crew Quarters access generated.`);
-    resetForm();
-    onClose();
+    try {
+      setIsSubmitting(true);
+      await onAddEmployee(newEmp);
+      resetForm();
+      onClose();
+    } catch {
+      // Error toast is handled by the parent mutation handler; keep wizard open so user can correct input
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const STEPS = [
@@ -527,11 +539,14 @@ export default function AddEmployeeModal({
           ) : (
             <Button
               type="button"
+              disabled={isSubmitting}
               onClick={handleComplete}
-              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl h-8 px-5 cursor-pointer shadow-lg"
+              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl h-8 px-5 cursor-pointer shadow-lg disabled:opacity-50"
             >
               <Check className="w-4 h-4 mr-1 stroke-[3]" />
-              <span>Create Employee &amp; Generate Access</span>
+              <span>
+                {isSubmitting ? "Sending Invitation…" : "Create Employee & Send Invitation"}
+              </span>
             </Button>
           )}
         </DialogFooter>

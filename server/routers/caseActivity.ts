@@ -1,8 +1,30 @@
 import { z } from "zod";
-import { router, protectedProcedure } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
+import {
+  router,
+  protectedProcedure,
+  staffProcedure,
+  assertClientContactOwnership,
+} from "../_core/trpc";
+import {
+  checkBackendCaseAccess,
+  checkBackendModuleAccess,
+} from "../_core/staffAccess";
 import { getStudentCaseTimeline, recordCaseActivity } from "../services/caseActivityService";
+import { getUnifiedStudentActivityFeed } from "../services/gmailCommunicationHub";
 import { askCaseHistory } from "../services/caseHistoryAi";
 import * as db from "../db";
+
+function assertStaffActivityEdit(ctx: any) {
+  const caseLvl = checkBackendCaseAccess(ctx.staffAccess, "activity");
+  const modLvl = checkBackendModuleAccess(ctx.staffAccess, "students");
+  if (caseLvl !== "edit" && caseLvl !== "manage" && modLvl !== "edit") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Modifying Student Case Activity Timeline is restricted for your role.",
+    });
+  }
+}
 
 export const caseActivityRouter = router({
   /**
@@ -16,14 +38,60 @@ export const caseActivityRouter = router({
         caseId: z.string().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      if (ctx.staffAccess?.isStaff) {
+        if (checkBackendCaseAccess(ctx.staffAccess, "activity") === "none") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Access to Student Case Activity Timeline is restricted for your role.",
+          });
+        }
+      } else {
+        await assertClientContactOwnership(ctx, input.studentContactId);
+      }
       return await getStudentCaseTimeline(input.studentContactId, input.caseId);
+    }),
+
+  /**
+   * WAP 1B.1: HoneyBook-style continuous, scrollable communication & activity feed
+   * with paginated infinite scrolling, date separators, category filters, email sub-filters, and search.
+   */
+  unifiedFeed: protectedProcedure
+    .input(
+      z.object({
+        studentContactId: z.number(),
+        caseId: z.string().optional(),
+        categoryFilter: z
+          .enum(["all", "emails", "documents", "meetings", "notes"])
+          .optional()
+          .default("all"),
+        emailSubFilter: z
+          .enum(["all", "inbox", "sent", "unread", "needs_review"])
+          .optional()
+          .default("all"),
+        searchQuery: z.string().optional(),
+        limit: z.number().min(1).max(200).optional().default(25),
+        offset: z.number().min(0).optional().default(0),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (ctx.staffAccess?.isStaff) {
+        if (checkBackendCaseAccess(ctx.staffAccess, "activity") === "none") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Access to Student Case Activity Timeline is restricted for your role.",
+          });
+        }
+      } else {
+        await assertClientContactOwnership(ctx, input.studentContactId);
+      }
+      return await getUnifiedStudentActivityFeed(input);
     }),
 
   /**
    * Automatically records a meaningful action or manual decision into the timeline.
    */
-  create: protectedProcedure
+  create: staffProcedure
     .input(
       z.object({
         studentContactId: z.number(),
@@ -53,7 +121,8 @@ export const caseActivityRouter = router({
         eventDate: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      assertStaffActivityEdit(ctx);
       const created = await recordCaseActivity({
         studentContactId: input.studentContactId,
         caseId: input.caseId,
@@ -77,21 +146,22 @@ export const caseActivityRouter = router({
   /**
    * Toggles the completion status of a next step or action item in the timeline.
    */
-  toggleComplete: protectedProcedure
+  toggleComplete: staffProcedure
     .input(
       z.object({
         id: z.number(),
         isCompleted: z.boolean(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      assertStaffActivityEdit(ctx);
       return await db.toggleCaseActivityCompletion(input.id, input.isCompleted);
     }),
 
   /**
    * Updates an existing activity timeline entry.
    */
-  update: protectedProcedure
+  update: staffProcedure
     .input(
       z.object({
         id: z.number(),
@@ -102,7 +172,8 @@ export const caseActivityRouter = router({
         isCompleted: z.boolean().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      assertStaffActivityEdit(ctx);
       const { id, ...updates } = input;
       return await db.updateCaseActivityItem(id, updates);
     }),
@@ -110,9 +181,10 @@ export const caseActivityRouter = router({
   /**
    * Deletes an activity timeline entry.
    */
-  delete: protectedProcedure
+  delete: staffProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      assertStaffActivityEdit(ctx);
       return await db.deleteCaseActivityItem(input.id);
     }),
 
@@ -120,7 +192,7 @@ export const caseActivityRouter = router({
    * Ask Case History: AI intelligence engine providing instant, accurate answers
    * and source citations from the student's complete case story.
    */
-  ask: protectedProcedure
+  ask: staffProcedure
     .input(
       z.object({
         studentContactId: z.number(),
@@ -129,7 +201,16 @@ export const caseActivityRouter = router({
         caseId: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      if (
+        checkBackendCaseAccess(ctx.staffAccess, "activity") === "none" ||
+        checkBackendCaseAccess(ctx.staffAccess, "files") === "none"
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Ask Case History is restricted to staff with full case file access.",
+        });
+      }
       return await askCaseHistory({
         studentContactId: input.studentContactId,
         query: input.query,

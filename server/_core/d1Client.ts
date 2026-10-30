@@ -77,8 +77,15 @@ export async function queryCloudflareD1(sql: string, params: any[] = []) {
 
   const token = getCloudflareToken();
 
-  // If local-only mode is explicitly requested, or if Cloudflare token is absent (e.g. in CI unit tests), route to local SQLite
-  if (process.env.LOCAL_DB_ONLY === 'true' || !token || process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST)) {
+  // Default strictly to local SQLite during local Node.js development and tests unless ALLOW_REMOTE_D1 === 'true'
+  const useLocalSqlite =
+    process.env.LOCAL_DB_ONLY === 'true' ||
+    process.env.ALLOW_REMOTE_D1 !== 'true' ||
+    !token ||
+    process.env.NODE_ENV === 'test' ||
+    Boolean(process.env.VITEST);
+
+  if (useLocalSqlite) {
     try {
       const res = await getLocalDbClient().execute({ sql: sanitizedSql, args: params });
       return res.rows || [];

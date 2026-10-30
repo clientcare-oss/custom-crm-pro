@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, publicProcedure } from "../_core/trpc";
+import { router, requireStaffModule } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import {
   runFastAssist,
@@ -81,7 +81,7 @@ const AskInputSchema = z.object({
 });
 
 export const firstMateRouter = router({
-  fastAssist: publicProcedure
+  fastAssist: requireStaffModule("first-mate", "edit")
     .input(
       z.object({
         session: z.any(),
@@ -100,7 +100,7 @@ export const firstMateRouter = router({
       return result;
     }),
 
-  deepAssist: publicProcedure
+  deepAssist: requireStaffModule("first-mate", "edit")
     .input(
       z.object({
         session: z.any(),
@@ -119,7 +119,7 @@ export const firstMateRouter = router({
       return result;
     }),
 
-  rephraseSayThis: publicProcedure
+  rephraseSayThis: requireStaffModule("first-mate", "edit")
     .input(
       z.object({
         currentSayThis: z.string(),
@@ -136,7 +136,7 @@ export const firstMateRouter = router({
       return result;
     }),
 
-  ask: publicProcedure
+  ask: requireStaffModule("first-mate", "edit")
     .input(AskInputSchema)
     .mutation(async ({ ctx, input }) => {
       // 1. Permission check: client users are forbidden from advocate copilot
@@ -230,7 +230,7 @@ export const firstMateRouter = router({
       };
     }),
 
-  generateSummary: publicProcedure
+  generateSummary: requireStaffModule("first-mate", "edit")
     .input(
       z.object({
         sessionId: z.string().optional(),
@@ -250,7 +250,7 @@ export const firstMateRouter = router({
       return { summary };
     }),
 
-  getAttachableRecords: publicProcedure.query(async () => {
+  getAttachableRecords: requireStaffModule("first-mate", "view").query(async () => {
     try {
       const db = await getDb();
       if (!db) {
@@ -293,7 +293,7 @@ export const firstMateRouter = router({
    * Mint a short-lived temporary AssemblyAI Realtime WebSocket token (v3).
    * Uses protected ASSEMBLYAI_API_KEY from environment, never exposes permanent key to browser.
    */
-  getAssemblyAiToken: publicProcedure
+  getAssemblyAiToken: requireStaffModule("first-mate", "edit")
     .input(
       z.object({
         expiresInSeconds: z.number().min(60).max(600).default(480),
@@ -344,7 +344,7 @@ export const firstMateRouter = router({
    * BUILD 3: Mint an ephemeral Realtime client secret session token.
    * If OPENAI_API_KEY is present, connects to OpenAI Realtime. Otherwise gracefully defaults to Workers AI session.
    */
-  getRealtimeSessionToken: publicProcedure.mutation(async () => {
+  getRealtimeSessionToken: requireStaffModule("first-mate", "edit").mutation(async () => {
     const apiKey = process.env.OPENAI_API_KEY;
     if (apiKey) {
       try {
@@ -397,7 +397,7 @@ export const firstMateRouter = router({
    * BUILD 3: Transcribe an audio chunk via Cloudflare Workers AI Whisper or OpenAI Whisper fallback.
    * Used for streaming chunk transcription and resilient live fallback.
    */
-  transcribeAudioChunk: publicProcedure
+  transcribeAudioChunk: requireStaffModule("first-mate", "edit")
     .input(
       z.object({
         sessionId: z.string().optional(),
@@ -519,7 +519,7 @@ export const firstMateRouter = router({
    * 5. Attaches both Summary and Full Transcript into the student's Notes (projectNotes)
    *    with isVisibleToClient: false (DEFAULT ADVOCATE ONLY FOR NOW).
    */
-  endSessionAndProcess: publicProcedure
+  endSessionAndProcess: requireStaffModule("first-mate", "edit")
     .input(
       z.object({
         sessionId: z.string().optional(),
@@ -887,7 +887,7 @@ ${transcriptFormatted}
   /**
    * ── AI LEARNING & SESSION RECORDING ENDPOINTS (PG-037) ──
    */
-  listRecordedSessions: publicProcedure
+  listRecordedSessions: requireStaffModule("first-mate", "view")
     .input(
       z
         .object({
@@ -984,7 +984,7 @@ ${transcriptFormatted}
       };
     }),
 
-  getRecordedSession: publicProcedure
+  getRecordedSession: requireStaffModule("first-mate", "view")
     .input(z.object({ sessionId: z.string() }))
     .query(async ({ input }) => {
       const dbRecord = await getFirstMateSessionRunBySessionId(input.sessionId);
@@ -1065,7 +1065,7 @@ ${transcriptFormatted}
       });
     }),
 
-  saveSessionRecord: publicProcedure
+  saveSessionRecord: requireStaffModule("first-mate", "edit")
     .input(
       z.object({
         sessionId: z.string(),
@@ -1143,7 +1143,7 @@ ${transcriptFormatted}
       return { success: true, session: memRun };
     }),
 
-  updateSessionFeedback: publicProcedure
+  updateSessionFeedback: requireStaffModule("first-mate", "edit")
     .input(
       z.object({
         sessionId: z.string(),
@@ -1177,7 +1177,7 @@ ${transcriptFormatted}
       return { success: true };
     }),
 
-  deleteRecordedSession: publicProcedure
+  deleteRecordedSession: requireStaffModule("first-mate", "edit")
     .input(z.object({ sessionId: z.string() }))
     .mutation(async ({ input }) => {
       firstMateSessionStore.deleteRecordedRun(input.sessionId);

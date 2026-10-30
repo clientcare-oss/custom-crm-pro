@@ -809,22 +809,10 @@ export default function ClientPortal() {
     enabled: !isPreviewMode && (!!portalUser || user?.role === "client"),
   });
 
-  // Staff and admin view access: fetch all contacts to identify CRM students
+  // Staff and admin view access: fetch contacts only to resolve the active family's children
   const { data: allContacts = [] } = trpc.contacts.list.useQuery(undefined, {
     enabled: isAdmin || isPreviewMode,
   });
-
-  const crmStudents = useMemo(() => {
-    if (!isAdmin && !isPreviewMode) return [];
-    return allContacts.filter((c: any) => 
-      c.parentContactId != null || 
-      c.caseId != null || 
-      c.gradeLevel != null || 
-      c.schoolName != null ||
-      c.jobTitle === "Student" ||
-      c.type === "student"
-    );
-  }, [isAdmin, isPreviewMode, allContacts]);
 
   const fallbackStudent = useMemo(() => ({
     id: 101,
@@ -843,26 +831,23 @@ export default function ClientPortal() {
   }), []);
 
   const previewStudentContactId = routeStudentId || (() => {
-    if (typeof window === "undefined" || !isPreviewMode) return null;
+    if (typeof window === "undefined") return null;
     const params = new URLSearchParams(window.location.search);
     const v = params.get("contactId") || params.get("studentId");
     return v ? parseInt(v, 10) : null;
   })();
 
-  const ensureDevParentMutation = trpc.portal.ensureDevParentForStudent.useMutation();
-
-  const previewParentContactId = (() => {
-    if (typeof window === "undefined" || !isPreviewMode) return null;
-    const parentId = new URLSearchParams(window.location.search).get("parentContactId");
-    if (parentId) return parseInt(parentId, 10);
-    if (ensureDevParentMutation.data?.parentId) return ensureDevParentMutation.data.parentId;
-    return null;
-  })();
-
-  const { data: previewStudents = [] } = trpc.portal.getStudentsForParent.useQuery(
-    { parentContactId: previewParentContactId! },
-    { enabled: isPreviewMode && !!previewParentContactId }
-  );
+  // Helper to distinguish a parent/guardian contact from a student contact
+  const isParentContactRecord = (c: any): boolean => {
+    if (!c) return false;
+    const fn = String(c.firstName || "");
+    const jt = String(c.jobTitle || "").toLowerCase();
+    const cat = String(c.contactCategory || "").toLowerCase();
+    if (fn.includes("[DEV Parent]") || jt === "parent" || cat === "client") {
+      return true;
+    }
+    return allContacts.some((other: any) => other.id !== c.id && other.parentContactId === c.id);
+  };
 
   // Selected student state: auto-select originating student if specified in URL or route or sessionStorage
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(() => {
@@ -892,41 +877,84 @@ export default function ClientPortal() {
     { enabled: (isPreviewMode || isAdmin) && !!targetStudentIdForDetail && targetStudentIdForDetail !== 101 }
   );
 
-  // Workspace Student payload reconstruction
-  const workspaceStudents = studentDetail?.contact
-    ? [{
-        id: studentDetail.contact.id,
-        firstName: studentDetail.contact.firstName,
-        lastName: studentDetail.contact.lastName,
-        email: studentDetail.contact.email,
-        phone: studentDetail.contact.phone,
-        company: studentDetail.contact.company,
-        caseId: studentDetail.contact.caseId,
-        parentContactId: studentDetail.contact.parentContactId,
-        attorneyName: studentDetail.contact.attorneyName,
-        attorneyFirm: studentDetail.contact.attorneyFirm,
-        attorneyPhone: studentDetail.contact.attorneyPhone,
-        attorneyEmail: studentDetail.contact.attorneyEmail,
-        attorneyAddress: studentDetail.contact.attorneyAddress,
-      }]
-    : [];
-
-  // Reconcile preview students: ensure originating student is included alongside any family siblings
-  const resolvedPreviewStudents = useMemo(() => {
-    if (!isPreviewMode) return [];
-    if (previewStudents.length > 0) {
-      return previewStudents;
+  // Resolve the active family's parentContactId (from URL, from a selected parent record, or from the student's parentContactId)
+  const previewParentContactId = useMemo(() => {
+    if (typeof window !== "undefined") {
+      const parentIdParam = new URLSearchParams(window.location.search).get("parentContactId");
+      if (parentIdParam) return parseInt(parentIdParam, 10);
     }
+    const detailContact = studentDetail?.contact;
+    if (detailContact) {
+      if (isParentContactRecord(detailContact)) {
+        return detailContact.id;
+      }
+      if (detailContact.parentContactId) {
+        return detailContact.parentContactId;
+      }
+    }
+    if (targetStudentIdForDetail && allContacts.length > 0) {
+      const matched = allContacts.find((c: any) => c.id === targetStudentIdForDetail);
+      if (matched) {
+        if (isParentContactRecord(matched)) return matched.id;
+        if (matched.parentContactId) return matched.parentContactId;
+      }
+    }
+    return null;
+  }, [studentDetail?.contact, targetStudentIdForDetail, allContacts]);
+
+  const { data: previewStudents = [] } = trpc.portal.getStudentsForParent.useQuery(
+    { parentContactId: previewParentContactId! },
+    { enabled: (isPreviewMode || isAdmin) && !!previewParentContactId }
+  );
+
+  // Strictly scope family students to ONLY the single family being viewed (never all CRM students!)
+  const familyScopedStudents = useMemo(() => {
+    const fromParentQuery = previewStudents.filter((s: any) => !isParentContactRecord(s));
+    if (fromParentQuery.length > 0) {
+      return fromParentQuery;
+    }
+
+    if (previewParentContactId && allContacts.length > 0) {
+      const siblings = allContacts.filter(
+        (c: any) =>
+          c.parentContactId === previewParentContactId &&
+          c.id !== previewParentContactId &&
+          !isParentContactRecord(c)
+      );
+      if (siblings.length > 0) {
+        return siblings;
+      }
+    }
+
+    if (studentDetail?.contact && !isParentContactRecord(studentDetail.contact)) {
+      return [studentDetail.contact];
+    }
+
+    if (targetStudentIdForDetail && allContacts.length > 0) {
+      const target = allContacts.find((c: any) => c.id === targetStudentIdForDetail);
+      if (target && !isParentContactRecord(target)) {
+        return [target];
+      }
+    }
+
     return [];
-  }, [isPreviewMode, previewStudents]);
+  }, [previewStudents, previewParentContactId, allContacts, studentDetail?.contact, targetStudentIdForDetail]);
+
+  // If selectedStudentId was pointing to a Parent ID (e.g., [DEV Parent] Mitchell #120062), automatically switch it to that parent's actual student (#120034 Jeremiah Mitchell)
+  useEffect(() => {
+    if (familyScopedStudents.length > 0 && selectedStudentId) {
+      const isSelectedInFamily = familyScopedStudents.some((s: any) => s.id === selectedStudentId);
+      if (!isSelectedInFamily) {
+        setSelectedStudentId(familyScopedStudents[0].id);
+      }
+    }
+  }, [familyScopedStudents, selectedStudentId]);
 
   const portalStudents = useMemo(() => {
-    if (isWorkspaceMode && workspaceStudents.length > 0) return workspaceStudents;
-    if (isPreviewMode && resolvedPreviewStudents.length > 0) return resolvedPreviewStudents;
-    if (myStudents.length > 0) return myStudents;
-    if (crmStudents.length > 0) return crmStudents;
+    if (myStudents.length > 0) return myStudents.filter((s: any) => !isParentContactRecord(s));
+    if (familyScopedStudents.length > 0) return familyScopedStudents;
     return [fallbackStudent];
-  }, [isWorkspaceMode, workspaceStudents, isPreviewMode, resolvedPreviewStudents, myStudents, crmStudents, fallbackStudent]);
+  }, [myStudents, familyScopedStudents, fallbackStudent]);
 
   const headerStudents: StudentOption[] = useMemo(() => {
     return portalStudents.map((s: any) => ({
@@ -950,27 +978,6 @@ export default function ClientPortal() {
 
   const effectiveCaseId = effectiveStudent?.caseId ?? null;
   const effectiveStudentContactId = effectiveStudent?.id ?? null;
-
-  useEffect(() => {
-    if (
-      isPreviewMode &&
-      previewStudentContactId &&
-      studentDetail?.contact &&
-      !studentDetail.contact.parentContactId &&
-      !ensureDevParentMutation.isPending &&
-      !ensureDevParentMutation.isSuccess
-    ) {
-      ensureDevParentMutation.mutate(
-        { studentContactId: previewStudentContactId },
-        {
-          onSuccess: (res) => {
-            utils.contacts.detail.invalidate({ id: previewStudentContactId });
-            utils.portal.getStudentsForParent.invalidate({ parentContactId: res.parentId });
-          },
-        }
-      );
-    }
-  }, [isPreviewMode, previewStudentContactId, studentDetail?.contact?.parentContactId]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1225,7 +1232,19 @@ export default function ClientPortal() {
   };
 
   const logoutMutation = trpc.auth.logout.useMutation({ onSuccess: () => setLocation("/") });
-  const parentDisplayName = portalUser?.name ?? (studentDetail?.parentContact ? `${studentDetail.parentContact.firstName} ${studentDetail.parentContact.lastName}` : "Client");
+  const rawParentContact =
+    studentDetail?.parentContact ||
+    (studentDetail?.contact && isParentContactRecord(studentDetail.contact) ? studentDetail.contact : null) ||
+    (previewParentContactId ? allContacts.find((c: any) => c.id === previewParentContactId) : null);
+  const parentDisplayName =
+    portalUser?.name ??
+    (rawParentContact
+      ? String(rawParentContact.firstName || "").includes("[DEV Parent]")
+        ? `${rawParentContact.lastName || effectiveStudent?.lastName || "Client"} Family`
+        : `${rawParentContact.firstName || ""} ${rawParentContact.lastName || ""}`.trim()
+      : effectiveStudent?.lastName
+        ? `${effectiveStudent.lastName} Family`
+        : "Client");
   const advocateDisplayName = user?.name ? "Waypoint Lead Advocate" : "Waypoint Advocate";
   const displayName = isAdminView ? advocateDisplayName : parentDisplayName;
   const parentContactId = isAdminView ? null : (studentDetail?.contact?.parentContactId ?? effectiveStudent?.parentContactId);

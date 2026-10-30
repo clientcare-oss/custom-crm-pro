@@ -1,4 +1,5 @@
 import { eq, and, desc, asc, inArray, sql, or, ne } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import {
   crewConversations,
   crewConversationMembers,
@@ -15,6 +16,11 @@ import {
   internalTasks,
 } from "../../drizzle/schema";
 import { getDb } from "./connection";
+import {
+  resolveStaffAccess,
+  checkBackendCaseAccess,
+  listStaffAccessProfiles,
+} from "../_core/staffAccess";
 
 function extractInsertId(result: any): number {
   if (Array.isArray(result) && result[0]?.id !== undefined) {
@@ -40,9 +46,242 @@ const testMessagesMemory = new Map<number, any[]>();
 const testReactionsMemory = new Set<string>();
 const testActionRequestsMemory = new Map<number, any>();
 const testDirectConvsMemory = new Map<string, number>();
+const testLastReadMemory = new Map<string, number>();
+const testConversationsMemory = new Map<
+  number,
+  { id: number; type: "channel" | "direct" | "group" | "case"; name?: string; linkedStudentId?: number | null }
+>();
+const testMembershipsMemory = new Map<number, Set<number>>();
+const testMessageToConvMemory = new Map<number, number>();
 let testMsgCounter = 100;
 let testArCounter = 200;
 let testConvCounter = 300;
+
+const STAFF_ROLE_LABELS: Record<string, string> = {
+  management: "Management",
+  technology: "Technology & Systems",
+  call_center: "Call Center & Intake",
+  advocate: "Special Education Advocate",
+  documentation: "Documentation & Records",
+  operations: "Operations & Billing",
+};
+
+function computeInitials(name: string): string {
+  return (
+    (name || "WA")
+      .trim()
+      .split(/\s+/)
+      .map((p) => p[0] || "")
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "WA"
+  );
+}
+
+export async function assertActiveStaffUser(userId: number, label = "Account"): Promise<any> {
+  if (!userId || userId === 9060031 || userId === 9060099 || userId === 9060100) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: `${label} is not an active authorized employee.`,
+    });
+  }
+
+  let dbUser: any = undefined;
+  const db = await getDb();
+  if (db) {
+    try {
+      const rows = await db
+        .select({
+          id: users.id,
+          openId: users.openId,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      if (rows.length > 0) {
+        dbUser = rows[0];
+        if (dbUser.role === "client") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: `${label} is a client account and cannot access Crew Messages.`,
+          });
+        }
+      }
+    } catch (err) {
+      if (err instanceof TRPCError) throw err;
+    }
+  }
+
+  const staffAccess = await resolveStaffAccess(dbUser || { id: userId });
+  if (
+    !staffAccess.isStaff ||
+    staffAccess.accountStatus !== "active" ||
+    staffAccess.primaryRole === "none" ||
+    staffAccess.invitationStatus === "pending" ||
+    staffAccess.invitationStatus === "revoked" ||
+    staffAccess.invitationStatus === "expired"
+  ) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: `${label} is not an active authorized employee or has been deactivated.`,
+    });
+  }
+
+  return staffAccess;
+}
+
+function registerMemoryMembership(
+  conversationId: number,
+  userIds: number[],
+  meta?: { type: "channel" | "direct" | "group" | "case"; name?: string; linkedStudentId?: number | null }
+) {
+  if (meta && !testConversationsMemory.has(conversationId)) {
+    testConversationsMemory.set(conversationId, { id: conversationId, ...meta });
+  }
+  if (!testMembershipsMemory.has(conversationId)) {
+    testMembershipsMemory.set(conversationId, new Set<number>());
+  }
+  const set = testMembershipsMemory.get(conversationId)!;
+  for (const uid of userIds) {
+    set.add(Number(uid));
+  }
+}
+
+/**
+ * Verifies that `userId` is an active staff member and an authorized participant of `conversationId`.
+ * Full CRM administrators do NOT automatically bypass private DM or group conversation membership checks.
+ */
+export async function assertConversationMember(conversationId: number, userId: number): Promise<void> {
+  await assertActiveStaffUser(userId, "Staff account");
+
+  const db = await getDb();
+
+  // Check in-memory conversation registry first (used in offline Vitest runs and same-process mutations)
+  const memConv = testConversationsMemory.get(conversationId);
+  const memMembers = testMembershipsMemory.get(conversationId);
+
+  if (memConv) {
+    if (memConv.type === "channel") {
+      registerMemoryMembership(conversationId, [userId]);
+      return;
+    }
+    if (memMembers && memMembers.has(userId)) {
+      return;
+    }
+    // Check DB fallback if not in memMembers
+    if (db) {
+      const dbMem = await db
+        .select()
+        .from(crewConversationMembers)
+        .where(
+          and(
+            eq(crewConversationMembers.conversationId, conversationId),
+            eq(crewConversationMembers.userId, userId)
+          )
+        )
+        .limit(1);
+      if (dbMem.length > 0) {
+        registerMemoryMembership(conversationId, [userId]);
+        return;
+      }
+    }
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You are not a participant in this private conversation.",
+    });
+  }
+
+  // Check DB conversation record
+  if (db) {
+    const convRows = await db
+      .select()
+      .from(crewConversations)
+      .where(eq(crewConversations.id, conversationId))
+      .limit(1);
+
+    if (convRows.length > 0) {
+      const conv = convRows[0];
+      if (conv.type === "channel") {
+        registerMemoryMembership(conversationId, [userId], {
+          type: "channel",
+          name: conv.name || undefined,
+        });
+        return;
+      }
+
+      const dbMem = await db
+        .select()
+        .from(crewConversationMembers)
+        .where(
+          and(
+            eq(crewConversationMembers.conversationId, conversationId),
+            eq(crewConversationMembers.userId, userId)
+          )
+        )
+        .limit(1);
+
+      if (dbMem.length > 0) {
+        registerMemoryMembership(conversationId, [userId], {
+          type: conv.type as any,
+          name: conv.name || undefined,
+          linkedStudentId: conv.linkedStudentId,
+        });
+        return;
+      }
+
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You are not a participant in this private conversation.",
+      });
+    }
+  }
+
+  // Default seeded channels (IDs 1, 2, 3) are accessible to active staff
+  if (conversationId >= 1 && conversationId <= 3) {
+    registerMemoryMembership(conversationId, [userId], { type: "channel" });
+    return;
+  }
+
+  throw new TRPCError({
+    code: "FORBIDDEN",
+    message: "You do not have access to this conversation.",
+  });
+}
+
+/**
+ * Resolves the parent conversationId for a given messageId and asserts caller membership.
+ */
+export async function assertMessageConversationMember(messageId: number, userId: number): Promise<number> {
+  let convId = testMessageToConvMemory.get(messageId);
+
+  if (!convId) {
+    const db = await getDb();
+    if (db) {
+      const rows = await db
+        .select({ conversationId: crewMessages.conversationId })
+        .from(crewMessages)
+        .where(eq(crewMessages.id, messageId))
+        .limit(1);
+      if (rows.length > 0) {
+        convId = Number(rows[0].conversationId);
+        testMessageToConvMemory.set(messageId, convId);
+      }
+    }
+  }
+
+  if (!convId) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Message not found.",
+    });
+  }
+
+  await assertConversationMember(convId, userId);
+  return convId;
+}
 
 export interface AvailableEmployee {
   id: number;
@@ -53,6 +292,133 @@ export interface AvailableEmployee {
   initials: string;
   avatarUrl?: string | null;
   jobTitle?: string;
+  isCurrentUser?: boolean;
+}
+
+async function resolveEmployeeDirectoryMap(currentUserId?: number): Promise<Map<number, AvailableEmployee>> {
+  const userMap = new Map<number, AvailableEmployee>();
+
+  // 1. Authoritative staff profiles from `staff_access_profiles`
+  const staffProfiles = await listStaffAccessProfiles();
+  for (const sp of staffProfiles) {
+    if (
+      !sp.isStaff ||
+      sp.accountStatus !== "active" ||
+      sp.primaryRole === "none" ||
+      sp.userId === 9060031 ||
+      sp.invitationStatus === "pending" ||
+      sp.invitationStatus === "revoked" ||
+      sp.invitationStatus === "expired"
+    ) {
+      continue;
+    }
+    const roleLabel =
+      sp.jobTitle ||
+      (sp.isProtectedOwner
+        ? "Protected Owner · Management"
+        : STAFF_ROLE_LABELS[sp.primaryRole] || "Staff Member");
+    userMap.set(sp.userId, {
+      id: sp.userId,
+      name: sp.name,
+      email: sp.email,
+      role: roleLabel,
+      presence: "available",
+      initials: computeInitials(sp.name),
+      jobTitle: roleLabel,
+      isCurrentUser: currentUserId !== undefined ? sp.userId === currentUserId : false,
+    });
+  }
+
+  // 2. Active staff records in `users` table (excluding clients and deactivated profiles)
+  const db = await getDb();
+  if (db) {
+    const allUsers = await db
+      .select({
+        id: users.id,
+        openId: users.openId,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+      })
+      .from(users)
+      .where(ne(users.role, "client"));
+
+    for (const u of allUsers) {
+      if (!u.id || u.id === 9060031 || userMap.has(u.id)) continue;
+      const access = await resolveStaffAccess(u);
+      if (
+        !access.isStaff ||
+        access.accountStatus !== "active" ||
+        access.primaryRole === "none" ||
+        access.invitationStatus === "pending" ||
+        access.invitationStatus === "revoked" ||
+        access.invitationStatus === "expired"
+      ) {
+        continue;
+      }
+
+      const name = access.name || u.name || (u.email ? u.email.split("@")[0] : "Advocate");
+      const roleLabel =
+        access.jobTitle ||
+        (access.isProtectedOwner
+          ? "Protected Owner · Management"
+          : STAFF_ROLE_LABELS[access.primaryRole] ||
+            (access.hasAdminAccess ? "Lead Special Education Advocate / Owner" : "Staff Member"));
+
+      userMap.set(u.id, {
+        id: u.id,
+        name,
+        email: u.email || access.email || "",
+        role: roleLabel,
+        presence: "available",
+        initials: computeInitials(name),
+        jobTitle: roleLabel,
+        isCurrentUser: currentUserId !== undefined ? u.id === currentUserId : false,
+      });
+    }
+  }
+
+  return userMap;
+}
+
+async function resolveParticipantDisplay(
+  userId: number,
+  directoryMap: Map<number, AvailableEmployee>,
+  fallbackName?: string | null,
+  fallbackEmail?: string | null,
+  fallbackRole?: string | null
+): Promise<{ name: string; email: string; role: string; initials: string }> {
+  const fromDir = directoryMap.get(userId);
+  if (fromDir) {
+    return {
+      name: fromDir.name,
+      email: fromDir.email,
+      role: fromDir.jobTitle || fromDir.role,
+      initials: fromDir.initials,
+    };
+  }
+  const resolved = await resolveStaffAccess({
+    id: userId,
+    name: fallbackName,
+    email: fallbackEmail,
+    role: fallbackRole,
+  });
+  const name =
+    (resolved.isStaff && resolved.name && resolved.name !== "Anonymous" ? resolved.name : null) ||
+    fallbackName ||
+    (fallbackEmail ? fallbackEmail.split("@")[0] : `Employee #${userId}`);
+  const role =
+    resolved.jobTitle ||
+    (resolved.isProtectedOwner
+      ? "Protected Owner · Management"
+      : STAFF_ROLE_LABELS[resolved.primaryRole] ||
+        (fallbackRole === "admin" ? "Lead IEP Advocate" : "Special Education Advocate"));
+  return {
+    name,
+    email: resolved.email || fallbackEmail || "",
+    role,
+    initials: computeInitials(name),
+  };
 }
 
 /**
@@ -126,83 +492,8 @@ export async function ensureDefaultChannelsAndMemberships(userId: number, tenant
  * Returns active employees available for direct messaging and assignments.
  */
 export async function getAvailableEmployees(currentUserId: number): Promise<AvailableEmployee[]> {
-  const db = await getDb();
-  if (!db) return [];
-
-  // Query users who are staff/admin (not clients)
-  const allUsers = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-      role: users.role,
-    })
-    .from(users)
-    .where(ne(users.role, "client"));
-
-  // Also query accepted team invites
-  const invites = await db
-    .select({
-      acceptedUserId: teamInvites.acceptedUserId,
-      name: teamInvites.name,
-      email: teamInvites.email,
-      role: teamInvites.role,
-    })
-    .from(teamInvites)
-    .where(eq(teamInvites.status, "accepted"));
-
-  const userMap = new Map<number, AvailableEmployee>();
-
-  for (const u of allUsers) {
-    if (!u.id) continue;
-    const name = u.name || (u.email ? u.email.split("@")[0] : "Advocate");
-    const initials = name
-      .split(" ")
-      .map((p) => p[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
-
-    // Default presence simulation for rich UI feel
-    const presence: "available" | "away" | "offline" =
-      u.id === currentUserId || u.id === 9060114 || u.id === 1 ? "available" : "available";
-
-    userMap.set(u.id, {
-      id: u.id,
-      name,
-      email: u.email || "",
-      role: u.role === "admin" ? "Lead Advocate / Owner" : "Senior IEP Advocate",
-      presence,
-      initials: initials || "WA",
-      jobTitle: u.role === "admin" ? "Practice Owner" : "IEP Advocate",
-    });
-  }
-
-  // Include employees shown in example designs if not already present so the interface is immediately populated
-  if (!Array.from(userMap.values()).some((u) => u.name.toLowerCase().includes("emily"))) {
-    userMap.set(99901, {
-      id: 99901,
-      name: "Emily Davis",
-      email: "emily@waypointadvocates.com",
-      role: "Paperwork & Administration",
-      presence: "available",
-      initials: "ED",
-      jobTitle: "Paperwork & Administration",
-    });
-  }
-
-  if (!Array.from(userMap.values()).some((u) => u.name.toLowerCase().includes("wyatt"))) {
-    userMap.set(99902, {
-      id: 99902,
-      name: "Wyatt Smith",
-      email: "wyatt@waypointadvocates.com",
-      role: "Lead Educational Advocate",
-      presence: "away",
-      initials: "WS",
-      jobTitle: "Senior Advocate",
-    });
-  }
-
+  await assertActiveStaffUser(currentUserId, "Caller account");
+  const userMap = await resolveEmployeeDirectoryMap(currentUserId);
   return Array.from(userMap.values());
 }
 
@@ -210,9 +501,11 @@ export async function getAvailableEmployees(currentUserId: number): Promise<Avai
  * Returns all conversations for a user grouped by category with unread counts and last message previews.
  */
 export async function getConversationsForUser(userId: number, tenantId = "waypoint") {
+  await assertActiveStaffUser(userId, "Caller account");
   const db = await getDb();
   if (!db) return { channels: [], directMessages: [], groupMessages: [], caseThreads: [] };
 
+  const directoryMap = await resolveEmployeeDirectoryMap(userId);
   await ensureDefaultChannelsAndMemberships(userId, tenantId);
 
   // Get user memberships
@@ -228,6 +521,67 @@ export async function getConversationsForUser(userId: number, tenantId = "waypoi
 
   const convIds = memberships.map((m) => m.conversationId);
   if (convIds.length === 0) {
+    // Offline/Vitest fallback: build conversations from in-memory conversation/membership registries
+    const memDMs: any[] = [];
+    const memGroups: any[] = [];
+    const memCases: any[] = [];
+
+    for (const [cId, mSet] of Array.from(testMembershipsMemory.entries())) {
+      if (!mSet.has(Number(userId))) continue;
+      const meta = testConversationsMemory.get(cId);
+      if (!meta || meta.type === "channel") continue;
+
+      const memMsgs = (testMessagesMemory.get(cId) || []).filter((m) => !m.deletedAt);
+      const lastMsg = memMsgs.length > 0 ? memMsgs[memMsgs.length - 1] : null;
+      const lastReadId = Number(testLastReadMemory.get(`${cId}:${userId}`) || 0);
+      const unreadCount = memMsgs.filter(
+        (m) => Number(m.senderUserId) !== Number(userId) && Number(m.id) > lastReadId
+      ).length;
+
+      if (meta.type === "direct") {
+        const partnerId: number = Array.from<number>(mSet).find((uid) => Number(uid) !== Number(userId)) ?? userId;
+        const partnerInfo = await resolveParticipantDisplay(partnerId, directoryMap);
+        memDMs.push({
+          id: cId,
+          type: "direct",
+          displayName: partnerInfo.name,
+          partnerUserId: partnerId,
+          role: partnerInfo.role,
+          initials: partnerInfo.initials,
+          unreadCount,
+          membersCount: mSet.size,
+          lastMessage: lastMsg,
+          createdAt: lastMsg?.createdAt || new Date().toISOString(),
+          updatedAt: lastMsg?.createdAt || new Date().toISOString(),
+        });
+      } else if (meta.type === "group") {
+        memGroups.push({
+          id: cId,
+          type: "group",
+          name: meta.name || "Group",
+          displayName: meta.name || "Group",
+          unreadCount,
+          membersCount: mSet.size,
+          lastMessage: lastMsg,
+          createdAt: lastMsg?.createdAt || new Date().toISOString(),
+          updatedAt: lastMsg?.createdAt || new Date().toISOString(),
+        });
+      } else if (meta.type === "case") {
+        memCases.push({
+          id: cId,
+          type: "case",
+          name: meta.name || "Case Thread",
+          displayName: meta.name || "Case Thread",
+          linkedStudentId: meta.linkedStudentId || null,
+          unreadCount,
+          membersCount: mSet.size,
+          lastMessage: lastMsg,
+          createdAt: lastMsg?.createdAt || new Date().toISOString(),
+          updatedAt: lastMsg?.createdAt || new Date().toISOString(),
+        });
+      }
+    }
+
     return {
       channels: [
         {
@@ -264,9 +618,9 @@ export async function getConversationsForUser(userId: number, tenantId = "waypoi
           updatedAt: new Date().toISOString(),
         },
       ],
-      directMessages: [],
-      groupMessages: [],
-      caseThreads: [],
+      directMessages: memDMs,
+      groupMessages: memGroups,
+      caseThreads: memCases,
     };
   }
 
@@ -295,7 +649,7 @@ export async function getConversationsForUser(userId: number, tenantId = "waypoi
     .leftJoin(users, eq(users.id, crewConversationMembers.userId))
     .where(inArray(crewConversationMembers.conversationId, convIds));
 
-  // Fetch last messages
+  // Fetch last messages (excluding soft-deleted messages)
   const lastMessages = await db
     .select({
       id: crewMessages.id,
@@ -305,16 +659,31 @@ export async function getConversationsForUser(userId: number, tenantId = "waypoi
       createdAt: crewMessages.createdAt,
       senderUserId: crewMessages.senderUserId,
       senderName: users.name,
+      senderEmail: users.email,
     })
     .from(crewMessages)
     .leftJoin(users, eq(users.id, crewMessages.senderUserId))
-    .where(inArray(crewMessages.conversationId, convIds))
-    .orderBy(desc(crewMessages.createdAt));
+    .where(
+      and(
+        inArray(crewMessages.conversationId, convIds),
+        sql`${crewMessages.deletedAt} IS NULL`
+      )
+    )
+    .orderBy(desc(crewMessages.createdAt), desc(crewMessages.id));
 
   const lastMsgMap = new Map<number, any>();
   for (const m of lastMessages) {
     if (!lastMsgMap.has(m.conversationId)) {
-      lastMsgMap.set(m.conversationId, m);
+      const senderInfo = await resolveParticipantDisplay(
+        m.senderUserId,
+        directoryMap,
+        m.senderName,
+        m.senderEmail
+      );
+      lastMsgMap.set(m.conversationId, {
+        ...m,
+        senderName: senderInfo.name,
+      });
     }
   }
 
@@ -327,7 +696,9 @@ export async function getConversationsForUser(userId: number, tenantId = "waypoi
   const unreadCounts = new Map<number, number>();
   for (const convId of convIds) {
     const mem = membershipMap.get(convId);
-    const lastReadId = mem?.lastReadMessageId || 0;
+    const dbLastReadId = Number(mem?.lastReadMessageId || 0);
+    const memLastReadId = Number(testLastReadMemory.get(`${convId}:${userId}`) || 0);
+    const lastReadId = Math.max(dbLastReadId, memLastReadId);
     const countRes = await db
       .select({ count: sql<number>`count(*)` })
       .from(crewMessages)
@@ -335,6 +706,7 @@ export async function getConversationsForUser(userId: number, tenantId = "waypoi
         and(
           eq(crewMessages.conversationId, convId),
           ne(crewMessages.senderUserId, userId),
+          sql`${crewMessages.deletedAt} IS NULL`,
           sql`${crewMessages.id} > ${lastReadId}`
         )
       );
@@ -366,6 +738,7 @@ export async function getConversationsForUser(userId: number, tenantId = "waypoi
   // Categorize
   const channels: any[] = [];
   const directMessages: any[] = [];
+  const seenDirectPartners = new Set<number>();
   const groupMessages: any[] = [];
   const caseThreads: any[] = [];
 
@@ -384,31 +757,50 @@ export async function getConversationsForUser(userId: number, tenantId = "waypoi
     } else if (conv.type === "direct") {
       // Find other participant
       const other = members.find((m) => m.userId !== userId) || members[0];
-      const otherName = other?.name || (other?.email ? other.email.split("@")[0] : conv.name || "Advocate");
-      const initials = otherName
-        .split(" ")
-        .map((p: string) => p[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase();
+      const partnerId = other?.userId || 0;
+      if (partnerId && seenDirectPartners.has(partnerId)) {
+        continue;
+      }
+      if (partnerId) {
+        seenDirectPartners.add(partnerId);
+      }
+
+      const partnerInfo = await resolveParticipantDisplay(
+        partnerId,
+        directoryMap,
+        other?.name || conv.name,
+        other?.email
+      );
 
       directMessages.push({
         ...conv,
-        displayName: otherName,
-        partnerUserId: other?.userId,
-        initials,
-        role: "Senior Advocate",
+        displayName: partnerInfo.name,
+        partnerUserId: partnerId,
+        initials: partnerInfo.initials,
+        role: partnerInfo.role,
         presence: "available",
         unreadCount: unread,
         lastMessage: lastMsg || null,
       });
     } else if (conv.type === "group") {
+      const enrichedMembers = await Promise.all(
+        members.map(async (m) => {
+          const info = await resolveParticipantDisplay(m.userId, directoryMap, m.name, m.email, m.role);
+          return {
+            ...m,
+            name: info.name,
+            email: info.email,
+            roleLabel: info.role,
+            initials: info.initials,
+          };
+        })
+      );
       groupMessages.push({
         ...conv,
         displayName: conv.name || "Group Conversation",
         unreadCount: unread,
         lastMessage: lastMsg || null,
-        members,
+        members: enrichedMembers,
       });
     } else if (conv.type === "case") {
       const student = conv.linkedStudentId ? studentMap.get(conv.linkedStudentId) : null;
@@ -430,8 +822,44 @@ export async function getConversationsForUser(userId: number, tenantId = "waypoi
  * Returns full message thread for a conversation, including reactions, attachments, links, and action requests.
  */
 export async function getMessagesForConversation(conversationId: number, userId: number, limit = 100) {
+  await assertConversationMember(conversationId, userId);
+
   const db = await getDb();
   if (!db) return [];
+
+  const directoryMap = await resolveEmployeeDirectoryMap(userId);
+
+  // Determine read status across other participants in this conversation
+  const memberRows = await db
+    .select({
+      userId: crewConversationMembers.userId,
+      lastReadMessageId: crewConversationMembers.lastReadMessageId,
+    })
+    .from(crewConversationMembers)
+    .where(eq(crewConversationMembers.conversationId, conversationId));
+
+  let maxOtherLastReadId = 0;
+  for (const mr of memberRows) {
+    if (Number(mr.userId) !== Number(userId)) {
+      const dbRead = Number(mr.lastReadMessageId || 0);
+      const memRead = Number(testLastReadMemory.get(`${conversationId}:${mr.userId}`) || 0);
+      const highest = Math.max(dbRead, memRead);
+      if (highest > maxOtherLastReadId) {
+        maxOtherLastReadId = highest;
+      }
+    }
+  }
+  const memMbrs = testMembershipsMemory.get(conversationId);
+  if (memMbrs) {
+    for (const mUid of Array.from(memMbrs)) {
+      if (Number(mUid) !== Number(userId)) {
+        const memRead = Number(testLastReadMemory.get(`${conversationId}:${mUid}`) || 0);
+        if (memRead > maxOtherLastReadId) {
+          maxOtherLastReadId = memRead;
+        }
+      }
+    }
+  }
 
   const msgs = await db
     .select({
@@ -456,15 +884,29 @@ export async function getMessagesForConversation(conversationId: number, userId:
         sql`${crewMessages.deletedAt} IS NULL`
       )
     )
-    .orderBy(asc(crewMessages.createdAt))
+    .orderBy(asc(crewMessages.createdAt), asc(crewMessages.id))
     .limit(limit);
 
   if (msgs.length === 0) {
-    const memoryMsgs = testMessagesMemory.get(conversationId) || [];
-    return memoryMsgs.map((m) => ({
-      ...m,
-      isSender: m.senderUserId === userId,
-    }));
+    const memoryMsgs = (testMessagesMemory.get(conversationId) || []).filter((m) => !m.deletedAt);
+    return Promise.all(
+      memoryMsgs.map(async (m) => {
+        const senderInfo = await resolveParticipantDisplay(
+          m.senderUserId,
+          directoryMap,
+          m.senderName,
+          m.senderEmail,
+          m.senderRole
+        );
+        return {
+          ...m,
+          senderName: senderInfo.name,
+          senderRole: senderInfo.role,
+          isSender: m.senderUserId === userId,
+          isReadByRecipient: m.senderUserId === userId ? Number(m.id) <= maxOtherLastReadId : true,
+        };
+      })
+    );
   }
 
   const msgIds = msgs.map((m) => m.id);
@@ -520,10 +962,24 @@ export async function getMessagesForConversation(conversationId: number, userId:
     arMap.set(ar.messageId, ar);
   }
 
+  // Resolve sender names from staff directory
+  const senderDisplayByMsgId = new Map<number, { name: string; role: string }>();
+  for (const m of msgs) {
+    const info = await resolveParticipantDisplay(
+      m.senderUserId,
+      directoryMap,
+      m.senderName,
+      m.senderEmail,
+      m.senderRole
+    );
+    senderDisplayByMsgId.set(m.id, { name: info.name, role: info.role });
+  }
+
   // Map reply-to parent snippets
   const replyMap = new Map<number, { body: string; senderName?: string }>();
   for (const m of msgs) {
-    replyMap.set(m.id, { body: m.body, senderName: m.senderName || undefined });
+    const senderInfo = senderDisplayByMsgId.get(m.id);
+    replyMap.set(m.id, { body: m.body, senderName: senderInfo?.name || m.senderName || undefined });
   }
 
   return msgs.map((m) => {
@@ -547,10 +1003,14 @@ export async function getMessagesForConversation(conversationId: number, userId:
     }
 
     const replySnippet = m.replyToMessageId ? replyMap.get(m.replyToMessageId) : undefined;
+    const senderInfo = senderDisplayByMsgId.get(m.id);
 
     return {
       ...m,
+      senderName: senderInfo?.name || m.senderName || "Advocate",
+      senderRole: senderInfo?.role || m.senderRole || "Advocate",
       isSender: m.senderUserId === userId,
+      isReadByRecipient: m.senderUserId === userId ? Number(m.id) <= maxOtherLastReadId : true,
       reactions: groupedReactions,
       attachments: attachMap.get(m.id) || [],
       links: linkMap.get(m.id) || [],
@@ -572,10 +1032,24 @@ export async function sendMessage(input: {
   links?: Array<{ recordType: string; recordId: string; metadata?: any }>;
   attachments?: Array<{ fileName: string; mimeType: string; fileSize: number; r2Key?: string; documentId?: number }>;
 }) {
+  await assertConversationMember(input.conversationId, input.senderUserId);
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  if (input.replyToMessageId) {
+    const replyConvId = await assertMessageConversationMember(input.replyToMessageId, input.senderUserId);
+    if (Number(replyConvId) !== Number(input.conversationId)) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Cannot reply to a message from a different conversation.",
+      });
+    }
+  }
+
   const msgType = input.messageType || "text";
+  const senderAccess = await resolveStaffAccess({ id: input.senderUserId });
+  const now = new Date();
 
   const inserted = await db.insert(crewMessages).values({
     conversationId: input.conversationId,
@@ -591,17 +1065,22 @@ export async function sendMessage(input: {
     messageId = latest ? Number(latest.id) : ++testMsgCounter;
   }
 
+  testMessageToConvMemory.set(messageId, input.conversationId);
+  testLastReadMemory.set(`${input.conversationId}:${input.senderUserId}`, messageId);
+
   // Store in test cache for instant query availability in test/offline mode
   const currentMem = testMessagesMemory.get(input.conversationId) || [];
   currentMem.push({
     id: messageId,
     conversationId: input.conversationId,
     senderUserId: input.senderUserId,
-    senderName: input.senderUserId === 1 ? "Byron Honea" : "Advocate",
+    senderName: senderAccess.name || "Advocate",
     messageType: msgType,
     body: input.body,
     replyToMessageId: input.replyToMessageId || null,
-    createdAt: new Date().toISOString(),
+    createdAt: now.toISOString(),
+    editedAt: null,
+    deletedAt: null,
     isSender: true,
     reactions: [],
     attachments: [],
@@ -641,7 +1120,7 @@ export async function sendMessage(input: {
   // Update conversation updatedAt
   await db
     .update(crewConversations)
-    .set({ updatedAt: new Date() })
+    .set({ updatedAt: now })
     .where(eq(crewConversations.id, input.conversationId));
 
   // Mark read for sender
@@ -649,7 +1128,7 @@ export async function sendMessage(input: {
     .update(crewConversationMembers)
     .set({
       lastReadMessageId: messageId,
-      lastReadAt: new Date(),
+      lastReadAt: now,
     })
     .where(
       and(
@@ -658,60 +1137,241 @@ export async function sendMessage(input: {
       )
     );
 
-  return { messageId, success: true };
+  return { messageId, createdAt: now.toISOString(), success: true };
+}
+
+/**
+ * Edits an existing message. Strictly restricted to the original message author.
+ */
+export async function editMessage(input: {
+  messageId: number;
+  userId: number;
+  body: string;
+}) {
+  const trimmed = input.body.trim();
+  if (!trimmed) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Message body cannot be empty." });
+  }
+
+  const convId = await assertMessageConversationMember(input.messageId, input.userId);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const rows = await db
+    .select()
+    .from(crewMessages)
+    .where(eq(crewMessages.id, input.messageId))
+    .limit(1);
+
+  const memList = testMessagesMemory.get(convId) || [];
+  const memMsg = memList.find((m) => Number(m.id) === Number(input.messageId));
+  const target = rows[0] || memMsg;
+
+  if (!target || target.deletedAt) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Message not found." });
+  }
+
+  if (Number(target.senderUserId) !== Number(input.userId)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You can only edit messages that you sent. Editing another employee's message is prohibited.",
+    });
+  }
+
+  if (target.messageType === "system" || target.messageType === "action_request") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "System and action request messages cannot be edited.",
+    });
+  }
+
+  const editedAt = new Date();
+  await db
+    .update(crewMessages)
+    .set({
+      body: trimmed,
+      editedAt,
+    })
+    .where(eq(crewMessages.id, input.messageId));
+
+  if (memMsg) {
+    memMsg.body = trimmed;
+    memMsg.editedAt = editedAt.toISOString();
+  }
+
+  return { success: true, messageId: input.messageId, body: trimmed, editedAt: editedAt.toISOString() };
+}
+
+/**
+ * Soft-deletes a message. Only the original sender (or a Protected Owner / Management admin who is a participant) may delete.
+ */
+export async function deleteMessage(input: {
+  messageId: number;
+  userId: number;
+}) {
+  const convId = await assertMessageConversationMember(input.messageId, input.userId);
+  const staffAccess = await assertActiveStaffUser(input.userId, "Caller account");
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const rows = await db
+    .select()
+    .from(crewMessages)
+    .where(eq(crewMessages.id, input.messageId))
+    .limit(1);
+
+  const memList = testMessagesMemory.get(convId) || [];
+  const memMsg = memList.find((m) => Number(m.id) === Number(input.messageId));
+  const target = rows[0] || memMsg;
+
+  if (!target || target.deletedAt) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Message not found." });
+  }
+
+  const isAuthor = Number(target.senderUserId) === Number(input.userId);
+  const canModerate = Boolean(staffAccess.isProtectedOwner || staffAccess.primaryRole === "management");
+  if (!isAuthor && !canModerate) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You are not authorized to delete another employee's message.",
+    });
+  }
+
+  const deletedAt = new Date();
+  await db
+    .update(crewMessages)
+    .set({ deletedAt })
+    .where(eq(crewMessages.id, input.messageId));
+
+  if (memMsg) {
+    memMsg.deletedAt = deletedAt.toISOString();
+  }
+
+  return { success: true, messageId: input.messageId };
 }
 
 /**
  * Marks conversation as read up to a message ID (or latest message if not specified).
  */
 export async function markConversationRead(conversationId: number, userId: number, messageId?: number) {
+  await assertConversationMember(conversationId, userId);
+
   const db = await getDb();
   if (!db) return;
 
-  const updateFields: any = {
-    lastReadAt: new Date(),
-  };
-
-  if (messageId !== undefined) {
-    updateFields.lastReadMessageId = messageId;
-  } else {
+  let targetMessageId = messageId;
+  if (targetMessageId === undefined) {
     const latest = await db
       .select({ id: crewMessages.id })
       .from(crewMessages)
-      .where(eq(crewMessages.conversationId, conversationId))
+      .where(
+        and(
+          eq(crewMessages.conversationId, conversationId),
+          sql`${crewMessages.deletedAt} IS NULL`
+        )
+      )
       .orderBy(desc(crewMessages.id))
       .limit(1);
     if (latest[0]) {
-      updateFields.lastReadMessageId = latest[0].id;
+      targetMessageId = Number(latest[0].id);
+    } else {
+      const memMsgs = testMessagesMemory.get(conversationId) || [];
+      if (memMsgs.length > 0) {
+        targetMessageId = Number(memMsgs[memMsgs.length - 1].id);
+      }
     }
   }
 
-  await db
-    .update(crewConversationMembers)
-    .set(updateFields)
+  if (targetMessageId !== undefined) {
+    const prevMem = Number(testLastReadMemory.get(`${conversationId}:${userId}`) || 0);
+    if (targetMessageId > prevMem) {
+      testLastReadMemory.set(`${conversationId}:${userId}`, targetMessageId);
+    }
+  }
+
+  const existingMember = await db
+    .select()
+    .from(crewConversationMembers)
     .where(
       and(
         eq(crewConversationMembers.conversationId, conversationId),
         eq(crewConversationMembers.userId, userId)
       )
-    );
+    )
+    .limit(1);
+
+  const now = new Date();
+  if (existingMember.length > 0) {
+    const updateFields: any = { lastReadAt: now };
+    if (targetMessageId !== undefined) {
+      updateFields.lastReadMessageId = targetMessageId;
+    }
+    await db
+      .update(crewConversationMembers)
+      .set(updateFields)
+      .where(
+        and(
+          eq(crewConversationMembers.conversationId, conversationId),
+          eq(crewConversationMembers.userId, userId)
+        )
+      );
+  } else {
+    await db.insert(crewConversationMembers).values({
+      conversationId,
+      tenantId: "waypoint",
+      userId,
+      role: "member",
+      lastReadMessageId: targetMessageId ?? null,
+      lastReadAt: now,
+    });
+  }
 }
 
 /**
- * Creates or gets an existing direct conversation.
+ * Creates or gets an existing direct conversation without duplicate threads.
  */
 export async function getOrCreateDirectConversation(userId: number, targetUserId: number, tenantId = "waypoint") {
+  if (Number(userId) === Number(targetUserId)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Cannot start a direct conversation with yourself.",
+    });
+  }
+
+  await assertActiveStaffUser(userId, "Sender account");
+  const targetAccess = await assertActiveStaffUser(targetUserId, "Target recipient");
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const directKey = [userId, targetUserId].sort().join(":");
+  const directoryMap = await resolveEmployeeDirectoryMap(userId);
+  const partnerInfo = await resolveParticipantDisplay(
+    targetUserId,
+    directoryMap,
+    targetAccess.name,
+    targetAccess.email
+  );
+
+  const directKey = [Number(userId), Number(targetUserId)].sort((a, b) => a - b).join(":");
   if (testDirectConvsMemory.has(directKey)) {
-    return { conversationId: testDirectConvsMemory.get(directKey)!, isNew: false };
+    const existingConvId = testDirectConvsMemory.get(directKey)!;
+    registerMemoryMembership(existingConvId, [userId, targetUserId], { type: "direct" });
+    return {
+      conversationId: existingConvId,
+      isNew: false,
+      displayName: partnerInfo.name,
+      partnerUserId: targetUserId,
+      role: partnerInfo.role,
+      initials: partnerInfo.initials,
+    };
   }
 
   // Check if a direct conversation already exists between these 2 users
   const user1Convs = await db
-    .select({ conversationId: crewConversationMembers.conversationId })
+    .select({
+      conversationId: crewConversationMembers.conversationId,
+      updatedAt: crewConversations.updatedAt,
+    })
     .from(crewConversationMembers)
     .innerJoin(crewConversations, eq(crewConversations.id, crewConversationMembers.conversationId))
     .where(
@@ -720,7 +1380,8 @@ export async function getOrCreateDirectConversation(userId: number, targetUserId
         eq(crewConversations.type, "direct"),
         eq(crewConversations.tenantId, tenantId)
       )
-    );
+    )
+    .orderBy(desc(crewConversations.updatedAt));
 
   const candidateIds = user1Convs.map((c) => c.conversationId);
 
@@ -737,7 +1398,17 @@ export async function getOrCreateDirectConversation(userId: number, targetUserId
       .limit(1);
 
     if (match.length > 0) {
-      return { conversationId: match[0].conversationId, isNew: false };
+      const foundId = match[0].conversationId;
+      testDirectConvsMemory.set(directKey, foundId);
+      registerMemoryMembership(foundId, [userId, targetUserId], { type: "direct" });
+      return {
+        conversationId: foundId,
+        isNew: false,
+        displayName: partnerInfo.name,
+        partnerUserId: targetUserId,
+        role: partnerInfo.role,
+        initials: partnerInfo.initials,
+      };
     }
   }
 
@@ -745,6 +1416,7 @@ export async function getOrCreateDirectConversation(userId: number, targetUserId
   const inserted = await db.insert(crewConversations).values({
     tenantId,
     type: "direct",
+    name: partnerInfo.name,
     createdBy: userId,
   }).returning({ id: crewConversations.id });
 
@@ -755,6 +1427,7 @@ export async function getOrCreateDirectConversation(userId: number, targetUserId
   }
 
   testDirectConvsMemory.set(directKey, conversationId);
+  registerMemoryMembership(conversationId, [userId, targetUserId], { type: "direct", name: partnerInfo.name });
 
   // Add both members
   await db.insert(crewConversationMembers).values([
@@ -762,7 +1435,14 @@ export async function getOrCreateDirectConversation(userId: number, targetUserId
     { conversationId, tenantId, userId: targetUserId, role: "member" },
   ]);
 
-  return { conversationId, isNew: true };
+  return {
+    conversationId,
+    isNew: true,
+    displayName: partnerInfo.name,
+    partnerUserId: targetUserId,
+    role: partnerInfo.role,
+    initials: partnerInfo.initials,
+  };
 }
 
 /**
@@ -775,6 +1455,13 @@ export async function createGroupConversation(
   description?: string,
   tenantId = "waypoint"
 ) {
+  await assertActiveStaffUser(userId, "Sender account");
+
+  const uniqueMemberIds = Array.from(new Set([userId, ...memberUserIds]));
+  for (const uid of uniqueMemberIds) {
+    await assertActiveStaffUser(uid, `Group member #${uid}`);
+  }
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -789,10 +1476,11 @@ export async function createGroupConversation(
   let conversationId = extractInsertId(inserted);
   if (!conversationId) {
     const [latest] = await db.select({ id: crewConversations.id }).from(crewConversations).orderBy(desc(crewConversations.id)).limit(1);
-    conversationId = latest ? Number(latest.id) : 1;
+    conversationId = latest ? Number(latest.id) : ++testConvCounter;
   }
 
-  const uniqueMemberIds = Array.from(new Set([userId, ...memberUserIds]));
+  registerMemoryMembership(conversationId, uniqueMemberIds, { type: "group", name });
+
   const memberValues = uniqueMemberIds.map((uid) => ({
     conversationId,
     tenantId,
@@ -809,6 +1497,19 @@ export async function createGroupConversation(
  * Creates or gets an existing Student Case Thread.
  */
 export async function getOrCreateCaseThread(userId: number, studentContactId: number, tenantId = "waypoint") {
+  const staffAccess = await assertActiveStaffUser(userId, "Staff account");
+
+  // Case thread creation and access require case workspace access
+  const hasCaseAccess =
+    checkBackendCaseAccess(staffAccess, "compass") !== "none" ||
+    checkBackendCaseAccess(staffAccess, "notes") !== "none";
+  if (!hasCaseAccess) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You do not have case workspace access to open or view student case threads.",
+    });
+  }
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -847,6 +1548,12 @@ export async function getOrCreateCaseThread(userId: number, studentContactId: nu
       });
     }
 
+    registerMemoryMembership(existing[0].id, [userId], {
+      type: "case",
+      name: existing[0].name || undefined,
+      linkedStudentId: studentContactId,
+    });
+
     return { conversationId: existing[0].id, isNew: false };
   }
 
@@ -871,8 +1578,14 @@ export async function getOrCreateCaseThread(userId: number, studentContactId: nu
   let conversationId = extractInsertId(inserted);
   if (!conversationId) {
     const [latest] = await db.select({ id: crewConversations.id }).from(crewConversations).orderBy(desc(crewConversations.id)).limit(1);
-    conversationId = latest ? Number(latest.id) : 1;
+    conversationId = latest ? Number(latest.id) : ++testConvCounter;
   }
+
+  registerMemoryMembership(conversationId, [userId], {
+    type: "case",
+    name: studentName,
+    linkedStudentId: studentContactId,
+  });
 
   await db.insert(crewConversationMembers).values({
     conversationId,
@@ -888,6 +1601,8 @@ export async function getOrCreateCaseThread(userId: number, studentContactId: nu
  * Toggles an emoji reaction.
  */
 export async function toggleMessageReaction(messageId: number, userId: number, emoji: string, tenantId = "waypoint") {
+  await assertMessageConversationMember(messageId, userId);
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -920,6 +1635,7 @@ export async function toggleMessageReaction(messageId: number, userId: number, e
 
 /**
  * Creates an Action Request message and approval card.
+ * Kept strictly internal to Crew Messages (does not write to client activity timeline).
  */
 export async function createActionRequest(input: {
   conversationId: number;
@@ -933,6 +1649,9 @@ export async function createActionRequest(input: {
   dueAt?: Date;
   tenantId?: string;
 }) {
+  await assertConversationMember(input.conversationId, input.requestedBy);
+  await assertActiveStaffUser(input.assignedApproverId, "Assigned approver");
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -948,8 +1667,10 @@ export async function createActionRequest(input: {
   let messageId = extractInsertId(insertedMsg);
   if (!messageId) {
     const [latest] = await db.select({ id: crewMessages.id }).from(crewMessages).orderBy(desc(crewMessages.id)).limit(1);
-    messageId = latest ? Number(latest.id) : 1;
+    messageId = latest ? Number(latest.id) : ++testMsgCounter;
   }
+
+  testMessageToConvMemory.set(messageId, input.conversationId);
 
   // 2. Create action request record
   const insertedAr = await db.insert(crewActionRequests).values({
@@ -981,32 +1702,11 @@ export async function createActionRequest(input: {
     title: input.title,
   });
 
-  // 3. If connected to a student, log to Activity Timeline
-  const conv = await db
-    .select()
-    .from(crewConversations)
-    .where(eq(crewConversations.id, input.conversationId))
-    .limit(1);
-
-  const studentId = conv[0]?.linkedStudentId;
-  if (studentId) {
-    const userRow = await db.select().from(users).where(eq(users.id, input.requestedBy)).limit(1);
-    await db.insert(caseActivityTimeline).values({
-      studentContactId: studentId,
-      eventType: "action_request",
-      title: `Action Request: ${input.title}`,
-      description: input.explanation || `Action request submitted (${input.requestType})`,
-      whyReason: "Internal crew collaboration & approval request",
-      ownerName: userRow[0]?.name || "Advocate",
-      ownerRole: "Staff",
-    });
-  }
-
   return { messageId, actionRequestId, success: true };
 }
 
 /**
- * Decides an Action Request (single-use, permission checked, and audited).
+ * Decides an Action Request (single-use, permission checked, and audited within Crew Messages).
  */
 export async function decideActionRequest(input: {
   actionRequestId: number;
@@ -1019,12 +1719,6 @@ export async function decideActionRequest(input: {
   if (!db) throw new Error("Database not available");
 
   const testAr = testActionRequestsMemory.get(input.actionRequestId);
-  if (testAr) {
-    if (testAr.status !== "pending") {
-      throw new Error(`This request has already been decided (${testAr.status})`);
-    }
-    testAr.status = input.decision;
-  }
 
   const ar = await db
     .select()
@@ -1032,8 +1726,35 @@ export async function decideActionRequest(input: {
     .where(eq(crewActionRequests.id, input.actionRequestId))
     .limit(1);
 
-  if (ar.length === 0 && !testAr) throw new Error("Action request not found");
-  if (ar.length > 0 && ar[0].status !== "pending") throw new Error(`This request has already been decided (${ar[0].status})`);
+  if (ar.length === 0 && !testAr) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Action request not found" });
+  }
+
+  const targetAr = ar[0] || testAr;
+  const convId = Number(targetAr.conversationId || 1);
+  const assignedApproverId = Number(targetAr.assignedApproverId || 0);
+
+  // 1. Decider must be a member of the conversation
+  await assertConversationMember(convId, input.deciderUserId);
+
+  // 2. Only the assigned approver may decide the action request
+  if (assignedApproverId && input.deciderUserId !== assignedApproverId) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Only the assigned approver is authorized to decide this action request.",
+    });
+  }
+
+  // 3. Single-use status validation
+  if (testAr && testAr.status !== "pending") {
+    throw new Error(`This request has already been decided (${testAr.status})`);
+  }
+  if (ar.length > 0 && ar[0].status !== "pending") {
+    throw new Error(`This request has already been decided (${ar[0].status})`);
+  }
+  if (testAr) {
+    testAr.status = input.decision;
+  }
 
   // Update status
   await db
@@ -1055,7 +1776,6 @@ export async function decideActionRequest(input: {
       ? "DECLINED"
       : "CHANGES REQUESTED";
 
-  const convId = ar[0]?.conversationId || testAr?.conversationId || 1;
   const reqTitle = ar[0]?.title || testAr?.title || "Action Request";
 
   await db.insert(crewMessages).values({
@@ -1067,30 +1787,12 @@ export async function decideActionRequest(input: {
     }`,
   });
 
-  // If connected to a student, record in Activity Timeline
-  const conv = await db
-    .select()
-    .from(crewConversations)
-    .where(eq(crewConversations.id, convId))
-    .limit(1);
-
-  if (conv[0]?.linkedStudentId) {
-    await db.insert(caseActivityTimeline).values({
-      studentContactId: conv[0].linkedStudentId,
-      eventType: "strategy_decision",
-      title: `Action Request ${decisionText}: ${reqTitle}`,
-      description: input.note || `Decision submitted by ${input.deciderName}`,
-      whyReason: `Formal internal action decision`,
-      ownerName: input.deciderName,
-      ownerRole: "Staff",
-    });
-  }
-
   return { success: true, status: input.decision };
 }
 
 /**
- * Converts a normal message into an existing CRM task.
+ * Converts a normal message into an existing CRM internal task.
+ * Kept separate from the client activity timeline.
  */
 export async function convertMessageToTask(input: {
   messageId: number;
@@ -1102,6 +1804,8 @@ export async function convertMessageToTask(input: {
   dueDate?: string;
   studentContactId?: number;
 }) {
+  await assertMessageConversationMember(input.messageId, input.creatorUserId);
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -1135,28 +1839,21 @@ export async function convertMessageToTask(input: {
     createdBy: input.creatorUserId,
   });
 
-  // If connected to student, record in Activity Timeline
-  if (input.studentContactId) {
-    await db.insert(caseActivityTimeline).values({
-      studentContactId: input.studentContactId,
-      eventType: "next_step",
-      title: `Task Created from Crew Message: ${input.title}`,
-      description: input.description || "Converted from internal crew conversation",
-      whyReason: "Advocate task conversion",
-      ownerName: input.creatorName,
-      ownerRole: "Staff",
-    });
-  }
-
   return { taskId, success: true };
 }
 
 /**
  * Returns Linked Context for a conversation (linked student, task, document, meeting, members).
  */
-export async function getLinkedContext(conversationId: number) {
+export async function getLinkedContext(conversationId: number, userId?: number) {
+  if (userId !== undefined) {
+    await assertConversationMember(conversationId, userId);
+  }
+
   const db = await getDb();
   if (!db) return null;
+
+  const directoryMap = await resolveEmployeeDirectoryMap(userId);
 
   const conv = await db
     .select()
@@ -1176,28 +1873,17 @@ export async function getLinkedContext(conversationId: number) {
       linkedStudent = {
         id: st[0].id,
         name: `${st[0].firstName} ${st[0].lastName}`,
-        grade: "12th Grade",
-        focus: "College & Transition Planning",
-        caseNumber: `WA-0${st[0].id + 280}`,
+        grade: st[0].gradeLevel || "Student Record",
+        focus: st[0].iepEligibility || "Special Education Advocacy",
+        caseNumber: st[0].caseId || `WP-${st[0].id}`,
       };
     }
   }
 
-  // Fallback linked student if in demo/example
-  if (!linkedStudent && c.type === "case") {
-    linkedStudent = {
-      id: 1,
-      name: c.name || "Pierre",
-      grade: "12th Grade",
-      focus: "College Planning",
-      caseNumber: "Case #WA-0287",
-    };
-  }
-
   // Members
-  const members = await db
+  const memberRows = await db
     .select({
-      id: users.id,
+      userId: crewConversationMembers.userId,
       name: users.name,
       email: users.email,
       role: users.role,
@@ -1206,11 +1892,28 @@ export async function getLinkedContext(conversationId: number) {
     .leftJoin(users, eq(users.id, crewConversationMembers.userId))
     .where(eq(crewConversationMembers.conversationId, conversationId));
 
+  const enrichedMembers = await Promise.all(
+    memberRows.map(async (m) => {
+      const info = await resolveParticipantDisplay(m.userId, directoryMap, m.name, m.email, m.role);
+      return {
+        id: m.userId,
+        name: info.name,
+        role: info.role,
+        initials: info.initials,
+      };
+    })
+  );
+
   // Message count
   const countRes = await db
     .select({ count: sql<number>`count(*)` })
     .from(crewMessages)
-    .where(eq(crewMessages.conversationId, conversationId));
+    .where(
+      and(
+        eq(crewMessages.conversationId, conversationId),
+        sql`${crewMessages.deletedAt} IS NULL`
+      )
+    );
 
   const messageCount = Number(countRes[0]?.count || 0);
 
@@ -1229,33 +1932,19 @@ export async function getLinkedContext(conversationId: number) {
     .limit(1);
 
   let linkedTask: any = null;
-  if (recentLink.length > 0) {
+  if (recentLink.length > 0 && recentLink[0].crew_message_links.metadata) {
     try {
-      linkedTask = recentLink[0].crew_message_links.metadata
-        ? JSON.parse(recentLink[0].crew_message_links.metadata)
-        : { title: "Review signed agreement", dueDate: "Due Today" };
+      linkedTask = JSON.parse(recentLink[0].crew_message_links.metadata);
     } catch {
-      linkedTask = { title: "Review signed agreement", dueDate: "Due Today" };
+      linkedTask = null;
     }
-  } else {
-    linkedTask = { title: "Review signed agreement", dueDate: "Due Today" };
   }
 
   return {
     conversation: c,
     linkedStudent,
     linkedTask,
-    members: members.map((m) => ({
-      id: m.id,
-      name: m.name || (m.email ? m.email.split("@")[0] : "Advocate"),
-      role: m.role === "admin" ? "Lead IEP Advocate" : "Senior Advocate",
-      initials: (m.name || "WA")
-        .split(" ")
-        .map((p) => p[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase(),
-    })),
+    members: enrichedMembers,
     messageCount,
     createdAt: c.createdAt,
     lastMessageTime: c.updatedAt,
@@ -1263,9 +1952,10 @@ export async function getLinkedContext(conversationId: number) {
 }
 
 /**
- * Returns compact overview statistics for the Crew Quarters Overview widget.
+ * Returns compact overview statistics for the Crew Quarters Overview widget & notification indicators.
  */
 export async function getCrewOverviewStats(userId: number, tenantId = "waypoint") {
+  const callerAccess = await assertActiveStaffUser(userId, "Caller account");
   const db = await getDb();
   if (!db) {
     return {
@@ -1276,6 +1966,7 @@ export async function getCrewOverviewStats(userId: number, tenantId = "waypoint"
     };
   }
 
+  const directoryMap = await resolveEmployeeDirectoryMap(userId);
   const convs = await getConversationsForUser(userId, tenantId);
   const allConvs = [
     ...convs.channels,
@@ -1292,6 +1983,17 @@ export async function getCrewOverviewStats(userId: number, tenantId = "waypoint"
     .sort((a, b) => new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime())
     .slice(0, 4);
 
+  // Compute real unread mentions for the current user (0 if none)
+  const firstName = (callerAccess.name || "").split(/\s+/)[0]?.toLowerCase() || "";
+  let recentMentions = 0;
+  if (firstName && unreadTotal > 0) {
+    for (const c of allConvs) {
+      if ((c.unreadCount || 0) > 0 && c.lastMessage?.body?.toLowerCase().includes(`@${firstName}`)) {
+        recentMentions += 1;
+      }
+    }
+  }
+
   // Latest pending action request assigned to user
   const latestAr = await db
     .select({
@@ -1301,6 +2003,7 @@ export async function getCrewOverviewStats(userId: number, tenantId = "waypoint"
       status: crewActionRequests.status,
       dueAt: crewActionRequests.dueAt,
       createdAt: crewActionRequests.createdAt,
+      requestedBy: crewActionRequests.requestedBy,
       requestedByName: users.name,
       conversationId: crewActionRequests.conversationId,
     })
@@ -1315,10 +2018,20 @@ export async function getCrewOverviewStats(userId: number, tenantId = "waypoint"
     .orderBy(desc(crewActionRequests.createdAt))
     .limit(1);
 
+  let latestActionRequest: any = null;
+  if (latestAr.length > 0) {
+    const ar = latestAr[0];
+    const reqInfo = await resolveParticipantDisplay(ar.requestedBy, directoryMap, ar.requestedByName);
+    latestActionRequest = {
+      ...ar,
+      requestedByName: reqInfo.name,
+    };
+  }
+
   return {
     unreadTotal,
     recentConversations,
-    recentMentions: 1, // At least 1 recent notification in feed
-    latestActionRequest: latestAr[0] || null,
+    recentMentions,
+    latestActionRequest,
   };
 }

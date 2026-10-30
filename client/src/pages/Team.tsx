@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
@@ -17,6 +17,9 @@ import {
   Link2,
   Loader2,
   CalendarCheck,
+  AlertTriangle,
+  RefreshCw,
+  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -44,13 +47,16 @@ import {
 } from "@/components/team/teamTypes";
 import {
   getStoredEmployees,
+  saveStoredEmployees,
   saveEmployee,
   addEmployee,
   deactivateEmployee,
   reactivateEmployee,
+  hydrateEmployeesFromBackend,
   calculateWorkforceTotals,
   calculateRoleCounts,
   calculateAttentionItems,
+  type BackendStaffAccessProfile,
 } from "@/components/team/teamStore";
 import TeamOverviewHeader from "@/components/team/TeamOverviewHeader";
 import EmployeeDirectoryTable from "@/components/team/EmployeeDirectoryTable";
@@ -111,35 +117,74 @@ export default function TeamPage() {
   const utils = trpc.useUtils();
   const [, setLocation] = useLocation();
 
-  // Backend invites / members queries
-  const { data: members = [] } = trpc.team.listMembers.useQuery();
-  const { data: invites = [], isLoading: invitesLoading } = trpc.team.listInvites.useQuery();
+  // Authoritative Backend Staff Access Profiles Query (WAP 1A.2A)
+  const staffAccessQuery = trpc.team.getStaffAccessList.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: true,
+  });
 
-  // Employee Directory state (connected to Crew Quarters shared storage)
-  const [employees, setEmployees] = useState<EmployeeRecord[]>(getStoredEmployees);
+  // Backend invites / members queries
+  const { data: members = [] } = trpc.team.listMembers.useQuery(undefined, {
+    enabled: Boolean(staffAccessQuery.data),
+    retry: false,
+  });
+  const { data: invites = [], isLoading: invitesLoading } = trpc.team.listInvites.useQuery(
+    undefined,
+    {
+      enabled: Boolean(staffAccessQuery.data),
+      retry: false,
+    }
+  );
+
+  // Local HR supplement store (schedule, compensation, documents, equipment, training, notes)
+  const [localHrRecords, setLocalHrRecords] = useState<EmployeeRecord[]>(getStoredEmployees);
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeRecord | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [deactivatingEmployee, setDeactivatingEmployee] = useState<EmployeeRecord | null>(null);
   const [roleFilter, setRoleFilter] = useState<RoleId | "all">("all");
 
-  // Sync listener across tabs and windows
+  // Authoritative employee list hydrated from backend `staff_access_profiles`
+  // Never substitute demo/localStorage permissions if backend loading is pending or failed
+  const employees: EmployeeRecord[] = useMemo(() => {
+    if (!staffAccessQuery.data) return [];
+    return hydrateEmployeesFromBackend(
+      staffAccessQuery.data as BackendStaffAccessProfile[],
+      localHrRecords
+    );
+  }, [staffAccessQuery.data, localHrRecords]);
+
+  // Keep localStorage HR cache synchronized with backend truth so Crew Quarters & sidebar stay aligned
   useEffect(() => {
-    const handleUpdate = () => {
-      const latest = getStoredEmployees();
-      setEmployees(latest);
-      if (selectedEmployee) {
-        const found = latest.find((e) => e.id === selectedEmployee.id);
-        if (found) setSelectedEmployee(found);
+    if (employees.length > 0) {
+      saveStoredEmployees(employees);
+    }
+  }, [employees]);
+
+  // Keep selectedEmployee synchronized whenever backend `employees` refreshes
+  useEffect(() => {
+    if (selectedEmployee && employees.length > 0) {
+      const latest = employees.find(
+        (e) =>
+          (selectedEmployee.userId && e.userId === selectedEmployee.userId) ||
+          e.id === selectedEmployee.id
+      );
+      if (latest) {
+        setSelectedEmployee(latest);
       }
+    }
+  }, [employees]);
+
+  // Sync listener for local HR edits across tabs
+  useEffect(() => {
+    const handleStorage = () => {
+      setLocalHrRecords(getStoredEmployees());
     };
-    window.addEventListener("waypoint_team_updated", handleUpdate);
-    window.addEventListener("storage", handleUpdate);
+    window.addEventListener("storage", handleStorage);
     return () => {
-      window.removeEventListener("waypoint_team_updated", handleUpdate);
-      window.removeEventListener("storage", handleUpdate);
+      window.removeEventListener("storage", handleStorage);
     };
-  }, [selectedEmployee]);
+  }, []);
 
   // Time off state synced with Crew Quarters
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>(() => {
@@ -209,50 +254,230 @@ export default function TeamPage() {
     onError: (e) => toast.error("Failed to revoke: " + e.message),
   });
 
+  const deactivateEmployeeMutation = trpc.team.deactivateEmployee.useMutation({
+    onError: (e) => toast.error("Failed to deactivate employee: " + e.message),
+  });
+
+  const reactivateEmployeeMutation = trpc.team.reactivateEmployee.useMutation({
+    onError: (e) => toast.error("Failed to reactivate employee: " + e.message),
+  });
+
+  const updateStaffAccessMutation = trpc.team.updateStaffAccess.useMutation({
+    onError: (e) => toast.error("Failed to update staff permissions: " + e.message),
+  });
+
+  const onboardEmployeeMutation = trpc.team.onboardEmployee.useMutation({
+    onError: (e) => toast.error("Failed to onboard employee: " + e.message),
+  });
+
+  const resendEmployeeInviteMutation = trpc.team.resendEmployeeInvitation.useMutation({
+    onError: (e) => toast.error("Failed to resend invitation: " + e.message),
+  });
+
+  const revokeEmployeeInviteMutation = trpc.team.revokeEmployeeInvitation.useMutation({
+    onError: (e) => toast.error("Failed to revoke invitation: " + e.message),
+  });
+
+  const acceptEmployeeInviteMutation = trpc.team.acceptEmployeeInvitation.useMutation({
+    onError: (e) => toast.error("Failed to accept invitation: " + e.message),
+  });
+
   const handleOpenEmployee = (emp: EmployeeRecord) => {
     setSelectedEmployee(emp);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSaveEmployee = (updated: EmployeeRecord) => {
-    saveEmployee(updated);
-    const refreshed = getStoredEmployees();
-    setEmployees(refreshed);
-    setSelectedEmployee(updated);
+    updateStaffAccessMutation.mutate(
+      {
+        targetUserId: updated.userId,
+        targetEmployeeId: updated.id,
+        primaryRole: updated.primaryRole,
+        additionalRoles: updated.additionalRoles,
+        accountStatus: updated.status,
+        modulePermissions: updated.modulePermissions,
+        caseWorkspaceAccess: updated.caseWorkspaceAccess,
+        permissionOverrides: updated.permissionOverrides,
+      },
+      {
+        onSuccess: async () => {
+          saveEmployee(updated);
+          setLocalHrRecords(getStoredEmployees());
+          await utils.team.getStaffAccessList.invalidate();
+          await utils.team.getMyStaffAccess.invalidate();
+        },
+      }
+    );
   };
 
-  const handleAddEmployee = (newEmp: Omit<EmployeeRecord, "id"> & { id?: string }) => {
-    const created = addEmployee(newEmp);
-    const refreshed = getStoredEmployees();
-    setEmployees(refreshed);
+  const handleAddEmployee = async (
+    newEmp: Omit<EmployeeRecord, "id"> & { id?: string; sendInvite?: boolean }
+  ) => {
+    const data = await onboardEmployeeMutation.mutateAsync({
+      name: newEmp.name,
+      preferredName: newEmp.preferredName,
+      email: newEmp.email,
+      phone: newEmp.phone,
+      jobTitle: newEmp.jobTitle,
+      employmentType: newEmp.employmentType,
+      department: newEmp.department,
+      normalScheduleSummary: newEmp.normalScheduleSummary,
+      primaryRole: newEmp.primaryRole,
+      additionalRoles: newEmp.additionalRoles,
+      modulePermissions: newEmp.modulePermissions,
+      caseWorkspaceAccess: newEmp.caseWorkspaceAccess,
+      permissionOverrides: newEmp.permissionOverrides,
+      sendInvite: newEmp.sendInvite ?? true,
+      originUrl: typeof window !== "undefined" ? window.location.origin : "http://localhost:3000",
+    });
+
+    const created = addEmployee({
+      ...newEmp,
+      id: data.profile.employeeId || undefined,
+      userId: data.profile.userId,
+      openId: data.profile.openId,
+      status: data.profile.accountStatus,
+      invitationStatus: data.invitation.status,
+      invitationToken: data.invitation.token,
+      invitedAt: data.invitation.invitedAt,
+      invitationExpiresAt: data.invitation.expiresAt,
+    });
+    setLocalHrRecords(getStoredEmployees());
+    await utils.team.getStaffAccessList.invalidate();
+    await utils.team.listInvites.invalidate();
+    await utils.crewMessages.listEmployees.invalidate();
+
+    if (data.invitation.emailSent) {
+      toast.success(
+        `Invitation sent to ${newEmp.email}! Status: Pending activation.`
+      );
+    } else {
+      toast.info(
+        `Employee onboarding record & invitation link created (Pending), but Clerk email delivery was unavailable: ${
+          data.invitation.deliveryError || "Copy the invite link from the directory below."
+        }`
+      );
+    }
+
     setSelectedEmployee(created);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleResendInviteClick = (emp: EmployeeRecord) => {
+    resendEmployeeInviteMutation.mutate(
+      {
+        targetUserId: emp.userId,
+        targetEmployeeId: emp.id,
+        originUrl: typeof window !== "undefined" ? window.location.origin : "http://localhost:3000",
+      },
+      {
+        onSuccess: async (data) => {
+          await utils.team.getStaffAccessList.invalidate();
+          await utils.team.listInvites.invalidate();
+          if (data.invitation.emailSent) {
+            toast.success(`Invitation resent to ${emp.email}!`);
+          } else {
+            toast.info(
+              `New invitation token generated for ${emp.email} (Pending). Copy the updated link to share.`
+            );
+          }
+        },
+      }
+    );
+  };
+
+  const handleRevokeInviteClick = (emp: EmployeeRecord) => {
+    revokeEmployeeInviteMutation.mutate(
+      {
+        targetUserId: emp.userId,
+        targetEmployeeId: emp.id,
+      },
+      {
+        onSuccess: async () => {
+          await utils.team.getStaffAccessList.invalidate();
+          await utils.team.listInvites.invalidate();
+          toast.success(`Invitation for ${emp.name} has been revoked.`);
+        },
+      }
+    );
+  };
+
+  const handleAcceptInviteClick = (emp: EmployeeRecord) => {
+    if (!emp.invitationToken) {
+      toast.error("No active invitation token found for this employee. Resend invitation first.");
+      return;
+    }
+    acceptEmployeeInviteMutation.mutate(
+      {
+        token: emp.invitationToken,
+        acceptingEmail: emp.email,
+      },
+      {
+        onSuccess: async () => {
+          reactivateEmployee(emp.id);
+          setLocalHrRecords(getStoredEmployees());
+          await utils.team.getStaffAccessList.invalidate();
+          await utils.team.listInvites.invalidate();
+          await utils.crewMessages.listEmployees.invalidate();
+          toast.success(
+            `${emp.name}'s invitation accepted! Employee activated in Team Management & Crew Quarters.`
+          );
+        },
+      }
+    );
+  };
+
   const handleDeactivateClick = (emp: EmployeeRecord) => {
+    if (
+      emp.isProtectedOwner ||
+      emp.id === "emp-byron-honea" ||
+      emp.id === "emp-byron-honea-2"
+    ) {
+      toast.error("Protected Owner accounts cannot be deactivated or locked out.");
+      return;
+    }
     setDeactivatingEmployee(emp);
     setDeactivateModalOpen(true);
   };
 
   const handleConfirmDeactivate = (id: string, notes: string) => {
-    deactivateEmployee(id, notes);
-    const refreshed = getStoredEmployees();
-    setEmployees(refreshed);
-    if (selectedEmployee?.id === id) {
-      const updated = refreshed.find((e) => e.id === id);
-      if (updated) setSelectedEmployee(updated);
-    }
+    const targetEmp = employees.find((e) => e.id === id);
+    deactivateEmployeeMutation.mutate(
+      {
+        targetUserId: targetEmp?.userId,
+        targetEmployeeId: id,
+        notes,
+      },
+      {
+        onSuccess: async () => {
+          deactivateEmployee(id, notes);
+          setLocalHrRecords(getStoredEmployees());
+          await utils.team.getStaffAccessList.invalidate();
+          await utils.team.getMyStaffAccess.invalidate();
+          toast.success(
+            "Employee deactivated and backend access revoked. Historical data safely preserved."
+          );
+        },
+      }
+    );
   };
 
   const handleReactivateClick = (emp: EmployeeRecord) => {
-    reactivateEmployee(emp.id);
-    const refreshed = getStoredEmployees();
-    setEmployees(refreshed);
-    if (selectedEmployee?.id === emp.id) {
-      const updated = refreshed.find((e) => e.id === emp.id);
-      if (updated) setSelectedEmployee(updated);
-    }
-    toast.success(`${emp.name} restored to Active status!`);
+    reactivateEmployeeMutation.mutate(
+      {
+        targetUserId: emp.userId,
+        targetEmployeeId: emp.id,
+      },
+      {
+        onSuccess: async () => {
+          reactivateEmployee(emp.id);
+          setLocalHrRecords(getStoredEmployees());
+          await utils.team.getStaffAccessList.invalidate();
+          await utils.team.getMyStaffAccess.invalidate();
+          toast.success(`${emp.name} restored to Active status!`);
+        },
+      }
+    );
   };
 
   const pendingInvites = invites.filter((i) => i.status === "pending");
@@ -260,7 +485,43 @@ export default function TeamPage() {
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {selectedEmployee ? (
+        {staffAccessQuery.isLoading ? (
+          <Card className="p-12 border-blue-900/50 bg-[#000d2b]/90 text-center space-y-4 rounded-2xl">
+            <Loader2 className="h-8 w-8 animate-spin text-amber-400 mx-auto" />
+            <div className="space-y-1">
+              <h2 className="text-lg font-bold text-white">
+                Loading Verified Staff Access Records…
+              </h2>
+              <p className="text-xs text-slate-400 max-w-md mx-auto">
+                Fetching authoritative staff identities, role assignments, account status, and effective permissions from <code className="text-amber-300">staff_access_profiles</code>.
+              </p>
+            </div>
+          </Card>
+        ) : staffAccessQuery.isError ? (
+          <Card className="p-10 border-red-900/60 bg-red-950/20 text-center space-y-4 rounded-2xl">
+            <div className="w-12 h-12 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto">
+              <ShieldAlert className="h-6 w-6 text-red-400" />
+            </div>
+            <div className="space-y-1.5">
+              <h2 className="text-lg font-bold text-white">
+                Unable to Load Trusted Backend Staff Records
+              </h2>
+              <p className="text-xs text-red-200/80 max-w-lg mx-auto">
+                {staffAccessQuery.error?.message ||
+                  "Failed to load staff access records from the backend server. Demo or browser fallback permissions are never substituted."}
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <Button
+                onClick={() => staffAccessQuery.refetch()}
+                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl h-9 px-4 gap-1.5 cursor-pointer"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Retry Backend Load
+              </Button>
+            </div>
+          </Card>
+        ) : selectedEmployee ? (
           <EmployeeManagementWorkspace
             employee={selectedEmployee}
             allEmployees={employees}
@@ -292,11 +553,21 @@ export default function TeamPage() {
                   <PageIdBadge id="PG-019" name="Team & Staff Management" />
                 </div>
                 <p className="text-xs sm:text-sm text-blue-200/70 mt-1">
-                  Centralized practice administration for Waypoint Advocates. Administer workforce records, roles, PTO approvals, equipment, payroll, and module permissions.
+                  Centralized practice administration for Waypoint Advocates. Connected to authoritative backend <code className="text-amber-300/90">staff_access_profiles</code> records.
                 </p>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  onClick={() => staffAccessQuery.refetch()}
+                  variant="outline"
+                  className="border-blue-700/60 text-blue-200 hover:text-white hover:bg-blue-900/40 text-xs rounded-xl h-9 px-3 gap-1.5 cursor-pointer"
+                  title="Refresh from backend"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${staffAccessQuery.isFetching ? "animate-spin" : ""}`} />
+                  <span>Sync</span>
+                </Button>
+
                 <Button
                   onClick={() => setInviteOpen(true)}
                   variant="outline"
@@ -330,18 +601,151 @@ export default function TeamPage() {
               }}
               activeRoleFilter={roleFilter}
               onRoleFilterSelect={(r) => setRoleFilter(r)}
+              employees={employees}
             />
 
             {/* ── Primary Workforce Directory ── */}
-            <EmployeeDirectoryTable
-              employees={employees}
-              onSelectEmployee={handleOpenEmployee}
-              onAddEmployee={() => setAddModalOpen(true)}
-              roleFilter={roleFilter}
-              onRoleFilterChange={setRoleFilter}
-              onDeactivateClick={handleDeactivateClick}
-              onReactivateClick={handleReactivateClick}
-            />
+            {employees.length === 0 ? (
+              <Card className="p-10 border-blue-900/50 bg-[#000d2b]/80 text-center space-y-3 rounded-2xl">
+                <Users className="h-8 w-8 text-slate-500 mx-auto" />
+                <h3 className="text-sm font-bold text-white">No Backend Staff Records Found</h3>
+                <p className="text-xs text-slate-400 max-w-md mx-auto">
+                  No staff access profiles were returned from the backend database.
+                </p>
+              </Card>
+            ) : (
+              <EmployeeDirectoryTable
+                employees={employees}
+                onSelectEmployee={handleOpenEmployee}
+                onAddEmployee={() => setAddModalOpen(true)}
+                roleFilter={roleFilter}
+                onRoleFilterChange={setRoleFilter}
+                onDeactivateClick={handleDeactivateClick}
+                onReactivateClick={handleReactivateClick}
+                onResendInviteClick={handleResendInviteClick}
+                onRevokeInviteClick={handleRevokeInviteClick}
+                onAcceptInviteClick={handleAcceptInviteClick}
+              />
+            )}
+
+            {/* ── Staff Onboarding & Invitation Status Tracker (WAP 1A.3) ── */}
+            {employees.some(
+              (e) =>
+                e.invitationStatus === "pending" ||
+                e.invitationStatus === "expired" ||
+                e.invitationStatus === "revoked" ||
+                Boolean(e.invitedAt)
+            ) && (
+              <div className="rounded-2xl border border-blue-900/50 bg-[#000d2b]/80 p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    <span>Employee Onboarding Invitations</span>
+                  </p>
+                  <span className="text-[11px] text-slate-400">
+                    Statuses: Pending · Accepted · Expired · Revoked
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {employees
+                    .filter(
+                      (e) =>
+                        e.invitationStatus === "pending" ||
+                        e.invitationStatus === "expired" ||
+                        e.invitationStatus === "revoked" ||
+                        Boolean(e.invitedAt)
+                    )
+                    .map((emp) => {
+                      const invStatus = emp.invitationStatus || "accepted";
+                      return (
+                        <div
+                          key={emp.id}
+                          className="p-3.5 rounded-xl border border-blue-900/50 bg-[#000820] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-8 h-8 rounded-full bg-amber-400/10 text-amber-400 flex items-center justify-center shrink-0">
+                              <Mail className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-white">{emp.name}</span>
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    invStatus === "pending"
+                                      ? "border-amber-500/50 text-amber-300 bg-amber-950/40 text-[10px]"
+                                      : invStatus === "accepted"
+                                      ? "border-emerald-500/50 text-emerald-300 bg-emerald-950/40 text-[10px]"
+                                      : invStatus === "expired"
+                                      ? "border-orange-500/50 text-orange-300 bg-orange-950/40 text-[10px]"
+                                      : "border-rose-500/50 text-rose-300 bg-rose-950/40 text-[10px]"
+                                  }
+                                >
+                                  {invStatus.toUpperCase()}
+                                </Badge>
+                              </div>
+                              <p className="text-[11px] text-slate-400 truncate">
+                                {emp.email} · {emp.jobTitle}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                            {invStatus === "pending" && emp.invitationToken && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const link = `${window.location.origin}/team/join?token=${emp.invitationToken}`;
+                                    navigator.clipboard
+                                      .writeText(link)
+                                      .then(() => toast.success("Onboarding invite link copied!"));
+                                  }}
+                                  className="h-7 px-2 text-xs text-sky-400 hover:text-white rounded-lg cursor-pointer"
+                                >
+                                  <Link2 className="h-3.5 w-3.5 mr-1" />
+                                  <span>Copy Link</span>
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleAcceptInviteClick(emp)}
+                                  className="h-7 px-2.5 text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg cursor-pointer"
+                                >
+                                  <Check className="h-3.5 w-3.5 mr-1" />
+                                  <span>Accept &amp; Activate</span>
+                                </Button>
+                              </>
+                            )}
+                            {invStatus !== "accepted" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleResendInviteClick(emp)}
+                                className="h-7 px-2.5 text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/10 rounded-lg cursor-pointer"
+                              >
+                                <RefreshCw className="h-3 w-3 mr-1" />
+                                <span>Resend</span>
+                              </Button>
+                            )}
+                            {invStatus === "pending" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRevokeInviteClick(emp)}
+                                className="h-7 px-2 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-lg cursor-pointer"
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                <span>Revoke</span>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
 
             {/* ── Pending Invite Tokens Section (Preserved Backend Integration) ── */}
             {(invitesLoading || pendingInvites.length > 0) && (

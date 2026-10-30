@@ -72,6 +72,10 @@ export default function ActiveConversationColumn({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [reactingToMessageId, setReactingToMessageId] = useState<number | null>(null);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [messageSearchQuery, setMessageSearchQuery] = useState("");
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editingBody, setEditingBody] = useState("");
 
   const handleEmojiSelect = (emojiData: EmojiClickData) => {
     setMessageText((prev) => prev + emojiData.emoji);
@@ -79,12 +83,35 @@ export default function ActiveConversationColumn({
   };
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastMarkedMsgIdRef = useRef<string>("");
   const utils = trpc.useUtils();
 
   const { data: messages = [], isLoading } = trpc.crewMessages.getMessages.useQuery(
     { conversationId: conversation.id, limit: 100 },
     { refetchInterval: 5000 } // Soft background refresh every 5s without heavy polling
   );
+
+  const markReadMutation = trpc.crewMessages.markRead.useMutation({
+    onSuccess: () => {
+      utils.crewMessages.listConversations.invalidate();
+      utils.crewMessages.getOverviewStats.invalidate();
+    },
+  });
+
+  // Automatically mark conversation as read when opened or when new incoming messages arrive
+  useEffect(() => {
+    if (!conversation?.id || !Array.isArray(messages) || messages.length === 0) return;
+    const latestMsg: any = messages[messages.length - 1];
+    if (!latestMsg?.id) return;
+    const markKey = `${conversation.id}:${latestMsg.id}`;
+    if ((conversation.unreadCount > 0 || !latestMsg.isSender) && lastMarkedMsgIdRef.current !== markKey) {
+      lastMarkedMsgIdRef.current = markKey;
+      markReadMutation.mutate({
+        conversationId: conversation.id,
+        messageId: latestMsg.id,
+      });
+    }
+  }, [conversation?.id, conversation?.unreadCount, messages]);
 
   const sendMutation = trpc.crewMessages.sendMessage.useMutation({
     onSuccess: () => {
@@ -94,6 +121,7 @@ export default function ActiveConversationColumn({
       utils.crewMessages.getMessages.invalidate({ conversationId: conversation.id });
       utils.crewMessages.listConversations.invalidate();
       utils.crewMessages.getOverviewStats.invalidate();
+      utils.crewMessages.getLinkedContext.invalidate({ conversationId: conversation.id });
       scrollToBottom();
     },
     onError: (err) => {
@@ -102,18 +130,34 @@ export default function ActiveConversationColumn({
     },
   });
 
-  const toggleReactionMutation = trpc.crewMessages.toggleReaction.useMutation({
+  const editMessageMutation = trpc.crewMessages.editMessage.useMutation({
     onSuccess: () => {
+      setEditingMessageId(null);
+      setEditingBody("");
       utils.crewMessages.getMessages.invalidate({ conversationId: conversation.id });
+      utils.crewMessages.listConversations.invalidate();
+      toast.success("Message updated");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to update message");
     },
   });
 
-  const addToTimelineMutation = trpc.crewMessages.addToActivityTimeline.useMutation({
+  const deleteMessageMutation = trpc.crewMessages.deleteMessage.useMutation({
     onSuccess: () => {
-      toast.success("Flagged and added to Student Activity Timeline!");
+      utils.crewMessages.getMessages.invalidate({ conversationId: conversation.id });
+      utils.crewMessages.listConversations.invalidate();
+      utils.crewMessages.getLinkedContext.invalidate({ conversationId: conversation.id });
+      toast.success("Message deleted");
     },
     onError: (err) => {
-      toast.error(err.message || "Could not log to timeline");
+      toast.error(err.message || "Failed to delete message");
+    },
+  });
+
+  const toggleReactionMutation = trpc.crewMessages.toggleReaction.useMutation({
+    onSuccess: () => {
+      utils.crewMessages.getMessages.invalidate({ conversationId: conversation.id });
     },
   });
 
@@ -248,8 +292,15 @@ export default function ActiveConversationColumn({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info("Search within this conversation active")}
-            className="h-8.5 px-3 rounded-xl bg-gradient-to-b from-[#0e2c59] to-[#071933] hover:from-[#133973] hover:to-[#092244] border-t border-t-sky-300/40 border border-sky-500/30 text-xs font-semibold text-sky-200 hover:text-white shadow-[0_3px_8px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.15)] gap-1.5 cursor-pointer transition-all hover:scale-[1.02]"
+            onClick={() => {
+              setShowSearchBar((prev) => !prev);
+              if (showSearchBar) setMessageSearchQuery("");
+            }}
+            className={`h-8.5 px-3 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer transition-all hover:scale-[1.02] ${
+              showSearchBar
+                ? "bg-gradient-to-b from-[#0062E3] to-[#004BB5] text-white border-t border-t-sky-200/60 border border-sky-400 shadow-[0_4px_14px_rgba(0,98,227,0.45),inset_0_1px_1px_rgba(255,255,255,0.3)]"
+                : "bg-gradient-to-b from-[#0e2c59] to-[#071933] hover:from-[#133973] hover:to-[#092244] border-t border-t-sky-300/40 border border-sky-500/30 text-sky-200 hover:text-white shadow-[0_3px_8px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.15)]"
+            }`}
           >
             <Search className="w-3.5 h-3.5 text-sky-400" />
             <span className="hidden sm:inline">Search</span>
@@ -281,6 +332,20 @@ export default function ActiveConversationColumn({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-gradient-to-b from-[#061833] to-[#020a17] border-t border-t-sky-400/40 border border-sky-500/30 text-white shadow-2xl rounded-2xl p-1.5">
               <DropdownMenuItem
+                onClick={() => {
+                  const latestMsg: any = Array.isArray(messages) && messages.length > 0 ? messages[messages.length - 1] : null;
+                  markReadMutation.mutate(
+                    { conversationId: conversation.id, messageId: latestMsg?.id },
+                    { onSuccess: () => toast.success("Conversation marked as read") }
+                  );
+                }}
+                className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2 font-medium rounded-xl text-sky-100"
+              >
+                <CheckCheck className="w-3.5 h-3.5 text-sky-400" />
+                Mark Conversation as Read
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-sky-500/20 my-1" />
+              <DropdownMenuItem
                 onClick={() => setShowActionModal(true)}
                 className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2 font-medium rounded-xl text-sky-100"
               >
@@ -294,17 +359,33 @@ export default function ActiveConversationColumn({
                 <FileText className="w-3.5 h-3.5 text-sky-400" />
                 Share Service Agreement Card
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-sky-500/20 my-1" />
-              <DropdownMenuItem
-                onClick={() => toast.success("Conversation notifications muted for 8 hours")}
-                className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2 rounded-xl text-sky-100"
-              >
-                Mute Notifications
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Inline Conversation Search Bar */}
+      {showSearchBar && (
+        <div className="px-4 sm:px-6 py-2 bg-[#041228]/95 border-b border-sky-500/20 flex items-center gap-2 z-10 shrink-0">
+          <Search className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+          <input
+            type="text"
+            value={messageSearchQuery}
+            onChange={(e) => setMessageSearchQuery(e.target.value)}
+            placeholder="Filter messages in this conversation..."
+            autoFocus
+            className="flex-1 bg-transparent text-xs text-white placeholder:text-blue-200/40 focus:outline-none"
+          />
+          {messageSearchQuery && (
+            <button
+              onClick={() => setMessageSearchQuery("")}
+              className="text-[11px] text-sky-300 hover:text-white cursor-pointer"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── Message Stream (Dark Navy, Soft 3D Bubbles) ── */}
       <div
@@ -333,7 +414,16 @@ export default function ActiveConversationColumn({
           </div>
         )}
 
-        {messages.map((m: any) => {
+        {messages
+          .filter((m: any) => {
+            if (!messageSearchQuery.trim()) return true;
+            const q = messageSearchQuery.toLowerCase();
+            return (
+              m.body?.toLowerCase().includes(q) ||
+              m.senderName?.toLowerCase().includes(q)
+            );
+          })
+          .map((m: any) => {
           const isMe = m.isSender;
           const senderInitial = (m.senderName || "U")
             .split(" ")
@@ -342,10 +432,19 @@ export default function ActiveConversationColumn({
             .join("")
             .toUpperCase();
 
-          const messageTime = new Date(m.createdAt).toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-          });
+          const createdDate = new Date(m.createdAt);
+          const isToday = createdDate.toDateString() === new Date().toDateString();
+          const messageTime = isToday
+            ? createdDate.toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+              })
+            : createdDate.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              });
 
           const hasAttachedCards = Boolean((m.links && m.links.length > 0) || m.actionRequest);
 
@@ -392,8 +491,46 @@ export default function ActiveConversationColumn({
                         : "bg-gradient-to-b from-[#102d54] via-[#0c2242] to-[#081830] text-slate-100 rounded-tl-xs shadow-[0_8px_24px_rgba(0,5,20,0.55),0_2px_5px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] border-t border-t-sky-400/35 border-x border-x-sky-500/25 border-b border-b-black/70 backdrop-blur-md text-left hover:brightness-105"
                     }`}
                   >
-                    {/* Plain or Multiline text */}
-                    <p className="whitespace-pre-wrap">{m.body}</p>
+                    {/* Plain or Multiline text (or inline editor for author) */}
+                    {editingMessageId === m.id ? (
+                      <div className="space-y-2 min-w-[240px]">
+                        <textarea
+                          value={editingBody}
+                          onChange={(e) => setEditingBody(e.target.value)}
+                          rows={2}
+                          className="w-full rounded-lg bg-[#020b18] border border-sky-400/50 p-2 text-xs text-white focus:outline-none"
+                        />
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingMessageId(null);
+                              setEditingBody("");
+                            }}
+                            className="px-2 py-1 rounded text-[11px] text-slate-300 hover:text-white cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!editingBody.trim()) return;
+                              editMessageMutation.mutate({ messageId: m.id, body: editingBody.trim() });
+                            }}
+                            className="px-2.5 py-1 rounded bg-sky-500 text-slate-950 font-bold text-[11px] hover:bg-sky-400 cursor-pointer"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap">
+                        {m.body}
+                        {m.editedAt && (
+                          <span className="ml-1.5 text-[10px] opacity-70 italic">(edited)</span>
+                        )}
+                      </p>
+                    )}
 
                     {/* Linked Record Card (e.g. Signed Service Agreement) */}
                     {m.links && m.links.length > 0 && (
@@ -553,20 +690,25 @@ export default function ActiveConversationColumn({
                     >
                       <CheckSquare className="w-3 h-3" />
                     </button>
-                    {isAdmin && conversation.linkedStudentId && (
+                    {isMe && (
                       <button
-                        onClick={() =>
-                          addToTimelineMutation.mutate({
-                            messageId: m.id,
-                            studentContactId: conversation.linkedStudentId,
-                            title: `Crew Insight: ${(m.body || "Advocate note").slice(0, 45)}`,
-                            notes: m.body,
-                          })
-                        }
-                        className="p-1.5 rounded-full bg-[#051733] border border-amber-400/50 text-amber-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
-                        title="Add to Student Activity Timeline"
+                        onClick={() => {
+                          setEditingMessageId(m.id);
+                          setEditingBody(m.body || "");
+                        }}
+                        className="px-2 py-1 rounded-full bg-[#051733] border border-sky-400/40 text-[10px] font-semibold text-sky-300 hover:text-white shadow-md hover:scale-105 transition-transform cursor-pointer"
+                        title="Edit your message"
                       >
-                        <BookOpen className="w-3.5 h-3.5" />
+                        Edit
+                      </button>
+                    )}
+                    {(isMe || isAdmin) && (
+                      <button
+                        onClick={() => deleteMessageMutation.mutate({ messageId: m.id })}
+                        className="px-2 py-1 rounded-full bg-[#051733] border border-rose-400/40 text-[10px] font-semibold text-rose-300 hover:text-white shadow-md hover:scale-105 transition-transform cursor-pointer"
+                        title="Delete message"
+                      >
+                        Delete
                       </button>
                     )}
                   </div>
@@ -592,11 +734,20 @@ export default function ActiveConversationColumn({
                   </div>
                 )}
 
-                {/* Sent message read receipt */}
+                {/* Sent / Read message status */}
                 {isMe && (
                   <div className="flex items-center justify-end gap-1 text-[11px] text-blue-200/60 pt-0.5">
-                    <span>Read {messageTime}</span>
-                    <CheckCheck className="w-3.5 h-3.5 text-sky-400" />
+                    {m.isReadByRecipient ? (
+                      <>
+                        <span>Read {messageTime}</span>
+                        <CheckCheck className="w-3.5 h-3.5 text-sky-400" />
+                      </>
+                    ) : (
+                      <>
+                        <span>Sent {messageTime}</span>
+                        <Check className="w-3.5 h-3.5 text-slate-400" />
+                      </>
+                    )}
                   </div>
                 )}
               </div>

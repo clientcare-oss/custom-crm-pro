@@ -49,40 +49,22 @@ export default {
       });
     }
 
-    // 2. Handle Local Dev Login Route
+    // 2. Handle Local Dev Login Route (Strictly restricted to localhost; 9060031 / katkins-admin-openid disabled per WAP 1A.1)
     if (url.pathname === "/api/auth/dev-login") {
-      try {
-        const email = url.searchParams.get("email") || "katkins@veritastech.io";
-        const conn = await db.getDb();
-        let targetUser: any;
-
-        if (conn) {
-          const usersList = await conn.select().from(users);
-          targetUser = usersList.find((u: any) => u.email === email || u.openId === email) || usersList.find((u: any) => u.role === 'admin') || usersList[0];
-        }
-
-        const openId = targetUser?.openId || "katkins-admin-openid";
-        const name = targetUser?.name || "Kyle Atkins";
-
-        const sessionToken = await sdk.createSessionToken(openId, {
-          name,
-          expiresInMs: ONE_YEAR_MS,
-        });
-
-        const headers = new Headers();
-        headers.append(
-          "Set-Cookie",
-          `${COOKIE_NAME}=${sessionToken}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax`
-        );
-        headers.append("Location", "/");
-
-        return new Response(null, { status: 302, headers });
-      } catch (err: any) {
-        return new Response(JSON.stringify({ error: "Dev login failed", details: String(err) }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" }
+      const isLocalHost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+      if (!isLocalHost) {
+        return new Response(JSON.stringify({ error: "Dev login is disabled outside localhost." }), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
         });
       }
+      return new Response(
+        JSON.stringify({ error: "Development login account (9060031 / katkins-admin-openid) has no staff access." }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     // 2b. Handle Quo (OpenPhone) Webhook Ingestion

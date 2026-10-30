@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Check } from "lucide-react";
 import { toast } from "sonner";
-import type { PipelineStageItem } from "./types";
+import type { PipelineStageItem, PipelineGroupType } from "./types";
 
 interface AddStageModalProps {
   open: boolean;
@@ -39,10 +39,16 @@ const CATEGORY_OPTIONS = [
   { value: "neutral", label: "Neutral / Holding" },
 ];
 
-export function AddStageModal({ open, onOpenChange, onAddStage }: AddStageModalProps) {
+export function AddStageModal({
+  open,
+  onOpenChange,
+  onAddStage,
+}: AddStageModalProps) {
   const [stageName, setStageName] = useState("");
   const [accentColor, setAccentColor] = useState("#38BDF8");
   const [category, setCategory] = useState("active");
+  const [pipelineGroup, setPipelineGroup] =
+    useState<PipelineGroupType>("active_project");
 
   const handleSave = () => {
     if (!stageName.trim()) {
@@ -55,6 +61,7 @@ export function AddStageModal({ open, onOpenChange, onAddStage }: AddStageModalP
       slug: stageName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       accentColor,
       category,
+      pipelineGroup,
       iconName: "Compass",
       isArchived: false,
     });
@@ -63,6 +70,7 @@ export function AddStageModal({ open, onOpenChange, onAddStage }: AddStageModalP
     setStageName("");
     setAccentColor("#38BDF8");
     setCategory("active");
+    setPipelineGroup("active_project");
     onOpenChange(false);
   };
 
@@ -78,7 +86,9 @@ export function AddStageModal({ open, onOpenChange, onAddStage }: AddStageModalP
 
         <div className="space-y-4 py-2 text-sm">
           <div className="space-y-1.5">
-            <Label className="text-xs text-[#C6B697] font-semibold">Stage Name *</Label>
+            <Label className="text-xs text-[#C6B697] font-semibold">
+              Stage Name *
+            </Label>
             <Input
               value={stageName}
               onChange={(e) => setStageName(e.target.value)}
@@ -88,7 +98,29 @@ export function AddStageModal({ open, onOpenChange, onAddStage }: AddStageModalP
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-[#C6B697] font-semibold">Workflow Category</Label>
+            <Label className="text-xs text-[#C6B697] font-semibold">
+              Pipeline Group
+            </Label>
+            <select
+              value={pipelineGroup}
+              onChange={(e) =>
+                setPipelineGroup(e.target.value as PipelineGroupType)
+              }
+              className="w-full h-9 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#FFF4D4] text-xs px-3 focus:outline-hidden focus:border-[#C5A059]"
+            >
+              <option value="opportunity">
+                Opportunities (Discovery / Follow-Up)
+              </option>
+              <option value="active_project">
+                Projects / Active Advocacy
+              </option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-[#C6B697] font-semibold">
+              Workflow Category
+            </Label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -103,7 +135,9 @@ export function AddStageModal({ open, onOpenChange, onAddStage }: AddStageModalP
           </div>
 
           <div className="space-y-1.5 pt-1">
-            <Label className="text-xs text-[#C6B697] font-semibold">Accent Color</Label>
+            <Label className="text-xs text-[#C6B697] font-semibold">
+              Accent Color
+            </Label>
             <div className="flex items-center gap-2 flex-wrap">
               {COLOR_OPTIONS.map((color) => (
                 <button
@@ -113,7 +147,9 @@ export function AddStageModal({ open, onOpenChange, onAddStage }: AddStageModalP
                   className="w-7 h-7 rounded-full border border-white/20 flex items-center justify-center transition-transform hover:scale-110 cursor-pointer shadow-xs"
                   style={{ backgroundColor: color }}
                 >
-                  {accentColor === color && <Check className="h-3.5 w-3.5 text-black font-bold" />}
+                  {accentColor === color && (
+                    <Check className="h-3.5 w-3.5 text-black font-bold" />
+                  )}
                 </button>
               ))}
             </div>

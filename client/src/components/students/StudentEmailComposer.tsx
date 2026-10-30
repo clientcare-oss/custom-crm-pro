@@ -11,6 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  EmailTemplateSelectorDropdown,
+  type SelectedEmailTemplatePayload,
+} from "@/components/email/EmailTemplateSelectorDropdown";
 
 interface StudentEmailComposerProps {
   studentId: number;
@@ -156,10 +160,10 @@ export function StudentEmailComposer({
   // Email Fields
   const [subject, setSubject] = useState(defaultSubject || "Re: ");
   const [body, setBody] = useState(defaultBody || "");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
   const [attachments, setAttachments] = useState<string[]>([]);
 
   // UI Menus & Toggles
-  const [showTemplatesMenu, setShowTemplatesMenu] = useState(false);
   const [showFormattingBar, setShowFormattingBar] = useState(true);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showMergeTagsMenu, setShowMergeTagsMenu] = useState(false);
@@ -171,10 +175,11 @@ export function StudentEmailComposer({
   const [selectedSize, setSelectedSize] = useState("16");
   const [sendTypeDropdown, setSendTypeDropdown] = useState(false);
 
-  // Server templates query
-  const { data: dbTemplates = [] } = trpc.emailTemplates.list.useQuery(undefined, {
-    retry: false,
-  });
+  const handleSelectStructuredTemplate = (tpl: SelectedEmailTemplatePayload) => {
+    setSelectedTemplateId(tpl.id);
+    setSubject(tpl.subject);
+    setBody(tpl.bodyText);
+  };
 
   const aiAssistMutation = trpc.emailTemplates.aiAssist.useMutation({
     onSuccess: (data) => {
@@ -219,7 +224,6 @@ export function StudentEmailComposer({
 
     setSubject(resolveTags(template.subject));
     setBody(resolveTags(template.body));
-    setShowTemplatesMenu(false);
     toast.success("Applied template: " + template.subject.slice(0, 30) + "…");
   };
 
@@ -302,9 +306,9 @@ export function StudentEmailComposer({
   };
 
   return (
-    <div className="w-full bg-[#05142B] border border-[#3A2C18] rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] overflow-hidden transition-all duration-200">
+    <div className="w-full bg-[#05142B] border border-[#3A2C18] rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] overflow-visible transition-all duration-200">
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-[#3A2C18]/80 bg-[#07162B]">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-[#3A2C18]/80 bg-[#07162B] rounded-t-2xl">
         {/* Recipient Chips & Label */}
         <div className="flex items-center flex-wrap gap-2 text-xs">
           {/* Logo seal */}
@@ -389,15 +393,33 @@ export function StudentEmailComposer({
         </div>
       </div>
 
-      {/* Subject Line */}
-      <div className="px-4 sm:px-6 py-2.5 border-b border-[#3A2C18]/60 bg-[#040E1E] flex items-center gap-2">
-        <label className="text-xs font-semibold text-[#A69371] shrink-0">Subject:</label>
-        <input
-          type="text"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder="Subject title…"
-          className="w-full bg-transparent border-none text-[#FFF4D4] font-medium text-xs sm:text-sm focus:outline-none placeholder:text-white/30"
+      {/* Subject Line & Visible Select Template Control */}
+      <div className="px-4 sm:px-6 py-2.5 border-b border-[#3A2C18]/60 bg-[#040E1E] flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <label className="text-xs font-semibold text-[#A69371] shrink-0">Subject:</label>
+          <input
+            type="text"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="Subject title…"
+            className="w-full bg-transparent border-none text-[#FFF4D4] font-medium text-xs sm:text-sm focus:outline-none placeholder:text-white/30"
+          />
+        </div>
+        <EmailTemplateSelectorDropdown
+          triggerLabel="Select Template"
+          variant="header"
+          placement="bottom"
+          currentSubject={subject}
+          currentBody={body}
+          defaultSubject={defaultSubject || "Re: "}
+          selectedTemplateId={selectedTemplateId}
+          mergeContext={{
+            studentFirstName,
+            studentFullName: fullName,
+            parentName,
+            caseId: caseId || studentId,
+          }}
+          onSelectTemplate={handleSelectStructuredTemplate}
         />
       </div>
 
@@ -677,77 +699,26 @@ export function StudentEmailComposer({
       )}
 
       {/* Bottom Action Bar */}
-      <div className="px-4 sm:px-6 py-3 border-t border-[#3A2C18] bg-[#07162B] flex items-center justify-between flex-wrap gap-3">
+      <div className="px-4 sm:px-6 py-3 border-t border-[#3A2C18] bg-[#07162B] rounded-b-2xl flex items-center justify-between flex-wrap gap-3">
         {/* Left Side: Templates Dropdown & Action Icons */}
         <div className="flex items-center flex-wrap gap-1.5 relative">
-          {/* THE HIGHLIGHTED USER FEATURE: Templates Dropdown in Lower Left */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowTemplatesMenu(!showTemplatesMenu)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E274A] hover:bg-[#163866] border border-[#C5A059]/60 text-[#FFE394] font-semibold text-xs shadow-md transition-colors cursor-pointer"
-            >
-              <span>Templates</span>
-              <ChevronDown className="w-3 h-3 text-[#FFE394]" />
-            </button>
-
-            {/* Templates Dropdown Menu */}
-            {showTemplatesMenu && (
-              <div className="absolute bottom-10 left-0 z-40 w-80 max-h-96 overflow-y-auto p-2 bg-[#07162B] border border-[#C5A059]/70 rounded-xl shadow-[0_12px_36px_rgba(0,0,0,0.95)] divide-y divide-[#3A2C18]/60">
-                <div className="px-2.5 py-1.5 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#A69371]">
-                  <span>Advocate Email Templates</span>
-                  <span className="text-[10px] text-[#C5A059]">{ADVOCATE_STANDARD_TEMPLATES.length} standard</span>
-                </div>
-
-                <div className="py-1 space-y-1">
-                  {ADVOCATE_STANDARD_TEMPLATES.map((tmpl) => (
-                    <button
-                      key={tmpl.id}
-                      type="button"
-                      onClick={() => applyTemplate(tmpl)}
-                      className="w-full text-left p-2 rounded-lg hover:bg-[#0E274A] transition-colors cursor-pointer group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-[#FFF4D4] group-hover:text-[#FFE394]">
-                          {tmpl.name}
-                        </span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/40 text-[#C6B697] border border-[#3A2C18]">
-                          {tmpl.category}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-white/50 line-clamp-1 mt-0.5">
-                        {tmpl.subject}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Custom DB Templates if available */}
-                {dbTemplates.length > 0 && (
-                  <div className="pt-1.5 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#A69371] px-2.5 py-1 block">
-                      Saved CRM Templates
-                    </span>
-                    {dbTemplates.map((dbT: any) => (
-                      <button
-                        key={dbT.id}
-                        type="button"
-                        onClick={() => applyTemplate({ subject: dbT.subject, body: dbT.body })}
-                        className="w-full text-left p-2 rounded-lg hover:bg-[#0E274A] transition-colors cursor-pointer group"
-                      >
-                        <span className="text-xs font-semibold text-[#FFF4D4] group-hover:text-[#FFE394] block">
-                          {dbT.name}
-                        </span>
-                        <span className="text-[10px] text-white/50 truncate block">
-                          {dbT.subject}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {/* THE HIGHLIGHTED USER FEATURE: Structured Category Templates Dropdown in Lower Left */}
+          <EmailTemplateSelectorDropdown
+            triggerLabel="Templates"
+            variant="toolbar"
+            placement="top"
+            currentSubject={subject}
+            currentBody={body}
+            defaultSubject={defaultSubject || "Re: "}
+            selectedTemplateId={selectedTemplateId}
+            mergeContext={{
+              studentFirstName,
+              studentFullName: fullName,
+              parentName,
+              caseId: caseId || studentId,
+            }}
+            onSelectTemplate={handleSelectStructuredTemplate}
+          />
 
           {/* Toggle formatting toolbar */}
           <button

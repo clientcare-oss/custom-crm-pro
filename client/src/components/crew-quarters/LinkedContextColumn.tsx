@@ -36,23 +36,9 @@ export default function LinkedContextColumn({
 }: LinkedContextColumnProps) {
   const [, setLocation] = useLocation();
 
-  const student = linkedContext?.linkedStudent || {
-    id: 1,
-    name: activeConversation?.displayName || "Pierre",
-    grade: "12th Grade",
-    focus: "College Planning",
-    caseNumber: "Case #WA-0287",
-  };
-
-  const task = linkedContext?.linkedTask || {
-    title: "Review signed agreement",
-    dueDate: "Due Today",
-  };
-
-  const members = linkedContext?.members || [
-    { id: 1, name: "Emily", role: "Paperwork & Administration", initials: "ED" },
-    { id: 2, name: "Byron", role: "Lead Advocate", initials: "BH" },
-  ];
+  const student = linkedContext?.linkedStudent || null;
+  const task = linkedContext?.linkedTask || null;
+  const members = linkedContext?.members || [];
 
   const createdDate = linkedContext?.createdAt
     ? new Date(linkedContext.createdAt).toLocaleDateString("en-US", {
@@ -60,16 +46,16 @@ export default function LinkedContextColumn({
         day: "numeric",
         year: "numeric",
       })
-    : "Mar 12, 2024";
+    : "Today";
 
   const lastMessageTime = linkedContext?.lastMessageTime
     ? new Date(linkedContext.lastMessageTime).toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "2-digit",
       })
-    : "10:20 AM";
+    : "—";
 
-  const messageCount = linkedContext?.messageCount || 24;
+  const messageCount = typeof linkedContext?.messageCount === "number" ? linkedContext.messageCount : 0;
 
   return (
     <aside className="w-48 sm:w-52 md:w-56 shrink-0 bg-gradient-to-b from-[#061833]/98 via-[#041228]/98 to-[#020b18]/98 border-l border-sky-500/25 flex flex-col h-full overflow-hidden relative text-slate-100 shadow-[inset_10px_0_20px_rgba(0,0,0,0.35)]">
@@ -89,53 +75,73 @@ export default function LinkedContextColumn({
         </div>
 
         {/* Linked Student Card (3D Elevated) */}
-        <div
-          onClick={() => student?.id && setLocation(`/contacts/${student.id}`)}
-          className="group relative bg-gradient-to-b from-[#0c284f] to-[#061730] hover:from-[#0f3261] hover:to-[#081d3d] border-t border-t-sky-400/40 border border-sky-500/25 rounded-2xl p-3 shadow-[0_8px_20px_rgba(0,5,20,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all duration-200 cursor-pointer space-y-2 hover:-translate-y-0.5"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500/25 to-blue-600/35 border border-sky-400/40 flex items-center justify-center text-sky-300 shadow-inner">
-                <GraduationCap className="w-4.5 h-4.5" />
+        {student ? (
+          <div
+            onClick={() => student?.id && setLocation(`/contacts/${student.id}`)}
+            className="group relative bg-gradient-to-b from-[#0c284f] to-[#061730] hover:from-[#0f3261] hover:to-[#081d3d] border-t border-t-sky-400/40 border border-sky-500/25 rounded-2xl p-3 shadow-[0_8px_20px_rgba(0,5,20,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all duration-200 cursor-pointer space-y-2 hover:-translate-y-0.5"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500/25 to-blue-600/35 border border-sky-400/40 flex items-center justify-center text-sky-300 shadow-inner">
+                  <GraduationCap className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-sky-300 transition-colors">
+                    {student.name}
+                  </h4>
+                  <p className="text-[10px] text-blue-200/70 font-medium">Student Profile</p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-sky-300 transition-colors">
-                  {student.name}
-                </h4>
-                <p className="text-[10px] text-blue-200/70 font-medium">Student Profile</p>
-              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-          </div>
 
-          <div className="border-t border-sky-500/15 pt-2 text-[10px] text-blue-200/80 space-y-0.5 font-medium">
-            <p>
-              {student.grade} <span className="text-slate-500">|</span> {student.focus}
-            </p>
-            <p className="text-sky-400/90 font-mono text-[10px]">{student.caseNumber}</p>
-          </div>
-        </div>
-
-        {/* Linked Task Card (3D Elevated) */}
-        <div
-          onClick={() => setLocation("/tasks")}
-          className="group relative bg-gradient-to-b from-[#0c284f] to-[#061730] hover:from-[#0f3261] hover:to-[#081d3d] border-t border-t-sky-400/40 border border-sky-500/25 rounded-2xl p-3 shadow-[0_8px_20px_rgba(0,5,20,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all duration-200 cursor-pointer flex items-center justify-between hover:-translate-y-0.5"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-blue-500/25 border border-blue-400/40 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
-              <CheckCircle2 className="w-4 h-4" />
+            <div className="border-t border-sky-500/15 pt-2 text-[10px] text-blue-200/80 space-y-0.5 font-medium">
+              <p>
+                {student.grade} <span className="text-slate-500">|</span> {student.focus}
+              </p>
+              <p className="text-sky-400/90 font-mono text-[10px]">{student.caseNumber}</p>
             </div>
-            <div className="min-w-0">
-              <h5 className="text-xs font-semibold text-white truncate group-hover:text-sky-300 transition-colors">
-                {task.title}
-              </h5>
-              <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider">
-                {task.dueDate}
+          </div>
+        ) : (
+          <div className="bg-gradient-to-b from-[#0c284f]/70 to-[#061730]/70 border border-sky-500/20 rounded-2xl p-3 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-sky-400 shrink-0" />
+              <span className="text-xs font-bold text-white truncate">
+                {activeConversation?.displayName || activeConversation?.name || "Internal Conversation"}
               </span>
             </div>
+            <p className="text-[10px] text-blue-200/70">
+              {activeConversation?.type === "channel"
+                ? "Internal team channel"
+                : activeConversation?.type === "direct"
+                ? `Direct message • ${activeConversation?.role || "Advocacy Team"}`
+                : "Internal staff discussion"}
+            </p>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
-        </div>
+        )}
+
+        {/* Linked Task Card (3D Elevated) */}
+        {task && (
+          <div
+            onClick={() => setLocation("/tasks")}
+            className="group relative bg-gradient-to-b from-[#0c284f] to-[#061730] hover:from-[#0f3261] hover:to-[#081d3d] border-t border-t-sky-400/40 border border-sky-500/25 rounded-2xl p-3 shadow-[0_8px_20px_rgba(0,5,20,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all duration-200 cursor-pointer flex items-center justify-between hover:-translate-y-0.5"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-blue-500/25 border border-blue-400/40 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <h5 className="text-xs font-semibold text-white truncate group-hover:text-sky-300 transition-colors">
+                  {task.title}
+                </h5>
+                <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider">
+                  {task.dueDate}
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
+          </div>
+        )}
 
         {/* Context Action Buttons (3D Styled) */}
         <div className="space-y-2 pt-1">

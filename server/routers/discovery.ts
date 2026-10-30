@@ -121,6 +121,31 @@ export const discoveryRouter = router({
           console.warn("[Discovery] Could not sync status to lead record:", syncErr);
         }
 
+        const autoTarget = data.studentContactId || contactId;
+        if (autoTarget) {
+          try {
+            const { triggerAutomationFlow } = await import("../db/automations");
+            if (data.scheduledAt) {
+              await triggerAutomationFlow("meeting_scheduled", autoTarget, false, {
+                eventKey: `disc_sched_${leadId}_${new Date(data.scheduledAt).getTime()}`,
+                meetingType: "Discovery Consultation",
+                meetingTitle: "Discovery Call",
+                eventDate: data.scheduledAt,
+              });
+            }
+            if (data.status === "Completed") {
+              await triggerAutomationFlow("session_ends", autoTarget, false, {
+                eventKey: `disc_done_${leadId}`,
+                meetingType: "Discovery Consultation",
+                meetingTitle: "Discovery Call",
+                eventDate: new Date(),
+              });
+            }
+          } catch (autoErr) {
+            console.warn("[Discovery] Automation trigger warning:", autoErr);
+          }
+        }
+
         return { success: true };
       }),
 

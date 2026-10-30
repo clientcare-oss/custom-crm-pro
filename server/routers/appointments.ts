@@ -147,6 +147,24 @@ export const appointmentsRouter = router({
         } catch (e) {
           console.error("[Notification] Failed to notify owner of booking:", e);
         }
+        if (input.clientId) {
+          try {
+            const { triggerAutomationFlow } = await import("../db/automations");
+            const aptKey = `book_${input.clientId}_${new Date(input.startTime).getTime()}`;
+            await triggerAutomationFlow("meeting_scheduled", input.clientId, false, {
+              eventKey: aptKey,
+              meetingTitle: input.title,
+              eventDate: input.startTime,
+            });
+            await triggerAutomationFlow("session_scheduled", input.clientId, false, {
+              eventKey: aptKey,
+              meetingTitle: input.title,
+              eventDate: input.startTime,
+            });
+          } catch (autoErr) {
+            console.warn("[Appointment] Automation trigger warning on bookPublic:", autoErr);
+          }
+        }
         return appointment;
       }),
 
@@ -323,6 +341,28 @@ export const appointmentsRouter = router({
           } catch {}
         }
 
+        const targetContactForAuto = input.clientId || parentContactId;
+        if (targetContactForAuto) {
+          try {
+            const { triggerAutomationFlow } = await import("../db/automations");
+            const schedKey = `apt_create_${createdAptId || Date.now()}_${targetContactForAuto}`;
+            await triggerAutomationFlow("meeting_scheduled", targetContactForAuto, false, {
+              eventKey: schedKey,
+              meetingType: input.meetingType,
+              meetingTitle: input.title,
+              eventDate: input.startTime,
+            });
+            await triggerAutomationFlow("session_scheduled", targetContactForAuto, false, {
+              eventKey: schedKey,
+              meetingType: input.meetingType,
+              meetingTitle: input.title,
+              eventDate: input.startTime,
+            });
+          } catch (autoErr) {
+            console.warn("[Appointment] Automation trigger warning on create:", autoErr);
+          }
+        }
+
         return created;
       }),
     update: adminProcedure
@@ -397,22 +437,42 @@ export const appointmentsRouter = router({
           }
         }
 
-        // When appointment is marked Completed, evaluate Review Opportunity trigger (Trigger A)
+        // When appointment is marked Completed, evaluate Review Opportunity trigger (Trigger A) & session_ends automations
         if (data.status === "Completed") {
           try {
             const apts = await db.getAppointmentsByOwner(ctx.user.id);
             const apt = (apts as any[]).find((a: any) => a.id === id);
-            if (apt && apt.clientId) {
-              await db.evaluateAndTriggerMeetingReviewOpportunity({
-                studentContactId: apt.clientId,
+            const targetContactId = data.clientId || apt?.clientId || data.parentContactId || apt?.parentContactId;
+            if (targetContactId) {
+              const resolvedTitle = data.title || apt?.title || "Advocacy Session";
+              const resolvedType = data.meetingType || apt?.meetingType || "";
+              const reviewRes = await db.evaluateAndTriggerMeetingReviewOpportunity({
+                studentContactId: targetContactId,
                 appointmentId: id,
-                meetingTitle: apt.title,
-                meetingType: apt.meetingType || data.meetingType,
-                assignedAdvocate: apt.assignedAdvocateName || "Byron Honea",
+                meetingTitle: resolvedTitle,
+                meetingType: resolvedType,
+                assignedAdvocate: data.assignedAdvocateName || apt?.assignedAdvocateName || "Byron Honea",
               });
+
+              const { triggerAutomationFlow } = await import("../db/automations");
+              const endKey = `apt_done_${id}_${targetContactId}`;
+              await triggerAutomationFlow("session_ends", targetContactId, false, {
+                eventKey: endKey,
+                meetingType: resolvedType,
+                meetingTitle: resolvedTitle,
+                eventDate: data.endTime || apt?.endTime || new Date(),
+              });
+              if (reviewRes?.triggered) {
+                await triggerAutomationFlow("review_request_point", targetContactId, false, {
+                  eventKey: `apt_review_${id}_${targetContactId}`,
+                  meetingType: resolvedType || "First IEP Meeting",
+                  meetingTitle: resolvedTitle,
+                  eventDate: data.endTime || apt?.endTime || new Date(),
+                });
+              }
             }
           } catch (revErr) {
-            console.warn("[Appointment] Review opportunity evaluation warning:", revErr);
+            console.warn("[Appointment] Review opportunity / session_ends evaluation warning:", revErr);
           }
         }
 

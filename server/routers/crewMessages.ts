@@ -1,7 +1,9 @@
 import { z } from "zod";
-import { router, protectedProcedure } from "../_core/trpc";
+import { router, requireStaffModule } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import * as db from "../db";
+
+const protectedProcedure = requireStaffModule("crew_quarters", "view");
 
 export const crewMessagesRouter = router({
   // Lists all conversations for current employee
@@ -77,6 +79,42 @@ export const crewMessagesRouter = router({
         replyToMessageId: input.replyToMessageId,
         links: input.links,
         attachments: input.attachments,
+      });
+    }),
+
+  // Edits an existing message (strictly author-only to prevent impersonation/tampering)
+  editMessage: protectedProcedure
+    .input(
+      z.object({
+        messageId: z.number(),
+        body: z.string().min(1),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role === "client") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access Crew Messages" });
+      }
+      return await db.editMessage({
+        messageId: input.messageId,
+        userId: ctx.user.id,
+        body: input.body,
+      });
+    }),
+
+  // Deletes an existing message (author or management/Protected Owner moderation)
+  deleteMessage: protectedProcedure
+    .input(
+      z.object({
+        messageId: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role === "client") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access Crew Messages" });
+      }
+      return await db.deleteMessage({
+        messageId: input.messageId,
+        userId: ctx.user.id,
       });
     }),
 
@@ -282,7 +320,7 @@ export const crewMessagesRouter = router({
       if (ctx.user.role === "client") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access Crew Messages" });
       }
-      return await db.getLinkedContext(input.conversationId);
+      return await db.getLinkedContext(input.conversationId, ctx.user.id);
     }),
 
   // Returns stats for the Crew Quarters Overview widget & notification bell
@@ -293,7 +331,7 @@ export const crewMessagesRouter = router({
     return await db.getCrewOverviewStats(ctx.user.id);
   }),
 
-  // Adds an important message directly to the student's Activity Timeline
+  // Crew Messages are strictly internal and separated from the client activity timeline
   addToActivityTimeline: protectedProcedure
     .input(
       z.object({
@@ -304,27 +342,10 @@ export const crewMessagesRouter = router({
         whyReason: z.string().optional(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role === "client") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Clients cannot access Crew Messages" });
-      }
-
-      const actorName = ctx.user.name || "Staff";
-
-      const database = await db.getDb();
-      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      const { caseActivityTimeline } = await import("../../drizzle/schema");
-      await database.insert(caseActivityTimeline).values({
-        studentContactId: input.studentContactId,
-        eventType: "note",
-        title: input.title,
-        description: input.notes || "Flagged note from internal crew messaging",
-        whyReason: input.whyReason || "Important advocacy communication record",
-        ownerName: actorName,
-        ownerRole: ctx.user.role === "admin" ? "Lead IEP Advocate" : "Senior Advocate",
+    .mutation(async () => {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Internal Crew Messages are strictly separated from the client activity timeline.",
       });
-
-      return { success: true };
     }),
 });
