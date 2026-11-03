@@ -293,15 +293,51 @@ export async function getContactByEmail(email: string) {
   return result ?? undefined;
 }
 
+const D1_CONTACT_COLUMNS = new Set([
+  "ownerId", "firstName", "lastName", "email", "phone", "company", "jobTitle",
+  "address", "city", "state", "zipCode", "country", "notes", "portalUserId",
+  "caseId", "parentContactId", "hourlyRate", "timezone", "bestTimeToCall",
+  "howHeardAboutUs", "referredBy", "secondParentName", "secondParentPhone",
+  "secondParentEmail", "dateOfBirth", "diagnosis", "schoolName", "gradeLevel",
+  "countyDistrict", "challenges", "archivedAt", "archiveReason", "attorneyName",
+  "attorneyPhone", "attorneyEmail", "attorneyFirm", "attorneyAddress",
+  "portalAccess", "quoContactId", "quoSyncStatus", "quoLastSyncAt",
+  "quoSyncError", "previousSchool", "goingToSchool", "planType", "pipelineStage",
+  "planTier", "accountStatus", "billingStatus", "contractStatus",
+  "assignedAdvocateName", "activeWorkstreams", "planMonthsRemaining",
+  "planExpiresAt", "iepEligibility", "medicalDiagnoses", "lifecycleStage",
+  "operationalState", "serviceStatus", "portalLifecycleStatus",
+  "currentPrimaryAction", "currentActionDestination", "currentActionDueDate",
+  "currentActionHelperText", "journeyProgress", "journeyTotalSteps",
+  "renewalDate", "renewalDaysRemaining", "serviceTermEndsAt", "pauseReason",
+  "pauseStartDate", "pauseReviewDate", "pauseType", "contractTreatment",
+  "pauseApprovedBy", "paymentFailureDate", "failedAttemptCount", "nextRetryDate",
+  "gracePeriodExpiresAt", "amountDue", "paymentMethodSummary",
+  "offboardingReason", "offboardingRequestedAt", "offboardingEffectiveDate",
+  "closeoutCompletedBy", "managerApprovalStatus", "approvingManager",
+  "approvalTimestamp", "scholarshipNotes", "referralCode", "lawyerInvolved",
+  "attorneyRepresents", "attorneyInvolvementDate", "legalNotes",
+  "attorneyDocuments", "legalStatusUpdatedAt", "legalStatusUpdatedBy",
+]);
+
 export async function createContact(data: any, ownerId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   // Find next unique sequence number across DB + in-memory cache
   let existingList: any[] = [];
-  try {
-    existingList = await db.select().from(contacts);
-  } catch {}
+  const cfDb = (globalThis as any).__CF_ENV_DB__;
+  if (cfDb) {
+    try {
+      const { results } = await cfDb.prepare("SELECT id, caseId FROM contacts ORDER BY id DESC").all();
+      if (Array.isArray(results)) existingList = results;
+    } catch {}
+  }
+  if (existingList.length === 0) {
+    try {
+      existingList = await db.select().from(contacts);
+    } catch {}
+  }
   const memList = Array.from(inMemoryContacts.values());
   for (const mc of memList) {
     if (!existingList.some((e) => e.id === mc.id)) {
@@ -359,15 +395,43 @@ export async function createContact(data: any, ownerId: number) {
   };
 
   let insertedId = 0;
-  try {
-    const insRes: any = await db.insert(contacts).values(enrichedData).returning({ id: contacts.id });
-    insertedId = insRes?.[0]?.id || insRes?.[0]?.insertId || insRes?.insertId || 0;
-  } catch {
+
+  // 1. Direct Cloudflare D1 insert (respects 100-column D1 schema & parameter limit)
+  if (cfDb) {
     try {
-      const fallbackRes: any = await db.insert(contacts).values(enrichedData);
-      insertedId = fallbackRes?.[0]?.insertId || fallbackRes?.insertId || 0;
-    } catch (innerErr) {
-      console.warn("[createContact] Insert error:", innerErr);
+      const cols: string[] = [];
+      const vals: any[] = [];
+      for (const [k, v] of Object.entries(enrichedData)) {
+        if (D1_CONTACT_COLUMNS.has(k) && v !== undefined) {
+          cols.push(k);
+          vals.push(v);
+        }
+      }
+      if (cols.length > 0) {
+        const placeholders = cols.map(() => "?").join(", ");
+        const d1Res = await cfDb
+          .prepare(`INSERT INTO contacts (${cols.join(", ")}) VALUES (${placeholders})`)
+          .bind(...vals)
+          .run();
+        insertedId = Number(d1Res?.meta?.last_row_id || 0);
+      }
+    } catch (d1Err) {
+      console.warn("[createContact] D1 direct insert error:", d1Err);
+    }
+  }
+
+  // 2. Local SQLite / Drizzle insert when not already inserted on D1
+  if (!insertedId) {
+    try {
+      const insRes: any = await db.insert(contacts).values(enrichedData).returning({ id: contacts.id });
+      insertedId = insRes?.[0]?.id || insRes?.[0]?.insertId || insRes?.insertId || 0;
+    } catch {
+      try {
+        const fallbackRes: any = await db.insert(contacts).values(enrichedData);
+        insertedId = fallbackRes?.[0]?.insertId || fallbackRes?.insertId || 0;
+      } catch (innerErr) {
+        console.warn("[createContact] Insert error:", innerErr);
+      }
     }
   }
 
@@ -1090,17 +1154,10 @@ export async function expressStudentSetup(
 
   let parentContactId = 0;
   try {
-    const pRes: any = await db.insert(contacts).values(parentData).returning({ id: contacts.id });
-    parentContactId = pRes?.[0]?.id || pRes?.[0]?.insertId || pRes?.insertId || 0;
+    const pCreated: any = await createContact(parentData, ownerId);
+    parentContactId = pCreated?.id || pCreated?.insertId || 0;
   } catch (err) {
     console.warn("[expressStudentSetup] Parent insert error:", err);
-  }
-
-  if (!parentContactId) {
-    try {
-      const [found] = await db.select().from(contacts).where(eq(contacts.caseId, parentCaseId)).limit(1);
-      if (found) parentContactId = found.id;
-    } catch {}
   }
 
   if (!parentContactId) {
@@ -1141,17 +1198,10 @@ export async function expressStudentSetup(
 
   let studentContactId = 0;
   try {
-    const sRes: any = await db.insert(contacts).values(studentData).returning({ id: contacts.id });
-    studentContactId = sRes?.[0]?.id || sRes?.[0]?.insertId || sRes?.insertId || 0;
+    const sCreated: any = await createContact(studentData, ownerId);
+    studentContactId = sCreated?.id || sCreated?.insertId || 0;
   } catch (err) {
     console.warn("[expressStudentSetup] Student insert error:", err);
-  }
-
-  if (!studentContactId) {
-    try {
-      const [found] = await db.select().from(contacts).where(eq(contacts.caseId, studentCaseId)).limit(1);
-      if (found) studentContactId = found.id;
-    } catch {}
   }
 
   if (!studentContactId) {
