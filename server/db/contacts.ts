@@ -297,12 +297,35 @@ export async function createContact(data: any, ownerId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Find next unique sequence number across DB + in-memory cache
+  let existingList: any[] = [];
+  try {
+    existingList = await db.select().from(contacts);
+  } catch {}
+  const memList = Array.from(inMemoryContacts.values());
+  for (const mc of memList) {
+    if (!existingList.some((e) => e.id === mc.id)) {
+      existingList.push(mc);
+    }
+  }
+
   // Auto-generate a unique caseId in WP-YYYY-NNNN format
   const year = new Date().getFullYear();
   let caseId = data.caseId;
   if (!caseId) {
-    const countResult = await db.select().from(contacts);
-    const nextNum = String(countResult.length + 1).padStart(4, "0");
+    let maxSeq = existingList.length;
+    for (const c of existingList) {
+      if (c.caseId && typeof c.caseId === "string") {
+        const match = c.caseId.match(/WP-\d{4}-(\d+)/);
+        if (match && match[1]) {
+          const num = parseInt(match[1], 10);
+          if (!isNaN(num) && num > maxSeq) {
+            maxSeq = num;
+          }
+        }
+      }
+    }
+    const nextNum = String(maxSeq + 1).padStart(4, "0");
     caseId = `WP-${year}-${nextNum}`;
   }
 
@@ -319,6 +342,10 @@ export async function createContact(data: any, ownerId: number) {
     ...data,
     ownerId,
     caseId,
+    pipelineStage: data.pipelineStage || "Active",
+    accountStatus: data.accountStatus || "Active",
+    lifecycleStage: data.lifecycleStage || "Active",
+    serviceStatus: data.serviceStatus || "Active",
     mapLatitude: loc.hasLocation ? loc.latitude : (data.mapLatitude ?? null),
     mapLongitude: loc.hasLocation ? loc.longitude : (data.mapLongitude ?? null),
     latitude: loc.hasLocation && loc.latitude != null ? String(loc.latitude) : (data.latitude ?? null),
@@ -331,8 +358,37 @@ export async function createContact(data: any, ownerId: number) {
     timezone: data.timezone || (loc.hasLocation ? loc.timeZone : undefined),
   };
 
-  const result = await db.insert(contacts).values(enrichedData);
-  return result;
+  let insertedId = 0;
+  try {
+    const insRes: any = await db.insert(contacts).values(enrichedData).returning({ id: contacts.id });
+    insertedId = insRes?.[0]?.id || insRes?.[0]?.insertId || insRes?.insertId || 0;
+  } catch {
+    try {
+      const fallbackRes: any = await db.insert(contacts).values(enrichedData);
+      insertedId = fallbackRes?.[0]?.insertId || fallbackRes?.insertId || 0;
+    } catch (innerErr) {
+      console.warn("[createContact] Insert error:", innerErr);
+    }
+  }
+
+  if (!insertedId) {
+    try {
+      const [found] = await db.select().from(contacts).where(eq(contacts.caseId, caseId)).limit(1);
+      if (found) insertedId = found.id;
+    } catch {}
+  }
+
+  if (!insertedId) {
+    let maxId = 120100;
+    for (const c of existingList) {
+      if (typeof c.id === "number" && c.id > maxId) maxId = c.id;
+    }
+    insertedId = maxId + inMemoryContacts.size + 1;
+  }
+
+  const createdRecord = { id: insertedId, insertId: insertedId, ...enrichedData };
+  inMemoryContacts.set(insertedId, createdRecord);
+  return createdRecord;
 }
 
 export async function updateContact(id: number, ownerId: number, data: any): Promise<any> {

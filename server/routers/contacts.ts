@@ -135,7 +135,7 @@ export const contactsRouter = router({
       .input(
         z.object({
           firstName: z.string().min(1),
-          lastName: z.string().min(1),
+          lastName: z.string().optional().default(""),
           email: z.union([z.string().email(), z.literal("")]).optional(),
           phone: z.string().optional(),
           company: z.string().optional(),
@@ -153,17 +153,131 @@ export const contactsRouter = router({
           planType: z.string().optional(),
           diagnosis: z.string().optional(),
           dateOfBirth: z.string().optional(),
+          // Optional inline linked parent creation when adding a student
+          newParentName: z.string().optional(),
+          newParentPhone: z.string().optional(),
+          newParentEmail: z.union([z.string().email(), z.literal("")]).optional(),
+          // Optional inline linked student creation when adding a parent
+          newStudentName: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const ownerId = ctx.user?.id || 1;
-        return await db.createContact(input, ownerId);
+        const {
+          newParentName,
+          newParentPhone,
+          newParentEmail,
+          newStudentName,
+          ...contactFields
+        } = input;
+
+        // Parse firstName / lastName gracefully if user typed full name into firstName or left lastName blank
+        let firstName = contactFields.firstName.trim();
+        let lastName = (contactFields.lastName || "").trim();
+        if (!lastName && firstName.includes(" ")) {
+          const parts = firstName.split(/\s+/);
+          firstName = parts[0] || firstName;
+          lastName = parts.slice(1).join(" ");
+        }
+
+        let resolvedParentId = contactFields.parentContactId;
+
+        // 1. If creating a student and a newParentName was typed inline, create the parent first
+        if (!resolvedParentId && newParentName && newParentName.trim()) {
+          const pParts = newParentName.trim().split(/\s+/);
+          const pFirst = pParts[0] || "Parent";
+          const pLast = pParts.slice(1).join(" ") || lastName || "Client";
+          if (!lastName) {
+            lastName = pLast;
+          }
+          const parentRes = await db.createContact(
+            {
+              firstName: pFirst,
+              lastName: pLast,
+              jobTitle: "Parent / Guardian",
+              company: contactFields.company || `${pLast} Family`,
+              phone: newParentPhone || contactFields.phone || undefined,
+              email: newParentEmail || undefined,
+              city: contactFields.city || "Atlanta",
+              state: contactFields.state || "GA",
+              bestTimeToCall: contactFields.bestTimeToCall || "Mornings before 11:00 AM",
+            },
+            ownerId
+          );
+          const pId = db.getInsertId(parentRes);
+          if (pId > 0) {
+            resolvedParentId = pId;
+          }
+        }
+
+        if (!lastName) {
+          // Check if linked parent has a lastName we can inherit
+          if (resolvedParentId) {
+            const parentRecord = await db.getContactById(resolvedParentId, ownerId);
+            if (parentRecord?.lastName) {
+              lastName = parentRecord.lastName;
+            }
+          }
+          if (!lastName) {
+            lastName = "Client";
+          }
+        }
+
+        const primaryRes = await db.createContact(
+          {
+            ...contactFields,
+            firstName,
+            lastName,
+            company: contactFields.company || `${lastName} Family`,
+            ...(resolvedParentId ? { parentContactId: resolvedParentId } : {}),
+          },
+          ownerId
+        );
+        const primaryId = db.getInsertId(primaryRes);
+
+        // 2. If creating a parent contact and a newStudentName was typed inline, create the linked student
+        let createdStudentId: number | undefined;
+        if (newStudentName && newStudentName.trim() && primaryId > 0) {
+          const sParts = newStudentName.trim().split(/\s+/);
+          const sFirst = sParts[0] || "Student";
+          const sLast = sParts.slice(1).join(" ") || lastName;
+          const studentRes = await db.createContact(
+            {
+              firstName: sFirst,
+              lastName: sLast,
+              jobTitle: "Student",
+              parentContactId: primaryId,
+              company: contactFields.company || `${lastName} Family`,
+              schoolName: contactFields.schoolName || "Atlanta Public Schools",
+              gradeLevel: contactFields.gradeLevel || "9th Grade",
+              planType: contactFields.planType || "IEP",
+              phone: contactFields.phone || undefined,
+              city: contactFields.city || "Atlanta",
+              state: contactFields.state || "GA",
+            },
+            ownerId
+          );
+          createdStudentId = db.getInsertId(studentRes);
+        }
+
+        return {
+          ...primaryRes,
+          id: primaryId,
+          insertId: primaryId,
+          parentContactId: resolvedParentId,
+          createdStudentId,
+        };
       }),
 
     createSamplePair: requireStaffModule("contacts", "edit")
       .input(
         z.object({
           pairIndex: z.number().optional(),
+          studentName: z.string().optional(),
+          parentName: z.string().optional(),
+          schoolName: z.string().optional(),
+          gradeLevel: z.string().optional(),
+          planType: z.string().optional(),
         }).optional()
       )
       .mutation(async ({ ctx, input }) => {
@@ -281,19 +395,110 @@ export const contactsRouter = router({
               zipCode: "30328",
               notes: "Sample student file. Multidisciplinary psychoeducational evaluation request.",
             }
+          },
+          {
+            parent: {
+              firstName: "Elena",
+              lastName: "Mercer",
+              email: "elena.mercer@sample.waypointadvocates.com",
+              phone: "(404) 555-0219",
+              company: "Mercer Family",
+              jobTitle: "Parent / Guardian",
+              city: "Alpharetta",
+              state: "GA",
+              zipCode: "30009",
+              notes: "Sample parent record. Dyslexia structured literacy intervention advocacy.",
+              bestTimeToCall: "Weekdays 9:00 AM - 12:00 PM",
+            },
+            student: {
+              firstName: "Noah",
+              lastName: "Mercer",
+              schoolName: "Milton High School",
+              gradeLevel: "9th Grade",
+              planType: "IEP",
+              company: "Mercer Family",
+              phone: "(404) 555-0219",
+              city: "Alpharetta",
+              state: "GA",
+              zipCode: "30009",
+              notes: "Sample student file. Assistive technology and reading comprehension goals.",
+            }
+          },
+          {
+            parent: {
+              firstName: "Rachel",
+              lastName: "Bennett",
+              email: "rachel.bennett@sample.waypointadvocates.com",
+              phone: "(678) 555-0264",
+              company: "Bennett Family",
+              jobTitle: "Parent / Guardian",
+              city: "Roswell",
+              state: "GA",
+              zipCode: "30075",
+              notes: "Sample parent record. Autism spectrum support and speech therapy minutes.",
+              bestTimeToCall: "Tuesdays & Thursdays before 1:00 PM",
+            },
+            student: {
+              firstName: "Chloe",
+              lastName: "Bennett",
+              schoolName: "Roswell High School",
+              gradeLevel: "7th Grade",
+              planType: "IEP",
+              company: "Bennett Family",
+              phone: "(678) 555-0264",
+              city: "Roswell",
+              state: "GA",
+              zipCode: "30075",
+              notes: "Sample student file. Social-pragmatic language goals and sensory breaks.",
+            }
           }
         ];
 
-        const selected = input?.pairIndex != null 
+        const existingContacts = await db.getContactsByOwner(ownerId);
+        const unusedPairs = SAMPLE_PAIRS.filter(
+          (pair) =>
+            !existingContacts.some(
+              (c: any) =>
+                (c.firstName || "").toLowerCase() === pair.student.firstName.toLowerCase() &&
+                (c.lastName || "").toLowerCase() === pair.student.lastName.toLowerCase()
+            )
+        );
+        const pool = unusedPairs.length > 0 ? unusedPairs : SAMPLE_PAIRS;
+
+        const basePair = input?.pairIndex != null 
           ? SAMPLE_PAIRS[input.pairIndex % SAMPLE_PAIRS.length] 
-          : SAMPLE_PAIRS[Math.floor(Math.random() * SAMPLE_PAIRS.length)];
+          : pool[Math.floor(Math.random() * pool.length)];
+
+        // Allow user-typed studentName or parentName to override the sample template names!
+        let sFirst = basePair.student.firstName;
+        let sLast = basePair.student.lastName;
+        if (input?.studentName && input.studentName.trim()) {
+          const parts = input.studentName.trim().split(/\s+/);
+          sFirst = parts[0] || sFirst;
+          sLast = parts.slice(1).join(" ") || sLast;
+        }
+
+        let pFirst = basePair.parent.firstName;
+        let pLast = input?.studentName && input.studentName.trim() ? sLast : basePair.parent.lastName;
+        if (input?.parentName && input.parentName.trim()) {
+          const parts = input.parentName.trim().split(/\s+/);
+          pFirst = parts[0] || pFirst;
+          pLast = parts.slice(1).join(" ") || pLast;
+          if (!input?.studentName?.trim().includes(" ")) {
+            sLast = pLast;
+          }
+        }
 
         const suffix = Math.floor(Math.random() * 9000 + 1000);
-        const parentEmail = selected.parent.email.replace("@", `+${suffix}@`);
+        const parentEmail = `${pFirst.toLowerCase()}.${pLast.toLowerCase()}+${suffix}@sample.waypointadvocates.com`;
+        const familyCompany = `${pLast} Family`;
 
         // 1. Create parent
         const parentRes = await db.createContact({
-          ...selected.parent,
+          ...basePair.parent,
+          firstName: pFirst,
+          lastName: pLast,
+          company: familyCompany,
           email: parentEmail,
         }, ownerId);
         let parentId = db.getInsertId(parentRes);
@@ -306,7 +511,13 @@ export const contactsRouter = router({
 
         // 2. Create student linked to parent
         const studentRes = await db.createContact({
-          ...selected.student,
+          ...basePair.student,
+          firstName: sFirst,
+          lastName: sLast,
+          company: familyCompany,
+          schoolName: input?.schoolName?.trim() || basePair.student.schoolName,
+          gradeLevel: input?.gradeLevel?.trim() || basePair.student.gradeLevel,
+          planType: input?.planType?.trim() || basePair.student.planType,
           jobTitle: "Student",
           parentContactId: parentId > 0 ? parentId : undefined,
         }, ownerId);
@@ -314,7 +525,7 @@ export const contactsRouter = router({
 
         if (!studentId || studentId <= 0) {
           const list = await db.getContactsByOwner(ownerId);
-          const found = list.find((c: any) => c.firstName === selected.student.firstName && c.lastName === selected.student.lastName);
+          const found = list.find((c: any) => c.firstName === sFirst && c.lastName === sLast);
           if (found?.id) studentId = found.id;
         }
 
@@ -322,10 +533,10 @@ export const contactsRouter = router({
           success: true,
           parentId,
           studentId,
-          parentName: `${selected.parent.firstName} ${selected.parent.lastName}`,
-          studentName: `${selected.student.firstName} ${selected.student.lastName}`,
-          planType: selected.student.planType,
-          message: `Sample student "${selected.student.firstName} ${selected.student.lastName}" & parent "${selected.parent.firstName} ${selected.parent.lastName}" created!`,
+          parentName: `${pFirst} ${pLast}`,
+          studentName: `${sFirst} ${sLast}`,
+          planType: input?.planType?.trim() || basePair.student.planType,
+          message: `Student "${sFirst} ${sLast}" & parent "${pFirst} ${pLast}" added!`,
         };
       }),
 

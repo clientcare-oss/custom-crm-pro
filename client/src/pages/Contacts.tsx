@@ -22,6 +22,7 @@ import ContactsLedgerView from "@/components/contact/ledger/ContactsLedgerView";
 
 export default function Contacts() {
   const { user } = useAuth();
+  const utils = trpc.useUtils();
   const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -33,20 +34,26 @@ export default function Contacts() {
     company: "",
     jobTitle: "",
     bestTimeToCall: "",
+    newStudentName: "",
+    schoolName: "",
+    gradeLevel: "",
+    planType: "IEP",
   });
 
-  const { data: contacts, isLoading, refetch } = trpc.contacts.list.useQuery(
-    undefined,
-    {
-      enabled: user?.role === "admin",
-    }
-  );
+  const { data: contacts, isLoading, refetch } = trpc.contacts.list.useQuery();
 
   const [searchQuery, setSearchQuery] = useState("");
 
   const createMutation = trpc.contacts.create.useMutation({
-    onSuccess: () => {
-      toast.success("Contact created successfully");
+    onSuccess: (data: any) => {
+      toast.success(
+        data?.createdStudentId
+          ? "Contact & linked student file created!"
+          : "Contact created successfully"
+      );
+      setSearchQuery("");
+      utils.contacts.list.invalidate();
+      utils.pipeline.cards.list.invalidate();
       refetch();
       setOpen(false);
       setFormData({
@@ -57,6 +64,10 @@ export default function Contacts() {
         company: "",
         jobTitle: "",
         bestTimeToCall: "",
+        newStudentName: "",
+        schoolName: "",
+        gradeLevel: "",
+        planType: "IEP",
       });
     },
     onError: (error) => {
@@ -67,27 +78,66 @@ export default function Contacts() {
   const createSamplePairMutation = trpc.contacts.createSamplePair.useMutation({
     onSuccess: (data) => {
       toast.success(data.message || "Sample student & parent pair created!");
+      setSearchQuery("");
+      utils.contacts.list.invalidate();
+      utils.pipeline.cards.list.invalidate();
       refetch();
+      setOpen(false);
     },
     onError: (e) => toast.error(e.message || "Failed to create sample pair"),
   });
 
   const handleFillSample = () => {
-    setFormData({
-      firstName: "Sarah",
-      lastName: "Sterling",
-      email: "sarah.sterling@sample.waypointadvocates.com",
-      phone: "(404) 555-0182",
-      company: "Sterling Family",
-      jobTitle: "Parent / Guardian",
-      bestTimeToCall: "Mornings before 11:00 AM",
-    });
-    toast.info("Sample contact data populated");
+    const SAMPLE_FAMILIES = [
+      {
+        firstName: "Sarah",
+        lastName: "Sterling",
+        email: "sarah.sterling@sample.waypointadvocates.com",
+        phone: "(404) 555-0182",
+        company: "Sterling Family",
+        jobTitle: "Parent / Guardian",
+        bestTimeToCall: "Mornings before 11:00 AM",
+        newStudentName: "Lucas Sterling",
+        schoolName: "North Atlanta High",
+        gradeLevel: "10th Grade",
+        planType: "IEP",
+      },
+      {
+        firstName: "David",
+        lastName: "Vance",
+        email: "david.vance@sample.waypointadvocates.com",
+        phone: "(404) 555-0194",
+        company: "Vance Family",
+        jobTitle: "Parent / Guardian",
+        bestTimeToCall: "Afternoons after 2:00 PM",
+        newStudentName: "Maya Vance",
+        schoolName: "Decatur High School",
+        gradeLevel: "8th Grade",
+        planType: "504",
+      },
+      {
+        firstName: "Kendra",
+        lastName: "Mitchell",
+        email: "kendra.mitchell@sample.waypointadvocates.com",
+        phone: "(770) 555-0138",
+        company: "Mitchell Family",
+        jobTitle: "Parent / Guardian",
+        bestTimeToCall: "Mid-day 12:00 PM - 1:00 PM",
+        newStudentName: "Elijah Mitchell",
+        schoolName: "Walton High School",
+        gradeLevel: "11th Grade",
+        planType: "IEP",
+      },
+    ];
+    const pick = SAMPLE_FAMILIES[Math.floor(Math.random() * SAMPLE_FAMILIES.length)];
+    setFormData(pick);
+    toast.info(`Filled sample parent (${pick.firstName} ${pick.lastName}) & student (${pick.newStudentName})`);
   };
 
   const updateMutation = trpc.contacts.update.useMutation({
     onSuccess: () => {
       toast.success("Contact updated successfully");
+      utils.contacts.list.invalidate();
       refetch();
       setOpen(false);
       setEditingId(null);
@@ -99,6 +149,10 @@ export default function Contacts() {
         company: "",
         jobTitle: "",
         bestTimeToCall: "",
+        newStudentName: "",
+        schoolName: "",
+        gradeLevel: "",
+        planType: "IEP",
       });
     },
     onError: (error) => {
@@ -109,6 +163,7 @@ export default function Contacts() {
   const deleteMutation = trpc.contacts.delete.useMutation({
     onSuccess: () => {
       toast.success("Contact deleted successfully");
+      utils.contacts.list.invalidate();
       refetch();
     },
     onError: (error) => {
@@ -127,8 +182,8 @@ export default function Contacts() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.firstName || !formData.lastName) {
-      toast.error("First and last name are required");
+    if (!formData.firstName.trim()) {
+      toast.error("Please enter a name");
       return;
     }
     const phoneErr = validatePhone(formData.phone);
@@ -136,12 +191,42 @@ export default function Contacts() {
       toast.error(phoneErr);
       return;
     }
+    let firstName = formData.firstName.trim();
+    let lastName = formData.lastName.trim();
+    if (!lastName && firstName.includes(" ")) {
+      const parts = firstName.split(/\s+/);
+      firstName = parts[0] || firstName;
+      lastName = parts.slice(1).join(" ");
+    }
+    if (!lastName && formData.newStudentName.trim().includes(" ")) {
+      const sParts = formData.newStudentName.trim().split(/\s+/);
+      lastName = sParts.slice(1).join(" ");
+    }
+    if (!lastName) {
+      lastName = "Client";
+    }
     // Auto-format phone before saving
-    const data = { ...formData, phone: formatPhone(formData.phone) };
+    const { newStudentName, schoolName, gradeLevel, planType, ...rest } = formData;
+    const data = {
+      ...rest,
+      firstName,
+      lastName,
+      phone: formatPhone(formData.phone),
+    };
     if (editingId) {
       updateMutation.mutate({ id: editingId, ...data });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate({
+        ...data,
+        ...(newStudentName.trim()
+          ? {
+              newStudentName: newStudentName.trim(),
+              schoolName: schoolName.trim() || undefined,
+              gradeLevel: gradeLevel.trim() || undefined,
+              planType: planType || "IEP",
+            }
+          : {}),
+      });
     }
   };
 
@@ -155,6 +240,10 @@ export default function Contacts() {
       company: "",
       jobTitle: "",
       bestTimeToCall: "",
+      newStudentName: "",
+      schoolName: "",
+      gradeLevel: "",
+      planType: "IEP",
     });
     setOpen(true);
   };
@@ -169,6 +258,10 @@ export default function Contacts() {
       company: contact.company || "",
       jobTitle: contact.jobTitle || "",
       bestTimeToCall: contact.bestTimeToCall || "",
+      newStudentName: "",
+      schoolName: "",
+      gradeLevel: "",
+      planType: "IEP",
     });
     setOpen(true);
   };
@@ -282,31 +375,68 @@ export default function Contacts() {
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold">
-                          First Name *
+                          First / Full Name *
                         </label>
                         <VoiceInput
                           value={formData.firstName}
                           onChange={(e) =>
                             setFormData({ ...formData, firstName: e.target.value })
                           }
-                          placeholder="John"
+                          placeholder="e.g. Sarah or Sarah Sterling"
                           required
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold">
-                          Last Name *
+                          Last Name <span className="text-[11px] font-normal text-[#7E97B8]">(or auto-split)</span>
                         </label>
                         <VoiceInput
                           value={formData.lastName}
                           onChange={(e) =>
                             setFormData({ ...formData, lastName: e.target.value })
                           }
-                          placeholder="Doe"
-                          required
+                          placeholder="Sterling"
                         />
                       </div>
                     </div>
+                    {!editingId && (
+                      <div className="p-3 rounded-xl bg-[#061121] border border-[#B88943]/30 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-xs font-serif font-bold text-[#FCE09E]">
+                            Linked Student Name (Optional — creates & links student file)
+                          </label>
+                          <span className="text-[10px] text-[#7E97B8]">Simultaneous setup</span>
+                        </div>
+                        <VoiceInput
+                          value={formData.newStudentName}
+                          onChange={(e) =>
+                            setFormData({ ...formData, newStudentName: e.target.value })
+                          }
+                          placeholder="e.g. Lucas Sterling (leave blank if no student)"
+                          className="bg-[#050D1A] border-[#B88943]/30 text-white"
+                        />
+                        {formData.newStudentName.trim() && (
+                          <div className="grid grid-cols-2 gap-2.5 pt-1">
+                            <VoiceInput
+                              value={formData.schoolName}
+                              onChange={(e) =>
+                                setFormData({ ...formData, schoolName: e.target.value })
+                              }
+                              placeholder="School (e.g. North Atlanta High)"
+                              className="bg-[#050D1A] border-[#B88943]/30 text-white text-xs h-8.5"
+                            />
+                            <VoiceInput
+                              value={formData.gradeLevel}
+                              onChange={(e) =>
+                                setFormData({ ...formData, gradeLevel: e.target.value })
+                              }
+                              placeholder="Grade (e.g. 10th Grade)"
+                              className="bg-[#050D1A] border-[#B88943]/30 text-white text-xs h-8.5"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold">Email</label>
                       <VoiceInput

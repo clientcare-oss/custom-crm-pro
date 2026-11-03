@@ -88,7 +88,12 @@ export async function queryCloudflareD1(sql: string, params: any[] = []) {
   if (useLocalSqlite) {
     try {
       const res = await getLocalDbClient().execute({ sql: sanitizedSql, args: params });
-      return res.rows || [];
+      const rows: any = res.rows ? [...res.rows] : [];
+      if (res.lastInsertRowid !== undefined && res.lastInsertRowid !== null) {
+        rows.insertId = Number(res.lastInsertRowid);
+        rows.lastInsertRowid = Number(res.lastInsertRowid);
+      }
+      return rows;
     } catch (localErr: any) {
       console.warn(`[Local DB Fallback] Query failed:`, localErr.message);
       return [];

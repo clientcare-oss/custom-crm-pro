@@ -35,6 +35,7 @@ import { CabinetSidePillar } from "@/components/students/CabinetSidePillar";
 
 export default function Students() {
   const [, setLocation] = useLocation();
+  const utils = trpc.useUtils();
 
   // ─── Query Live Production Contacts ───
   const { data: rawContacts, isLoading, refetch } = trpc.contacts.list.useQuery();
@@ -111,6 +112,7 @@ export default function Students() {
     email: string;
     phone: string;
     parentContactId: string;
+    newParentName: string;
     markerType: MarkerType | "none";
   }>({
     firstName: "",
@@ -123,15 +125,21 @@ export default function Students() {
     email: "",
     phone: "",
     parentContactId: "",
+    newParentName: "",
     markerType: "none",
   });
 
   const createMutation = trpc.contacts.create.useMutation({
     onSuccess: (data: any) => {
-      toast.success("Student file successfully added to active cabinet");
+      toast.success("Student & parent file added to active cabinet!");
       if (data?.id && formData.markerType && formData.markerType !== "none") {
         handleMarkerChange(data.id, formData.markerType);
       }
+      setSelectedLetter("ALL");
+      setSearchQuery("");
+      setOpenDrawers((prev) => ({ ...prev, active: true }));
+      utils.contacts.list.invalidate();
+      utils.pipeline.cards.list.invalidate();
       refetch();
       setNewStudentOpen(false);
       setFormData({
@@ -145,6 +153,7 @@ export default function Students() {
         email: "",
         phone: "",
         parentContactId: "",
+        newParentName: "",
         markerType: "none",
       });
     },
@@ -159,6 +168,11 @@ export default function Students() {
         const randomMarker = sampleMarkers[Math.floor(Math.random() * sampleMarkers.length)];
         handleMarkerChange(data.studentId, randomMarker);
       }
+      setSelectedLetter("ALL");
+      setSearchQuery("");
+      setOpenDrawers((prev) => ({ ...prev, active: true }));
+      utils.contacts.list.invalidate();
+      utils.pipeline.cards.list.invalidate();
       refetch();
       setNewStudentOpen(false);
     },
@@ -167,11 +181,12 @@ export default function Students() {
 
   const quickAddParentMutation = trpc.contacts.create.useMutation({
     onSuccess: (data: any) => {
-      toast.success("Sample parent contact created!");
+      toast.success("Parent contact created & linked!");
+      utils.contacts.list.invalidate();
       refetch().then((res) => {
         const newId = data?.id || (res.data && (res.data as any)[0]?.id);
         if (newId) {
-          setFormData((prev) => ({ ...prev, parentContactId: newId.toString() }));
+          setFormData((prev) => ({ ...prev, parentContactId: newId.toString(), newParentName: "" }));
         }
       });
     },
@@ -179,15 +194,18 @@ export default function Students() {
   });
 
   const handleQuickAddSampleParent = () => {
-    const parentLastName = formData.lastName.trim() || "Sterling";
+    const typedParent = formData.newParentName.trim();
+    const parts = typedParent ? typedParent.split(/\s+/) : [];
+    const parentFirstName = parts[0] || "Sarah";
+    const parentLastName = parts.slice(1).join(" ") || formData.lastName.trim() || "Sterling";
     quickAddParentMutation.mutate({
-      firstName: "Sarah",
+      firstName: parentFirstName,
       lastName: parentLastName,
       company: `${parentLastName} Family`,
       jobTitle: "Parent / Guardian",
-      phone: "(404) 555-0182",
-      email: `sarah.${parentLastName.toLowerCase()}@sample.waypointadvocates.com`,
-      notes: "Sample parent contact record.",
+      phone: formData.phone || "(404) 555-0182",
+      email: `${parentFirstName.toLowerCase()}.${parentLastName.toLowerCase()}@sample.waypointadvocates.com`,
+      notes: "Parent contact record.",
       bestTimeToCall: "Mornings before 11:00 AM",
     });
   };
@@ -197,6 +215,7 @@ export default function Students() {
       {
         firstName: "Lucas",
         lastName: "Sterling",
+        newParentName: "Sarah Sterling",
         schoolName: "North Atlanta High",
         gradeLevel: "10th Grade",
         company: "Sterling Family",
@@ -207,6 +226,7 @@ export default function Students() {
       {
         firstName: "Maya",
         lastName: "Vance",
+        newParentName: "David Vance",
         schoolName: "Decatur High School",
         gradeLevel: "8th Grade",
         company: "Vance Family",
@@ -217,6 +237,7 @@ export default function Students() {
       {
         firstName: "Elijah",
         lastName: "Mitchell",
+        newParentName: "Kendra Mitchell",
         schoolName: "Walton High School",
         gradeLevel: "11th Grade",
         company: "Mitchell Family",
@@ -227,12 +248,24 @@ export default function Students() {
       {
         firstName: "Caleb",
         lastName: "Davis",
+        newParentName: "Marcus Davis",
         schoolName: "Riverwood High School",
         gradeLevel: "6th Grade",
         company: "Davis Family",
         planType: "No IEP/504 Yet",
         phone: "(678) 555-0177",
         markerType: "calendar" as MarkerType,
+      },
+      {
+        firstName: "Noah",
+        lastName: "Mercer",
+        newParentName: "Elena Mercer",
+        schoolName: "Milton High School",
+        gradeLevel: "9th Grade",
+        company: "Mercer Family",
+        planType: "IEP",
+        phone: "(404) 555-0219",
+        markerType: "green_bookmark" as MarkerType,
       },
     ];
 
@@ -245,9 +278,10 @@ export default function Students() {
     setFormData((prev) => ({
       ...prev,
       ...pick,
-      parentContactId: matchingParent ? matchingParent.id.toString() : prev.parentContactId,
+      parentContactId: matchingParent ? matchingParent.id.toString() : "",
+      newParentName: matchingParent ? "" : pick.newParentName,
     }));
-    toast.info(`Filled sample student data for ${pick.firstName} ${pick.lastName}`);
+    toast.info(`Filled sample student (${pick.firstName} ${pick.lastName}) & parent (${pick.newParentName})`);
   };
 
   // ─── Parents Lookup Map ───
@@ -722,8 +756,8 @@ export default function Students() {
               id="new-student-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!formData.firstName.trim() || !formData.lastName.trim()) {
-                  toast.error("First and last name are required");
+                if (!formData.firstName.trim()) {
+                  toast.error("Please enter the student's name");
                   return;
                 }
                 const phoneErr = validatePhone(formData.phone);
@@ -731,34 +765,50 @@ export default function Students() {
                   toast.error(phoneErr);
                   return;
                 }
-                const { parentContactId, ...rest } = formData;
+                let sFirst = formData.firstName.trim();
+                let sLast = formData.lastName.trim();
+                if (!sLast && sFirst.includes(" ")) {
+                  const parts = sFirst.split(/\s+/);
+                  sFirst = parts[0] || sFirst;
+                  sLast = parts.slice(1).join(" ");
+                }
+                if (!sLast && formData.newParentName.trim().includes(" ")) {
+                  const pParts = formData.newParentName.trim().split(/\s+/);
+                  sLast = pParts.slice(1).join(" ");
+                }
+                const { parentContactId, newParentName, ...rest } = formData;
                 createMutation.mutate({
                   ...rest,
+                  firstName: sFirst,
+                  lastName: sLast,
                   phone: formatPhone(formData.phone),
                   ...(parentContactId ? { parentContactId: parseInt(parentContactId, 10) } : {}),
+                  ...(!parentContactId && newParentName.trim() ? { newParentName: newParentName.trim() } : {}),
                 });
               }}
               className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 min-h-0"
             >
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[#CBD7E8]">First Name *</label>
+                  <label className="text-xs font-semibold text-[#CBD7E8]">Student Name *</label>
                   <VoiceInput
                     value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    placeholder="e.g. Lucas"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData({ ...formData, firstName: val });
+                    }}
+                    placeholder="e.g. Lucas or Lucas Sterling"
                     className="bg-[#050D1A] border-[#B88943]/30 text-white"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[#CBD7E8]">Last Name *</label>
+                  <label className="text-xs font-semibold text-[#CBD7E8]">Last Name <span className="text-[10px] font-normal text-[#7E97B8]">(or auto-split)</span></label>
                   <VoiceInput
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                     placeholder="e.g. Sterling"
                     className="bg-[#050D1A] border-[#B88943]/30 text-white"
-                    required
                   />
                 </div>
               </div>
@@ -784,36 +834,57 @@ export default function Students() {
                 </div>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5 p-2.5 rounded-xl bg-[#061121] border border-[#B88943]/30">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-[#CBD7E8]">Parent / Family Contact</label>
+                  <label className="text-xs font-semibold text-[#FCE09E]">Parent / Family Contact</label>
                   <button
                     type="button"
                     onClick={handleQuickAddSampleParent}
                     disabled={quickAddParentMutation.isPending}
                     className="text-[11px] text-[#E9BA6B] hover:underline flex items-center gap-1 cursor-pointer font-medium"
-                    title="Create and link a sample parent contact"
+                    title="Create and link a parent contact immediately"
                   >
                     <Plus className="w-3 h-3" />
                     <span>{quickAddParentMutation.isPending ? "Adding..." : "Quick Sample Parent"}</span>
                   </button>
                 </div>
-                <Select
-                  value={formData.parentContactId || "none"}
-                  onValueChange={(val) => setFormData({ ...formData, parentContactId: val === "none" ? "" : val })}
-                >
-                  <SelectTrigger className="bg-[#050D1A] border-[#B88943]/30 text-white">
-                    <SelectValue placeholder="Select parent contact..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0A1729] border-[#B88943]/40 text-white">
-                    <SelectItem value="none">— No parent linked —</SelectItem>
-                    {parents.map((p: any) => (
-                      <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.firstName} {p.lastName}{p.company ? ` (${p.company})` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <VoiceInput
+                  value={formData.newParentName}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      newParentName: e.target.value,
+                      ...(e.target.value.trim() ? { parentContactId: "" } : {}),
+                    })
+                  }
+                  placeholder="Type new parent name (e.g. Sarah Sterling) to auto-create & link..."
+                  className="bg-[#050D1A] border-[#B88943]/30 text-white text-xs h-8.5"
+                />
+                <div className="flex items-center gap-2 pt-0.5">
+                  <span className="text-[10px] text-[#7E97B8] shrink-0">Or link existing:</span>
+                  <Select
+                    value={formData.parentContactId || "none"}
+                    onValueChange={(val) =>
+                      setFormData({
+                        ...formData,
+                        parentContactId: val === "none" ? "" : val,
+                        ...(val !== "none" ? { newParentName: "" } : {}),
+                      })
+                    }
+                  >
+                    <SelectTrigger className="bg-[#050D1A] border-[#B88943]/30 text-white h-8 text-xs flex-1">
+                      <SelectValue placeholder="Select existing parent..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0A1729] border-[#B88943]/40 text-white">
+                      <SelectItem value="none">— Create new or none —</SelectItem>
+                      {parents.map((p: any) => (
+                        <SelectItem key={p.id} value={p.id.toString()}>
+                          {p.firstName} {p.lastName}{p.company ? ` (${p.company})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -897,9 +968,19 @@ export default function Students() {
                 type="button"
                 variant="outline"
                 disabled={createSamplePairMutation.isPending}
-                onClick={() => createSamplePairMutation.mutate({})}
+                onClick={() => {
+                  const typedStudent = `${formData.firstName} ${formData.lastName}`.trim();
+                  const typedParent = formData.newParentName.trim();
+                  createSamplePairMutation.mutate({
+                    ...(typedStudent ? { studentName: typedStudent } : {}),
+                    ...(typedParent ? { parentName: typedParent } : {}),
+                    ...(formData.schoolName.trim() ? { schoolName: formData.schoolName.trim() } : {}),
+                    ...(formData.gradeLevel.trim() ? { gradeLevel: formData.gradeLevel.trim() } : {}),
+                    ...(formData.planType ? { planType: formData.planType } : {}),
+                  });
+                }}
                 className="h-9 px-3 text-xs font-serif font-semibold bg-[#11233D] border-[#2A446B] text-[#F3C876] hover:text-white hover:bg-[#183156] cursor-pointer flex items-center gap-1.5 shadow-sm"
-                title="1-Click create both a sample student and a linked sample parent"
+                title="1-Click create both a student and a linked parent (uses any typed names above or generates a sample pair)"
               >
                 <Zap className="w-3.5 h-3.5 text-[#E9BA6B]" />
                 <span>{createSamplePairMutation.isPending ? "Adding..." : "1-Click Sample Pair"}</span>

@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import {
   Phone,
   Mail,
@@ -16,6 +18,7 @@ import {
   Trash2,
   Home,
   Check,
+  Plus,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
@@ -145,6 +148,20 @@ export default function ContactsLedgerView({
   onOpenAddContact,
 }: ContactsLedgerViewProps) {
   const [, setLocation] = useLocation();
+  const utils = trpc.useUtils();
+  const [quickStudentName, setQuickStudentName] = useState("");
+  const [showQuickAddStudent, setShowQuickAddStudent] = useState(false);
+
+  const quickAddStudentMutation = trpc.contacts.create.useMutation({
+    onSuccess: () => {
+      toast.success("Student added & linked to parent!");
+      setQuickStudentName("");
+      setShowQuickAddStudent(false);
+      utils.contacts.list.invalidate();
+      utils.pipeline.cards.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Failed to add linked student"),
+  });
 
   // CRM Global Theme: "navy" (dark leather) or "blue" (antique vellum parchment)
   const { theme } = useTheme();
@@ -1110,17 +1127,80 @@ export default function ContactsLedgerView({
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setLocation("/students")}
-                      className={cn(
-                        "text-[11px] font-serif font-semibold underline cursor-pointer",
-                        isLight ? "text-[#785412] hover:text-[#2E1D02]" : "text-[#D4AF37] hover:text-white"
-                      )}
-                    >
-                      All Students
-                    </button>
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowQuickAddStudent((prev) => !prev)}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-serif font-bold border transition-all cursor-pointer",
+                          isLight
+                            ? "bg-[#E5BF65] text-[#291A04] border-[#8C6418] hover:brightness-105"
+                            : "bg-[#142A4A] text-[#FCE09E] border-[#D4AF37]/50 hover:bg-[#1B3863]"
+                        )}
+                        title="Quickly type a student name to link to this parent"
+                      >
+                        <Plus className="h-3 w-3" />
+                        <span>Add Student</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLocation("/students")}
+                        className={cn(
+                          "text-[11px] font-serif font-semibold underline cursor-pointer",
+                          isLight ? "text-[#785412] hover:text-[#2E1D02]" : "text-[#D4AF37] hover:text-white"
+                        )}
+                      >
+                        All Students
+                      </button>
+                    </div>
                   </div>
+
+                  {showQuickAddStudent && (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const raw = quickStudentName.trim();
+                        if (!raw) {
+                          toast.error("Please type a student name");
+                          return;
+                        }
+                        const parts = raw.split(/\s+/);
+                        const firstName = parts[0] || raw;
+                        const lastName = parts.slice(1).join(" ") || dossierContact.lastName || "Client";
+                        quickAddStudentMutation.mutate({
+                          firstName,
+                          lastName,
+                          jobTitle: "Student",
+                          parentContactId: dossierContact.id,
+                          company: dossierContact.company || `${lastName} Family`,
+                          phone: dossierContact.phone || undefined,
+                          planType: "IEP",
+                        });
+                      }}
+                      className="flex items-center gap-1.5 mb-2.5"
+                    >
+                      <input
+                        type="text"
+                        value={quickStudentName}
+                        onChange={(e) => setQuickStudentName(e.target.value)}
+                        placeholder={`Type student name (e.g. Lucas ${dossierContact.lastName || ""})...`}
+                        className={cn(
+                          "flex-1 h-8 px-2.5 rounded-lg text-xs border focus:outline-none",
+                          isLight
+                            ? "bg-white border-[#B89B67] text-[#1C1405] placeholder:text-[#8C7A62]"
+                            : "bg-[#040E1E] border-[#D4AF37]/40 text-white placeholder:text-[#647C9D]"
+                        )}
+                        autoFocus
+                      />
+                      <button
+                        type="submit"
+                        disabled={quickAddStudentMutation.isPending}
+                        className="h-8 px-3 rounded-lg text-xs font-serif font-bold bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#B88943] text-[#1A1208] cursor-pointer shrink-0 shadow-xs"
+                      >
+                        {quickAddStudentMutation.isPending ? "Adding..." : "Save"}
+                      </button>
+                    </form>
+                  )}
 
                   {dossierStudents.length > 0 ? (
                     <div className="space-y-1.5">
