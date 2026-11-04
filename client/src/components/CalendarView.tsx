@@ -287,13 +287,13 @@ export default function CalendarView({
       <div
         key={day}
         style={cellStyle}
-        className={`min-h-[7rem] border-b border-r border-[#3A2C18]/60 p-2 transition-all cursor-pointer ${cellBackground}`}
+        className={`min-h-[7rem] border-b border-r border-[#3A2C18]/60 px-[1px] pt-1.5 pb-1 transition-all cursor-pointer ${cellBackground}`}
         onClick={() => {
           const clickedDate = new Date(year, month, day);
           onDateClick?.(clickedDate);
         }}
       >
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center justify-between mb-1 px-1.5">
           <span
             className={`text-xs font-mono font-bold ${
               isToday
@@ -315,7 +315,7 @@ export default function CalendarView({
           ) : null}
         </div>
 
-        <div className="space-y-1 overflow-hidden">
+        <div className="space-y-[3px] overflow-hidden">
           {/* Operational Blocks in Month Cell */}
           {dayBlocks.slice(0, 2).map((block) => {
             const pKey = detectItemPatternKey({
@@ -333,9 +333,9 @@ export default function CalendarView({
                   onOperationalBlockClick?.(block);
                 }}
                 style={{ background: pDef.inlineBackground }}
-                className={`text-[9px] px-1.5 py-0.5 rounded-[5px] cursor-pointer hover:opacity-90 transition-all border ${pDef.borderClass}`}
+                className={`text-[9px] px-1 py-[2px] rounded-[4px] cursor-pointer hover:opacity-90 transition-all border ${pDef.borderClass}`}
               >
-                <div className="font-serif font-bold truncate leading-tight text-[#FFE394]">
+                <div className="font-serif font-bold truncate leading-[1.15] text-[#FFE394]">
                   {pDef.patternSymbol} {block.title}
                 </div>
               </div>
@@ -357,18 +357,18 @@ export default function CalendarView({
                   onEventClick?.(apt);
                 }}
                 style={{ background: patternDef.inlineBackground }}
-                className={`text-[10px] px-1.5 py-1 rounded-[5px] cursor-pointer hover:opacity-90 transition-all border ${
+                className={`text-[10px] px-1 py-[2px] rounded-[4px] cursor-pointer hover:opacity-90 transition-all border !border-l-[5px] ${
                   isNeedsCoverage
                     ? "border-rose-600/80 shadow-sm shadow-rose-950"
                     : patternDef.borderClass
                 }`}
               >
-                <div className={`font-serif font-bold truncate leading-tight ${patternKey === "confirmed" ? "text-white" : "text-[#FFF4D4]"}`}>{apt.title}</div>
-                <div className="flex items-center justify-between text-[9px] mt-0.5">
-                  <span className={`truncate max-w-[85px] ${patternKey === "confirmed" ? "text-emerald-100" : "text-[#C6B697]"}`}>
+                <div className={`font-serif font-bold truncate leading-[1.1] ${patternKey === "confirmed" ? "text-white" : "text-[#FFF4D4]"}`}>{apt.title}</div>
+                <div className="flex items-center justify-between gap-1 text-[9px] leading-[1.1] mt-[1px]">
+                  <span className={`truncate min-w-0 flex-1 ${patternKey === "confirmed" ? "text-emerald-100" : "text-[#C6B697]"}`}>
                     {apt.studentName || apt.parentName || "Student"}
                   </span>
-                  <span className={`font-semibold ${patternKey === "confirmed" ? "text-emerald-300" : "text-[#FFE394]"}`}>{advocateName}</span>
+                  <span className={`font-semibold shrink-0 ${patternKey === "confirmed" ? "text-emerald-300" : "text-[#FFE394]"}`}>{advocateName}</span>
                 </div>
               </div>
             );
