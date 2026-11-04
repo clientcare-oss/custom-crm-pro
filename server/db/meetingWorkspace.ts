@@ -131,11 +131,20 @@ export async function getWorkspaceByStudentId(studentContactId: number): Promise
               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
               ON CONFLICT(id) DO UPDATE SET
                 title = excluded.title,
+                meeting_date = excluded.meeting_date,
+                meeting_type = excluded.meeting_type,
                 status = excluded.status,
                 active_tab = excluded.active_tab,
                 prep_step = excluded.prep_step,
-                meeting_targets = excluded.meeting_targets,
+                detected_iep_order = excluded.detected_iep_order,
+                iep_intel_findings = excluded.iep_intel_findings,
+                parent_intel_concerns = excluded.parent_intel_concerns,
                 parent_concern_statement = excluded.parent_concern_statement,
+                pcs_approved = excluded.pcs_approved,
+                meeting_targets = excluded.meeting_targets,
+                parking_lot = excluded.parking_lot,
+                additional_items = excluded.additional_items,
+                closeout_checks = excluded.closeout_checks,
                 updated_at = CURRENT_TIMESTAMP
             `,
             args: [
@@ -503,3 +512,136 @@ export async function updateWorkspace(
 
   return null;
 }
+
+/**
+ * Verifies that a vault file record belongs to the requested student (directly, via parentContactId,
+ * or via an established iepDocuments fileKey link for that student).
+ */
+export async function isFileLinkedToStudent(
+  fileRecord: {
+    id?: number;
+    clientId?: number | null;
+    studentContactId?: number | null;
+    fileKey?: string | null;
+  },
+  studentContactId: number
+): Promise<boolean> {
+  if (!fileRecord || !studentContactId) return false;
+  if (
+    Number(fileRecord.studentContactId) === Number(studentContactId) ||
+    Number(fileRecord.clientId) === Number(studentContactId)
+  ) {
+    return true;
+  }
+
+  try {
+    const contactRows = await queryCloudflareD1(
+      "SELECT id, parentContactId FROM contacts WHERE id = ? LIMIT 1",
+      [studentContactId]
+    );
+    const studentRow = contactRows?.[0] as Record<string, any> | undefined;
+    if (
+      studentRow?.parentContactId &&
+      Number(fileRecord.clientId) === Number(studentRow.parentContactId) &&
+      (!fileRecord.studentContactId ||
+        Number(fileRecord.studentContactId) === Number(studentContactId))
+    ) {
+      return true;
+    }
+
+    if (fileRecord.studentContactId) {
+      const linkedRows = await queryCloudflareD1(
+        `SELECT 1 FROM clientFiles cf2
+         INNER JOIN iepDocuments iep ON (iep.currentFileKey = cf2.fileKey OR iep.previousFileKey = cf2.fileKey)
+         WHERE iep.contactId = ? AND cf2.studentContactId = ?
+         LIMIT 1`,
+        [studentContactId, fileRecord.studentContactId]
+      );
+      if (linkedRows && linkedRows.length > 0) {
+        return true;
+      }
+    }
+  } catch {}
+
+  return false;
+}
+
+/**
+ * Resolves the binary PDF buffer for an authorized vault file from memory, local uploads/, or D1/SQLite file_blobs.
+ * Never exposes public storage URLs or credentials.
+ */
+export async function resolveVaultFileBinary(fileRecord: {
+  id: number;
+  fileName?: string | null;
+  fileKey?: string | null;
+  fileUrl?: string | null;
+  pdfBuffer?: Buffer | Uint8Array;
+  base64Data?: string;
+}): Promise<Buffer | null> {
+  if (fileRecord.pdfBuffer) {
+    return Buffer.from(fileRecord.pdfBuffer);
+  }
+  if (fileRecord.base64Data) {
+    return Buffer.from(fileRecord.base64Data, "base64");
+  }
+
+  const candidateKeys = new Set<string>();
+  if (fileRecord.fileKey && String(fileRecord.fileKey).trim()) {
+    candidateKeys.add(String(fileRecord.fileKey).trim().replace(/^\/+/, ""));
+  }
+  if (fileRecord.fileUrl && String(fileRecord.fileUrl).trim()) {
+    const urlStr = String(fileRecord.fileUrl).trim();
+    if (urlStr.startsWith("/api/storage/")) {
+      candidateKeys.add(
+        decodeURIComponent(urlStr.replace(/^\/api\/storage\//, "")).replace(
+          /^\/+/,
+          ""
+        )
+      );
+    } else if (urlStr.startsWith("/")) {
+      candidateKeys.add(urlStr.replace(/^\/+/, ""));
+    }
+  }
+  if (fileRecord.fileName && String(fileRecord.fileName).trim()) {
+    const rawName = String(fileRecord.fileName).trim();
+    const normalizedName = rawName.replace(/\s+/g, "_");
+    candidateKeys.add(`iep-documents/${normalizedName}`);
+    candidateKeys.add(`iep-documents/${rawName}`);
+  }
+
+  // 1. Check local uploads/ directory safely (preventing path traversal)
+  try {
+    const fs = await import("fs");
+    const path = await import("path");
+    const uploadsBase = path.resolve(process.cwd(), "uploads");
+    for (const key of Array.from(candidateKeys)) {
+      const safeRel = key.replace(/\.\./g, "");
+      const candidatePath = path.resolve(uploadsBase, safeRel);
+      if (
+        candidatePath.startsWith(uploadsBase) &&
+        fs.existsSync(candidatePath) &&
+        fs.statSync(candidatePath).isFile()
+      ) {
+        return fs.readFileSync(candidatePath);
+      }
+    }
+  } catch {}
+
+  // 2. Check file_blobs table in D1 / local SQLite
+  try {
+    for (const key of Array.from(candidateKeys)) {
+      const rows = await queryCloudflareD1(
+        "SELECT * FROM file_blobs WHERE file_key = ? LIMIT 1",
+        [key]
+      );
+      const row = rows?.[0] as Record<string, any> | undefined;
+      const blobBase64 = row?.data || row?.base64_data || row?.blob_data;
+      if (blobBase64) {
+        return Buffer.from(String(blobBase64), "base64");
+      }
+    }
+  } catch {}
+
+  return null;
+}
+

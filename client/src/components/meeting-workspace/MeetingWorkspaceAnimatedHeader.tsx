@@ -260,7 +260,7 @@ export function MeetingWorkspaceAnimatedHeader({
               height: "30%",
             }}
           >
-            {/* ── Stage 1: ASSEMBLE (Build the case) ── */}
+            {/* ── Stage 1: INTEL UNIT (Follow the evidence) ── */}
             <button
               type="button"
               onClick={() => onSelectTab?.("ASSEMBLY")}
@@ -290,16 +290,16 @@ export function MeetingWorkspaceAnimatedHeader({
                       : "text-[#FFF4D4] group-hover:text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
                   }`}
                 >
-                  ASSEMBLE
+                  INTEL UNIT
                 </span>
                 <span
-                  className={`text-[clamp(7px,0.8cqw,10.5px)] font-medium leading-tight mt-0.5 ${
+                  className={`text-[clamp(7px,0.8cqw,10.5px)] italic font-medium leading-tight mt-0.5 ${
                     normalizedTab === "ASSEMBLY"
                       ? "text-[#3A2808] font-semibold"
                       : "text-[#8EA6C9] group-hover:text-[#B0C7E8] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]"
                   }`}
                 >
-                  Build the case
+                  Follow the evidence
                 </span>
               </div>
 

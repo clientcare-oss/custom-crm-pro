@@ -793,8 +793,8 @@ export async function updateWebhook(id: number, ownerId: number, data: any) {
 export async function getClientFilesByClient(clientId: number) {
   try {
     const rows = await queryCloudflareD1(
-      "SELECT * FROM clientFiles WHERE clientId = ? OR studentContactId = ? ORDER BY id DESC",
-      [clientId, clientId]
+      "SELECT * FROM clientFiles WHERE clientId = ? OR studentContactId = ? OR studentContactId IN (SELECT cf2.studentContactId FROM clientFiles cf2 INNER JOIN iepDocuments iep ON (iep.currentFileKey = cf2.fileKey OR iep.previousFileKey = cf2.fileKey) WHERE iep.contactId = ? AND cf2.studentContactId IS NOT NULL) ORDER BY id DESC",
+      [clientId, clientId, clientId]
     );
     if (rows && Array.isArray(rows) && rows.length > 0) {
       return rows;

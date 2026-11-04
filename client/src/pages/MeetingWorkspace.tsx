@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import PageIdBadge from "@/components/PageIdBadge";
+import { broadcastPageId, resolveMeetingWorkspaceTabId } from "@/lib/pageIdRegistry";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -44,6 +45,7 @@ import { ParentConcernStatementWorkspace } from "../components/meeting-workspace
 import { MeetingWorkspaceAnimatedHeader } from "../components/meeting-workspace/MeetingWorkspaceAnimatedHeader";
 import { MeetingStatusBar } from "../components/meeting-workspace/MeetingStatusBar";
 import { Step5ReadyView } from "../components/meeting-workspace/prep/Step5ReadyView";
+import { IntelUnitWorkbench } from "../components/meeting-workspace/intel-unit/IntelUnitWorkbench";
 import type { PcsMetadata } from "../components/meeting-workspace/pcs/types";
 
 export default function MeetingWorkspace() {
@@ -127,8 +129,44 @@ export default function MeetingWorkspace() {
   );
 
   // Local State synchronized with Workspace
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>("ASSEMBLY");
-  const [prepStep, setPrepStep] = useState<PrepStep>("iep_intel");
+  const initialUrlTab = useMemo<WorkspaceTab | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = (new URLSearchParams(window.location.search).get("tab") || "").toLowerCase();
+    if (raw === "assemble" || raw === "assembly" || raw === "prep" || raw === "1") return "ASSEMBLY";
+    if (raw === "blueprint" || raw === "parent_ready" || raw === "2") return "BLUEPRINT";
+    if (raw === "meeting-space" || raw === "meeting_mode" || raw === "meeting-mode" || raw === "advocate_ready" || raw === "live" || raw === "3") return "MEETING_MODE";
+    return null;
+  }, []);
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>(initialUrlTab || "ASSEMBLY");
+  const [prepStep, setPrepStep] = useState<PrepStep>(initialUrlTab === "BLUEPRINT" ? "blueprint" : "iep_intel");
+
+  // Broadcast active Meeting Workspace sub-page ID (PG-043-ASM, PG-043-BLP, PG-043-MTG) to bottom-right Page ID tool
+  const activeSubPageInfo = useMemo(() => {
+    if (activeTab === "BLUEPRINT" || activeTab === "PARENT_READY") {
+      return resolveMeetingWorkspaceTabId("blueprint");
+    }
+    if (activeTab === "MEETING_MODE" || activeTab === "ADVOCATE_READY") {
+      return resolveMeetingWorkspaceTabId("meeting-space");
+    }
+    return resolveMeetingWorkspaceTabId("assemble");
+  }, [activeTab]);
+
+  useEffect(() => {
+    broadcastPageId(activeSubPageInfo);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      const tabSlug =
+        activeTab === "BLUEPRINT" || activeTab === "PARENT_READY"
+          ? "blueprint"
+          : activeTab === "MEETING_MODE" || activeTab === "ADVOCATE_READY"
+          ? "meeting-space"
+          : "assemble";
+      if (url.searchParams.get("tab") !== tabSlug && url.searchParams.get("tab") !== "import") {
+        url.searchParams.set("tab", tabSlug);
+        window.history.replaceState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
+      }
+    }
+  }, [activeTab, activeSubPageInfo]);
   const [meetingStatus, setMeetingStatus] = useState<MeetingWorkspaceStatus>("PREPARING");
   const [meetingType] = useState<string>("Annual IEP Meeting");
   const [meetingDate] = useState<string>("October 21, 2026 · 10:00 AM");
@@ -163,6 +201,7 @@ export default function MeetingWorkspace() {
   // Manual import modal & status
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isManualImport, setIsManualImport] = useState(false);
+  const [isWorkbenchExpanded, setIsWorkbenchExpanded] = useState(false);
 
   function safeParseJson<T>(val: any, fallback: T): T {
     if (!val) return fallback;
@@ -177,101 +216,96 @@ export default function MeetingWorkspace() {
     return fallback;
   }
 
-  // Sync loaded DB data into local state
+  // Cancel any pending debounced saves when switching students so Student A never overwrites Student B
+  useEffect(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+  }, [selectedStudentId]);
+
+  // Sync loaded DB data into local state deterministically (never restore obsolete browser backups on empty DB responses)
   useEffect(() => {
     if (workspace) {
-      if (workspace.status) setMeetingStatus(workspace.status as MeetingWorkspaceStatus);
-      if (workspace.detectedIepOrder) {
-        const order = safeParseJson<string[]>(workspace.detectedIepOrder, []);
-        if (order.length > 0) setDetectedIepOrder(order);
-      }
-      if (workspace.parentConcernStatement) setPcsText(workspace.parentConcernStatement);
-      if (typeof workspace.pcsApproved === "boolean") setPcsApproved(workspace.pcsApproved);
+      setMeetingStatus((workspace.status as MeetingWorkspaceStatus) || "PREPARING");
+      const order = workspace.detectedIepOrder
+        ? safeParseJson<string[]>(workspace.detectedIepOrder, [])
+        : [];
+      setDetectedIepOrder(
+        order.length > 0
+          ? order
+          : [
+              "Parent Concerns",
+              "Present Levels / Academics",
+              "Special Factors",
+              "Annual Goals",
+              "Accommodations / Supports",
+              "Related Services / AAC",
+              "Placement / LRE",
+              "ESY & Transportation",
+            ]
+      );
+      setPcsText(workspace.parentConcernStatement || "");
+      setPcsApproved(Boolean(workspace.pcsApproved));
 
-      let loadedTargets: MeetingTarget[] = [];
-      if (workspace.meetingTargets) {
-        loadedTargets = safeParseJson<MeetingTarget[]>(workspace.meetingTargets, []);
-        if (loadedTargets.length > 0) {
-          setTargets(loadedTargets);
-          try { if (selectedStudentId) localStorage.setItem(`mw_backup_${selectedStudentId}`, JSON.stringify(loadedTargets)); } catch {}
-        } else if (selectedStudentId) {
-          try {
-            const cached = localStorage.getItem(`mw_backup_${selectedStudentId}`);
-            if (cached) {
-              const parsedCache = JSON.parse(cached);
-              if (Array.isArray(parsedCache) && parsedCache.length > 0) {
-                loadedTargets = parsedCache;
-                setTargets(parsedCache);
-                saveCurrentState({ meetingTargets: parsedCache });
-              }
-            }
-          } catch {}
-        }
-        if (loadedTargets.some((t) => t.sources?.some((s) => s.toLowerCase().includes("import")))) setIsManualImport(true);
-      }
+      const loadedTargets = workspace.meetingTargets
+        ? safeParseJson<MeetingTarget[]>(workspace.meetingTargets, [])
+        : [];
+      setTargets(loadedTargets);
+      setIsManualImport(
+        loadedTargets.some((t) =>
+          t.sources?.some((s) => s.toLowerCase().includes("import"))
+        )
+      );
 
-      // Sync or auto-derive IEP Intel Findings
-      const existingFindings = workspace.iepIntelFindings ? safeParseJson<IepIntelFinding[]>(workspace.iepIntelFindings, []) : [];
-      if (existingFindings.length > 0) {
-        setIepFindings(existingFindings);
-      } else if (loadedTargets.length > 0) {
-        const derivedFindings: IepIntelFinding[] = loadedTargets
-          .filter((t) => t.iepSection !== "Parent Concerns")
-          .map((t, idx) => ({
-            id: `fnd-derived-${t.id || idx + 1}`,
-            category: t.iepSection || "Accommodations / Supports",
-            section: t.iepSection || "Accommodations / Supports",
-            text: `${t.targetName}: ${t.whyWeWantIt || t.quickAdvocateSayThis || ""}`,
-            quote: t.supportingEvidence || t.possibleIepWording || undefined,
-            status: (t.iepSection === "Accommodations / Supports" || t.iepSection === "Special Education Services") ? "important" : "keep",
-            isCustom: false,
-          }));
-        setIepFindings(derivedFindings);
-      }
+      // Sync saved IEP Intel Findings without automatically generating or overwriting
+      const existingFindings = workspace.iepIntelFindings
+        ? safeParseJson<IepIntelFinding[]>(workspace.iepIntelFindings, [])
+        : [];
+      setIepFindings(existingFindings);
 
-      // Sync or auto-derive Parent Intel Concerns
-      const existingConcerns = workspace.parentIntelConcerns ? safeParseJson<ParentIntelConcern[]>(workspace.parentIntelConcerns, []) : [];
-      if (existingConcerns.length > 0) {
-        setParentConcerns(existingConcerns);
-      } else if (loadedTargets.length > 0) {
-        const derivedConcerns: ParentIntelConcern[] = loadedTargets
-          .filter((t) => t.iepSection === "Parent Concerns" || t.parentWhatWeWant || t.parentWhyWeWantIt)
-          .map((t, idx) => ({
-            id: `pci-derived-${t.id || idx + 1}`,
-            topic: t.targetName,
-            concern: t.parentWhyWeWantIt || t.whyWeWantIt || t.parentWhatWeWant || t.quickAdvocateSayThis || "",
-            source: t.sources?.[0] || "Advocate Ready Document",
-            status: "keep",
-            isCustom: false,
-          }));
-        setParentConcerns(derivedConcerns);
-      }
+      // Sync saved Parent Intel Concerns without automatically generating or overwriting
+      const existingConcerns = workspace.parentIntelConcerns
+        ? safeParseJson<ParentIntelConcern[]>(workspace.parentIntelConcerns, [])
+        : [];
+      setParentConcerns(existingConcerns);
 
-      if (workspace.parkingLot) setParkingLot(safeParseJson<ParkingLotItem[]>(workspace.parkingLot, []));
-      if (workspace.additionalItems) setAdditionalItems(safeParseJson<AdditionalItem[]>(workspace.additionalItems, []));
-      if (workspace.closeoutChecks) {
-        const parsedChecks = safeParseJson<any>(workspace.closeoutChecks, {
-          allRequestsRaised: false, pwnIdentified: false, agreedLocationsClear: false, followUpAssigned: false, nextMeetingDiscussed: false,
-        });
-        setCloseoutChecks(parsedChecks);
-        if (parsedChecks.parentDoesntWant && typeof parsedChecks.parentDoesntWant === "string") {
-          setParentDoesntWantText(parsedChecks.parentDoesntWant);
-        }
-      }
-      if (selectedStudentId) {
-        try {
-          const cachedPdw = localStorage.getItem(`mw_pdw_${selectedStudentId}`);
-          if (cachedPdw && !parentDoesntWantText) setParentDoesntWantText(cachedPdw);
-        } catch {}
-      }
-      if (workspace.status === "LIVE") {
+      setParkingLot(
+        workspace.parkingLot
+          ? safeParseJson<ParkingLotItem[]>(workspace.parkingLot, [])
+          : []
+      );
+      setAdditionalItems(
+        workspace.additionalItems
+          ? safeParseJson<AdditionalItem[]>(workspace.additionalItems, [])
+          : []
+      );
+
+      const defaultChecks: CloseoutChecks = {
+        allRequestsRaised: false,
+        pwnIdentified: false,
+        agreedLocationsClear: false,
+        followUpAssigned: false,
+        nextMeetingDiscussed: false,
+      };
+      const parsedChecks = workspace.closeoutChecks
+        ? safeParseJson<any>(workspace.closeoutChecks, defaultChecks)
+        : defaultChecks;
+      setCloseoutChecks(parsedChecks);
+      setParentDoesntWantText(
+        typeof parsedChecks.parentDoesntWant === "string"
+          ? parsedChecks.parentDoesntWant
+          : ""
+      );
+
+      if (initialUrlTab) {
+        setActiveTab(initialUrlTab);
+        if (initialUrlTab === "BLUEPRINT") setPrepStep("blueprint");
+      } else if (workspace.status === "LIVE") {
         setActiveTab("MEETING_MODE");
       } else if (workspace.activeTab) {
         setActiveTab(workspace.activeTab as WorkspaceTab);
         if (workspace.prepStep) setPrepStep(workspace.prepStep as PrepStep);
-      } else if (loadedTargets.length > 0) {
-        setActiveTab("BLUEPRINT");
-        setPrepStep("blueprint");
       }
     }
   }, [workspace]);
@@ -288,7 +322,14 @@ export default function MeetingWorkspace() {
   });
 
   const runIepIntelMutation = trpc.meetingWorkspace.runIepIntel.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
+      if (data?.status === "document_audit_pending") {
+        toast.info(
+          data.message ||
+            "Automated IEP chapter auditing is pending Phase 2B. Existing saved findings are preserved."
+        );
+        return;
+      }
       setIepFindings(data.findings as IepIntelFinding[]);
       if (data.detectedOrder?.length) setDetectedIepOrder(data.detectedOrder);
       toast.success("IEP Intel analysis complete");
@@ -298,7 +339,11 @@ export default function MeetingWorkspace() {
   });
 
   const runParentIntelMutation = trpc.meetingWorkspace.runParentIntel.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
+      if (data?.status === "unavailable") {
+        toast.info(data.message || "No recorded parent concerns found on file yet.");
+        return;
+      }
       setParentConcerns(data.concerns as ParentIntelConcern[]);
       toast.success("Parent Intel extracted from authorized case records");
       saveCurrentState({ parentIntelConcerns: data.concerns });
@@ -474,6 +519,7 @@ export default function MeetingWorkspace() {
   return (
     <ScopedErrorBoundary>
       <div className="min-h-screen bg-[#07162B] bg-[radial-gradient(ellipse_at_50%_0%,#102B4E_0%,#07162B_55%,#030D1A_100%)] text-[#FFF4D4] pb-12 flex flex-col">
+        <PageIdBadge id={activeSubPageInfo.id} name={activeSubPageInfo.name} />
         {/* ── Top Panoramic Advocacy Strategy Library & Study Shelf Canopy (PG-043) ── */}
         <MeetingWorkspaceAnimatedHeader
           studentName={studentName}
@@ -502,7 +548,13 @@ export default function MeetingWorkspace() {
         />
 
         {/* ── Main Workspace Content Deck (Trailing ivy vines drape gracefully over the deck) ── */}
-        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1700px] mx-auto w-full flex-1 -mt-4 sm:-mt-8 lg:-mt-12 relative z-30">
+        <div
+          className={`${
+            (activeTab === "ASSEMBLY" || activeTab === "PREP") && isWorkbenchExpanded
+              ? "p-2 sm:p-4 max-w-[99vw]"
+              : "p-4 sm:p-6 lg:p-8 max-w-[1700px]"
+          } space-y-6 mx-auto w-full flex-1 -mt-4 sm:-mt-8 lg:-mt-12 relative z-30 transition-all`}
+        >
           
           {/* Status Bar & Live Meeting Command Bar */}
           <MeetingStatusBar
@@ -533,167 +585,210 @@ export default function MeetingWorkspace() {
         {/* Main Workspace Body */}
         {!workspaceLoading && (
           <div className="flex-1">
-            {/* TAB: ASSEMBLY (Build the Case) */}
+            {/* TAB: INTEL UNIT (PG-043-ASM · Follow the evidence) */}
             {(activeTab === "ASSEMBLY" || activeTab === "PREP") && (
-              <div className="space-y-6">
-                {/* 5-Step Pipeline Indicator + Optional Manual Import */}
-                <PrepPipeline
-                  currentStep={prepStep}
-                  onSelectStep={(step) => {
-                    setPrepStep(step);
-                    saveCurrentState({ prepStep: step }, true);
-                  }}
-                  hasIepIntel={hasIepIntel}
-                  hasParentIntel={hasParentIntel}
-                  pcsApproved={pcsApproved}
-                  hasBlueprint={hasBlueprint}
-                  isReady={isReady}
-                  onOpenImportModal={() => setIsImportModalOpen(true)}
-                  isManualImport={isManualImport}
-                />
+              <IntelUnitWorkbench
+                studentContactId={selectedStudentId || 0}
+                workspaceId={workspace?.id}
+                studentName={studentName}
+                findings={iepFindings}
+                targets={targets}
+                detectedOrder={detectedIepOrder}
+                intelUnitState={(closeoutChecks as any)?.intelUnitState}
+                onUpdateIntelUnitState={(nextIntelState, isDebounced = true) => {
+                  const updatedChecks = {
+                    ...closeoutChecks,
+                    intelUnitState: nextIntelState,
+                  };
+                  setCloseoutChecks(updatedChecks);
+                  saveCurrentState({ closeoutChecks: updatedChecks }, isDebounced);
+                }}
+                onUpdateFindings={(newFindings) => {
+                  setIepFindings(newFindings);
+                  saveCurrentState({ iepIntelFindings: newFindings });
+                }}
+                onUpdateTargets={(newTargets) => {
+                  setTargets(newTargets);
+                  saveCurrentState({ meetingTargets: newTargets });
+                }}
+                onOpenImportModal={() => setIsImportModalOpen(true)}
+                isExpanded={isWorkbenchExpanded}
+                onToggleExpand={() => setIsWorkbenchExpanded((prev) => !prev)}
+                legacyToolsNode={
+                  <div className="space-y-6">
+                    {/* 5-Step Pipeline Indicator + Optional Manual Import */}
+                    <PrepPipeline
+                      currentStep={prepStep}
+                      onSelectStep={(step) => {
+                        setPrepStep(step);
+                        saveCurrentState({ prepStep: step }, true);
+                      }}
+                      hasIepIntel={hasIepIntel}
+                      hasParentIntel={hasParentIntel}
+                      pcsApproved={pcsApproved}
+                      hasBlueprint={hasBlueprint}
+                      isReady={isReady}
+                      onOpenImportModal={() => setIsImportModalOpen(true)}
+                      isManualImport={isManualImport}
+                    />
 
-                {/* Step 1: IEP Intel */}
-                {prepStep === "iep_intel" && (
-                  <Step1IepIntel
-                    studentContactId={selectedStudentId || 0}
-                    studentName={studentName}
-                    findings={iepFindings}
-                    detectedOrder={detectedIepOrder}
-                    onUpdateFindings={(newFindings) => {
-                      setIepFindings(newFindings);
-                      saveCurrentState({ iepIntelFindings: newFindings });
-                    }}
-                    onUpdateDetectedOrder={(newOrder) => {
-                      setDetectedIepOrder(newOrder);
-                      saveCurrentState({ detectedIepOrder: newOrder });
-                    }}
-                    onRunIepIntel={async () => {
-                      await runIepIntelMutation.mutateAsync({ studentContactId: selectedStudentId || 0 });
-                    }}
-                    isLoading={runIepIntelMutation.isPending}
-                    onNextStep={() => {
-                      setPrepStep("parent_intel");
-                    }}
-                  />
-                )}
+                    {/* Step 1: IEP Intel */}
+                    {prepStep === "iep_intel" && (
+                      <Step1IepIntel
+                        studentContactId={selectedStudentId || 0}
+                        studentName={studentName}
+                        findings={iepFindings}
+                        detectedOrder={detectedIepOrder}
+                        onUpdateFindings={(newFindings) => {
+                          setIepFindings(newFindings);
+                          saveCurrentState({ iepIntelFindings: newFindings });
+                        }}
+                        onUpdateDetectedOrder={(newOrder) => {
+                          setDetectedIepOrder(newOrder);
+                          saveCurrentState({ detectedIepOrder: newOrder });
+                        }}
+                        onRunIepIntel={async () => {
+                          await runIepIntelMutation.mutateAsync({ studentContactId: selectedStudentId || 0 });
+                        }}
+                        isLoading={runIepIntelMutation.isPending}
+                        onNextStep={() => {
+                          setPrepStep("parent_intel");
+                        }}
+                      />
+                    )}
 
-                {/* Step 2: Parent Intel */}
-                {prepStep === "parent_intel" && (
-                  <Step2ParentIntel
-                    studentContactId={selectedStudentId || 0}
-                    studentName={studentName}
-                    concerns={parentConcerns}
-                    onUpdateConcerns={(newConcerns) => {
-                      setParentConcerns(newConcerns);
-                      saveCurrentState({ parentIntelConcerns: newConcerns });
-                    }}
-                    onRunParentIntel={async () => {
-                      await runParentIntelMutation.mutateAsync({ studentContactId: selectedStudentId || 0 });
-                    }}
-                    isLoading={runParentIntelMutation.isPending}
-                    onNextStep={() => {
-                      setPrepStep("pcs");
-                    }}
-                    onPrevStep={() => {
-                      setPrepStep("iep_intel");
-                    }}
-                    parentDoesntWantText={parentDoesntWantText}
-                    onUpdateParentDoesntWant={(newText) => {
-                      setParentDoesntWantText(newText);
-                      if (selectedStudentId) {
-                        try { localStorage.setItem(`mw_pdw_${selectedStudentId}`, newText); } catch {}
-                      }
-                      const updatedChecks = {
-                        ...closeoutChecks,
-                        parentDoesntWant: newText,
-                      };
-                      setCloseoutChecks(updatedChecks);
-                      saveCurrentState({ closeoutChecks: updatedChecks }, true);
-                    }}
-                  />
-                )}
+                    {/* Step 2: Parent Intel */}
+                    {prepStep === "parent_intel" && (
+                      <Step2ParentIntel
+                        studentContactId={selectedStudentId || 0}
+                        studentName={studentName}
+                        concerns={parentConcerns}
+                        onUpdateConcerns={(newConcerns) => {
+                          setParentConcerns(newConcerns);
+                          saveCurrentState({ parentIntelConcerns: newConcerns });
+                        }}
+                        onRunParentIntel={async () => {
+                          await runParentIntelMutation.mutateAsync({ studentContactId: selectedStudentId || 0 });
+                        }}
+                        isLoading={runParentIntelMutation.isPending}
+                        onNextStep={() => {
+                          setPrepStep("pcs");
+                        }}
+                        onPrevStep={() => {
+                          setPrepStep("iep_intel");
+                        }}
+                        parentDoesntWantText={parentDoesntWantText}
+                        onUpdateParentDoesntWant={(newText) => {
+                          setParentDoesntWantText(newText);
+                          if (selectedStudentId) {
+                            try { localStorage.setItem(`mw_pdw_${selectedStudentId}`, newText); } catch {}
+                          }
+                          const updatedChecks = {
+                            ...closeoutChecks,
+                            parentDoesntWant: newText,
+                          };
+                          setCloseoutChecks(updatedChecks);
+                          saveCurrentState({ closeoutChecks: updatedChecks }, true);
+                        }}
+                      />
+                    )}
 
-                {/* Step 3: Parent Concern Statement (PCS) */}
-                {prepStep === "pcs" && (
-                  <Step3PcsEditor
-                    studentName={studentName}
-                    pcsText={pcsText}
-                    pcsApproved={pcsApproved}
-                    hasBlueprintGenerated={hasBlueprint}
-                    approvedConcerns={parentConcerns.filter((c) => c.status === "keep")}
-                    onSavePcs={async (text, approved) => {
-                      setPcsText(text);
-                      setPcsApproved(approved);
-                      saveCurrentState({ parentConcernStatement: text, pcsApproved: approved });
-                    }}
-                    onGenerateDraft={async () => {
-                      await generatePcsMutation.mutateAsync({
-                        studentContactId: selectedStudentId || 0,
-                        approvedConcerns: parentConcerns.filter((c) => c.status === "keep"),
-                      });
-                    }}
-                    isLoading={generatePcsMutation.isPending}
-                    onNextStep={() => {
-                      setPrepStep("blueprint");
-                    }}
-                    onPrevStep={() => {
-                      setPrepStep("parent_intel");
-                    }}
-                  />
-                )}
+                    {/* Step 3: Parent Concern Statement (PCS) */}
+                    {prepStep === "pcs" && (
+                      <Step3PcsEditor
+                        studentName={studentName}
+                        pcsText={pcsText}
+                        pcsApproved={pcsApproved}
+                        hasBlueprintGenerated={hasBlueprint}
+                        approvedConcerns={parentConcerns.filter((c) => c.status === "keep")}
+                        onSavePcs={async (text, approved) => {
+                          setPcsText(text);
+                          setPcsApproved(approved);
+                          saveCurrentState({ parentConcernStatement: text, pcsApproved: approved });
+                        }}
+                        onGenerateDraft={async () => {
+                          await generatePcsMutation.mutateAsync({
+                            studentContactId: selectedStudentId || 0,
+                            approvedConcerns: parentConcerns.filter((c) => c.status === "keep"),
+                          });
+                        }}
+                        isLoading={generatePcsMutation.isPending}
+                        onNextStep={() => {
+                          setPrepStep("blueprint");
+                        }}
+                        onPrevStep={() => {
+                          setPrepStep("parent_intel");
+                        }}
+                      />
+                    )}
 
-                {/* Step 4: IEP Blueprint within Assembly */}
-                {prepStep === "blueprint" && (
-                  <BlueprintView
-                    studentName={studentName}
-                    meetingType={meetingType}
-                    meetingDate={meetingDate}
-                    clientEmail={activeStudent?.email || undefined}
-                    targets={targets}
-                    detectedOrder={detectedIepOrder}
-                    onUpdateTargets={(newTargets) => {
-                      setTargets(newTargets);
-                      saveCurrentState({ meetingTargets: newTargets });
-                    }}
-                    onUpdateDetectedOrder={(newOrder) => {
-                      setDetectedIepOrder(newOrder);
-                      saveCurrentState({ detectedIepOrder: newOrder });
-                    }}
-                    onBuildBlueprint={async () => {
-                      await buildBlueprintMutation.mutateAsync({
-                        studentContactId: selectedStudentId || 0,
-                        approvedFindings: iepFindings.filter((f) => f.status === "keep" || f.status === "important"),
-                        approvedConcerns: parentConcerns.filter((c) => c.status === "keep"),
-                        pcsText: pcsText,
-                        detectedOrder: detectedIepOrder,
-                      });
-                    }}
-                    onPreviewMeetingMode={() => {
-                      setActiveTab("MEETING_MODE");
-                    }}
-                    onMarkReady={() => {
-                      setMeetingStatus("READY");
-                      setPrepStep("ready");
-                      saveCurrentState({ status: "READY" });
-                      toast.success("Ready for Meeting! Meeting Mode prepared.");
-                    }}
-                    onOpenImportModal={() => setIsImportModalOpen(true)}
-                    isLoading={buildBlueprintMutation.isPending}
-                  />
-                )}
+                    {/* Step 4: IEP Blueprint within Assembly */}
+                    {prepStep === "blueprint" && (
+                      <BlueprintView
+                        studentName={studentName}
+                        meetingType={meetingType}
+                        meetingDate={meetingDate}
+                        clientEmail={activeStudent?.email || undefined}
+                        targets={targets}
+                        detectedOrder={detectedIepOrder}
+                        onUpdateTargets={(newTargets) => {
+                          setTargets(newTargets);
+                          saveCurrentState({ meetingTargets: newTargets });
+                        }}
+                        onUpdateDetectedOrder={(newOrder) => {
+                          setDetectedIepOrder(newOrder);
+                          saveCurrentState({ detectedIepOrder: newOrder });
+                        }}
+                        onBuildBlueprint={async () => {
+                          await buildBlueprintMutation.mutateAsync({
+                            studentContactId: selectedStudentId || 0,
+                            approvedFindings: iepFindings.filter((f) => f.status === "keep" || f.status === "important"),
+                            approvedConcerns: parentConcerns.filter((c) => c.status === "keep"),
+                            pcsText: pcsText,
+                            detectedOrder: detectedIepOrder,
+                          });
+                        }}
+                        onPreviewMeetingMode={() => {
+                          setActiveTab("MEETING_MODE");
+                        }}
+                        onMarkReady={() => {
+                          setMeetingStatus("READY");
+                          setPrepStep("ready");
+                          saveCurrentState({ status: "READY" });
+                          toast.success("Ready for Meeting! Meeting Mode prepared.");
+                        }}
+                        onOpenImportModal={() => setIsImportModalOpen(true)}
+                        isLoading={buildBlueprintMutation.isPending}
+                      />
+                    )}
 
-                {/* Step 5: Ready for Meeting */}
-                {prepStep === "ready" && (
-                  <Step5ReadyView
-                    onPreviewMeetingMode={() => setActiveTab("MEETING_MODE")}
-                    onLaunchLiveMeeting={() => {
-                      setMeetingStatus("LIVE");
-                      setActiveTab("MEETING_MODE");
-                      saveCurrentState({ status: "LIVE" });
-                    }}
-                  />
-                )}
-              </div>
+                    {/* Step 5: Ready for Meeting */}
+                    {prepStep === "ready" && (
+                      <Step5ReadyView
+                        onPreviewMeetingMode={() => setActiveTab("MEETING_MODE")}
+                        onLaunchLiveMeeting={() => {
+                          setMeetingStatus("LIVE");
+                          setActiveTab("MEETING_MODE");
+                          saveCurrentState({ status: "LIVE" });
+                        }}
+                      />
+                    )}
+
+                    {/* Parent Concern Statement Workspace inside Legacy / Parent Prep Tools */}
+                    <ParentConcernStatementWorkspace
+                      studentName={studentName}
+                      studentContactId={selectedStudentId}
+                      parentEmail={activeStudent?.email || undefined}
+                      pcsText={pcsText}
+                      parentConcerns={parentConcerns}
+                      iepFindings={iepFindings}
+                      rawPcsMetadata={(closeoutChecks as any)?.pcsMetadata}
+                      parentDoesntWantText={parentDoesntWantText}
+                      onSavePcs={handleSavePcsFromWorkspace}
+                    />
+                  </div>
+                }
+              />
             )}
 
             {/* TAB: BLUEPRINT (Discuss with parents and edit) */}
@@ -776,18 +871,20 @@ export default function MeetingWorkspace() {
               />
             )}
 
-            {/* ── MANDATORY BOTTOM BLOCK: PARENT CONCERN STATEMENT WORKSPACE (PG-043) ── */}
-            <ParentConcernStatementWorkspace
-              studentName={studentName}
-              studentContactId={selectedStudentId}
-              parentEmail={activeStudent?.email || undefined}
-              pcsText={pcsText}
-              parentConcerns={parentConcerns}
-              iepFindings={iepFindings}
-              rawPcsMetadata={(closeoutChecks as any)?.pcsMetadata}
-              parentDoesntWantText={parentDoesntWantText}
-              onSavePcs={handleSavePcsFromWorkspace}
-            />
+            {/* ── MANDATORY BOTTOM BLOCK ON BLUEPRINT & MEETING SPACE (PG-043) ── */}
+            {activeTab !== "ASSEMBLY" && activeTab !== "PREP" && (
+              <ParentConcernStatementWorkspace
+                studentName={studentName}
+                studentContactId={selectedStudentId}
+                parentEmail={activeStudent?.email || undefined}
+                pcsText={pcsText}
+                parentConcerns={parentConcerns}
+                iepFindings={iepFindings}
+                rawPcsMetadata={(closeoutChecks as any)?.pcsMetadata}
+                parentDoesntWantText={parentDoesntWantText}
+                onSavePcs={handleSavePcsFromWorkspace}
+              />
+            )}
           </div>
         )}
 

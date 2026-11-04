@@ -36,7 +36,7 @@ export function HeaderSection({
   const normalizedActiveTab = (activeTab === "PREP" ? "ASSEMBLY" : activeTab === "PARENT_READY" ? "BLUEPRINT" : activeTab === "ADVOCATE_READY" ? "MEETING_MODE" : activeTab) as WorkspaceTab;
 
   const tabs: { key: WorkspaceTab; label: string; icon: any; highlight?: boolean; subtitle: string }[] = [
-    { key: "ASSEMBLY", label: "✨ ASSEMBLY", icon: Sparkles, subtitle: "Build the case" },
+    { key: "ASSEMBLY", label: "✨ INTEL UNIT", icon: Sparkles, subtitle: "Follow the evidence" },
     { key: "BLUEPRINT", label: "📋 BLUEPRINT", icon: FileCheck, subtitle: "Discuss with parents and edit" },
     { key: "MEETING_MODE", label: "⚡ MEETING MODE", icon: PlayCircle, highlight: true, subtitle: "Run the meeting" },
   ];

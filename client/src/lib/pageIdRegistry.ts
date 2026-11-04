@@ -388,6 +388,31 @@ export const STUDENT_WORKSPACE_TAB_IDS: Record<string, PageIdInfo> = {
   "documents":     { id: "PG-030-DOC", name: "Student Workspace → Documents", category: "Vault", description: "Case document vault and student files mirror" },
 };
 
+// ─── Meeting Workspace (PG-043) Sub-ID Mappings ──────────────────────────────
+export const MEETING_WORKSPACE_TAB_IDS: Record<string, PageIdInfo> = {
+  "assemble":       { id: "PG-043-ASM", name: "Meeting Workspace → 1. Assemble", category: "Advocacy", description: "Option 1: Assemble — Build the case (IEP Intel, Parent Intel, and Parent Concern Statement)" },
+  "assembly":       { id: "PG-043-ASM", name: "Meeting Workspace → 1. Assemble", category: "Advocacy", description: "Option 1: Assemble — Build the case (IEP Intel, Parent Intel, and Parent Concern Statement)" },
+  "prep":           { id: "PG-043-ASM", name: "Meeting Workspace → 1. Assemble", category: "Advocacy", description: "Option 1: Assemble — Build the case (IEP Intel, Parent Intel, and Parent Concern Statement)" },
+  "1":              { id: "PG-043-ASM", name: "Meeting Workspace → 1. Assemble", category: "Advocacy", description: "Option 1: Assemble — Build the case (IEP Intel, Parent Intel, and Parent Concern Statement)" },
+  "blueprint":      { id: "PG-043-BLP", name: "Meeting Workspace → 2. Blueprint", category: "Advocacy", description: "Option 2: Blueprint — Discuss with parents & edit meeting targets and strategy" },
+  "parent_ready":   { id: "PG-043-BLP", name: "Meeting Workspace → 2. Blueprint", category: "Advocacy", description: "Option 2: Blueprint — Discuss with parents & edit meeting targets and strategy" },
+  "2":              { id: "PG-043-BLP", name: "Meeting Workspace → 2. Blueprint", category: "Advocacy", description: "Option 2: Blueprint — Discuss with parents & edit meeting targets and strategy" },
+  "meeting-space":  { id: "PG-043-MTG", name: "Meeting Workspace → 3. Meeting Space", category: "Advocacy", description: "Option 3: Meeting Space — Run the live IEP meeting, track targets, parking lot, and closeout" },
+  "meeting_mode":   { id: "PG-043-MTG", name: "Meeting Workspace → 3. Meeting Space", category: "Advocacy", description: "Option 3: Meeting Space — Run the live IEP meeting, track targets, parking lot, and closeout" },
+  "meeting-mode":   { id: "PG-043-MTG", name: "Meeting Workspace → 3. Meeting Space", category: "Advocacy", description: "Option 3: Meeting Space — Run the live IEP meeting, track targets, parking lot, and closeout" },
+  "advocate_ready": { id: "PG-043-MTG", name: "Meeting Workspace → 3. Meeting Space", category: "Advocacy", description: "Option 3: Meeting Space — Run the live IEP meeting, track targets, parking lot, and closeout" },
+  "live":           { id: "PG-043-MTG", name: "Meeting Workspace → 3. Meeting Space", category: "Advocacy", description: "Option 3: Meeting Space — Run the live IEP meeting, track targets, parking lot, and closeout" },
+  "3":              { id: "PG-043-MTG", name: "Meeting Workspace → 3. Meeting Space", category: "Advocacy", description: "Option 3: Meeting Space — Run the live IEP meeting, track targets, parking lot, and closeout" },
+};
+
+/**
+ * Resolves a Meeting Workspace tab identifier ('assemble', 'blueprint', 'meeting-space', or WorkspaceTab enum) to its Sub-Page ID.
+ */
+export function resolveMeetingWorkspaceTabId(tabId: string): PageIdInfo {
+  const key = (tabId || "assemble").toLowerCase().trim();
+  return MEETING_WORKSPACE_TAB_IDS[key] || MEETING_WORKSPACE_TAB_IDS["assemble"];
+}
+
 /**
  * Resolves a Student Workspace tab identifier (e.g. 'more', 'reviews', 'communication') to its specific Sub-Page ID.
  */
@@ -541,6 +566,16 @@ export function resolvePageId(pathname: string, search = ""): PageIdInfo {
       return STUDENT_WORKSPACE_TAB_IDS[tabParam];
     }
     return STUDENT_WORKSPACE_TAB_IDS["overview"];
+  }
+
+  // Check Meeting Workspace sub-options (/meeting-workspace?tab=assemble|blueprint|meeting-space, /meeting-workspace/:studentId?tab=...)
+  if (cleanPath === "/meeting-workspace" || /^\/meeting-workspace\/[^/]+/.test(cleanPath)) {
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const tabParam = (urlParams.get("tab") || urlParams.get("option") || "").toLowerCase();
+    if (tabParam && MEETING_WORKSPACE_TAB_IDS[tabParam]) {
+      return MEETING_WORKSPACE_TAB_IDS[tabParam];
+    }
+    return MEETING_WORKSPACE_TAB_IDS["assemble"];
   }
 
   // 1. Direct exact match

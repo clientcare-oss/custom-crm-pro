@@ -6,6 +6,25 @@ export type PrepStep = "iep_intel" | "parent_intel" | "pcs" | "blueprint" | "rea
 
 export type FindingStatus = "keep" | "important" | "edit" | "dismiss";
 
+export interface FindingSourceBoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface FindingSourceReference {
+  documentId: number;
+  fileName: string;
+  contentFingerprint?: string;
+  pdfPageNumber: number | null;
+  printedPageLabel?: string | null;
+  excerpt?: string | null;
+  boundingBoxes?: FindingSourceBoundingBox[];
+  verificationStatus: "verified" | "page_only" | "unverified";
+  verificationReason?: string;
+}
+
 export interface IepIntelFinding {
   id: string;
   category: string;
@@ -14,6 +33,7 @@ export interface IepIntelFinding {
   quote?: string;
   status: FindingStatus;
   isCustom?: boolean;
+  sourceRef?: FindingSourceReference;
 }
 
 export interface ParentIntelConcern {
