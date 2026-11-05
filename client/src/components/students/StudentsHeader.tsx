@@ -190,24 +190,6 @@ export function StudentsHeader({
           </PopoverContent>
         </Popover>
 
-        {/* Manage Tags Button */}
-        {onOpenManageTags && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onOpenManageTags}
-            className={cn(
-              "h-10 sm:h-11 px-3.5 sm:px-4 rounded-lg text-xs sm:text-sm font-medium gap-2 transition-all cursor-pointer select-none",
-              "bg-gradient-to-b from-[#14233C]/95 to-[#0A1322]/98 border border-[#283C5C] text-[#C4D7ED]",
-              "hover:bg-[#1A2E4E] hover:border-[#3D5B8A] hover:text-white"
-            )}
-            title="Manage company tags"
-          >
-            <Tag className="w-4 h-4 text-[#E9BA6B]" />
-            <span className="hidden md:inline">Tags</span>
-          </Button>
-        )}
-
         {/* New Student: Solid Radiant Brushed Brass Button */}
         <Button
           onClick={onNewStudentClick}

@@ -855,9 +855,9 @@ export function AddCustomStagePopover({
         <button
           type="button"
           title="Add a new custom stage (linked to a tag)"
-          className="inline-flex items-center justify-center h-9 w-9 rounded-full border border-[#8A6731]/65 bg-gradient-to-b from-[#0E223D] to-[#061224] text-[#FFE394] hover:border-[#FFE394] hover:from-[#163258] hover:to-[#0A1C36] shadow-[0_4px_14px_rgba(0,0,0,0.75),inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all cursor-pointer shrink-0"
+          className="inline-flex items-center justify-center h-[38px] w-[38px] sm:h-[42px] sm:w-[42px] rounded-2xl border border-[#B88943]/75 hover:border-[#FFE299] bg-gradient-to-b from-[#142B49] via-[#0E2038] to-[#081527] hover:from-[#1B3A63] hover:via-[#112744] hover:to-[#09182D] text-[#FFE299] shadow-[0_0_12px_rgba(184,137,67,0.22),inset_0_1px_1.5px_rgba(255,255,255,0.2),inset_0_-2px_4px_rgba(0,0,0,0.55),0_3px_8px_rgba(0,0,0,0.75)] transition-all cursor-pointer shrink-0"
         >
-          <Plus className="w-4 h-4 stroke-[2.6]" />
+          <Plus className="w-4 h-4 stroke-[2.8] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
         </button>
       </PopoverTrigger>
       <PopoverContent

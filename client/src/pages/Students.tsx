@@ -896,51 +896,24 @@ export default function Students() {
 
         {/* ─── Stage Filter Pill Bar: All Students, Active, Scholarship, Renewal, Archived, + Custom Stage ─── */}
         <div className="w-full px-4 sm:px-6 md:px-10 lg:px-12 pt-3 pb-2 bg-[#020712] border-b border-[#8A6731]/25">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
-              {stageTabs.map((tab) => (
-                <WaypointPillTab
-                  key={tab.id}
-                  label={tab.label}
-                  count={tab.count}
-                  active={listCategory === tab.id}
-                  onClick={() => handleStageTabClick(tab.id)}
-                />
-              ))}
-
-              {/* "+" Button for adding a new custom stage (ordered/populated by tags) */}
-              <AddCustomStagePopover
-                companyTags={companyTags}
-                customStages={customStages}
-                onAddStage={handleAddCustomStage}
-                onDeleteStage={handleDeleteCustomStage}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
+            {stageTabs.map((tab) => (
+              <WaypointPillTab
+                key={tab.id}
+                label={tab.label}
+                count={tab.count}
+                active={listCategory === tab.id}
+                onClick={() => handleStageTabClick(tab.id)}
               />
-            </div>
+            ))}
 
-            {/* Quick Order-by-Tags & Manage Company Tags Controls */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setSortBy((prev) => (prev === "tags" ? "name" : "tags"))}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-serif font-semibold border transition-all cursor-pointer",
-                  sortBy === "tags"
-                    ? "bg-[#091931] text-[#FFE394] border-[#C5A059] shadow-[0_0_10px_rgba(197,160,89,0.25)]"
-                    : "bg-[#050E1C] text-[#8EA6C6] border-[#1E3250] hover:text-[#E2EDF8] hover:border-[#3A5A88]"
-                )}
-                title="Order students by their assigned tags"
-              >
-                {sortBy === "tags" ? "Ordered by Tags ✓" : "Order by Tags"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setManageTagsOpen(true)}
-                className="px-3 py-1.5 rounded-full text-xs font-serif font-semibold bg-[#050E1C] text-[#D8C7A5] border border-[#3A2C18] hover:border-[#C5A059]/70 hover:text-[#FFE394] transition-all cursor-pointer"
-              >
-                Manage Tags
-              </button>
-            </div>
+            {/* "+" Button for adding a new custom stage (ordered/populated by tags) */}
+            <AddCustomStagePopover
+              companyTags={companyTags}
+              customStages={customStages}
+              onAddStage={handleAddCustomStage}
+              onDeleteStage={handleDeleteCustomStage}
+            />
           </div>
         </div>
 
