@@ -377,7 +377,11 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
         loc === "/projects" ||
         loc.startsWith("/projects/") ||
         loc.startsWith("/contacts/") ||
-        loc.startsWith("/project-workspace/"),
+        loc.startsWith("/project-workspace/") ||
+        loc === "/meeting-workspace" ||
+        loc.startsWith("/meeting-workspace") ||
+        loc === "/workspace" ||
+        loc.startsWith("/post-meeting-review"),
     },
     {
       id: "contacts",
@@ -391,7 +395,11 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       icon: Workflow,
       label: "Pipeline",
       path: "/advocacy-pipeline",
-      isActive: (loc) => loc === "/advocacy-pipeline" || loc.startsWith("/advocacy-pipeline") || loc === "/meeting-workspace" || loc.startsWith("/meeting-workspace") || loc === "/workspace" || loc.startsWith("/post-meeting-review"),
+      isActive: (loc) =>
+        loc === "/advocacy-pipeline" ||
+        loc.startsWith("/advocacy-pipeline") ||
+        loc === "/pipeline" ||
+        loc.startsWith("/pipeline/"),
     },
     {
       id: "documents",

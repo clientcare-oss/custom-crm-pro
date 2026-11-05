@@ -225,7 +225,7 @@ interface AntiqueBrassNameplateProps {
   icon?: React.ElementType;
   title: string;
   count: number | string;
-  type?: "active" | "onboarding" | "paused" | "archived";
+  type?: "active" | "scholarship" | "renewal" | "onboarding" | "paused" | "archived" | string;
   className?: string;
 }
 

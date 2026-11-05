@@ -12,7 +12,7 @@ import type {
   PcsVersionHistoryItem,
   PcsSubmittedVersion,
 } from "./types";
-import type { ParentIntelConcern, IepIntelFinding } from "../types";
+import type { ParentIntelConcern, IepIntelFinding, MeetingTarget } from "../types";
 import { toast } from "sonner";
 
 interface ParentConcernStatementWorkspaceProps {
@@ -22,6 +22,9 @@ interface ParentConcernStatementWorkspaceProps {
   pcsText: string;
   parentConcerns?: ParentIntelConcern[];
   iepFindings?: IepIntelFinding[];
+  targets?: MeetingTarget[];
+  onUpdateTargets?: (targets: MeetingTarget[]) => void;
+  onOpenSourceEvidence?: (target: MeetingTarget) => void;
   rawPcsMetadata?: any;
   parentDoesntWantText?: string;
   onSavePcs: (newPcsText: string, updatedMetadata: PcsMetadata, parentDoesntWantText?: string) => Promise<void> | void;
@@ -34,6 +37,9 @@ export function ParentConcernStatementWorkspace({
   pcsText,
   parentConcerns = [],
   iepFindings = [],
+  targets = [],
+  onUpdateTargets,
+  onOpenSourceEvidence,
   rawPcsMetadata,
   parentDoesntWantText,
   onSavePcs,
@@ -447,6 +453,9 @@ export function ParentConcernStatementWorkspace({
           onSaveContent={handleSaveParentDoesntWant}
           isSaving={isSavingDoesntWant}
           isDirty={isDirtyDoesntWant}
+          targets={targets}
+          onUpdateTargets={onUpdateTargets}
+          onOpenSourceEvidence={onOpenSourceEvidence}
         />
       </div>
 

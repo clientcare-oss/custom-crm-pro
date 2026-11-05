@@ -25,6 +25,7 @@ export interface StudentFolderData {
   needsAttention?: boolean;
   upcomingMeetingDate?: string | null;
   markerType?: MarkerType;
+  tags?: string[];
 }
 
 export interface StudentFileCardProps {
@@ -345,6 +346,17 @@ export function StudentFileCard({
           >
             {diagTag}
           </span>
+
+          {/* Custom Tag Indicator on Card if present */}
+          {student.tags && student.tags.length > 0 && (
+            <span
+              className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-[#F9E2E2]/95 text-[#3B1A1A] border border-[#F1C4C4] truncate max-w-[85px] shadow-[0_1px_1px_rgba(0,0,0,0.06)]"
+              title={student.tags.join(", ")}
+            >
+              {student.tags[0]}
+              {student.tags.length > 1 ? ` +${student.tags.length - 1}` : ""}
+            </span>
+          )}
         </div>
       </div>
     </div>

@@ -1,22 +1,27 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   Ban,
   ShieldAlert,
   Save,
   Copy,
   Plus,
-  Trash2,
   ListPlus,
-  AlertOctagon,
   Sparkles,
-  CheckCircle2,
   Info,
+  ExternalLink,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { BlueprintItemDestination, MeetingTarget } from "../types";
+import {
+  getEffectiveTargetDestination,
+  setTargetDestination,
+} from "../intel-unit/connectedFindingWorkflow";
 
 interface ParentDoesntWantBoxProps {
   content: string;
@@ -24,6 +29,9 @@ interface ParentDoesntWantBoxProps {
   onSaveContent: () => Promise<void>;
   isSaving: boolean;
   isDirty: boolean;
+  targets?: MeetingTarget[];
+  onUpdateTargets?: (targets: MeetingTarget[]) => void;
+  onOpenSourceEvidence?: (target: MeetingTarget) => void;
   className?: string;
 }
 
@@ -61,10 +69,47 @@ export function ParentDoesntWantBox({
   onSaveContent,
   isSaving,
   isDirty,
+  targets = [],
+  onUpdateTargets,
+  onOpenSourceEvidence,
   className,
 }: ParentDoesntWantBoxProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showPresets, setShowPresets] = useState(false);
+
+  const parentDoesntWantTargets = targets.filter(
+    (t) =>
+      !t.archivedOrWithdrawn &&
+      !t.removedFromPlan &&
+      getEffectiveTargetDestination(t) === "parent_doesnt_want"
+  );
+
+  const handleChangeTargetDestination = (
+    target: MeetingTarget,
+    nextDest: BlueprintItemDestination
+  ) => {
+    if (!onUpdateTargets) return;
+    const updated = targets.map((t) =>
+      t.id === target.id ? setTargetDestination(t, nextDest) : t
+    );
+    onUpdateTargets(updated);
+    const labelMap: Record<BlueprintItemDestination, string> = {
+      final_meeting_plan: "Final Meeting Plan",
+      keep_in_blueprint: "Keep in Blueprint",
+      parent_doesnt_want: "Parent Doesn't Want",
+      set_aside: "Set Aside",
+    };
+    toast.success(`Moved "${target.targetName}" to ${labelMap[nextDest]}`);
+  };
+
+  const handleUpdatePreferenceReason = (targetId: string, reason: string) => {
+    if (!onUpdateTargets) return;
+    onUpdateTargets(
+      targets.map((t) =>
+        t.id === targetId ? { ...t, parentDoesntWantReason: reason } : t
+      )
+    );
+  };
 
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
   const lineCount = content.trim() ? content.trim().split("\n").filter((l) => l.trim().length > 0).length : 0;
@@ -109,6 +154,8 @@ export function ParentDoesntWantBox({
 
   return (
     <div
+      id="parent-doesnt-want-box"
+      data-testid="parent-doesnt-want-box"
       className={cn(
         "rounded-xl bg-[#170509]/95 border border-[#52161E] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,100,100,0.06)] p-5 sm:p-6 space-y-4 transition-all hover:border-[#6F1E28]",
         className
@@ -135,9 +182,15 @@ export function ParentDoesntWantBox({
               >
                 {isDirty ? "UNSAVED EDITS" : "PARENT DEALBREAKERS"}
               </Badge>
+              {parentDoesntWantTargets.length > 0 && (
+                <Badge className="bg-rose-950 text-rose-200 border border-rose-500/50 text-[10px] font-mono">
+                  {parentDoesntWantTargets.length} Blueprint{" "}
+                  {parentDoesntWantTargets.length === 1 ? "Item" : "Items"}
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-rose-200/70 mt-0.5 leading-relaxed">
-              Explicit parent boundaries, rejected district proposals, service reductions to oppose, and non-negotiable red lines.
+              Explicit parent boundaries, items routed to Parent Doesn&apos;t Want during Blueprint review, and non-negotiable red lines.
             </p>
           </div>
         </div>
@@ -160,6 +213,114 @@ export function ParentDoesntWantBox({
           <span>{showPresets ? "Hide Quick Boundaries" : "Quick Boundaries"}</span>
         </Button>
       </div>
+
+      {/* ── Blueprint Plan Items Routed to Parent Doesn't Want ─────────────── */}
+      {parentDoesntWantTargets.length > 0 && (
+        <div
+          data-testid="parent-doesnt-want-routed-items"
+          className="rounded-xl bg-[#22070D]/90 border border-[#5A1720] p-3.5 space-y-2.5"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-200 flex items-center gap-1.5">
+              <Ban className="w-3.5 h-3.5 text-rose-400" />
+              <span>
+                Plan Items Placed in Parent Doesn&apos;t Want ({parentDoesntWantTargets.length})
+              </span>
+            </span>
+            <span className="text-[10.5px] text-rose-300/75">
+              Excluded from active meeting requests · Evidence preserved
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {parentDoesntWantTargets.map((item) => (
+              <div
+                key={item.id}
+                data-testid={`pdw-item-${item.id}`}
+                className="rounded-lg bg-[#140307] border border-[#4D141C] p-3 space-y-2 text-xs"
+              >
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div className="space-y-0.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-[#FFE6E8]">
+                        {item.targetName}
+                      </span>
+                      <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-[#280A12] border border-[#5A1720] text-rose-200/90 font-mono">
+                        {item.iepSection}
+                      </span>
+                    </div>
+                    <p className="text-[11.5px] text-rose-100/85">
+                      {item.parentWhatWeWant || item.quickAdvocateSayThis}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                    {onOpenSourceEvidence &&
+                      (item.sourceRef ||
+                        item.evalSourceRef ||
+                        item.sourceFindingId ||
+                        (item.sources && item.sources.length > 0)) && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenSourceEvidence(item)}
+                          className="h-7 px-2 rounded bg-[#260910] border border-[#5A1720] text-[11px] text-rose-200 hover:text-white inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>View Source</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </button>
+                      )}
+
+                    {onUpdateTargets && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleChangeTargetDestination(
+                              item,
+                              "keep_in_blueprint"
+                            )
+                          }
+                          className="h-7 px-2.5 rounded bg-[#0A1E3D] border border-[#2C4E86] text-[11px] font-semibold text-[#FFE394] hover:bg-[#102A54] inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          <span>Return to Blueprint</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleChangeTargetDestination(
+                              item,
+                              "final_meeting_plan"
+                            )
+                          }
+                          className="h-7 px-2.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-900/80 cursor-pointer"
+                        >
+                          Include in Final Plan
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Optional explanation of parent's preference */}
+                <div className="pt-1">
+                  <label className="text-[10.5px] font-semibold text-rose-300/90 block mb-1">
+                    Parent&apos;s Preference / Explanation (Optional):
+                  </label>
+                  <Input
+                    value={item.parentDoesntWantReason || ""}
+                    onChange={(e) =>
+                      handleUpdatePreferenceReason(item.id, e.target.value)
+                    }
+                    placeholder="Record why the parent prefers not to pursue this request right now..."
+                    className="h-7 text-xs bg-[#0B0204] border-[#4A131A] text-rose-100 placeholder:text-rose-300/40"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Preset Boundaries Drawer ───────────────────────────────────────── */}
       {showPresets && (

@@ -111,9 +111,27 @@ export function ParentFriendlyPreviewModal({
             {/* Target Items List */}
             <div className="space-y-4">
               {targets.map((target, idx) => {
-                const whatWeWant = target.parentWhatWeWant || target.quickAdvocateSayThis || target.targetName;
-                const whyWeWantIt = target.parentWhyWeWantIt || target.whyWeWantIt || "To support meaningful educational progress and access in the classroom.";
-                const evidence = target.parentSupportingEvidence || target.supportingEvidence || "Observations, progress reports, and educational evaluations.";
+                const whatWeFound =
+                  target.parentWhatWeFound ||
+                  target.parentSupportingEvidence ||
+                  target.supportingEvidence ||
+                  target.fullAdvocateScript ||
+                  "Documented need identified during records review.";
+                const whatWeWant =
+                  target.parentWhatWeWant ||
+                  target.quickAdvocateSayThis ||
+                  target.targetName;
+                const whyWeWantIt =
+                  target.parentWhyWeWantIt ||
+                  target.whyWeWantIt ||
+                  "To support meaningful educational progress and access in the classroom.";
+                const parentInput =
+                  target.parentInput ||
+                  "Does this match what you are seeing? Is this a priority for you?";
+                const evidence =
+                  target.parentSupportingEvidence ||
+                  target.supportingEvidence ||
+                  "Observations, progress reports, and educational evaluations.";
 
                 return (
                   <div
@@ -133,34 +151,55 @@ export function ParentFriendlyPreviewModal({
                       </Badge>
                     </div>
 
-                    {/* WHAT WE ARE REQUESTING */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* 1. WHAT WE FOUND */}
+                      <div className="bg-[#092244]/70 border border-[#103E70] rounded-lg p-3.5">
+                        <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-blue-300 uppercase tracking-wider mb-1">
+                          <FileBarChart2 className="w-3.5 h-3.5 text-blue-300" />
+                          <span>WHAT WE FOUND</span>
+                        </div>
+                        <p className="text-xs text-blue-100 leading-relaxed">
+                          {whatWeFound}
+                        </p>
+                      </div>
+
+                      {/* 2. WHY IT MATTERS */}
+                      <div className="bg-[#092244]/70 border border-[#103E70] rounded-lg p-3.5">
+                        <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-[#F5B544] uppercase tracking-wider mb-1">
+                          <Lightbulb className="w-3.5 h-3.5 text-[#F5B544]" />
+                          <span>WHY IT MATTERS</span>
+                        </div>
+                        <p className="text-xs text-blue-100 leading-relaxed">
+                          {whyWeWantIt}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 3. WHAT WE WANT TO ASK FOR */}
                     <div className="bg-[#092244] border border-emerald-500/30 rounded-lg p-3.5">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
                         <Target className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>WHAT WE ARE REQUESTING</span>
+                        <span>WHAT WE WANT TO ASK FOR</span>
                       </div>
                       <p className="text-xs font-semibold text-white leading-relaxed">
                         {whatWeWant}
                       </p>
                     </div>
 
+                    {/* 4. YOUR INPUT & SUPPORTING EVIDENCE */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {/* WHY WE WANT IT */}
                       <div className="bg-[#092244]/70 border border-[#103E70] rounded-lg p-3.5">
-                        <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-[#F5B544] uppercase tracking-wider mb-1">
-                          <Lightbulb className="w-3.5 h-3.5 text-[#F5B544]" />
-                          <span>WHY WE WANT IT</span>
+                        <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-[#FFE394] uppercase tracking-wider mb-1">
+                          <span>💬 YOUR INPUT</span>
                         </div>
-                        <p className="text-xs text-blue-200 leading-relaxed">
-                          {whyWeWantIt}
+                        <p className="text-xs text-blue-100 leading-relaxed">
+                          {parentInput}
                         </p>
                       </div>
 
-                      {/* WHAT SUPPORTS IT */}
                       <div className="bg-[#092244]/70 border border-[#103E70] rounded-lg p-3.5">
                         <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-blue-300 uppercase tracking-wider mb-1">
-                          <FileBarChart2 className="w-3.5 h-3.5 text-blue-300" />
-                          <span>WHAT SUPPORTS IT</span>
+                          <span>📊 SUPPORTING EVIDENCE</span>
                         </div>
                         <p className="text-xs text-blue-200 leading-relaxed">
                           {evidence}

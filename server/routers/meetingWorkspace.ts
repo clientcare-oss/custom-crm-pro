@@ -15,6 +15,11 @@ import {
   searchIndexedDocument,
   verifySourceReferenceAgainstIndex,
 } from "../services/intelDocumentIndexService";
+import {
+  updateVaultRecordMetadata,
+  runEvaluationsToIepComparison,
+  runFirstMateRecordsReview,
+} from "../services/recordsReviewService";
 
 async function assertAuthorizedStudentVaultFile(
   ctx: any,
@@ -464,6 +469,234 @@ export const meetingWorkspaceRouter = router({
     }),
 
   /**
+   * Records Review Drawer: Assign or correct a document's category/group
+   * or designate/replace the Current IEP without deleting historical records.
+   */
+  updateRecordMetadata: protectedProcedure
+    .input(
+      z.object({
+        studentContactId: z.number(),
+        fileId: z.number(),
+        recordGroup: z.enum([
+          "current_iep",
+          "school_evaluation",
+          "outside_evaluation",
+          "historical_iep",
+        ]),
+        documentDate: z.string().nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertAuthorizedStudentVaultFile(
+        ctx,
+        input.studentContactId,
+        input.fileId
+      );
+      return updateVaultRecordMetadata({
+        studentContactId: input.studentContactId,
+        fileId: input.fileId,
+        recordGroup: input.recordGroup,
+        documentDate: input.documentDate,
+      });
+    }),
+
+  /**
+   * Records Review Compare View: Connect selected School & Outside Evaluations
+   * to the Current IEP across Present Levels, Goals, Accommodations, Services,
+   * Placement, Behavior Supports, and Assistive Technology.
+   */
+  compareEvaluationsWithIep: protectedProcedure
+    .input(
+      z.object({
+        studentContactId: z.number(),
+        workspaceId: z.number().optional(),
+        currentIepFileId: z.number(),
+        evaluationFileIds: z.array(z.number()),
+        sectionFilter: z.string().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const contact = await db.getContactById(input.studentContactId);
+      const studentName = contact
+        ? `${contact.firstName} ${contact.lastName}`.trim()
+        : "Student";
+
+      const iepRecord = await assertAuthorizedStudentVaultFile(
+        ctx,
+        input.studentContactId,
+        input.currentIepFileId
+      );
+
+      const loadIndexedRecord = async (fileRecord: any) => {
+        const fileName = String(fileRecord.fileName || "Document.pdf");
+        const mimeType = String(fileRecord.mimeType || "application/pdf");
+        const isPdf =
+          mimeType.toLowerCase().includes("pdf") ||
+          fileName.toLowerCase().endsWith(".pdf");
+        if (!isPdf) {
+          return {
+            fileRecord,
+            index: null,
+            status: "unsupported" as const,
+          };
+        }
+        const pdfBuffer = await resolveVaultFileBinary(fileRecord);
+        if (!pdfBuffer || pdfBuffer.length === 0) {
+          return {
+            fileRecord,
+            index: null,
+            status: "unavailable" as const,
+          };
+        }
+        const classified = classifyDocument(fileName);
+        const index = await extractAndIndexPdfDocument({
+          fileId: Number(fileRecord.id),
+          studentContactId: input.studentContactId,
+          workspaceId: input.workspaceId ?? null,
+          fileName,
+          pdfBuffer,
+          uploadedAt: fileRecord.uploadedAt
+            ? String(fileRecord.uploadedAt)
+            : null,
+          fallbackMetadataDate:
+            fileRecord.documentDate || classified.extractedDate || null,
+        });
+        return {
+          fileRecord,
+          index,
+          status: "ready" as const,
+        };
+      };
+
+      const iepLoaded = await loadIndexedRecord(iepRecord);
+
+      const evalLoadedList: Array<{
+        fileRecord: any;
+        index: Awaited<ReturnType<typeof extractAndIndexPdfDocument>> | null;
+        status: "ready" | "unavailable" | "unsupported" | "error";
+      }> = [];
+      for (const evalId of input.evaluationFileIds) {
+        if (evalId === input.currentIepFileId) continue;
+        const evRecord = await assertAuthorizedStudentVaultFile(
+          ctx,
+          input.studentContactId,
+          evalId
+        );
+        evalLoadedList.push(await loadIndexedRecord(evRecord));
+      }
+
+      return runEvaluationsToIepComparison({
+        studentName,
+        currentIepFile: iepLoaded.fileRecord,
+        currentIepIndex: iepLoaded.index,
+        currentIepStatus: iepLoaded.status,
+        evaluations: evalLoadedList,
+        sectionFilter: input.sectionFilter,
+      });
+    }),
+
+  /**
+   * First Mate Contextual Records Review Assistant:
+   * Uses the advocate's selected source records and active passage/page context,
+   * reporting exact source citations and extraction/OCR limitations.
+   */
+  askFirstMateRecordsReview: protectedProcedure
+    .input(
+      z.object({
+        studentContactId: z.number(),
+        workspaceId: z.number().optional(),
+        action: z.enum([
+          "explain_passage",
+          "compare_eval_with_iep",
+          "find_recommendations",
+          "turn_into_question",
+          "custom_question",
+        ]),
+        selectedFileIds: z.array(z.number()),
+        activeFileId: z.number().nullable().optional(),
+        activePageNumber: z.number().nullable().optional(),
+        selectedPassageText: z.string().nullable().optional(),
+        customPrompt: z.string().nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const contact = await db.getContactById(input.studentContactId);
+      const studentName = contact
+        ? `${contact.firstName} ${contact.lastName}`.trim()
+        : "Student";
+
+      const uniqueIds = Array.from(
+        new Set(
+          [
+            ...input.selectedFileIds,
+            ...(input.activeFileId ? [input.activeFileId] : []),
+          ].filter((id) => id > 0)
+        )
+      );
+
+      const loadedRecords: Array<{
+        fileRecord: any;
+        index: Awaited<ReturnType<typeof extractAndIndexPdfDocument>> | null;
+        status: "ready" | "unavailable" | "unsupported" | "error";
+      }> = [];
+      for (const fid of uniqueIds) {
+        const rec = await assertAuthorizedStudentVaultFile(
+          ctx,
+          input.studentContactId,
+          fid
+        );
+        const fileName = String(rec.fileName || "Document.pdf");
+        const mimeType = String(rec.mimeType || "application/pdf");
+        const isPdf =
+          mimeType.toLowerCase().includes("pdf") ||
+          fileName.toLowerCase().endsWith(".pdf");
+        if (!isPdf) {
+          loadedRecords.push({
+            fileRecord: rec,
+            index: null,
+            status: "unsupported" as const,
+          });
+          continue;
+        }
+        const pdfBuffer = await resolveVaultFileBinary(rec);
+        if (!pdfBuffer || pdfBuffer.length === 0) {
+          loadedRecords.push({
+            fileRecord: rec,
+            index: null,
+            status: "unavailable" as const,
+          });
+          continue;
+        }
+        const classified = classifyDocument(fileName);
+        const index = await extractAndIndexPdfDocument({
+          fileId: Number(rec.id),
+          studentContactId: input.studentContactId,
+          workspaceId: input.workspaceId ?? null,
+          fileName,
+          pdfBuffer,
+          uploadedAt: rec.uploadedAt ? String(rec.uploadedAt) : null,
+          fallbackMetadataDate:
+            rec.documentDate || classified.extractedDate || null,
+        });
+        loadedRecords.push({
+          fileRecord: rec,
+          index,
+          status: "ready" as const,
+        });
+      }
+
+      return runFirstMateRecordsReview({
+        studentName,
+        action: input.action,
+        records: loadedRecords,
+        activeFileId: input.activeFileId,
+        activePageNumber: input.activePageNumber,
+        selectedPassageText: input.selectedPassageText,
+        customPrompt: input.customPrompt,
+      });
+    }),
+
+  /**
    * Step 1: Run IEP Intel (Neutralized in Phase 2A per Section 8)
    * Does not generate document findings from diagnosis/challenges alone or fabricate quotes/page numbers.
    * Preserves existing saved findings in the student's workspace.
@@ -798,28 +1031,52 @@ Build 5-8 distinct meeting targets.`;
       let orderIdx = 1;
 
       for (const finding of approvedFindings || []) {
+        const canonicalId = finding.id
+          ? String(finding.id).startsWith("target-from-")
+            ? String(finding.id)
+            : `target-from-${finding.id}`
+          : `tgt-${Date.now()}-${orderIdx}`;
+        const sourceLabel = finding.sourceRef?.fileName
+          ? `${finding.sourceRef.fileName}${
+              finding.sourceRef.pdfPageNumber
+                ? ` · PDF p. ${finding.sourceRef.pdfPageNumber}`
+                : ""
+            }`
+          : finding.quote || "Source needs verification";
+        const evidenceText =
+          finding.sourceRef?.excerpt ||
+          finding.evalSourceRef?.excerpt ||
+          finding.quote ||
+          "Source needs verification";
+        const resolvedQuestion =
+          finding.proposedQuestion || finding.text || "";
+
         dynamicTargets.push({
-          id: `tgt-${Date.now()}-${orderIdx}`,
+          id: canonicalId,
+          sourceFindingId: finding.id || undefined,
           targetName: `${finding.category || "IEP Review"}: ${(finding.text || "").slice(0, 52)}${(finding.text || "").length > 52 ? "…" : ""}`,
           iepSection: finding.section || finding.category || "Present Levels / Academics",
           sectionOrder: orderIdx,
           targetOrder: orderIdx,
-          quickAdvocateSayThis: finding.text || "",
+          quickAdvocateSayThis: resolvedQuestion,
           fullAdvocateScript: `Regarding ${finding.section || finding.category || "this section"} for ${firstName}: ${finding.text || ""}`,
           putItHereLocation: `IEP Section: ${finding.section || finding.category || "Relevant Section"}`,
           possibleIepWording: finding.text || "",
-          whyWeWantIt: `Addresses documented finding for ${firstName} in ${finding.section || finding.category || "the IEP"}.`,
-          supportingEvidence: finding.quote || "Source needs verification",
-          sources: finding.quote ? [finding.quote] : ["Source needs verification"],
+          whyWeWantIt: finding.text || `Addresses documented finding for ${firstName} in ${finding.section || finding.category || "the IEP"}.`,
+          supportingEvidence: evidenceText,
+          sources: [sourceLabel],
           ifTeamDisagrees: "Request specific evaluation data supporting the team's position and document any refusal in Prior Written Notice.",
-          parentWhatWeWant: finding.text || "",
+          parentWhatWeWant: resolvedQuestion,
           parentWhyWeWantIt: `Ensures ${firstName}'s IEP reflects accurate baselines and appropriate supports.`,
-          parentSupportingEvidence: finding.quote || "Source needs verification",
+          parentSupportingEvidence: evidenceText,
           meetingStatus: "NOT_DISCUSSED",
           requestRaised: false,
           pwnNeeded: false,
           addedToIep: false,
           followUpNeeded: false,
+          sourceRef: finding.sourceRef,
+          evalSourceRef: finding.evalSourceRef,
+          priority: finding.priority || "medium",
         });
         orderIdx++;
       }

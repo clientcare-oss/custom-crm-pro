@@ -8,6 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { cn } from "@/lib/utils";
 import type { MeetingTarget, TargetMeetingStatus, ParkingLotItem, AdditionalItem, CloseoutChecks, ScratchNote, BeforeWeEndItem, MeetingTimelineEvent } from "../types";
 import { TargetTagsControl, isTargetStruckThrough } from "../tags/TargetTagsControl";
+import {
+  getEffectiveTargetDestination,
+  isTargetIncludedInFinalMeetingPlan,
+  setTargetDestination,
+} from "../intel-unit/connectedFindingWorkflow";
 import { DeleteTargetModal } from "../DeleteTargetModal";
 import { openPrintDialog } from "../print/PrintableMeetingDocument";
 import { ScratchPadDrawer } from "./ScratchPadDrawer";
@@ -33,6 +38,9 @@ interface MeetingModeViewProps {
   onUpdateAdditionalItems: (items: AdditionalItem[]) => void;
   onUpdateCloseoutChecks: (checks: CloseoutChecks) => void;
   onCompleteMeeting: (summary: any) => Promise<void>;
+  onOpenSourceEvidence?: (target: MeetingTarget) => void;
+  onWithdrawTargetPreserveHistory?: (targetId: string) => void;
+  onDeleteConnectedFindingEverywhere?: (target: MeetingTarget) => void;
 }
 
 export function MeetingModeView({
@@ -51,6 +59,9 @@ export function MeetingModeView({
   onUpdateAdditionalItems,
   onUpdateCloseoutChecks,
   onCompleteMeeting,
+  onOpenSourceEvidence,
+  onWithdrawTargetPreserveHistory,
+  onDeleteConnectedFindingEverywhere,
 }: MeetingModeViewProps) {
   // Voyage Log Meeting Recording state synchronized with global recorder
   const [isVoyageRecording, setIsVoyageRecording] = useState(false);
@@ -106,12 +117,28 @@ export function MeetingModeView({
 
   // Delete Target Confirmation State
   const [targetToDelete, setTargetToDelete] = useState<MeetingTarget | null>(null);
+  const [showWithdrawnHistory, setShowWithdrawnHistory] = useState(false);
 
   const handleConfirmDeleteTarget = (id: string) => {
+    const previousTargets = [...targets];
+    const removed = targets.find((t) => t.id === id);
     onUpdateTargets(targets.filter((t) => t.id !== id));
     if (selectedTargetId === id) setSelectedTargetId(null);
     if (sayThisEditTarget?.id === id) setSayThisEditTarget(null);
-    toast.success("Target deleted");
+    toast.success(
+      removed?.sourceFindingId
+        ? "Removed from meeting agenda · Saved finding retained in Records Review"
+        : "Target removed from meeting agenda",
+      {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            onUpdateTargets(previousTargets);
+            toast.success("Restored to meeting agenda");
+          },
+        },
+      }
+    );
   };
 
   // Perfect What to Ask For (Say This) editing modal
@@ -434,9 +461,12 @@ export function MeetingModeView({
       supportingEvidence: "Raised during session.",
       sources: ["Live IEP Meeting"],
       ifTeamDisagrees: "Document denial in Prior Written Notice.",
+      parentWhatWeFound: "Identified during live IEP team discussion.",
       parentWhatWeWant: quickTopic.trim(),
       parentWhyWeWantIt: "",
       parentSupportingEvidence: "",
+      parentReviewStatus: "ready_for_meeting",
+      blueprintDestination: "final_meeting_plan",
       meetingStatus: "DISCUSSED",
       requestRaised: true,
       pwnNeeded: false,
@@ -461,15 +491,26 @@ export function MeetingModeView({
         setIsVoyageRecording(false);
       }
 
+      const finalPlanTargets = targets.filter((t) =>
+        isTargetIncludedInFinalMeetingPlan(t)
+      );
       const summary = {
-        totalTargets: targets.length,
-        raisedTargets: targets.filter((t) => t.requestRaised).length,
-        agreedTargets: targets.filter((t) => t.meetingStatus === "AGREED" || t.addedToIep).map((t) => t.targetName),
-        deniedTargets: targets.filter((t) => t.meetingStatus === "DENIED").map((t) => t.targetName),
-        deferredTargets: targets.filter((t) => t.meetingStatus === "DEFERRED").map((t) => t.targetName),
-        pwnTargets: targets.filter((t) => t.pwnNeeded || t.meetingStatus === "DENIED").map((t) => t.targetName),
+        totalTargets: finalPlanTargets.length,
+        raisedTargets: finalPlanTargets.filter((t) => t.requestRaised).length,
+        agreedTargets: finalPlanTargets
+          .filter((t) => t.meetingStatus === "AGREED" || t.addedToIep)
+          .map((t) => t.targetName),
+        deniedTargets: finalPlanTargets
+          .filter((t) => t.meetingStatus === "DENIED")
+          .map((t) => t.targetName),
+        deferredTargets: finalPlanTargets
+          .filter((t) => t.meetingStatus === "DEFERRED")
+          .map((t) => t.targetName),
+        pwnTargets: finalPlanTargets
+          .filter((t) => t.pwnNeeded || t.meetingStatus === "DENIED")
+          .map((t) => t.targetName),
         parkingLotItems: parkingLot.map((p) => p.note),
-        followUpItems: targets
+        followUpItems: finalPlanTargets
           .filter((t) => t.followUpNeeded || t.meetingStatus === "FOLLOW_UP")
           .map((t) => ({ title: t.targetName, ownerDate: t.followUpOwnerDate })),
         notes: closeoutNotes,
@@ -484,13 +525,23 @@ export function MeetingModeView({
     }
   };
 
-  // Progress metrics
-  const totalTargets = targets.length;
-  const raisedCount = targets.filter((t) => t.requestRaised).length;
-  const agreedCount = targets.filter(
+  // Progress metrics — only items explicitly in Final Meeting Plan appear as active requests
+  const activeTargets = targets.filter((t) =>
+    isTargetIncludedInFinalMeetingPlan(t)
+  );
+  const nonFinalPlanTargets = targets.filter(
+    (t) =>
+      !t.archivedOrWithdrawn &&
+      (t.removedFromPlan ||
+        getEffectiveTargetDestination(t) !== "final_meeting_plan")
+  );
+  const archivedTargets = targets.filter((t) => Boolean(t.archivedOrWithdrawn));
+  const totalTargets = activeTargets.length;
+  const raisedCount = activeTargets.filter((t) => t.requestRaised).length;
+  const agreedCount = activeTargets.filter(
     (t) => t.meetingStatus === "AGREED" || t.meetingStatus === "APPROVED" || t.addedToIep
   ).length;
-  const unresolvedTargets = targets.filter(
+  const unresolvedTargets = activeTargets.filter(
     (t) =>
       t.meetingStatus === "NOT_DISCUSSED" ||
       t.meetingStatus === "FOLLOW_UP" ||
@@ -502,7 +553,7 @@ export function MeetingModeView({
   // Group active targets by detected section
   const sectionMap = new Map<string, MeetingTarget[]>();
   detectedOrder.forEach((sec) => sectionMap.set(sec, []));
-  targets.forEach((t) => {
+  activeTargets.forEach((t) => {
     const sec = t.iepSection || "General";
     if (!sectionMap.has(sec)) sectionMap.set(sec, []);
     sectionMap.get(sec)!.push(t);
@@ -685,10 +736,10 @@ export function MeetingModeView({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => openPrintDialog("ADVOCATE_STRATEGY", studentName, meetingType, meetingDate, targets)}
-            disabled={targets.length === 0}
+            onClick={() => openPrintDialog("ADVOCATE_STRATEGY", studentName, meetingType, meetingDate, activeTargets)}
+            disabled={activeTargets.length === 0}
             className="text-xs font-bold border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 cursor-pointer inline-flex items-center gap-1.5 shadow-md"
-            title="Generate the expanded Advocate Ready strategy document / PDF"
+            title="Generate the expanded Advocate Ready strategy document / PDF for Final Meeting Plan items"
           >
             <Printer className="h-3.5 w-3.5 text-[#DFBE77]" />
             <span>Advocate Printer-Friendly Version</span>
@@ -982,6 +1033,20 @@ export function MeetingModeView({
                         </>
                       )}
 
+                      {onOpenSourceEvidence && (target.sourceRef || target.evalSourceRef || target.sourceFindingId || (target.sources && target.sources.length > 0)) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          data-testid={`meeting-space-open-evidence-${target.id}`}
+                          onClick={() => onOpenSourceEvidence(target)}
+                          className="h-8 px-2 text-xs border-[#3A2C18] bg-[#020A17] text-[#FFE394] hover:text-white hover:border-[#C5A059]/60 cursor-pointer inline-flex items-center gap-1 shadow-sm"
+                          title="Open original IEP or evaluation passage in Records Review"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 text-[#DFBE77]" />
+                          <span className="hidden sm:inline">Evidence</span>
+                        </Button>
+                      )}
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -1094,6 +1159,93 @@ export function MeetingModeView({
           );
         })}
       </div>
+
+      {/* ── Collapsible Tray for Items Held Outside Final Meeting Plan (Keep in Blueprint / Parent Doesn't Want / Set Aside / Withdrawn) ── */}
+      {(nonFinalPlanTargets.length > 0 || archivedTargets.length > 0) && (
+        <div
+          data-testid="live-meeting-non-final-tray"
+          className="rounded-xl bg-[#041126]/90 border border-[#243B67] overflow-hidden"
+        >
+          <button
+            type="button"
+            onClick={() => setShowWithdrawnHistory((prev) => !prev)}
+            className="w-full px-4 py-2.5 flex items-center justify-between gap-2 text-xs text-[#A8C2E8] hover:text-white cursor-pointer"
+          >
+            <span className="inline-flex items-center gap-2 font-semibold">
+              <RotateCcw className="h-3.5 w-3.5 text-[#DFBE77]" />
+              <span>
+                Items Held Outside Active Final Meeting Plan ({nonFinalPlanTargets.length + archivedTargets.length})
+              </span>
+            </span>
+            <span className="text-[11px] text-[#FFE394]">
+              {showWithdrawnHistory ? "Hide" : "Show & Manage"}
+            </span>
+          </button>
+
+          {showWithdrawnHistory && (
+            <div className="p-3.5 border-t border-[#1D325A] space-y-2">
+              {[...nonFinalPlanTargets, ...archivedTargets].map((item) => {
+                const dest = item.archivedOrWithdrawn
+                  ? "Withdrawn (History Preserved)"
+                  : item.removedFromPlan
+                  ? "Removed from Plan"
+                  : getEffectiveTargetDestination(item) === "parent_doesnt_want"
+                  ? "Parent Doesn't Want"
+                  : getEffectiveTargetDestination(item) === "set_aside"
+                  ? "Set Aside"
+                  : "Keep in Blueprint";
+
+                return (
+                  <div
+                    key={item.id}
+                    className="rounded-lg bg-[#071936] border border-[#233B66] p-3 flex flex-wrap items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="space-y-0.5 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-white">
+                          {item.targetName}
+                        </span>
+                        <Badge className="bg-[#0E254D] text-[#FFE394] border border-[#32528A] text-[10px]">
+                          {dest}
+                        </Badge>
+                        {item.meetingStatus &&
+                          item.meetingStatus !== "NOT_DISCUSSED" && (
+                            <Badge className="bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 text-[10px]">
+                              Outcome Preserved: {item.meetingStatus}
+                            </Badge>
+                          )}
+                      </div>
+                      <p className="text-[11px] text-[#9BB7E0] truncate">
+                        {item.parentWhatWeWant || item.quickAdvocateSayThis}
+                      </p>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        onUpdateTargets(
+                          targets.map((t) =>
+                            t.id === item.id
+                              ? setTargetDestination(t, "final_meeting_plan")
+                              : t
+                          )
+                        );
+                        toast.success(
+                          `Added "${item.targetName}" to Final Meeting Plan`
+                        );
+                      }}
+                      className="h-7 text-xs border-[#3A5E9E] bg-[#0D234A] text-[#FFE394] hover:bg-[#15346B] cursor-pointer shrink-0"
+                    >
+                      Include in Final Meeting Plan
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── ✏️ MEETING SCRATCHPAD (Dedicated In-Flow Live Section) ── */}
       <MeetingScratchpadSection
@@ -1423,9 +1575,22 @@ export function MeetingModeView({
             </div>
 
             <div className="space-y-1">
-              <span className="text-[10.5px] font-bold uppercase tracking-wider text-blue-300">
-                📊 Supporting Evidence
-              </span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-blue-300">
+                  📊 Supporting Evidence
+                </span>
+                {onOpenSourceEvidence && (selectedTarget.sourceRef || selectedTarget.evalSourceRef || selectedTarget.sourceFindingId || (selectedTarget.sources && selectedTarget.sources.length > 0)) && (
+                  <button
+                    type="button"
+                    data-testid={`meeting-space-drawer-open-evidence-${selectedTarget.id}`}
+                    onClick={() => onOpenSourceEvidence(selectedTarget)}
+                    className="text-xs font-semibold text-[#FFE394] hover:text-white inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Open Original Evidence</span>
+                    <ExternalLink className="h-3 w-3 text-[#DFBE77]" />
+                  </button>
+                )}
+              </div>
               <p className="text-xs text-blue-100 bg-[#051426] p-2.5 rounded-xl border border-[#0E3560] leading-relaxed">
                 {selectedTarget.supportingEvidence}
               </p>
@@ -1773,6 +1938,8 @@ export function MeetingModeView({
         onClose={() => setTargetToDelete(null)}
         target={targetToDelete}
         onConfirmDelete={handleConfirmDeleteTarget}
+        onWithdrawPreserveHistory={onWithdrawTargetPreserveHistory}
+        onDeleteConnectedFindingEverywhere={onDeleteConnectedFindingEverywhere}
       />
 
       {/* ── LIVE SCRATCH PAD DRAWER ── */}

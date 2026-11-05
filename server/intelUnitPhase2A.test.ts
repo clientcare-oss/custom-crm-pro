@@ -499,4 +499,628 @@ describe("Intel Unit Phase 2A — Vault PDF Indexing, Table Search, Citation Ver
       })
     ).rejects.toThrow(/not associated|permission/i);
   });
+
+  it("12. Records Review: categorizes school/outside evaluations, compares evaluations with Current IEP, and runs First Mate with source citations and limitations", async () => {
+    const caller = appRouter.createCaller(createAdminContext());
+
+    // 1. Re-assign file 508 as a school evaluation and verify Current IEP (507) remains intact
+    const metaRes = await caller.meetingWorkspace.updateRecordMetadata({
+      studentContactId: BROOKLYN_STUDENT_ID,
+      fileId: PREVIOUS_IEP_FILE_ID,
+      recordGroup: "school_evaluation",
+      documentDate: "2026-03-10",
+    });
+    expect(metaRes.recordGroup).toBe("school_evaluation");
+
+    // 2. Compare school evaluation (508) with Current IEP (507)
+    const cmpRes = await caller.meetingWorkspace.compareEvaluationsWithIep({
+      studentContactId: BROOKLYN_STUDENT_ID,
+      currentIepFileId: CURRENT_IEP_FILE_ID,
+      evaluationFileIds: [PREVIOUS_IEP_FILE_ID],
+      sectionFilter: "all",
+    });
+    expect(cmpRes.reviewedDocuments.length).toBe(2);
+    expect(cmpRes.connections.length).toBeGreaterThan(0);
+    expect(cmpRes.connections[0].evalSource.fileId).toBe(PREVIOUS_IEP_FILE_ID);
+    expect(cmpRes.connections[0].proposedMeetingQuestion).toBeTruthy();
+
+    // 3. Ask First Mate using selected records
+    const fmRes = await caller.meetingWorkspace.askFirstMateRecordsReview({
+      studentContactId: BROOKLYN_STUDENT_ID,
+      action: "explain_passage",
+      selectedFileIds: [CURRENT_IEP_FILE_ID, PREVIOUS_IEP_FILE_ID],
+      activeFileId: CURRENT_IEP_FILE_ID,
+      activePageNumber: 3,
+      selectedPassageText:
+        "When assessed on single-step word problems involving multiplication, division, subtraction, and addition, Brooklyn answered questions at 0% accuracy.",
+    });
+    expect(fmRes.answerSummary).toBeTruthy();
+    expect(fmRes.sourceRecordsUsed.length).toBe(2);
+    expect(fmRes.citations.length).toBeGreaterThan(0);
+    expect(fmRes.draftFindings.length).toBeGreaterThan(0);
+    expect(fmRes.draftFindings[0].isAiDraft).toBe(true);
+  }, 30000);
+
+  it("13. Guided Review: orders findings strictly by IEP page and passage position (not severity) and avoids fabricated highlights for missing items", async () => {
+    const { sortFindingsInIepDocumentOrder } = await import(
+      "../client/src/components/meeting-workspace/intel-unit/intelUnitTypes"
+    );
+    const { buildGuidedReviewSequence } = await import(
+      "../client/src/components/meeting-workspace/intel-unit/guidedReviewHelpers"
+    );
+
+    const caller = appRouter.createCaller(createAdminContext());
+    const docRes = await caller.meetingWorkspace.getVaultDocument({
+      studentContactId: BROOKLYN_STUDENT_ID,
+      fileId: CURRENT_IEP_FILE_ID,
+    });
+    expect(docRes.index).toBeTruthy();
+
+    // Create out-of-order findings with high-severity items on later pages and low-severity items on earlier pages
+    const unsortedFindings = [
+      {
+        id: "fnd-late-high",
+        category: "Services",
+        section: "Special Education Services",
+        text: "High priority service grid item on page 14",
+        quote: "PDF p. 14",
+        status: "important" as const,
+        priority: "high" as const,
+        sourceRef: {
+          documentId: CURRENT_IEP_FILE_ID,
+          fileName: "current IEP.pdf",
+          pdfPageNumber: 14,
+          excerpt: "Service delivery minutes",
+          boundingBoxes: [{ x: 10, y: 45, width: 60, height: 4 }],
+          verificationStatus: "verified" as const,
+        },
+      },
+      {
+        id: "fnd-early-low-bottom",
+        category: "Present Levels",
+        section: "Present Levels",
+        text: "Lower passage on page 3",
+        quote: "PDF p. 3",
+        status: "keep" as const,
+        priority: "low" as const,
+        sourceRef: {
+          documentId: CURRENT_IEP_FILE_ID,
+          fileName: "current IEP.pdf",
+          pdfPageNumber: 3,
+          excerpt: "Single-step word problems",
+          boundingBoxes: [{ x: 10, y: 72, width: 60, height: 4 }],
+          verificationStatus: "verified" as const,
+        },
+      },
+      {
+        id: "fnd-early-low-top",
+        category: "Present Levels",
+        section: "Present Levels",
+        text: "Upper passage on page 3",
+        quote: "PDF p. 3",
+        status: "keep" as const,
+        priority: "low" as const,
+        sourceRef: {
+          documentId: CURRENT_IEP_FILE_ID,
+          fileName: "current IEP.pdf",
+          pdfPageNumber: 3,
+          excerpt: "WJ-IV ACH scores",
+          boundingBoxes: [{ x: 10, y: 18, width: 60, height: 4 }],
+          verificationStatus: "verified" as const,
+        },
+      },
+    ];
+
+    const sorted = sortFindingsInIepDocumentOrder(
+      unsortedFindings,
+      CURRENT_IEP_FILE_ID
+    );
+    expect(sorted.map((f) => f.id)).toEqual([
+      "fnd-early-low-top",
+      "fnd-early-low-bottom",
+      "fnd-late-high",
+    ]);
+
+    // Build guided sequence with a "Not located" evaluation recommendation
+    const guidedSeq = buildGuidedReviewSequence({
+      savedFindings: unsortedFindings,
+      documentIndex: docRes.index,
+      comparisonConnections: [
+        {
+          id: "conn-missing-at",
+          iepSection: "Assistive Technology",
+          evalFindingOrRecommendation:
+            "Provide dedicated text-to-speech assistive technology across core classes.",
+          status: "Not located",
+          explanation:
+            "Not located in the reviewed Current IEP sections.",
+          proposedMeetingQuestion:
+            "How will the team address the outside evaluation recommendation for text-to-speech assistive technology?",
+          evalSource: {
+            fileId: PREVIOUS_IEP_FILE_ID,
+            fileName: "Outside_Eval.pdf",
+            recordGroup: "outside_evaluation",
+            documentDate: "2026-03-10",
+            pdfPageNumber: 4,
+            printedPageLabel: "4 of 22",
+            excerpt:
+              "Provide dedicated text-to-speech assistive technology across core classes.",
+            boundingBoxes: [{ x: 12, y: 30, width: 70, height: 5 }],
+            verificationStatus: "verified",
+          },
+          iepPassage: null,
+        },
+      ],
+      decisionsMap: {},
+    });
+
+    expect(guidedSeq.length).toBeGreaterThan(3);
+    const missingItem = guidedSeq.find((f) => f.id === "fnd-conn-missing-at");
+    expect(missingItem).toBeDefined();
+    expect(missingItem?.iepLocateStatus).toBe("Not located");
+    expect(missingItem?.sourceRef).toBeUndefined();
+    expect(missingItem?.evalSourceRef?.documentId).toBe(PREVIOUS_IEP_FILE_ID);
+    expect(missingItem?.relevantIepSectionPage).toBeGreaterThanOrEqual(1);
+  });
+
+  it("14. Preserves one connected finding across Records Review -> Blueprint -> Meeting Space without duplicates or lost outcomes", async () => {
+    const {
+      getCanonicalTargetIdForFinding,
+      resolveConnectedTargetForFinding,
+      hasRecordedMeetingOutcome,
+      getFindingStageStatus,
+      upsertConnectedTargetFromFinding,
+      syncFindingUpdateToTargets,
+      reconcileSourceMaterialChanges,
+    } = await import(
+      "../client/src/components/meeting-workspace/intel-unit/connectedFindingWorkflow"
+    );
+
+    // 1. Create a finding in Records Review with IEP + Evaluation citations
+    const finding = {
+      id: "fnd-e2e-math-goal",
+      category: "Annual Goals",
+      section: "Annual Goals",
+      text: "Math word-problem goal lacks multi-step baseline and explicit trial criterion.",
+      quote: "When assessed on single-step word problems, Brooklyn answered at 0% accuracy.",
+      status: "keep" as const,
+      advocateConfirmed: true,
+      reviewDecision: "saved" as const,
+      priority: "high" as const,
+      proposedQuestion:
+        "Can we revise the math word-problem goal to include explicit visual modeling and a measurable 4-of-5 trial criterion?",
+      whyItMatters:
+        "School evaluation recommends structured visual modeling for word problems.",
+      sourceRef: {
+        documentId: CURRENT_IEP_FILE_ID,
+        fileName: "current IEP.pdf",
+        pdfPageNumber: 11,
+        printedPageLabel: "11 of 21",
+        sectionHeading: "Annual Goals",
+        excerpt: "Solve single-step multiplication word problems",
+        boundingBoxes: [{ x: 10, y: 24, width: 70, height: 5 }],
+        verificationStatus: "verified" as const,
+      },
+      evalSourceRef: {
+        documentId: PREVIOUS_IEP_FILE_ID,
+        fileName: "School_Eval.pdf",
+        pdfPageNumber: 6,
+        printedPageLabel: "6 of 22",
+        sectionHeading: "Math Recommendations",
+        excerpt: "Provide explicit visual schema instruction for word problems.",
+        boundingBoxes: [{ x: 12, y: 40, width: 65, height: 5 }],
+        verificationStatus: "verified" as const,
+      },
+    };
+
+    // Initially saved for later in Records Review (not yet in Blueprint)
+    const initialStage = getFindingStageStatus(finding, [], "PREPARING");
+    expect(initialStage.stageStatus).toBe("saved_for_later");
+
+    // 2. Send to Blueprint -> creates one canonical connected target
+    const firstSend = upsertConnectedTargetFromFinding({
+      finding,
+      targets: [],
+    });
+    expect(firstSend.wasExisting).toBe(false);
+    expect(firstSend.updatedTargets.length).toBe(1);
+    expect(firstSend.target.id).toBe(getCanonicalTargetIdForFinding(finding.id));
+    expect(firstSend.target.sourceFindingId).toBe(finding.id);
+    expect(firstSend.target.sourceRef?.pdfPageNumber).toBe(11);
+    expect(firstSend.target.evalSourceRef?.pdfPageNumber).toBe(6);
+    expect(firstSend.target.quickAdvocateSayThis).toBe(finding.proposedQuestion);
+
+    const blueprintStage = getFindingStageStatus(
+      finding,
+      firstSend.updatedTargets,
+      "PREPARING"
+    );
+    expect(blueprintStage.stageStatus).toBe("in_blueprint");
+
+    // 3. Edit the finding in Records Review -> updates the connected target in place without creating a duplicate
+    const editedFinding = {
+      ...finding,
+      text: "Updated rationale: Math word-problem goal lacks multi-step baseline and visual schema support.",
+      proposedQuestion:
+        "Updated question: Can we add visual schema modeling and bi-weekly progress monitoring to the math goal?",
+      priority: "high" as const,
+    };
+    const syncedTargets = syncFindingUpdateToTargets(
+      editedFinding,
+      firstSend.updatedTargets
+    );
+    expect(syncedTargets.length).toBe(1);
+    expect(syncedTargets[0].quickAdvocateSayThis).toContain("Updated question:");
+    expect(syncedTargets[0].whyWeWantIt).toContain("Updated rationale:");
+
+    // Sending again updates in place rather than duplicating
+    const secondSend = upsertConnectedTargetFromFinding({
+      finding: editedFinding,
+      targets: syncedTargets,
+    });
+    expect(secondSend.wasExisting).toBe(true);
+    expect(secondSend.updatedTargets.length).toBe(1);
+
+    // 4. Advance to Meeting Space and record a live meeting outcome
+    const liveTargets = secondSend.updatedTargets.map((t) => ({
+      ...t,
+      requestRaised: true,
+      meetingStatus: "AGREED" as const,
+      addedToIep: true,
+      notes: "Team agreed to add visual schema support and bi-weekly tracking.",
+    }));
+
+    const meetingStage = getFindingStageStatus(
+      editedFinding,
+      liveTargets,
+      "LIVE"
+    );
+    expect(meetingStage.stageStatus).toBe("on_meeting_agenda");
+    expect(hasRecordedMeetingOutcome(liveTargets[0])).toBe(true);
+
+    // Verify original evidence remains accessible on the live target
+    const resolvedTarget = resolveConnectedTargetForFinding(
+      editedFinding,
+      liveTargets
+    );
+    expect(resolvedTarget?.sourceRef?.documentId).toBe(CURRENT_IEP_FILE_ID);
+    expect(resolvedTarget?.sourceRef?.pdfPageNumber).toBe(11);
+    expect(resolvedTarget?.evalSourceRef?.documentId).toBe(PREVIOUS_IEP_FILE_ID);
+
+    // 5. Source material change reconciliation: if evaluation file 508 is removed from vault,
+    // flag the finding & target for review without erasing the finding or its recorded meeting outcome
+    const reconciledFindings = reconcileSourceMaterialChanges({
+      findings: [editedFinding],
+      vaultDocuments: [
+        {
+          id: CURRENT_IEP_FILE_ID,
+          fileName: "current IEP.pdf",
+          folderCategory: "IEP",
+          recordGroup: "current_iep",
+          documentDate: "2026-05-01",
+          createdAt: "2026-05-01",
+        },
+      ],
+      designatedCurrentIepId: CURRENT_IEP_FILE_ID,
+    });
+    expect(reconciledFindings.length).toBe(1);
+    expect(reconciledFindings[0].sourceMaterialFlaggedForReview).toBe(true);
+
+    const reconciledTargets = syncFindingUpdateToTargets(
+      reconciledFindings[0],
+      liveTargets
+    );
+    expect(reconciledTargets.length).toBe(1);
+    expect(reconciledTargets[0].sourceMaterialFlaggedForReview).toBe(true);
+    expect(reconciledTargets[0].meetingStatus).toBe("AGREED");
+    expect(reconciledTargets[0].notes).toContain("Team agreed");
+  });
+
+  it("15. Blueprint parent-friendly plan workflow: 4 editable sections, deliberate parent-review status, destination routing (Final Meeting Plan / Keep in Blueprint / Parent Doesn't Want / Set Aside), combining items while retaining all sources, and preserving meeting outcomes", async () => {
+    const {
+      getEffectiveParentReviewStatus,
+      getEffectiveTargetDestination,
+      isTargetIncludedInFinalMeetingPlan,
+      setTargetParentReviewStatus,
+      setTargetDestination,
+      toggleTargetIncludedInFinalMeetingPlan,
+      removeTargetFromActivePlan,
+      restoreTargetToActivePlan,
+      upsertConnectedTargetFromFinding,
+      combinePlanItemsPreservingSources,
+    } = await import(
+      "../client/src/components/meeting-workspace/intel-unit/connectedFindingWorkflow"
+    );
+
+    // 1. Send an existing records-review finding into Blueprint with source references intact
+    const readingFinding = {
+      id: "fnd-reading-gap",
+      category: "Annual Goals",
+      section: "Annual Goals",
+      text: "The IEP describes reading difficulties, but it does not include a reading goal.",
+      quote: "Broad Reading standard score: 79 (8th percentile).",
+      status: "keep" as const,
+      advocateConfirmed: true,
+      reviewDecision: "saved" as const,
+      priority: "high" as const,
+      proposedQuestion:
+        "A measurable reading goal based on your child's current reading skills.",
+      whyItMatters:
+        "We need a clear way to track whether your child's reading is improving.",
+      sourceRef: {
+        documentId: CURRENT_IEP_FILE_ID,
+        fileName: "current IEP.pdf",
+        pdfPageNumber: 7,
+        printedPageLabel: "7 of 21",
+        excerpt: "Broad Reading standard score: 79",
+        boundingBoxes: [{ x: 10, y: 20, width: 65, height: 5 }],
+        verificationStatus: "verified" as const,
+      },
+    };
+
+    const sendRes = upsertConnectedTargetFromFinding({
+      finding: readingFinding,
+      targets: [],
+    });
+    let planItem = sendRes.target;
+
+    // Newly added findings stay in Blueprint ("keep_in_blueprint") with "review_with_parent"
+    expect(getEffectiveTargetDestination(planItem)).toBe("keep_in_blueprint");
+    expect(getEffectiveParentReviewStatus(planItem)).toBe("review_with_parent");
+    expect(isTargetIncludedInFinalMeetingPlan(planItem)).toBe(false);
+    expect(planItem.sourceRef?.pdfPageNumber).toBe(7);
+
+    // 2. Edit the 4 parent-friendly sections inline and record parent input
+    planItem = {
+      ...planItem,
+      parentWhatWeFound:
+        "The IEP describes reading difficulties, but it does not include a reading goal.",
+      parentWhyWeWantIt:
+        "We need a clear way to track whether your child's reading is improving.",
+      parentWhatWeWant:
+        "A measurable reading goal based on your child's current reading skills.",
+      parentInput:
+        "Parent confirmed child avoids reading aloud at home; high priority for the family.",
+    };
+    expect(planItem.parentWhatWeFound).toContain("does not include a reading goal");
+    expect(planItem.parentInput).toContain("high priority for the family");
+
+    // 3. Deliberately change parent-review status (Review with Parent -> Parent Approved -> Ready for Meeting)
+    // Verify it NEVER automatically sends the item to the Final Meeting Plan
+    planItem = setTargetParentReviewStatus(planItem, "parent_approved");
+    expect(getEffectiveParentReviewStatus(planItem)).toBe("parent_approved");
+    expect(getEffectiveTargetDestination(planItem)).toBe("keep_in_blueprint");
+    expect(isTargetIncludedInFinalMeetingPlan(planItem)).toBe(false);
+
+    planItem = setTargetParentReviewStatus(planItem, "ready_for_meeting");
+    expect(getEffectiveParentReviewStatus(planItem)).toBe("ready_for_meeting");
+    expect(isTargetIncludedInFinalMeetingPlan(planItem)).toBe(false);
+
+    // Can return to Review with Parent when changes are needed
+    planItem = setTargetParentReviewStatus(planItem, "review_with_parent");
+    expect(getEffectiveParentReviewStatus(planItem)).toBe("review_with_parent");
+    planItem = setTargetParentReviewStatus(planItem, "parent_approved");
+
+    // 4. Directly select "Include in Final Meeting Plan" -> reflects the exact same destination setting
+    planItem = toggleTargetIncludedInFinalMeetingPlan(planItem);
+    expect(getEffectiveTargetDestination(planItem)).toBe("final_meeting_plan");
+    expect(isTargetIncludedInFinalMeetingPlan(planItem)).toBe(true);
+
+    // Record a live meeting outcome on the item
+    planItem = {
+      ...planItem,
+      requestRaised: true,
+      meetingStatus: "AGREED",
+      notes: "Team agreed to draft a phonics & fluency reading goal.",
+    };
+
+    // 5. Move into Parent Doesn't Want, Set Aside, Keep in Blueprint, or Remove from Plan
+    // Moving out of Final Meeting Plan removes it from active requests WITHOUT erasing meeting notes/outcomes
+    planItem = setTargetDestination(
+      planItem,
+      "parent_doesnt_want",
+      "Parent prefers to focus on math first and revisit reading next quarter."
+    );
+    expect(getEffectiveTargetDestination(planItem)).toBe("parent_doesnt_want");
+    expect(planItem.tags).toContain("PARENT_DOESNT_WANT");
+    expect(planItem.parentDoesntWantReason).toContain("focus on math first");
+    expect(isTargetIncludedInFinalMeetingPlan(planItem)).toBe(false);
+    expect(planItem.meetingStatus).toBe("AGREED");
+    expect(planItem.notes).toContain("Team agreed");
+
+    planItem = setTargetDestination(planItem, "set_aside");
+    expect(getEffectiveTargetDestination(planItem)).toBe("set_aside");
+    expect(isTargetIncludedInFinalMeetingPlan(planItem)).toBe(false);
+
+    // Remove from Plan and restore without losing evidence or creating duplicates
+    planItem = removeTargetFromActivePlan(planItem);
+    expect(planItem.removedFromPlan).toBe(true);
+    expect(isTargetIncludedInFinalMeetingPlan(planItem)).toBe(false);
+
+    planItem = restoreTargetToActivePlan(planItem, "final_meeting_plan");
+    expect(planItem.removedFromPlan).toBe(false);
+    expect(isTargetIncludedInFinalMeetingPlan(planItem)).toBe(true);
+    expect(planItem.sourceRef?.pdfPageNumber).toBe(7);
+    expect(planItem.meetingStatus).toBe("AGREED");
+
+    // 6. Combine related findings into one request while retaining every source reference
+    const secondFinding = {
+      id: "fnd-reading-eval-rec",
+      category: "Evaluations",
+      section: "Annual Goals",
+      text: "Outside evaluation recommends Orton-Gillingham multisensory decoding benchmarks.",
+      status: "keep" as const,
+      proposedQuestion: "Include multisensory decoding benchmarks in the reading goal.",
+      evalSourceRef: {
+        documentId: PREVIOUS_IEP_FILE_ID,
+        fileName: "Outside_Eval.pdf",
+        recordGroup: "outside_evaluation" as const,
+        pdfPageNumber: 12,
+        excerpt: "Provide multisensory decoding benchmarks.",
+        verificationStatus: "verified" as const,
+      },
+    };
+
+    const combineRes = combinePlanItemsPreservingSources({
+      primaryTarget: planItem,
+      additionalFindings: [secondFinding],
+      allTargets: [planItem],
+      allFindings: [readingFinding, secondFinding],
+    });
+
+    expect(combineRes.updatedTargets.length).toBe(1);
+    expect(combineRes.combinedTarget.combinedSourceFindingIds).toEqual([
+      "fnd-reading-gap",
+      "fnd-reading-eval-rec",
+    ]);
+    expect(combineRes.combinedTarget.combinedSourceItems?.length).toBe(2);
+    expect(combineRes.combinedTarget.sourceRef?.pdfPageNumber).toBe(7);
+    expect(combineRes.combinedTarget.evalSourceRef?.pdfPageNumber).toBe(12);
+  });
+
+  it("16. Blueprint 'What to Say to the Parent' read-aloud script: tailored suggestions (accommodation / missing goal / clarification), plain-language framing, separation from formal request & feedback, and preservation of manual edits when regenerating", async () => {
+    const {
+      detectWhatToSayToParentStyle,
+      generateWhatToSayToParentScript,
+      getEffectiveWhatToSayToParentScript,
+      updateWhatToSayToParentManualEdit,
+      regenerateWhatToSayToParentForTarget,
+      regenerateWhatToSayToParentAcrossTargets,
+      upsertConnectedTargetFromFinding,
+    } = await import(
+      "../client/src/components/meeting-workspace/intel-unit/connectedFindingWorkflow"
+    );
+
+    // 1. Possible accommodation framing
+    const accommodationItem = {
+      id: "tgt-accom",
+      targetName: "Quiet Transition Support",
+      iepSection: "Accommodations / Supports",
+      parentWhatWeFound: "unstructured hallway transitions cause sensory overload",
+      parentWhyWeWantIt: "stay regulated and ready to learn",
+      parentWhatWeWant: "a 2-minute visual transition warning and noise-reducing headphones",
+    };
+    expect(detectWhatToSayToParentStyle(accommodationItem)).toBe("accommodation");
+    const accomScript = generateWhatToSayToParentScript(accommodationItem, {
+      studentName: "Leo Martinez",
+    });
+    expect(accomScript).toContain("We found a possible accommodation that may help with");
+    expect(accomScript).toContain("We’d like to ask the IEP team to consider");
+    expect(accomScript).toContain("Leo");
+    expect(accomScript).toContain("Does that sound helpful based on what you see?");
+
+    // 2. Missing goal framing
+    const missingGoalItem = {
+      id: "tgt-goal",
+      targetName: "Reading Fluency Goal",
+      iepSection: "Annual Goals",
+      parentWhatWeFound:
+        "The IEP describes reading difficulties, but it does not include a reading goal.",
+      parentWhyWeWantIt:
+        "We need a clear way to track whether your child's reading is improving.",
+      parentWhatWeWant:
+        "A measurable reading goal based on your child's current reading skills.",
+    };
+    expect(detectWhatToSayToParentStyle(missingGoalItem)).toBe("missing_goal");
+    const goalScript = generateWhatToSayToParentScript(missingGoalItem);
+    expect(goalScript).toContain("We noticed the IEP describes reading difficulties, but we didn’t find a goal addressing it.");
+    expect(goalScript).toContain("We’d like to ask the team about adding a measurable reading goal");
+    expect(goalScript).toContain("Is this something you want us to bring up?");
+
+    // 3. Clarification needed framing + jargon cleanup
+    const clarificationItem = {
+      id: "tgt-clarify",
+      targetName: "Behavior Prompting Clarification",
+      iepSection: "Present Levels",
+      parentWhatWeFound:
+        "The PLAAFP states behavior does not impede learning when 1:1 adult prompt is provided",
+      parentWhyWeWantIt: "Clarify daily support needs",
+      parentWhatWeWant:
+        "Can the team clarify how often 1:1 adult prompting is needed and whether an FBA should be considered?",
+    };
+    expect(detectWhatToSayToParentStyle(clarificationItem)).toBe("clarification");
+    const clarifyScript = generateWhatToSayToParentScript(clarificationItem);
+    expect(clarifyScript).toContain("We found something we’d like the team to explain more clearly.");
+    expect(clarifyScript).toContain("but it isn’t clear how often 1:1 adult prompting is needed");
+    expect(clarifyScript).toContain("functional behavior assessment");
+    expect(clarifyScript).not.toContain("PLAAFP");
+    expect(clarifyScript).toContain("What has your experience been?");
+
+    // 4. Inline editing & strict preservation when regenerating suggestions or syncing findings
+    const finding = {
+      id: "fnd-custom-script",
+      category: "Accommodations",
+      section: "Accommodations / Supports",
+      text: "Extended time is listed without specifying the exact percentage.",
+      status: "keep" as const,
+      proposedQuestion: "Specify 50% extended time on classroom tests and quizzes.",
+    };
+
+    const created = upsertConnectedTargetFromFinding({
+      finding,
+      targets: [],
+    }).target;
+    expect(created.whatToSayToParent).toBeTruthy();
+    expect(created.whatToSayToParentEdited).toBe(false);
+
+    // Employee edits "What to Say to the Parent" inline
+    const customParentScript =
+      "When we looked at the testing accommodations, we noticed extended time is listed without a specific amount. We'd like to ask the team to consider specifying 50% extra time. How does that sound to you?";
+    const editedTarget = updateWhatToSayToParentManualEdit(
+      created,
+      customParentScript
+    );
+    expect(editedTarget.whatToSayToParent).toBe(customParentScript);
+    expect(editedTarget.whatToSayToParentEdited).toBe(true);
+    expect(getEffectiveWhatToSayToParentScript(editedTarget)).toBe(
+      customParentScript
+    );
+
+    // Verify formal meeting request, technical analysis, and parent feedback remain separate
+    expect(editedTarget.parentWhatWeWant).toBe(
+      "Specify 50% extended time on classroom tests and quizzes."
+    );
+    expect(editedTarget.fullAdvocateScript).toBe(
+      "Extended time is listed without specifying the exact percentage."
+    );
+
+    // Regenerating suggestions on an edited item does NOT overwrite the employee's edit
+    const singleRegen = regenerateWhatToSayToParentForTarget(editedTarget, {
+      studentName: "Leo",
+      forceOverwriteEdited: false,
+    });
+    expect(singleRegen.wasSkippedBecauseEdited).toBe(true);
+    expect(singleRegen.updatedTarget.whatToSayToParent).toBe(customParentScript);
+    expect(singleRegen.suggestedScript).not.toBe(customParentScript);
+
+    // Bulk regeneration refreshes unedited items while preserving edited ones
+    const uneditedTarget = upsertConnectedTargetFromFinding({
+      finding: {
+        ...finding,
+        id: "fnd-unedited",
+      },
+      targets: [],
+    }).target;
+
+    const bulkRegen = regenerateWhatToSayToParentAcrossTargets(
+      [editedTarget, uneditedTarget],
+      { studentName: "Leo" }
+    );
+    expect(bulkRegen.preservedEditedCount).toBe(1);
+    expect(bulkRegen.regeneratedCount).toBe(1);
+    expect(bulkRegen.updatedTargets[0].whatToSayToParent).toBe(
+      customParentScript
+    );
+
+    // Re-upserting from Step 1 also preserves the employee's edited parent script
+    const reupserted = upsertConnectedTargetFromFinding({
+      finding: {
+        ...finding,
+        text: "Updated finding detail from Step 1.",
+      },
+      targets: [editedTarget],
+    }).target;
+    expect(reupserted.whatToSayToParent).toBe(customParentScript);
+    expect(reupserted.whatToSayToParentEdited).toBe(true);
+  });
 });

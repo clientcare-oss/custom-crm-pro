@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { ChevronRight, FileText, Pause, Archive, GraduationCap } from "lucide-react";
+import { ChevronRight, FileText, Pause, Archive, GraduationCap, Award, RefreshCw, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StudentFileCard, type StudentFolderData } from "./StudentFileCard";
 import { StudentsListView } from "./StudentsListView";
 import { type MarkerType } from "./MarkerSelectorBox";
 import { CastBrassDrawerHandle, AntiqueBrassNameplate } from "./CabinetOrnaments";
 
-export type DrawerType = "active" | "onboarding" | "paused" | "archived";
+export type DrawerType = "active" | "scholarship" | "renewal" | "onboarding" | "paused" | "archived" | string;
 
 interface CabinetDrawerProps {
   type: DrawerType;
@@ -24,8 +24,10 @@ interface CabinetDrawerProps {
   className?: string;
 }
 
-const DRAWER_ICONS: Record<DrawerType, React.ElementType> = {
+const DRAWER_ICONS: Record<string, React.ElementType> = {
   active: GraduationCap,
+  scholarship: Award,
+  renewal: RefreshCw,
   onboarding: FileText,
   paused: Pause,
   archived: Archive,
@@ -46,7 +48,7 @@ export function CabinetDrawer({
   children,
   className,
 }: CabinetDrawerProps) {
-  const IconComponent = DRAWER_ICONS[type] || FileText;
+  const IconComponent = DRAWER_ICONS[type] || Tag;
 
   // Responsive Shelf Columns: Always 5 columns on tablets & desktops (>= 768px), matching the physical 5-slot card catalog
   const [cols, setCols] = useState(5);

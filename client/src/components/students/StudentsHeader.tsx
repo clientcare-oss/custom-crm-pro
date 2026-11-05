@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SlidersHorizontal, Plus, ChevronDown, Sparkles } from "lucide-react";
+import { SlidersHorizontal, Plus, ChevronDown, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -7,10 +7,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import type { CompanyTag } from "./StudentTagsManager";
 
 interface StudentsHeaderProps {
   sortOrder?: "asc" | "desc";
   onSortChange?: (order: "asc" | "desc") => void;
+  sortBy?: "name" | "tags";
+  onSortByChange?: (sortBy: "name" | "tags") => void;
   onNewStudentClick: () => void;
   onQuickSample?: () => void;
   isCreatingSample?: boolean;
@@ -18,6 +21,10 @@ interface StudentsHeaderProps {
   onPlanFilterChange: (plan: string) => void;
   selectedGradeFilter: string;
   onGradeFilterChange: (grade: string) => void;
+  selectedTagFilter?: string;
+  onTagFilterChange?: (tag: string) => void;
+  companyTags?: CompanyTag[];
+  onOpenManageTags?: () => void;
   onResetFilters: () => void;
   hasActiveFilters: boolean;
   className?: string;
@@ -26,6 +33,8 @@ interface StudentsHeaderProps {
 export function StudentsHeader({
   sortOrder = "asc",
   onSortChange,
+  sortBy = "name",
+  onSortByChange,
   onNewStudentClick,
   onQuickSample,
   isCreatingSample = false,
@@ -33,6 +42,10 @@ export function StudentsHeader({
   onPlanFilterChange,
   selectedGradeFilter,
   onGradeFilterChange,
+  selectedTagFilter = "ALL",
+  onTagFilterChange,
+  companyTags = [],
+  onOpenManageTags,
   onResetFilters,
   hasActiveFilters,
   className,
@@ -124,8 +137,76 @@ export function StudentsHeader({
                 <option value="High">High School (9-12)</option>
               </select>
             </div>
+
+            {/* Tag Filter */}
+            {onTagFilterChange && (
+              <div className="space-y-1">
+                <label className="text-[11px] text-[#7B8EA7] font-semibold uppercase">Tag Filter</label>
+                <select
+                  value={selectedTagFilter}
+                  onChange={(e) => onTagFilterChange(e.target.value)}
+                  className="w-full text-xs rounded-lg bg-[#050E1C] border border-[#B88943]/30 text-[#F0DFC5] p-2 focus:border-[#E9BA6B] outline-none"
+                >
+                  <option value="ALL">All Tags</option>
+                  {companyTags.map((t) => (
+                    <option key={t.id} value={t.name}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Order By (Name or Tags) */}
+            {onSortByChange && (
+              <div className="space-y-1">
+                <label className="text-[11px] text-[#7B8EA7] font-semibold uppercase">Order By</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => onSortByChange(e.target.value as "name" | "tags")}
+                  className="w-full text-xs rounded-lg bg-[#050E1C] border border-[#B88943]/30 text-[#F0DFC5] p-2 focus:border-[#E9BA6B] outline-none"
+                >
+                  <option value="name">Student Name (A–Z)</option>
+                  <option value="tags">Tags (Grouped by Tag)</option>
+                </select>
+              </div>
+            )}
+
+            {onOpenManageTags && (
+              <div className="pt-1 border-t border-[#B88943]/20">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterOpen(false);
+                    onOpenManageTags();
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-serif font-bold text-[#E9BA6B] bg-[#122642] hover:bg-[#193358] border border-[#B88943]/40 transition-colors cursor-pointer"
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  <span>Manage Company Tags</span>
+                </button>
+              </div>
+            )}
           </PopoverContent>
         </Popover>
+
+        {/* Manage Tags Button */}
+        {onOpenManageTags && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenManageTags}
+            className={cn(
+              "h-10 sm:h-11 px-3.5 sm:px-4 rounded-lg text-xs sm:text-sm font-medium gap-2 transition-all cursor-pointer select-none",
+              "bg-gradient-to-b from-[#14233C]/95 to-[#0A1322]/98 border border-[#283C5C] text-[#C4D7ED]",
+              "hover:bg-[#1A2E4E] hover:border-[#3D5B8A] hover:text-white"
+            )}
+            title="Manage company tags"
+          >
+            <Tag className="w-4 h-4 text-[#E9BA6B]" />
+            <span className="hidden md:inline">Tags</span>
+          </Button>
+        )}
 
         {/* New Student: Solid Radiant Brushed Brass Button */}
         <Button

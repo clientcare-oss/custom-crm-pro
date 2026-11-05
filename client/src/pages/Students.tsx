@@ -32,6 +32,18 @@ import {
 } from "@/components/students/MarkerSelectorBox";
 import { StudentsListView } from "@/components/students/StudentsListView";
 import { CabinetSidePillar } from "@/components/students/CabinetSidePillar";
+import {
+  type CompanyTag,
+  type CustomStudentStage,
+  loadCompanyTags,
+  saveCompanyTags,
+  loadStudentTagsMap,
+  saveStudentTagsMap,
+  loadCustomStudentStages,
+  saveCustomStudentStages,
+  ManageCompanyTagsModal,
+  AddCustomStagePopover,
+} from "@/components/students/StudentTagsManager";
 
 export default function Students() {
   const [, setLocation] = useLocation();
@@ -44,23 +56,158 @@ export default function Students() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLetter, setSelectedLetter] = useState("ALL");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortBy, setSortBy] = useState<"name" | "tags">("name");
   const [viewMode, setViewMode] = useState<"cards" | "list">(() => {
     return (localStorage.getItem("waypoint_students_view_mode") as "cards" | "list") || "cards";
   });
   const [selectedPlanFilter, setSelectedPlanFilter] = useState("ALL");
   const [selectedGradeFilter, setSelectedGradeFilter] = useState("ALL");
+  const [selectedTagFilter, setSelectedTagFilter] = useState("ALL");
   const [newStudentOpen, setNewStudentOpen] = useState(false);
 
+  // ─── Company Tags, Per-Student Tags & Custom Stages State ───
+  const [companyTags, setCompanyTags] = useState<CompanyTag[]>(() => loadCompanyTags());
+  const [studentTagsMap, setStudentTagsMap] = useState<Record<number, string[]>>(() => loadStudentTagsMap());
+  const [customStages, setCustomStages] = useState<CustomStudentStage[]>(() => loadCustomStudentStages());
+  const [manageTagsOpen, setManageTagsOpen] = useState(false);
+
   // Drawer expansion states
-  const [openDrawers, setOpenDrawers] = useState<Record<DrawerType, boolean>>({
+  const [openDrawers, setOpenDrawers] = useState<Record<string, boolean>>({
     active: true,
-    onboarding: false,
-    paused: false,
+    scholarship: false,
+    renewal: false,
     archived: false,
   });
 
-  const toggleDrawer = (drawer: DrawerType) => {
+  const toggleDrawer = (drawer: string) => {
     setOpenDrawers((prev) => ({ ...prev, [drawer]: !prev[drawer] }));
+  };
+
+  const handleAssignTag = (studentId: number, rawTagName: string) => {
+    const cleanName = rawTagName.trim();
+    if (!cleanName) return;
+
+    // Ensure tag exists in companyTags
+    setCompanyTags((prevTags) => {
+      const exists = prevTags.some((t) => t.name.toLowerCase() === cleanName.toLowerCase());
+      if (exists) return prevTags;
+      const nextTags: CompanyTag[] = [
+        ...prevTags,
+        { id: `tag-${Date.now()}`, name: cleanName, colorId: "blue" },
+      ];
+      saveCompanyTags(nextTags);
+      return nextTags;
+    });
+
+    setStudentTagsMap((prev) => {
+      const existing = prev[studentId] || [];
+      if (existing.some((t) => t.toLowerCase() === cleanName.toLowerCase())) {
+        return prev;
+      }
+      const next = { ...prev, [studentId]: [...existing, cleanName] };
+      saveStudentTagsMap(next);
+      return next;
+    });
+  };
+
+  const handleRemoveTag = (studentId: number, tagName: string) => {
+    setStudentTagsMap((prev) => {
+      const existing = prev[studentId] || [];
+      const filtered = existing.filter((t) => t.toLowerCase() !== tagName.toLowerCase());
+      const next = { ...prev, [studentId]: filtered };
+      saveStudentTagsMap(next);
+      return next;
+    });
+  };
+
+  const handleSaveCompanyTag = (savedTag: CompanyTag, previousName?: string) => {
+    setCompanyTags((prev) => {
+      const idx = prev.findIndex((t) => t.id === savedTag.id);
+      const next = idx >= 0 ? prev.map((t, i) => (i === idx ? savedTag : t)) : [...prev, savedTag];
+      saveCompanyTags(next);
+      return next;
+    });
+
+    // If renamed, propagate the new tag name to all previously tagged students & custom stages
+    if (previousName && previousName !== savedTag.name) {
+      setStudentTagsMap((prev) => {
+        const next: Record<number, string[]> = {};
+        Object.entries(prev).forEach(([idStr, tags]) => {
+          next[Number(idStr)] = (tags || []).map((t) =>
+            t.toLowerCase() === previousName.toLowerCase() ? savedTag.name : t
+          );
+        });
+        saveStudentTagsMap(next);
+        return next;
+      });
+      setCustomStages((prev) => {
+        const next = prev.map((st) =>
+          st.linkedTagName.toLowerCase() === previousName.toLowerCase()
+            ? { ...st, linkedTagName: savedTag.name }
+            : st
+        );
+        saveCustomStudentStages(next);
+        return next;
+      });
+    }
+  };
+
+  const handleDeleteCompanyTag = (tagId: string, tagName: string) => {
+    setCompanyTags((prev) => {
+      const next = prev.filter((t) => t.id !== tagId);
+      saveCompanyTags(next);
+      return next;
+    });
+    setStudentTagsMap((prev) => {
+      const next: Record<number, string[]> = {};
+      Object.entries(prev).forEach(([idStr, tags]) => {
+        next[Number(idStr)] = (tags || []).filter(
+          (t) => t.toLowerCase() !== tagName.toLowerCase()
+        );
+      });
+      saveStudentTagsMap(next);
+      return next;
+    });
+    toast.success(`Tag "${tagName}" removed`);
+  };
+
+  const handleAddCustomStage = (label: string, linkedTagName: string) => {
+    const newStage: CustomStudentStage = {
+      id: `stage-${Date.now()}`,
+      label,
+      linkedTagName,
+    };
+    // Ensure the linked tag exists in companyTags
+    setCompanyTags((prev) => {
+      const exists = prev.some((t) => t.name.toLowerCase() === linkedTagName.toLowerCase());
+      if (exists) return prev;
+      const next: CompanyTag[] = [
+        ...prev,
+        { id: `tag-${Date.now()}`, name: linkedTagName, colorId: "mint" },
+      ];
+      saveCompanyTags(next);
+      return next;
+    });
+    setCustomStages((prev) => {
+      const next = [...prev, newStage];
+      saveCustomStudentStages(next);
+      return next;
+    });
+    setOpenDrawers((prev) => ({ ...prev, [newStage.id]: true }));
+    setListCategory(newStage.id);
+    toast.success(`Custom stage "${label}" added (ordered by tag "${linkedTagName}")`);
+  };
+
+  const handleDeleteCustomStage = (stageId: string) => {
+    setCustomStages((prev) => {
+      const next = prev.filter((s) => s.id !== stageId);
+      saveCustomStudentStages(next);
+      return next;
+    });
+    if (listCategory === stageId) {
+      setListCategory("all");
+    }
+    toast.info("Custom stage removed");
   };
 
   const handleViewModeChange = (mode: "cards" | "list") => {
@@ -318,66 +465,116 @@ export default function Students() {
   const studentRecords: StudentFolderData[] = useMemo(() => {
     const rawStudents = allContacts.filter(isStudent);
     const list = rawStudents.length > 0 ? rawStudents : allContacts;
+    const hasSavedMap = Object.keys(studentTagsMap).length > 0;
 
-    return list.map((c: any) => ({
-      id: c.id,
-      firstName: c.firstName || "",
-      lastName: c.lastName || "",
-      caseId: c.caseId,
-      schoolName: c.schoolName,
-      gradeLevel: c.gradeLevel,
-      planType: c.planType,
-      diagnosis: c.diagnosis,
-      iepEligibility: c.iepEligibility,
-      parentContactId: c.parentContactId,
-      parentName: (c.parentContactId ? parentMap.get(c.parentContactId) || null : null) || c.secondParentName || null,
-      company: c.company,
-      pipelineStage: c.pipelineStage,
-      accountStatus: c.accountStatus,
-      lifecycleStage: c.lifecycleStage,
-      serviceStatus: c.serviceStatus,
-      upcomingMeetingDate: c.pipelineStage === "1st IEP Scheduled" ? "Scheduled" : null,
-      needsAttention: c.accountStatus === "On Hold" || c.serviceStatus === "Paused",
-      priority: c.pipelineStage === "1st IEP Scheduled" || c.accountStatus === "Renewal Needed",
-      bookmarked: c.pipelineStage === "IEP Active",
-      markerType: studentMarkers[c.id],
-    }));
-  }, [allContacts, parentMap, studentMarkers]);
+    return list.map((c: any, idx: number) => {
+      // Parse any DB tags
+      let dbTags: string[] = [];
+      if (Array.isArray(c.tags)) {
+        dbTags = c.tags.filter(Boolean);
+      } else if (typeof c.tags === "string" && c.tags.trim()) {
+        try {
+          const parsed = JSON.parse(c.tags);
+          if (Array.isArray(parsed)) dbTags = parsed.filter(Boolean);
+          else dbTags = c.tags.split(",").map((s: string) => s.trim()).filter(Boolean);
+        } catch {
+          dbTags = c.tags.split(",").map((s: string) => s.trim()).filter(Boolean);
+        }
+      }
 
-  // ─── Categorization into Cabinet Compartments ───
-  const { activeStudents, onboardingStudents, pausedStudents, archivedStudents } = useMemo(() => {
+      let resolvedTags: string[] = [];
+      if (studentTagsMap[c.id] !== undefined) {
+        resolvedTags = studentTagsMap[c.id];
+      } else if (dbTags.length > 0) {
+        resolvedTags = dbTags;
+      } else if (!hasSavedMap) {
+        // Seed initial sample tags on the first few records so tag pills & stages are immediately visible
+        if (idx === 0) resolvedTags = ["Discovery", "Active"];
+        else if (idx === 1) resolvedTags = ["Cancelation", "High Priority", "RENEWAL NEEDED"];
+        else if (idx === 2) resolvedTags = ["SCHOLARSHIP", "Active"];
+        else if (idx === 3) resolvedTags = ["IEP SOON"];
+      }
+
+      return {
+        id: c.id,
+        firstName: c.firstName || "",
+        lastName: c.lastName || "",
+        caseId: c.caseId,
+        schoolName: c.schoolName,
+        gradeLevel: c.gradeLevel,
+        planType: c.planType,
+        diagnosis: c.diagnosis,
+        iepEligibility: c.iepEligibility,
+        parentContactId: c.parentContactId,
+        parentName: (c.parentContactId ? parentMap.get(c.parentContactId) || null : null) || c.secondParentName || null,
+        company: c.company,
+        pipelineStage: c.pipelineStage,
+        accountStatus: c.accountStatus,
+        lifecycleStage: c.lifecycleStage,
+        serviceStatus: c.serviceStatus,
+        upcomingMeetingDate: c.pipelineStage === "1st IEP Scheduled" ? "Scheduled" : null,
+        needsAttention: c.accountStatus === "On Hold" || c.serviceStatus === "Paused",
+        priority: c.pipelineStage === "1st IEP Scheduled" || c.accountStatus === "Renewal Needed",
+        bookmarked: c.pipelineStage === "IEP Active",
+        markerType: studentMarkers[c.id],
+        tags: resolvedTags,
+      };
+    });
+  }, [allContacts, parentMap, studentMarkers, studentTagsMap]);
+
+  // ─── Categorization into Stages & Cabinet Compartments (Ordered/Filtered by Tags & Status) ───
+  const { activeStudents, scholarshipStudents, renewalStudents, archivedStudents } = useMemo(() => {
     const active: StudentFolderData[] = [];
-    const onboarding: StudentFolderData[] = [];
-    const paused: StudentFolderData[] = [];
+    const scholarship: StudentFolderData[] = [];
+    const renewal: StudentFolderData[] = [];
     const archived: StudentFolderData[] = [];
 
     studentRecords.forEach((s) => {
       const stage = (s.pipelineStage || "").toLowerCase();
-      const lifecycle = (s.lifecycleStage || "").toLowerCase();
       const account = (s.accountStatus || "").toLowerCase();
-      const service = (s.serviceStatus || "").toLowerCase();
+      const lowerTags = (s.tags || []).map((t) => t.toLowerCase());
 
-      if (s.id && (s as any).archivedAt || account === "closed" || stage === "closed") {
+      const isArchived =
+        Boolean(s.id && (s as any).archivedAt) ||
+        account === "closed" ||
+        stage === "closed" ||
+        lowerTags.includes("archive") ||
+        lowerTags.includes("archived");
+
+      const isScholarship =
+        lowerTags.includes("scholarship") ||
+        account.includes("scholarship") ||
+        stage.includes("scholarship");
+
+      const isRenewal =
+        lowerTags.includes("renewal needed") ||
+        lowerTags.includes("renewal") ||
+        account.includes("renewal") ||
+        stage.includes("renewal");
+
+      if (isArchived) {
         archived.push(s);
-      } else if (service === "paused" || account === "on hold" || account === "paused") {
-        paused.push(s);
-      } else if (lifecycle === "onboarding" || stage === "intake" || account === "onboarding") {
-        onboarding.push(s);
       } else {
-        // Default to Active compartment so all legitimate students remain visible
+        if (isScholarship) {
+          scholarship.push(s);
+        }
+        if (isRenewal) {
+          renewal.push(s);
+        }
+        // Keep active students in Active (unless archived)
         active.push(s);
       }
     });
 
     return {
       activeStudents: active,
-      onboardingStudents: onboarding,
-      pausedStudents: paused,
+      scholarshipStudents: scholarship,
+      renewalStudents: renewal,
       archivedStudents: archived,
     };
   }, [studentRecords]);
 
-  // ─── Filter & Search Predicate ───
+  // ─── Filter & Search Predicate (Including Tag Filter & Tag Ordering) ───
   const filterList = (list: StudentFolderData[]) => {
     return list
       .filter((s) => {
@@ -387,14 +584,21 @@ export default function Students() {
           if (checkChar !== selectedLetter) return false;
         }
 
-        // Search query
+        // Search query (matches student name, caseId, school, family, or any assigned tag)
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase().trim();
           const name = `${s.firstName} ${s.lastName}`.toLowerCase();
           const caseId = (s.caseId || "").toLowerCase();
           const school = (s.schoolName || "").toLowerCase();
           const family = (s.company || "").toLowerCase();
-          if (!name.includes(q) && !caseId.includes(q) && !school.includes(q) && !family.includes(q)) {
+          const tagsStr = (s.tags || []).join(" ").toLowerCase();
+          if (
+            !name.includes(q) &&
+            !caseId.includes(q) &&
+            !school.includes(q) &&
+            !family.includes(q) &&
+            !tagsStr.includes(q)
+          ) {
             return false;
           }
         }
@@ -413,19 +617,59 @@ export default function Students() {
           if (selectedGradeFilter === "High" && !grade.includes("9") && !grade.includes("10") && !grade.includes("11") && !grade.includes("12") && !grade.includes("high")) return false;
         }
 
+        // Tag filter
+        if (selectedTagFilter !== "ALL") {
+          const hasTag = (s.tags || []).some(
+            (t) => t.toLowerCase() === selectedTagFilter.toLowerCase()
+          );
+          if (!hasTag) return false;
+        }
+
         return true;
       })
       .sort((a, b) => {
+        if (sortBy === "tags") {
+          const tagA = (a.tags && a.tags.length > 0 ? a.tags.join(", ") : "zzzz").toLowerCase();
+          const tagB = (b.tags && b.tags.length > 0 ? b.tags.join(", ") : "zzzz").toLowerCase();
+          if (tagA !== tagB) {
+            return sortOrder === "asc" ? tagA.localeCompare(tagB) : tagB.localeCompare(tagA);
+          }
+        }
         const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
         const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
         return sortOrder === "asc" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       });
   };
 
-  const filteredActive = useMemo(() => filterList(activeStudents), [activeStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, sortOrder]);
-  const filteredOnboarding = useMemo(() => filterList(onboardingStudents), [onboardingStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, sortOrder]);
-  const filteredPaused = useMemo(() => filterList(pausedStudents), [pausedStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, sortOrder]);
-  const filteredArchived = useMemo(() => filterList(archivedStudents), [archivedStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, sortOrder]);
+  const filteredActive = useMemo(
+    () => filterList(activeStudents),
+    [activeStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]
+  );
+  const filteredScholarship = useMemo(
+    () => filterList(scholarshipStudents),
+    [scholarshipStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]
+  );
+  const filteredRenewal = useMemo(
+    () => filterList(renewalStudents),
+    [renewalStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]
+  );
+  const filteredArchived = useMemo(
+    () => filterList(archivedStudents),
+    [archivedStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]
+  );
+
+  // Custom stage student lists (ordered/matched by each custom stage's linked tag)
+  const customStageStudentsMap = useMemo(() => {
+    const map: Record<string, StudentFolderData[]> = {};
+    customStages.forEach((st) => {
+      const targetTag = st.linkedTagName.toLowerCase();
+      const matched = studentRecords.filter((s) =>
+        (s.tags || []).some((t) => t.toLowerCase() === targetTag)
+      );
+      map[st.id] = filterList(matched);
+    });
+    return map;
+  }, [customStages, studentRecords, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]);
 
   // Alphabet counts mapping
   const letterCounts = useMemo(() => {
@@ -437,27 +681,83 @@ export default function Students() {
     return counts;
   }, [studentRecords]);
 
-  const hasActiveFilters = Boolean(selectedPlanFilter !== "ALL" || selectedGradeFilter !== "ALL");
+  const hasActiveFilters = Boolean(
+    selectedPlanFilter !== "ALL" ||
+      selectedGradeFilter !== "ALL" ||
+      selectedTagFilter !== "ALL" ||
+      sortBy !== "name"
+  );
 
-  const allFilteredStudents = useMemo(() => filterList(studentRecords), [studentRecords, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, sortOrder]);
+  const allFilteredStudents = useMemo(
+    () => filterList(studentRecords),
+    [studentRecords, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]
+  );
 
-  const [listCategory, setListCategory] = useState<"all" | "active" | "onboarding" | "paused" | "archived">("all");
+  const [listCategory, setListCategory] = useState<string>("all");
 
   const displayedListStudents = useMemo(() => {
     switch (listCategory) {
       case "active":
         return filteredActive;
-      case "onboarding":
-        return filteredOnboarding;
-      case "paused":
-        return filteredPaused;
+      case "scholarship":
+        return filteredScholarship;
+      case "renewal":
+        return filteredRenewal;
       case "archived":
         return filteredArchived;
       case "all":
-      default:
         return allFilteredStudents;
+      default:
+        return customStageStudentsMap[listCategory] || allFilteredStudents;
     }
-  }, [listCategory, filteredActive, filteredOnboarding, filteredPaused, filteredArchived, allFilteredStudents]);
+  }, [
+    listCategory,
+    filteredActive,
+    filteredScholarship,
+    filteredRenewal,
+    filteredArchived,
+    allFilteredStudents,
+    customStageStudentsMap,
+  ]);
+
+  const stageTabs = useMemo(
+    () => [
+      { id: "all", label: "All Students", count: allFilteredStudents.length },
+      { id: "active", label: "Active", count: filteredActive.length },
+      { id: "scholarship", label: "Scholarship", count: filteredScholarship.length },
+      { id: "renewal", label: "Renewal", count: filteredRenewal.length },
+      { id: "archived", label: "Archived", count: filteredArchived.length },
+      ...customStages.map((st) => ({
+        id: st.id,
+        label: st.label,
+        count: (customStageStudentsMap[st.id] || []).length,
+      })),
+    ],
+    [
+      allFilteredStudents.length,
+      filteredActive.length,
+      filteredScholarship.length,
+      filteredRenewal.length,
+      filteredArchived.length,
+      customStages,
+      customStageStudentsMap,
+    ]
+  );
+
+  const handleStageTabClick = (tabId: string) => {
+    setListCategory(tabId);
+    if (viewMode === "cards" && tabId !== "all") {
+      setOpenDrawers((prev) => ({
+        active: false,
+        scholarship: false,
+        renewal: false,
+        archived: false,
+        ...Object.fromEntries(customStages.map((c) => [c.id, false])),
+        ...prev,
+        [tabId]: true,
+      }));
+    }
+  };
 
   return (
     <ScopedErrorBoundary moduleName="Students">
@@ -472,6 +772,8 @@ export default function Students() {
             <StudentsHeader
               sortOrder={sortOrder}
               onSortChange={setSortOrder}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
               onNewStudentClick={() => setNewStudentOpen(true)}
               onQuickSample={() => createSamplePairMutation.mutate({})}
               isCreatingSample={createSamplePairMutation.isPending}
@@ -479,9 +781,15 @@ export default function Students() {
               onPlanFilterChange={setSelectedPlanFilter}
               selectedGradeFilter={selectedGradeFilter}
               onGradeFilterChange={setSelectedGradeFilter}
+              selectedTagFilter={selectedTagFilter}
+              onTagFilterChange={setSelectedTagFilter}
+              companyTags={companyTags}
+              onOpenManageTags={() => setManageTagsOpen(true)}
               onResetFilters={() => {
                 setSelectedPlanFilter("ALL");
                 setSelectedGradeFilter("ALL");
+                setSelectedTagFilter("ALL");
+                setSortBy("name");
                 setSelectedLetter("ALL");
                 setSearchQuery("");
               }}
@@ -519,7 +827,7 @@ export default function Students() {
                   <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search students..."
+                    placeholder="Search students or tags..."
                     className={cn(
                       "w-full h-10 pl-8.5 sm:pl-9 pr-8 rounded-xl text-xs sm:text-sm text-[#F0F6FC] placeholder:text-[#6E87A8]",
                       "bg-[#040B17]/92 border border-[#8A6731]/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.7),0_4px_16px_rgba(0,0,0,0.6)]",
@@ -586,30 +894,59 @@ export default function Students() {
           </div>
         </div>
 
-        {/* ─── 3. Content Area: Clean Full-Bleed Table List View OR Full-Bleed Physical Filing Credenza ─── */}
-        {viewMode === "list" ? (
-          <div className="w-full flex-1 flex flex-col pt-3 pb-12">
-            {/* Category Filter Tabs */}
-            <div className="w-full px-4 sm:px-6 md:px-10 lg:px-12 mb-3">
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
-              {[
-                { id: "all", label: "All Students", count: allFilteredStudents.length },
-                { id: "active", label: "Active Cases", count: filteredActive.length },
-                { id: "onboarding", label: "Onboarding", count: filteredOnboarding.length },
-                { id: "paused", label: "Paused", count: filteredPaused.length },
-                { id: "archived", label: "Archived", count: filteredArchived.length },
-              ].map((tab) => (
+        {/* ─── Stage Filter Pill Bar: All Students, Active, Scholarship, Renewal, Archived, + Custom Stage ─── */}
+        <div className="w-full px-4 sm:px-6 md:px-10 lg:px-12 pt-3 pb-2 bg-[#020712] border-b border-[#8A6731]/25">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
+              {stageTabs.map((tab) => (
                 <WaypointPillTab
                   key={tab.id}
                   label={tab.label}
                   count={tab.count}
                   active={listCategory === tab.id}
-                  onClick={() => setListCategory(tab.id as any)}
+                  onClick={() => handleStageTabClick(tab.id)}
                 />
               ))}
-              </div>
+
+              {/* "+" Button for adding a new custom stage (ordered/populated by tags) */}
+              <AddCustomStagePopover
+                companyTags={companyTags}
+                customStages={customStages}
+                onAddStage={handleAddCustomStage}
+                onDeleteStage={handleDeleteCustomStage}
+              />
             </div>
 
+            {/* Quick Order-by-Tags & Manage Company Tags Controls */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setSortBy((prev) => (prev === "tags" ? "name" : "tags"))}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-serif font-semibold border transition-all cursor-pointer",
+                  sortBy === "tags"
+                    ? "bg-[#091931] text-[#FFE394] border-[#C5A059] shadow-[0_0_10px_rgba(197,160,89,0.25)]"
+                    : "bg-[#050E1C] text-[#8EA6C6] border-[#1E3250] hover:text-[#E2EDF8] hover:border-[#3A5A88]"
+                )}
+                title="Order students by their assigned tags"
+              >
+                {sortBy === "tags" ? "Ordered by Tags ✓" : "Order by Tags"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setManageTagsOpen(true)}
+                className="px-3 py-1.5 rounded-full text-xs font-serif font-semibold bg-[#050E1C] text-[#D8C7A5] border border-[#3A2C18] hover:border-[#C5A059]/70 hover:text-[#FFE394] transition-all cursor-pointer"
+              >
+                Manage Tags
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── 3. Content Area: Clean Full-Bleed Table List View OR Full-Bleed Physical Filing Credenza ─── */}
+        {viewMode === "list" ? (
+          <div className="w-full flex-1 flex flex-col pt-3 pb-12">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="w-12 h-12 rounded-full border-2 border-[#E9BA6B] border-t-transparent animate-spin mb-4" />
@@ -622,6 +959,10 @@ export default function Students() {
                 onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                 onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
                 onMarkerChange={handleMarkerChange}
+                companyTags={companyTags}
+                onAssignTag={handleAssignTag}
+                onRemoveTag={handleRemoveTag}
+                onOpenManageCompanyTags={() => setManageTagsOpen(true)}
               />
             )}
           </div>
@@ -652,14 +993,14 @@ export default function Students() {
                   </div>
                 ) : (
                   <div className="w-full divide-y-2 divide-[#8A6731]/40">
-                    {/* Drawer 0: Active Students (Directly Above New / Onboarding) */}
+                    {/* Drawer 0: Active Students */}
                     <CabinetDrawer
                       type="active"
-                      title="ACTIVE STUDENTS"
+                      title="ACTIVE"
                       subtitle="Current active IEP advocacy cases and ongoing representations"
-                      count={filteredActive.length || 42}
+                      count={filteredActive.length}
                       students={filteredActive}
-                      isOpen={openDrawers.active}
+                      isOpen={Boolean(openDrawers.active)}
                       onToggle={() => toggleDrawer("active")}
                       onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                       onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
@@ -667,44 +1008,65 @@ export default function Students() {
                       viewMode="cards"
                     />
 
-                    {/* Drawer 1: New / Onboarding */}
+                    {/* Drawer 1: Scholarship */}
                     <CabinetDrawer
-                      type="onboarding"
-                      title="NEW / ONBOARDING"
-                      subtitle="Recently enrolled students completing intake and records review"
-                      count={filteredOnboarding.length || 3}
-                      students={filteredOnboarding}
-                      isOpen={openDrawers.onboarding}
-                      onToggle={() => toggleDrawer("onboarding")}
+                      type="scholarship"
+                      title="SCHOLARSHIP"
+                      subtitle="Students tagged or enrolled under Waypoint Scholarship advocacy"
+                      count={filteredScholarship.length}
+                      students={filteredScholarship}
+                      isOpen={Boolean(openDrawers.scholarship)}
+                      onToggle={() => toggleDrawer("scholarship")}
                       onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                       onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
                       onMarkerChange={handleMarkerChange}
                       viewMode="cards"
                     />
 
-                    {/* Drawer 2: Paused */}
+                    {/* Drawer 2: Renewal */}
                     <CabinetDrawer
-                      type="paused"
-                      title="PAUSED"
-                      subtitle="Student cases on hold, awaiting school evaluations, or seasonal hiatus"
-                      count={filteredPaused.length || 2}
-                      students={filteredPaused}
-                      isOpen={openDrawers.paused}
-                      onToggle={() => toggleDrawer("paused")}
+                      type="renewal"
+                      title="RENEWAL"
+                      subtitle="Students approaching annual plan renewal or tagged Renewal Needed"
+                      count={filteredRenewal.length}
+                      students={filteredRenewal}
+                      isOpen={Boolean(openDrawers.renewal)}
+                      onToggle={() => toggleDrawer("renewal")}
                       onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                       onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
                       onMarkerChange={handleMarkerChange}
                       viewMode="cards"
                     />
+
+                    {/* Custom Stage Drawers added via "+" */}
+                    {customStages.map((st) => {
+                      const stageStudents = customStageStudentsMap[st.id] || [];
+                      return (
+                        <CabinetDrawer
+                          key={st.id}
+                          type={st.id}
+                          title={st.label.toUpperCase()}
+                          subtitle={`Custom stage ordered by tag "${st.linkedTagName}"`}
+                          count={stageStudents.length}
+                          students={stageStudents}
+                          isOpen={Boolean(openDrawers[st.id])}
+                          onToggle={() => toggleDrawer(st.id)}
+                          onStudentClick={(id) => setLocation(`/contacts/${id}`)}
+                          onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
+                          onMarkerChange={handleMarkerChange}
+                          viewMode="cards"
+                        />
+                      );
+                    })}
 
                     {/* Drawer 3: Archived */}
                     <CabinetDrawer
                       type="archived"
                       title="ARCHIVED"
                       subtitle="Closed student advocacy files, historical records, and graduated cases"
-                      count={filteredArchived.length || 18}
+                      count={filteredArchived.length}
                       students={filteredArchived}
-                      isOpen={openDrawers.archived}
+                      isOpen={Boolean(openDrawers.archived)}
                       onToggle={() => toggleDrawer("archived")}
                       onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                       onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
@@ -1019,6 +1381,15 @@ export default function Students() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* ─── Waypoint Admiralty Manage Company Tags Modal ─── */}
+        <ManageCompanyTagsModal
+          open={manageTagsOpen}
+          onOpenChange={setManageTagsOpen}
+          companyTags={companyTags}
+          onSaveTag={handleSaveCompanyTag}
+          onDeleteTag={handleDeleteCompanyTag}
+        />
       </div>
     </ScopedErrorBoundary>
   );

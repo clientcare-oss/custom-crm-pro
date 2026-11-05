@@ -202,6 +202,10 @@ export default function MeetingWorkspace() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isManualImport, setIsManualImport] = useState(false);
   const [isWorkbenchExpanded, setIsWorkbenchExpanded] = useState(false);
+  const [externalOpenCitationRequest, setExternalOpenCitationRequest] = useState<{
+    target: MeetingTarget;
+    seq: number;
+  } | null>(null);
 
   function safeParseJson<T>(val: any, fallback: T): T {
     if (!val) return fallback;
@@ -373,10 +377,48 @@ export default function MeetingWorkspace() {
 
   const buildBlueprintMutation = trpc.meetingWorkspace.buildBlueprint.useMutation({
     onSuccess: (data) => {
-      setTargets(data.targets as MeetingTarget[]);
+      const incoming = (data.targets || []) as MeetingTarget[];
+      // Preserve existing connected targets and recorded meeting outcomes without creating duplicates
+      const existingById = new Map<string, MeetingTarget>();
+      const existingByFindingId = new Map<string, MeetingTarget>();
+      targets.forEach((t) => {
+        existingById.set(t.id, t);
+        if (t.sourceFindingId) existingByFindingId.set(t.sourceFindingId, t);
+      });
+
+      const merged: MeetingTarget[] = [];
+      const consumedExistingIds = new Set<string>();
+
+      incoming.forEach((inc) => {
+        const matched =
+          existingById.get(inc.id) ||
+          (inc.sourceFindingId ? existingByFindingId.get(inc.sourceFindingId) : undefined);
+        if (matched) {
+          consumedExistingIds.add(matched.id);
+          merged.push({
+            ...inc,
+            ...matched,
+            id: matched.id,
+            sourceFindingId: matched.sourceFindingId || inc.sourceFindingId,
+            sourceRef: matched.sourceRef || inc.sourceRef,
+            evalSourceRef: matched.evalSourceRef || inc.evalSourceRef,
+          });
+        } else {
+          merged.push(inc);
+        }
+      });
+
+      // Keep any custom or already-prepared targets that weren't in incoming
+      targets.forEach((existing) => {
+        if (!consumedExistingIds.has(existing.id)) {
+          merged.push(existing);
+        }
+      });
+
+      setTargets(merged);
       if (data.detectedOrder?.length) setDetectedIepOrder(data.detectedOrder);
-      toast.success(`IEP Blueprint constructed with ${data.targets.length} meeting targets`);
-      saveCurrentState({ meetingTargets: data.targets, detectedIepOrder: data.detectedOrder });
+      toast.success(`IEP Blueprint constructed with ${merged.filter((t) => !t.archivedOrWithdrawn).length} meeting targets`);
+      saveCurrentState({ meetingTargets: merged, detectedIepOrder: data.detectedOrder });
     },
     onError: (err) => toast.error(`Blueprint build error: ${err.message}`),
   });
@@ -448,6 +490,107 @@ export default function MeetingWorkspace() {
       }
       performSave();
     }
+  };
+
+  // Sync edits on targets back to connected findings so one connected record stays unified
+  const handleUpdateTargetsAndSyncFindings = (newTargets: MeetingTarget[]) => {
+    setTargets(newTargets);
+    let findingsChanged = false;
+    const syncedFindings = iepFindings.map((f) => {
+      const connectedTarget = newTargets.find(
+        (t) =>
+          t.sourceFindingId === f.id ||
+          t.id === f.linkedTargetId ||
+          t.id === `target-from-${f.id}`
+      );
+      if (!connectedTarget) return f;
+      const nextQuestion = connectedTarget.quickAdvocateSayThis || f.proposedQuestion;
+      const nextWhy = connectedTarget.whyWeWantIt || f.whyItMatters;
+      const nextSection = connectedTarget.iepSection || f.section;
+      if (
+        nextQuestion !== f.proposedQuestion ||
+        nextWhy !== f.whyItMatters ||
+        nextSection !== f.section ||
+        f.linkedTargetId !== connectedTarget.id
+      ) {
+        findingsChanged = true;
+        return {
+          ...f,
+          proposedQuestion: nextQuestion,
+          whyItMatters: nextWhy,
+          section: nextSection,
+          linkedTargetId: connectedTarget.id,
+        };
+      }
+      return f;
+    });
+
+    if (findingsChanged) {
+      setIepFindings(syncedFindings);
+      saveCurrentState({ meetingTargets: newTargets, iepIntelFindings: syncedFindings });
+    } else {
+      saveCurrentState({ meetingTargets: newTargets });
+    }
+  };
+
+  const handleOpenSourceEvidenceFromTarget = (target: MeetingTarget) => {
+    setActiveTab("ASSEMBLY");
+    setPrepStep("iep_intel");
+    setExternalOpenCitationRequest({ target, seq: Date.now() });
+    saveCurrentState({ activeTab: "ASSEMBLY", prepStep: "iep_intel" }, true);
+  };
+
+  const handleWithdrawTargetPreserveHistory = (targetId: string) => {
+    const previousTargets = [...targets];
+    const updatedTargets = targets.map((t) =>
+      t.id === targetId
+        ? {
+            ...t,
+            archivedOrWithdrawn: true,
+            archivedAt: new Date().toISOString(),
+            archivedReason: "Withdrawn while preserving recorded meeting outcome history",
+            archivedMeetingOutcome: t.meetingStatus,
+          }
+        : t
+    );
+    setTargets(updatedTargets);
+    saveCurrentState({ meetingTargets: updatedTargets });
+    toast.success("Withdrawn from active agenda · Recorded meeting history preserved", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          setTargets(previousTargets);
+          saveCurrentState({ meetingTargets: previousTargets });
+          toast.success("Restored to active agenda");
+        },
+      },
+    });
+  };
+
+  const handleDeleteConnectedFindingEverywhere = (target: MeetingTarget) => {
+    const previousTargets = [...targets];
+    const previousFindings = [...iepFindings];
+    const updatedTargets = targets.filter((t) => t.id !== target.id);
+    const updatedFindings = iepFindings.filter(
+      (f) =>
+        f.id !== target.sourceFindingId &&
+        f.linkedTargetId !== target.id &&
+        `target-from-${f.id}` !== target.id
+    );
+    setTargets(updatedTargets);
+    setIepFindings(updatedFindings);
+    saveCurrentState({ meetingTargets: updatedTargets, iepIntelFindings: updatedFindings });
+    toast.success("Deleted connected finding from Records Review, Blueprint, and Meeting Space", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          setTargets(previousTargets);
+          setIepFindings(previousFindings);
+          saveCurrentState({ meetingTargets: previousTargets, iepIntelFindings: previousFindings });
+          toast.success("Restored connected finding across all workspace stages");
+        },
+      },
+    });
   };
 
   const handleSavePcsFromWorkspace = async (
@@ -605,6 +748,7 @@ export default function MeetingWorkspace() {
                 findings={iepFindings}
                 targets={targets}
                 detectedOrder={detectedIepOrder}
+                workspaceStatus={meetingStatus}
                 intelUnitState={(closeoutChecks as any)?.intelUnitState}
                 onUpdateIntelUnitState={(nextIntelState, isDebounced = true) => {
                   const updatedChecks = {
@@ -618,10 +762,18 @@ export default function MeetingWorkspace() {
                   setIepFindings(newFindings);
                   saveCurrentState({ iepIntelFindings: newFindings });
                 }}
-                onUpdateTargets={(newTargets) => {
-                  setTargets(newTargets);
-                  saveCurrentState({ meetingTargets: newTargets });
+                onUpdateTargets={handleUpdateTargetsAndSyncFindings}
+                onNavigateToStage={(stage) => {
+                  if (stage === "meeting_space") {
+                    setActiveTab("MEETING_MODE");
+                    saveCurrentState({ activeTab: "MEETING_MODE" }, true);
+                  } else {
+                    setActiveTab("BLUEPRINT");
+                    setPrepStep("blueprint");
+                    saveCurrentState({ activeTab: "BLUEPRINT", prepStep: "blueprint" }, true);
+                  }
                 }}
+                externalOpenCitationRequest={externalOpenCitationRequest}
                 onOpenImportModal={() => setIsImportModalOpen(true)}
                 isExpanded={isWorkbenchExpanded}
                 onToggleExpand={() => setIsWorkbenchExpanded((prev) => !prev)}
@@ -741,10 +893,12 @@ export default function MeetingWorkspace() {
                         meetingDate={meetingDate}
                         clientEmail={activeStudent?.email || undefined}
                         targets={targets}
+                        findings={iepFindings}
                         detectedOrder={detectedIepOrder}
-                        onUpdateTargets={(newTargets) => {
-                          setTargets(newTargets);
-                          saveCurrentState({ meetingTargets: newTargets });
+                        onUpdateTargets={handleUpdateTargetsAndSyncFindings}
+                        onUpdateFindings={(newFindings) => {
+                          setIepFindings(newFindings);
+                          saveCurrentState({ iepIntelFindings: newFindings });
                         }}
                         onUpdateDetectedOrder={(newOrder) => {
                           setDetectedIepOrder(newOrder);
@@ -769,6 +923,9 @@ export default function MeetingWorkspace() {
                           toast.success("Ready for Meeting! Meeting Mode prepared.");
                         }}
                         onOpenImportModal={() => setIsImportModalOpen(true)}
+                        onOpenSourceEvidence={handleOpenSourceEvidenceFromTarget}
+                        onWithdrawTargetPreserveHistory={handleWithdrawTargetPreserveHistory}
+                        onDeleteConnectedFindingEverywhere={handleDeleteConnectedFindingEverywhere}
                         isLoading={buildBlueprintMutation.isPending}
                       />
                     )}
@@ -793,6 +950,9 @@ export default function MeetingWorkspace() {
                       pcsText={pcsText}
                       parentConcerns={parentConcerns}
                       iepFindings={iepFindings}
+                      targets={targets}
+                      onUpdateTargets={handleUpdateTargetsAndSyncFindings}
+                      onOpenSourceEvidence={handleOpenSourceEvidenceFromTarget}
                       rawPcsMetadata={(closeoutChecks as any)?.pcsMetadata}
                       parentDoesntWantText={parentDoesntWantText}
                       onSavePcs={handleSavePcsFromWorkspace}
@@ -810,10 +970,12 @@ export default function MeetingWorkspace() {
                 meetingDate={meetingDate}
                 clientEmail={activeStudent?.email || undefined}
                 targets={targets}
+                findings={iepFindings}
                 detectedOrder={detectedIepOrder}
-                onUpdateTargets={(newTargets) => {
-                  setTargets(newTargets);
-                  saveCurrentState({ meetingTargets: newTargets });
+                onUpdateTargets={handleUpdateTargetsAndSyncFindings}
+                onUpdateFindings={(newFindings) => {
+                  setIepFindings(newFindings);
+                  saveCurrentState({ iepIntelFindings: newFindings });
                 }}
                 onUpdateDetectedOrder={(newOrder) => {
                   setDetectedIepOrder(newOrder);
@@ -837,6 +999,9 @@ export default function MeetingWorkspace() {
                   toast.success("Ready for Meeting! Meeting Mode prepared.");
                 }}
                 onOpenImportModal={() => setIsImportModalOpen(true)}
+                onOpenSourceEvidence={handleOpenSourceEvidenceFromTarget}
+                onWithdrawTargetPreserveHistory={handleWithdrawTargetPreserveHistory}
+                onDeleteConnectedFindingEverywhere={handleDeleteConnectedFindingEverywhere}
                 isLoading={buildBlueprintMutation.isPending}
               />
             )}
@@ -854,10 +1019,7 @@ export default function MeetingWorkspace() {
                 parkingLot={parkingLot}
                 additionalItems={additionalItems}
                 closeoutChecks={closeoutChecks}
-                onUpdateTargets={(newTargets) => {
-                  setTargets(newTargets);
-                  saveCurrentState({ meetingTargets: newTargets });
-                }}
+                onUpdateTargets={handleUpdateTargetsAndSyncFindings}
                 onUpdateParkingLot={(newParkingLot) => {
                   setParkingLot(newParkingLot);
                   saveCurrentState({ parkingLot: newParkingLot });
@@ -870,6 +1032,9 @@ export default function MeetingWorkspace() {
                   setCloseoutChecks(newChecks);
                   saveCurrentState({ closeoutChecks: newChecks as any });
                 }}
+                onOpenSourceEvidence={handleOpenSourceEvidenceFromTarget}
+                onWithdrawTargetPreserveHistory={handleWithdrawTargetPreserveHistory}
+                onDeleteConnectedFindingEverywhere={handleDeleteConnectedFindingEverywhere}
                 onCompleteMeeting={async (summary) => {
                   if (workspace?.id) {
                     await completeMeetingMutation.mutateAsync({
@@ -891,6 +1056,9 @@ export default function MeetingWorkspace() {
                 pcsText={pcsText}
                 parentConcerns={parentConcerns}
                 iepFindings={iepFindings}
+                targets={targets}
+                onUpdateTargets={handleUpdateTargetsAndSyncFindings}
+                onOpenSourceEvidence={handleOpenSourceEvidenceFromTarget}
                 rawPcsMetadata={(closeoutChecks as any)?.pcsMetadata}
                 parentDoesntWantText={parentDoesntWantText}
                 onSavePcs={handleSavePcsFromWorkspace}

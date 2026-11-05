@@ -13,12 +13,21 @@ import {
   MarkerSelectorPopover,
   MarkerPreview,
 } from "./MarkerSelectorBox";
+import {
+  type CompanyTag,
+  StudentTagCellPopover,
+  DEFAULT_COMPANY_TAGS,
+} from "./StudentTagsManager";
 
 interface StudentsListViewProps {
   students: StudentFolderData[];
   onStudentClick: (studentId: number) => void;
   onParentClick?: (parentId: number) => void;
   onMarkerChange?: (studentId: number, marker: MarkerType | "none") => void;
+  companyTags?: CompanyTag[];
+  onAssignTag?: (studentId: number, tagName: string) => void;
+  onRemoveTag?: (studentId: number, tagName: string) => void;
+  onOpenManageCompanyTags?: () => void;
   className?: string;
 }
 
@@ -27,6 +36,7 @@ type SortField =
   | "parent"
   | "plan"
   | "status"
+  | "tags"
   | "meeting"
   | "activity";
 
@@ -35,6 +45,10 @@ export function StudentsListView({
   onStudentClick,
   onParentClick,
   onMarkerChange,
+  companyTags = DEFAULT_COMPANY_TAGS,
+  onAssignTag,
+  onRemoveTag,
+  onOpenManageCompanyTags,
   className,
 }: StudentsListViewProps) {
   const [sortField, setSortField] = useState<SortField>("student");
@@ -102,6 +116,10 @@ export function StudentsListView({
         comp = (a.planType || "IEP").localeCompare(b.planType || "IEP");
       } else if (sortField === "status") {
         comp = (a.pipelineStage || a.accountStatus || "").localeCompare(b.pipelineStage || b.accountStatus || "");
+      } else if (sortField === "tags") {
+        const tagsA = (a.tags && a.tags.length > 0 ? a.tags.join(", ") : "zzzz").toLowerCase();
+        const tagsB = (b.tags && b.tags.length > 0 ? b.tags.join(", ") : "zzzz").toLowerCase();
+        comp = tagsA.localeCompare(tagsB);
       } else if (sortField === "meeting") {
         const meetingA = a.upcomingMeetingDate || "";
         const meetingB = b.upcomingMeetingDate || "";
@@ -115,16 +133,16 @@ export function StudentsListView({
     return (
       <div className="w-full flex flex-col items-center justify-center py-20 text-center bg-[#071322] border-t border-b border-[#0D1E36] p-8 shadow-inner">
         <p className="text-base font-serif font-bold text-[#F0DFC5]">No student records found</p>
-        <p className="text-xs text-[#7B8EA7] mt-1">Adjust your search or alphabet filter to view active students.</p>
+        <p className="text-xs text-[#7B8EA7] mt-1">Adjust your search, stage, or tag filter to view students.</p>
       </div>
     );
   }
 
   return (
     <div className={cn("w-full overflow-x-auto select-none", className)}>
-      <div className="w-full min-w-[880px] px-1.5 sm:px-2 flex flex-col space-y-1.5">
+      <div className="w-full min-w-[1040px] px-1.5 sm:px-2 flex flex-col space-y-1.5">
         {/* ─── List Header Mounted On Rounded Executive Navy Bar (Brighter than Rows) ─── */}
-        <div className="w-full grid grid-cols-[minmax(250px,2.4fr)_minmax(130px,1.2fr)_120px_minmax(110px,1fr)_minmax(110px,1fr)_76px_40px] items-center px-4 sm:px-6 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border border-[#2B4B72] bg-gradient-to-b from-[#254263] via-[#1A334E] to-[#13263A] shadow-[inset_0_1px_0_rgba(135,185,245,0.5),inset_0_-1px_0_rgba(0,0,0,0.65),0_3px_10px_rgba(0,0,0,0.55)] text-xs font-serif text-[#E2EDF8] tracking-wide mb-1 gap-2 sm:gap-4">
+        <div className="w-full grid grid-cols-[minmax(220px,2.1fr)_minmax(125px,1.1fr)_115px_minmax(195px,1.6fr)_minmax(110px,1fr)_minmax(110px,1fr)_72px_38px] items-center px-4 sm:px-6 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border border-[#2B4B72] bg-gradient-to-b from-[#254263] via-[#1A334E] to-[#13263A] shadow-[inset_0_1px_0_rgba(135,185,245,0.5),inset_0_-1px_0_rgba(0,0,0,0.65),0_3px_10px_rgba(0,0,0,0.55)] text-xs font-serif text-[#E2EDF8] tracking-wide mb-1 gap-2 sm:gap-3.5">
           {/* 1. Student */}
           <button
             type="button"
@@ -136,7 +154,7 @@ export function StudentsListView({
             <ChevronsUpDown className="w-3.5 h-3.5 text-[#8CB4E0] shrink-0" />
           </button>
 
-          {/* 2. Parent (where Plan was) */}
+          {/* 2. Parent */}
           <button
             type="button"
             onClick={() => toggleSort("parent")}
@@ -158,7 +176,18 @@ export function StudentsListView({
             </button>
           </div>
 
-          {/* 4. Next Meeting */}
+          {/* 4. Custom Tags Space (Ordered by Tags) */}
+          <button
+            type="button"
+            onClick={() => toggleSort("tags")}
+            className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors text-left font-serif min-w-0"
+            title="Sort / Order by Tags"
+          >
+            <span className="truncate font-semibold text-[#FFFFFF] drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Tags</span>
+            <ChevronsUpDown className="w-3.5 h-3.5 text-[#8CB4E0] shrink-0" />
+          </button>
+
+          {/* 5. Next Meeting */}
           <button
             type="button"
             onClick={() => toggleSort("meeting")}
@@ -168,7 +197,7 @@ export function StudentsListView({
             <ChevronsUpDown className="w-3.5 h-3.5 text-[#8CB4E0] shrink-0" />
           </button>
 
-          {/* 5. Last Activity */}
+          {/* 6. Last Activity */}
           <button
             type="button"
             onClick={() => toggleSort("activity")}
@@ -178,7 +207,7 @@ export function StudentsListView({
             <ChevronsUpDown className="w-3.5 h-3.5 text-[#8CB4E0] shrink-0" />
           </button>
 
-          {/* 6. Plan Type (moved to the end) */}
+          {/* 7. Plan Type */}
           <div className="flex justify-center">
             <button
               type="button"
@@ -190,7 +219,7 @@ export function StudentsListView({
             </button>
           </div>
 
-          {/* 7. Far Right Badge */}
+          {/* 8. Far Right Badge */}
           <div className="flex justify-end">
             <div className="w-7 h-7 rounded-md flex items-center justify-center border border-[#E9BA6B]/70 text-[#E9BA6B] bg-[#122742] shadow-[0_1px_3px_rgba(0,0,0,0.6)] shrink-0">
               <LayoutList className="w-3.5 h-3.5" />
@@ -226,7 +255,7 @@ export function StudentsListView({
               key={student.id}
               onClick={() => onStudentClick(student.id)}
               className={cn(
-                "group w-full grid grid-cols-[minmax(250px,2.4fr)_minmax(130px,1.2fr)_120px_minmax(110px,1fr)_minmax(110px,1fr)_76px_40px] items-center px-4 sm:px-6 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border transition-all cursor-pointer gap-2 sm:gap-4",
+                "group w-full grid grid-cols-[minmax(220px,2.1fr)_minmax(125px,1.1fr)_115px_minmax(195px,1.6fr)_minmax(110px,1fr)_minmax(110px,1fr)_72px_38px] items-center px-4 sm:px-6 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border transition-all cursor-pointer gap-2 sm:gap-3.5",
                 index % 2 === 0
                   ? "bg-gradient-to-b from-[#1C3A62] via-[#142D4E] to-[#0E223D] border-[#224876] shadow-[inset_0_1px_0_rgba(100,160,230,0.4),inset_0_-1px_0_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.4)] hover:from-[#23487A] hover:via-[#193760] hover:to-[#122C4D] hover:border-[#3368A8]"
                   : "bg-gradient-to-b from-[#132A48] via-[#0E2038] to-[#09172A] border-[#18355A] shadow-[inset_0_1px_0_rgba(75,130,195,0.3),inset_0_-1px_0_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.4)] hover:from-[#19355A] hover:via-[#132948] hover:to-[#0C1F37] hover:border-[#254E82]"
@@ -332,7 +361,23 @@ export function StudentsListView({
                 )}
               </div>
 
-              {/* 4. Next Meeting */}
+              {/* 4. Custom Tags Space (Click to open Student Tags Popover & Add/Remove Tags) */}
+              <div
+                className="flex items-center min-w-0"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <StudentTagCellPopover
+                  studentId={student.id}
+                  studentTags={student.tags || []}
+                  companyTags={companyTags}
+                  onAssignTag={(id, tagName) => onAssignTag?.(id, tagName)}
+                  onRemoveTag={(id, tagName) => onRemoveTag?.(id, tagName)}
+                  onOpenManageCompanyTags={() => onOpenManageCompanyTags?.()}
+                  variant="row"
+                />
+              </div>
+
+              {/* 5. Next Meeting */}
               <div className="flex items-center gap-2 min-w-0">
                 <Calendar className="w-4 h-4 text-[#E5B866] shrink-0" />
                 <div className="flex flex-col min-w-0">
