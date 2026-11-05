@@ -1,10 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Calendar as CalendarIcon,
   ChevronRight,
+  Clock,
   Plus,
+  X,
 } from "lucide-react";
 import { formatDualTimes } from "@shared/timezones";
 import TodaysAppointmentsTable, { CalendarAppointment } from "./calendar/TodaysAppointmentsTable";
@@ -114,6 +116,33 @@ export default function CalendarView({
   const [internalFilter, setInternalFilter] = useState<string>("all");
   const [internalDate, setInternalDate] = useState<Date>(new Date());
   const [tableTab, setTableTab] = useState<"my" | "all">("my");
+  const [overflowDrawerDateStr, setOverflowDrawerDateStr] = useState<string | null>(null);
+  const [cachedOverflowDateStr, setCachedOverflowDateStr] = useState<string | null>(null);
+  const [isOverflowRendered, setIsOverflowRendered] = useState(false);
+  const [isOverflowAnimatedOpen, setIsOverflowAnimatedOpen] = useState(false);
+
+  useEffect(() => {
+    if (overflowDrawerDateStr) {
+      setCachedOverflowDateStr(overflowDrawerDateStr);
+      setIsOverflowRendered(true);
+      let raf2 = 0;
+      const raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          setIsOverflowAnimatedOpen(true);
+        });
+      });
+      return () => {
+        cancelAnimationFrame(raf1);
+        cancelAnimationFrame(raf2);
+      };
+    } else {
+      setIsOverflowAnimatedOpen(false);
+      const timer = setTimeout(() => {
+        setIsOverflowRendered(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [overflowDrawerDateStr]);
 
   const viewMode = controlledViewMode ?? internalViewMode;
   const setViewMode = (mode: CalendarViewMode) => {
@@ -343,7 +372,7 @@ export default function CalendarView({
           })}
 
           {/* Client Appointments in Month Cell */}
-          {dayAppointments.slice(0, 2).map((apt) => {
+          {dayAppointments.slice(0, 4).map((apt) => {
             const isNeedsCoverage = apt.status === "Needs Coverage";
             const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
             const patternKey = detectItemPatternKey(apt as any);
@@ -373,6 +402,34 @@ export default function CalendarView({
               </div>
             );
           })}
+
+          {dayAppointments.length > 4 && (
+            <div className="flex items-center gap-1 pt-0.5">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOverflowDrawerDateStr(dateStr);
+                }}
+                className="flex-1 flex items-center justify-between text-[9px] font-mono font-bold px-1.5 py-[2px] rounded-[4px] bg-[#05142B]/95 border border-[#C5A059]/60 text-[#FFE394] hover:bg-[#102B4E] hover:border-[#FFE394] transition-all cursor-pointer"
+              >
+                <span>+{dayAppointments.length - 4} more</span>
+                <ChevronRight className="w-2.5 h-2.5 text-[#C5A059]" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentDate(new Date(year, month, day));
+                  setViewMode("day");
+                }}
+                className="text-[9px] font-mono font-semibold px-1.5 py-[2px] rounded-[4px] bg-[#020A17] border border-[#3A2C18] text-[#C6B697] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 transition-all cursor-pointer shrink-0"
+                title="Open Day View"
+              >
+                Day →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -604,6 +661,150 @@ export default function CalendarView({
           </CardContent>
         </Card>
       )}
+
+      {/* ── Right Slide-Out Drawer for Day Overflow (>4 Appointments) ── */}
+      {isOverflowRendered && (overflowDrawerDateStr || cachedOverflowDateStr) && (() => {
+        const activeDateStr = overflowDrawerDateStr || cachedOverflowDateStr!;
+        const drawerApts = (appointmentsByDate[activeDateStr] || []).slice().sort(
+          (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        );
+        const [yNum, mNum, dNum] = activeDateStr.split("-").map(Number);
+        const drawerDateObj = new Date(yNum, (mNum || 1) - 1, dNum || 1);
+        const drawerDateLabel = drawerDateObj.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+
+        return (
+          <>
+            <div
+              className={`fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px] transition-opacity duration-300 motion-reduce:transition-none ${
+                isOverflowAnimatedOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}
+              onClick={() => setOverflowDrawerDateStr(null)}
+              aria-hidden="true"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Appointments for ${drawerDateLabel}`}
+              className={`fixed top-0 right-0 bottom-0 z-50 h-full w-full sm:w-[400px] max-w-full flex flex-col bg-[#05142B] border-l border-[#3A2C18] shadow-[-16px_0_48px_rgba(0,0,0,0.85)] transform transition-transform duration-300 ease-out motion-reduce:transition-none ${
+                isOverflowAnimatedOpen ? "translate-x-0" : "translate-x-full"
+              }`}
+            >
+              <div className="h-1.5 w-full shrink-0 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B]" />
+              <div className="shrink-0 p-4 border-b border-[#3A2C18]/70 bg-[#07162B] flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-[11px] font-mono uppercase tracking-widest text-[#C5A059] font-bold">
+                    {drawerApts.length} Appointments Scheduled
+                  </div>
+                  <h2 className="text-lg font-serif font-bold text-[#FFF4D4] leading-tight mt-0.5">
+                    {drawerDateLabel}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOverflowDrawerDateStr(null)}
+                  className="p-1.5 rounded-lg text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#020A17] transition-colors cursor-pointer"
+                  aria-label="Close day appointments drawer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+                {drawerApts.map((apt) => {
+                  const isNeedsCoverage = apt.status === "Needs Coverage";
+                  const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
+                  const patternKey = detectItemPatternKey(apt as any);
+                  const patternDef = CALENDAR_PATTERNS[patternKey];
+                  const startStr = new Date(apt.startTime).toLocaleTimeString([], {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  });
+                  const endStr = new Date(apt.endTime).toLocaleTimeString([], {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  });
+
+                  return (
+                    <div
+                      key={apt.id}
+                      onClick={() => {
+                        setOverflowDrawerDateStr(null);
+                        onEventClick?.(apt);
+                      }}
+                      style={{ background: patternDef.inlineBackground }}
+                      className={`p-2.5 rounded-lg cursor-pointer hover:brightness-110 transition-all border !border-l-[6px] ${
+                        isNeedsCoverage
+                          ? "border-rose-600/80 shadow-sm shadow-rose-950"
+                          : patternDef.borderClass
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`font-serif text-sm font-bold truncate leading-tight ${
+                            patternKey === "confirmed" ? "text-white" : "text-[#FFF4D4]"
+                          }`}
+                        >
+                          {apt.title}
+                        </span>
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-black/30 text-[#FFE394] shrink-0 flex items-center gap-1">
+                          <Clock className="w-2.5 h-2.5 text-[#C5A059]" />
+                          {startStr} – {endStr}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 text-xs mt-1">
+                        <span
+                          className={`truncate font-medium ${
+                            patternKey === "confirmed" ? "text-emerald-100" : "text-[#C6B697]"
+                          }`}
+                        >
+                          {apt.studentName || apt.parentName || "Student"}
+                        </span>
+                        <span
+                          className={`font-semibold shrink-0 ${
+                            patternKey === "confirmed" ? "text-emerald-300" : "text-[#FFE394]"
+                          }`}
+                        >
+                          {advocateName}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="shrink-0 p-3.5 border-t border-[#3A2C18]/70 bg-[#07162B] flex items-center gap-2">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setOverflowDrawerDateStr(null);
+                    setCurrentDate(drawerDateObj);
+                    setViewMode("day");
+                  }}
+                  className="flex-1 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-9 rounded-[5px] border border-[#FFE394]/50 shadow-md cursor-pointer"
+                >
+                  Open Full Day Timeline →
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setOverflowDrawerDateStr(null);
+                    onDateClick?.(drawerDateObj);
+                  }}
+                  className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs h-9 px-3 rounded-[5px] cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Schedule
+                </Button>
+              </div>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 }

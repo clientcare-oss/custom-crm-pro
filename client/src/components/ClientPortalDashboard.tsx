@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import CaseCompassCard from "./CaseCompassCard";
 import { ParentOfferCard } from "./portal/ParentOfferCard";
+import { resolveClientFacingMeetingView } from "@shared/appointmentClientMessage";
 
 interface ClientPortalDashboardProps {
   displayName: string;
@@ -494,6 +495,39 @@ export default function ClientPortalDashboard({
                 <span className="truncate">{nextAppt.title || "Annual IEP Meeting"}</span>
                 <ChevronRight className={`w-4 h-4 group-hover:translate-x-1 transition-transform shrink-0 ${isLight ? "text-amber-605" : "text-amber-400"}`} />
               </button>
+              {(() => {
+                const clientView = resolveClientFacingMeetingView({
+                  videoLink: nextAppt.videoLink,
+                  location: nextAppt.location,
+                  description: nextAppt.description,
+                });
+                return (
+                  <div className="mt-2 space-y-1.5">
+                    <p className={`text-[11px] font-bold ${clientView.isLinkReady ? "text-emerald-400" : "text-amber-400"}`}>
+                      {clientView.headline}
+                    </p>
+                    <p className="text-[11px] text-white/70 leading-snug">
+                      {clientView.supportingMessage}
+                    </p>
+                    {clientView.additionalDirections && (
+                      <p className="text-[11px] text-amber-200/90 leading-snug">
+                        {clientView.additionalDirections}
+                      </p>
+                    )}
+                    {clientView.isLinkReady && (
+                      <a
+                        href={clientView.normalizedLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 inline-flex items-center gap-1.5 bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs px-3 py-1.5 rounded-lg transition-all"
+                      >
+                        <Video className="w-3.5 h-3.5" />
+                        <span>Join Meeting</span>
+                      </a>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             <div className={`pt-2.5 border-t ${isLight ? "border-slate-100" : "border-blue-900/40"}`}>

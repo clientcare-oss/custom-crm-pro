@@ -148,7 +148,12 @@ export const portalRouter = router({
           const isOwned = students.some((s) => s.id === input.studentContactId);
           if (!isOwned) throw new TRPCError({ code: "FORBIDDEN" });
         }
-        return await db.getAppointmentsByClient(input.studentContactId);
+        const { stripPrivateInternalNotes } = await import("../../shared/appointmentClientMessage");
+        const rows = await db.getAppointmentsByClient(input.studentContactId);
+        return (rows || []).map((r: any) => ({
+          ...r,
+          description: r.description ? stripPrivateInternalNotes(r.description) : null,
+        }));
       }),
 
     // Portal: get files for a specific student (by their contact id)
@@ -278,7 +283,13 @@ export const portalRouter = router({
         .where(inArray(apptTable.clientId, studentIds))
         .orderBy(asc(apptTable.startTime));
       console.log('[getAllMyAppointments] found', rows.length, 'appointments for studentIds:', studentIds);
-      const filtered = rows.filter((r: any) => new Date(r.startTime) >= now && r.status !== 'Cancelled');
+      const { stripPrivateInternalNotes } = await import("../../shared/appointmentClientMessage");
+      const filtered = rows
+        .filter((r: any) => new Date(r.startTime) >= now && r.status !== 'Cancelled')
+        .map((r: any) => ({
+          ...r,
+          description: r.description ? stripPrivateInternalNotes(r.description) : null,
+        }));
       console.log('[getAllMyAppointments] after filtering future/non-cancelled:', filtered.length);
       return filtered;
     }),

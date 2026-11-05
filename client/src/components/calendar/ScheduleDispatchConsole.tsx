@@ -32,7 +32,17 @@ import {
   Building,
   Info,
   ArrowLeft,
+  Eye,
+  Lock,
+  Video,
+  ExternalLink,
 } from "lucide-react";
+import {
+  DEFAULT_PENDING_LINK_MESSAGE,
+  READY_LINK_HEADLINE,
+  serializeAppointmentDescription,
+  resolveClientFacingMeetingView,
+} from "@shared/appointmentClientMessage";
 import {
   ScheduleMode,
   MeetingTypeOption,
@@ -354,7 +364,8 @@ export default function ScheduleDispatchConsole({
   const [mDate, setMDate] = useState<string>(baseDateStr);
   const [mStartTime, setMStartTime] = useState<string>(initialTime);
   const [mDuration, setMDuration] = useState<number>(60);
-  const [mNotes, setMNotes] = useState<string>("");
+  const [mVideoLink, setMVideoLink] = useState<string>("");
+  const [mNotes, setMNotes] = useState<string>(DEFAULT_PENDING_LINK_MESSAGE);
   const [mInternalNotes, setMInternalNotes] = useState<string>("");
 
   const handleSelectMeetingType = (option: MeetingTypeOption) => {
@@ -379,7 +390,9 @@ export default function ScheduleDispatchConsole({
   const [csDate, setCsDate] = useState<string>(baseDateStr);
   const [csStartTime, setCsStartTime] = useState<string>(initialTime);
   const [csDuration, setCsDuration] = useState<number>(30);
-  const [csNotes, setCsNotes] = useState<string>("");
+  const [csVideoLink, setCsVideoLink] = useState<string>("");
+  const [csNotes, setCsNotes] = useState<string>(DEFAULT_PENDING_LINK_MESSAGE);
+  const [csInternalNotes, setCsInternalNotes] = useState<string>("");
 
   const csFilteredStudents = useMemo(() => {
     if (!csParentId) return studentsList;
@@ -583,7 +596,9 @@ export default function ScheduleDispatchConsole({
       {
         clientId: student?.id || 0,
         title: `${studentName} — ${meetingType}`,
-        description: mNotes || undefined,
+        description:
+          serializeAppointmentDescription(mNotes, mInternalNotes) || undefined,
+        videoLink: mVideoLink.trim() || undefined,
         startTime: start,
         endTime: end,
         meetingType,
@@ -610,8 +625,8 @@ export default function ScheduleDispatchConsole({
     const studentName = student
       ? `${student.firstName} ${student.lastName}`.trim()
       : parent
-      ? `${parent.firstName} ${parent.lastName}'s Student`
-      : "Client";
+        ? `${parent.firstName} ${parent.lastName}'s Student`
+        : "Client";
     const parentName = parent
       ? `${parent.firstName} ${parent.lastName}`.trim()
       : undefined;
@@ -623,7 +638,9 @@ export default function ScheduleDispatchConsole({
       {
         clientId: student?.id || parent?.id || 0,
         title: `${parentName || studentName} — ${clientSessionType}`,
-        description: csNotes || undefined,
+        description:
+          serializeAppointmentDescription(csNotes, csInternalNotes) || undefined,
+        videoLink: csVideoLink.trim() || undefined,
         startTime: start,
         endTime: end,
         meetingType: clientSessionType,
@@ -758,8 +775,7 @@ export default function ScheduleDispatchConsole({
       .filter((m) => m.checked)
       .map(
         (m) =>
-          `• [${m.label} (${getMilestoneCalculatedDate(m.dayOffset)})] ${
-            m.title
+          `• [${m.label} (${getMilestoneCalculatedDate(m.dayOffset)})] ${m.title
           }: ${m.description}`
       )
       .join("\n");
@@ -783,8 +799,7 @@ export default function ScheduleDispatchConsole({
       {
         onSuccess: () =>
           toast.success(
-            `Blueprint created! Primary meeting scheduled with ${
-              bpMilestones.filter((m) => m.checked).length
+            `Blueprint created! Primary meeting scheduled with ${bpMilestones.filter((m) => m.checked).length
             } connected timeline milestones.`
           ),
       }
@@ -861,10 +876,10 @@ export default function ScheduleDispatchConsole({
           blockCategory === "OFFICE_CLOSED"
             ? "Office Closure Block"
             : blockCategory === "PERSONAL_BLACKOUT"
-            ? "Personal Staff Blackout"
-            : blockCategory === "AVAILABILITY_BLOCK"
-            ? "Operational Availability Protection"
-            : "Recurring Time Protection",
+              ? "Personal Staff Blackout"
+              : blockCategory === "AVAILABILITY_BLOCK"
+                ? "Operational Availability Protection"
+                : "Recurring Time Protection",
         description:
           "Protects team time, handles holiday closures, and prevents client self-scheduling during unavailable windows.",
         typicalDuration: bIsAllDay ? "All-Day Block" : `${bStartTime} – ${bEndTime}`,
@@ -931,9 +946,8 @@ export default function ScheduleDispatchConsole({
 
   return (
     <div
-      className={`min-h-screen w-full bg-[#07162B] text-[#FFF4D4] relative flex flex-col justify-start items-center ${
-        isSubPage ? "p-2 sm:p-4 lg:p-6" : "p-0"
-      }`}
+      className={`min-h-screen w-full bg-[#07162B] text-[#FFF4D4] relative flex flex-col justify-start items-center ${isSubPage ? "p-2 sm:p-4 lg:p-6" : "p-0"
+        }`}
       style={{
         backgroundImage:
           "url('/images/calendar-wood-planks.png'), radial-gradient(ellipse at 88% 60px, rgba(255,190,80,0.35) 0%, rgba(10,35,70,0.4) 35%, rgba(0,8,32,0.95) 80%)",
@@ -992,1753 +1006,1749 @@ export default function ScheduleDispatchConsole({
           </div>
         </div>
 
-      {/* ── 2. MODE NAVIGATION (6 EXPANSIVE TABS ACROSS FULL WIDTH) ── */}
-      <div className="px-6 sm:px-8 py-3 bg-[#010B1E]/95 border-b border-[#1A3358] relative z-10">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {/* Tab 1: MEETINGS */}
-          <button
-            type="button"
-            onClick={() => setActiveMode("MEETINGS")}
-            className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
-              activeMode === "MEETINGS"
+        {/* ── 2. MODE NAVIGATION (6 EXPANSIVE TABS ACROSS FULL WIDTH) ── */}
+        <div className="px-6 sm:px-8 py-3 bg-[#010B1E]/95 border-b border-[#1A3358] relative z-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {/* Tab 1: MEETINGS */}
+            <button
+              type="button"
+              onClick={() => setActiveMode("MEETINGS")}
+              className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${activeMode === "MEETINGS"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] border-[#FFE394] font-bold shadow-[0_4px_18px_rgba(197,160,89,0.4)] ring-1 ring-[#FFE394]/70 scale-[1.01]"
                 : "bg-[#031126]/90 text-[#DFD0B5] border-[#182C48] hover:border-[#C5A059]/60 hover:bg-[#061836] shadow-sm"
-            }`}
-          >
-            <CalendarIcon
-              className={`w-5 h-5 shrink-0 ${
-                activeMode === "MEETINGS" ? "text-[#000820]" : "text-[#C5A059]"
-              }`}
-            />
-            <div className="min-w-0">
-              <div
-                className={`text-xs font-bold uppercase tracking-wider truncate ${
-                  activeMode === "MEETINGS" ? "text-[#000820]" : "text-[#FFF4D4]"
                 }`}
-              >
-                MEETINGS
+            >
+              <CalendarIcon
+                className={`w-5 h-5 shrink-0 ${activeMode === "MEETINGS" ? "text-[#000820]" : "text-[#C5A059]"
+                  }`}
+              />
+              <div className="min-w-0">
+                <div
+                  className={`text-xs font-bold uppercase tracking-wider truncate ${activeMode === "MEETINGS" ? "text-[#000820]" : "text-[#FFF4D4]"
+                    }`}
+                >
+                  MEETINGS
+                </div>
+                <div
+                  className={`text-[11px] truncate ${activeMode === "MEETINGS" ? "text-[#1A1408]" : "text-[#8E9EB8]"
+                    }`}
+                >
+                  School Meetings
+                </div>
               </div>
-              <div
-                className={`text-[11px] truncate ${
-                  activeMode === "MEETINGS" ? "text-[#1A1408]" : "text-[#8E9EB8]"
-                }`}
-              >
-                School Meetings
-              </div>
-            </div>
-          </button>
+            </button>
 
-          {/* Tab 2: CLIENT SESSIONS */}
-          <button
-            type="button"
-            onClick={() => setActiveMode("CLIENT_SESSIONS")}
-            className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
-              activeMode === "CLIENT_SESSIONS"
+            {/* Tab 2: CLIENT SESSIONS */}
+            <button
+              type="button"
+              onClick={() => setActiveMode("CLIENT_SESSIONS")}
+              className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${activeMode === "CLIENT_SESSIONS"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] border-[#FFE394] font-bold shadow-[0_4px_18px_rgba(197,160,89,0.4)] ring-1 ring-[#FFE394]/70 scale-[1.01]"
                 : "bg-[#031126]/90 text-[#DFD0B5] border-[#182C48] hover:border-[#C5A059]/60 hover:bg-[#061836] shadow-sm"
-            }`}
-          >
-            <PhoneCall
-              className={`w-5 h-5 shrink-0 ${
-                activeMode === "CLIENT_SESSIONS" ? "text-[#000820]" : "text-[#C5A059]"
-              }`}
-            />
-            <div className="min-w-0">
-              <div
-                className={`text-xs font-bold uppercase tracking-wider truncate ${
-                  activeMode === "CLIENT_SESSIONS"
+                }`}
+            >
+              <PhoneCall
+                className={`w-5 h-5 shrink-0 ${activeMode === "CLIENT_SESSIONS" ? "text-[#000820]" : "text-[#C5A059]"
+                  }`}
+              />
+              <div className="min-w-0">
+                <div
+                  className={`text-xs font-bold uppercase tracking-wider truncate ${activeMode === "CLIENT_SESSIONS"
                     ? "text-[#000820]"
                     : "text-[#FFF4D4]"
-                }`}
-              >
-                CLIENT SESSIONS
-              </div>
-              <div
-                className={`text-[11px] truncate ${
-                  activeMode === "CLIENT_SESSIONS"
+                    }`}
+                >
+                  CLIENT SESSIONS
+                </div>
+                <div
+                  className={`text-[11px] truncate ${activeMode === "CLIENT_SESSIONS"
                     ? "text-[#1A1408]"
                     : "text-[#8E9EB8]"
-                }`}
-              >
-                With Families
+                    }`}
+                >
+                  With Families
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
 
-          {/* Tab 3: HOLDS */}
-          <button
-            type="button"
-            onClick={() => setActiveMode("HOLDS")}
-            className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
-              activeMode === "HOLDS"
+            {/* Tab 3: HOLDS */}
+            <button
+              type="button"
+              onClick={() => setActiveMode("HOLDS")}
+              className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${activeMode === "HOLDS"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] border-[#FFE394] font-bold shadow-[0_4px_18px_rgba(197,160,89,0.4)] ring-1 ring-[#FFE394]/70 scale-[1.01]"
                 : "bg-[#031126]/90 text-[#DFD0B5] border-[#182C48] hover:border-[#C5A059]/60 hover:bg-[#061836] shadow-sm"
-            }`}
-          >
-            <Clock
-              className={`w-5 h-5 shrink-0 ${
-                activeMode === "HOLDS" ? "text-[#000820]" : "text-[#C5A059]"
-              }`}
-            />
-            <div className="min-w-0">
-              <div
-                className={`text-xs font-bold uppercase tracking-wider truncate ${
-                  activeMode === "HOLDS" ? "text-[#000820]" : "text-[#FFF4D4]"
                 }`}
-              >
-                HOLDS
+            >
+              <Clock
+                className={`w-5 h-5 shrink-0 ${activeMode === "HOLDS" ? "text-[#000820]" : "text-[#C5A059]"
+                  }`}
+              />
+              <div className="min-w-0">
+                <div
+                  className={`text-xs font-bold uppercase tracking-wider truncate ${activeMode === "HOLDS" ? "text-[#000820]" : "text-[#FFF4D4]"
+                    }`}
+                >
+                  HOLDS
+                </div>
+                <div
+                  className={`text-[11px] truncate ${activeMode === "HOLDS" ? "text-[#1A1408]" : "text-[#8E9EB8]"
+                    }`}
+                >
+                  Tentative Times
+                </div>
               </div>
-              <div
-                className={`text-[11px] truncate ${
-                  activeMode === "HOLDS" ? "text-[#1A1408]" : "text-[#8E9EB8]"
-                }`}
-              >
-                Tentative Times
-              </div>
-            </div>
-          </button>
+            </button>
 
-          {/* Tab 4: BLOCKS */}
-          <button
-            type="button"
-            onClick={() => setActiveMode("BLOCKS")}
-            className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
-              activeMode === "BLOCKS"
+            {/* Tab 4: BLOCKS */}
+            <button
+              type="button"
+              onClick={() => setActiveMode("BLOCKS")}
+              className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${activeMode === "BLOCKS"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] border-[#FFE394] font-bold shadow-[0_4px_18px_rgba(197,160,89,0.4)] ring-1 ring-[#FFE394]/70 scale-[1.01]"
                 : "bg-[#031126]/90 text-[#DFD0B5] border-[#182C48] hover:border-[#C5A059]/60 hover:bg-[#061836] shadow-sm"
-            }`}
-          >
-            <Ban
-              className={`w-5 h-5 shrink-0 ${
-                activeMode === "BLOCKS" ? "text-[#000820]" : "text-[#C5A059]"
-              }`}
-            />
-            <div className="min-w-0">
-              <div
-                className={`text-xs font-bold uppercase tracking-wider truncate ${
-                  activeMode === "BLOCKS" ? "text-[#000820]" : "text-[#FFF4D4]"
                 }`}
-              >
-                BLOCKS
+            >
+              <Ban
+                className={`w-5 h-5 shrink-0 ${activeMode === "BLOCKS" ? "text-[#000820]" : "text-[#C5A059]"
+                  }`}
+              />
+              <div className="min-w-0">
+                <div
+                  className={`text-xs font-bold uppercase tracking-wider truncate ${activeMode === "BLOCKS" ? "text-[#000820]" : "text-[#FFF4D4]"
+                    }`}
+                >
+                  BLOCKS
+                </div>
+                <div
+                  className={`text-[11px] truncate ${activeMode === "BLOCKS" ? "text-[#1A1408]" : "text-[#8E9EB8]"
+                    }`}
+                >
+                  Unavailable Time
+                </div>
               </div>
-              <div
-                className={`text-[11px] truncate ${
-                  activeMode === "BLOCKS" ? "text-[#1A1408]" : "text-[#8E9EB8]"
-                }`}
-              >
-                Unavailable Time
-              </div>
-            </div>
-          </button>
+            </button>
 
-          {/* Tab 5: INTERNAL */}
-          <button
-            type="button"
-            onClick={() => setActiveMode("INTERNAL")}
-            className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
-              activeMode === "INTERNAL"
+            {/* Tab 5: INTERNAL */}
+            <button
+              type="button"
+              onClick={() => setActiveMode("INTERNAL")}
+              className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${activeMode === "INTERNAL"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] border-[#FFE394] font-bold shadow-[0_4px_18px_rgba(197,160,89,0.4)] ring-1 ring-[#FFE394]/70 scale-[1.01]"
                 : "bg-[#031126]/90 text-[#DFD0B5] border-[#182C48] hover:border-[#C5A059]/60 hover:bg-[#061836] shadow-sm"
-            }`}
-          >
-            <Users
-              className={`w-5 h-5 shrink-0 ${
-                activeMode === "INTERNAL" ? "text-[#000820]" : "text-[#C5A059]"
-              }`}
-            />
-            <div className="min-w-0">
-              <div
-                className={`text-xs font-bold uppercase tracking-wider truncate ${
-                  activeMode === "INTERNAL" ? "text-[#000820]" : "text-[#FFF4D4]"
                 }`}
-              >
-                INTERNAL
+            >
+              <Users
+                className={`w-5 h-5 shrink-0 ${activeMode === "INTERNAL" ? "text-[#000820]" : "text-[#C5A059]"
+                  }`}
+              />
+              <div className="min-w-0">
+                <div
+                  className={`text-xs font-bold uppercase tracking-wider truncate ${activeMode === "INTERNAL" ? "text-[#000820]" : "text-[#FFF4D4]"
+                    }`}
+                >
+                  INTERNAL
+                </div>
+                <div
+                  className={`text-[11px] truncate ${activeMode === "INTERNAL" ? "text-[#1A1408]" : "text-[#8E9EB8]"
+                    }`}
+                >
+                  Team Events
+                </div>
               </div>
-              <div
-                className={`text-[11px] truncate ${
-                  activeMode === "INTERNAL" ? "text-[#1A1408]" : "text-[#8E9EB8]"
-                }`}
-              >
-                Team Events
-              </div>
-            </div>
-          </button>
+            </button>
 
-          {/* Tab 6: BLUEPRINT */}
-          <button
-            type="button"
-            onClick={() => setActiveMode("BLUEPRINT")}
-            className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
-              activeMode === "BLUEPRINT"
+            {/* Tab 6: BLUEPRINT */}
+            <button
+              type="button"
+              onClick={() => setActiveMode("BLUEPRINT")}
+              className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${activeMode === "BLUEPRINT"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] border-[#FFE394] font-bold shadow-[0_4px_18px_rgba(197,160,89,0.4)] ring-1 ring-[#FFE394]/70 scale-[1.01]"
                 : "bg-[#031126]/90 text-[#DFD0B5] border-[#182C48] hover:border-[#C5A059]/60 hover:bg-[#061836] shadow-sm"
-            }`}
-          >
-            <CalendarClock
-              className={`w-5 h-5 shrink-0 ${
-                activeMode === "BLUEPRINT" ? "text-[#000820]" : "text-[#C5A059]"
-              }`}
-            />
-            <div className="min-w-0">
-              <div
-                className={`text-xs font-bold uppercase tracking-wider truncate ${
-                  activeMode === "BLUEPRINT" ? "text-[#000820]" : "text-[#FFF4D4]"
                 }`}
-              >
-                BLUEPRINT
+            >
+              <CalendarClock
+                className={`w-5 h-5 shrink-0 ${activeMode === "BLUEPRINT" ? "text-[#000820]" : "text-[#C5A059]"
+                  }`}
+              />
+              <div className="min-w-0">
+                <div
+                  className={`text-xs font-bold uppercase tracking-wider truncate ${activeMode === "BLUEPRINT" ? "text-[#000820]" : "text-[#FFF4D4]"
+                    }`}
+                >
+                  BLUEPRINT
+                </div>
+                <div
+                  className={`text-[11px] truncate ${activeMode === "BLUEPRINT" ? "text-[#1A1408]" : "text-[#8E9EB8]"
+                    }`}
+                >
+                  Auto-Schedule Tasks
+                </div>
               </div>
-              <div
-                className={`text-[11px] truncate ${
-                  activeMode === "BLUEPRINT" ? "text-[#1A1408]" : "text-[#8E9EB8]"
-                }`}
-              >
-                Auto-Schedule Tasks
-              </div>
-            </div>
-          </button>
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* ── 3. MAIN WORKSPACE (LEFT FORM + RIGHT PARCHMENT CARD) ── */}
-      <div className="p-6 sm:p-8 flex flex-col lg:flex-row gap-6 relative z-10">
-        {/* ── LEFT: FORM PANEL (EXPANSIVE WIDTH) ── */}
-        <div className="flex-1 min-w-0 bg-[#020A1A]/95 border border-[#162A48] rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
-          {/* ──────────────────────────────────────────────────────── */}
-          {/* MODE 1: MEETINGS                                        */}
-          {/* ──────────────────────────────────────────────────────── */}
-          {activeMode === "MEETINGS" && (
-            <form onSubmit={handleScheduleSchoolMeeting} className="space-y-6">
-              {/* Header inside form */}
-              <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
-                <div>
-                  <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
-                    Schedule a School Meeting
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
-                    School-facing meeting attended by Waypoint.
-                  </p>
-                </div>
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-[#081B36] border border-[#1D3E6B] text-xs text-[#8EB8EE]">
-                  <Info className="w-3.5 h-3.5 text-[#8EB8EE]" />
-                  <span>Select meeting type to view tailored options.</span>
-                </div>
-              </div>
-
-              {/* 3 Columns of School Meeting options */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Column 1: IEP Meetings */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#DFBE77] uppercase tracking-wider px-1">
-                    <BookOpen className="w-4 h-4" />
-                    <span>IEP Meetings</span>
+        {/* ── 3. MAIN WORKSPACE (LEFT FORM + RIGHT PARCHMENT CARD) ── */}
+        <div className="p-6 sm:p-8 flex flex-col lg:flex-row gap-6 relative z-10">
+          {/* ── LEFT: FORM PANEL (EXPANSIVE WIDTH) ── */}
+          <div className="flex-1 min-w-0 bg-[#020A1A]/95 border border-[#162A48] rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+            {/* ──────────────────────────────────────────────────────── */}
+            {/* MODE 1: MEETINGS                                        */}
+            {/* ──────────────────────────────────────────────────────── */}
+            {activeMode === "MEETINGS" && (
+              <form onSubmit={handleScheduleSchoolMeeting} className="space-y-6">
+                {/* Header inside form */}
+                <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
+                  <div>
+                    <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
+                      Schedule a School Meeting
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
+                      School-facing meeting attended by Waypoint.
+                    </p>
                   </div>
-                  <div className="space-y-1.5">
-                    {IEP_MEETINGS.map((option) => {
-                      const isSelected = meetingType === option.name;
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          onClick={() => handleSelectMeetingType(option)}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left text-xs sm:text-sm transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394] shadow-[0_3px_12px_rgba(197,160,89,0.4)]"
-                              : "bg-[#061833]/70 border-[#193A60] text-[#D8C7A5] hover:border-[#8C6D37] hover:bg-[#0A244C] hover:text-[#FFF4D4]"
-                          }`}
-                        >
-                          <span
-                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                              isSelected
-                                ? "border-[#07162B] bg-[#07162B]"
-                                : "border-[#3A5B86] bg-[#020A17]"
-                            }`}
-                          >
-                            {isSelected && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#DFBE77]" />
-                            )}
-                          </span>
-                          <span className="truncate">{option.name}</span>
-                        </button>
-                      );
-                    })}
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-[#081B36] border border-[#1D3E6B] text-xs text-[#8EB8EE]">
+                    <Info className="w-3.5 h-3.5 text-[#8EB8EE]" />
+                    <span>Select meeting type to view tailored options.</span>
                   </div>
                 </div>
 
-                {/* Column 2: 504 Meetings */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#DFBE77] uppercase tracking-wider px-1">
-                    <FileText className="w-4 h-4" />
-                    <span>504 Meetings</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {SECTION_504_MEETINGS.map((option) => {
-                      const isSelected = meetingType === option.name;
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          onClick={() => handleSelectMeetingType(option)}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left text-xs sm:text-sm transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394] shadow-[0_3px_12px_rgba(197,160,89,0.4)]"
-                              : "bg-[#061833]/70 border-[#193A60] text-[#D8C7A5] hover:border-[#8C6D37] hover:bg-[#0A244C] hover:text-[#FFF4D4]"
-                          }`}
-                        >
-                          <span
-                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                              isSelected
-                                ? "border-[#07162B] bg-[#07162B]"
-                                : "border-[#3A5B86] bg-[#020A17]"
-                            }`}
-                          >
-                            {isSelected && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#DFBE77]" />
-                            )}
-                          </span>
-                          <span className="truncate">{option.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Column 3: Other School Meetings */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#DFBE77] uppercase tracking-wider px-1">
-                    <Users className="w-4 h-4" />
-                    <span>Other School Meetings</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {OTHER_SCHOOL_MEETINGS.map((option) => {
-                      const isSelected = meetingType === option.name;
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          onClick={() => handleSelectMeetingType(option)}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left text-xs sm:text-sm transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394] shadow-[0_3px_12px_rgba(197,160,89,0.4)]"
-                              : "bg-[#061833]/70 border-[#193A60] text-[#D8C7A5] hover:border-[#8C6D37] hover:bg-[#0A244C] hover:text-[#FFF4D4]"
-                          }`}
-                        >
-                          <span
-                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                              isSelected
-                                ? "border-[#07162B] bg-[#07162B]"
-                                : "border-[#3A5B86] bg-[#020A17]"
-                            }`}
-                          >
-                            {isSelected && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#DFBE77]" />
-                            )}
-                          </span>
-                          <span className="truncate">{option.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Fields Row 1 (Client, Student, Advocate) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#1A3358]">
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Client / Family *
-                  </Label>
-                  <Select value={mParentId} onValueChange={setMParentId}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue placeholder="Select Parent / Client..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      {parentsList.map((p: any) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {p.firstName} {p.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Student *
-                  </Label>
-                  <Select value={mStudentId} onValueChange={setMStudentId}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue placeholder="Select Student..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      {mFilteredStudents.map((s: any) => (
-                        <SelectItem key={s.id} value={String(s.id)}>
-                          {s.firstName} {s.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Assigned Advocate *
-                  </Label>
-                  <Select value={mAdvocate} onValueChange={setMAdvocate}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue placeholder="Select Advocate..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      {advocateList.map((adv) => (
-                        <SelectItem key={adv.id} value={adv.name}>
-                          {adv.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Fields Row 2 (Date, Start Time, Expected Duration) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Date *
-                  </Label>
-                  <Input
-                    type="date"
-                    value={mDate}
-                    onChange={(e) => setMDate(e.target.value)}
-                    className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Start Time *
-                  </Label>
-                  <Input
-                    type="time"
-                    value={mStartTime}
-                    onChange={(e) => setMStartTime(e.target.value)}
-                    className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Expected Duration
-                  </Label>
-                  <Select
-                    value={String(mDuration)}
-                    onValueChange={(v) => setMDuration(Number(v))}
-                  >
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      <SelectItem value="30">30 mins (0.5 hr)</SelectItem>
-                      <SelectItem value="45">45 mins</SelectItem>
-                      <SelectItem value="60">60 mins (1 hr)</SelectItem>
-                      <SelectItem value="90">90 mins (1.5 hrs)</SelectItem>
-                      <SelectItem value="120">120 mins (2 hrs)</SelectItem>
-                      <SelectItem value="180">180 mins (3 hrs)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Bottom Row */}
-              <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
-                <button
-                  type="button"
-                  onClick={() => setIsNotesOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1D3557] bg-[#020A17] text-xs sm:text-sm text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] transition-colors"
-                >
-                  <FileText className="w-4 h-4 text-[#C5A059]" />
-                  <span>
-                    {mNotes ? "Edit Meeting Notes" : "+ Add Notes (Optional)"}
-                  </span>
-                  {mNotes && (
-                    <span className="w-2 h-2 rounded-full bg-[#DFBE77] ml-1" />
-                  )}
-                </button>
-
-                <Button
-                  type="submit"
-                  disabled={createAppointmentMutation.isPending}
-                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
-                >
-                  <CalendarIcon className="w-5 h-5 text-[#000820]" />
-                  <span>
-                    {createAppointmentMutation.isPending
-                      ? "Scheduling..."
-                      : "Schedule Meeting"}
-                  </span>
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {/* ──────────────────────────────────────────────────────── */}
-          {/* MODE 2: CLIENT SESSIONS                                 */}
-          {/* ──────────────────────────────────────────────────────── */}
-          {activeMode === "CLIENT_SESSIONS" && (
-            <form onSubmit={handleScheduleClientSession} className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
-                <div>
-                  <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
-                    Schedule a Client Session
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
-                    Direct consultation, strategy, and debriefing sessions with families.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                {CLIENT_SESSION_OPTIONS.map((opt) => {
-                  const isSelected = clientSessionType === opt.name;
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => {
-                        setClientSessionType(opt.name);
-                        setCsDuration(opt.defaultDurationMinutes);
-                      }}
-                      className={`flex flex-col p-4 rounded-xl border text-left transition-all ${
-                        isSelected
-                          ? "bg-gradient-to-r from-[#C5A059]/25 via-[#DFBE77]/30 to-[#C5A059]/15 border-[#DFBE77] text-[#FFF4D4] shadow-[0_0_12px_rgba(223,190,119,0.25)]"
-                          : "bg-[#051630]/70 border-[#152B4E] text-[#B8C8DF] hover:border-[#2A4C7E] hover:bg-[#081F42]"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs sm:text-sm truncate">
-                          {opt.name}
-                        </span>
-                        <span className="text-[11px] font-mono text-[#C5A059]">
-                          {opt.typicalDuration}
-                        </span>
-                      </div>
-                      <p className="text-xs text-[#8E9EB8] mt-2 line-clamp-2 leading-relaxed">
-                        {opt.description}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#1A3358]">
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Client / Family *
-                  </Label>
-                  <Select value={csParentId} onValueChange={setCsParentId}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue placeholder="Select Parent / Client..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      {parentsList.map((p: any) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {p.firstName} {p.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Student (If Applicable)
-                  </Label>
-                  <Select value={csStudentId} onValueChange={setCsStudentId}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue placeholder="Select Student (Optional)..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      {csFilteredStudents.map((s: any) => (
-                        <SelectItem key={s.id} value={String(s.id)}>
-                          {s.firstName} {s.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Assigned Team Member *
-                  </Label>
-                  <Select value={csAdvocate} onValueChange={setCsAdvocate}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue placeholder="Select Team Member..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      {advocateList.map((adv) => (
-                        <SelectItem key={adv.id} value={adv.name}>
-                          {adv.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Date *
-                  </Label>
-                  <Input
-                    type="date"
-                    value={csDate}
-                    onChange={(e) => setCsDate(e.target.value)}
-                    className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Start Time *
-                  </Label>
-                  <Input
-                    type="time"
-                    value={csStartTime}
-                    onChange={(e) => setCsStartTime(e.target.value)}
-                    className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Expected Duration
-                  </Label>
-                  <Select
-                    value={String(csDuration)}
-                    onValueChange={(v) => setCsDuration(Number(v))}
-                  >
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      <SelectItem value="30">30 mins</SelectItem>
-                      <SelectItem value="45">45 mins</SelectItem>
-                      <SelectItem value="60">60 mins (1 hr)</SelectItem>
-                      <SelectItem value="90">90 mins</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
-                <button
-                  type="button"
-                  onClick={() => setIsNotesOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1D3557] bg-[#020A17] text-xs sm:text-sm text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] transition-colors"
-                >
-                  <FileText className="w-4 h-4 text-[#C5A059]" />
-                  <span>{csNotes ? "Edit Notes" : "+ Add Notes (Optional)"}</span>
-                </button>
-
-                <Button
-                  type="submit"
-                  disabled={createAppointmentMutation.isPending}
-                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
-                >
-                  <PhoneCall className="w-5 h-5 text-[#000820]" />
-                  <span>
-                    {createAppointmentMutation.isPending
-                      ? "Scheduling..."
-                      : "Schedule Client Session"}
-                  </span>
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {/* ──────────────────────────────────────────────────────── */}
-          {/* MODE 3: HOLDS                                           */}
-          {/* ──────────────────────────────────────────────────────── */}
-          {activeMode === "HOLDS" && (
-            <form onSubmit={handlePlaceHolds} className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
-                <div>
-                  <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
-                    Tentative Holds
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
-                    Reserve multiple proposed times while the family and school decide.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#081B36] border border-[#1D3E6B] text-xs text-[#8EB8EE]">
-                  <Clock className="w-3.5 h-3.5 text-[#8EB8EE]" />
-                  <span>One unified hold group: confirming one releases all siblings.</span>
-                </div>
-              </div>
-
-              {/* Fields Row */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Client / Family *
-                  </Label>
-                  <Select value={hParentId} onValueChange={setHParentId}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue placeholder="Select Parent..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      {parentsList.map((p: any) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {p.firstName} {p.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Student *
-                  </Label>
-                  <Select value={hStudentId} onValueChange={setHStudentId}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue placeholder="Select Student..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      {hFilteredStudents.map((s: any) => (
-                        <SelectItem key={s.id} value={String(s.id)}>
-                          {s.firstName} {s.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Meeting Type
-                  </Label>
-                  <Select value={hMeetingType} onValueChange={setHMeetingType}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      <SelectItem value="Annual IEP Meeting">Annual IEP Meeting</SelectItem>
-                      <SelectItem value="Triennial Re-evaluation / MET">Triennial Re-evaluation / MET</SelectItem>
-                      <SelectItem value="Initial IEP / Eligibility">Initial IEP / Eligibility</SelectItem>
-                      <SelectItem value="IEP Amendment / Addendum">IEP Amendment / Addendum</SelectItem>
-                      <SelectItem value="504 Annual / Review">504 Annual / Review</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Assigned Advocate *
-                  </Label>
-                  <Select value={hAdvocate} onValueChange={setHAdvocate}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      {advocateList.map((adv) => (
-                        <SelectItem key={adv.id} value={adv.name}>
-                          {adv.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Candidate Hold Slots */}
-              <div className="bg-[#031126] border border-[#183152] rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#DFBE77] uppercase tracking-wider">
-                    Proposed Candidate Time Slots ({hCandidateSlots.length})
-                  </span>
-                  <button
-                    type="button"
-                    onClick={addHoldOption}
-                    className="flex items-center gap-1.5 text-xs text-[#FFE394] hover:text-[#FFF4D4] font-semibold transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Another Option</span>
-                  </button>
-                </div>
-
-                <div className="space-y-2.5">
-                  {hCandidateSlots.map((slot, index) => (
-                    <div
-                      key={slot.id}
-                      className="flex flex-col sm:flex-row items-center gap-3 bg-[#020A17] border border-[#1F3C64] rounded-xl p-3"
-                    >
-                      <span className="w-24 font-bold text-xs text-[#C5A059] uppercase shrink-0">
-                        Option {index + 1}
-                      </span>
-                      <div className="flex flex-1 items-center gap-3 w-full">
-                        <Input
-                          type="date"
-                          value={slot.date}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setHCandidateSlots((prev) =>
-                              prev.map((s) => (s.id === slot.id ? { ...s, date: val } : s))
-                            );
-                          }}
-                          className="h-9 bg-[#05142B] border-[#223E66] text-[#FFF4D4] text-xs sm:text-sm rounded-lg"
-                        />
-                        <Input
-                          type="time"
-                          value={slot.startTime}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setHCandidateSlots((prev) =>
-                              prev.map((s) => (s.id === slot.id ? { ...s, startTime: val } : s))
-                            );
-                          }}
-                          className="h-9 w-32 bg-[#05142B] border-[#223E66] text-[#FFF4D4] text-xs sm:text-sm rounded-lg"
-                        />
-                        <Select
-                          value={String(slot.durationMinutes)}
-                          onValueChange={(v) => {
-                            const num = Number(v);
-                            setHCandidateSlots((prev) =>
-                              prev.map((s) =>
-                                s.id === slot.id ? { ...s, durationMinutes: num } : s
-                              )
-                            );
-                          }}
-                        >
-                          <SelectTrigger className="h-9 w-32 bg-[#05142B] border-[#223E66] text-[#FFF4D4] text-xs sm:text-sm rounded-lg">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#05142B] border-[#223E66] text-[#FFF4D4]">
-                            <SelectItem value="30">30 mins</SelectItem>
-                            <SelectItem value="60">60 mins</SelectItem>
-                            <SelectItem value="90">90 mins</SelectItem>
-                            <SelectItem value="120">120 mins</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      {hCandidateSlots.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeHoldOption(slot.id)}
-                          className="text-[#E57373] hover:text-[#FF8A80] transition-colors p-1.5"
-                          title="Remove option"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
+                {/* 3 Columns of School Meeting options */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Column 1: IEP Meetings */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#DFBE77] uppercase tracking-wider px-1">
+                      <BookOpen className="w-4 h-4" />
+                      <span>IEP Meetings</span>
                     </div>
-                  ))}
+                    <div className="space-y-1.5">
+                      {IEP_MEETINGS.map((option) => {
+                        const isSelected = meetingType === option.name;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => handleSelectMeetingType(option)}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left text-xs sm:text-sm transition-all cursor-pointer ${isSelected
+                              ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394] shadow-[0_3px_12px_rgba(197,160,89,0.4)]"
+                              : "bg-[#061833]/70 border-[#193A60] text-[#D8C7A5] hover:border-[#8C6D37] hover:bg-[#0A244C] hover:text-[#FFF4D4]"
+                              }`}
+                          >
+                            <span
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected
+                                ? "border-[#07162B] bg-[#07162B]"
+                                : "border-[#3A5B86] bg-[#020A17]"
+                                }`}
+                            >
+                              {isSelected && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#DFBE77]" />
+                              )}
+                            </span>
+                            <span className="truncate">{option.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Column 2: 504 Meetings */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#DFBE77] uppercase tracking-wider px-1">
+                      <FileText className="w-4 h-4" />
+                      <span>504 Meetings</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {SECTION_504_MEETINGS.map((option) => {
+                        const isSelected = meetingType === option.name;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => handleSelectMeetingType(option)}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left text-xs sm:text-sm transition-all cursor-pointer ${isSelected
+                              ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394] shadow-[0_3px_12px_rgba(197,160,89,0.4)]"
+                              : "bg-[#061833]/70 border-[#193A60] text-[#D8C7A5] hover:border-[#8C6D37] hover:bg-[#0A244C] hover:text-[#FFF4D4]"
+                              }`}
+                          >
+                            <span
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected
+                                ? "border-[#07162B] bg-[#07162B]"
+                                : "border-[#3A5B86] bg-[#020A17]"
+                                }`}
+                            >
+                              {isSelected && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#DFBE77]" />
+                              )}
+                            </span>
+                            <span className="truncate">{option.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Column 3: Other School Meetings */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#DFBE77] uppercase tracking-wider px-1">
+                      <Users className="w-4 h-4" />
+                      <span>Other School Meetings</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {OTHER_SCHOOL_MEETINGS.map((option) => {
+                        const isSelected = meetingType === option.name;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => handleSelectMeetingType(option)}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left text-xs sm:text-sm transition-all cursor-pointer ${isSelected
+                              ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394] shadow-[0_3px_12px_rgba(197,160,89,0.4)]"
+                              : "bg-[#061833]/70 border-[#193A60] text-[#D8C7A5] hover:border-[#8C6D37] hover:bg-[#0A244C] hover:text-[#FFF4D4]"
+                              }`}
+                          >
+                            <span
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected
+                                ? "border-[#07162B] bg-[#07162B]"
+                                : "border-[#3A5B86] bg-[#020A17]"
+                                }`}
+                            >
+                              {isSelected && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#DFBE77]" />
+                              )}
+                            </span>
+                            <span className="truncate">{option.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#8E9EB8] pt-3 border-t border-[#183152]">
-                  <div className="flex items-center gap-2">
-                    <span>Waiting On:</span>
-                    <Select value={hWaitingOn} onValueChange={(v: any) => setHWaitingOn(v)}>
-                      <SelectTrigger className="h-8 w-36 bg-[#020A17] border-[#1A3355] text-xs text-[#FFF4D4]">
-                        <SelectValue />
+                {/* Fields Row 1 (Client, Student, Advocate) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#1A3358]">
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Client / Family *
+                    </Label>
+                    <Select value={mParentId} onValueChange={setMParentId}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue placeholder="Select Parent / Client..." />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#05142B] border-[#1A3355] text-[#FFF4D4]">
-                        <SelectItem value="School">School</SelectItem>
-                        <SelectItem value="Parent / Client">Parent / Client</SelectItem>
-                        <SelectItem value="Waypoint">Waypoint</SelectItem>
-                        <SelectItem value="Multiple Parties">Multiple Parties</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        {parentsList.map((p: any) => (
+                          <SelectItem key={p.id} value={String(p.id)}>
+                            {p.firstName} {p.lastName}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span>Follow-up Deadline:</span>
-                    <Input
-                      type="date"
-                      value={hFollowUpBy}
-                      onChange={(e) => setHFollowUpBy(e.target.value)}
-                      className="h-8 w-36 bg-[#020A17] border-[#1A3355] text-xs text-[#FFF4D4]"
-                    />
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Student *
+                    </Label>
+                    <Select value={mStudentId} onValueChange={setMStudentId}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue placeholder="Select Student..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        {mFilteredStudents.map((s: any) => (
+                          <SelectItem key={s.id} value={String(s.id)}>
+                            {s.firstName} {s.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Assigned Advocate *
+                    </Label>
+                    <Select value={mAdvocate} onValueChange={setMAdvocate}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue placeholder="Select Advocate..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        {advocateList.map((adv) => (
+                          <SelectItem key={adv.id} value={adv.name}>
+                            {adv.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </div>
 
-              {/* Bottom Row */}
-              <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
-                <button
-                  type="button"
-                  onClick={() => setIsNotesOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1D3557] bg-[#020A17] text-xs sm:text-sm text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] transition-colors"
-                >
-                  <FileText className="w-4 h-4 text-[#C5A059]" />
-                  <span>{hNotes ? "Edit Hold Notes" : "+ Add Notes (Optional)"}</span>
-                </button>
+                {/* Fields Row 2 (Date, Start Time, Expected Duration) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Date *
+                    </Label>
+                    <Input
+                      type="date"
+                      value={mDate}
+                      onChange={(e) => setMDate(e.target.value)}
+                      className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                    />
+                  </div>
 
-                <Button
-                  type="submit"
-                  disabled={createProposedMeetingMutation.isPending}
-                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
-                >
-                  <Clock className="w-5 h-5 text-[#000820]" />
-                  <span>
-                    {createProposedMeetingMutation.isPending
-                      ? "Placing Holds..."
-                      : `Place Holds (${hCandidateSlots.length} Slots)`}
-                  </span>
-                </Button>
-              </div>
-            </form>
-          )}
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Start Time *
+                    </Label>
+                    <Input
+                      type="time"
+                      value={mStartTime}
+                      onChange={(e) => setMStartTime(e.target.value)}
+                      className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                    />
+                  </div>
 
-          {/* ──────────────────────────────────────────────────────── */}
-          {/* MODE 4: BLOCKS                                          */}
-          {/* ──────────────────────────────────────────────────────── */}
-          {activeMode === "BLOCKS" && (
-            <form onSubmit={handleBlockTimeSubmit} className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
-                <div>
-                  <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
-                    Block Calendar Time
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
-                    Why is this time unavailable?
-                  </p>
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Expected Duration
+                    </Label>
+                    <Select
+                      value={String(mDuration)}
+                      onValueChange={(v) => setMDuration(Number(v))}
+                    >
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        <SelectItem value="30">30 mins (0.5 hr)</SelectItem>
+                        <SelectItem value="45">45 mins</SelectItem>
+                        <SelectItem value="60">60 mins (1 hr)</SelectItem>
+                        <SelectItem value="90">90 mins (1.5 hrs)</SelectItem>
+                        <SelectItem value="120">120 mins (2 hrs)</SelectItem>
+                        <SelectItem value="180">180 mins (3 hrs)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#081B36] border border-[#1D3E6B] text-xs text-[#8EB8EE]">
-                  <Ban className="w-3.5 h-3.5 text-[#8EB8EE]" />
-                  <span>Enforces scheduling availability on client booking portals.</span>
-                </div>
-              </div>
 
-              {/* 4 Choices */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-                {[
-                  {
-                    id: "OFFICE_CLOSED",
-                    title: "OFFICE CLOSED",
-                    sub: "Everyone unavailable",
-                    icon: Building,
-                  },
-                  {
-                    id: "PERSONAL_BLACKOUT",
-                    title: "PERSONAL BLACKOUT",
-                    sub: "One team member unavailable",
-                    icon: User,
-                  },
-                  {
-                    id: "AVAILABILITY_BLOCK",
-                    title: "AVAILABILITY BLOCK",
-                    sub: "Protect scheduling time",
-                    icon: Briefcase,
-                  },
-                  {
-                    id: "RECURRING_BLOCK",
-                    title: "RECURRING BLOCK",
-                    sub: "Repeated unavailable time",
-                    icon: CalendarClock,
-                  },
-                ].map((cat) => {
-                  const isSelected = blockCategory === cat.id;
-                  const IconComp = cat.icon;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        setBlockCategory(cat.id as any);
-                        if (cat.id === "OFFICE_CLOSED") setBAllStaff(true);
-                        else if (cat.id === "PERSONAL_BLACKOUT") setBAllStaff(false);
-                      }}
-                      className={`flex flex-col p-4 rounded-xl border text-left transition-all ${
-                        isSelected
+                {/* Bottom Row */}
+                <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
+                  <button
+                    type="button"
+                    onClick={() => setIsNotesOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1D3557] bg-[#020A17] text-xs sm:text-sm text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] transition-colors"
+                  >
+                    <FileText className="w-4 h-4 text-[#C5A059]" />
+                    <span>
+                      {mNotes ? "Edit Meeting Notes" : "+ Add Notes (Optional)"}
+                    </span>
+                    {mNotes && (
+                      <span className="w-2 h-2 rounded-full bg-[#DFBE77] ml-1" />
+                    )}
+                  </button>
+
+                  <Button
+                    type="submit"
+                    disabled={createAppointmentMutation.isPending}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
+                  >
+                    <CalendarIcon className="w-5 h-5 text-[#000820]" />
+                    <span>
+                      {createAppointmentMutation.isPending
+                        ? "Scheduling..."
+                        : "Schedule Meeting"}
+                    </span>
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {/* ──────────────────────────────────────────────────────── */}
+            {/* MODE 2: CLIENT SESSIONS                                 */}
+            {/* ──────────────────────────────────────────────────────── */}
+            {activeMode === "CLIENT_SESSIONS" && (
+              <form onSubmit={handleScheduleClientSession} className="space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
+                  <div>
+                    <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
+                      Schedule a Client Session
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
+                      Direct consultation, strategy, and debriefing sessions with families.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {CLIENT_SESSION_OPTIONS.map((opt) => {
+                    const isSelected = clientSessionType === opt.name;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setClientSessionType(opt.name);
+                          setCsDuration(opt.defaultDurationMinutes);
+                        }}
+                        className={`flex flex-col p-4 rounded-xl border text-left transition-all ${isSelected
                           ? "bg-gradient-to-r from-[#C5A059]/25 via-[#DFBE77]/30 to-[#C5A059]/15 border-[#DFBE77] text-[#FFF4D4] shadow-[0_0_12px_rgba(223,190,119,0.25)]"
                           : "bg-[#051630]/70 border-[#152B4E] text-[#B8C8DF] hover:border-[#2A4C7E] hover:bg-[#081F42]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 font-bold text-xs sm:text-sm">
-                        <IconComp className="w-4 h-4 text-[#DFBE77]" />
-                        <span className="truncate">{cat.title}</span>
-                      </div>
-                      <span className="text-xs text-[#8E9EB8] mt-1 truncate">
-                        {cat.sub}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Sub-Form Container */}
-              <div className="bg-[#031126] border border-[#183152] rounded-2xl p-5 space-y-4">
-                {blockCategory === "OFFICE_CLOSED" && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        Closure Reason
-                      </Label>
-                      <Select
-                        value={bSubReason}
-                        onValueChange={(v) => {
-                          setBSubReason(v);
-                          setBTitle(`Office Closed — ${v}`);
-                        }}
+                          }`}
                       >
-                        <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs sm:text-sm truncate">
+                            {opt.name}
+                          </span>
+                          <span className="text-[11px] font-mono text-[#C5A059]">
+                            {opt.typicalDuration}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#8E9EB8] mt-2 line-clamp-2 leading-relaxed">
+                          {opt.description}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#1A3358]">
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Client / Family *
+                    </Label>
+                    <Select value={csParentId} onValueChange={setCsParentId}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue placeholder="Select Parent / Client..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        {parentsList.map((p: any) => (
+                          <SelectItem key={p.id} value={String(p.id)}>
+                            {p.firstName} {p.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Student (If Applicable)
+                    </Label>
+                    <Select value={csStudentId} onValueChange={setCsStudentId}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue placeholder="Select Student (Optional)..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        {csFilteredStudents.map((s: any) => (
+                          <SelectItem key={s.id} value={String(s.id)}>
+                            {s.firstName} {s.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Assigned Team Member *
+                    </Label>
+                    <Select value={csAdvocate} onValueChange={setCsAdvocate}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue placeholder="Select Team Member..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        {advocateList.map((adv) => (
+                          <SelectItem key={adv.id} value={adv.name}>
+                            {adv.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Date *
+                    </Label>
+                    <Input
+                      type="date"
+                      value={csDate}
+                      onChange={(e) => setCsDate(e.target.value)}
+                      className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Start Time *
+                    </Label>
+                    <Input
+                      type="time"
+                      value={csStartTime}
+                      onChange={(e) => setCsStartTime(e.target.value)}
+                      className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Expected Duration
+                    </Label>
+                    <Select
+                      value={String(csDuration)}
+                      onValueChange={(v) => setCsDuration(Number(v))}
+                    >
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        <SelectItem value="30">30 mins</SelectItem>
+                        <SelectItem value="45">45 mins</SelectItem>
+                        <SelectItem value="60">60 mins (1 hr)</SelectItem>
+                        <SelectItem value="90">90 mins</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
+                  <button
+                    type="button"
+                    onClick={() => setIsNotesOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1D3557] bg-[#020A17] text-xs sm:text-sm text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] transition-colors"
+                  >
+                    <FileText className="w-4 h-4 text-[#C5A059]" />
+                    <span>{csNotes ? "Edit Notes" : "+ Add Notes (Optional)"}</span>
+                  </button>
+
+                  <Button
+                    type="submit"
+                    disabled={createAppointmentMutation.isPending}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
+                  >
+                    <PhoneCall className="w-5 h-5 text-[#000820]" />
+                    <span>
+                      {createAppointmentMutation.isPending
+                        ? "Scheduling..."
+                        : "Schedule Client Session"}
+                    </span>
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {/* ──────────────────────────────────────────────────────── */}
+            {/* MODE 3: HOLDS                                           */}
+            {/* ──────────────────────────────────────────────────────── */}
+            {activeMode === "HOLDS" && (
+              <form onSubmit={handlePlaceHolds} className="space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
+                  <div>
+                    <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
+                      Tentative Holds
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
+                      Reserve multiple proposed times while the family and school decide.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#081B36] border border-[#1D3E6B] text-xs text-[#8EB8EE]">
+                    <Clock className="w-3.5 h-3.5 text-[#8EB8EE]" />
+                    <span>One unified hold group: confirming one releases all siblings.</span>
+                  </div>
+                </div>
+
+                {/* Fields Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Client / Family *
+                    </Label>
+                    <Select value={hParentId} onValueChange={setHParentId}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue placeholder="Select Parent..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        {parentsList.map((p: any) => (
+                          <SelectItem key={p.id} value={String(p.id)}>
+                            {p.firstName} {p.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Student *
+                    </Label>
+                    <Select value={hStudentId} onValueChange={setHStudentId}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue placeholder="Select Student..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        {hFilteredStudents.map((s: any) => (
+                          <SelectItem key={s.id} value={String(s.id)}>
+                            {s.firstName} {s.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Meeting Type
+                    </Label>
+                    <Select value={hMeetingType} onValueChange={setHMeetingType}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        <SelectItem value="Annual IEP Meeting">Annual IEP Meeting</SelectItem>
+                        <SelectItem value="Triennial Re-evaluation / MET">Triennial Re-evaluation / MET</SelectItem>
+                        <SelectItem value="Initial IEP / Eligibility">Initial IEP / Eligibility</SelectItem>
+                        <SelectItem value="IEP Amendment / Addendum">IEP Amendment / Addendum</SelectItem>
+                        <SelectItem value="504 Annual / Review">504 Annual / Review</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Assigned Advocate *
+                    </Label>
+                    <Select value={hAdvocate} onValueChange={setHAdvocate}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        {advocateList.map((adv) => (
+                          <SelectItem key={adv.id} value={adv.name}>
+                            {adv.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Candidate Hold Slots */}
+                <div className="bg-[#031126] border border-[#183152] rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#DFBE77] uppercase tracking-wider">
+                      Proposed Candidate Time Slots ({hCandidateSlots.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={addHoldOption}
+                      className="flex items-center gap-1.5 text-xs text-[#FFE394] hover:text-[#FFF4D4] font-semibold transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Another Option</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {hCandidateSlots.map((slot, index) => (
+                      <div
+                        key={slot.id}
+                        className="flex flex-col sm:flex-row items-center gap-3 bg-[#020A17] border border-[#1F3C64] rounded-xl p-3"
+                      >
+                        <span className="w-24 font-bold text-xs text-[#C5A059] uppercase shrink-0">
+                          Option {index + 1}
+                        </span>
+                        <div className="flex flex-1 items-center gap-3 w-full">
+                          <Input
+                            type="date"
+                            value={slot.date}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setHCandidateSlots((prev) =>
+                                prev.map((s) => (s.id === slot.id ? { ...s, date: val } : s))
+                              );
+                            }}
+                            className="h-9 bg-[#05142B] border-[#223E66] text-[#FFF4D4] text-xs sm:text-sm rounded-lg"
+                          />
+                          <Input
+                            type="time"
+                            value={slot.startTime}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setHCandidateSlots((prev) =>
+                                prev.map((s) => (s.id === slot.id ? { ...s, startTime: val } : s))
+                              );
+                            }}
+                            className="h-9 w-32 bg-[#05142B] border-[#223E66] text-[#FFF4D4] text-xs sm:text-sm rounded-lg"
+                          />
+                          <Select
+                            value={String(slot.durationMinutes)}
+                            onValueChange={(v) => {
+                              const num = Number(v);
+                              setHCandidateSlots((prev) =>
+                                prev.map((s) =>
+                                  s.id === slot.id ? { ...s, durationMinutes: num } : s
+                                )
+                              );
+                            }}
+                          >
+                            <SelectTrigger className="h-9 w-32 bg-[#05142B] border-[#223E66] text-[#FFF4D4] text-xs sm:text-sm rounded-lg">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#05142B] border-[#223E66] text-[#FFF4D4]">
+                              <SelectItem value="30">30 mins</SelectItem>
+                              <SelectItem value="60">60 mins</SelectItem>
+                              <SelectItem value="90">90 mins</SelectItem>
+                              <SelectItem value="120">120 mins</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {hCandidateSlots.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeHoldOption(slot.id)}
+                            className="text-[#E57373] hover:text-[#FF8A80] transition-colors p-1.5"
+                            title="Remove option"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-[#8E9EB8] pt-3 border-t border-[#183152]">
+                    <div className="flex items-center gap-2">
+                      <span>Waiting On:</span>
+                      <Select value={hWaitingOn} onValueChange={(v: any) => setHWaitingOn(v)}>
+                        <SelectTrigger className="h-8 w-36 bg-[#020A17] border-[#1A3355] text-xs text-[#FFF4D4]">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                          {BLOCK_REASONS.OFFICE_CLOSED.map((r) => (
-                            <SelectItem key={r} value={r}>
-                              {r}
-                            </SelectItem>
-                          ))}
+                        <SelectContent className="bg-[#05142B] border-[#1A3355] text-[#FFF4D4]">
+                          <SelectItem value="School">School</SelectItem>
+                          <SelectItem value="Parent / Client">Parent / Client</SelectItem>
+                          <SelectItem value="Waypoint">Waypoint</SelectItem>
+                          <SelectItem value="Multiple Parties">Multiple Parties</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
-                    <div className="md:col-span-2">
+                    <div className="flex items-center gap-2">
+                      <span>Follow-up Deadline:</span>
+                      <Input
+                        type="date"
+                        value={hFollowUpBy}
+                        onChange={(e) => setHFollowUpBy(e.target.value)}
+                        className="h-8 w-36 bg-[#020A17] border-[#1A3355] text-xs text-[#FFF4D4]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Row */}
+                <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
+                  <button
+                    type="button"
+                    onClick={() => setIsNotesOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1D3557] bg-[#020A17] text-xs sm:text-sm text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] transition-colors"
+                  >
+                    <FileText className="w-4 h-4 text-[#C5A059]" />
+                    <span>{hNotes ? "Edit Hold Notes" : "+ Add Notes (Optional)"}</span>
+                  </button>
+
+                  <Button
+                    type="submit"
+                    disabled={createProposedMeetingMutation.isPending}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
+                  >
+                    <Clock className="w-5 h-5 text-[#000820]" />
+                    <span>
+                      {createProposedMeetingMutation.isPending
+                        ? "Placing Holds..."
+                        : `Place Holds (${hCandidateSlots.length} Slots)`}
+                    </span>
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {/* ──────────────────────────────────────────────────────── */}
+            {/* MODE 4: BLOCKS                                          */}
+            {/* ──────────────────────────────────────────────────────── */}
+            {activeMode === "BLOCKS" && (
+              <form onSubmit={handleBlockTimeSubmit} className="space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
+                  <div>
+                    <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
+                      Block Calendar Time
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
+                      Why is this time unavailable?
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#081B36] border border-[#1D3E6B] text-xs text-[#8EB8EE]">
+                    <Ban className="w-3.5 h-3.5 text-[#8EB8EE]" />
+                    <span>Enforces scheduling availability on client booking portals.</span>
+                  </div>
+                </div>
+
+                {/* 4 Choices */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+                  {[
+                    {
+                      id: "OFFICE_CLOSED",
+                      title: "OFFICE CLOSED",
+                      sub: "Everyone unavailable",
+                      icon: Building,
+                    },
+                    {
+                      id: "PERSONAL_BLACKOUT",
+                      title: "PERSONAL BLACKOUT",
+                      sub: "One team member unavailable",
+                      icon: User,
+                    },
+                    {
+                      id: "AVAILABILITY_BLOCK",
+                      title: "AVAILABILITY BLOCK",
+                      sub: "Protect scheduling time",
+                      icon: Briefcase,
+                    },
+                    {
+                      id: "RECURRING_BLOCK",
+                      title: "RECURRING BLOCK",
+                      sub: "Repeated unavailable time",
+                      icon: CalendarClock,
+                    },
+                  ].map((cat) => {
+                    const isSelected = blockCategory === cat.id;
+                    const IconComp = cat.icon;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          setBlockCategory(cat.id as any);
+                          if (cat.id === "OFFICE_CLOSED") setBAllStaff(true);
+                          else if (cat.id === "PERSONAL_BLACKOUT") setBAllStaff(false);
+                        }}
+                        className={`flex flex-col p-4 rounded-xl border text-left transition-all ${isSelected
+                          ? "bg-gradient-to-r from-[#C5A059]/25 via-[#DFBE77]/30 to-[#C5A059]/15 border-[#DFBE77] text-[#FFF4D4] shadow-[0_0_12px_rgba(223,190,119,0.25)]"
+                          : "bg-[#051630]/70 border-[#152B4E] text-[#B8C8DF] hover:border-[#2A4C7E] hover:bg-[#081F42]"
+                          }`}
+                      >
+                        <div className="flex items-center gap-2 font-bold text-xs sm:text-sm">
+                          <IconComp className="w-4 h-4 text-[#DFBE77]" />
+                          <span className="truncate">{cat.title}</span>
+                        </div>
+                        <span className="text-xs text-[#8E9EB8] mt-1 truncate">
+                          {cat.sub}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Sub-Form Container */}
+                <div className="bg-[#031126] border border-[#183152] rounded-2xl p-5 space-y-4">
+                  {blockCategory === "OFFICE_CLOSED" && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          Closure Reason
+                        </Label>
+                        <Select
+                          value={bSubReason}
+                          onValueChange={(v) => {
+                            setBSubReason(v);
+                            setBTitle(`Office Closed — ${v}`);
+                          }}
+                        >
+                          <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                            {BLOCK_REASONS.OFFICE_CLOSED.map((r) => (
+                              <SelectItem key={r} value={r}>
+                                {r}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          Display Title
+                        </Label>
+                        <Input
+                          value={bTitle}
+                          onChange={(e) => setBTitle(e.target.value)}
+                          placeholder="e.g. Office Closed — Labor Day Holiday"
+                          className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {blockCategory === "PERSONAL_BLACKOUT" && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          Team Member *
+                        </Label>
+                        <Select value={bStaff} onValueChange={setBStaff}>
+                          <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                            {advocateList.map((adv) => (
+                              <SelectItem key={adv.id} value={adv.name}>
+                                {adv.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          Blackout Category
+                        </Label>
+                        <Select value={bSubReason} onValueChange={setBSubReason}>
+                          <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                            {BLOCK_REASONS.PERSONAL_BLACKOUT.map((r) => (
+                              <SelectItem key={r} value={r}>
+                                {r}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          Enforcement
+                        </Label>
+                        <Select
+                          value={bEnforcement}
+                          onValueChange={(v: any) => setBEnforcement(v)}
+                        >
+                          <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                            <SelectItem value="HARD_BLOCK">
+                              Hard Block (Prevent Booking)
+                            </SelectItem>
+                            <SelectItem value="SOFT_BLOCK">
+                              Soft Block (Warning Only)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+
+                  {blockCategory === "AVAILABILITY_BLOCK" && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          Protection Type
+                        </Label>
+                        <Select value={bSubReason} onValueChange={setBSubReason}>
+                          <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                            {BLOCK_REASONS.AVAILABILITY_BLOCK.map((r) => (
+                              <SelectItem key={r} value={r}>
+                                {r}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          Assigned Staff
+                        </Label>
+                        <Select
+                          value={bAllStaff ? "ALL" : bStaff}
+                          onValueChange={(v) => {
+                            if (v === "ALL") setBAllStaff(true);
+                            else {
+                              setBAllStaff(false);
+                              setBStaff(v);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                            <SelectItem value="ALL">Entire Company / All Staff</SelectItem>
+                            {advocateList.map((adv) => (
+                              <SelectItem key={adv.id} value={adv.name}>
+                                {adv.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          Effect on Clients
+                        </Label>
+                        <div className="mt-3 text-xs text-[#8EB8EE] flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-[#DFBE77]" />
+                          <span>Hides time slots on client booking portal</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {blockCategory === "RECURRING_BLOCK" && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          Recurring Pattern
+                        </Label>
+                        <Select value={bRecurrence} onValueChange={setBRecurrence}>
+                          <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                            {BLOCK_REASONS.RECURRING_BLOCK.map((r) => (
+                              <SelectItem key={r} value={r}>
+                                {r}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          Staff Member
+                        </Label>
+                        <Select value={bStaff} onValueChange={setBStaff}>
+                          <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                            {advocateList.map((adv) => (
+                              <SelectItem key={adv.id} value={adv.name}>
+                                {adv.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          Recurrence Frequency
+                        </Label>
+                        <div className="mt-3 text-xs text-[#C6B697]">
+                          Repeats Weekly on{" "}
+                          {new Date(bStartDate).toLocaleDateString("en-US", {
+                            weekday: "long",
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dates & Times */}
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 border-t border-[#183152] items-end">
+                    <div>
                       <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        Display Title
+                        Start Date *
                       </Label>
                       <Input
-                        value={bTitle}
-                        onChange={(e) => setBTitle(e.target.value)}
-                        placeholder="e.g. Office Closed — Labor Day Holiday"
+                        type="date"
+                        value={bStartDate}
+                        onChange={(e) => {
+                          setBStartDate(e.target.value);
+                          if (!bEndDate || e.target.value > bEndDate) {
+                            setBEndDate(e.target.value);
+                          }
+                        }}
                         className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
                       />
                     </div>
+
+                    <div>
+                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                        End Date
+                      </Label>
+                      <Input
+                        type="date"
+                        value={bEndDate}
+                        onChange={(e) => setBEndDate(e.target.value)}
+                        className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                          All Day
+                        </Label>
+                        <Checkbox
+                          checked={bIsAllDay}
+                          onCheckedChange={(c) => setBIsAllDay(Boolean(c))}
+                          className="border-[#DFBE77] data-[state=checked]:bg-[#DFBE77] data-[state=checked]:text-[#000820]"
+                        />
+                      </div>
+                      <div className="text-xs text-[#8E9EB8] mt-1">
+                        {bIsAllDay ? "Entire 24-hr day" : "Specific hours"}
+                      </div>
+                    </div>
+
+                    {!bIsAllDay && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={bStartTime}
+                          onChange={(e) => setBStartTime(e.target.value)}
+                          className="h-10 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs rounded-xl"
+                        />
+                        <span className="text-xs text-[#8E9EB8]">–</span>
+                        <Input
+                          type="time"
+                          value={bEndTime}
+                          onChange={(e) => setBEndTime(e.target.value)}
+                          className="h-10 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs rounded-xl"
+                        />
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
 
-                {blockCategory === "PERSONAL_BLACKOUT" && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        Team Member *
-                      </Label>
-                      <Select value={bStaff} onValueChange={setBStaff}>
-                        <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                          {advocateList.map((adv) => (
-                            <SelectItem key={adv.id} value={adv.name}>
-                              {adv.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                {/* Bottom Row */}
+                <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
+                  <button
+                    type="button"
+                    onClick={() => setIsNotesOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1D3557] bg-[#020A17] text-xs sm:text-sm text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] transition-colors"
+                  >
+                    <FileText className="w-4 h-4 text-[#C5A059]" />
+                    <span>{bNotes ? "Edit Reason Notes" : "+ Add Reason Notes (Optional)"}</span>
+                  </button>
 
-                    <div>
-                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        Blackout Category
-                      </Label>
-                      <Select value={bSubReason} onValueChange={setBSubReason}>
-                        <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                          {BLOCK_REASONS.PERSONAL_BLACKOUT.map((r) => (
-                            <SelectItem key={r} value={r}>
-                              {r}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <Button
+                    type="submit"
+                    disabled={createOperationalBlockMutation.isPending}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
+                  >
+                    <Ban className="w-5 h-5 text-[#000820]" />
+                    <span>
+                      {createOperationalBlockMutation.isPending
+                        ? "Saving Block..."
+                        : blockCategory === "OFFICE_CLOSED"
+                          ? "Block Office Closed"
+                          : blockCategory === "PERSONAL_BLACKOUT"
+                            ? "Save Personal Blackout"
+                            : blockCategory === "AVAILABILITY_BLOCK"
+                              ? "Protect Calendar Time"
+                              : "Create Recurring Block"}
+                    </span>
+                  </Button>
+                </div>
+              </form>
+            )}
 
-                    <div>
-                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        Enforcement
-                      </Label>
-                      <Select
-                        value={bEnforcement}
-                        onValueChange={(v: any) => setBEnforcement(v)}
-                      >
-                        <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                          <SelectItem value="HARD_BLOCK">
-                            Hard Block (Prevent Booking)
-                          </SelectItem>
-                          <SelectItem value="SOFT_BLOCK">
-                            Soft Block (Warning Only)
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+            {/* ──────────────────────────────────────────────────────── */}
+            {/* MODE 5: INTERNAL                                        */}
+            {/* ──────────────────────────────────────────────────────── */}
+            {activeMode === "INTERNAL" && (
+              <form onSubmit={handleInternalEventSubmit} className="space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
+                  <div>
+                    <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
+                      Schedule Internal Event
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
+                      Internal team synchronization, supervision, and operations.
+                    </p>
                   </div>
-                )}
+                </div>
 
-                {blockCategory === "AVAILABILITY_BLOCK" && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        Protection Type
-                      </Label>
-                      <Select value={bSubReason} onValueChange={setBSubReason}>
-                        <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                          {BLOCK_REASONS.AVAILABILITY_BLOCK.map((r) => (
-                            <SelectItem key={r} value={r}>
-                              {r}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        Assigned Staff
-                      </Label>
-                      <Select
-                        value={bAllStaff ? "ALL" : bStaff}
-                        onValueChange={(v) => {
-                          if (v === "ALL") setBAllStaff(true);
-                          else {
-                            setBAllStaff(false);
-                            setBStaff(v);
-                          }
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                  {INTERNAL_EVENT_OPTIONS.map((t) => {
+                    const isSelected = ieType === t;
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => {
+                          setIeType(t);
+                          setIeTitle(t);
                         }}
-                      >
-                        <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                          <SelectItem value="ALL">Entire Company / All Staff</SelectItem>
-                          {advocateList.map((adv) => (
-                            <SelectItem key={adv.id} value={adv.name}>
-                              {adv.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        Effect on Clients
-                      </Label>
-                      <div className="mt-3 text-xs text-[#8EB8EE] flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-[#DFBE77]" />
-                        <span>Hides time slots on client booking portal</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {blockCategory === "RECURRING_BLOCK" && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        Recurring Pattern
-                      </Label>
-                      <Select value={bRecurrence} onValueChange={setBRecurrence}>
-                        <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                          {BLOCK_REASONS.RECURRING_BLOCK.map((r) => (
-                            <SelectItem key={r} value={r}>
-                              {r}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        Staff Member
-                      </Label>
-                      <Select value={bStaff} onValueChange={setBStaff}>
-                        <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                          {advocateList.map((adv) => (
-                            <SelectItem key={adv.id} value={adv.name}>
-                              {adv.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        Recurrence Frequency
-                      </Label>
-                      <div className="mt-3 text-xs text-[#C6B697]">
-                        Repeats Weekly on{" "}
-                        {new Date(bStartDate).toLocaleDateString("en-US", {
-                          weekday: "long",
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Dates & Times */}
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 border-t border-[#183152] items-end">
-                  <div>
-                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                      Start Date *
-                    </Label>
-                    <Input
-                      type="date"
-                      value={bStartDate}
-                      onChange={(e) => {
-                        setBStartDate(e.target.value);
-                        if (!bEndDate || e.target.value > bEndDate) {
-                          setBEndDate(e.target.value);
-                        }
-                      }}
-                      className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                      End Date
-                    </Label>
-                    <Input
-                      type="date"
-                      value={bEndDate}
-                      onChange={(e) => setBEndDate(e.target.value)}
-                      className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                        All Day
-                      </Label>
-                      <Checkbox
-                        checked={bIsAllDay}
-                        onCheckedChange={(c) => setBIsAllDay(Boolean(c))}
-                        className="border-[#DFBE77] data-[state=checked]:bg-[#DFBE77] data-[state=checked]:text-[#000820]"
-                      />
-                    </div>
-                    <div className="text-xs text-[#8E9EB8] mt-1">
-                      {bIsAllDay ? "Entire 24-hr day" : "Specific hours"}
-                    </div>
-                  </div>
-
-                  {!bIsAllDay && (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="time"
-                        value={bStartTime}
-                        onChange={(e) => setBStartTime(e.target.value)}
-                        className="h-10 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs rounded-xl"
-                      />
-                      <span className="text-xs text-[#8E9EB8]">–</span>
-                      <Input
-                        type="time"
-                        value={bEndTime}
-                        onChange={(e) => setBEndTime(e.target.value)}
-                        className="h-10 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs rounded-xl"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Bottom Row */}
-              <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
-                <button
-                  type="button"
-                  onClick={() => setIsNotesOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1D3557] bg-[#020A17] text-xs sm:text-sm text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] transition-colors"
-                >
-                  <FileText className="w-4 h-4 text-[#C5A059]" />
-                  <span>{bNotes ? "Edit Reason Notes" : "+ Add Reason Notes (Optional)"}</span>
-                </button>
-
-                <Button
-                  type="submit"
-                  disabled={createOperationalBlockMutation.isPending}
-                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
-                >
-                  <Ban className="w-5 h-5 text-[#000820]" />
-                  <span>
-                    {createOperationalBlockMutation.isPending
-                      ? "Saving Block..."
-                      : blockCategory === "OFFICE_CLOSED"
-                      ? "Block Office Closed"
-                      : blockCategory === "PERSONAL_BLACKOUT"
-                      ? "Save Personal Blackout"
-                      : blockCategory === "AVAILABILITY_BLOCK"
-                      ? "Protect Calendar Time"
-                      : "Create Recurring Block"}
-                  </span>
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {/* ──────────────────────────────────────────────────────── */}
-          {/* MODE 5: INTERNAL                                        */}
-          {/* ──────────────────────────────────────────────────────── */}
-          {activeMode === "INTERNAL" && (
-            <form onSubmit={handleInternalEventSubmit} className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
-                <div>
-                  <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
-                    Schedule Internal Event
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
-                    Internal team synchronization, supervision, and operations.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-                {INTERNAL_EVENT_OPTIONS.map((t) => {
-                  const isSelected = ieType === t;
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        setIeType(t);
-                        setIeTitle(t);
-                      }}
-                      className={`px-3 py-2.5 rounded-xl border text-center text-xs sm:text-sm transition-all ${
-                        isSelected
+                        className={`px-3 py-2.5 rounded-xl border text-center text-xs sm:text-sm transition-all ${isSelected
                           ? "bg-gradient-to-r from-[#C5A059]/25 via-[#DFBE77]/30 to-[#C5A059]/15 border-[#DFBE77] text-[#FFF4D4] font-bold shadow-[0_0_12px_rgba(223,190,119,0.25)]"
                           : "bg-[#051630]/70 border-[#152B4E] text-[#B8C8DF] hover:border-[#2A4C7E] hover:bg-[#081F42]"
-                      }`}
+                          }`}
+                      >
+                        <span className="truncate block">{t}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#1A3358]">
+                  <div className="md:col-span-2">
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Event Title *
+                    </Label>
+                    <Input
+                      value={ieTitle}
+                      onChange={(e) => setIeTitle(e.target.value)}
+                      placeholder="e.g. Weekly Advocacy Sync"
+                      className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Participants
+                    </Label>
+                    <Select
+                      value={ieAllStaff ? "ALL" : ieSelectedStaff}
+                      onValueChange={(v) => {
+                        if (v === "ALL") setIeAllStaff(true);
+                        else {
+                          setIeAllStaff(false);
+                          setIeSelectedStaff(v);
+                        }
+                      }}
                     >
-                      <span className="truncate block">{t}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#1A3358]">
-                <div className="md:col-span-2">
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Event Title *
-                  </Label>
-                  <Input
-                    value={ieTitle}
-                    onChange={(e) => setIeTitle(e.target.value)}
-                    placeholder="e.g. Weekly Advocacy Sync"
-                    className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Participants
-                  </Label>
-                  <Select
-                    value={ieAllStaff ? "ALL" : ieSelectedStaff}
-                    onValueChange={(v) => {
-                      if (v === "ALL") setIeAllStaff(true);
-                      else {
-                        setIeAllStaff(false);
-                        setIeSelectedStaff(v);
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      <SelectItem value="ALL">All Team Members (Entire Staff)</SelectItem>
-                      {advocateList.map((adv) => (
-                        <SelectItem key={adv.id} value={adv.name}>
-                          {adv.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Date *
-                  </Label>
-                  <Input
-                    type="date"
-                    value={ieDate}
-                    onChange={(e) => setIeDate(e.target.value)}
-                    className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Start Time *
-                  </Label>
-                  <Input
-                    type="time"
-                    value={ieStartTime}
-                    onChange={(e) => setIeStartTime(e.target.value)}
-                    className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Duration
-                  </Label>
-                  <Select
-                    value={String(ieDuration)}
-                    onValueChange={(v) => setIeDuration(Number(v))}
-                  >
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      <SelectItem value="30">30 mins</SelectItem>
-                      <SelectItem value="45">45 mins</SelectItem>
-                      <SelectItem value="60">60 mins (1 hr)</SelectItem>
-                      <SelectItem value="90">90 mins</SelectItem>
-                      <SelectItem value="120">120 mins (2 hrs)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Blocks Client Scheduling
-                  </Label>
-                  <div className="flex items-center gap-3 mt-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setIeBlocksClientScheduling(true)}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        ieBlocksClientScheduling
-                          ? "bg-[#DFBE77] text-[#000820] shadow-sm"
-                          : "bg-[#05142B] text-[#8E9EB8] border border-[#1D3557]"
-                      }`}
-                    >
-                      YES
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIeBlocksClientScheduling(false)}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        !ieBlocksClientScheduling
-                          ? "bg-[#DFBE77] text-[#000820] shadow-sm"
-                          : "bg-[#05142B] text-[#8E9EB8] border border-[#1D3557]"
-                      }`}
-                    >
-                      NO
-                    </button>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        <SelectItem value="ALL">All Team Members (Entire Staff)</SelectItem>
+                        {advocateList.map((adv) => (
+                          <SelectItem key={adv.id} value={adv.name}>
+                            {adv.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
-                <button
-                  type="button"
-                  onClick={() => setIsNotesOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1D3557] bg-[#020A17] text-xs sm:text-sm text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] transition-colors"
-                >
-                  <FileText className="w-4 h-4 text-[#C5A059]" />
-                  <span>{ieNotes ? "Edit Agenda Notes" : "+ Add Agenda Notes (Optional)"}</span>
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Date *
+                    </Label>
+                    <Input
+                      type="date"
+                      value={ieDate}
+                      onChange={(e) => setIeDate(e.target.value)}
+                      className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                    />
+                  </div>
 
-                <Button
-                  type="submit"
-                  disabled={createOperationalBlockMutation.isPending}
-                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
-                >
-                  <Users className="w-5 h-5 text-[#000820]" />
-                  <span>
-                    {createOperationalBlockMutation.isPending
-                      ? "Scheduling..."
-                      : "Schedule Internal Event"}
-                  </span>
-                </Button>
-              </div>
-            </form>
-          )}
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Start Time *
+                    </Label>
+                    <Input
+                      type="time"
+                      value={ieStartTime}
+                      onChange={(e) => setIeStartTime(e.target.value)}
+                      className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                    />
+                  </div>
 
-          {/* ──────────────────────────────────────────────────────── */}
-          {/* MODE 6: BLUEPRINT                                       */}
-          {/* ──────────────────────────────────────────────────────── */}
-          {activeMode === "BLUEPRINT" && (
-            <form onSubmit={handleBlueprintSubmit} className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
-                <div>
-                  <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
-                    Scheduling Blueprint
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
-                    Build the work timeline around a major advocacy milestone.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#081B36] border border-[#1D3E6B] text-xs text-[#8EB8EE]">
-                  <Sparkles className="w-3.5 h-3.5 text-[#DFBE77]" />
-                  <span>Connected workflow timeline around Primary Meeting date.</span>
-                </div>
-              </div>
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Duration
+                    </Label>
+                    <Select
+                      value={String(ieDuration)}
+                      onValueChange={(v) => setIeDuration(Number(v))}
+                    >
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        <SelectItem value="30">30 mins</SelectItem>
+                        <SelectItem value="45">45 mins</SelectItem>
+                        <SelectItem value="60">60 mins (1 hr)</SelectItem>
+                        <SelectItem value="90">90 mins</SelectItem>
+                        <SelectItem value="120">120 mins (2 hrs)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* Blueprint Setup */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Client / Family *
-                  </Label>
-                  <Select value={bpParentId} onValueChange={setBpParentId}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue placeholder="Select Parent..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      {parentsList.map((p: any) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {p.firstName} {p.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Student *
-                  </Label>
-                  <Select value={bpStudentId} onValueChange={setBpStudentId}>
-                    <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
-                      <SelectValue placeholder="Select Student..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
-                      {bpFilteredStudents.map((s: any) => (
-                        <SelectItem key={s.id} value={String(s.id)}>
-                          {s.firstName} {s.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Blocks Client Scheduling
+                    </Label>
+                    <div className="flex items-center gap-3 mt-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setIeBlocksClientScheduling(true)}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${ieBlocksClientScheduling
+                          ? "bg-[#DFBE77] text-[#000820] shadow-sm"
+                          : "bg-[#05142B] text-[#8E9EB8] border border-[#1D3557]"
+                          }`}
+                      >
+                        YES
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIeBlocksClientScheduling(false)}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${!ieBlocksClientScheduling
+                          ? "bg-[#DFBE77] text-[#000820] shadow-sm"
+                          : "bg-[#05142B] text-[#8E9EB8] border border-[#1D3557]"
+                          }`}
+                      >
+                        NO
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Primary Meeting Date *
-                  </Label>
-                  <Input
-                    type="date"
-                    value={bpMeetingDate}
-                    onChange={(e) => setBpMeetingDate(e.target.value)}
-                    className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
-                  />
+                <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
+                  <button
+                    type="button"
+                    onClick={() => setIsNotesOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#1D3557] bg-[#020A17] text-xs sm:text-sm text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] transition-colors"
+                  >
+                    <FileText className="w-4 h-4 text-[#C5A059]" />
+                    <span>{ieNotes ? "Edit Agenda Notes" : "+ Add Agenda Notes (Optional)"}</span>
+                  </button>
+
+                  <Button
+                    type="submit"
+                    disabled={createOperationalBlockMutation.isPending}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
+                  >
+                    <Users className="w-5 h-5 text-[#000820]" />
+                    <span>
+                      {createOperationalBlockMutation.isPending
+                        ? "Scheduling..."
+                        : "Schedule Internal Event"}
+                    </span>
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {/* ──────────────────────────────────────────────────────── */}
+            {/* MODE 6: BLUEPRINT                                       */}
+            {/* ──────────────────────────────────────────────────────── */}
+            {activeMode === "BLUEPRINT" && (
+              <form onSubmit={handleBlueprintSubmit} className="space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-[#1A3358]">
+                  <div>
+                    <h2 className="text-xl font-serif font-bold text-[#FFF4D4]">
+                      Scheduling Blueprint
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#8E9EB8] mt-0.5">
+                      Build the work timeline around a major advocacy milestone.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#081B36] border border-[#1D3E6B] text-xs text-[#8EB8EE]">
+                    <Sparkles className="w-3.5 h-3.5 text-[#DFBE77]" />
+                    <span>Connected workflow timeline around Primary Meeting date.</span>
+                  </div>
                 </div>
 
-                <div>
-                  <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
-                    Meeting Time *
-                  </Label>
-                  <Input
-                    type="time"
-                    value={bpStartTime}
-                    onChange={(e) => setBpStartTime(e.target.value)}
-                    className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
-                  />
-                </div>
-              </div>
+                {/* Blueprint Setup */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Client / Family *
+                    </Label>
+                    <Select value={bpParentId} onValueChange={setBpParentId}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue placeholder="Select Parent..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        {parentsList.map((p: any) => (
+                          <SelectItem key={p.id} value={String(p.id)}>
+                            {p.firstName} {p.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* Connected Timeline Preview */}
-              <div className="bg-[#031126] border border-[#183152] rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#DFBE77] uppercase tracking-wider">
-                    ANNUAL IEP BLUEPRINT TIMELINE PREVIEW
-                  </span>
-                  <span className="text-xs text-[#8E9EB8]">
-                    Toggle items on/off before creating
-                  </span>
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Student *
+                    </Label>
+                    <Select value={bpStudentId} onValueChange={setBpStudentId}>
+                      <SelectTrigger className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl">
+                        <SelectValue placeholder="Select Student..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#05142B] border-[#1D3557] text-[#FFF4D4]">
+                        {bpFilteredStudents.map((s: any) => (
+                          <SelectItem key={s.id} value={String(s.id)}>
+                            {s.firstName} {s.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Primary Meeting Date *
+                    </Label>
+                    <Input
+                      type="date"
+                      value={bpMeetingDate}
+                      onChange={(e) => setBpMeetingDate(e.target.value)}
+                      className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-[#C6B697] uppercase tracking-wider">
+                      Meeting Time *
+                    </Label>
+                    <Input
+                      type="time"
+                      value={bpStartTime}
+                      onChange={(e) => setBpStartTime(e.target.value)}
+                      className="h-10 mt-1.5 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-                  {bpMilestones.map((m, idx) => (
-                    <div
-                      key={m.label}
-                      onClick={() => toggleMilestone(idx)}
-                      className={`cursor-pointer p-3 rounded-xl border flex flex-col justify-between transition-all ${
-                        m.checked
+                {/* Connected Timeline Preview */}
+                <div className="bg-[#031126] border border-[#183152] rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#DFBE77] uppercase tracking-wider">
+                      ANNUAL IEP BLUEPRINT TIMELINE PREVIEW
+                    </span>
+                    <span className="text-xs text-[#8E9EB8]">
+                      Toggle items on/off before creating
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                    {bpMilestones.map((m, idx) => (
+                      <div
+                        key={m.label}
+                        onClick={() => toggleMilestone(idx)}
+                        className={`cursor-pointer p-3 rounded-xl border flex flex-col justify-between transition-all ${m.checked
                           ? m.dayOffset === 0
                             ? "bg-gradient-to-b from-[#C5A059]/35 to-[#9E7D3B]/25 border-[#DFBE77] text-[#FFF4D4] shadow-md ring-1 ring-[#DFBE77]"
                             : "bg-[#051630] border-[#1F3D6B] text-[#FFF4D4]"
                           : "bg-[#020A17]/60 border-[#152B4E]/60 text-[#5A6D88] opacity-60"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`text-[11px] font-bold uppercase tracking-wider ${
-                            m.dayOffset === 0 ? "text-[#DFBE77]" : "text-[#C5A059]"
                           }`}
-                        >
-                          {m.label}
-                        </span>
-                        <Checkbox
-                          checked={m.checked}
-                          onCheckedChange={() => toggleMilestone(idx)}
-                          className="w-4 h-4 border-[#C5A059] data-[state=checked]:bg-[#DFBE77] data-[state=checked]:text-[#000820]"
-                        />
-                      </div>
-                      <div className="my-2">
-                        <div className="font-bold text-xs sm:text-sm leading-tight line-clamp-1">
-                          {m.title}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`text-[11px] font-bold uppercase tracking-wider ${m.dayOffset === 0 ? "text-[#DFBE77]" : "text-[#C5A059]"
+                              }`}
+                          >
+                            {m.label}
+                          </span>
+                          <Checkbox
+                            checked={m.checked}
+                            onCheckedChange={() => toggleMilestone(idx)}
+                            className="w-4 h-4 border-[#C5A059] data-[state=checked]:bg-[#DFBE77] data-[state=checked]:text-[#000820]"
+                          />
                         </div>
-                        <div className="text-[11px] text-[#8E9EB8] mt-0.5 font-mono">
-                          {getMilestoneCalculatedDate(m.dayOffset)}
+                        <div className="my-2">
+                          <div className="font-bold text-xs sm:text-sm leading-tight line-clamp-1">
+                            {m.title}
+                          </div>
+                          <div className="text-[11px] text-[#8E9EB8] mt-0.5 font-mono">
+                            {getMilestoneCalculatedDate(m.dayOffset)}
+                          </div>
                         </div>
+                        <p className="text-[10px] text-[#A69371] line-clamp-2 leading-tight">
+                          {m.description}
+                        </p>
                       </div>
-                      <p className="text-[10px] text-[#A69371] line-clamp-2 leading-tight">
-                        {m.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bottom Row */}
-              <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
-                <div className="text-xs sm:text-sm text-[#8E9EB8]">
-                  Creates Primary Meeting +{" "}
-                  {bpMilestones.filter((m) => m.checked).length} connected timeline tasks
+                    ))}
+                  </div>
                 </div>
 
-                <Button
-                  type="submit"
-                  disabled={createAppointmentMutation.isPending}
-                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
-                >
-                  <Sparkles className="w-5 h-5 text-[#000820]" />
-                  <span>
-                    {createAppointmentMutation.isPending
-                      ? "Creating Blueprint..."
-                      : "Create Blueprint"}
-                  </span>
-                </Button>
-              </div>
-            </form>
-          )}
-        </div>
+                {/* Bottom Row */}
+                <div className="flex items-center justify-between pt-4 border-t border-[#1A3358]">
+                  <div className="text-xs sm:text-sm text-[#8E9EB8]">
+                    Creates Primary Meeting +{" "}
+                    {bpMilestones.filter((m) => m.checked).length} connected timeline tasks
+                  </div>
 
-        {/* ── RIGHT: AUTHENTIC PARCHMENT CARD (MATCHES MOCKUP EXACTLY) ── */}
-        <div className="w-full lg:w-[380px] xl:w-[420px] 2xl:w-[460px] shrink-0 rounded-2xl overflow-hidden shadow-2xl flex flex-col border-2 border-[#4A3B22]">
-          {/* Header banner */}
-          <div className="bg-[#061730] border-b border-[#3A2C18] px-4 py-2.5 text-[#FFE394] font-serif font-bold text-sm flex items-center gap-2">
-            <CalendarIcon className="w-4 h-4 text-[#DFBE77]" />
-            <span className="tracking-wide">{activeContextualData.badgeHeader}</span>
+                  <Button
+                    type="submit"
+                    disabled={createAppointmentMutation.isPending}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-sm sm:text-base px-8 h-11 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2.5"
+                  >
+                    <Sparkles className="w-5 h-5 text-[#000820]" />
+                    <span>
+                      {createAppointmentMutation.isPending
+                        ? "Creating Blueprint..."
+                        : "Create Blueprint"}
+                    </span>
+                  </Button>
+                </div>
+              </form>
+            )}
           </div>
 
-          <div
-            className="flex-1 bg-[#F3E7C4] text-[#1E1A11] p-5 sm:p-6 flex flex-col justify-between overflow-hidden relative"
-            style={{
-              backgroundImage: "url('/decor/fine-parchment.jpg')",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          >
-            <div>
-              {/* Title & Description */}
+          {/* ── RIGHT: AUTHENTIC PARCHMENT CARD (MATCHES MOCKUP EXACTLY) ── */}
+          <div className="w-full lg:w-[380px] xl:w-[420px] 2xl:w-[460px] shrink-0 rounded-2xl overflow-hidden shadow-2xl flex flex-col border-2 border-[#4A3B22]">
+            {/* Header banner */}
+            <div className="bg-[#061730] border-b border-[#3A2C18] px-4 py-2.5 text-[#FFE394] font-serif font-bold text-sm flex items-center gap-2">
+              <CalendarIcon className="w-4 h-4 text-[#DFBE77]" />
+              <span className="tracking-wide">{activeContextualData.badgeHeader}</span>
+            </div>
+
+            <div
+              className="flex-1 bg-[#F3E7C4] text-[#1E1A11] p-5 sm:p-6 flex flex-col justify-between overflow-hidden relative"
+              style={{
+                backgroundImage: "url('/decor/fine-parchment.jpg')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            >
               <div>
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-5 h-5 text-[#2C210E] shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-serif font-bold text-sm sm:text-base text-[#1E170A] leading-snug">
-                      {activeContextualData.title}
-                    </h3>
-                    <p className="text-xs text-[#4F4129] mt-1.5 leading-relaxed font-sans">
-                      {activeContextualData.description}
-                    </p>
+                {/* Title & Description */}
+                <div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-[#2C210E] shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-serif font-bold text-sm sm:text-base text-[#1E170A] leading-snug">
+                        {activeContextualData.title}
+                      </h3>
+                      <p className="text-xs text-[#4F4129] mt-1.5 leading-relaxed font-sans">
+                        {activeContextualData.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Typical Duration */}
+                <div className="mt-4 pt-3 border-t border-[#D6C498]/70">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#1E170A]">
+                    <Clock className="w-4 h-4 text-[#2C210E]" />
+                    <span>Typical Duration</span>
+                  </div>
+                  <p className="text-xs text-[#4F4129] mt-1 ml-6 font-semibold">
+                    {activeContextualData.typicalDuration}
+                  </p>
+                </div>
+
+                {/* Waypoint Role */}
+                <div className="mt-4 pt-3 border-t border-[#D6C498]/70">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#1E170A]">
+                    <Users className="w-4 h-4 text-[#2C210E]" />
+                    <span>Waypoint Role</span>
+                  </div>
+                  <p className="text-xs text-[#4F4129] mt-1 ml-6 leading-relaxed">
+                    {activeContextualData.waypointRole}
+                  </p>
+                </div>
+
+                {/* Checklist */}
+                <div className="mt-4 pt-3 border-t border-[#D6C498]/70">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#1E170A] mb-2">
+                    <FileText className="w-4 h-4 text-[#2C210E]" />
+                    <span>Helpful Before the Meeting</span>
+                  </div>
+                  <div className="space-y-1.5 ml-2">
+                    {activeContextualData.checklist.map((item, idx) => (
+                      <label
+                        key={idx}
+                        className="flex items-start gap-2.5 text-xs text-[#473B25] leading-snug cursor-pointer hover:text-[#1E1A11]"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 rounded border-[#8A713E] text-[#7A6129] focus:ring-0"
+                        />
+                        <span>{item}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* Typical Duration */}
-              <div className="mt-4 pt-3 border-t border-[#D6C498]/70">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#1E170A]">
-                  <Clock className="w-4 h-4 text-[#2C210E]" />
-                  <span>Typical Duration</span>
-                </div>
-                <p className="text-xs text-[#4F4129] mt-1 ml-6 font-semibold">
-                  {activeContextualData.typicalDuration}
-                </p>
+              {/* Stamp footer */}
+              <div className="pt-4 mt-6 border-t border-[#D6C498] text-[10px] uppercase tracking-widest text-[#8A713E] font-bold text-center">
+                Waypoint Special Education Advocacy Protocol
               </div>
-
-              {/* Waypoint Role */}
-              <div className="mt-4 pt-3 border-t border-[#D6C498]/70">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#1E170A]">
-                  <Users className="w-4 h-4 text-[#2C210E]" />
-                  <span>Waypoint Role</span>
-                </div>
-                <p className="text-xs text-[#4F4129] mt-1 ml-6 leading-relaxed">
-                  {activeContextualData.waypointRole}
-                </p>
-              </div>
-
-              {/* Checklist */}
-              <div className="mt-4 pt-3 border-t border-[#D6C498]/70">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#1E170A] mb-2">
-                  <FileText className="w-4 h-4 text-[#2C210E]" />
-                  <span>Helpful Before the Meeting</span>
-                </div>
-                <div className="space-y-1.5 ml-2">
-                  {activeContextualData.checklist.map((item, idx) => (
-                    <label
-                      key={idx}
-                      className="flex items-start gap-2.5 text-xs text-[#473B25] leading-snug cursor-pointer hover:text-[#1E1A11]"
-                    >
-                      <input
-                        type="checkbox"
-                        className="mt-0.5 rounded border-[#8A713E] text-[#7A6129] focus:ring-0"
-                      />
-                      <span>{item}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Stamp footer */}
-            <div className="pt-4 mt-6 border-t border-[#D6C498] text-[10px] uppercase tracking-widest text-[#8A713E] font-bold text-center">
-              Waypoint Special Education Advocacy Protocol
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ── NOTES MODAL POPOVER ── */}
+      {/* ── NOTES & CLIENT PREVIEW MODAL POPOVER ── */}
       {isNotesOpen && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#05142B] border border-[#3A2C18] rounded-2xl w-full max-w-lg p-6 text-[#FFF4D4] shadow-2xl space-y-4">
+          <div className="bg-[#05142B] border border-[#3A2C18] rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 text-[#FFF4D4] shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#142640] pb-3">
               <div className="flex items-center gap-2.5">
                 <FileText className="w-5 h-5 text-[#DFBE77]" />
                 <h3 className="font-serif text-lg font-bold text-[#FFF4D4]">
-                  Add Meeting & Advocacy Notes
+                  Client Message, Preview & Private Notes
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsNotesOpen(false)}
-                className="text-[#C6B697] hover:text-[#FFF4D4]"
+                className="text-[#C6B697] hover:text-[#FFF4D4] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
+            {(activeMode === "MEETINGS" || activeMode === "CLIENT_SESSIONS") && (
+              <div>
+                <Label className="text-xs text-[#C6B697] uppercase tracking-wider font-bold flex items-center gap-1.5">
+                  <Video className="w-3.5 h-3.5 text-[#DFBE77]" />
+                  <span>Virtual Meeting Link (Optional)</span>
+                </Label>
+                <Input
+                  value={activeMode === "MEETINGS" ? mVideoLink : csVideoLink}
+                  onChange={(e) => {
+                    if (activeMode === "MEETINGS") setMVideoLink(e.target.value);
+                    else setCsVideoLink(e.target.value);
+                  }}
+                  placeholder="https://zoom.us/j/... or https://meet.google.com/..."
+                  className="mt-1.5 h-9 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl"
+                />
+              </div>
+            )}
+
             <div>
-              <Label className="text-xs text-[#C6B697] uppercase tracking-wider font-bold">
-                Client & Family Notes (Visible on confirmations)
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-[#C6B697] uppercase tracking-wider font-bold flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-[#DFBE77]" />
+                  <span>Client-Facing Directions & Message</span>
+                </Label>
+                {(activeMode === "MEETINGS" || activeMode === "CLIENT_SESSIONS") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (activeMode === "MEETINGS") setMNotes(DEFAULT_PENDING_LINK_MESSAGE);
+                      else setCsNotes(DEFAULT_PENDING_LINK_MESSAGE);
+                    }}
+                    className="text-[11px] text-[#DFBE77] hover:underline cursor-pointer"
+                  >
+                    Reset Default
+                  </button>
+                )}
+              </div>
               <Textarea
                 value={
                   activeMode === "MEETINGS"
@@ -2759,26 +2769,100 @@ export default function ScheduleDispatchConsole({
                   else if (activeMode === "BLOCKS") setBNotes(val);
                   else setIeNotes(val);
                 }}
-                placeholder="Enter meeting objectives, prep requests, or meeting link..."
-                className="mt-1.5 h-28 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl resize-none"
+                placeholder={DEFAULT_PENDING_LINK_MESSAGE}
+                className="mt-1.5 h-24 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl resize-none"
               />
             </div>
 
-            {activeMode === "MEETINGS" && (
+            {(activeMode === "MEETINGS" || activeMode === "CLIENT_SESSIONS") && (() => {
+              const preview = resolveClientFacingMeetingView({
+                videoLink: activeMode === "MEETINGS" ? mVideoLink : csVideoLink,
+                description: serializeAppointmentDescription(
+                  activeMode === "MEETINGS" ? mNotes : csNotes,
+                  activeMode === "MEETINGS" ? mInternalNotes : csInternalNotes
+                ),
+              });
+              return (
+                <div className="p-3.5 rounded-xl bg-[#020A17] border border-[#3A2C18] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#C5A059] flex items-center gap-1.5">
+                      <Eye className="w-3.5 h-3.5 text-[#C5A059]" />
+                      <span>Client Preview (What the Client Will See)</span>
+                    </span>
+                    <span
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        preview.isLinkReady
+                          ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300"
+                          : "bg-amber-950/60 border-amber-500/40 text-amber-300"
+                      }`}
+                    >
+                      {preview.isLinkReady ? "Link Ready" : "Link Pending"}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-[#05142B] border border-[#3A2C18] space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-[#FFF4D4]">
+                      {preview.isLinkReady ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                      )}
+                      <span>{preview.headline}</span>
+                    </div>
+                    <p className="text-xs text-[#D8C7A5] leading-relaxed whitespace-pre-wrap break-words">
+                      {preview.supportingMessage}
+                    </p>
+                    {preview.additionalDirections && (
+                      <div className="p-2 rounded bg-[#020A17] border border-[#3A2C18]/70 text-xs text-[#FFE394] whitespace-pre-wrap break-words">
+                        {preview.additionalDirections}
+                      </div>
+                    )}
+                    {preview.isLinkReady && preview.normalizedLink ? (
+                      <a
+                        href={preview.normalizedLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full h-9 px-3 rounded-lg bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs flex items-center justify-center gap-1.5"
+                      >
+                        <Video className="w-3.5 h-3.5" />
+                        <span>Join Meeting</span>
+                        <ExternalLink className="w-3 h-3 opacity-80" />
+                      </a>
+                    ) : (
+                      <div className="w-full h-8 px-3 rounded-lg border border-dashed border-[#3A2C18] bg-[#020A17]/60 text-[#A69371] text-[11px] flex items-center justify-center gap-1.5">
+                        <Video className="w-3.5 h-3.5 opacity-60" />
+                        <span>Join Meeting button activates when link is saved</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {(activeMode === "MEETINGS" || activeMode === "CLIENT_SESSIONS") && (
               <div>
-                <Label className="text-xs text-[#DFBE77] uppercase tracking-wider font-bold">
-                  Internal Strategy Notes (Private to Waypoint Advocates)
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-[#DFBE77] uppercase tracking-wider font-bold flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-[#DFBE77]" />
+                    <span>Internal Advocate Notes</span>
+                  </Label>
+                  <span className="text-[10px] font-mono text-[#A69371] bg-[#020A17] px-1.5 py-0.5 rounded border border-[#3A2C18]">
+                    Private · Hidden from Client
+                  </span>
+                </div>
                 <Textarea
-                  value={mInternalNotes}
-                  onChange={(e) => setMInternalNotes(e.target.value)}
-                  placeholder="Enter confidential leverage points, target outcomes, and tactical notes..."
-                  className="mt-1.5 h-24 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl resize-none"
+                  value={activeMode === "MEETINGS" ? mInternalNotes : csInternalNotes}
+                  onChange={(e) => {
+                    if (activeMode === "MEETINGS") setMInternalNotes(e.target.value);
+                    else setCsInternalNotes(e.target.value);
+                  }}
+                  placeholder="Enter confidential leverage points, target outcomes, and internal advocate notes..."
+                  className="mt-1.5 h-20 bg-[#020A17] border-[#1D3557] text-[#FFF4D4] text-xs sm:text-sm rounded-xl resize-none"
                 />
               </div>
             )}
 
-            <div className="flex justify-end pt-3">
+            <div className="flex justify-end pt-2">
               <Button
                 type="button"
                 onClick={() => setIsNotesOpen(false)}

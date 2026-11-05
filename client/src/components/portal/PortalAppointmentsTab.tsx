@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import PageIdBadge from "@/components/PageIdBadge";
 import { trpc } from "@/lib/trpc";
+import { resolveClientFacingMeetingView } from "@shared/appointmentClientMessage";
 
 interface PortalAppointmentsTabProps {
   displayName?: string;
@@ -107,10 +108,20 @@ export function PortalAppointmentsTab({
   const [phoneUpdateOpen, setPhoneUpdateOpen] = useState(false);
 
   // Virtual Meeting Link State
-  const initialLink = nextAppt?.location || "https://meet.google.com/waypoint-iep-conference";
+  const initialLink = nextAppt?.videoLink || (nextAppt?.location?.startsWith("http") ? nextAppt.location : "");
   const [meetingLink, setMeetingLink] = useState(initialLink);
   const [linkEditInput, setLinkEditInput] = useState(initialLink);
   const [linkUpdateOpen, setLinkUpdateOpen] = useState(false);
+
+  const nextApptClientView = useMemo(
+    () =>
+      resolveClientFacingMeetingView({
+        videoLink: meetingLink || nextAppt?.videoLink,
+        location: nextAppt?.location,
+        description: nextAppt?.description,
+      }),
+    [meetingLink, nextAppt?.videoLink, nextAppt?.location, nextAppt?.description]
+  );
   
   // Add School Meeting Dialog State
   const [addMeetingOpen, setAddMeetingOpen] = useState(false);
@@ -233,26 +244,44 @@ export function PortalAppointmentsTab({
                   <Clock className="h-3.5 w-3.5 text-blue-300/80" />
                   {apptTime}
                 </span>
-                <span className="flex items-center gap-1.5 font-medium text-emerald-300">
-                  <Video className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                  Virtual meeting link received!
+                <span
+                  className={`flex items-center gap-1.5 font-semibold ${
+                    nextApptClientView.isLinkReady ? "text-emerald-300" : "text-amber-300"
+                  }`}
+                >
+                  <Video
+                    className={`h-3.5 w-3.5 shrink-0 ${
+                      nextApptClientView.isLinkReady ? "text-emerald-400" : "text-amber-400"
+                    }`}
+                  />
+                  {nextApptClientView.headline}
                 </span>
               </div>
+              <p className="text-xs text-blue-100/85 pt-1 leading-relaxed whitespace-pre-wrap">
+                {nextApptClientView.supportingMessage}
+              </p>
+              {nextApptClientView.additionalDirections && (
+                <p className="text-xs text-amber-200/90 pt-1 leading-relaxed whitespace-pre-wrap">
+                  {nextApptClientView.additionalDirections}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Bottom Row: Action buttons */}
           <div className="flex items-center gap-2 pt-2 border-t border-white/10 flex-wrap">
-            <a
-              href={meetingLink.startsWith("http") ? meetingLink : `https://${meetingLink}`}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <Video className="h-3.5 w-3.5 stroke-[2.5]" />
-              <span>Join Virtual Meeting</span>
-              <ExternalLink className="h-3 w-3 opacity-70" />
-            </a>
+            {nextApptClientView.isLinkReady && nextApptClientView.normalizedLink && (
+              <a
+                href={nextApptClientView.normalizedLink}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-semibold text-xs px-3.5 py-1.5 h-8 rounded-lg shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Video className="h-3.5 w-3.5 stroke-[2.5]" />
+                <span>Join Meeting</span>
+                <ExternalLink className="h-3 w-3 opacity-70" />
+              </a>
+            )}
 
             <Button
               variant="outline"
@@ -264,7 +293,7 @@ export function PortalAppointmentsTab({
               className="border-blue-900/40 bg-[#030C22] hover:bg-blue-900/40 text-white text-xs font-normal px-3 py-1.5 h-8 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <LinkIcon className="h-3.5 w-3.5 text-amber-400" />
-              <span>Change Meeting Link</span>
+              <span>{nextApptClientView.isLinkReady ? "Change Meeting Link" : "Submit Meeting Link"}</span>
             </Button>
           </div>
         </div>
@@ -437,6 +466,11 @@ export function PortalAppointmentsTab({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
               {filteredAppts.map((appt) => {
                 const isUpcoming = new Date(appt.startTime) >= now;
+                const apptClientView = resolveClientFacingMeetingView({
+                  videoLink: appt.videoLink,
+                  location: appt.location,
+                  description: appt.description,
+                });
                 return (
                   <div
                     key={appt.id}
@@ -449,10 +483,22 @@ export function PortalAppointmentsTab({
                         }`}>
                           <Calendar className="h-4 w-4" />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 space-y-1">
                           <p className="font-bold text-sm text-white truncate">{appt.title}</p>
-                          {appt.description && (
-                            <p className="text-xs text-white/60 mt-0.5 line-clamp-2">{appt.description}</p>
+                          <p
+                            className={`text-[11px] font-semibold ${
+                              apptClientView.isLinkReady ? "text-emerald-300" : "text-amber-300"
+                            }`}
+                          >
+                            {apptClientView.headline}
+                          </p>
+                          <p className="text-xs text-white/70 leading-relaxed whitespace-pre-wrap">
+                            {apptClientView.supportingMessage}
+                          </p>
+                          {apptClientView.additionalDirections && (
+                            <p className="text-xs text-amber-200/90 leading-relaxed whitespace-pre-wrap">
+                              {apptClientView.additionalDirections}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -477,12 +523,25 @@ export function PortalAppointmentsTab({
                           {new Date(appt.startTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                         </span>
                       </div>
-                      {appt.location && (
-                        <span className="flex items-center gap-1 text-[11px] text-white/60 truncate max-w-[150px]">
-                          <MapPin className="h-3 w-3 text-amber-400 shrink-0" />
-                          {appt.location}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {apptClientView.isLinkReady && apptClientView.normalizedLink && (
+                          <a
+                            href={apptClientView.normalizedLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-[11px] px-2.5 py-1 rounded-md inline-flex items-center gap-1 transition-all"
+                          >
+                            <Video className="h-3 w-3" />
+                            <span>Join Meeting</span>
+                          </a>
+                        )}
+                        {appt.location && !apptClientView.isLinkReady && (
+                          <span className="flex items-center gap-1 text-[11px] text-white/60 truncate max-w-[150px]">
+                            <MapPin className="h-3 w-3 text-amber-400 shrink-0" />
+                            {appt.location}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
