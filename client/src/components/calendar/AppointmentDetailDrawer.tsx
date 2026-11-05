@@ -17,6 +17,7 @@ import {
   ArrowRightLeft,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   Globe,
   ShieldAlert,
   CalendarClock,
@@ -674,43 +675,61 @@ export default function AppointmentDetailDrawer({
         }`}
       >
         {/* Status Top Accent Bar */}
-        <div className={`h-1.5 w-full shrink-0 ${getStatusBarColor(appointment.status)}`} />
+        <div className={`h-1 w-full shrink-0 ${getStatusBarColor(appointment.status)}`} />
 
         {/* ── SECTION 1: FIXED APPOINTMENT HEADER & JOIN MEETING BUTTON (PINNED) ── */}
-        <div className="shrink-0 p-3.5 sm:p-4 border-b border-[#3A2C18]/70 bg-gradient-to-b from-[#0E2749] to-[#081A35] space-y-2.5 relative shadow-md">
-          {/* Top Row: Meeting Badge + Action Toolbar */}
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2">
+        <div className="shrink-0 px-3.5 py-2.5 border-b border-[#F5B544]/25 bg-gradient-to-b from-[#0E2D63] via-[#091F45] to-[#061530] space-y-1.5 relative shadow-[0_6px_20px_rgba(0,0,0,0.65)]">
+          {/* Top Accent Glow Line */}
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#F5B544]/65 to-transparent" />
+          {/* Top Row: Meeting Badge + Status Select + Action Toolbar */}
+          <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
               <span
-                className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider border ${
+                className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase tracking-wider border truncate ${
                   appointment.meetingType === "IEP Meeting"
-                    ? "bg-purple-950/60 text-purple-300 border-purple-500/40"
+                    ? "bg-purple-950/70 text-purple-200 border-purple-400/40"
                     : appointment.meetingType === "Discovery Call"
-                    ? "bg-[#FFE394]/15 text-[#FFE394] border-[#FFE394]/30"
-                    : "bg-[#102A4C] text-[#FFE394] border-[#C5A059]/40"
+                    ? "bg-[#F5B544]/15 text-[#F5B544] border-[#F5B544]/35"
+                    : "bg-[#F5B544]/10 text-[#F5B544] border-[#F5B544]/30"
                 }`}
               >
                 {appointment.meetingType || "Appointment"}
               </span>
 
-              {/* Status Indicator Pill */}
-              <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
-                  appointment.status === "Confirmed"
-                    ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/40"
-                    : appointment.status === "Needs Coverage"
-                    ? "bg-amber-950/60 text-amber-300 border-amber-500/40"
-                    : appointment.status === "Cancelled"
-                    ? "bg-rose-950/60 text-rose-300 border-rose-500/40"
-                    : "bg-blue-950/60 text-blue-300 border-blue-500/40"
-                }`}
+              {/* Inline Compact Status Selector (replaces separate bottom card!) */}
+              <Select
+                value={appointment.status}
+                onValueChange={(val) => {
+                  if (onStatusChange) {
+                    onStatusChange(appointment.id, val);
+                  }
+                }}
               >
-                {appointment.status}
-              </span>
+                <SelectTrigger
+                  className={`h-6 px-2 py-0 rounded-full text-[10px] font-semibold border w-auto gap-1 shadow-none ${
+                    appointment.status === "Confirmed"
+                      ? "bg-emerald-950/70 text-emerald-300 border-emerald-500/40"
+                      : appointment.status === "Needs Coverage"
+                      ? "bg-amber-950/70 text-amber-300 border-amber-500/40"
+                      : appointment.status === "Cancelled"
+                      ? "bg-rose-950/70 text-rose-300 border-rose-500/40"
+                      : "bg-blue-950/70 text-blue-300 border-blue-500/40"
+                  }`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#071D40] border-[#F5B544]/40 text-white z-[80]">
+                  <SelectItem value="Scheduled">Scheduled</SelectItem>
+                  <SelectItem value="Confirmed">Confirmed</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  <SelectItem value="Needs Coverage">🚨 Needs Coverage</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Header Right Actions: Edit, Single Trash Action, and Close (X) */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 shrink-0">
               {!isEditing && (
                 <>
                   <button
@@ -719,10 +738,10 @@ export default function AppointmentDetailDrawer({
                       setIsTrashMenuOpen(false);
                       setIsEditing(true);
                     }}
-                    className="h-8 px-2.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] hover:brightness-110 active:scale-95 transition-all shadow-sm flex items-center gap-1 cursor-pointer"
+                    className="h-7 px-2.5 rounded-lg text-[11px] font-bold bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] active:scale-95 transition-all shadow-sm flex items-center gap-1 cursor-pointer"
                     title="Edit appointment details"
                   >
-                    <Edit className="w-3.5 h-3.5" />
+                    <Edit className="w-3 h-3 stroke-[2.2]" />
                     <span>Edit</span>
                   </button>
 
@@ -732,13 +751,13 @@ export default function AppointmentDetailDrawer({
                     onClick={() => setIsTrashMenuOpen((prev) => !prev)}
                     className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                       isTrashMenuOpen
-                        ? "bg-rose-950/70 text-rose-300 border border-rose-500/50"
-                        : "text-[#C6B697] hover:text-rose-400 hover:bg-[#020A17]"
+                        ? "bg-rose-950/80 text-rose-300 border border-rose-500/50"
+                        : "text-blue-200/75 hover:text-rose-400 hover:bg-[#030C22]"
                     }`}
                     title="Cancel or delete appointment"
                     aria-label="Cancel or delete appointment"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </>
               )}
@@ -747,11 +766,11 @@ export default function AppointmentDetailDrawer({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#102A4C] transition-colors cursor-pointer ml-0.5"
+                className="p-1 rounded-lg text-blue-200/75 hover:text-white hover:bg-[#030C22] transition-colors cursor-pointer"
                 aria-label="Close appointment drawer"
                 title="Close drawer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -830,23 +849,23 @@ export default function AppointmentDetailDrawer({
 
           {/* Prominent Appointment Title */}
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-white leading-snug tracking-tight">
+            <h2 className="text-base sm:text-lg font-bold text-white leading-tight tracking-tight">
               {isEditing ? "Edit Appointment" : appointment.title}
             </h2>
 
             {/* Compact Timing Summary */}
             {dualTime && !isEditing && (
-              <div className="flex items-center gap-2 text-xs text-blue-200/80 mt-1 flex-wrap">
-                <Calendar className="w-3.5 h-3.5 text-[#F5B544] shrink-0" />
+              <div className="flex items-center gap-1.5 text-[11px] text-blue-200/80 mt-0.5 flex-wrap">
+                <Calendar className="w-3 h-3 text-[#F5B544] shrink-0" />
                 <span className="font-semibold text-white">
                   {dualTime.waypointTime.dateFormatted}
                 </span>
                 <span>·</span>
-                <Clock className="w-3.5 h-3.5 text-[#F5B544] shrink-0" />
+                <Clock className="w-3 h-3 text-[#F5B544] shrink-0" />
                 <span className="font-mono font-bold text-[#F5B544]">
                   {dualTime.waypointTime.timeRange}
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#030C22] border border-blue-800/50 text-blue-200/85 font-mono">
+                <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#030C22] border border-blue-800/50 text-blue-200/85 font-mono">
                   {dualTime.waypointTime.tzAbbr}
                 </span>
               </div>
@@ -855,9 +874,9 @@ export default function AppointmentDetailDrawer({
 
           {/* Needs Coverage Alert Banner if flagged */}
           {appointment.status === "Needs Coverage" && !isEditing && (
-            <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/50 flex items-start gap-2">
-              <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-              <div className="text-xs">
+            <div className="p-2 rounded-xl bg-amber-950/40 border border-amber-500/50 flex items-start gap-2">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="text-[11px]">
                 <span className="font-bold text-amber-200">Coverage Required: </span>
                 <span className="text-amber-300/90">
                   Advocate is unavailable. Reassign to delegate.
@@ -868,25 +887,25 @@ export default function AppointmentDetailDrawer({
 
           {/* ── PRIORITY REQUIREMENT: PINNED JOIN MEETING BUTTON ── */}
           {!isEditing && (
-            <div className="pt-1">
+            <div className="pt-0.5">
               {meetingUrl ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <a
                     href={meetingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 h-10 px-4 rounded-xl bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_6px_18px_rgba(245,181,68,0.28)] transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                    className="flex-1 h-9 px-3 rounded-xl bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-[0_4px_14px_rgba(245,181,68,0.28)] transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
                   >
-                    <Video className="w-4 h-4 stroke-[2.2]" />
+                    <Video className="w-3.5 h-3.5 stroke-[2.2]" />
                     <span>Join {getMeetingPlatformLabel(meetingUrl)}</span>
-                    <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                    <ExternalLink className="w-3 h-3 opacity-80" />
                   </a>
 
                   {/* Copy Link Button */}
                   <button
                     type="button"
                     onClick={() => handleCopyLink(meetingUrl)}
-                    className="h-10 px-3 rounded-xl bg-[#030C22] border border-blue-800/60 text-white hover:border-[#F5B544]/50 hover:text-[#F5B544] flex items-center gap-1.5 text-xs transition-colors cursor-pointer shrink-0 shadow-inner"
+                    className="h-9 px-2.5 rounded-xl bg-[#030C22] border border-blue-800/60 text-white hover:border-[#F5B544]/50 hover:text-[#F5B544] flex items-center gap-1 text-xs transition-colors cursor-pointer shrink-0 shadow-inner"
                     title="Copy meeting URL"
                   >
                     {copiedLink ? (
@@ -905,15 +924,15 @@ export default function AppointmentDetailDrawer({
                   </button>
                 </div>
               ) : (
-                <div className="p-2.5 rounded-xl border border-dashed border-blue-700/60 bg-[#030C22] flex items-center justify-between text-xs shadow-inner">
+                <div className="px-2.5 py-1.5 rounded-xl border border-dashed border-blue-700/60 bg-[#030C22] flex items-center justify-between text-[11px] shadow-inner">
                   <span className="text-blue-200/75 italic flex items-center gap-1.5">
-                    <LinkIcon className="w-3.5 h-3.5 text-[#F5B544]" />
+                    <LinkIcon className="w-3 h-3 text-[#F5B544]" />
                     Virtual meeting link not attached
                   </span>
                   <button
                     type="button"
                     onClick={() => setIsEditing(true)}
-                    className="text-xs text-[#F5B544] hover:text-[#FFE394] font-bold hover:underline cursor-pointer"
+                    className="text-[11px] text-[#F5B544] hover:text-[#FFE394] font-bold hover:underline cursor-pointer"
                   >
                     + Add Link
                   </button>
@@ -923,972 +942,944 @@ export default function AppointmentDetailDrawer({
           )}
         </div>
 
-        {/* ── SECTION 2: INDEPENDENTLY SCROLLABLE APPOINTMENT DETAILS ── */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-5 space-y-4">
-          {isEditing && editFormData ? (
-            /* ── FULL EDIT FORM ── */
-            <div className="space-y-3.5">
-              {/* Auto-fill from contact */}
-              <div>
-                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">
-                  Auto-fill from Contact
-                </label>
-                <Select onValueChange={handleAutoFillFromContact}>
-                  <SelectTrigger className="mt-1 h-9 text-xs bg-[#102A4C] border-[#274E82] text-[#FFF4D4]">
-                    <SelectValue placeholder="Pick a contact to auto-fill..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0B213F] border-[#274E82] text-[#FFF4D4] max-h-56">
-                    {contacts.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id.toString()}>
-                        {c.firstName} {c.lastName}
-                        {c.jobTitle === "Student" ? " (Student)" : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* ── SECTION 2: EDGE-TO-EDGE DOSSIER LEATHER TEXTURE WITH DIRECT TEXT OVERLAY ── */}
+        <div
+          className="flex-1 overflow-y-auto overflow-x-hidden relative bg-[#081F42]"
+          style={{
+            backgroundImage:
+              "radial-gradient(ellipse at 50% 15%, rgba(56,189,248,0.12) 0%, transparent 70%), url('/decor/folio-leather-texture.png')",
+            backgroundSize: "100% 100%, 360px 360px",
+            backgroundRepeat: "no-repeat, repeat",
+          }}
+        >
+          {/* ─── Direct Text Overlay Content Layer on Edge-to-Edge Leather Dossier ─── */}
+          <div className="relative z-10 px-4 py-3.5">
+              {isEditing && editFormData ? (
+                /* ── FULL EDIT FORM (Overlaid on Dossier Texture) ── */
+                <div className="space-y-3">
+                  {/* Auto-fill from contact */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                      Auto-fill from Contact
+                    </label>
+                    <Select onValueChange={handleAutoFillFromContact}>
+                      <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-[#FFF4D4]">
+                        <SelectValue placeholder="Pick a contact to auto-fill..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#07162B] border-[#D4AF37]/40 text-[#FFF4D4] max-h-56">
+                        {contacts.map((c: any) => (
+                          <SelectItem key={c.id} value={c.id.toString()}>
+                            {c.firstName} {c.lastName}
+                            {c.jobTitle === "Student" ? " (Student)" : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* Title */}
-              <div>
-                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">
-                  Title *
-                </label>
-                <VoiceInput
-                  value={editFormData.title}
-                  onChange={(e) =>
-                    setEditFormData((d) => (d ? { ...d, title: e.target.value } : d))
-                  }
-                  placeholder="Appointment title"
-                  className="mt-1 h-9 text-xs sm:text-sm bg-[#102A4C] border-[#274E82] text-[#FFF4D4] placeholder:text-blue-200/45"
-                />
-              </div>
+                  {/* Title */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                      Title *
+                    </label>
+                    <VoiceInput
+                      value={editFormData.title}
+                      onChange={(e) =>
+                        setEditFormData((d) => (d ? { ...d, title: e.target.value } : d))
+                      }
+                      placeholder="Appointment title"
+                      className="mt-1 h-8 text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-white placeholder:text-slate-400"
+                    />
+                  </div>
 
-              {/* Start & End Times */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">
-                    Start *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={editFormData.startTime}
-                    onChange={(e) =>
-                      setEditFormData((d) =>
-                        d ? { ...d, startTime: e.target.value } : d
-                      )
-                    }
-                    className="mt-1 w-full h-9 text-xs rounded-md border border-[#274E82] bg-[#102A4C] text-[#FFF4D4] px-2 focus:outline-none focus:border-[#C5A059]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">
-                    End *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={editFormData.endTime}
-                    onChange={(e) =>
-                      setEditFormData((d) =>
-                        d ? { ...d, endTime: e.target.value } : d
-                      )
-                    }
-                    className="mt-1 w-full h-9 text-xs rounded-md border border-[#274E82] bg-[#102A4C] text-[#FFF4D4] px-2 focus:outline-none focus:border-[#C5A059]"
-                  />
-                </div>
-              </div>
-
-              {/* Client Time Zone */}
-              <div>
-                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider flex items-center gap-1">
-                  <Globe className="h-3 w-3 text-[#C5A059]" /> Client Time Zone
-                </label>
-                <Select
-                  value={editFormData.clientTimeZone}
-                  onValueChange={(v) =>
-                    setEditFormData((d) => (d ? { ...d, clientTimeZone: v } : d))
-                  }
-                >
-                  <SelectTrigger className="mt-1 h-9 text-xs bg-[#102A4C] border-[#274E82] text-[#FFF4D4]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0B213F] border-[#274E82] text-[#FFF4D4]">
-                    {SIX_CORE_ZONES.map((z) => (
-                      <SelectItem key={z.id} value={z.id}>
-                        {z.name} ({z.code})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Assigned Advocate */}
-              <div>
-                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider flex items-center gap-1">
-                  <User className="h-3 w-3 text-cyan-400" /> Assigned Advocate
-                </label>
-                <Select
-                  value={editFormData.assignedAdvocateName}
-                  onValueChange={(v) =>
-                    setEditFormData((d) =>
-                      d ? { ...d, assignedAdvocateName: v } : d
-                    )
-                  }
-                >
-                  <SelectTrigger className="mt-1 h-9 text-xs bg-[#102A4C] border-[#274E82] text-[#FFF4D4]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0B213F] border-[#274E82] text-[#FFF4D4]">
-                    {staffList.map((s) => (
-                      <SelectItem key={s.id} value={s.name}>
-                        {s.name} ({s.status})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">
-                  Status
-                </label>
-                <Select
-                  value={editFormData.status}
-                  onValueChange={(v) =>
-                    setEditFormData((d) => (d ? { ...d, status: v } : d))
-                  }
-                >
-                  <SelectTrigger className="mt-1 h-9 text-xs bg-[#102A4C] border-[#274E82] text-[#FFF4D4]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0B213F] border-[#274E82] text-[#FFF4D4]">
-                    <SelectItem value="Scheduled">Scheduled</SelectItem>
-                    <SelectItem value="Confirmed">Confirmed</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
-                    <SelectItem value="Needs Coverage">🚨 Needs Coverage</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Virtual Meeting Link */}
-              <div>
-                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">
-                  Video / Meeting Link
-                </label>
-                <VoiceInput
-                  value={editFormData.videoLink}
-                  onChange={(e) =>
-                    setEditFormData((d) =>
-                      d ? { ...d, videoLink: e.target.value } : d
-                    )
-                  }
-                  placeholder="https://meet.google.com/..."
-                  className="mt-1 h-9 text-xs sm:text-sm bg-[#102A4C] border-[#274E82] text-[#FFF4D4] placeholder:text-blue-200/45"
-                />
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">
-                  Location (Physical or Virtual)
-                </label>
-                <VoiceInput
-                  value={editFormData.location}
-                  onChange={(e) =>
-                    setEditFormData((d) =>
-                      d ? { ...d, location: e.target.value } : d
-                    )
-                  }
-                  placeholder="School District Office / Google Meet"
-                  className="mt-1 h-9 text-xs sm:text-sm bg-[#102A4C] border-[#274E82] text-[#FFF4D4] placeholder:text-blue-200/45"
-                />
-              </div>
-
-              {/* Parent & Student */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">
-                    Parent Name
-                  </label>
-                  <VoiceInput
-                    value={editFormData.parentName}
-                    onChange={(e) =>
-                      setEditFormData((d) =>
-                        d ? { ...d, parentName: e.target.value } : d
-                      )
-                    }
-                    placeholder="Parent name"
-                    className="mt-1 h-9 text-xs sm:text-sm bg-[#102A4C] border-[#274E82] text-[#FFF4D4] placeholder:text-blue-200/45"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">
-                    Parent Phone
-                  </label>
-                  <VoiceInput
-                    value={editFormData.parentPhone}
-                    onChange={(e) =>
-                      setEditFormData((d) =>
-                        d ? { ...d, parentPhone: e.target.value } : d
-                      )
-                    }
-                    placeholder="(xxx) xxx-xxxx"
-                    className="mt-1 h-9 text-xs sm:text-sm bg-[#102A4C] border-[#274E82] text-[#FFF4D4] placeholder:text-blue-200/45"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-[#FFE394] uppercase tracking-wider">
-                  Student Name
-                </label>
-                <VoiceInput
-                  value={editFormData.studentName}
-                  onChange={(e) =>
-                    setEditFormData((d) =>
-                      d ? { ...d, studentName: e.target.value } : d
-                    )
-                  }
-                  placeholder="Student name"
-                  className="mt-1 h-9 text-xs sm:text-sm bg-[#102A4C] border-[#274E82] text-[#FFF4D4] placeholder:text-blue-200/45"
-                />
-              </div>
-
-              {/* Client-Facing Directions & Message */}
-              <div className="relative overflow-hidden p-3.5 rounded-2xl border border-[#F5B544]/35 bg-gradient-to-b from-[#0E2D63] via-[#091F45] to-[#061530] shadow-[0_12px_32px_rgba(0,0,0,0.75)] space-y-2.5">
-                <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#F5B544]/70 to-transparent" />
-                <div className="flex items-center justify-between gap-2">
-                  <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <Eye className="w-3.5 h-3.5 text-[#F5B544]" />
-                    <span>Client-Facing Directions & Message</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditFormData((d) =>
-                        d ? { ...d, clientMessage: DEFAULT_PENDING_LINK_MESSAGE } : d
-                      )
-                    }
-                    className="text-[10px] font-semibold text-[#F5B544] hover:text-[#FFE394] hover:underline cursor-pointer"
-                  >
-                    Reset Default
-                  </button>
-                </div>
-                <VoiceTextarea
-                  value={editFormData.clientMessage}
-                  onChange={(e) =>
-                    setEditFormData((d) =>
-                      d ? { ...d, clientMessage: e.target.value } : d
-                    )
-                  }
-                  placeholder={DEFAULT_PENDING_LINK_MESSAGE}
-                  rows={3}
-                  className="text-xs bg-[#030C22] border-blue-700/70 text-white placeholder:text-blue-200/45 shadow-inner focus:border-[#F5B544]"
-                />
-                <p className="text-[10px] text-blue-200/80 leading-snug">
-                  When a valid meeting link is saved above, status automatically updates to{" "}
-                  <span className="text-emerald-300 font-semibold">
-                    “{READY_LINK_HEADLINE}”
-                  </span>{" "}
-                  while preserving any custom directions you add here. If the link is removed, the pending status returns automatically.
-                </p>
-
-                {/* Live Client Preview inside Edit Form */}
-                {editModeClientPreview && (
-                  <div className="mt-2 pt-2.5 border-t border-white/15 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#F5B544] flex items-center gap-1">
-                        <Eye className="w-3 h-3 text-[#F5B544]" />
-                        Client Preview (Live)
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                          editModeClientPreview.isLinkReady
-                            ? "bg-emerald-950/70 border-emerald-400/50 text-emerald-300"
-                            : "bg-[#F5B544]/15 border-[#F5B544]/40 text-[#F5B544]"
-                        }`}
-                      >
-                        {editModeClientPreview.isLinkReady ? "Link Ready" : "Link Pending"}
-                      </span>
+                  {/* Start & End Times */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider">
+                        Start *
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={editFormData.startTime}
+                        onChange={(e) =>
+                          setEditFormData((d) =>
+                            d ? { ...d, startTime: e.target.value } : d
+                          )
+                        }
+                        className="mt-1 w-full h-8 text-xs rounded-md border border-[#D4AF37]/40 bg-[#020A17]/80 text-white px-2 focus:outline-none focus:border-[#F5B544]"
+                      />
                     </div>
-
-                    <div className="p-3 rounded-xl bg-[#030C22] border border-blue-800/60 space-y-2 shadow-inner">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                        {editModeClientPreview.isLinkReady ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        ) : (
-                          <Clock className="w-4 h-4 text-[#F5B544] shrink-0" />
-                        )}
-                        <span>{editModeClientPreview.headline}</span>
-                      </div>
-
-                      <p className="text-xs text-blue-100/85 leading-relaxed whitespace-pre-wrap break-words">
-                        {editModeClientPreview.supportingMessage}
-                      </p>
-
-                      {editModeClientPreview.additionalDirections && (
-                        <div className="p-2 rounded-lg bg-[#0A1F44] border border-blue-700/60 text-[11px] text-white leading-relaxed whitespace-pre-wrap break-words">
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#F5B544] block mb-0.5">
-                            Additional Directions
-                          </span>
-                          {editModeClientPreview.additionalDirections}
-                        </div>
-                      )}
-
-                      {editModeClientPreview.isLinkReady && editModeClientPreview.normalizedLink ? (
-                        <a
-                          href={editModeClientPreview.normalizedLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full h-9 px-3 rounded-lg bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all"
-                        >
-                          <Video className="w-3.5 h-3.5 stroke-[2.2]" />
-                          <span>Join Meeting</span>
-                          <ExternalLink className="w-3 h-3 opacity-80" />
-                        </a>
-                      ) : (
-                        <div className="w-full h-8 px-3 rounded-lg border border-dashed border-blue-700/60 bg-[#07152B] text-blue-200/70 text-[11px] flex items-center justify-center gap-1.5">
-                          <Video className="w-3.5 h-3.5 text-[#F5B544]" />
-                          <span>Join Meeting button activates when link is saved</span>
-                        </div>
-                      )}
+                    <div>
+                      <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider">
+                        End *
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={editFormData.endTime}
+                        onChange={(e) =>
+                          setEditFormData((d) =>
+                            d ? { ...d, endTime: e.target.value } : d
+                          )
+                        }
+                        className="mt-1 w-full h-8 text-xs rounded-md border border-[#D4AF37]/40 bg-[#020A17]/80 text-white px-2 focus:outline-none focus:border-[#F5B544]"
+                      />
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Internal Private Advocate Notes */}
-              <div className="relative overflow-hidden p-3.5 rounded-2xl border border-[#F5B544]/35 bg-gradient-to-b from-[#0E2D63] via-[#091F45] to-[#061530] shadow-[0_12px_32px_rgba(0,0,0,0.75)] space-y-2">
-                <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#F5B544]/70 to-transparent" />
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-[#F5B544]" />
-                    <span>Internal Advocate Notes</span>
-                  </label>
-                  <span className="text-[9px] font-mono font-extrabold uppercase tracking-wider text-[#F5B544] bg-[#F5B544]/10 px-2 py-0.5 rounded-full border border-[#F5B544]/30">
-                    PRIVATE · HIDDEN FROM CLIENT
-                  </span>
-                </div>
-                <VoiceTextarea
-                  value={editFormData.internalNotes}
-                  onChange={(e) =>
-                    setEditFormData((d) =>
-                      d ? { ...d, internalNotes: e.target.value } : d
-                    )
-                  }
-                  placeholder="Confidential advocate prep notes, strategy, or internal team context..."
-                  rows={3}
-                  className="mt-1 text-xs sm:text-sm bg-[#030C22] border-blue-700/70 text-white placeholder:text-blue-200/45 shadow-inner focus:border-[#F5B544]"
-                />
-              </div>
+                  {/* Client Time Zone & Assigned Advocate */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider flex items-center gap-1">
+                        <Globe className="h-3 w-3 text-[#38BDF8]" /> Time Zone
+                      </label>
+                      <Select
+                        value={editFormData.clientTimeZone}
+                        onValueChange={(v) =>
+                          setEditFormData((d) => (d ? { ...d, clientTimeZone: v } : d))
+                        }
+                      >
+                        <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#07162B] border-[#D4AF37]/40 text-white">
+                          {SIX_CORE_ZONES.map((z) => (
+                            <SelectItem key={z.id} value={z.id}>
+                              {z.name} ({z.code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-              {/* Form Action Buttons */}
-              <div className="flex gap-2 pt-2 pb-4">
-                <Button
-                  size="sm"
-                  onClick={handleSaveFullEdit}
-                  disabled={isSaving}
-                  className="flex-1 h-10 bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-extrabold shadow-md"
-                >
-                  <Save className="w-4 h-4 mr-1.5" />
-                  <span>{isSaving ? "Saving..." : "Save Changes"}</span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setIsEditing(false)}
-                  className="flex-1 h-10 border-blue-700/70 bg-[#030C22] text-white hover:bg-[#0E2D63]"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : (
-            /* ── VIEW MODE (DETAILS, PARTICIPANTS, CLIENT PREVIEW, NOTES) ── */
-            <div className="space-y-3.5">
-              {/* 1. COMPACT, COLLAPSIBLE STUDENT & PARTICIPANTS */}
-              {(() => {
-                const participantCount =
-                  (appointment.assignedAdvocateName ? 1 : 1) +
-                  (appointment.parentName ? 1 : 0) +
-                  (appointment.studentName ? 1 : 0);
+                    <div>
+                      <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider flex items-center gap-1">
+                        <User className="h-3 w-3 text-[#38BDF8]" /> Advocate
+                      </label>
+                      <Select
+                        value={editFormData.assignedAdvocateName}
+                        onValueChange={(v) =>
+                          setEditFormData((d) =>
+                            d ? { ...d, assignedAdvocateName: v } : d
+                          )
+                        }
+                      >
+                        <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#07162B] border-[#D4AF37]/40 text-white">
+                          {staffList.map((s) => (
+                            <SelectItem key={s.id} value={s.name}>
+                              {s.name} ({s.status})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-                return (
-                  <div className="relative overflow-hidden p-3 sm:p-3.5 rounded-2xl border border-[#F5B544]/35 bg-gradient-to-b from-[#0E2D63] via-[#091F45] to-[#061530] shadow-[0_12px_32px_rgba(0,0,0,0.75)] hover:border-[#F5B544]/60 transition-all space-y-2.5">
-                    <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#F5B544]/70 to-transparent" />
-                    {/* Discreet Collapsible Header Row */}
-                    <button
-                      type="button"
-                      onClick={() => setIsParticipantsExpanded((prev) => !prev)}
-                      className="w-full flex items-center justify-between text-left group cursor-pointer select-none"
+                  {/* Status */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider">
+                      Status
+                    </label>
+                    <Select
+                      value={editFormData.status}
+                      onValueChange={(v) =>
+                        setEditFormData((d) => (d ? { ...d, status: v } : d))
+                      }
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-6 h-6 rounded-full border border-[#F5B544]/35 bg-[#030C22] text-[#F5B544] flex items-center justify-center shrink-0 shadow-inner">
-                          {isParticipantsExpanded ? (
-                            <ChevronDown className="w-3.5 h-3.5 stroke-[2.2]" />
-                          ) : (
-                            <ChevronRight className="w-3.5 h-3.5 stroke-[2.2]" />
-                          )}
+                      <SelectTrigger className="mt-1 h-8 text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#07162B] border-[#D4AF37]/40 text-white">
+                        <SelectItem value="Scheduled">Scheduled</SelectItem>
+                        <SelectItem value="Confirmed">Confirmed</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                        <SelectItem value="Needs Coverage">🚨 Needs Coverage</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Virtual Meeting Link */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider">
+                      Video / Meeting Link
+                    </label>
+                    <VoiceInput
+                      value={editFormData.videoLink}
+                      onChange={(e) =>
+                        setEditFormData((d) =>
+                          d ? { ...d, videoLink: e.target.value } : d
+                        )
+                      }
+                      placeholder="https://meet.google.com/..."
+                      className="mt-1 h-8 text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-white placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider">
+                      Location (Physical or Virtual)
+                    </label>
+                    <VoiceInput
+                      value={editFormData.location}
+                      onChange={(e) =>
+                        setEditFormData((d) =>
+                          d ? { ...d, location: e.target.value } : d
+                        )
+                      }
+                      placeholder="School District Office / Google Meet"
+                      className="mt-1 h-8 text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-white placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  {/* Parent & Student */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider">
+                        Parent Name
+                      </label>
+                      <VoiceInput
+                        value={editFormData.parentName}
+                        onChange={(e) =>
+                          setEditFormData((d) =>
+                            d ? { ...d, parentName: e.target.value } : d
+                          )
+                        }
+                        placeholder="Parent name"
+                        className="mt-1 h-8 text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-white placeholder:text-slate-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider">
+                        Parent Phone
+                      </label>
+                      <VoiceInput
+                        value={editFormData.parentPhone}
+                        onChange={(e) =>
+                          setEditFormData((d) =>
+                            d ? { ...d, parentPhone: e.target.value } : d
+                          )
+                        }
+                        placeholder="(xxx) xxx-xxxx"
+                        className="mt-1 h-8 text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-white placeholder:text-slate-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider">
+                      Student Name
+                    </label>
+                    <VoiceInput
+                      value={editFormData.studentName}
+                      onChange={(e) =>
+                        setEditFormData((d) =>
+                          d ? { ...d, studentName: e.target.value } : d
+                        )
+                      }
+                      placeholder="Student name"
+                      className="mt-1 h-8 text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-white placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  {/* Client-Facing Directions & Message (Dossier Overlay Style) */}
+                  <div className="pt-3 border-t-2 border-[#D4AF37]/45 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="text-[10px] font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <Eye className="w-3 h-3 text-[#38BDF8]" />
+                        <span>Client-Facing Directions & Message</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditFormData((d) =>
+                            d ? { ...d, clientMessage: DEFAULT_PENDING_LINK_MESSAGE } : d
+                          )
+                        }
+                        className="text-[10px] font-semibold text-[#F5B544] hover:text-[#FFE394] hover:underline cursor-pointer"
+                      >
+                        Reset Default
+                      </button>
+                    </div>
+                    <VoiceTextarea
+                      value={editFormData.clientMessage}
+                      onChange={(e) =>
+                        setEditFormData((d) =>
+                          d ? { ...d, clientMessage: e.target.value } : d
+                        )
+                      }
+                      placeholder={DEFAULT_PENDING_LINK_MESSAGE}
+                      rows={3}
+                      className="text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-white placeholder:text-slate-400 focus:border-[#F5B544]"
+                    />
+                    <p className="text-[10px] text-slate-300/85 leading-snug">
+                      When a valid meeting link is saved above, status automatically updates to{" "}
+                      <span className="text-emerald-300 font-semibold">
+                        “{READY_LINK_HEADLINE}”
+                      </span>{" "}
+                      while preserving any custom directions you add here.
+                    </p>
+
+                    {/* Live Client Preview inside Edit Form */}
+                    {editModeClientPreview && (
+                      <div className="pt-2 border-t-2 border-white/20 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#F5B544] flex items-center gap-1">
+                            <Eye className="w-3 h-3 text-[#F5B544]" />
+                            Client Preview (Live)
+                          </span>
+                          <span
+                            className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                              editModeClientPreview.isLinkReady
+                                ? "bg-emerald-950/70 border-emerald-400/50 text-emerald-300"
+                                : "bg-[#F5B544]/15 border-[#F5B544]/40 text-[#F5B544]"
+                            }`}
+                          >
+                            {editModeClientPreview.isLinkReady ? "Link Ready" : "Link Pending"}
+                          </span>
                         </div>
-                        <span className="text-xs font-bold tracking-tight text-white group-hover:text-[#F5B544] transition-colors">
-                          Student & Participants
-                        </span>
-                        <span className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-[#F5B544]/10 border border-[#F5B544]/30 text-[#F5B544]">
-                          {participantCount}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-mono text-blue-200/75 group-hover:text-white">
-                        {isParticipantsExpanded ? "Hide details" : "Show all"}
-                      </span>
-                    </button>
 
-                    {/* Student Row — ALWAYS visible (even when collapsed) so user can click straight to Student Workspace */}
-                    {appointment.studentName && (
-                      <div className="flex items-center justify-between pt-2 border-t border-white/10">
-                        <button
-                          type="button"
-                          onClick={handleOpenStudentWorkspace}
-                          className="flex items-center gap-2.5 text-left group bg-[#030C22] hover:bg-[#071636] border border-blue-900/50 hover:border-[#F5B544]/50 px-2.5 py-2 rounded-xl transition-all cursor-pointer flex-1 min-w-0 shadow-inner"
-                          title={`Open Student Workspace for ${appointment.studentName}`}
-                        >
-                          <div className="w-7 h-7 rounded-full bg-[#0E2D63] border border-[#F5B544]/40 flex items-center justify-center text-[#F5B544] font-bold text-xs shrink-0">
-                            {appointment.studentName.charAt(0)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs sm:text-sm text-white font-bold group-hover:text-[#F5B544] flex items-center gap-1.5 transition-colors">
-                              <span className="truncate">{appointment.studentName}</span>
-                              <ArrowUpRight className="w-3.5 h-3.5 text-[#F5B544] shrink-0" />
+                        <div className="pl-3 border-l-[3px] border-[#F5B544] space-y-1.5 py-0.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                              {editModeClientPreview.isLinkReady ? (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                              ) : (
+                                <Clock className="w-3.5 h-3.5 text-[#F5B544] shrink-0" />
+                              )}
+                              <span>{editModeClientPreview.headline}</span>
                             </div>
-                            <div className="text-[10px] text-blue-200/75 truncate">
-                              Student · Click to open Student Workspace
-                            </div>
-                          </div>
-                        </button>
-                      </div>
-                    )}
 
-                    {/* Expanded Participants Details (Names, Emails, Roles, Attendance) */}
-                    {isParticipantsExpanded && (
-                      <div className="space-y-2 pt-2 border-t border-white/10 text-xs animate-in fade-in duration-150">
-                        {/* Waypoint / Assigned Advocate (Owner) */}
-                        <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-[#030C22] border border-blue-900/50">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="relative shrink-0">
-                              <div className="w-7 h-7 rounded-full bg-[#0E2D63] border border-cyan-400/50 flex items-center justify-center text-cyan-200 font-bold text-[10px]">
-                                {(appointment.assignedAdvocateName || "WA")
-                                  .split(" ")
-                                  .map((p) => p[0])
-                                  .join("")
-                                  .slice(0, 2)}
-                              </div>
-                              <span
-                                className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-[#030C22]"
-                                title="Confirmed · Organizer"
-                              />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-white font-bold truncate">
-                                {appointment.assignedAdvocateName || "Waypoint Advocates"}
-                              </div>
-                              <div className="text-[10px] text-blue-200/75 truncate">
-                                clientcare@waypointadvocates.com · Lead Special Education Advocate
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#F5B544]/10 border border-[#F5B544]/30 text-[#F5B544]">
-                              OWNER
-                            </span>
-                            {onReassign && (
-                              <button
-                                type="button"
-                                onClick={() => onReassign(appointment)}
-                                className="text-[11px] font-semibold text-[#F5B544] hover:underline cursor-pointer"
+                            {editModeClientPreview.isLinkReady && editModeClientPreview.normalizedLink && (
+                              <a
+                                href={editModeClientPreview.normalizedLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="h-6 px-2.5 rounded-md bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-extrabold text-[10px] flex items-center justify-center gap-1 shadow-xs transition-all shrink-0"
                               >
-                                Reassign
-                              </button>
+                                <span>Join Meeting</span>
+                                <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
                             )}
                           </div>
+
+                          <p className="text-[11px] text-slate-200 leading-snug whitespace-pre-wrap break-words">
+                            {editModeClientPreview.supportingMessage}
+                          </p>
+
+                          {editModeClientPreview.additionalDirections && (
+                            <div className="text-[11px] text-[#FFE394] leading-snug whitespace-pre-wrap break-words pt-0.5">
+                              <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-sky-300 mr-1.5">
+                                Directions:
+                              </span>
+                              {editModeClientPreview.additionalDirections}
+                            </div>
+                          )}
                         </div>
+                      </div>
+                    )}
+                  </div>
 
-                        {/* Parent / Client */}
-                        {appointment.parentName && (
-                          <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-[#030C22] border border-blue-900/50">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="flex items-center gap-2 text-left group hover:opacity-95 rounded-lg transition-colors cursor-pointer select-none min-w-0 flex-1"
-                                  title="Click for parent actions (Contact Client, View Details)"
-                                >
-                                  <div className="relative shrink-0">
-                                    <div className="w-7 h-7 rounded-full bg-[#0E2D63] border border-[#F5B544]/40 flex items-center justify-center text-[#F5B544] font-bold text-[10px]">
-                                      {appointment.parentName
-                                        .split(" ")
-                                        .map((p) => p[0])
-                                        .join("")
-                                        .slice(0, 2)}
-                                    </div>
-                                    <span
-                                      className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-[#030C22]"
-                                      title="Attendance Confirmed"
-                                    />
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <div className="text-white font-bold group-hover:text-[#F5B544] flex items-center gap-1 transition-colors">
-                                      <span className="truncate">{appointment.parentName}</span>
-                                      <ChevronDown className="w-3 h-3 text-blue-200/75 shrink-0" />
-                                    </div>
-                                    <div className="text-[10px] text-blue-200/75 truncate">
-                                      {clientEmail || "Parent / Client"}
-                                      {clientPhone ? ` · ${clientPhone}` : ""}
-                                    </div>
-                                  </div>
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="start"
-                                className="w-56 bg-[#071D40] border border-[#F5B544]/40 text-white shadow-[0_16px_40px_rgba(0,0,0,0.95)] z-50 p-1.5 rounded-xl"
-                              >
-                                <DropdownMenuItem
-                                  onClick={handleContactClient}
-                                  className="flex items-center gap-2.5 px-3 py-2 text-xs text-white hover:bg-[#0E2D63] hover:text-[#F5B544] rounded-lg cursor-pointer"
-                                >
-                                  <PhoneCall className="w-4 h-4 text-[#F5B544] shrink-0" />
-                                  <div className="flex flex-col">
-                                    <span className="font-bold text-[#F5B544]">
-                                      Contact Client
-                                    </span>
-                                    <span className="text-[10px] text-blue-200/75">
-                                      Call, email, or message
-                                    </span>
-                                  </div>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator className="my-1 bg-white/10" />
-                                <DropdownMenuItem
-                                  onClick={handleViewParentDetails}
-                                  className="flex items-center gap-2.5 px-3 py-2 text-xs text-white hover:bg-[#0E2D63] hover:text-[#F5B544] rounded-lg cursor-pointer"
-                                >
-                                  <User className="w-4 h-4 text-[#F5B544] shrink-0" />
-                                  <div className="flex flex-col">
-                                    <span className="font-bold text-white">
-                                      View Details
-                                    </span>
-                                    <span className="text-[10px] text-blue-200/75">
-                                      Profile & contact history
-                                    </span>
-                                  </div>
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                  {/* Internal Private Advocate Notes */}
+                  <div className="pt-3 border-t-2 border-[#D4AF37]/45 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <Lock className="w-3 h-3 text-[#38BDF8]" />
+                        <span>Internal Advocate Notes</span>
+                      </label>
+                      <span className="text-[9px] font-mono font-extrabold uppercase tracking-wider text-[#F5B544] bg-[#F5B544]/10 px-2 py-0.2 rounded-full border border-[#F5B544]/30">
+                        PRIVATE · HIDDEN FROM CLIENT
+                      </span>
+                    </div>
+                    <VoiceTextarea
+                      value={editFormData.internalNotes}
+                      onChange={(e) =>
+                        setEditFormData((d) =>
+                          d ? { ...d, internalNotes: e.target.value } : d
+                        )
+                      }
+                      placeholder="Confidential advocate prep notes, strategy, or internal team context..."
+                      rows={3}
+                      className="text-xs bg-[#020A17]/80 border-[#D4AF37]/40 text-white placeholder:text-slate-400 focus:border-[#F5B544]"
+                    />
+                  </div>
 
-                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-400/40 text-emerald-300 shrink-0">
-                              ✓ Confirmed
+                  {/* Form Action Buttons */}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveFullEdit}
+                      disabled={isSaving}
+                      className="flex-1 h-9 bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-extrabold shadow-md"
+                    >
+                      <Save className="w-3.5 h-3.5 mr-1.5" />
+                      <span>{isSaving ? "Saving..." : "Save Changes"}</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsEditing(false)}
+                      className="flex-1 h-9 border-[#D4AF37]/40 bg-[#020A17]/80 text-white hover:bg-white/10"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                /* ── VIEW MODE: EDGE-TO-EDGE DOSSIER TEXT OVERLAY WITH THICK DIVIDERS ── */
+                <div className="space-y-3 bg-transparent text-[11px]">
+                  {/* 1. STUDENT & PARTICIPANTS (Transparent on Leather) */}
+                  {(() => {
+                    const participantCount =
+                      (appointment.assignedAdvocateName ? 1 : 1) +
+                      (appointment.parentName ? 1 : 0) +
+                      (appointment.studentName ? 1 : 0);
+
+                    return (
+                      <div className="space-y-1.5">
+                        {/* Dossier Section Header */}
+                        <button
+                          type="button"
+                          onClick={() => setIsParticipantsExpanded((prev) => !prev)}
+                          className="w-full flex items-center justify-between pb-1.5 border-b-2 border-[#38BDF8]/35 text-left group cursor-pointer select-none"
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <User className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                            <span className="text-[10.5px] font-bold uppercase tracking-wider text-sky-300 group-hover:text-[#FFE394] transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                              STUDENT & PARTICIPANTS
+                            </span>
+                            <span className="text-[9px] font-mono font-extrabold px-1.5 py-0.2 rounded-full bg-[#123159]/85 border border-sky-400/40 text-sky-200">
+                              {participantCount}
                             </span>
                           </div>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#38BDF8] group-hover:text-[#FFE394] transition-colors">
+                            <span>{isParticipantsExpanded ? "Hide" : "Show all"}</span>
+                            {isParticipantsExpanded ? (
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            ) : (
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            )}
+                          </span>
+                        </button>
+
+                        {/* Student Row — Direct Text Overlay on Leather, Always Visible */}
+                        {appointment.studentName && (
+                          <button
+                            type="button"
+                            onClick={handleOpenStudentWorkspace}
+                            className="w-full flex items-center justify-between gap-2 py-1 px-1.5 -mx-1.5 rounded-lg hover:bg-white/[0.06] transition-all cursor-pointer group text-left"
+                            title={`Open Student Workspace for ${appointment.studentName}`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-6 h-6 rounded-full border border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-[10px] shadow-[0_0_10px_rgba(212,175,55,0.35)] shrink-0">
+                                {appointment.studentName.charAt(0)}
+                              </div>
+                              <span
+                                className="text-sm font-bold text-white group-hover:text-[#FFE394] truncate transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
+                                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                              >
+                                {appointment.studentName}
+                              </span>
+                              <span className="text-[10px] text-slate-300/80">
+                                · Student
+                              </span>
+                            </div>
+                            <span className="text-[10.5px] font-bold text-[#F5B544] group-hover:text-[#FFE394] flex items-center gap-0.5 shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                              <span>Workspace</span>
+                              <ArrowUpRight className="w-3 h-3" />
+                            </span>
+                          </button>
+                        )}
+
+                        {/* Expanded Participants Details (Overlaid on Leather with Dividers) */}
+                        {isParticipantsExpanded && (
+                          <div className="space-y-1.5 pt-1.5 border-t-2 border-white/20 text-xs animate-in fade-in duration-150">
+                            {/* Waypoint / Assigned Advocate (Owner) */}
+                            <div className="flex items-center justify-between gap-2 py-1">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="relative shrink-0">
+                                  <div className="w-6 h-6 rounded-full bg-[#122847] border border-sky-400/50 flex items-center justify-center text-sky-200 font-bold text-[10px]">
+                                    {(appointment.assignedAdvocateName || "WA")
+                                      .split(" ")
+                                      .map((p) => p[0])
+                                      .join("")
+                                      .slice(0, 2)}
+                                  </div>
+                                  <span
+                                    className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-[#02132d]"
+                                    title="Confirmed · Organizer"
+                                  />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-white font-bold text-xs truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                                    {appointment.assignedAdvocateName || "Waypoint Advocates"}
+                                  </div>
+                                  <div className="text-[10px] text-slate-300/80 truncate">
+                                    clientcare@waypointadvocates.com
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.2 rounded-full bg-[#F5B544]/15 border border-[#F5B544]/40 text-[#FFE394]">
+                                  OWNER
+                                </span>
+                                {onReassign && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onReassign(appointment)}
+                                    className="text-[10px] font-semibold text-[#38BDF8] hover:text-[#FFE394] hover:underline cursor-pointer"
+                                  >
+                                    Reassign
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Parent / Client */}
+                            {appointment.parentName && (
+                              <div className="flex items-center justify-between gap-2 py-1.5 border-t-2 border-white/20">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="flex items-center gap-2 text-left group hover:opacity-95 rounded-lg transition-colors cursor-pointer select-none min-w-0 flex-1"
+                                      title="Click for parent actions (Contact Client, View Details)"
+                                    >
+                                      <div className="relative shrink-0">
+                                        <div className="w-6 h-6 rounded-full bg-[#122847] border border-[#D4AF37]/50 flex items-center justify-center text-[#FFE394] font-bold text-[10px]">
+                                          {appointment.parentName
+                                            .split(" ")
+                                            .map((p) => p[0])
+                                            .join("")
+                                            .slice(0, 2)}
+                                        </div>
+                                        <span
+                                          className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-[#02132d]"
+                                          title="Attendance Confirmed"
+                                        />
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="text-white font-bold text-xs group-hover:text-[#FFE394] flex items-center gap-1 transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                                          <span className="truncate">{appointment.parentName}</span>
+                                          <ChevronDown className="w-3 h-3 text-slate-300 shrink-0" />
+                                        </div>
+                                        <div className="text-[10px] text-slate-300/80 truncate">
+                                          {clientEmail || "Parent / Client"}
+                                          {clientPhone ? ` · ${clientPhone}` : ""}
+                                        </div>
+                                      </div>
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align="start"
+                                    className="w-56 bg-[#071D40] border border-[#F5B544]/40 text-white shadow-[0_16px_40px_rgba(0,0,0,0.95)] z-50 p-1.5 rounded-xl"
+                                  >
+                                    <DropdownMenuItem
+                                      onClick={handleContactClient}
+                                      className="flex items-center gap-2.5 px-3 py-2 text-xs text-white hover:bg-[#0E2D63] hover:text-[#F5B544] rounded-lg cursor-pointer"
+                                    >
+                                      <PhoneCall className="w-4 h-4 text-[#F5B544] shrink-0" />
+                                      <div className="flex flex-col">
+                                        <span className="font-bold text-[#F5B544]">
+                                          Contact Client
+                                        </span>
+                                        <span className="text-[10px] text-blue-200/75">
+                                          Call, email, or message
+                                        </span>
+                                      </div>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator className="my-1 bg-white/10" />
+                                    <DropdownMenuItem
+                                      onClick={handleViewParentDetails}
+                                      className="flex items-center gap-2.5 px-3 py-2 text-xs text-white hover:bg-[#0E2D63] hover:text-[#F5B544] rounded-lg cursor-pointer"
+                                    >
+                                      <User className="w-4 h-4 text-[#F5B544] shrink-0" />
+                                      <div className="flex flex-col">
+                                        <span className="font-bold text-white">
+                                          View Details
+                                        </span>
+                                        <span className="text-[10px] text-blue-200/75">
+                                          Profile & contact history
+                                        </span>
+                                      </div>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-[#093527]/85 border border-emerald-500/40 text-emerald-300 shrink-0">
+                                  ✓ Confirmed
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── THICK DOSSIER SECTION DIVIDER ── */}
+                  <div className="-mx-4 h-[2.5px] bg-gradient-to-r from-[#D4AF37]/45 via-[#38BDF8]/60 to-[#D4AF37]/45 shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
+
+                  {/* 2. QUICK LINKS (Transparent Dossier Row) */}
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsWorkspacesExpanded((prev) => !prev)}
+                        className="flex items-center gap-1.5 text-left group cursor-pointer select-none min-w-0"
+                      >
+                        <Sparkles className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                        <span className="text-[10.5px] font-bold uppercase tracking-wider text-sky-300 group-hover:text-[#FFE394] truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                          QUICK LINKS
+                        </span>
+                        {isWorkspacesExpanded ? (
+                          <ChevronUp className="w-3.5 h-3.5 text-sky-300" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5 text-sky-300" />
+                        )}
+                      </button>
+
+                      {/* Inline Dossier Action Pills */}
+                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                        {(appointment.meetingType === "IEP Meeting" ||
+                          appointment.meetingType === "504 Meeting") && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              if (resolvedRelationships.studentId) {
+                                setLocation(
+                                  `/meeting-workspace/${resolvedRelationships.studentId}`
+                                );
+                              } else {
+                                setLocation("/meeting-workspace");
+                              }
+                            }}
+                            className="px-2.5 py-0.5 rounded-full bg-[#123159]/85 border border-sky-400/45 hover:border-[#F5B544] text-white hover:text-[#FFE394] text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-all shadow-xs"
+                            title="Open Meeting Space"
+                          >
+                            <span className="text-[#F5B544] font-bold">✓</span>
+                            <span>Meeting Space</span>
+                          </button>
+                        )}
+
+                        {(resolvedRelationships.studentId ||
+                          appointment.studentName ||
+                          appointment.clientId) && (
+                          <button
+                            type="button"
+                            onClick={handleOpenStudentWorkspace}
+                            className="px-2.5 py-0.5 rounded-full bg-[#123159]/85 border border-sky-400/45 hover:border-[#F5B544] text-white hover:text-[#FFE394] text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-all shadow-xs"
+                            title="Open Student Workspace"
+                          >
+                            <span className="text-[#F5B544] font-bold">✓</span>
+                            <span>Workspace</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {isWorkspacesExpanded && (
+                      <div className="grid grid-cols-2 gap-1.5 pt-2 mt-2 border-t-2 border-white/20 animate-in fade-in duration-150">
+                        {resolvedRelationships.isDiscovery &&
+                          resolvedRelationships.leadId && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onClose();
+                                setLocation(
+                                  `/leads/${resolvedRelationships.leadId}/discovery`
+                                );
+                              }}
+                              className="h-7 px-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-[#F5B544]/60 text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+                            >
+                              <CalendarClock className="w-3 h-3 text-[#F5B544]" />
+                              <span className="truncate">Discovery Call</span>
+                            </button>
+                          )}
+
+                        {(appointment.meetingType === "IEP Meeting" ||
+                          appointment.meetingType === "504 Meeting") && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              if (resolvedRelationships.studentId) {
+                                setLocation(
+                                  `/meeting-workspace/${resolvedRelationships.studentId}`
+                                );
+                              } else {
+                                setLocation("/meeting-workspace");
+                              }
+                            }}
+                            className="h-7 px-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-[#F5B544]/60 text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+                          >
+                            <Sparkles className="w-3 h-3 text-[#F5B544]" />
+                            <span className="truncate">Meeting Space</span>
+                          </button>
+                        )}
+
+                        {(resolvedRelationships.studentId ||
+                          appointment.studentName ||
+                          appointment.clientId) && (
+                          <button
+                            type="button"
+                            onClick={handleOpenStudentWorkspace}
+                            className="h-7 px-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-[#F5B544]/60 text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+                          >
+                            <User className="w-3 h-3 text-[#F5B544]" />
+                            <span className="truncate">Student Workspace</span>
+                          </button>
+                        )}
+
+                        {(resolvedRelationships.parentId || appointment.clientId) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              setLocation(
+                                `/contacts/${
+                                  resolvedRelationships.parentId || appointment.clientId
+                                }`
+                              );
+                            }}
+                            className="h-7 px-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-[#F5B544]/60 text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+                          >
+                            <UserCheck className="w-3 h-3 text-[#F5B544]" />
+                            <span className="truncate">Family Profile</span>
+                          </button>
+                        )}
+
+                        {onReschedule && (
+                          <button
+                            type="button"
+                            onClick={() => onReschedule(appointment)}
+                            className="h-7 px-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-[#F5B544]/60 text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+                          >
+                            <ArrowRightLeft className="w-3 h-3 text-[#F5B544]" />
+                            <span className="truncate">Reschedule</span>
+                          </button>
                         )}
                       </div>
                     )}
                   </div>
-                );
-              })()}
 
-              {/* 2. SMALL, COLLAPSED WORKSPACE & MEETING SPACE LINKS */}
-              <div className="relative overflow-hidden p-3 rounded-2xl border border-[#F5B544]/35 bg-gradient-to-b from-[#0E2D63] via-[#091F45] to-[#061530] shadow-[0_12px_32px_rgba(0,0,0,0.75)] hover:border-[#F5B544]/60 transition-all">
-                <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#F5B544]/70 to-transparent" />
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsWorkspacesExpanded((prev) => !prev)}
-                    className="flex items-center gap-2 text-left group cursor-pointer select-none min-w-0"
-                  >
-                    <div className="w-6 h-6 rounded-full border border-[#F5B544]/35 bg-[#030C22] text-[#F5B544] flex items-center justify-center shrink-0 shadow-inner">
-                      {isWorkspacesExpanded ? (
-                        <ChevronDown className="w-3.5 h-3.5 stroke-[2.2]" />
-                      ) : (
-                        <ChevronRight className="w-3.5 h-3.5 stroke-[2.2]" />
-                      )}
-                    </div>
-                    <span className="text-xs font-bold tracking-tight text-white group-hover:text-[#F5B544] truncate">
-                      Workspaces & Quick Links
-                    </span>
-                  </button>
+                  {/* ── THICK DOSSIER SECTION DIVIDER ── */}
+                  <div className="-mx-4 h-[2.5px] bg-gradient-to-r from-[#D4AF37]/45 via-[#38BDF8]/60 to-[#D4AF37]/45 shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
 
-                  {/* Compact Feature Highlight Chips (matching Portal Card style) */}
-                  <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-                    {(appointment.meetingType === "IEP Meeting" ||
-                      appointment.meetingType === "504 Meeting") && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onClose();
-                          if (resolvedRelationships.studentId) {
-                            setLocation(
-                              `/meeting-workspace/${resolvedRelationships.studentId}`
-                            );
-                          } else {
-                            setLocation("/meeting-workspace");
-                          }
-                        }}
-                        className="px-2.5 py-1 rounded-md bg-[#030C22] border border-blue-800/60 hover:border-[#F5B544]/60 text-white text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-all shadow-inner"
-                        title="Open Meeting Space"
-                      >
-                        <span className="text-[#F5B544] font-bold">✓</span>
-                        <span>Meeting Space</span>
-                      </button>
-                    )}
+                  {/* 3. CLIENT PREVIEW (Direct Text Overlay on Leather Dossier) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2 pb-1.5 border-b-2 border-[#38BDF8]/35">
+                      <div className="flex items-center gap-1.5">
+                        <Eye className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
+                        <span className="text-[10.5px] font-bold uppercase tracking-wider text-sky-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                          CLIENT PREVIEW
+                        </span>
+                      </div>
 
-                    {(resolvedRelationships.studentId ||
-                      appointment.studentName ||
-                      appointment.clientId) && (
-                      <button
-                        type="button"
-                        onClick={handleOpenStudentWorkspace}
-                        className="px-2.5 py-1 rounded-md bg-[#030C22] border border-blue-800/60 hover:border-[#F5B544]/60 text-white text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-all shadow-inner"
-                        title="Open Student Workspace"
-                      >
-                        <span className="text-[#F5B544] font-bold">✓</span>
-                        <span>Workspace</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {isWorkspacesExpanded && (
-                  <div className="grid grid-cols-2 gap-2 pt-2.5 mt-2.5 border-t border-white/10 animate-in fade-in duration-150">
-                    {resolvedRelationships.isDiscovery &&
-                      resolvedRelationships.leadId && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            onClose();
-                            setLocation(
-                              `/leads/${resolvedRelationships.leadId}/discovery`
-                            );
-                          }}
-                          className="h-8 text-[11px] font-semibold border-blue-800/60 bg-[#030C22] text-white hover:border-[#F5B544]/60 hover:bg-[#071636] justify-start gap-1.5 px-2.5"
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-[9px] font-mono font-extrabold uppercase tracking-wider px-2 py-0.2 rounded-full border ${
+                            clientFacingView.isLinkReady
+                              ? "bg-[#093527]/85 border-emerald-500/40 text-emerald-300"
+                              : "bg-[#F5B544]/15 border-[#F5B544]/40 text-[#FFE394]"
+                          }`}
                         >
-                          <CalendarClock className="w-3.5 h-3.5 text-[#F5B544]" />
-                          <span className="truncate">Discovery Call</span>
-                        </Button>
+                          {clientFacingView.isLinkReady ? "LINK READY" : "AWAITING LINK"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditing(true)}
+                          className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#38BDF8] hover:text-[#FFE394] transition-colors cursor-pointer"
+                        >
+                          <Edit className="w-2.5 h-2.5" />
+                          <span>Customize</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Direct Overlay Content with Thick Gold Left Rule */}
+                    <div className="pl-3 border-l-[3px] border-[#F5B544] space-y-1.5 py-0.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {clientFacingView.isLinkReady ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          ) : (
+                            <Clock className="w-3.5 h-3.5 text-[#F5B544] shrink-0" />
+                          )}
+                          <span
+                            className={`text-xs font-bold truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] ${
+                              clientFacingView.isLinkReady
+                                ? "text-emerald-300"
+                                : "text-[#FFE394]"
+                            }`}
+                          >
+                            {clientFacingView.headline}
+                          </span>
+                        </div>
+
+                        {clientFacingView.isLinkReady && clientFacingView.normalizedLink && (
+                          <a
+                            href={clientFacingView.normalizedLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="h-6 px-2.5 rounded-md bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-extrabold text-[10px] flex items-center justify-center gap-1 shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition-all cursor-pointer shrink-0"
+                          >
+                            <span>Join Meeting</span>
+                            <ChevronRight className="w-3 h-3 stroke-[2.5]" />
+                          </a>
+                        )}
+                      </div>
+
+                      <p className="text-[11px] text-white/95 leading-snug whitespace-pre-wrap break-words drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                        {clientFacingView.supportingMessage}
+                      </p>
+
+                      {clientFacingView.additionalDirections && (
+                        <div className="pt-1.5 border-t-2 border-white/20 text-[11px] text-[#FFE394] leading-snug whitespace-pre-wrap break-words">
+                          <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-sky-300 mr-1.5">
+                            Directions:
+                          </span>
+                          {clientFacingView.additionalDirections}
+                        </div>
                       )}
-
-                    {(appointment.meetingType === "IEP Meeting" ||
-                      appointment.meetingType === "504 Meeting") && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          onClose();
-                          if (resolvedRelationships.studentId) {
-                            setLocation(
-                              `/meeting-workspace/${resolvedRelationships.studentId}`
-                            );
-                          } else {
-                            setLocation("/meeting-workspace");
-                          }
-                        }}
-                        className="h-8 text-[11px] font-semibold border-blue-800/60 bg-[#030C22] text-white hover:border-[#F5B544]/60 hover:bg-[#071636] justify-start gap-1.5 px-2.5"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-[#F5B544]" />
-                        <span className="truncate">Meeting Space</span>
-                      </Button>
-                    )}
-
-                    {(resolvedRelationships.studentId ||
-                      appointment.studentName ||
-                      appointment.clientId) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleOpenStudentWorkspace}
-                        className="h-8 text-[11px] font-semibold border-blue-800/60 bg-[#030C22] text-white hover:border-[#F5B544]/60 hover:bg-[#071636] justify-start gap-1.5 px-2.5"
-                      >
-                        <User className="w-3.5 h-3.5 text-[#F5B544]" />
-                        <span className="truncate">Student Workspace</span>
-                      </Button>
-                    )}
-
-                    {(resolvedRelationships.parentId || appointment.clientId) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          onClose();
-                          setLocation(
-                            `/contacts/${
-                              resolvedRelationships.parentId || appointment.clientId
-                            }`
-                          );
-                        }}
-                        className="h-8 text-[11px] font-semibold border-blue-800/60 bg-[#030C22] text-white hover:border-[#F5B544]/60 hover:bg-[#071636] justify-start gap-1.5 px-2.5"
-                      >
-                        <UserCheck className="w-3.5 h-3.5 text-[#F5B544]" />
-                        <span className="truncate">Family Profile</span>
-                      </Button>
-                    )}
-
-                    {onReschedule && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onReschedule(appointment)}
-                        className="h-8 text-[11px] font-semibold border-blue-800/60 bg-[#030C22] text-white hover:border-[#F5B544]/60 hover:bg-[#071636] justify-start gap-1.5 px-2.5"
-                      >
-                        <ArrowRightLeft className="w-3.5 h-3.5 text-[#F5B544]" />
-                        <span className="truncate">Reschedule</span>
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* 3. CLIENT PREVIEW & APPOINTMENT-SPECIFIC CLIENT MESSAGE */}
-              <div className="relative overflow-hidden p-3.5 sm:p-4 rounded-2xl border border-[#F5B544]/40 bg-gradient-to-b from-[#0E2D63] via-[#091F45] to-[#061530] shadow-[0_12px_32px_rgba(0,0,0,0.75)] hover:border-[#F5B544]/65 transition-all space-y-3">
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#F5B544]/75 to-transparent" />
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full border border-[#F5B544]/35 bg-[#030C22] text-[#F5B544] flex items-center justify-center shrink-0 shadow-inner">
-                      <Eye className="w-3.5 h-3.5 stroke-[2]" />
                     </div>
-                    <span className="text-xs sm:text-sm font-bold tracking-tight text-white">
-                      Client Preview
-                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-[9px] font-mono font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                        clientFacingView.isLinkReady
-                          ? "bg-emerald-950/70 border-emerald-400/50 text-emerald-300"
-                          : "bg-[#F5B544]/10 border-[#F5B544]/30 text-[#F5B544]"
-                      }`}
-                    >
-                      {clientFacingView.isLinkReady ? "LINK READY" : "AWAITING LINK"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(true)}
-                      className="text-[11px] font-bold text-[#F5B544] hover:text-[#FFE394] hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <Edit className="w-3 h-3" />
-                      <span>Customize</span>
-                    </button>
-                  </div>
-                </div>
+                  {/* 4. MULTI-ZONE SCHEDULE ALIGNMENT (Direct Overlay on Leather) */}
+                  {dualTime && dualTime.clientTime.isDifferent && (
+                    <>
+                      <div className="-mx-4 h-[2.5px] bg-gradient-to-r from-[#D4AF37]/45 via-[#38BDF8]/60 to-[#D4AF37]/45 shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10.5px] font-bold uppercase tracking-wider text-sky-300 flex items-center gap-1.5">
+                            <Globe className="h-3.5 w-3.5 text-[#38BDF8]" />
+                            <span>MULTI-ZONE ALIGNMENT</span>
+                          </span>
+                          <span className="text-[9px] font-semibold text-rose-300 bg-rose-950/60 border border-rose-500/40 px-2 py-0.2 rounded-full">
+                            {dualTime.clientTime.friendlyName} vs Eastern
+                          </span>
+                        </div>
 
-                {/* Exact Client-Facing Card Preview */}
-                <div className="p-3.5 rounded-xl bg-[#030C22] border border-blue-900/60 space-y-2.5 shadow-inner">
-                  <div className="flex items-center gap-2">
-                    {clientFacingView.isLinkReady ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <Clock className="w-4 h-4 text-[#F5B544] shrink-0" />
-                    )}
-                    <span
-                      className={`text-xs sm:text-sm font-bold ${
-                        clientFacingView.isLinkReady
-                          ? "text-emerald-300"
-                          : "text-white"
-                      }`}
-                    >
-                      {clientFacingView.headline}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-blue-100/85 leading-relaxed whitespace-pre-wrap break-words">
-                    {clientFacingView.supportingMessage}
-                  </p>
-
-                  {clientFacingView.additionalDirections && (
-                    <div className="p-2.5 rounded-lg bg-[#0A1F44] border border-blue-700/60 text-xs text-white leading-relaxed whitespace-pre-wrap break-words">
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#F5B544] block mb-1">
-                        Client Directions
-                      </span>
-                      {clientFacingView.additionalDirections}
-                    </div>
+                        <div className="grid grid-cols-2 gap-2 pt-0.5">
+                          <div className="pl-2.5 border-l-[3px] border-rose-400">
+                            <div className="flex items-center justify-between text-[9px] text-rose-300 font-semibold">
+                              <span>Client Time</span>
+                              <span className="font-mono">{dualTime.clientTime.tzAbbr}</span>
+                            </div>
+                            <p className="text-[11px] font-bold text-white font-mono">
+                              {dualTime.clientTime.timeRange}
+                            </p>
+                          </div>
+                          <div className="pl-2.5 border-l-[3px] border-emerald-400">
+                            <div className="flex items-center justify-between text-[9px] text-emerald-300 font-semibold">
+                              <span>Waypoint Time</span>
+                              <span className="font-mono">{dualTime.waypointTime.tzAbbr}</span>
+                            </div>
+                            <p className="text-[11px] font-bold text-white font-mono">
+                              {dualTime.waypointTime.timeRange}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   )}
 
-                  <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
-                    <span className="text-[10px] text-blue-200/70 flex items-center gap-1 font-mono">
-                      <Video className="w-3 h-3 text-[#F5B544]" />
-                      {clientFacingView.isLinkReady ? "Virtual Room Active" : "Link Status"}
-                    </span>
+                  {/* 5. PHYSICAL LOCATION (Direct Overlay Row) */}
+                  {appointment.location && (
+                    <>
+                      <div className="-mx-4 h-[2.5px] bg-gradient-to-r from-[#D4AF37]/45 via-[#38BDF8]/60 to-[#D4AF37]/45 shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
+                          <MapPin className="w-3.5 h-3.5 text-[#38BDF8]" />
+                          <span>Location:</span>
+                        </div>
+                        <span className="font-bold text-white truncate text-right drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                          {appointment.location}
+                        </span>
+                      </div>
+                    </>
+                  )}
 
-                    {clientFacingView.isLinkReady && clientFacingView.normalizedLink ? (
-                      <a
-                        href={clientFacingView.normalizedLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="h-8 px-3.5 rounded-lg bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                      >
-                        <span>Join Meeting</span>
-                        <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
-                      </a>
+                  {/* ── THICK DOSSIER SECTION DIVIDER ── */}
+                  <div className="-mx-4 h-[2.5px] bg-gradient-to-r from-[#D4AF37]/45 via-[#38BDF8]/60 to-[#D4AF37]/45 shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
+
+                  {/* 6. INTERNAL ADVOCATE NOTES (Direct Text Overlay on Leather Dossier) */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2 pb-1.5 border-b-2 border-[#38BDF8]/35">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Lock className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
+                        <span className="text-[10.5px] font-bold uppercase tracking-wider text-sky-300 truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                          INTERNAL ADVOCATE NOTES
+                        </span>
+                        <span className="text-[8.5px] font-mono font-extrabold uppercase tracking-wider text-[#FFE394] bg-[#F5B544]/15 px-1.5 py-0.2 rounded-full border border-[#F5B544]/40 shrink-0">
+                          PRIVATE
+                        </span>
+                      </div>
+
+                      {!isAddingNote && (
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingNote(true)}
+                          className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#38BDF8] hover:text-[#FFE394] shrink-0 cursor-pointer transition-colors"
+                        >
+                          <Plus className="w-2.5 h-2.5" />
+                          <span>
+                            {parsedContent.internalNotes ? "Edit Notes" : "Add Note"}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+
+                    {isAddingNote ? (
+                      <div className="space-y-2 pt-1 animate-in fade-in duration-150">
+                        <VoiceTextarea
+                          value={quickNoteText}
+                          onChange={(e) => setQuickNoteText(e.target.value)}
+                          placeholder="Add confidential internal advocate notes, prep items, or follow-up tasks (never visible to client)..."
+                          rows={2}
+                          className="text-xs bg-[#020A17]/85 border-[#D4AF37]/40 text-white placeholder:text-slate-400 rounded-lg focus:border-[#F5B544]"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            onClick={handleSaveQuickNote}
+                            disabled={isSaving}
+                            className="h-7 px-3 text-xs font-bold bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] rounded-lg"
+                          >
+                            <Save className="w-3 h-3 mr-1" />
+                            <span>Save Note</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setIsAddingNote(false)}
+                            className="h-7 text-xs border-white/20 bg-transparent text-white hover:bg-white/10 rounded-lg"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : parsedContent.internalNotes ? (
+                      <div className="text-[11px] text-white/95 pl-3 border-l-[3px] border-[#38BDF8] leading-snug whitespace-pre-wrap break-words drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                        {renderFormattedDescription(parsedContent.internalNotes)}
+                      </div>
                     ) : (
-                      <span className="text-[10px] font-mono text-[#F5B544] bg-[#F5B544]/10 border border-[#F5B544]/25 px-2.5 py-1 rounded-md">
-                        Activates once link saved
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingNote(true)}
+                        className="w-full text-left py-1 text-[11px] text-slate-300/75 hover:text-[#FFE394] italic cursor-pointer transition-colors"
+                      >
+                        + Add private advocate note...
+                      </button>
                     )}
-                  </div>
-                </div>
-              </div>
-
-              {/* 4. MULTI-ZONE SCHEDULE ALIGNMENT (Compact) */}
-              {dualTime && dualTime.clientTime.isDifferent && (
-                <div className="relative overflow-hidden rounded-2xl border border-[#F5B544]/35 bg-gradient-to-b from-[#0E2D63] via-[#091F45] to-[#061530] p-3.5 space-y-2.5 shadow-[0_12px_32px_rgba(0,0,0,0.75)]">
-                  <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#F5B544]/70 to-transparent" />
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <Globe className="h-3.5 w-3.5 text-[#F5B544]" /> Multi-Zone Alignment
-                    </span>
-                    <span className="text-[10px] font-semibold text-rose-300 bg-rose-950/60 border border-rose-500/40 px-2 py-0.5 rounded-full">
-                      {dualTime.clientTime.friendlyName} vs Eastern
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-xl border border-rose-500/50 bg-[#030C22] p-2.5">
-                      <div className="flex items-center justify-between text-[10px] text-rose-300 font-semibold">
-                        <span>Client Time</span>
-                        <span className="font-mono">{dualTime.clientTime.tzAbbr}</span>
-                      </div>
-                      <p className="text-xs font-bold text-rose-100 font-mono mt-0.5">
-                        {dualTime.clientTime.timeRange}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-emerald-500/50 bg-[#030C22] p-2.5">
-                      <div className="flex items-center justify-between text-[10px] text-emerald-300 font-semibold">
-                        <span>Waypoint Time</span>
-                        <span className="font-mono">{dualTime.waypointTime.tzAbbr}</span>
-                      </div>
-                      <p className="text-xs font-bold text-emerald-100 font-mono mt-0.5">
-                        {dualTime.waypointTime.timeRange}
-                      </p>
-                    </div>
                   </div>
                 </div>
               )}
-
-              {/* 5. PHYSICAL LOCATION */}
-              {appointment.location && (
-                <div className="relative overflow-hidden p-3 rounded-2xl border border-[#F5B544]/35 bg-gradient-to-b from-[#0E2D63] via-[#091F45] to-[#061530] flex items-center gap-2.5 shadow-[0_12px_32px_rgba(0,0,0,0.75)]">
-                  <div className="w-7 h-7 rounded-full border border-[#F5B544]/35 bg-[#030C22] text-[#F5B544] flex items-center justify-center shrink-0">
-                    <MapPin className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="text-xs min-w-0">
-                    <span className="text-blue-200/75 block text-[10px] uppercase font-mono">
-                      Location
-                    </span>
-                    <span className="text-white font-bold break-words">
-                      {appointment.location}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* 6. PRIVATE INTERNAL ADVOCATE NOTES & LOG */}
-              <div className="relative overflow-hidden p-3.5 sm:p-4 rounded-2xl border border-[#F5B544]/35 bg-gradient-to-b from-[#0E2D63] via-[#091F45] to-[#061530] space-y-2.5 shadow-[0_12px_32px_rgba(0,0,0,0.75)] hover:border-[#F5B544]/60 transition-all">
-                <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#F5B544]/70 to-transparent" />
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-full border border-[#F5B544]/35 bg-[#030C22] text-[#F5B544] flex items-center justify-center shrink-0 shadow-inner">
-                      <Lock className="w-3.5 h-3.5 stroke-[2]" />
-                    </div>
-                    <span className="text-xs sm:text-sm font-bold tracking-tight text-white truncate">
-                      Internal Advocate Notes
-                    </span>
-                    <span className="text-[9px] font-mono font-extrabold uppercase tracking-wider text-[#F5B544] bg-[#F5B544]/10 px-2 py-0.5 rounded-full border border-[#F5B544]/30 shrink-0">
-                      PRIVATE
-                    </span>
-                  </div>
-
-                  {!isAddingNote && (
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingNote(true)}
-                      className="text-xs font-bold text-[#F5B544] hover:text-[#FFE394] hover:underline flex items-center gap-1 shrink-0 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>
-                        {parsedContent.internalNotes ? "Edit Notes" : "Add Note"}
-                      </span>
-                    </button>
-                  )}
-                </div>
-
-                {isAddingNote ? (
-                  <div className="space-y-2.5 pt-1 animate-in fade-in duration-150">
-                    <VoiceTextarea
-                      value={quickNoteText}
-                      onChange={(e) => setQuickNoteText(e.target.value)}
-                      placeholder="Add confidential internal advocate notes, prep items, or follow-up tasks (never visible to client)..."
-                      rows={3}
-                      className="text-xs bg-[#030C22] border-blue-700/70 text-white placeholder:text-blue-200/50 rounded-xl shadow-inner focus:border-[#F5B544]"
-                    />
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        onClick={handleSaveQuickNote}
-                        disabled={isSaving}
-                        className="h-8 px-3.5 text-xs font-bold bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] rounded-lg"
-                      >
-                        <Save className="w-3.5 h-3.5 mr-1" />
-                        <span>Save Private Note</span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setIsAddingNote(false)}
-                        className="h-8 text-xs border-blue-800/60 bg-[#030C22] text-white hover:bg-[#0E2D63] rounded-lg"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : parsedContent.internalNotes ? (
-                  <div className="text-xs text-blue-100/90 bg-[#030C22] p-3 rounded-xl border border-blue-900/60 shadow-inner leading-relaxed whitespace-pre-wrap break-words">
-                    {renderFormattedDescription(parsedContent.internalNotes)}
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => setIsAddingNote(true)}
-                    className="p-2.5 rounded-xl bg-[#030C22] border border-dashed border-blue-800/60 hover:border-[#F5B544]/50 text-xs text-blue-200/70 italic cursor-pointer transition-colors"
-                  >
-                    Click to add private internal advocate notes...
-                  </div>
-                )}
-              </div>
-
-              {/* 7. QUICK STATUS UPDATER */}
-              <div className="relative overflow-hidden p-3 sm:p-3.5 rounded-2xl border border-[#F5B544]/35 bg-gradient-to-b from-[#0E2D63] via-[#091F45] to-[#061530] flex items-center justify-between gap-3 shadow-[0_12px_32px_rgba(0,0,0,0.75)]">
-                <span className="text-xs font-bold text-white shrink-0">
-                  Appointment Status:
-                </span>
-                <Select
-                  value={appointment.status}
-                  onValueChange={(val) => {
-                    if (onStatusChange) {
-                      onStatusChange(appointment.id, val);
-                    }
-                  }}
-                >
-                  <SelectTrigger className="h-8 text-xs max-w-[160px] bg-[#030C22] border-blue-800/70 text-white font-semibold shadow-inner">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#071D40] border-[#F5B544]/40 text-white">
-                    <SelectItem value="Scheduled">Scheduled</SelectItem>
-                    <SelectItem value="Confirmed">Confirmed</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
-                    <SelectItem value="Needs Coverage">🚨 Needs Coverage</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
