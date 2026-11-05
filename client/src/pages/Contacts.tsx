@@ -329,19 +329,6 @@ export default function Contacts() {
                 )}
               </div>
 
-              {/* Quick Add Sample Pair Button */}
-              <Button
-                type="button"
-                onClick={() => createSamplePairMutation.mutate({})}
-                disabled={createSamplePairMutation.isPending}
-                size="sm"
-                className="h-10 sm:h-11 px-3 sm:px-3.5 rounded-xl text-xs sm:text-sm font-serif font-semibold gap-1.5 cursor-pointer bg-gradient-to-b from-[#142640] via-[#0C1A2E] to-[#071322] text-[#F5DC9F] border border-[#C5A059]/60 shadow-[0_2px_8px_rgba(0,0,0,0.7)] hover:border-[#FFE29A] hover:bg-[#1A3152] transition-all shrink-0"
-                title="Quickly create a realistic sample student & parent pair"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#F3C876] shrink-0" />
-                <span>{createSamplePairMutation.isPending ? "Adding..." : "Add Sample Pair"}</span>
-              </Button>
-
               {/* Import Contacts Button (.csv, .vcf, .xlsx) */}
               <Button
                 type="button"
@@ -369,20 +356,39 @@ export default function Contacts() {
         {/* Contact Create / Edit Dialog Modal */}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden bg-[#0A1729] border border-[#B88943]/50 text-[#F0DFC5] rounded-2xl shadow-2xl">
-            <div className="p-4 sm:p-5 pb-3 border-b border-[#B88943]/25 shrink-0 flex items-center justify-between gap-2 bg-[#091526]">
+            <div className="p-4 sm:p-5 pb-3 border-b border-[#B88943]/25 shrink-0 flex flex-wrap items-center justify-between gap-2 bg-[#091526]">
               <DialogTitle className="font-serif text-lg font-bold text-white">
                 {editingId ? "Edit Contact" : "Add New Contact"}
               </DialogTitle>
               {!editingId && (
-                <button
-                  type="button"
-                  onClick={handleFillSample}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-serif font-bold bg-[#E9BA6B]/15 text-[#FCE09E] border border-[#E9BA6B]/40 hover:bg-[#E9BA6B]/25 transition-all cursor-pointer shadow-xs"
-                  title="Autofill realistic sample contact data"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#FCE09E]" />
-                  <span>Fill Sample</span>
-                </button>
+                <div className="flex items-center gap-1.5 pr-6">
+                  <button
+                    type="button"
+                    disabled={createSamplePairMutation.isPending}
+                    onClick={() => {
+                      createSamplePairMutation.mutate(
+                        {},
+                        {
+                          onSuccess: () => setOpen(false),
+                        }
+                      );
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-serif font-bold bg-gradient-to-b from-[#142640] via-[#0C1A2E] to-[#071322] text-[#F5DC9F] border border-[#C5A059]/60 hover:border-[#FFE29A] hover:bg-[#1A3152] transition-all cursor-pointer shadow-xs"
+                    title="Quickly create a realistic sample student & parent pair"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#F3C876]" />
+                    <span>{createSamplePairMutation.isPending ? "Adding..." : "Add Sample Pair"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleFillSample}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-serif font-bold bg-[#E9BA6B]/15 text-[#FCE09E] border border-[#E9BA6B]/40 hover:bg-[#E9BA6B]/25 transition-all cursor-pointer shadow-xs"
+                    title="Autofill realistic sample contact data"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#FCE09E]" />
+                    <span>Fill Form</span>
+                  </button>
+                </div>
               )}
             </div>
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 min-h-0">

@@ -5,7 +5,20 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, PhoneCall, ChevronUp } from "lucide-react";
+import {
+  Sparkles,
+  PhoneCall,
+  ChevronUp,
+  Phone,
+  PhoneMissed,
+  Voicemail,
+  CalendarCheck,
+  AlertCircle,
+  MessageSquare,
+  Check,
+  X,
+  UserPlus,
+} from "lucide-react";
 import { useActiveCall } from "@/contexts/ActiveCallContext";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -23,7 +36,11 @@ import {
   ContactItem,
 } from "@/components/callCenter/ContactLookupSection";
 import { MiniFirstMatePanel } from "@/components/callCenter/MiniFirstMatePanel";
-import { BottomOperationalDeck } from "@/components/callCenter/BottomOperationalDeck";
+import {
+  BottomOperationalDeck,
+  NeedsAttentionItem,
+  ScheduleCallItem,
+} from "@/components/callCenter/BottomOperationalDeck";
 import { OpenQuoPhoneModal } from "@/components/callCenter/OpenQuoPhoneModal";
 import { AddNewContactModal } from "@/components/callCenter/AddNewContactModal";
 import { SimulatedCallCard } from "@/components/callCenter/SimulatedCallCard";
@@ -134,19 +151,185 @@ export default function UnassignedCallLogs() {
     return list;
   }, [contactsData, leadsData]);
 
-  // Derived Counts for Stats & Work Queues
-  const missedCount = useMemo(() => {
-    return logs.filter((l: any) => l.isMissed || l.status === "missed").length || 2;
+  // Mark Callback / Follow-Up Handled Mutation
+  const updateCallbackMutation = trpc.callLogs.updateCallbackStatus.useMutation({
+    onSuccess: () => {
+      toast.success("Marked call follow-up as handled");
+      utils.callLogs.listAll.invalidate();
+    },
+    onError: (err) => toast.error(`Failed to update status: ${err.message}`),
+  });
+
+  const isBool = (v: unknown): boolean =>
+    v === true || v === 1 || v === "1" || v === "true";
+
+  const normalizeDigits = (raw?: string | null): string =>
+    String(raw || "").replace(/\D/g, "").slice(-10);
+
+  // Match any phone number to a known CRM Contact or Lead
+  const resolveCallerName = useMemo(() => {
+    const map = new Map<string, string>();
+    quickSearchContacts.forEach((c) => {
+      const d = normalizeDigits(c.phone);
+      if (d.length >= 7 && !map.has(d)) {
+        map.set(d, c.name);
+      }
+    });
+    return (phone?: string | null, direction?: string, toNum?: string | null): string => {
+      const targetPhone =
+        direction === "outgoing" || direction === "outbound" ? toNum || phone : phone;
+      const d = normalizeDigits(targetPhone);
+      if (d && map.has(d)) {
+        return map.get(d)!;
+      }
+      return targetPhone || "Quo Caller";
+    };
+  }, [quickSearchContacts]);
+
+  const formatShortTime = (dateInput?: string | Date) => {
+    if (!dateInput) return "";
+    try {
+      const d = new Date(dateInput);
+      const now = new Date();
+      const isToday = d.toDateString() === now.toDateString();
+      if (isToday) {
+        return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+      }
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    } catch {
+      return String(dateInput);
+    }
+  };
+
+  // Real Quo Voice Call Logs (excluding SMS message events)
+  const voiceCallLogs = useMemo(() => {
+    return logs.filter(
+      (l: any) => !(l.eventType || "").startsWith("message.") && !l.smsBody
+    );
   }, [logs]);
 
-  const voicemailCount = useMemo(() => {
-    return logs.filter((l: any) => l.isVoicemail).length || 1;
+  // Real Quo Calls from Today
+  const callsTodayLogs = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    return voiceCallLogs.filter((l: any) => {
+      try {
+        return new Date(l.createdAt).toDateString() === todayStr;
+      } catch {
+        return false;
+      }
+    });
+  }, [voiceCallLogs]);
+
+  // Real Quo Missed Calls
+  const missedCallLogs = useMemo(() => {
+    return logs.filter(
+      (l: any) =>
+        (l.eventType === "call.missed" || isBool(l.isMissed)) &&
+        l.callbackStatus !== "completed" &&
+        l.callbackStatus !== "dismissed"
+    );
   }, [logs]);
 
-  const callbacksCount = 2;
-  const callsTodayCount = Math.max(logs.length, 6);
-  const scheduledCount = Math.max(appointmentsData.length, 4);
-  const leadsCount = Math.max(leadsData.length, 3);
+  // Real Quo Voicemails
+  const voicemailLogs = useMemo(() => {
+    return logs
+      .filter((l: any) => isBool(l.isVoicemail))
+      .map((l: any) => ({
+        ...l,
+        callerDisplayName: resolveCallerName(l.fromNumber, l.direction, l.toNumber),
+      }));
+  }, [logs, resolveCallerName]);
+
+  // Real Needs Attention Queue (Missed Calls, Voicemails, and Unassigned Inbound Calls/SMS)
+  const needsAttentionItems: NeedsAttentionItem[] = useMemo(() => {
+    const items: NeedsAttentionItem[] = [];
+    for (const l of logs as any[]) {
+      if (l.callbackStatus === "completed" || l.callbackStatus === "dismissed") continue;
+      const isVm = isBool(l.isVoicemail);
+      const isMissed = l.eventType === "call.missed" || isBool(l.isMissed);
+      const isInboundSms = l.eventType === "message.received" && l.status === "unassigned";
+      const isUnassignedInboundCall =
+        !isVm &&
+        !isMissed &&
+        !(l.eventType || "").startsWith("message.") &&
+        l.status === "unassigned" &&
+        (l.direction === "incoming" || l.direction === "inbound");
+
+      if (!isVm && !isMissed && !isInboundSms && !isUnassignedInboundCall) continue;
+
+      const phone =
+        l.direction === "outgoing" || l.direction === "outbound"
+          ? l.toNumber || l.fromNumber
+          : l.fromNumber || l.toNumber;
+      const callerName = resolveCallerName(l.fromNumber, l.direction, l.toNumber);
+
+      items.push({
+        id: l.id,
+        name: callerName,
+        phone: phone || "",
+        reason: isVm
+          ? "Voicemail"
+          : isMissed
+          ? "Missed call"
+          : isInboundSms
+          ? `SMS: "${String(l.smsBody || "").slice(0, 28)}"`
+          : "Unassigned call",
+        time: formatShortTime(l.createdAt),
+        type: isVm ? "voicemail" : isMissed ? "missed" : isInboundSms ? "sms" : "call",
+        rawLog: l,
+      });
+    }
+    return items;
+  }, [logs, resolveCallerName]);
+
+  // Real Scheduled Calls / Appointments from Calendar
+  const scheduleItems: ScheduleCallItem[] = useMemo(() => {
+    if (!Array.isArray(appointmentsData) || appointmentsData.length === 0) return [];
+    return appointmentsData.slice(0, 12).map((apt: any) => {
+      const startTime = apt.startTime || apt.date || apt.scheduledAt;
+      let formattedTime = "Scheduled";
+      if (startTime) {
+        try {
+          formattedTime = new Date(startTime).toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          });
+        } catch {}
+      }
+      const contactName =
+        apt.clientName || apt.studentName || apt.contactName || apt.attendeeName || "Scheduled Client";
+      const matchedContact = quickSearchContacts.find(
+        (c) => c.name.toLowerCase() === String(contactName).toLowerCase()
+      );
+      return {
+        id: apt.id,
+        time: formattedTime,
+        title: apt.title || apt.sessionType || "Consultation Call",
+        contact: contactName,
+        phone: apt.clientPhone || apt.phone || matchedContact?.phone || null,
+        completed: apt.status === "completed" || apt.status === "Completed",
+      };
+    });
+  }, [appointmentsData, quickSearchContacts]);
+
+  // Derived Real Counts for the 5 Top Number Blocks
+  const callsBlockCount =
+    callsTodayLogs.length > 0 ? callsTodayLogs.length : voiceCallLogs.length;
+  const callsBlockLabel =
+    callsTodayLogs.length > 0 ? "Calls Today" : "Quo Calls";
+  const missedCount = missedCallLogs.length;
+  const voicemailCount = voicemailLogs.length;
+  const callbacksCount = missedCallLogs.length;
+  const callsTodayCount = callsBlockCount;
+  const scheduledCount = scheduleItems.length;
+  const needsAttentionCount = needsAttentionItems.length;
 
   // Auto-connect from Lead Center / Contact records via URL parameters
   const [urlParamsHandled, setUrlParamsHandled] = useState(false);
@@ -395,20 +578,277 @@ export default function UnassignedCallLogs() {
           {/* Top Metric & Statistics Boxes (safely centered, not going under leaves) */}
           <CallCenterStats
             callsTodayCount={callsTodayCount}
+            callsLabel={callsBlockLabel}
             missedCallsCount={missedCount}
             callbacksCount={callbacksCount}
             voicemailCount={voicemailCount}
             scheduledCallsCount={scheduledCount}
-            needsAttentionCount={3}
+            needsAttentionCount={needsAttentionCount}
             contactsCount={formattedContacts.length}
             activeFilter={activeStatFilter}
             onSelectStat={(key) => {
               setActiveStatFilter(key);
-              toast.info(`Filtered view for: ${key}`);
+              if (key === "needs-attention") {
+                handleScrollToNeedsAttention();
+              }
             }}
             onScrollToNeedsAttention={handleScrollToNeedsAttention}
             onScrollToContactList={handleScrollToContactList}
           />
+
+          {/* Interactive Selected Number Block Live Drawer */}
+          {activeStatFilter !== "all" && (
+            <div className="bg-[#05142B]/95 border border-[#C5A059]/70 rounded-2xl p-4 shadow-[0_8px_24px_rgba(0,0,0,0.9),0_0_16px_rgba(197,160,89,0.2)] animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-[#3A2C18]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-[#020A17] border border-[#C5A059]/50 flex items-center justify-center text-[#FFE394]">
+                    {activeStatFilter === "calls" ? (
+                      <Phone className="h-3.5 w-3.5" />
+                    ) : activeStatFilter === "missed" ? (
+                      <PhoneMissed className="h-3.5 w-3.5 text-rose-400" />
+                    ) : activeStatFilter === "voicemails" ? (
+                      <Voicemail className="h-3.5 w-3.5 text-[#FFE394]" />
+                    ) : activeStatFilter === "scheduled" ? (
+                      <CalendarCheck className="h-3.5 w-3.5 text-[#C5A059]" />
+                    ) : (
+                      <AlertCircle className="h-3.5 w-3.5 text-rose-400" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-serif font-bold text-[#FFF4D4]">
+                      {activeStatFilter === "calls"
+                        ? `${callsBlockLabel} (${callsTodayCount})`
+                        : activeStatFilter === "missed"
+                        ? `Missed Quo Calls (${missedCount})`
+                        : activeStatFilter === "voicemails"
+                        ? `Quo Voicemails (${voicemailCount})`
+                        : activeStatFilter === "scheduled"
+                        ? `Scheduled Calls (${scheduledCount})`
+                        : `Needs Attention Queue (${needsAttentionCount})`}
+                    </h3>
+                    <p className="text-[11px] text-[#C6B697]">
+                      Click any record below to call back in Quo, send an SMS, or load into the Call Workspace.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {activeStatFilter !== "scheduled" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const el = document.getElementById("live-quo-feed-section");
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                      className="h-7 px-2.5 text-[11px] border-[#3A2C18] bg-[#020A17] text-[#FFE394] hover:bg-[#07162B] rounded-lg cursor-pointer"
+                    >
+                      Jump to Full Feed
+                    </Button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setActiveStatFilter("all")}
+                    className="p-1.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#C6B697] hover:text-white cursor-pointer"
+                    title="Close filtered block view"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Drawer Body */}
+              <div className="mt-3 max-h-[260px] overflow-y-auto divide-y divide-[#3A2C18]/60 pr-1">
+                {activeStatFilter === "scheduled" ? (
+                  scheduleItems.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-[#C6B697]">
+                      No scheduled calls found on your calendar.
+                    </div>
+                  ) : (
+                    scheduleItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="py-2.5 px-2 flex items-center justify-between gap-3 hover:bg-[#020A17]/60 rounded-lg"
+                      >
+                        <div>
+                          <div className="text-xs font-serif font-bold text-[#FFF4D4]">
+                            {item.title} — {item.contact}
+                          </div>
+                          <div className="text-[11px] text-[#C6B697]">
+                            {item.time} {item.phone ? `• ${item.phone}` : ""}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {item.phone && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleDirectCallPhone(item.phone!, item.contact)}
+                              className="h-7 px-2.5 text-[11px] font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] rounded-lg cursor-pointer"
+                            >
+                              Call in Quo
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setLocation("/calendar")}
+                            className="h-7 px-2.5 text-[11px] border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] rounded-lg cursor-pointer"
+                          >
+                            Calendar
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )
+                ) : (
+                  (() => {
+                    const list =
+                      activeStatFilter === "calls"
+                        ? callsTodayLogs.length > 0
+                          ? callsTodayLogs
+                          : voiceCallLogs
+                        : activeStatFilter === "missed"
+                        ? missedCallLogs
+                        : activeStatFilter === "voicemails"
+                        ? voicemailLogs
+                        : needsAttentionItems.map((n) => n.rawLog).filter(Boolean);
+
+                    if (list.length === 0) {
+                      return (
+                        <div className="py-6 text-center text-xs text-[#C6B697]">
+                          No Quo records currently in this queue.
+                        </div>
+                      );
+                    }
+
+                    return list.slice(0, 12).map((log: any) => {
+                      const phone =
+                        log.direction === "outgoing" || log.direction === "outbound"
+                          ? log.toNumber || log.fromNumber
+                          : log.fromNumber || log.toNumber;
+                      const callerName = resolveCallerName(
+                        log.fromNumber,
+                        log.direction,
+                        log.toNumber
+                      );
+                      const isVm = isBool(log.isVoicemail);
+                      const isMissed =
+                        log.eventType === "call.missed" || isBool(log.isMissed);
+
+                      return (
+                        <div
+                          key={log.id}
+                          className="py-2.5 px-2 flex items-center justify-between gap-3 hover:bg-[#020A17]/60 rounded-lg"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-serif font-bold text-[#FFF4D4]">
+                                {callerName}
+                              </span>
+                              <span className="text-[11px] font-mono text-[#A69371]">
+                                {phone}
+                              </span>
+                              {isVm && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 font-semibold">
+                                  Voicemail
+                                </span>
+                              )}
+                              {isMissed && !isVm && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-semibold">
+                                  Missed Call
+                                </span>
+                              )}
+                              {log.recordingUrl && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">
+                                  Audio Ready
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-[#C6B697] truncate mt-0.5">
+                              {formatShortTime(log.createdAt)}
+                              {log.durationSeconds
+                                ? ` • ${Math.floor(log.durationSeconds / 60)}m ${
+                                    log.durationSeconds % 60
+                                  }s`
+                                : ""}
+                              {log.voicemailTranscript || log.transcript || log.smsBody
+                                ? ` — "${String(
+                                    log.voicemailTranscript || log.transcript || log.smsBody
+                                  ).slice(0, 80)}"`
+                                : ""}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button
+                              size="sm"
+                              onClick={() => handleDirectCallPhone(phone, callerName)}
+                              className="h-7 px-2.5 text-[11px] font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] rounded-lg cursor-pointer gap-1"
+                            >
+                              <Phone className="h-3 w-3" />
+                              <span>Call</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDirectSmsPhone(phone, callerName)}
+                              className="h-7 px-2 text-[11px] border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:text-white rounded-lg cursor-pointer"
+                              title="Send SMS in Quo"
+                            >
+                              <MessageSquare className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setShowCallWorkspace(true);
+                                startCall({
+                                  callerCategory: "new_lead",
+                                  callType: isVm ? "Voicemail Follow-Up" : "Inbound Call",
+                                  callerInfo: { name: callerName, phone },
+                                  generalNotes:
+                                    log.voicemailTranscript ||
+                                    log.transcript ||
+                                    log.summary ||
+                                    log.smsBody ||
+                                    `Quo Call #${log.id} (${log.eventType || "call"})`,
+                                });
+                                toast.success(`Loaded ${callerName} into Call Workspace`);
+                                setTimeout(() => {
+                                  const el = document.getElementById("call-workspace");
+                                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                                }, 100);
+                              }}
+                              className="h-7 px-2 text-[11px] border-[#3A2C18] bg-[#020A17] text-[#FFE394] hover:text-white rounded-lg cursor-pointer"
+                              title="Load into Call Workspace"
+                            >
+                              <UserPlus className="h-3 w-3" />
+                            </Button>
+                            {(activeStatFilter === "missed" ||
+                              activeStatFilter === "needs-attention") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  updateCallbackMutation.mutate({
+                                    id: log.id,
+                                    callbackStatus: "completed",
+                                  })
+                                }
+                                className="h-7 px-2 text-[11px] border-[#3A2C18] bg-[#020A17] text-emerald-400 hover:bg-emerald-950/50 rounded-lg cursor-pointer"
+                                title="Mark handled"
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()
+                )}
+              </div>
+            </div>
+          )}
 
       {/* PRIMARY PHONE / CALL AREA (TOP OF PAGE) */}
       <div className="space-y-4">
@@ -486,22 +926,58 @@ export default function UnassignedCallLogs() {
 
       {/* Operational Activity Deck (3 Cards: Needs Attention, Today's Schedule, Voicemails) */}
       <BottomOperationalDeck
+        needsAttentionItems={needsAttentionItems}
+        scheduleItems={scheduleItems}
+        voicemailLogs={voicemailLogs as any}
         onCallNumber={handleDirectCallPhone}
+        onOpenSms={handleDirectSmsPhone}
+        onMarkHandled={(logId) =>
+          updateCallbackMutation.mutate({
+            id: logId,
+            callbackStatus: "completed",
+          })
+        }
+        onLoadIntoWorkspace={(log, callerName) => {
+          setShowCallWorkspace(true);
+          startCall({
+            callerCategory: "new_lead",
+            callType: "Inbound Call",
+            callerInfo: {
+              name: callerName || "Inbound Caller",
+              phone: log.fromNumber,
+            },
+            generalNotes:
+              log.voicemailTranscript ||
+              log.transcript ||
+              log.summary ||
+              log.smsBody ||
+              `Inbound Call #${log.id} (${log.eventType || "call"})`,
+          });
+          toast.success(`Loaded ${callerName || log.fromNumber} into Call Workspace`);
+          setTimeout(() => {
+            const el = document.getElementById("call-workspace");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 100);
+        }}
         onOpenSchedule={() => {
-          window.location.href = "/calendar";
+          setLocation("/calendar");
         }}
         onViewAllVoicemails={() => {
-          toast.info("Filtering to all voicemails");
+          setActiveStatFilter("voicemails");
+          const el = document.getElementById("live-quo-feed-section");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
         }}
         onViewAllNeedsAttention={() => {
-          toast.info("Viewing all priority items");
+          setActiveStatFilter("needs-attention");
+          const el = document.getElementById("live-quo-feed-section");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
         }}
         onCreateLeadFromVoicemail={(phone, summary) => {
           setShowCallWorkspace(true);
           startCall({
             callerCategory: "new_lead",
             callType: "New Lead / Sales",
-            callerInfo: { name: "Inbound Voicemail", phone },
+            callerInfo: { name: resolveCallerName(phone), phone },
             generalNotes: `Inbound Voicemail:\n"${summary}"`,
           });
           toast.success("Voicemail loaded into Call Workspace");
@@ -649,6 +1125,8 @@ export default function UnassignedCallLogs() {
         <LiveCallLogsTable
           logs={logs as any}
           isLoading={isFetching}
+          externalFilter={activeStatFilter}
+          onFilterChange={(nextFilter) => setActiveStatFilter(nextFilter)}
           onRefresh={() => {
             refetchLogs();
             toast.success("Call logs refreshed");

@@ -4,7 +4,7 @@ import {
   SquarePen, Compass, Users, 
   UsersRound, ClipboardCheck, Landmark, Wrench, 
   CalendarDays, Clock, Coins, Link2, Star, Shield,
-  MoreHorizontal
+  MoreHorizontal, FileSearch
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -83,7 +83,7 @@ export function StudentWorkspaceMoreTab({
   onOpenContactHistory,
 }: StudentWorkspaceMoreTabProps) {
   const [, setLocation] = useLocation();
-  const [selectedId, setSelectedId] = useState<string>("activity-timeline");
+  const [selectedId, setSelectedId] = useState<string>("records-iep-review");
   const [activeSubView, setActiveSubView] = useState<"grid" | "reviews" | "compass">(initialSubView);
 
   useEffect(() => {
@@ -93,6 +93,23 @@ export function StudentWorkspaceMoreTab({
   }, [initialSubView]);
 
   const items: WorkspaceItem[] = useMemo(() => [
+    {
+      id: "records-iep-review",
+      title: "Records & IEP Review",
+      description: "Start or resume records and IEP review in Step 1.",
+      icon: FileSearch,
+      onClick: () => {
+        setSelectedId("records-iep-review");
+        if (studentId) {
+          sessionStorage.setItem("lastStudentProfileUrl", `/students/${studentId}?tab=more`);
+          sessionStorage.setItem("lastStudentProfileId", String(studentId));
+          if (studentName) {
+            sessionStorage.setItem("lastStudentProfileName", studentName);
+          }
+        }
+        setLocation(`/meeting-workspace/${studentId}?tab=assemble&step=iep_intel`);
+      },
+    },
     {
       id: "parent-profile-history",
       title: "Parent Profile & History",
@@ -331,7 +348,7 @@ export function StudentWorkspaceMoreTab({
               onClick={item.onClick}
               className={cn(
                 // Base layout & dimensions: identical padding, height, and alignment across all buttons
-                "group relative w-full h-[88px] min-h-[88px] rounded-[12px] px-5 py-3 flex items-center gap-[18px]",
+                "group relative w-full h-[88px] min-h-[88px] rounded-[12px] px-3.5 sm:px-4 py-3 flex items-center gap-3 sm:gap-3.5 overflow-hidden",
                 "text-left select-none cursor-pointer transition-all duration-150 ease-out",
                 // Keyboard focus outline in restrained warm brass
                 "focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-[#D4AF37]/90 focus-visible:border-[#C59E45]",
@@ -351,20 +368,20 @@ export function StudentWorkspaceMoreTab({
                 isSelected && "border-[#C59E45]/85 ring-1 ring-[#D4AF37]/50 shadow-[0_0_14px_rgba(212,175,55,0.22),inset_0_1px_1px_rgba(255,255,255,0.18),inset_0_-1.5px_2px_rgba(0,0,0,0.85)]"
               )}
             >
-              {/* ─── Consistent 56px-wide icon area directly on button surface (no square box) ─── */}
-              <div className="w-[56px] min-w-[56px] h-full flex items-center justify-center shrink-0">
-                <Icon className="w-[36px] h-[36px] sm:w-[38px] sm:h-[38px] text-[#F1CB6C] stroke-[1.9] drop-shadow-[0_2px_3.5px_rgba(0,0,0,0.85)] group-hover:text-[#FDE295] group-hover:scale-[1.03] transition-all" />
+              {/* ─── Consistent icon area directly on button surface (no square box) ─── */}
+              <div className="w-[44px] min-w-[44px] h-full flex items-center justify-center shrink-0">
+                <Icon className="w-[32px] h-[32px] sm:w-[34px] sm:h-[34px] text-[#F1CB6C] stroke-[1.9] drop-shadow-[0_2px_3.5px_rgba(0,0,0,0.85)] group-hover:text-[#FDE295] group-hover:scale-[1.03] transition-all" />
               </div>
 
               {/* ─── Content Area: Left-aligned, refined serif title & muted blue description ─── */}
-              <div className="min-w-0 flex-1 flex flex-col justify-center text-left">
+              <div className="min-w-0 flex-1 flex flex-col justify-center text-left overflow-hidden">
                 <h4
-                  className="font-medium text-[15.5px] lg:text-[16px] text-[#F7F2E8] tracking-normal leading-tight whitespace-nowrap drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.85)] group-hover:text-[#FFF8EE] transition-colors"
+                  className="font-medium text-[14px] sm:text-[14.5px] xl:text-[15px] text-[#F7F2E8] tracking-tight leading-snug truncate drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.85)] group-hover:text-[#FFF8EE] transition-colors"
                   style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                 >
                   {item.title}
                 </h4>
-                <p className="text-[12px] lg:text-[12.5px] text-[#93AECD] leading-[1.35] mt-1 line-clamp-2 group-hover:text-[#A8C4E6] transition-colors">
+                <p className="text-[11.5px] lg:text-[12px] text-[#93AECD] leading-[1.3] mt-0.5 line-clamp-2 group-hover:text-[#A8C4E6] transition-colors">
                   {item.description}
                 </p>
               </div>

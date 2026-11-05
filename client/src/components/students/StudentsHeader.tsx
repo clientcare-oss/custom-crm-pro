@@ -59,27 +59,8 @@ export function StudentsHeader({
         </div>
       </div>
 
-      {/* ─── 2. RIGHT: Filters, Sample Person Generator, and + New Student ─── */}
+      {/* ─── 2. RIGHT: Filters and + New Student ─── */}
       <div className="flex items-center gap-2.5 shrink-0 flex-wrap sm:flex-nowrap z-10">
-        {/* Quick Add Sample Pair: Admiralty Navy & Warm Brass Button */}
-        {onQuickSample && (
-          <Button
-            onClick={onQuickSample}
-            disabled={isCreatingSample}
-            size="sm"
-            className={cn(
-              "h-10 sm:h-11 px-3 sm:px-3.5 rounded-lg text-xs sm:text-sm font-serif font-semibold tracking-wide gap-1.5 cursor-pointer select-none",
-              "bg-gradient-to-b from-[#142640] via-[#0C1A2E] to-[#071322] text-[#F5DC9F]",
-              "border border-[#C5A059]/60 shadow-[0_2px_8px_rgba(0,0,0,0.7)]",
-              "hover:border-[#FFE29A] hover:bg-[#1A3152] active:scale-[0.98] transition-all"
-            )}
-            title="Instantly generate a realistic sample student & parent pair"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#F3C876] shrink-0" />
-            <span>{isCreatingSample ? "Adding Pair..." : "Add Sample Pair"}</span>
-          </Button>
-        )}
-
         {/* Filters Popover */}
         <Popover open={filterOpen} onOpenChange={setFilterOpen}>
           <PopoverTrigger asChild>

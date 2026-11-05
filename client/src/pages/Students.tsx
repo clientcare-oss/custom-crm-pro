@@ -735,20 +735,32 @@ export default function Students() {
         <Dialog open={newStudentOpen} onOpenChange={setNewStudentOpen}>
           <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden bg-[#0A1729] border border-[#B88943]/50 text-[#F0DFC5] rounded-2xl shadow-2xl">
             {/* Pinned Header */}
-            <div className="p-4 sm:p-5 pb-3 border-b border-[#B88943]/25 shrink-0 flex items-center justify-between gap-2 bg-[#091526]">
+            <div className="p-4 sm:p-5 pb-3 border-b border-[#B88943]/25 shrink-0 flex flex-wrap items-center justify-between gap-2 bg-[#091526]">
               <DialogTitle className="font-serif text-base sm:text-lg font-bold text-white flex items-center gap-2">
                 <Folder className="w-5 h-5 text-[#E9BA6B] shrink-0" />
-                <span>Add Student Archival File</span>
+                <span>Add New Student</span>
               </DialogTitle>
-              <button
-                type="button"
-                onClick={handleFillSampleData}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-serif font-bold bg-[#E9BA6B]/15 text-[#FCE09E] border border-[#E9BA6B]/40 hover:bg-[#E9BA6B]/25 transition-all cursor-pointer shadow-xs"
-                title="Autofill realistic sample student data into this form"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#FCE09E]" />
-                <span>Fill Sample</span>
-              </button>
+              <div className="flex items-center gap-1.5 pr-6">
+                <button
+                  type="button"
+                  disabled={createSamplePairMutation.isPending}
+                  onClick={() => createSamplePairMutation.mutate({})}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-serif font-bold bg-gradient-to-b from-[#142640] via-[#0C1A2E] to-[#071322] text-[#F5DC9F] border border-[#C5A059]/60 hover:border-[#FFE29A] hover:bg-[#1A3152] transition-all cursor-pointer shadow-xs"
+                  title="Instantly generate and save a realistic sample student & parent pair"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#F3C876]" />
+                  <span>{createSamplePairMutation.isPending ? "Adding..." : "Add Sample Pair"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFillSampleData}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-serif font-bold bg-[#E9BA6B]/15 text-[#FCE09E] border border-[#E9BA6B]/40 hover:bg-[#E9BA6B]/25 transition-all cursor-pointer shadow-xs"
+                  title="Autofill realistic sample student data into this form"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#FCE09E]" />
+                  <span>Fill Form</span>
+                </button>
+              </div>
             </div>
 
             {/* Scrollable Form Body */}

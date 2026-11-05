@@ -339,7 +339,33 @@ export async function processQuoWebhook(
       callData?.to || callData?.toNumber || payload?.to || ""
     );
 
-    // Duration extraction
+    // Voicemail detection
+    const voicemailData = callData?.voicemail || payload?.voicemail;
+    const isVoicemail = !!(voicemailData || callData?.isVoicemail || payload?.isVoicemail);
+    const voicemailTranscript: string =
+      voicemailData?.transcript?.text ||
+      (typeof voicemailData?.transcript === "string" ? voicemailData.transcript : "") ||
+      voicemailData?.transcription ||
+      callData?.voicemailTranscript ||
+      "";
+
+    // Robust Recording URL extraction (including Quo v3 media array and voicemail audio URL)
+    let recordingUrl: string =
+      callData?.recordingUrl ||
+      callData?.recording?.url ||
+      callData?.url ||
+      payload?.recordingUrl ||
+      (typeof voicemailData?.url === "string" ? voicemailData.url : "") ||
+      "";
+
+    if (!recordingUrl && Array.isArray(callData?.media) && callData.media.length > 0) {
+      const audio = callData.media.find(
+        (m: any) => (m?.type && String(m.type).startsWith("audio")) || m?.url
+      );
+      if (audio?.url) recordingUrl = audio.url;
+    }
+
+    // Duration extraction (including Quo v3 media duration, voicemail duration, or answeredAt -> completedAt)
     let durationSeconds: number = 0;
     if (typeof callData?.duration === "number" && callData.duration > 0) {
       durationSeconds = Math.round(callData.duration);
@@ -347,6 +373,20 @@ export async function processQuoWebhook(
       durationSeconds = Math.round(callData.durationSeconds);
     } else if (typeof payload?.duration === "number" && payload.duration > 0) {
       durationSeconds = Math.round(payload.duration);
+    } else if (typeof voicemailData?.duration === "number" && voicemailData.duration > 0) {
+      durationSeconds = Math.round(voicemailData.duration);
+    } else if (
+      Array.isArray(callData?.media) &&
+      callData.media.length > 0 &&
+      typeof callData.media[0]?.duration === "number" &&
+      callData.media[0].duration > 0
+    ) {
+      durationSeconds = Math.round(callData.media[0].duration);
+    } else if (callData?.answeredAt && callData?.completedAt) {
+      const diffSec = Math.round(
+        (new Date(callData.completedAt).getTime() - new Date(callData.answeredAt).getTime()) / 1000
+      );
+      if (diffSec > 0 && !isNaN(diffSec)) durationSeconds = diffSec;
     }
 
     const direction: string = callData?.direction || payload?.direction || "inbound";
@@ -399,6 +439,11 @@ export async function processQuoWebhook(
             return `${time ? time + " " : ""}${speaker}: ${content}`;
           })
           .join("\n\n");
+
+        if (durationSeconds === 0) {
+          const maxEnd = Math.max(...dialogue.map((d: any) => Number(d?.end) || 0));
+          if (maxEnd > 0) durationSeconds = Math.round(maxEnd);
+        }
       }
     }
 
@@ -425,40 +470,21 @@ export async function processQuoWebhook(
       }
     }
 
-    // Robust Recording URL extraction
-    let recordingUrl: string =
-      callData?.recordingUrl ||
-      callData?.recording?.url ||
-      callData?.url ||
-      payload?.recordingUrl ||
-      "";
-
-    if (!recordingUrl && Array.isArray(callData?.media) && callData.media.length > 0) {
-      const audio = callData.media.find(
-        (m: any) => (m?.type && String(m.type).startsWith("audio")) || m?.url
-      );
-      if (audio?.url) recordingUrl = audio.url;
-    }
-
-    // Voicemail detection
-    const voicemailData = callData?.voicemail || payload?.voicemail;
-    const isVoicemail = !!(voicemailData || callData?.isVoicemail || payload?.isVoicemail);
-    const voicemailTranscript: string =
-      voicemailData?.transcript?.text ||
-      voicemailData?.transcript ||
-      voicemailData?.transcription ||
-      callData?.voicemailTranscript ||
-      "";
-
     const participants: string[] = Array.isArray(callData?.participants) ? callData.participants : [];
 
-    // Detect missed call
+    // Detect missed call (supports Quo v3 'no-answer', unanswered incoming calls, and voicemail-only calls)
     const isMissed =
       eventType === "call.missed" ||
       callData?.status === "missed" ||
+      callData?.status === "no-answer" ||
       callData?.status === "unanswered" ||
+      callData?.status === "busy" ||
+      callData?.status === "canceled" ||
       callData?.answered === false ||
-      (isVoicemail && durationSeconds === 0);
+      ((direction === "incoming" || direction === "inbound") &&
+        callData?.answeredAt === null &&
+        eventType === "call.completed") ||
+      isVoicemail;
     const callbackStatus = isMissed ? "pending" : "none";
 
     // Idempotency check — update existing record if same call ID or parent callId

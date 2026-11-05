@@ -300,7 +300,18 @@ export default function MeetingWorkspace() {
 
       if (initialUrlTab) {
         setActiveTab(initialUrlTab);
-        if (initialUrlTab === "BLUEPRINT") setPrepStep("blueprint");
+        if (initialUrlTab === "BLUEPRINT") {
+          setPrepStep("blueprint");
+        } else if (initialUrlTab === "ASSEMBLY") {
+          const stepParam = typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("step") || "").toLowerCase() : "";
+          if (stepParam === "iep_intel" || stepParam === "1") {
+            setPrepStep("iep_intel");
+          } else if (workspace.prepStep) {
+            setPrepStep(workspace.prepStep as PrepStep);
+          } else {
+            setPrepStep("iep_intel");
+          }
+        }
       } else if (workspace.status === "LIVE") {
         setActiveTab("MEETING_MODE");
       } else if (workspace.activeTab) {

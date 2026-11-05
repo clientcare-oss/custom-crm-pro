@@ -10,6 +10,7 @@ import {
 
 interface CallCenterStatsProps {
   callsTodayCount?: number;
+  callsLabel?: string;
   missedCallsCount?: number;
   callbacksCount?: number;
   voicemailCount?: number;
@@ -25,20 +26,20 @@ interface CallCenterStatsProps {
 }
 
 export function CallCenterStats({
-  callsTodayCount = 6,
-  missedCallsCount = 2,
-  voicemailCount = 1,
-  scheduledCallsCount = 4,
-  leadsCount = 3,
-  needsAttentionCount = 3,
+  callsTodayCount = 0,
+  callsLabel = "Calls Today",
+  missedCallsCount = 0,
+  voicemailCount = 0,
+  scheduledCallsCount = 0,
+  leadsCount = 0,
+  needsAttentionCount = 0,
   activeFilter,
   onSelectStat,
-  onScrollToNeedsAttention,
 }: CallCenterStatsProps) {
   const stats = [
     {
       key: "calls",
-      label: "Calls Today",
+      label: callsLabel,
       count: callsTodayCount,
       icon: Phone,
       iconColor: "text-[#FFE394]",
@@ -67,11 +68,10 @@ export function CallCenterStats({
     {
       key: "needs-attention",
       label: "Needs Attention",
-      count: needsAttentionCount ?? leadsCount ?? 3,
+      count: needsAttentionCount ?? leadsCount ?? 0,
       icon: AlertCircle,
       iconColor: "text-rose-400",
       isAnchorLink: true,
-      action: onScrollToNeedsAttention,
     },
   ];
 
@@ -82,33 +82,31 @@ export function CallCenterStats({
           const Icon = stat.icon;
           const isActive = activeFilter === stat.key;
           return (
-            <div
+            <button
+              type="button"
               key={stat.key}
               onClick={() => {
-                if (stat.action) {
-                  stat.action();
-                } else {
-                  onSelectStat?.(stat.key);
-                }
+                onSelectStat?.(isActive ? "all" : stat.key);
               }}
               className={`flex flex-col items-center justify-center px-3 py-2.5 sm:py-3 rounded-xl border transition-all cursor-pointer group min-h-[78px] sm:min-h-[84px] w-[126px] sm:w-[136px] md:w-[142px] shrink-0 text-center shadow-[0_6px_18px_rgba(0,0,0,0.85),inset_0_1px_1.5px_rgba(255,227,148,0.22)] ${
                 isActive
-                  ? "bg-[#07162B] border-[#C5A059] shadow-[0_0_18px_rgba(197,160,89,0.35),inset_0_1px_2px_rgba(255,227,148,0.4)]"
+                  ? "bg-[#07162B] border-[#C5A059] ring-1 ring-[#FFE394]/60 shadow-[0_0_18px_rgba(197,160,89,0.45),inset_0_1px_2px_rgba(255,227,148,0.4)]"
                   : "bg-[#05142B] border-[#3A2C18] hover:border-[#C5A059]/70 hover:bg-[#07162B]"
               }`}
+              title={`Click to view ${stat.label} (${stat.count})`}
             >
               {/* Top: Icon + Big Number centered together */}
               <div className="flex items-center justify-center gap-2.5 w-full">
-                <div className={`w-8 h-8 rounded-lg border border-[#3A2C18] bg-[#020A17] flex items-center justify-center shrink-0 shadow-inner ${stat.iconColor}`}>
+                <div
+                  className={`w-8 h-8 rounded-lg border border-[#3A2C18] bg-[#020A17] flex items-center justify-center shrink-0 shadow-inner ${stat.iconColor}`}
+                >
                   <Icon className="h-4.5 w-4.5" />
                 </div>
                 <span className="text-2xl sm:text-[25px] font-serif font-bold text-[#FFF4D4] leading-none tracking-tight">
                   {stat.count}
                 </span>
                 {stat.isAnchorLink && (
-                  <ArrowDown
-                    className="h-3.5 w-3.5 text-[#A69371] group-hover:text-[#FFE394] transition-all shrink-0 animate-bounce"
-                  />
+                  <ArrowDown className="h-3.5 w-3.5 text-[#A69371] group-hover:text-[#FFE394] transition-all shrink-0 animate-bounce" />
                 )}
               </div>
 
@@ -116,7 +114,7 @@ export function CallCenterStats({
               <div className="mt-2 text-xs sm:text-[12px] font-semibold text-[#C6B697] truncate tracking-wide text-center w-full">
                 {stat.label}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

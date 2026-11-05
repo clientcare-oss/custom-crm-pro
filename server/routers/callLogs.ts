@@ -7,6 +7,139 @@ import { ENV } from "../_core/env";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
+import { formatPhone } from "../quoWebhook";
+
+function toStrictBool(val: unknown): boolean {
+  return val === true || val === 1 || val === "1" || val === "true";
+}
+
+function formatDialogueTime(secs: number | null | undefined): string {
+  if (secs == null || isNaN(secs)) return "";
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return `[${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}]`;
+}
+
+/**
+ * Normalizes SQLite boolean representations ('false'/'true'/0/1) and hydrates
+ * Quo v3 fields (transcript dialogue, voicemail URL/duration, media duration, missed status)
+ * from rawPayload when historical rows were ingested before parser enhancements.
+ */
+function hydrateCallLogRow(row: any): any {
+  let payload: any = row.rawPayload;
+  if (typeof payload === "string" && payload.trim().startsWith("{")) {
+    try {
+      payload = JSON.parse(payload);
+    } catch {
+      payload = null;
+    }
+  }
+
+  const callData =
+    payload?.data?.resource ||
+    payload?.data?.object ||
+    payload?.data ||
+    payload?.call ||
+    {};
+
+  const eventType: string =
+    row.eventType || payload?.type || payload?.event || payload?.eventType || "";
+  const direction: string =
+    row.direction || callData?.direction || payload?.direction || "inbound";
+
+  const voicemailData = callData?.voicemail || payload?.voicemail;
+  const isVoicemail =
+    toStrictBool(row.isVoicemail) ||
+    Boolean(voicemailData || callData?.isVoicemail || payload?.isVoicemail);
+
+  let recordingUrl: string | null = row.recordingUrl || null;
+  if (!recordingUrl) {
+    if (typeof voicemailData?.url === "string" && voicemailData.url) {
+      recordingUrl = voicemailData.url;
+    } else if (Array.isArray(callData?.media) && callData.media.length > 0) {
+      const audio = callData.media.find(
+        (m: any) => (m?.type && String(m.type).startsWith("audio")) || m?.url
+      );
+      if (audio?.url) recordingUrl = audio.url;
+    }
+  }
+
+  let durationSeconds: number = Number(row.durationSeconds) || 0;
+  if (durationSeconds === 0) {
+    if (typeof voicemailData?.duration === "number" && voicemailData.duration > 0) {
+      durationSeconds = Math.round(voicemailData.duration);
+    } else if (
+      Array.isArray(callData?.media) &&
+      callData.media.length > 0 &&
+      typeof callData.media[0]?.duration === "number" &&
+      callData.media[0].duration > 0
+    ) {
+      durationSeconds = Math.round(callData.media[0].duration);
+    } else if (callData?.answeredAt && callData?.completedAt) {
+      const diff = Math.round(
+        (new Date(callData.completedAt).getTime() - new Date(callData.answeredAt).getTime()) / 1000
+      );
+      if (diff > 0 && !isNaN(diff)) durationSeconds = diff;
+    }
+  }
+
+  let transcript: string | null = row.transcript || null;
+  if (!transcript) {
+    const dialogue =
+      callData?.callTranscript?.dialogue ||
+      callData?.dialogue ||
+      payload?.dialogue ||
+      callData?.transcript?.dialogue;
+    if (Array.isArray(dialogue) && dialogue.length > 0) {
+      transcript = dialogue
+        .map((d: any) => {
+          const time = formatDialogueTime(d?.start);
+          const isEmployee = Boolean(d?.userId);
+          const speaker = isEmployee
+            ? "Advocate (Waypoint)"
+            : d?.identifier
+            ? `Caller (${formatPhone(String(d.identifier))})`
+            : "Caller";
+          const content = d?.content || d?.text || "";
+          return `${time ? time + " " : ""}${speaker}: ${content}`;
+        })
+        .join("\n\n");
+      if (durationSeconds === 0) {
+        const maxEnd = Math.max(...dialogue.map((d: any) => Number(d?.end) || 0));
+        if (maxEnd > 0) durationSeconds = Math.round(maxEnd);
+      }
+    }
+  }
+
+  const isMissed =
+    toStrictBool(row.isMissed) ||
+    eventType === "call.missed" ||
+    callData?.status === "missed" ||
+    callData?.status === "no-answer" ||
+    callData?.status === "unanswered" ||
+    callData?.status === "busy" ||
+    callData?.status === "canceled" ||
+    callData?.answered === false ||
+    ((direction === "incoming" || direction === "inbound") &&
+      callData?.answeredAt === null &&
+      eventType === "call.completed") ||
+    isVoicemail;
+
+  return {
+    ...row,
+    isVoicemail,
+    isMissed,
+    recordingUrl,
+    durationSeconds,
+    transcript,
+    callbackStatus:
+      row.callbackStatus && row.callbackStatus !== "none"
+        ? row.callbackStatus
+        : isMissed
+        ? "pending"
+        : "none",
+  };
+}
 
 export const callLogsRouter = router({
   // List call logs for a specific student
@@ -20,11 +153,12 @@ export const callLogsRouter = router({
       const whereClause = isAdmin
         ? eq(callLogs.studentId, input.studentId)
         : and(eq(callLogs.ownerId, ctx.user.id), eq(callLogs.studentId, input.studentId));
-      return await database
+      const rows = await database
         .select()
         .from(callLogs)
         .where(whereClause)
         .orderBy(desc(callLogs.createdAt));
+      return rows.map(hydrateCallLogRow);
     }),
 
   // List ALL call logs (for the full call log view with filters)
@@ -32,8 +166,8 @@ export const callLogsRouter = router({
     .input(
       z
         .object({
-          filter: z.enum(["all", "unassigned", "calls", "voicemails", "sms"]).optional().default("all"),
-          limit: z.number().min(1).max(200).optional().default(50),
+          filter: z.enum(["all", "unassigned", "calls", "voicemails", "sms", "missed"]).optional().default("all"),
+          limit: z.number().min(1).max(200).optional().default(100),
         })
         .optional()
     )
@@ -42,34 +176,66 @@ export const callLogsRouter = router({
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { callLogs } = await import("../../drizzle/schema");
       const filter = input?.filter ?? "all";
-      const limit = input?.limit ?? 50;
+      const limit = input?.limit ?? 100;
       const isAdmin = ctx.user?.role === "admin";
 
       const conditions: any[] = [];
       if (!isAdmin && ctx.user?.id) {
         conditions.push(eq(callLogs.ownerId, ctx.user.id));
       }
-      if (filter === "unassigned") conditions.push(eq(callLogs.status, "unassigned"));
-      if (filter === "voicemails") conditions.push(eq(callLogs.isVoicemail, true));
-      if (filter === "sms") conditions.push(eq(callLogs.eventType, "message.received"));
-      if (filter === "calls") {
-        const { or, isNull, ne } = await import("drizzle-orm");
-        const callTypeFilter = or(isNull(callLogs.eventType), ne(callLogs.eventType, "message.received"));
-        const whereClause = conditions.length > 0 ? and(...conditions, callTypeFilter) : callTypeFilter;
-        return await database
-          .select()
-          .from(callLogs)
-          .where(whereClause)
-          .orderBy(desc(callLogs.createdAt))
-          .limit(limit);
-      }
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-      return await database
+      const rawRows = await database
         .select()
         .from(callLogs)
         .where(whereClause)
         .orderBy(desc(callLogs.createdAt))
         .limit(limit);
+
+      const hydrated = rawRows.map(hydrateCallLogRow);
+
+      if (filter === "unassigned") {
+        return hydrated.filter((r) => r.status === "unassigned");
+      }
+      if (filter === "voicemails") {
+        return hydrated.filter((r) => r.isVoicemail);
+      }
+      if (filter === "missed") {
+        return hydrated.filter((r) => r.isMissed);
+      }
+      if (filter === "sms") {
+        return hydrated.filter(
+          (r) => (r.eventType || "").startsWith("message.") || Boolean(r.smsBody)
+        );
+      }
+      if (filter === "calls") {
+        return hydrated.filter(
+          (r) => !(r.eventType || "").startsWith("message.") && !r.smsBody
+        );
+      }
+      return hydrated;
+    }),
+
+  // Update callback / follow-up status for a call log ("pending" | "completed" | "dismissed" | "none")
+  updateCallbackStatus: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        callbackStatus: z.enum(["none", "pending", "completed", "dismissed"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const database = await db.getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { callLogs } = await import("../../drizzle/schema");
+      const isAdmin = ctx.user?.role === "admin";
+      const whereClause = isAdmin
+        ? eq(callLogs.id, input.id)
+        : and(eq(callLogs.id, input.id), eq(callLogs.ownerId, ctx.user.id));
+      await database
+        .update(callLogs)
+        .set({ callbackStatus: input.callbackStatus })
+        .where(whereClause);
+      return { success: true, id: input.id, callbackStatus: input.callbackStatus };
     }),
 
   // List unassigned call logs (no student matched)

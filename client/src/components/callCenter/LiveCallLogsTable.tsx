@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Phone,
   PhoneIncoming,
@@ -64,6 +64,8 @@ export interface CallLogItem {
 interface LiveCallLogsTableProps {
   logs: CallLogItem[];
   isLoading?: boolean;
+  externalFilter?: string;
+  onFilterChange?: (filter: string) => void;
   onRefresh?: () => void;
   onCallNumber?: (phone: string, name?: string) => void;
   onOpenSms?: (phone: string, name?: string) => void;
@@ -71,20 +73,49 @@ interface LiveCallLogsTableProps {
   onOpenSettings?: () => void;
 }
 
+const isBool = (v: unknown): boolean =>
+  v === true || v === 1 || v === "1" || v === "true";
+
 export function LiveCallLogsTable({
   logs = [],
   isLoading = false,
+  externalFilter,
+  onFilterChange,
   onRefresh,
   onCallNumber,
   onOpenSms,
   onAssignToLead,
   onOpenSettings,
 }: LiveCallLogsTableProps) {
-  const [filter, setFilter] = useState<"all" | "sms" | "inbound" | "completed" | "missed" | "voicemail">("all");
+  const [filter, setFilter] = useState<
+    "all" | "calls" | "sms" | "inbound" | "completed" | "missed" | "voicemail" | "needs-attention"
+  >("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingLog, setViewingLog] = useState<CallLogItem | null>(null);
   const [activeModalTab, setActiveModalTab] = useState<"summary" | "transcript" | "audio" | "sms" | "payload">("summary");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!externalFilter) return;
+    if (externalFilter === "voicemails" || externalFilter === "voicemail") {
+      setFilter("voicemail");
+    } else if (externalFilter === "missed") {
+      setFilter("missed");
+    } else if (externalFilter === "calls") {
+      setFilter("calls");
+    } else if (externalFilter === "needs-attention") {
+      setFilter("needs-attention");
+    } else if (externalFilter === "all") {
+      setFilter("all");
+    }
+  }, [externalFilter]);
+
+  const handleSelectFilter = (
+    nextFilter: "all" | "calls" | "sms" | "inbound" | "completed" | "missed" | "voicemail" | "needs-attention"
+  ) => {
+    setFilter(nextFilter);
+    onFilterChange?.(nextFilter === "voicemail" ? "voicemails" : nextFilter);
+  };
 
   const handleCopy = (text: string, key: string) => {
     try {
@@ -144,6 +175,9 @@ export function LiveCallLogsTable({
       }
     }
 
+    if (filter === "calls") {
+      return !(log.eventType || "").startsWith("message.") && !log.smsBody;
+    }
     if (filter === "sms") {
       return (log.eventType || "").startsWith("message.") || Boolean(log.smsBody);
     }
@@ -154,17 +188,29 @@ export function LiveCallLogsTable({
       return log.eventType === "call.completed";
     }
     if (filter === "missed") {
-      return log.eventType === "call.missed" || (log as any).isMissed;
+      return log.eventType === "call.missed" || isBool((log as any).isMissed);
     }
     if (filter === "voicemail") {
-      return Boolean(log.isVoicemail);
+      return isBool(log.isVoicemail);
+    }
+    if (filter === "needs-attention") {
+      const cb = (log as any).callbackStatus;
+      if (cb === "completed" || cb === "dismissed") return false;
+      return (
+        log.eventType === "call.missed" ||
+        isBool((log as any).isMissed) ||
+        isBool(log.isVoicemail) ||
+        (log.status === "unassigned" &&
+          (log.direction === "incoming" || log.direction === "inbound"))
+      );
     }
     return true;
   });
 
+  const callsOnlyCount = logs.filter((l) => !(l.eventType || "").startsWith("message.") && !l.smsBody).length;
   const smsCount = logs.filter((l) => (l.eventType || "").startsWith("message.") || Boolean(l.smsBody)).length;
-  const missedCount = logs.filter((l) => l.eventType === "call.missed" || (l as any).isMissed).length;
-  const voicemailCount = logs.filter((l) => Boolean(l.isVoicemail)).length;
+  const missedCount = logs.filter((l) => l.eventType === "call.missed" || isBool((l as any).isMissed)).length;
+  const voicemailCount = logs.filter((l) => isBool(l.isVoicemail)).length;
 
   const formatTimestamp = (dateInput: string | Date) => {
     try {
@@ -183,7 +229,7 @@ export function LiveCallLogsTable({
   };
 
   const getEventBadge = (log: CallLogItem) => {
-    const event = log.eventType || (log.isVoicemail ? "voicemail" : "call.completed");
+    const event = log.eventType || (isBool(log.isVoicemail) ? "voicemail" : "call.completed");
     if (event === "call.ringing") {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
@@ -192,15 +238,15 @@ export function LiveCallLogsTable({
         </span>
       );
     }
-    if (event === "call.completed") {
+    if (isBool(log.isVoicemail)) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          Completed Call
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/40">
+          <Voicemail className="w-3 h-3" />
+          Voicemail
         </span>
       );
     }
-    if (event === "call.missed" || (log as any).isMissed) {
+    if (event === "call.missed" || isBool((log as any).isMissed)) {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40">
           <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
@@ -208,11 +254,11 @@ export function LiveCallLogsTable({
         </span>
       );
     }
-    if (log.isVoicemail) {
+    if (event === "call.completed") {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/40">
-          <Voicemail className="w-3 h-3" />
-          Voicemail
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          Completed Call
         </span>
       );
     }
@@ -302,8 +348,8 @@ export function LiveCallLogsTable({
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-1.5 flex-wrap">
           <button
-            onClick={() => setFilter("all")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            onClick={() => handleSelectFilter("all")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               filter === "all"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
                 : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
@@ -312,8 +358,19 @@ export function LiveCallLogsTable({
             All Logs ({logs.length})
           </button>
           <button
-            onClick={() => setFilter("sms")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+            onClick={() => handleSelectFilter("calls")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+              filter === "calls"
+                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
+                : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
+            }`}
+          >
+            <Phone className="w-3 h-3" />
+            <span>Calls ({callsOnlyCount})</span>
+          </button>
+          <button
+            onClick={() => handleSelectFilter("sms")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
               filter === "sms"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
                 : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
@@ -323,8 +380,8 @@ export function LiveCallLogsTable({
             <span>SMS Texts ({smsCount})</span>
           </button>
           <button
-            onClick={() => setFilter("inbound")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            onClick={() => handleSelectFilter("inbound")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               filter === "inbound"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
                 : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
@@ -333,8 +390,8 @@ export function LiveCallLogsTable({
             Inbound / Ringing
           </button>
           <button
-            onClick={() => setFilter("completed")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            onClick={() => handleSelectFilter("completed")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               filter === "completed"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
                 : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
@@ -343,8 +400,8 @@ export function LiveCallLogsTable({
             Completed Calls
           </button>
           <button
-            onClick={() => setFilter("missed")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            onClick={() => handleSelectFilter("missed")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               filter === "missed"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
                 : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
@@ -353,8 +410,8 @@ export function LiveCallLogsTable({
             Missed ({missedCount})
           </button>
           <button
-            onClick={() => setFilter("voicemail")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            onClick={() => handleSelectFilter("voicemail")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               filter === "voicemail"
                 ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
                 : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
