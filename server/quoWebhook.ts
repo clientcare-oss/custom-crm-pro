@@ -621,10 +621,52 @@ export async function processQuoWebhook(
     return { status: 200, data: { received: true, action: "created", eventType } };
   }
 
-  // ─── CONTACT EVENTS ────────────────────────────────────────────
-  if (eventType === "contact.updated" || eventType === "contact.created" || eventType === "contact.deleted") {
-    console.log(`[Quo Webhook] Contact event received: ${eventType} (acknowledged)`);
-    return { status: 200, data: { received: true, action: "logged", eventType } };
+  // ─── CONTACT EVENTS (TWO-WAY QUO CONTACT SYNC) ─────────────────
+  if (eventType === "contact.created" || eventType === "contact.updated") {
+    const { handleInboundQuoContactUpsert, getQuoSyncConfig } = await import(
+      "./services/quo"
+    );
+    const syncConfig = getQuoSyncConfig(ownerId);
+    if (!syncConfig.autoSyncContacts) {
+      return {
+        status: 200,
+        data: {
+          received: true,
+          action: "skipped_auto_sync_disabled",
+          eventType,
+        },
+      };
+    }
+
+    const syncRes = await handleInboundQuoContactUpsert(ownerId, payload);
+    console.log(
+      `[Quo Webhook] Contact upsert (${eventType}) -> action: ${syncRes.action}, contactId: ${syncRes.contactId ?? "none"}, quoContactId: ${syncRes.quoContactId}`
+    );
+    return {
+      status: 200,
+      data: {
+        received: true,
+        eventType,
+        ...syncRes,
+      },
+    };
+  }
+
+  if (eventType === "contact.deleted") {
+    const { handleInboundQuoContactDeleted } = await import("./services/quo");
+    const delRes = await handleInboundQuoContactDeleted(ownerId, payload);
+    console.log(
+      `[Quo Webhook] Contact deleted in Quo (${eventType}) -> Waypoint contact preserved (${delRes.action}), contactId: ${delRes.contactId ?? "none"}`
+    );
+    return {
+      status: 200,
+      data: {
+        received: true,
+        eventType,
+        waypointContactDeleted: false,
+        ...delRes,
+      },
+    };
   }
 
   // Acknowledge all other events
@@ -761,6 +803,7 @@ export function registerQuoWebhookRoutes(app: any) {
           "message.delivered",
           "contact.created",
           "contact.updated",
+          "contact.deleted",
         ],
       });
     });

@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import PageIdBadge from "@/components/PageIdBadge";
+import QuoContactSyncPanel from "@/components/quo/QuoContactSyncPanel";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
@@ -480,6 +481,9 @@ export default function QuoSettings() {
           </CardContent>
         </Card>
       </div>
+
+      {/* SECTION 2B: TWO-WAY CONTACT SYNCHRONIZATION */}
+      <QuoContactSyncPanel />
 
       {/* SECTION 3: EMPLOYEE MAPPING */}
       <Card className="border-border/70 bg-[#06172F]/50 backdrop-blur-sm">

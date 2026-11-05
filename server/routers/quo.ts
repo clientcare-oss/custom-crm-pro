@@ -5,6 +5,16 @@ import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, adminProcedure } from "../_core/trpc";
 import {
   syncQuoContact,
+  restoreContactToQuo,
+  resolveQuoContactConflict,
+  runTwoWayQuoContactSync,
+  previewExistingQuoContacts,
+  executeExistingQuoContactsImport,
+  getQuoSyncConfig,
+  saveQuoSyncConfig,
+  getContactSyncMeta,
+  extractContactPhones,
+  extractContactEmails,
   sendQuoMessage,
   getQuoMessagesForContact,
   sendCallToPhone,
@@ -198,11 +208,170 @@ export const quoRouter = router({
       return { success: true };
     }),
 
-  // ─── 3. CONTACT SYNC ───────────────────────────────────────────────
+  // ─── 3. CONTACT SYNC & TWO-WAY SYNCHRONIZATION CONTROLS ───────────
   syncContact: protectedProcedure
     .input(z.object({ contactId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       return await syncQuoContact(ctx.user.id, input.contactId);
+    }),
+
+  restoreContactToQuo: protectedProcedure
+    .input(z.object({ contactId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return await restoreContactToQuo(ctx.user.id, input.contactId);
+    }),
+
+  resolveContactConflict: protectedProcedure
+    .input(
+      z.object({
+        contactId: z.number(),
+        resolution: z.enum(["keep_waypoint", "accept_quo", "merge"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await resolveQuoContactConflict(
+        ctx.user.id,
+        input.contactId,
+        input.resolution
+      );
+    }),
+
+  getContactSyncDetails: protectedProcedure
+    .input(z.object({ contactId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const contact = await db.getContactById(input.contactId, ctx.user.id);
+      const meta = getContactSyncMeta(input.contactId, ctx.user.id);
+      const syncStatus = contact?.quoSyncStatus || meta.syncStatus || "not_synced";
+      const quoContactId = contact?.quoContactId || meta.quoContactId || null;
+      return {
+        contactId: input.contactId,
+        quoContactId,
+        syncStatus,
+        lastSyncedAt: contact?.quoLastSyncAt
+          ? new Date(contact.quoLastSyncAt).toISOString()
+          : meta.lastSyncedAt,
+        lastError: contact?.quoSyncError || meta.lastError || null,
+        conflictDetails: meta.conflictDetails || null,
+        phones: contact ? extractContactPhones(contact) : [],
+        emails: contact ? extractContactEmails(contact) : [],
+      };
+    }),
+
+  getContactSyncConfig: protectedProcedure.query(async ({ ctx }) => {
+    const config = getQuoSyncConfig(ctx.user.id);
+    const allContacts = (await db.getContactsByOwner(ctx.user.id)) || [];
+
+    const conflicts: Array<{
+      contactId: number;
+      contactName: string;
+      quoContactId: string | null;
+      conflictingFields: string[];
+      waypointValues: Record<string, any>;
+      quoValues: Record<string, any>;
+      detectedAt: string;
+    }> = [];
+
+    const removedFromQuo: Array<{
+      contactId: number;
+      contactName: string;
+      phone: string | null;
+      email: string | null;
+      quoContactId: string | null;
+      lastSyncedAt: string | null;
+    }> = [];
+
+    let syncedContactsCount = 0;
+
+    for (const c of allContacts) {
+      if ((c as any).archivedAt) continue;
+      if (((c.jobTitle || "").toLowerCase() === "student") && c.parentContactId) continue;
+
+      const meta = getContactSyncMeta(Number(c.id), ctx.user.id);
+      const status = c.quoSyncStatus || meta.syncStatus;
+      const quoId = c.quoContactId || meta.quoContactId || null;
+      const fullName = `${c.firstName || ""} ${c.lastName || ""}`.trim() || `Contact #${c.id}`;
+
+      if (status === "synced" && quoId) {
+        syncedContactsCount++;
+      } else if (status === "conflict") {
+        conflicts.push({
+          contactId: Number(c.id),
+          contactName: fullName,
+          quoContactId: quoId,
+          conflictingFields: meta.conflictDetails?.conflictingFields || ["phone", "email"],
+          waypointValues: meta.conflictDetails?.waypointValues || {
+            firstName: c.firstName,
+            lastName: c.lastName,
+            phone: c.phone,
+            email: c.email,
+          },
+          quoValues: meta.conflictDetails?.quoValues || {},
+          detectedAt: meta.conflictDetails?.detectedAt || new Date().toISOString(),
+        });
+      } else if (status === "removed_from_quo") {
+        removedFromQuo.push({
+          contactId: Number(c.id),
+          contactName: fullName,
+          phone: c.phone || null,
+          email: c.email || null,
+          quoContactId: quoId,
+          lastSyncedAt: meta.lastSyncedAt || null,
+        });
+      }
+    }
+
+    return {
+      ...config,
+      syncedContactsCount,
+      conflicts,
+      removedFromQuo,
+    };
+  }),
+
+  setAutoSyncContacts: adminProcedure
+    .input(z.object({ enabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const updated = await saveQuoSyncConfig(ctx.user.id, {
+        autoSyncContacts: input.enabled,
+      });
+      return {
+        success: true,
+        autoSyncContacts: updated.autoSyncContacts,
+      };
+    }),
+
+  syncContactsNow: protectedProcedure
+    .input(
+      z
+        .object({
+          retryFailed: z.boolean().optional(),
+        })
+        .optional()
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await runTwoWayQuoContactSync(ctx.user.id, {
+        retryFailed: input?.retryFailed ?? true,
+      });
+    }),
+
+  previewExistingContacts: protectedProcedure.query(async ({ ctx }) => {
+    return await previewExistingQuoContacts(ctx.user.id);
+  }),
+
+  executeImportContacts: protectedProcedure
+    .input(
+      z.object({
+        decisions: z.array(
+          z.object({
+            quoContactId: z.string(),
+            action: z.enum(["import", "skip", "merge", "create_separate"]),
+            targetWaypointContactId: z.number().optional(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await executeExistingQuoContactsImport(ctx.user.id, input.decisions);
     }),
 
   // ─── 4. SMS COMPOSER & THREADS ────────────────────────────────────

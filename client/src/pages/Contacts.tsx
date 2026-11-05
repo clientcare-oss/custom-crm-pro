@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Search, X, Clock, Sparkles } from "lucide-react";
+import { Loader2, Search, X, Clock, Sparkles, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -19,12 +19,14 @@ import PageIdBadge from "@/components/PageIdBadge";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import MetalPlaqueButton from "@/components/ui/MetalPlaqueButton";
 import ContactsLedgerView from "@/components/contact/ledger/ContactsLedgerView";
+import ContactImportModal from "@/components/contact/ContactImportModal";
 
 export default function Contacts() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
   const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -340,6 +342,18 @@ export default function Contacts() {
                 <span>{createSamplePairMutation.isPending ? "Adding..." : "Add Sample Pair"}</span>
               </Button>
 
+              {/* Import Contacts Button (.csv, .vcf, .xlsx) */}
+              <Button
+                type="button"
+                onClick={() => setImportModalOpen(true)}
+                size="sm"
+                className="h-10 sm:h-11 px-3 sm:px-3.5 rounded-xl text-xs sm:text-sm font-serif font-semibold gap-1.5 cursor-pointer bg-[#000820] text-[#FFF4D4] border border-[#C5A059]/65 shadow-[0_2px_8px_rgba(0,0,0,0.8)] hover:border-[#FFE394] hover:bg-[#07162B] transition-all shrink-0"
+                title="Import contacts from CSV, Google Contacts, Outlook, vCard (.vcf), or Excel (.xlsx)"
+              >
+                <Upload className="w-3.5 h-3.5 text-[#C5A059] shrink-0" />
+                <span>Import Contacts</span>
+              </Button>
+
               {/* Old-World Forged Brass Plaque Add Contact Button */}
               <MetalPlaqueButton
                 onClick={handleOpenAddContact}
@@ -539,6 +553,17 @@ export default function Contacts() {
                   </form>
                 </DialogContent>
               </Dialog>
+
+        {/* ─── 5-Step Contact Import Modal (.csv, .vcf, .xlsx) ─── */}
+        <ContactImportModal
+          open={importModalOpen}
+          onOpenChange={setImportModalOpen}
+          existingContacts={contacts || []}
+          onImportComplete={() => {
+            utils.contacts.list.invalidate();
+            refetch();
+          }}
+        />
 
         {/* ─── Main Content: Ledger Book Resting on Executive Desk ─── */}
         <div className="w-full relative z-10 -mt-4 sm:-mt-6 lg:-mt-7 pb-6 drop-shadow-[0_12px_32px_rgba(0,0,0,0.85)]">

@@ -853,21 +853,33 @@ export default function AppointmentDetailDrawer({
               {isEditing ? "Edit Appointment" : appointment.title}
             </h2>
 
-            {/* Compact Timing Summary */}
+            {/* Compact Timing Summary + Different Time Zone Alert Pill */}
             {dualTime && !isEditing && (
-              <div className="flex items-center gap-1.5 text-[11px] text-blue-200/80 mt-0.5 flex-wrap">
-                <Calendar className="w-3 h-3 text-[#F5B544] shrink-0" />
-                <span className="font-semibold text-white">
-                  {dualTime.waypointTime.dateFormatted}
-                </span>
-                <span>·</span>
-                <Clock className="w-3 h-3 text-[#F5B544] shrink-0" />
-                <span className="font-mono font-bold text-[#F5B544]">
-                  {dualTime.waypointTime.timeRange}
-                </span>
-                <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#030C22] border border-blue-800/50 text-blue-200/85 font-mono">
-                  {dualTime.waypointTime.tzAbbr}
-                </span>
+              <div className="space-y-1 mt-0.5">
+                <div className="flex items-center gap-1.5 text-[11px] text-blue-200/80 flex-wrap">
+                  <Calendar className="w-3 h-3 text-[#F5B544] shrink-0" />
+                  <span className="font-semibold text-white">
+                    {dualTime.waypointTime.dateFormatted}
+                  </span>
+                  <span>·</span>
+                  <Clock className="w-3 h-3 text-[#F5B544] shrink-0" />
+                  <span className="font-mono font-bold text-[#F5B544]">
+                    {dualTime.waypointTime.timeRange}
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#030C22] border border-blue-800/50 text-blue-200/85 font-mono">
+                    {dualTime.waypointTime.tzAbbr}
+                  </span>
+                </div>
+
+                {dualTime.clientTime.isDifferent && (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-rose-950/75 border border-rose-500/50 text-[10.5px] text-rose-200 font-semibold">
+                    <Globe className="w-3 h-3 text-rose-400 shrink-0" />
+                    <span>
+                      Different Time Zone: Client is {dualTime.clientTime.timeRange} (
+                      {dualTime.clientTime.tzAbbr})
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1329,404 +1341,313 @@ export default function AppointmentDetailDrawer({
                   </div>
                 </div>
               ) : (
-                /* ── VIEW MODE: EDGE-TO-EDGE DOSSIER TEXT OVERLAY WITH THICK DIVIDERS ── */
-                <div className="space-y-3 bg-transparent text-[11px]">
-                  {/* 1. STUDENT & PARTICIPANTS (Transparent on Leather) */}
-                  {(() => {
-                    const participantCount =
-                      (appointment.assignedAdvocateName ? 1 : 1) +
-                      (appointment.parentName ? 1 : 0) +
-                      (appointment.studentName ? 1 : 0);
-
-                    return (
-                      <div className="space-y-1.5">
-                        {/* Dossier Section Header */}
-                        <button
-                          type="button"
-                          onClick={() => setIsParticipantsExpanded((prev) => !prev)}
-                          className="w-full flex items-center justify-between pb-1.5 border-b-2 border-[#38BDF8]/35 text-left group cursor-pointer select-none"
-                        >
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <User className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
-                            <span className="text-[10.5px] font-bold uppercase tracking-wider text-sky-300 group-hover:text-[#FFE394] transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
-                              STUDENT & PARTICIPANTS
-                            </span>
-                            <span className="text-[9px] font-mono font-extrabold px-1.5 py-0.2 rounded-full bg-[#123159]/85 border border-sky-400/40 text-sky-200">
-                              {participantCount}
-                            </span>
-                          </div>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#38BDF8] group-hover:text-[#FFE394] transition-colors">
-                            <span>{isParticipantsExpanded ? "Hide" : "Show all"}</span>
-                            {isParticipantsExpanded ? (
-                              <ChevronUp className="w-3.5 h-3.5" />
-                            ) : (
-                              <ChevronDown className="w-3.5 h-3.5" />
-                            )}
-                          </span>
-                        </button>
-
-                        {/* Student Row — Direct Text Overlay on Leather, Always Visible */}
-                        {appointment.studentName && (
-                          <button
-                            type="button"
-                            onClick={handleOpenStudentWorkspace}
-                            className="w-full flex items-center justify-between gap-2 py-1 px-1.5 -mx-1.5 rounded-lg hover:bg-white/[0.06] transition-all cursor-pointer group text-left"
-                            title={`Open Student Workspace for ${appointment.studentName}`}
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="w-6 h-6 rounded-full border border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-[10px] shadow-[0_0_10px_rgba(212,175,55,0.35)] shrink-0">
-                                {appointment.studentName.charAt(0)}
-                              </div>
-                              <span
-                                className="text-sm font-bold text-white group-hover:text-[#FFE394] truncate transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
-                                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                              >
-                                {appointment.studentName}
-                              </span>
-                              <span className="text-[10px] text-slate-300/80">
-                                · Student
-                              </span>
-                            </div>
-                            <span className="text-[10.5px] font-bold text-[#F5B544] group-hover:text-[#FFE394] flex items-center gap-0.5 shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
-                              <span>Workspace</span>
-                              <ArrowUpRight className="w-3 h-3" />
-                            </span>
-                          </button>
-                        )}
-
-                        {/* Expanded Participants Details (Overlaid on Leather with Dividers) */}
-                        {isParticipantsExpanded && (
-                          <div className="space-y-1.5 pt-1.5 border-t-2 border-white/20 text-xs animate-in fade-in duration-150">
-                            {/* Waypoint / Assigned Advocate (Owner) */}
-                            <div className="flex items-center justify-between gap-2 py-1">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="relative shrink-0">
-                                  <div className="w-6 h-6 rounded-full bg-[#122847] border border-sky-400/50 flex items-center justify-center text-sky-200 font-bold text-[10px]">
-                                    {(appointment.assignedAdvocateName || "WA")
-                                      .split(" ")
-                                      .map((p) => p[0])
-                                      .join("")
-                                      .slice(0, 2)}
-                                  </div>
-                                  <span
-                                    className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-[#02132d]"
-                                    title="Confirmed · Organizer"
-                                  />
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="text-white font-bold text-xs truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
-                                    {appointment.assignedAdvocateName || "Waypoint Advocates"}
-                                  </div>
-                                  <div className="text-[10px] text-slate-300/80 truncate">
-                                    clientcare@waypointadvocates.com
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <span className="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.2 rounded-full bg-[#F5B544]/15 border border-[#F5B544]/40 text-[#FFE394]">
-                                  OWNER
-                                </span>
-                                {onReassign && (
-                                  <button
-                                    type="button"
-                                    onClick={() => onReassign(appointment)}
-                                    className="text-[10px] font-semibold text-[#38BDF8] hover:text-[#FFE394] hover:underline cursor-pointer"
-                                  >
-                                    Reassign
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Parent / Client */}
-                            {appointment.parentName && (
-                              <div className="flex items-center justify-between gap-2 py-1.5 border-t-2 border-white/20">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <button
-                                      type="button"
-                                      className="flex items-center gap-2 text-left group hover:opacity-95 rounded-lg transition-colors cursor-pointer select-none min-w-0 flex-1"
-                                      title="Click for parent actions (Contact Client, View Details)"
-                                    >
-                                      <div className="relative shrink-0">
-                                        <div className="w-6 h-6 rounded-full bg-[#122847] border border-[#D4AF37]/50 flex items-center justify-center text-[#FFE394] font-bold text-[10px]">
-                                          {appointment.parentName
-                                            .split(" ")
-                                            .map((p) => p[0])
-                                            .join("")
-                                            .slice(0, 2)}
-                                        </div>
-                                        <span
-                                          className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-[#02132d]"
-                                          title="Attendance Confirmed"
-                                        />
-                                      </div>
-                                      <div className="min-w-0 flex-1">
-                                        <div className="text-white font-bold text-xs group-hover:text-[#FFE394] flex items-center gap-1 transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
-                                          <span className="truncate">{appointment.parentName}</span>
-                                          <ChevronDown className="w-3 h-3 text-slate-300 shrink-0" />
-                                        </div>
-                                        <div className="text-[10px] text-slate-300/80 truncate">
-                                          {clientEmail || "Parent / Client"}
-                                          {clientPhone ? ` · ${clientPhone}` : ""}
-                                        </div>
-                                      </div>
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="start"
-                                    className="w-56 bg-[#071D40] border border-[#F5B544]/40 text-white shadow-[0_16px_40px_rgba(0,0,0,0.95)] z-50 p-1.5 rounded-xl"
-                                  >
-                                    <DropdownMenuItem
-                                      onClick={handleContactClient}
-                                      className="flex items-center gap-2.5 px-3 py-2 text-xs text-white hover:bg-[#0E2D63] hover:text-[#F5B544] rounded-lg cursor-pointer"
-                                    >
-                                      <PhoneCall className="w-4 h-4 text-[#F5B544] shrink-0" />
-                                      <div className="flex flex-col">
-                                        <span className="font-bold text-[#F5B544]">
-                                          Contact Client
-                                        </span>
-                                        <span className="text-[10px] text-blue-200/75">
-                                          Call, email, or message
-                                        </span>
-                                      </div>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator className="my-1 bg-white/10" />
-                                    <DropdownMenuItem
-                                      onClick={handleViewParentDetails}
-                                      className="flex items-center gap-2.5 px-3 py-2 text-xs text-white hover:bg-[#0E2D63] hover:text-[#F5B544] rounded-lg cursor-pointer"
-                                    >
-                                      <User className="w-4 h-4 text-[#F5B544] shrink-0" />
-                                      <div className="flex flex-col">
-                                        <span className="font-bold text-white">
-                                          View Details
-                                        </span>
-                                        <span className="text-[10px] text-blue-200/75">
-                                          Profile & contact history
-                                        </span>
-                                      </div>
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-
-                                <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-[#093527]/85 border border-emerald-500/40 text-emerald-300 shrink-0">
-                                  ✓ Confirmed
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* ── THICK DOSSIER SECTION DIVIDER ── */}
-                  <div className="-mx-4 h-[2.5px] bg-gradient-to-r from-[#D4AF37]/45 via-[#38BDF8]/60 to-[#D4AF37]/45 shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
-
-                  {/* 2. QUICK LINKS (Transparent Dossier Row) */}
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
+                /* ── VIEW MODE: CLEAN, SIMPLE EDGE-TO-EDGE DOSSIER OVERLAY (SINGLE DIVIDER BETWEEN SECTIONS) ── */
+                <div className="space-y-4 bg-transparent text-xs">
+                  {/* 1. PARTICIPANTS (Clean HoneyBook-style layout on leather) */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white tracking-tight">
+                        Participants
+                      </span>
                       <button
                         type="button"
-                        onClick={() => setIsWorkspacesExpanded((prev) => !prev)}
-                        className="flex items-center gap-1.5 text-left group cursor-pointer select-none min-w-0"
+                        onClick={() => setIsParticipantsExpanded((prev) => !prev)}
+                        className="text-[11px] font-semibold text-[#38BDF8] hover:text-[#FFE394] transition-colors cursor-pointer"
                       >
-                        <Sparkles className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
-                        <span className="text-[10.5px] font-bold uppercase tracking-wider text-sky-300 group-hover:text-[#FFE394] truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
-                          QUICK LINKS
-                        </span>
-                        {isWorkspacesExpanded ? (
-                          <ChevronUp className="w-3.5 h-3.5 text-sky-300" />
-                        ) : (
-                          <ChevronDown className="w-3.5 h-3.5 text-sky-300" />
-                        )}
+                        {isParticipantsExpanded ? "Show less" : "Show all"}
                       </button>
-
-                      {/* Inline Dossier Action Pills */}
-                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-                        {(appointment.meetingType === "IEP Meeting" ||
-                          appointment.meetingType === "504 Meeting") && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onClose();
-                              if (resolvedRelationships.studentId) {
-                                setLocation(
-                                  `/meeting-workspace/${resolvedRelationships.studentId}`
-                                );
-                              } else {
-                                setLocation("/meeting-workspace");
-                              }
-                            }}
-                            className="px-2.5 py-0.5 rounded-full bg-[#123159]/85 border border-sky-400/45 hover:border-[#F5B544] text-white hover:text-[#FFE394] text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-all shadow-xs"
-                            title="Open Meeting Space"
-                          >
-                            <span className="text-[#F5B544] font-bold">✓</span>
-                            <span>Meeting Space</span>
-                          </button>
-                        )}
-
-                        {(resolvedRelationships.studentId ||
-                          appointment.studentName ||
-                          appointment.clientId) && (
-                          <button
-                            type="button"
-                            onClick={handleOpenStudentWorkspace}
-                            className="px-2.5 py-0.5 rounded-full bg-[#123159]/85 border border-sky-400/45 hover:border-[#F5B544] text-white hover:text-[#FFE394] text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-all shadow-xs"
-                            title="Open Student Workspace"
-                          >
-                            <span className="text-[#F5B544] font-bold">✓</span>
-                            <span>Workspace</span>
-                          </button>
-                        )}
-                      </div>
                     </div>
 
-                    {isWorkspacesExpanded && (
-                      <div className="grid grid-cols-2 gap-1.5 pt-2 mt-2 border-t-2 border-white/20 animate-in fade-in duration-150">
-                        {resolvedRelationships.isDiscovery &&
-                          resolvedRelationships.leadId && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onClose();
-                                setLocation(
-                                  `/leads/${resolvedRelationships.leadId}/discovery`
-                                );
-                              }}
-                              className="h-7 px-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-[#F5B544]/60 text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
-                            >
-                              <CalendarClock className="w-3 h-3 text-[#F5B544]" />
-                              <span className="truncate">Discovery Call</span>
-                            </button>
+                    <div className="space-y-2.5">
+                      {/* Student Row — Always Visible */}
+                      {appointment.studentName && (
+                        <button
+                          type="button"
+                          onClick={handleOpenStudentWorkspace}
+                          className="w-full flex items-center justify-between gap-2.5 text-left group cursor-pointer"
+                          title={`Open Student Workspace for ${appointment.studentName}`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-full border border-[#D4AF37] bg-[#122847] flex items-center justify-center text-[#F4D068] font-bold text-xs shrink-0">
+                              {appointment.studentName.charAt(0)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-bold text-white group-hover:text-[#FFE394] truncate transition-colors">
+                                {appointment.studentName}
+                              </div>
+                              <div className="text-[11px] text-slate-300/80">
+                                Student
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-xs font-bold text-[#F5B544] group-hover:text-[#FFE394] flex items-center gap-0.5 shrink-0">
+                            <span>Workspace</span>
+                            <ArrowUpRight className="w-3.5 h-3.5" />
+                          </span>
+                        </button>
+                      )}
+
+                      {/* Expanded or Always-Clean Organizer & Parent Rows */}
+                      {isParticipantsExpanded && (
+                        <div className="space-y-2.5 pt-1 animate-in fade-in duration-150">
+                          {/* Waypoint / Assigned Advocate (Owner) */}
+                          <div className="flex items-center justify-between gap-2.5">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-full bg-[#122847] border border-sky-400/50 flex items-center justify-center text-sky-200 font-bold text-xs shrink-0">
+                                {(appointment.assignedAdvocateName || "WA")
+                                  .split(" ")
+                                  .map((p) => p[0])
+                                  .join("")
+                                  .slice(0, 2)}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-white font-bold text-xs truncate">
+                                  {appointment.assignedAdvocateName || "Waypoint Advocates"}
+                                </div>
+                                <div className="text-[11px] text-slate-300/80 truncate">
+                                  clientcare@waypointadvocates.com
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[11px] text-slate-300/85">Owner</span>
+                              {onReassign && (
+                                <button
+                                  type="button"
+                                  onClick={() => onReassign(appointment)}
+                                  className="text-[11px] font-semibold text-[#38BDF8] hover:text-[#FFE394] hover:underline cursor-pointer"
+                                >
+                                  Reassign
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Parent / Client */}
+                          {appointment.parentName && (
+                            <div className="flex items-center justify-between gap-2.5">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="flex items-center gap-2.5 text-left group cursor-pointer select-none min-w-0 flex-1"
+                                    title="Click for parent actions (Contact Client, View Details)"
+                                  >
+                                    <div className="relative shrink-0">
+                                      <div className="w-8 h-8 rounded-full bg-[#122847] border border-[#D4AF37]/50 flex items-center justify-center text-[#FFE394] font-bold text-xs">
+                                        {appointment.parentName
+                                          .split(" ")
+                                          .map((p) => p[0])
+                                          .join("")
+                                          .slice(0, 2)}
+                                      </div>
+                                      <span
+                                        className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-[#02132d]"
+                                        title="Attendance Confirmed"
+                                      />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-white font-bold text-xs group-hover:text-[#FFE394] flex items-center gap-1 transition-colors">
+                                        <span className="truncate">{appointment.parentName}</span>
+                                        <ChevronDown className="w-3 h-3 text-slate-300 shrink-0" />
+                                      </div>
+                                      <div className="text-[11px] text-slate-300/80 truncate">
+                                        {clientEmail || "Parent / Client"}
+                                        {clientPhone ? ` · ${clientPhone}` : ""}
+                                      </div>
+                                    </div>
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="start"
+                                  className="w-56 bg-[#071D40] border border-[#F5B544]/40 text-white shadow-[0_16px_40px_rgba(0,0,0,0.95)] z-50 p-1.5 rounded-xl"
+                                >
+                                  <DropdownMenuItem
+                                    onClick={handleContactClient}
+                                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-white hover:bg-[#0E2D63] hover:text-[#F5B544] rounded-lg cursor-pointer"
+                                  >
+                                    <PhoneCall className="w-4 h-4 text-[#F5B544] shrink-0" />
+                                    <div className="flex flex-col">
+                                      <span className="font-bold text-[#F5B544]">
+                                        Contact Client
+                                      </span>
+                                      <span className="text-[10px] text-blue-200/75">
+                                        Call, email, or message
+                                      </span>
+                                    </div>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator className="my-1 bg-white/10" />
+                                  <DropdownMenuItem
+                                    onClick={handleViewParentDetails}
+                                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-white hover:bg-[#0E2D63] hover:text-[#F5B544] rounded-lg cursor-pointer"
+                                  >
+                                    <User className="w-4 h-4 text-[#F5B544] shrink-0" />
+                                    <div className="flex flex-col">
+                                      <span className="font-bold text-white">
+                                        View Details
+                                      </span>
+                                      <span className="text-[10px] text-blue-200/75">
+                                        Profile & contact history
+                                      </span>
+                                    </div>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           )}
+                        </div>
+                      )}
+                    </div>
 
-                        {(appointment.meetingType === "IEP Meeting" ||
-                          appointment.meetingType === "504 Meeting") && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onClose();
-                              if (resolvedRelationships.studentId) {
-                                setLocation(
-                                  `/meeting-workspace/${resolvedRelationships.studentId}`
-                                );
-                              } else {
-                                setLocation("/meeting-workspace");
-                              }
-                            }}
-                            className="h-7 px-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-[#F5B544]/60 text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
-                          >
-                            <Sparkles className="w-3 h-3 text-[#F5B544]" />
-                            <span className="truncate">Meeting Space</span>
-                          </button>
-                        )}
-
-                        {(resolvedRelationships.studentId ||
-                          appointment.studentName ||
-                          appointment.clientId) && (
-                          <button
-                            type="button"
-                            onClick={handleOpenStudentWorkspace}
-                            className="h-7 px-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-[#F5B544]/60 text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
-                          >
-                            <User className="w-3 h-3 text-[#F5B544]" />
-                            <span className="truncate">Student Workspace</span>
-                          </button>
-                        )}
-
-                        {(resolvedRelationships.parentId || appointment.clientId) && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onClose();
+                    {/* Inline Quick Workspace Pills right under Participants (no extra divider) */}
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      {(appointment.meetingType === "IEP Meeting" ||
+                        appointment.meetingType === "504 Meeting") && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            if (resolvedRelationships.studentId) {
                               setLocation(
-                                `/contacts/${
-                                  resolvedRelationships.parentId || appointment.clientId
-                                }`
+                                `/meeting-workspace/${resolvedRelationships.studentId}`
                               );
-                            }}
-                            className="h-7 px-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-[#F5B544]/60 text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
-                          >
-                            <UserCheck className="w-3 h-3 text-[#F5B544]" />
-                            <span className="truncate">Family Profile</span>
-                          </button>
-                        )}
+                            } else {
+                              setLocation("/meeting-workspace");
+                            }
+                          }}
+                          className="px-2.5 py-1 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-all"
+                        >
+                          <span className="text-[#F5B544] font-bold">✓</span>
+                          <span>Meeting Space</span>
+                        </button>
+                      )}
 
-                        {onReschedule && (
-                          <button
-                            type="button"
-                            onClick={() => onReschedule(appointment)}
-                            className="h-7 px-2 rounded-lg border border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-[#F5B544]/60 text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
-                          >
-                            <ArrowRightLeft className="w-3 h-3 text-[#F5B544]" />
-                            <span className="truncate">Reschedule</span>
-                          </button>
-                        )}
-                      </div>
-                    )}
+                      {(resolvedRelationships.parentId || appointment.clientId) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            setLocation(
+                              `/contacts/${
+                                resolvedRelationships.parentId || appointment.clientId
+                              }`
+                            );
+                          }}
+                          className="px-2.5 py-1 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-all"
+                        >
+                          <span className="text-[#F5B544] font-bold">✓</span>
+                          <span>Family Profile</span>
+                        </button>
+                      )}
+
+                      {onReschedule && (
+                        <button
+                          type="button"
+                          onClick={() => onReschedule(appointment)}
+                          className="px-2.5 py-1 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-all"
+                        >
+                          <ArrowRightLeft className="w-3 h-3 text-[#F5B544]" />
+                          <span>Reschedule</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  {/* ── THICK DOSSIER SECTION DIVIDER ── */}
-                  <div className="-mx-4 h-[2.5px] bg-gradient-to-r from-[#D4AF37]/45 via-[#38BDF8]/60 to-[#D4AF37]/45 shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
+                  {/* ── SINGLE SECTION DIVIDER ── */}
+                  <div className="-mx-4 h-[2px] bg-white/15" />
 
-                  {/* 3. CLIENT PREVIEW (Direct Text Overlay on Leather Dossier) */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2 pb-1.5 border-b-2 border-[#38BDF8]/35">
-                      <div className="flex items-center gap-1.5">
-                        <Eye className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
-                        <span className="text-[10.5px] font-bold uppercase tracking-wider text-sky-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
-                          CLIENT PREVIEW
-                        </span>
+                  {/* 2. TIME ZONE ALERT & CALLING SAFETY (Simple, no sub-lines) */}
+                  {dualTime && (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-white">
+                            Time Zone & Calling Status
+                          </span>
+                          {dualTime.clientTime.isDifferent ? (
+                            <span className="text-[10px] font-bold text-rose-200 bg-rose-950/75 border border-rose-400/50 px-2 py-0.5 rounded-full">
+                              ⚠️ {dualTime.clientTime.friendlyName} vs Eastern
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-emerald-300">
+                              ✓ Synchronized ({dualTime.waypointTime.tzAbbr})
+                            </span>
+                          )}
+                        </div>
+
+                        {dualTime.clientTime.isDifferent && (
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                              <span className="text-[11px] text-rose-300 block">
+                                Client Time ({dualTime.clientTime.tzAbbr})
+                              </span>
+                              <span className="font-bold text-white font-mono">
+                                {dualTime.clientTime.timeRange}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-emerald-300 block">
+                                Waypoint Time ({dualTime.waypointTime.tzAbbr})
+                              </span>
+                              <span className="font-bold text-white font-mono">
+                                {dualTime.waypointTime.timeRange}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        <ClientCallingSafetyBadge timeZone={appointment.clientTimeZone} />
                       </div>
 
+                      {/* ── SINGLE SECTION DIVIDER ── */}
+                      <div className="-mx-4 h-[2px] bg-white/15" />
+                    </>
+                  )}
+
+                  {/* 3. DESCRIPTION / CLIENT PREVIEW (Clean like HoneyBook "Description") */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-white">
+                        Client Preview
+                      </span>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`text-[9px] font-mono font-extrabold uppercase tracking-wider px-2 py-0.2 rounded-full border ${
+                          className={`text-[10px] font-bold ${
                             clientFacingView.isLinkReady
-                              ? "bg-[#093527]/85 border-emerald-500/40 text-emerald-300"
-                              : "bg-[#F5B544]/15 border-[#F5B544]/40 text-[#FFE394]"
+                              ? "text-emerald-300"
+                              : "text-[#FFE394]"
                           }`}
                         >
-                          {clientFacingView.isLinkReady ? "LINK READY" : "AWAITING LINK"}
+                          {clientFacingView.isLinkReady ? "✓ Link Ready" : "• Awaiting Link"}
                         </span>
                         <button
                           type="button"
                           onClick={() => setIsEditing(true)}
-                          className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#38BDF8] hover:text-[#FFE394] transition-colors cursor-pointer"
+                          className="text-[11px] font-semibold text-[#38BDF8] hover:text-[#FFE394] cursor-pointer"
                         >
-                          <Edit className="w-2.5 h-2.5" />
-                          <span>Customize</span>
+                          Customize
                         </button>
                       </div>
                     </div>
 
-                    {/* Direct Overlay Content with Thick Gold Left Rule */}
-                    <div className="pl-3 border-l-[3px] border-[#F5B544] space-y-1.5 py-0.5">
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          {clientFacingView.isLinkReady ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                          ) : (
-                            <Clock className="w-3.5 h-3.5 text-[#F5B544] shrink-0" />
-                          )}
-                          <span
-                            className={`text-xs font-bold truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] ${
-                              clientFacingView.isLinkReady
-                                ? "text-emerald-300"
-                                : "text-[#FFE394]"
-                            }`}
-                          >
-                            {clientFacingView.headline}
-                          </span>
-                        </div>
+                        <span
+                          className={`text-xs font-bold ${
+                            clientFacingView.isLinkReady
+                              ? "text-emerald-300"
+                              : "text-[#FFE394]"
+                          }`}
+                        >
+                          {clientFacingView.headline}
+                        </span>
 
                         {clientFacingView.isLinkReady && clientFacingView.normalizedLink && (
                           <a
                             href={clientFacingView.normalizedLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="h-6 px-2.5 rounded-md bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-extrabold text-[10px] flex items-center justify-center gap-1 shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition-all cursor-pointer shrink-0"
+                            className="h-6 px-2.5 rounded-md bg-[#F5B544] hover:bg-[#E5A534] text-[#07152B] font-extrabold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer shrink-0"
                           >
                             <span>Join Meeting</span>
                             <ChevronRight className="w-3 h-3 stroke-[2.5]" />
@@ -1734,89 +1655,30 @@ export default function AppointmentDetailDrawer({
                         )}
                       </div>
 
-                      <p className="text-[11px] text-white/95 leading-snug whitespace-pre-wrap break-words drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                      <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap break-words">
                         {clientFacingView.supportingMessage}
                       </p>
 
                       {clientFacingView.additionalDirections && (
-                        <div className="pt-1.5 border-t-2 border-white/20 text-[11px] text-[#FFE394] leading-snug whitespace-pre-wrap break-words">
-                          <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-sky-300 mr-1.5">
-                            Directions:
-                          </span>
+                        <p className="text-xs text-[#FFE394] leading-relaxed whitespace-pre-wrap break-words pt-1">
                           {clientFacingView.additionalDirections}
-                        </div>
+                        </p>
                       )}
                     </div>
                   </div>
 
-                  {/* 4. MULTI-ZONE SCHEDULE ALIGNMENT (Direct Overlay on Leather) */}
-                  {dualTime && dualTime.clientTime.isDifferent && (
-                    <>
-                      <div className="-mx-4 h-[2.5px] bg-gradient-to-r from-[#D4AF37]/45 via-[#38BDF8]/60 to-[#D4AF37]/45 shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10.5px] font-bold uppercase tracking-wider text-sky-300 flex items-center gap-1.5">
-                            <Globe className="h-3.5 w-3.5 text-[#38BDF8]" />
-                            <span>MULTI-ZONE ALIGNMENT</span>
-                          </span>
-                          <span className="text-[9px] font-semibold text-rose-300 bg-rose-950/60 border border-rose-500/40 px-2 py-0.2 rounded-full">
-                            {dualTime.clientTime.friendlyName} vs Eastern
-                          </span>
-                        </div>
+                  {/* ── SINGLE SECTION DIVIDER ── */}
+                  <div className="-mx-4 h-[2px] bg-white/15" />
 
-                        <div className="grid grid-cols-2 gap-2 pt-0.5">
-                          <div className="pl-2.5 border-l-[3px] border-rose-400">
-                            <div className="flex items-center justify-between text-[9px] text-rose-300 font-semibold">
-                              <span>Client Time</span>
-                              <span className="font-mono">{dualTime.clientTime.tzAbbr}</span>
-                            </div>
-                            <p className="text-[11px] font-bold text-white font-mono">
-                              {dualTime.clientTime.timeRange}
-                            </p>
-                          </div>
-                          <div className="pl-2.5 border-l-[3px] border-emerald-400">
-                            <div className="flex items-center justify-between text-[9px] text-emerald-300 font-semibold">
-                              <span>Waypoint Time</span>
-                              <span className="font-mono">{dualTime.waypointTime.tzAbbr}</span>
-                            </div>
-                            <p className="text-[11px] font-bold text-white font-mono">
-                              {dualTime.waypointTime.timeRange}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* 5. PHYSICAL LOCATION (Direct Overlay Row) */}
-                  {appointment.location && (
-                    <>
-                      <div className="-mx-4 h-[2.5px] bg-gradient-to-r from-[#D4AF37]/45 via-[#38BDF8]/60 to-[#D4AF37]/45 shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 text-slate-300 shrink-0">
-                          <MapPin className="w-3.5 h-3.5 text-[#38BDF8]" />
-                          <span>Location:</span>
-                        </div>
-                        <span className="font-bold text-white truncate text-right drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
-                          {appointment.location}
+                  {/* 4. NOTES (Clean like HoneyBook "Notes" section) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-white">
+                          Notes
                         </span>
-                      </div>
-                    </>
-                  )}
-
-                  {/* ── THICK DOSSIER SECTION DIVIDER ── */}
-                  <div className="-mx-4 h-[2.5px] bg-gradient-to-r from-[#D4AF37]/45 via-[#38BDF8]/60 to-[#D4AF37]/45 shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
-
-                  {/* 6. INTERNAL ADVOCATE NOTES (Direct Text Overlay on Leather Dossier) */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2 pb-1.5 border-b-2 border-[#38BDF8]/35">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <Lock className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
-                        <span className="text-[10.5px] font-bold uppercase tracking-wider text-sky-300 truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
-                          INTERNAL ADVOCATE NOTES
-                        </span>
-                        <span className="text-[8.5px] font-mono font-extrabold uppercase tracking-wider text-[#FFE394] bg-[#F5B544]/15 px-1.5 py-0.2 rounded-full border border-[#F5B544]/40 shrink-0">
-                          PRIVATE
+                        <span className="text-[9px] font-mono uppercase tracking-wider text-[#FFE394]/80">
+                          Private
                         </span>
                       </div>
 
@@ -1824,12 +1686,9 @@ export default function AppointmentDetailDrawer({
                         <button
                           type="button"
                           onClick={() => setIsAddingNote(true)}
-                          className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#38BDF8] hover:text-[#FFE394] shrink-0 cursor-pointer transition-colors"
+                          className="text-[11px] font-semibold text-[#38BDF8] hover:text-[#FFE394] cursor-pointer"
                         >
-                          <Plus className="w-2.5 h-2.5" />
-                          <span>
-                            {parsedContent.internalNotes ? "Edit Notes" : "Add Note"}
-                          </span>
+                          {parsedContent.internalNotes ? "Edit" : "+ Add note"}
                         </button>
                       )}
                     </div>
@@ -1839,7 +1698,7 @@ export default function AppointmentDetailDrawer({
                         <VoiceTextarea
                           value={quickNoteText}
                           onChange={(e) => setQuickNoteText(e.target.value)}
-                          placeholder="Add confidential internal advocate notes, prep items, or follow-up tasks (never visible to client)..."
+                          placeholder="Add confidential internal advocate notes..."
                           rows={2}
                           className="text-xs bg-[#020A17]/85 border-[#D4AF37]/40 text-white placeholder:text-slate-400 rounded-lg focus:border-[#F5B544]"
                         />
@@ -1864,16 +1723,17 @@ export default function AppointmentDetailDrawer({
                         </div>
                       </div>
                     ) : parsedContent.internalNotes ? (
-                      <div className="text-[11px] text-white/95 pl-3 border-l-[3px] border-[#38BDF8] leading-snug whitespace-pre-wrap break-words drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                      <div className="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap break-words">
                         {renderFormattedDescription(parsedContent.internalNotes)}
                       </div>
                     ) : (
                       <button
                         type="button"
                         onClick={() => setIsAddingNote(true)}
-                        className="w-full text-left py-1 text-[11px] text-slate-300/75 hover:text-[#FFE394] italic cursor-pointer transition-colors"
+                        className="text-left text-xs text-slate-300/80 hover:text-[#FFE394] flex items-center gap-1.5 cursor-pointer transition-colors"
                       >
-                        + Add private advocate note...
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add note</span>
                       </button>
                     )}
                   </div>

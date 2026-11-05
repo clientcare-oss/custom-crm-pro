@@ -26,6 +26,15 @@ import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
 import { recordCaseActivity } from "../services/caseActivityService";
+import {
+  onWaypointContactCreated,
+  onWaypointContactUpdated,
+  onWaypointContactDeletedOrArchived,
+  mergeNotesWithAdditionalChannels,
+  extractContactPhones,
+  extractContactEmails,
+  formatPhone,
+} from "../services/quo";
 
 const PARENT_EDITABLE_CONTACT_FIELDS = new Set<string>([
   "attorneyName",
@@ -258,6 +267,18 @@ export const contactsRouter = router({
             ownerId
           );
           createdStudentId = db.getInsertId(studentRes);
+        }
+
+        // 3. Two-Way Quo Contact Sync (Outbound automatic creation if enabled)
+        try {
+          if (resolvedParentId && resolvedParentId !== contactFields.parentContactId) {
+            await onWaypointContactCreated(ownerId, resolvedParentId);
+          }
+          if (primaryId > 0) {
+            await onWaypointContactCreated(ownerId, primaryId);
+          }
+        } catch (err) {
+          console.warn("[Contacts Create] Non-fatal Quo auto-sync warning:", err);
         }
 
         return {
@@ -701,7 +722,11 @@ export const contactsRouter = router({
             }
           }
           const ownerId = ctx.user?.id || 1;
-          return await db.updateContact(id, ownerId, data);
+          const parentUpdateRes = await db.updateContact(id, ownerId, data);
+          try {
+            await onWaypointContactUpdated(ownerId, id, providedKeys);
+          } catch {}
+          return parentUpdateRes;
         }
 
         // 2. Staff Path: Enforce module & field-level authorization
@@ -795,6 +820,13 @@ export const contactsRouter = router({
 
         const ownerId = ctx.user?.id || 1;
         const res = await db.updateContact(id, ownerId, data);
+
+        // Two-Way Quo Contact Sync (Outbound field update if enabled)
+        try {
+          await onWaypointContactUpdated(ownerId, id, providedKeys);
+        } catch (err) {
+          console.warn("[Contacts Update] Non-fatal Quo auto-sync warning:", err);
+        }
 
         if (input.lifecycleStage || input.accountStatus) {
           try {
@@ -1097,6 +1129,7 @@ export const contactsRouter = router({
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        await onWaypointContactDeletedOrArchived(ctx.user.id, input.id);
         return await db.deleteContact(input.id, ctx.user.id);
       }),
 
@@ -1330,6 +1363,7 @@ export const contactsRouter = router({
         const { contacts: contactsTable } = await import("../../drizzle/schema");
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        await onWaypointContactDeletedOrArchived(ctx.user.id, input.id);
         await dbConn
           .update(contactsTable)
           .set({ archivedAt: new Date(), archiveReason: input.reason })
@@ -1349,6 +1383,284 @@ export const contactsRouter = router({
           .set({ archivedAt: null, archiveReason: null })
           .where(and(eq(contactsTable.id, input.id), eq(contactsTable.ownerId, ctx.user.id)));
         return { success: true };
+      }),
+
+    // 5-Step Contact Import Execution (CSV, vCard .vcf, Excel .xlsx)
+    // Preserves multiple emails & phones; never creates portal accounts, assigns advocacy roles, sends invitations, or triggers messages.
+    importContactsBatch: requireStaffModule("contacts", "edit")
+      .input(
+        z.object({
+          sourceFormat: z.enum(["csv", "vcf", "xlsx"]).default("csv"),
+          rows: z.array(
+            z.object({
+              rowNumber: z.number(),
+              firstName: z.string(),
+              lastName: z.string().optional().default(""),
+              emails: z.array(z.string()).default([]),
+              phones: z.array(z.string()).default([]),
+              company: z.string().optional(),
+              jobTitle: z.string().optional(),
+              address: z.string().optional(),
+              city: z.string().optional(),
+              state: z.string().optional(),
+              zipCode: z.string().optional(),
+              country: z.string().optional(),
+              notes: z.string().optional(),
+              action: z.enum(["import", "skip", "merge", "create_separate"]).default("skip"),
+              duplicateTargetId: z.number().optional(),
+              overwriteExistingFields: z.boolean().optional().default(false),
+            })
+          ),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const ownerId = ctx.user?.id || 1;
+        let importedCount = 0;
+        let mergedCount = 0;
+        let skippedCount = 0;
+        let failedCount = 0;
+
+        const results: Array<{
+          rowNumber: number;
+          name: string;
+          email: string;
+          phone: string;
+          status: "imported" | "merged" | "skipped" | "failed";
+          contactId?: number;
+          reason: string;
+        }> = [];
+
+        for (const row of input.rows) {
+          const cleanFirst = (row.firstName || "").trim();
+          const cleanLast = (row.lastName || "").trim();
+          const displayName = `${cleanFirst} ${cleanLast}`.trim() || `Row #${row.rowNumber}`;
+          const validEmails = (row.emails || [])
+            .map((e) => e.trim())
+            .filter((e) => Boolean(e) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+          const validPhones = (row.phones || [])
+            .map((p) => formatPhone(p.trim()))
+            .filter(Boolean);
+
+          const primaryEmail = validEmails[0] || "";
+          const primaryPhone = validPhones[0] || "";
+
+          if (row.action === "skip") {
+            skippedCount++;
+            results.push({
+              rowNumber: row.rowNumber,
+              name: displayName,
+              email: primaryEmail,
+              phone: primaryPhone,
+              status: "skipped",
+              reason: "Skipped (Duplicate or deselected by user)",
+            });
+            continue;
+          }
+
+          if (!cleanFirst && !cleanLast && !primaryEmail && !primaryPhone) {
+            failedCount++;
+            results.push({
+              rowNumber: row.rowNumber,
+              name: displayName,
+              email: primaryEmail,
+              phone: primaryPhone,
+              status: "failed",
+              reason: "Missing required contact identity (no name, email, or phone number)",
+            });
+            continue;
+          }
+
+          // Check invalid email if raw emails were provided but none were valid
+          if ((row.emails || []).some((e) => e.trim().length > 0) && validEmails.length === 0) {
+            failedCount++;
+            results.push({
+              rowNumber: row.rowNumber,
+              name: displayName,
+              email: row.emails[0] || "",
+              phone: primaryPhone,
+              status: "failed",
+              reason: `Invalid email format: "${row.emails[0]}"`,
+            });
+            continue;
+          }
+
+          try {
+            if (row.action === "merge" && row.duplicateTargetId) {
+              const existing = await db.getContactById(row.duplicateTargetId, ownerId);
+              if (!existing) {
+                failedCount++;
+                results.push({
+                  rowNumber: row.rowNumber,
+                  name: displayName,
+                  email: primaryEmail,
+                  phone: primaryPhone,
+                  status: "failed",
+                  reason: `Target contact #${row.duplicateTargetId} for merge was not found`,
+                });
+                continue;
+              }
+
+              const combinedPhones = Array.from(
+                new Set([
+                  ...extractContactPhones(existing).map(formatPhone),
+                  ...validPhones,
+                ])
+              ).filter(Boolean);
+
+              const combinedEmails = Array.from(
+                new Set([...extractContactEmails(existing), ...validEmails])
+              ).filter(Boolean);
+
+              const extraPhones = combinedPhones.slice(1);
+              const extraEmails = combinedEmails.slice(1);
+
+              const baseNotes = [existing.notes, row.notes]
+                .filter(Boolean)
+                .join("\n");
+              const mergedNotes = mergeNotesWithAdditionalChannels(
+                baseNotes,
+                extraPhones,
+                extraEmails
+              );
+
+              const overwrite = Boolean(row.overwriteExistingFields);
+              const patch: Record<string, any> = {
+                firstName: overwrite
+                  ? cleanFirst || existing.firstName
+                  : existing.firstName || cleanFirst,
+                lastName: overwrite
+                  ? cleanLast || existing.lastName
+                  : existing.lastName || cleanLast,
+                email: overwrite
+                  ? combinedEmails[0] || existing.email
+                  : existing.email || combinedEmails[0] || undefined,
+                secondParentEmail:
+                  existing.secondParentEmail || extraEmails[0] || undefined,
+                phone: overwrite
+                  ? combinedPhones[0] || existing.phone
+                  : existing.phone || combinedPhones[0] || undefined,
+                secondParentPhone:
+                  existing.secondParentPhone || extraPhones[0] || undefined,
+                company: overwrite
+                  ? row.company || existing.company
+                  : existing.company || row.company || undefined,
+                jobTitle: overwrite
+                  ? row.jobTitle || existing.jobTitle
+                  : existing.jobTitle || row.jobTitle || undefined,
+                address: overwrite
+                  ? row.address || existing.address
+                  : existing.address || row.address || undefined,
+                city: overwrite
+                  ? row.city || existing.city
+                  : existing.city || row.city || undefined,
+                state: overwrite
+                  ? row.state || existing.state
+                  : existing.state || row.state || undefined,
+                zipCode: overwrite
+                  ? row.zipCode || existing.zipCode
+                  : existing.zipCode || row.zipCode || undefined,
+                country: overwrite
+                  ? row.country || existing.country
+                  : existing.country || row.country || undefined,
+                notes: mergedNotes || existing.notes || undefined,
+              };
+
+              await db.updateContact(existing.id, ownerId, patch);
+              try {
+                await onWaypointContactUpdated(ownerId, existing.id);
+              } catch {}
+
+              mergedCount++;
+              results.push({
+                rowNumber: row.rowNumber,
+                name: displayName,
+                email: combinedEmails[0] || "",
+                phone: combinedPhones[0] || "",
+                status: "merged",
+                contactId: existing.id,
+                reason: `Merged into existing contact #${existing.id} (${existing.firstName} ${existing.lastName})`,
+              });
+              continue;
+            }
+
+            // "import" or "create_separate": Create a new contact record
+            // Never automatically create client portal accounts, assign advocacy roles, send invitations, or trigger messages
+            const extraPhones = validPhones.slice(1);
+            const extraEmails = validEmails.slice(1);
+            const notesWithExtras = mergeNotesWithAdditionalChannels(
+              row.notes,
+              extraPhones,
+              extraEmails
+            );
+
+            const resolvedFirstName = cleanFirst || cleanLast || "Contact";
+            const resolvedLastName = cleanFirst ? cleanLast || "Contact" : "";
+
+            const createRes = await db.createContact(
+              {
+                firstName: resolvedFirstName,
+                lastName: resolvedLastName,
+                email: primaryEmail || undefined,
+                secondParentEmail: extraEmails[0] || undefined,
+                phone: primaryPhone || undefined,
+                secondParentPhone: extraPhones[0] || undefined,
+                company:
+                  row.company?.trim() ||
+                  (resolvedLastName ? `${resolvedLastName} Family` : "Imported Contact"),
+                jobTitle: row.jobTitle?.trim() || "Contact",
+                address: row.address?.trim() || undefined,
+                city: row.city?.trim() || undefined,
+                state: row.state?.trim() || undefined,
+                zipCode: row.zipCode?.trim() || undefined,
+                country: row.country?.trim() || undefined,
+                notes: notesWithExtras || undefined,
+              },
+              ownerId
+            );
+
+            const newId = db.getInsertId(createRes);
+            if (newId > 0) {
+              try {
+                await onWaypointContactCreated(ownerId, newId);
+              } catch {}
+            }
+
+            importedCount++;
+            results.push({
+              rowNumber: row.rowNumber,
+              name: `${resolvedFirstName} ${resolvedLastName}`.trim(),
+              email: primaryEmail,
+              phone: primaryPhone,
+              status: "imported",
+              contactId: newId,
+              reason:
+                row.action === "create_separate"
+                  ? "Created as separate contact record"
+                  : "Imported successfully",
+            });
+          } catch (err: any) {
+            failedCount++;
+            results.push({
+              rowNumber: row.rowNumber,
+              name: displayName,
+              email: primaryEmail,
+              phone: primaryPhone,
+              status: "failed",
+              reason: err?.message || "Database error while saving contact",
+            });
+          }
+        }
+
+        return {
+          success: true,
+          sourceFormat: input.sourceFormat,
+          importedCount,
+          mergedCount,
+          skippedCount,
+          failedCount,
+          totalProcessed: input.rows.length,
+          results,
+        };
       }),
   
 });

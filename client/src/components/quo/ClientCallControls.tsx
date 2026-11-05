@@ -11,6 +11,8 @@ import {
   AlertCircle,
   Clock,
   ExternalLink,
+  RotateCcw,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +53,16 @@ export default function ClientCallControls({
 }: ClientCallControlsProps) {
   const [copied, setCopied] = useState(false);
   const [isSmsOpen, setIsSmsOpen] = useState(false);
+  const utils = trpc.useUtils();
+
+  const { data: syncDetails } = trpc.quo.getContactSyncDetails.useQuery(
+    { contactId },
+    { enabled: Boolean(contactId) && isAdminOrStaff }
+  );
+
+  const effectiveSyncStatus = syncDetails?.syncStatus ?? quoSyncStatus;
+  const effectiveLastSyncAt = syncDetails?.lastSyncedAt ?? quoLastSyncAt;
+  const effectiveSyncError = syncDetails?.lastError ?? quoSyncError;
 
   const cleanPhone = phone?.replace(/\D/g, "") || "";
   const telLink = cleanPhone.length >= 10 ? `tel:+1${cleanPhone.slice(-10)}` : "";
@@ -90,12 +102,47 @@ export default function ClientCallControls({
     onSuccess: (data) => {
       if (data.success) {
         toast.success(data.message);
+        utils.contacts.list.invalidate();
+        utils.quo.getContactSyncDetails.invalidate({ contactId });
+        utils.quo.getContactSyncConfig.invalidate();
       } else {
         toast.error(data.message || "Sync failed");
       }
     },
     onError: (err) => {
       toast.error(`Sync failed: ${err.message}`);
+    },
+  });
+
+  const restoreContactMutation = trpc.quo.restoreContactToQuo.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success(data.message || `${contactName} restored to Quo`);
+        utils.contacts.list.invalidate();
+        utils.quo.getContactSyncDetails.invalidate({ contactId });
+        utils.quo.getContactSyncConfig.invalidate();
+      } else {
+        toast.error(data.message || "Failed to restore contact to Quo");
+      }
+    },
+    onError: (err) => {
+      toast.error(`Restore failed: ${err.message}`);
+    },
+  });
+
+  const resolveConflictMutation = trpc.quo.resolveContactConflict.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success(data.message || "Quo sync conflict resolved");
+        utils.contacts.list.invalidate();
+        utils.quo.getContactSyncDetails.invalidate({ contactId });
+        utils.quo.getContactSyncConfig.invalidate();
+      } else {
+        toast.error(data.message || "Failed to resolve conflict");
+      }
+    },
+    onError: (err) => {
+      toast.error(`Conflict resolution failed: ${err.message}`);
     },
   });
 
@@ -176,15 +223,56 @@ export default function ClientCallControls({
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48 bg-[#06172F] border-border/80 text-foreground">
-          <DropdownMenuItem
-            onClick={() => syncContactMutation.mutate({ contactId })}
-            disabled={syncContactMutation.isPending}
-            className="cursor-pointer gap-2 text-xs py-2"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 text-cyan-400 ${syncContactMutation.isPending ? "animate-spin" : ""}`} />
-            <span>Sync with Quo</span>
-          </DropdownMenuItem>
+        <DropdownMenuContent align="end" className="w-56 bg-[#06172F] border-border/80 text-foreground">
+          {effectiveSyncStatus === "removed_from_quo" ? (
+            <DropdownMenuItem
+              onClick={() => restoreContactMutation.mutate({ contactId })}
+              disabled={restoreContactMutation.isPending}
+              className="cursor-pointer gap-2 text-xs py-2 text-amber-300 hover:bg-amber-950/40"
+            >
+              <RotateCcw className={`h-3.5 w-3.5 text-amber-400 ${restoreContactMutation.isPending ? "animate-spin" : ""}`} />
+              <span>Restore to Quo</span>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              onClick={() => syncContactMutation.mutate({ contactId })}
+              disabled={syncContactMutation.isPending}
+              className="cursor-pointer gap-2 text-xs py-2"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 text-cyan-400 ${syncContactMutation.isPending ? "animate-spin" : ""}`} />
+              <span>Sync with Quo</span>
+            </DropdownMenuItem>
+          )}
+          {effectiveSyncStatus === "conflict" && (
+            <>
+              <DropdownMenuSeparator className="bg-border/60" />
+              <DropdownMenuLabel className="text-[10px] text-amber-300 uppercase tracking-wider">
+                Resolve Quo Sync Conflict
+              </DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => resolveConflictMutation.mutate({ contactId, resolution: "keep_waypoint" })}
+                disabled={resolveConflictMutation.isPending}
+                className="cursor-pointer gap-2 text-xs py-1.5"
+              >
+                <span>Keep Waypoint Version</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => resolveConflictMutation.mutate({ contactId, resolution: "accept_quo" })}
+                disabled={resolveConflictMutation.isPending}
+                className="cursor-pointer gap-2 text-xs py-1.5"
+              >
+                <span>Accept Quo Version</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => resolveConflictMutation.mutate({ contactId, resolution: "merge" })}
+                disabled={resolveConflictMutation.isPending}
+                className="cursor-pointer gap-2 text-xs py-1.5"
+              >
+                <span>Merge Both Versions</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border/60" />
+            </>
+          )}
           <DropdownMenuItem onClick={copyNumber} className="cursor-pointer gap-2 text-xs py-2">
             <Copy className="h-3.5 w-3.5 text-muted-foreground" />
             <span>Copy Phone Number</span>
@@ -193,20 +281,20 @@ export default function ClientCallControls({
       </DropdownMenu>
 
       {/* ── SUBTLE ADMIN-VISIBLE SYNC INDICATOR ── */}
-      {isAdminOrStaff && quoSyncStatus && quoSyncStatus !== "not_synced" && (
-        <div className="ml-1 inline-flex items-center">
-          {quoSyncStatus === "synced" && (
+      {isAdminOrStaff && effectiveSyncStatus && effectiveSyncStatus !== "not_synced" && (
+        <div className="ml-1 inline-flex items-center gap-1">
+          {effectiveSyncStatus === "synced" && (
             <Badge
               variant="outline"
               className="text-[10px] h-5 px-1.5 gap-1 bg-emerald-950/20 text-emerald-400 border-emerald-800/50 font-normal"
-              title={quoLastSyncAt ? `Last synced: ${new Date(quoLastSyncAt).toLocaleString()}` : "Synced with Quo"}
+              title={effectiveLastSyncAt ? `Last synced: ${new Date(effectiveLastSyncAt).toLocaleString()}` : "Synced with Quo"}
             >
               <CheckCircle2 className="h-3 w-3 text-emerald-400" />
               <span>Synced with Quo ✓</span>
             </Badge>
           )}
 
-          {quoSyncStatus === "pending" && (
+          {effectiveSyncStatus === "pending" && (
             <Badge
               variant="outline"
               className="text-[10px] h-5 px-1.5 gap-1 bg-amber-950/20 text-amber-400 border-amber-800/50 font-normal"
@@ -216,12 +304,48 @@ export default function ClientCallControls({
             </Badge>
           )}
 
-          {quoSyncStatus === "failed" && (
+          {effectiveSyncStatus === "removed_from_quo" && (
+            <div className="inline-flex items-center gap-1">
+              <Badge
+                variant="outline"
+                className="text-[10px] h-5 px-1.5 gap-1 bg-slate-900/60 text-slate-300 border-slate-700/70 font-normal"
+                title="This contact was deleted in Quo. Waypoint preserved the contact and paused automatic recreation."
+              >
+                <span>Removed from Quo</span>
+              </Badge>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={restoreContactMutation.isPending}
+                onClick={() => restoreContactMutation.mutate({ contactId })}
+                className="h-5 px-1.5 text-[10px] text-amber-300 hover:text-amber-200 hover:bg-amber-950/40 gap-1"
+                title="Re-create and re-link this contact in Quo"
+              >
+                <RotateCcw className={`h-2.5 w-2.5 ${restoreContactMutation.isPending ? "animate-spin" : ""}`} />
+                <span>Restore to Quo</span>
+              </Button>
+            </div>
+          )}
+
+          {effectiveSyncStatus === "conflict" && (
+            <Badge
+              variant="outline"
+              className="text-[10px] h-5 px-1.5 gap-1 bg-amber-950/30 text-amber-300 border-amber-700/60 font-normal cursor-pointer"
+              title={effectiveSyncError || "Conflicting edits detected between Waypoint and Quo"}
+              onClick={() => resolveConflictMutation.mutate({ contactId, resolution: "merge" })}
+            >
+              <AlertTriangle className="h-3 w-3 text-amber-400" />
+              <span>Quo Conflict (Click to Merge)</span>
+            </Badge>
+          )}
+
+          {effectiveSyncStatus === "failed" && (
             <Badge
               variant="outline"
               className="text-[10px] h-5 px-1.5 gap-1 bg-rose-950/20 text-rose-400 border-rose-800/50 font-normal cursor-pointer"
-              title={quoSyncError || "Quo sync failed"}
-              onClick={() => toast.error(`Quo Sync Error: ${quoSyncError || "Unknown error"}`)}
+              title={effectiveSyncError || "Quo sync failed"}
+              onClick={() => toast.error(`Quo Sync Error: ${effectiveSyncError || "Unknown error"}`)}
             >
               <AlertCircle className="h-3 w-3" />
               <span>Sync Failed</span>

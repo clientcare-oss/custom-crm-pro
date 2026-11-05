@@ -19,6 +19,9 @@ import {
   Home,
   Check,
   Plus,
+  RotateCcw,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
@@ -63,6 +66,10 @@ export interface ContactItem {
   preferredCallingEndTime?: string | null;
   mayCallOutsidePreferredHours?: boolean | null;
   relationship?: string | null;
+  quoContactId?: string | null;
+  quoSyncStatus?: string | null;
+  quoLastSyncAt?: string | Date | null;
+  quoSyncError?: string | null;
 }
 
 const AREA_CODE_TIMEZONE_MAP: Record<string, string> = {
@@ -161,6 +168,45 @@ export default function ContactsLedgerView({
       utils.pipeline.cards.list.invalidate();
     },
     onError: (err) => toast.error(err.message || "Failed to add linked student"),
+  });
+
+  const restoreToQuoMutation = trpc.quo.restoreContactToQuo.useMutation({
+    onSuccess: (res) => {
+      if (res.success) {
+        toast.success(res.message || "Contact restored to Quo");
+        utils.contacts.list.invalidate();
+        utils.quo.getContactSyncConfig.invalidate();
+      } else {
+        toast.error(res.message || "Failed to restore contact to Quo");
+      }
+    },
+    onError: (err) => toast.error(err.message || "Failed to restore contact to Quo"),
+  });
+
+  const syncWithQuoMutation = trpc.quo.syncContact.useMutation({
+    onSuccess: (res) => {
+      if (res.success) {
+        toast.success(res.message || "Synced with Quo");
+        utils.contacts.list.invalidate();
+        utils.quo.getContactSyncConfig.invalidate();
+      } else {
+        toast.error(res.message || "Quo sync failed");
+      }
+    },
+    onError: (err) => toast.error(err.message || "Quo sync failed"),
+  });
+
+  const resolveConflictMutation = trpc.quo.resolveContactConflict.useMutation({
+    onSuccess: (res) => {
+      if (res.success) {
+        toast.success(res.message || "Quo conflict resolved");
+        utils.contacts.list.invalidate();
+        utils.quo.getContactSyncConfig.invalidate();
+      } else {
+        toast.error(res.message || "Failed to resolve conflict");
+      }
+    },
+    onError: (err) => toast.error(err.message || "Failed to resolve conflict"),
   });
 
   // CRM Global Theme: "navy" (dark leather) or "blue" (antique vellum parchment)
@@ -794,6 +840,33 @@ export default function ContactsLedgerView({
                             {activeBadge.label}
                           </span>
                         )}
+
+                        {dossierContact.quoSyncStatus === "removed_from_quo" && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-serif font-semibold bg-slate-900/80 text-slate-300 border border-slate-600/60 shadow-xs">
+                            <span>Removed from Quo</span>
+                            <button
+                              type="button"
+                              disabled={restoreToQuoMutation.isPending}
+                              onClick={() => restoreToQuoMutation.mutate({ contactId: dossierContact.id })}
+                              className="inline-flex items-center gap-1 text-[#FCE09E] hover:text-white underline cursor-pointer ml-1"
+                              title="Re-create and re-link this contact in Quo"
+                            >
+                              <RotateCcw className={cn("h-2.5 w-2.5", restoreToQuoMutation.isPending && "animate-spin")} />
+                              <span>Restore to Quo</span>
+                            </button>
+                          </span>
+                        )}
+
+                        {dossierContact.quoSyncStatus === "conflict" && (
+                          <span
+                            onClick={() => resolveConflictMutation.mutate({ contactId: dossierContact.id, resolution: "merge" })}
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-serif font-semibold bg-amber-950/80 text-amber-300 border border-amber-500/60 cursor-pointer hover:bg-amber-900/80 shadow-xs"
+                            title={dossierContact.quoSyncError || "Conflicting edits detected between Waypoint and Quo. Click to merge."}
+                          >
+                            <AlertTriangle className="h-3 w-3 text-amber-400" />
+                            <span>Quo Sync Conflict · Merge</span>
+                          </span>
+                        )}
                       </div>
 
                       {/* Parent / Contact Name (Dropped down, uninhibited full width) */}
@@ -922,6 +995,25 @@ export default function ContactsLedgerView({
                           <Edit2 className="h-3.5 w-3.5 text-[#93C5FD]" />
                           <span>Edit Contact</span>
                         </DropdownMenuItem>
+                        {dossierContact.quoSyncStatus === "removed_from_quo" ? (
+                          <DropdownMenuItem
+                            onClick={() => restoreToQuoMutation.mutate({ contactId: dossierContact.id })}
+                            disabled={restoreToQuoMutation.isPending}
+                            className="flex items-center gap-2 cursor-pointer hover:bg-amber-950/60 text-amber-300 text-xs py-2 rounded-lg"
+                          >
+                            <RotateCcw className={cn("h-3.5 w-3.5", restoreToQuoMutation.isPending && "animate-spin")} />
+                            <span>Restore to Quo</span>
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onClick={() => syncWithQuoMutation.mutate({ contactId: dossierContact.id })}
+                            disabled={syncWithQuoMutation.isPending}
+                            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-xs py-2 rounded-lg"
+                          >
+                            <RefreshCw className={cn("h-3.5 w-3.5 text-cyan-400", syncWithQuoMutation.isPending && "animate-spin")} />
+                            <span>Sync with Quo</span>
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           onClick={() => onDeleteContact(dossierContact.id)}
                           className="flex items-center gap-2 cursor-pointer hover:bg-red-950/60 text-red-400 text-xs py-2 rounded-lg"
