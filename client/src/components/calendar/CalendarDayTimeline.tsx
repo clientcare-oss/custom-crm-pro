@@ -447,9 +447,12 @@ export default function CalendarDayTimeline({
                       style={{ background: cardBackground }}
                       className={`rounded-[5px] border p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all hover:brightness-110 shadow-md relative z-10 ${cardBorderClass}`}
                     >
-                      {/* Left: Title & Subtitle */}
+                      {/* Left: Time -> Student -> Meeting Type & Advocate (preserving exact aesthetic) */}
                       <div>
                         <div className="font-serif font-bold text-[#FFF4D4] text-sm tracking-tight leading-tight flex items-center gap-2">
+                          <span className="font-mono text-[#FFE394]">{startStr}</span>
+                          <span>{studentName}</span>
+                          <span className="text-[#C6B697] font-normal">—</span>
                           <span>{apt.title}</span>
                           {isHold ? (
                             <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-[5px] bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
@@ -473,12 +476,12 @@ export default function CalendarDayTimeline({
                               {apt.siblingLabel || "1 OF 3 POSSIBLE DATES"}
                             </span>
                             <span className="text-xs text-[#C6B697]">
-                              {studentName} · Waiting on: <strong className="text-[#FFE394]">{apt.waitingOn || "School"}</strong>
+                              {apt.title} · Assigned: <strong className="text-[#FFE394]">{advocateName}</strong> · Waiting on: <strong className="text-[#FFE394]">{apt.waitingOn || "School"}</strong>
                             </span>
                           </div>
                         ) : (
                           <div className="text-xs text-emerald-100/90 mt-0.5 flex items-center gap-2">
-                            <span className="text-white font-bold text-xs">{studentName}</span>
+                            <span className="text-white font-bold text-xs">{apt.title}</span>
                             <span className="text-emerald-300/60">•</span>
                             <span className="text-emerald-200 font-semibold">{advocateName}</span>
                             {isNeedsCoverage && (

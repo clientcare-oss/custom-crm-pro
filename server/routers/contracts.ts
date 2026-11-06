@@ -105,8 +105,12 @@ export const contractsRouter = router({
         if (contract.clientId) {
           try {
             const { triggerAutomationFlow } = await import("../db/automations");
-            await triggerAutomationFlow("contract_signed", contract.clientId);
-            await triggerAutomationFlow("all_signatures_collected", contract.clientId);
+            await triggerAutomationFlow("contract_signed", contract.clientId, false, {
+              eventKey: `contract_signed:${input.id}`,
+            });
+            await triggerAutomationFlow("all_signatures_collected", contract.clientId, false, {
+              eventKey: `contract_all_sig:${input.id}`,
+            });
           } catch (e) {
             console.error("Failed to execute contract automation trigger:", e);
           }

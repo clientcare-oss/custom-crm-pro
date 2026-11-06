@@ -1,6 +1,7 @@
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { invoices, invoiceLineItems, contracts, vaultSubscriptions, contacts, projects, savedPaymentMethods } from "../../drizzle/schema";
 import { getDb } from "./connection";
+import { dispatchPaymentAutomationTriggers } from "./automations";
 
 // In-memory cache layer to ensure zero-failure deterministic testing and offline CI execution
 export const inMemoryBillingInvoices = new Map<number, any>();
@@ -448,10 +449,14 @@ export async function recordInvoicePayment(
     return existing;
   }
 
+  const totalCents = Math.round(Number(existing.total || existing.amount || 0) * 100);
+  const previousPaidCents = Math.round(Number(existing.amountPaid || 0) * 100);
+
   if (inMemoryBillingInvoices.has(id)) {
     const inv = inMemoryBillingInvoices.get(id);
     inv.status = "Paid";
     inv.paidDate = new Date();
+    inv.amountPaid = String(existing.total || existing.amount || "0");
     inv.stripePaymentIntentId = paymentData.stripePaymentIntentId || inv.stripePaymentIntentId;
     inv.stripeInvoiceId = paymentData.stripeInvoiceId || inv.stripeInvoiceId;
     inv.paymentStatusNote = paymentData.paymentNote || "Payment completed via Stripe";
@@ -474,6 +479,26 @@ export async function recordInvoicePayment(
         .where(eq(invoices.id, id));
     }
   } catch {}
+
+  if (existing.clientId && totalCents > 0) {
+    try {
+      await dispatchPaymentAutomationTriggers({
+        paymentId:
+          paymentData.stripePaymentIntentId ||
+          paymentData.stripeInvoiceId ||
+          `inv_pay_${id}`,
+        contactId: Number(existing.clientId),
+        invoiceId: id,
+        status: "PAID",
+        amountCents: Math.max(0, totalCents - previousPaidCents) || totalCents,
+        invoiceTotalCents: totalCents,
+        invoicePaidBeforeCents: previousPaidCents,
+        invoicePaidAfterCents: totalCents,
+        remainingBalanceCents: 0,
+        paymentType: "invoice_payment",
+      });
+    } catch {}
+  }
 
   return await getInvoiceWithDetails(id);
 }
@@ -546,15 +571,22 @@ export async function recordExternalPayment(
   }
 
   const paidAmount = data.amountPaid || existing.total;
+  const totalCents = Math.round(Number(existing.total || existing.amount || 0) * 100);
+  const previousPaidCents = Math.round(Number(existing.amountPaid || 0) * 100);
+  const deltaCents = Math.round(Number(paidAmount || 0) * 100);
+  const newPaidCents = previousPaidCents + deltaCents;
+  const isNowPaidInFull = totalCents > 0 && newPaidCents >= totalCents;
+  const nextStatus = isNowPaidInFull ? "Paid" : existing.status || "Sent";
+
   const note = data.notes
     ? `External payment of $${paidAmount} recorded (${data.paymentMethod}): ${data.notes}`
     : `External payment of $${paidAmount} recorded via ${data.paymentMethod}`;
 
   if (inMemoryBillingInvoices.has(id)) {
     const inv = inMemoryBillingInvoices.get(id);
-    inv.status = "Paid";
-    inv.paidDate = new Date();
-    inv.amountPaid = paidAmount;
+    inv.status = nextStatus;
+    if (isNowPaidInFull) inv.paidDate = new Date();
+    inv.amountPaid = (newPaidCents / 100).toFixed(2);
     inv.externalPaymentMethod = data.paymentMethod;
     inv.externalPaymentReference = data.reference || null;
     inv.externalPaymentRecordedBy = data.recordedBy || null;
@@ -569,9 +601,9 @@ export async function recordExternalPayment(
       await db
         .update(invoices)
         .set({
-          status: "Paid",
-          paidDate: new Date(),
-          amountPaid: paidAmount,
+          status: nextStatus as any,
+          paidDate: isNowPaidInFull ? new Date() : existing.paidDate,
+          amountPaid: (newPaidCents / 100).toFixed(2),
           externalPaymentMethod: data.paymentMethod,
           externalPaymentReference: data.reference || null,
           externalPaymentRecordedBy: data.recordedBy || null,
@@ -582,6 +614,23 @@ export async function recordExternalPayment(
         .where(eq(invoices.id, id));
     }
   } catch {}
+
+  if (existing.clientId && deltaCents > 0) {
+    try {
+      await dispatchPaymentAutomationTriggers({
+        paymentId: data.reference || `ext_pay_${id}_${newPaidCents}`,
+        contactId: Number(existing.clientId),
+        invoiceId: id,
+        status: "PAID",
+        amountCents: deltaCents,
+        invoiceTotalCents: totalCents,
+        invoicePaidBeforeCents: previousPaidCents,
+        invoicePaidAfterCents: newPaidCents,
+        remainingBalanceCents: Math.max(0, totalCents - newPaidCents),
+        paymentType: isNowPaidInFull ? "invoice_payment" : "installment",
+      });
+    } catch {}
+  }
 
   return await getInvoiceWithDetails(id);
 }

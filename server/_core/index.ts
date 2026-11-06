@@ -79,6 +79,18 @@ async function startServer() {
 
   server.listen(port, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${port}/ (and http://0.0.0.0:${port}/)`);
+    if (process.env.VITEST !== "true") {
+      const schedulerInterval = setInterval(async () => {
+        try {
+          const db = await import("../db");
+          await db.evaluateScheduledTimeTriggers();
+          await db.processDueAutomationJobs({ workerId: `node-bg-${process.pid}` });
+        } catch (err) {
+          console.warn("[Background Automation Worker] Tick error:", err);
+        }
+      }, 60_000);
+      schedulerInterval.unref?.();
+    }
   });
 }
 

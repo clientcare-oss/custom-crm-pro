@@ -22,6 +22,8 @@ import {
   detectItemPatternKey,
   CALENDAR_PATTERNS,
   CalendarPatternKey,
+  formatWaypointCalendarEvent,
+  sortAppointmentsChronologically,
 } from "./CalendarPatternStyles";
 import type { OperationalBlock } from "../../../../drizzle/schema";
 import { cn } from "@/lib/utils";
@@ -640,6 +642,15 @@ export default function CalendarWeekView({
                       titleColor = "text-purple-200";
                     }
 
+                    const fmtEvt = formatWaypointCalendarEvent(
+                      {
+                        ...data,
+                        startTime: evt.startTime,
+                        endTime: evt.endTime,
+                      },
+                      loggedInAdvocateName
+                    );
+
                     return (
                       <div
                         key={`apt-${evtIdx}`}
@@ -658,33 +669,39 @@ export default function CalendarWeekView({
                         )}
                       >
                         <div className="min-w-0">
-                          {/* Top: Icon + Time + Title */}
-                          <div className="flex items-center gap-1.5 mb-0.5">
-                            {isHold ? (
-                              <div className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-cyan-400 text-[#07162B] font-mono text-[9px] font-bold">
-                                {data.optionsCount || 3}
-                              </div>
-                            ) : (
-                              <div className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-black/40 text-[#FFF4D4]">
-                                {isCall ? (
-                                  <Phone className="h-2.5 w-2.5 text-amber-300" />
-                                ) : (
-                                  <User className="h-2.5 w-2.5 text-emerald-300" />
-                                )}
-                              </div>
-                            )}
-                            <span className="font-mono text-[10px] font-semibold text-[#FFE394]">
-                              {evt.startTime.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                          {/* Top: Icon + Time in front + Advocate */}
+                          <div className="flex items-center justify-between gap-1.5 mb-0.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              {isHold ? (
+                                <div className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-cyan-400 text-[#07162B] font-mono text-[9px] font-bold">
+                                  {data.optionsCount || 3}
+                                </div>
+                              ) : (
+                                <div className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-black/40 text-[#FFF4D4]">
+                                  {isCall ? (
+                                    <Phone className="h-2.5 w-2.5 text-amber-300" />
+                                  ) : (
+                                    <User className="h-2.5 w-2.5 text-emerald-300" />
+                                  )}
+                                </div>
+                              )}
+                              <span className="font-mono text-[10px] font-semibold text-[#FFE394]">
+                                {fmtEvt.startTimeLabel}
+                              </span>
+                            </div>
+                            <span className="text-[9px] font-semibold text-[#FFE394] shrink-0">
+                              {fmtEvt.advocateFirstName}
                             </span>
                           </div>
 
+                          {/* Student Name first, then Session Type (1:1 / IEP / 504) */}
                           <div className={cn("font-serif text-xs font-bold leading-tight truncate", titleColor)}>
-                            {data.title}
+                            {fmtEvt.studentLabel || fmtEvt.sessionTypeFull}
                           </div>
 
-                          {(data.studentName || data.parentName) && (
+                          {fmtEvt.studentLabel && (
                             <div className="text-[10px] text-[#FFF4D4] font-medium truncate mt-0.5">
-                              {data.studentName || data.parentName}
+                              {fmtEvt.sessionTypeFull}
                             </div>
                           )}
 

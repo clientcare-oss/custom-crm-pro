@@ -1122,10 +1122,19 @@ export const agreementsRouter = router({
 
       // Fire Automations
       try {
-        await triggerAutomationFlow("agreement_signed", agreement.clientId);
-        await triggerAutomationFlow("agreement_completed", agreement.clientId);
-        await triggerAutomationFlow("contract_signed", agreement.clientId);
-        await triggerAutomationFlow("all_signatures_collected", agreement.clientId);
+        const targetContact = agreement.studentContactId || agreement.clientId;
+        await triggerAutomationFlow("agreement_signed", targetContact, false, {
+          eventKey: `agreement_signed:${agreement.id}`,
+        });
+        await triggerAutomationFlow("agreement_completed", targetContact, false, {
+          eventKey: `agreement_completed:${agreement.id}`,
+        });
+        await triggerAutomationFlow("contract_signed", targetContact, false, {
+          eventKey: `agreement_contract_signed:${agreement.id}`,
+        });
+        await triggerAutomationFlow("all_signatures_collected", targetContact, false, {
+          eventKey: `agreement_all_sig:${agreement.id}`,
+        });
       } catch (e) {}
 
       return {

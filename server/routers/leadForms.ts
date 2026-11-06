@@ -281,7 +281,9 @@ export const leadFormsRouter = router({
         if (studentContactId) {
           try {
             const { triggerAutomationFlow } = await import("../db/automations");
-            await triggerAutomationFlow("lead_form_submitted", studentContactId);
+            await triggerAutomationFlow("lead_form_submitted", studentContactId, false, {
+              eventKey: `lead_form_submit:${leadId || caseId || studentContactId}:${input.slug}`,
+            });
           } catch (e) {
             console.error("Failed to run lead form automation flow:", e);
           }

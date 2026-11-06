@@ -640,10 +640,10 @@ export default function Appointments() {
       },
       {
         id: 9904,
-        title: "IEP Meeting",
+        title: "1:1 Advocate Session",
         studentName: "Noah Davis",
         parentName: "Rachel Davis",
-        meetingType: "IEP Meeting",
+        meetingType: "1:1 with Advocate",
         assignedAdvocateName: "Byron Honea",
         status: "Confirmed",
         description: "Meeting link pending. Please forward the virtual meeting link to Waypoint Advocates as soon as the school sends it to you. Please do not assume the school will send it directly to us.\n<!--WAYPOINT_INTERNAL_NOTES-->\nAwaiting Microsoft Teams invite from Fulton County IEP chair.",
@@ -737,10 +737,12 @@ export default function Appointments() {
 
   const bottomConsoleTodayApts: BottomConsoleAppointment[] = useMemo(() => {
     const selStr = new Date(selectedDate).toISOString().split("T")[0];
-    const dayMatches = mergedAppointments.filter((a: any) => {
-      const s = new Date(a.startTime).toISOString().split("T")[0];
-      return s === selStr && (showCanceled || a.status !== "Cancelled");
-    });
+    const dayMatches = mergedAppointments
+      .filter((a: any) => {
+        const s = new Date(a.startTime).toISOString().split("T")[0];
+        return s === selStr && (showCanceled || a.status !== "Cancelled");
+      })
+      .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
     return dayMatches.map((a: any) => {
       const startTime = new Date(a.startTime);
@@ -759,7 +761,8 @@ export default function Appointments() {
         title: a.title,
         studentName: a.studentName,
         parentName: a.parentName,
-        contextTag: a.studentName && a.meetingType ? `${a.studentName} • ${a.meetingType}` : a.location || undefined,
+        assignedAdvocateName: a.assignedAdvocateName,
+        contextTag: a.location || undefined,
         status: st,
         meetingType: a.meetingType,
         videoLink: a.videoLink,

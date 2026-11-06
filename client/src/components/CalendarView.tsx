@@ -12,7 +12,12 @@ import { formatDualTimes } from "@shared/timezones";
 import TodaysAppointmentsTable, { CalendarAppointment } from "./calendar/TodaysAppointmentsTable";
 import CalendarDayTimeline from "./calendar/CalendarDayTimeline";
 import CalendarWeekView from "./calendar/CalendarWeekView";
-import { detectItemPatternKey, CALENDAR_PATTERNS } from "./calendar/CalendarPatternStyles";
+import {
+  detectItemPatternKey,
+  CALENDAR_PATTERNS,
+  formatWaypointCalendarEvent,
+  sortAppointmentsChronologically,
+} from "./calendar/CalendarPatternStyles";
 
 import type { OperationalBlock } from "../../../drizzle/schema";
 
@@ -228,6 +233,9 @@ export default function CalendarView({
       if (!map[date]) map[date] = [];
       map[date].push(apt);
     });
+    for (const dateKey of Object.keys(map)) {
+      map[dateKey] = sortAppointmentsChronologically(map[dateKey]);
+    }
     return map;
   }, [filteredAppointments]);
 
@@ -371,12 +379,13 @@ export default function CalendarView({
             );
           })}
 
-          {/* Client Appointments in Month Cell */}
+          {/* Client Appointments in Month Cell — Exact Waypoint aesthetic, ordered: Time -> Student -> Session Type -> Advocate */}
           {dayAppointments.slice(0, 4).map((apt) => {
             const isNeedsCoverage = apt.status === "Needs Coverage";
             const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
             const patternKey = detectItemPatternKey(apt as any);
             const patternDef = CALENDAR_PATTERNS[patternKey];
+            const fmtEvt = formatWaypointCalendarEvent(apt, loggedInAdvocateName);
 
             return (
               <div
@@ -391,13 +400,31 @@ export default function CalendarView({
                     ? "border-rose-600/80 shadow-sm shadow-rose-950"
                     : patternDef.borderClass
                 }`}
+                title={`${fmtEvt.startTimeLabel} ${fmtEvt.studentLabel || "Student"} — ${fmtEvt.sessionTypeFull} (${advocateName})`}
               >
-                <div className={`font-serif font-bold truncate leading-[1.1] ${patternKey === "confirmed" ? "text-white" : "text-[#FFF4D4]"}`}>{apt.title}</div>
+                <div
+                  className={`font-serif font-bold truncate leading-[1.1] ${
+                    patternKey === "confirmed" ? "text-white" : "text-[#FFF4D4]"
+                  }`}
+                >
+                  <span className="font-mono text-[#FFE394] mr-1">{fmtEvt.startTimeLabel}</span>
+                  <span>{fmtEvt.studentLabel || fmtEvt.sessionTypeFull}</span>
+                </div>
                 <div className="flex items-center justify-between gap-1 text-[9px] leading-[1.1] mt-[1px]">
-                  <span className={`truncate min-w-0 flex-1 ${patternKey === "confirmed" ? "text-emerald-100" : "text-[#C6B697]"}`}>
-                    {apt.studentName || apt.parentName || "Student"}
+                  <span
+                    className={`truncate min-w-0 flex-1 ${
+                      patternKey === "confirmed" ? "text-emerald-100" : "text-[#C6B697]"
+                    }`}
+                  >
+                    {fmtEvt.sessionTypeFull}
                   </span>
-                  <span className={`font-semibold shrink-0 ${patternKey === "confirmed" ? "text-emerald-300" : "text-[#FFE394]"}`}>{advocateName}</span>
+                  <span
+                    className={`font-semibold shrink-0 ${
+                      patternKey === "confirmed" ? "text-emerald-300" : "text-[#FFE394]"
+                    }`}
+                  >
+                    {advocateName}
+                  </span>
                 </div>
               </div>
             );
@@ -720,14 +747,7 @@ export default function CalendarView({
                   const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
                   const patternKey = detectItemPatternKey(apt as any);
                   const patternDef = CALENDAR_PATTERNS[patternKey];
-                  const startStr = new Date(apt.startTime).toLocaleTimeString([], {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  });
-                  const endStr = new Date(apt.endTime).toLocaleTimeString([], {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  });
+                  const fmtEvt = formatWaypointCalendarEvent(apt, loggedInAdvocateName);
 
                   return (
                     <div
@@ -749,11 +769,12 @@ export default function CalendarView({
                             patternKey === "confirmed" ? "text-white" : "text-[#FFF4D4]"
                           }`}
                         >
-                          {apt.title}
+                          <span className="font-mono text-[#FFE394] mr-1.5">{fmtEvt.startTimeLabel}</span>
+                          {fmtEvt.studentLabel || "Student"}
                         </span>
                         <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-black/30 text-[#FFE394] shrink-0 flex items-center gap-1">
                           <Clock className="w-2.5 h-2.5 text-[#C5A059]" />
-                          {startStr} – {endStr}
+                          {fmtEvt.timeRangeLabel}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-2 text-xs mt-1">
@@ -762,7 +783,7 @@ export default function CalendarView({
                             patternKey === "confirmed" ? "text-emerald-100" : "text-[#C6B697]"
                           }`}
                         >
-                          {apt.studentName || apt.parentName || "Student"}
+                          {fmtEvt.sessionTypeFull}
                         </span>
                         <span
                           className={`font-semibold shrink-0 ${

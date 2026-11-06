@@ -71,6 +71,74 @@ export default function Students() {
   const [customStages, setCustomStages] = useState<CustomStudentStage[]>(() => loadCustomStudentStages());
   const [manageTagsOpen, setManageTagsOpen] = useState(false);
 
+  const updateStudentTagsMutation = trpc.contacts.updateStudentTags.useMutation({
+    onSuccess: () => {
+      utils.contacts.list.invalidate();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to persist student tag update");
+    },
+  });
+
+  const syncBrowserStudentTagsMutation = trpc.contacts.syncBrowserStudentTags.useMutation({
+    onSuccess: (res) => {
+      if (res?.mergedStudentTagsMap) {
+        setStudentTagsMap((prev) => {
+          const merged = { ...prev, ...res.mergedStudentTagsMap };
+          saveStudentTagsMap(merged);
+          return merged;
+        });
+      }
+    },
+  });
+
+  // Safely merge browser-saved tags with backend persisted tags on load
+  useEffect(() => {
+    if (!rawContacts || !Array.isArray(rawContacts)) return;
+    const dbTagsMap: Record<number, string[]> = {};
+    for (const c of rawContacts as any[]) {
+      if (!c || typeof c.id !== "number" || !c.tags) continue;
+      try {
+        const parsed = typeof c.tags === "string" ? JSON.parse(c.tags) : c.tags;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          dbTagsMap[c.id] = parsed.map((t: any) => String(t).trim()).filter(Boolean);
+        }
+      } catch {}
+    }
+
+    const localMap = loadStudentTagsMap();
+    const stringKeyMap: Record<string, string[]> = {};
+    let hasUnsyncedLocal = false;
+
+    for (const [idStr, tags] of Object.entries(localMap)) {
+      const numId = Number(idStr);
+      if (Array.isArray(tags) && tags.length > 0) {
+        stringKeyMap[idStr] = tags;
+        const dbForStudent = dbTagsMap[numId] || [];
+        if (tags.some((t) => !dbForStudent.some((d) => d.toLowerCase() === t.toLowerCase()))) {
+          hasUnsyncedLocal = true;
+        }
+      }
+    }
+
+    if (Object.keys(dbTagsMap).length > 0) {
+      setStudentTagsMap((prev) => {
+        const merged: Record<number, string[]> = { ...prev };
+        for (const [idStr, dbList] of Object.entries(dbTagsMap)) {
+          const numId = Number(idStr);
+          const combined = Array.from(new Set([...(merged[numId] || []), ...dbList]));
+          merged[numId] = combined;
+        }
+        saveStudentTagsMap(merged);
+        return merged;
+      });
+    }
+
+    if (hasUnsyncedLocal && !syncBrowserStudentTagsMutation.isPending) {
+      syncBrowserStudentTagsMutation.mutate({ studentTagsMap: stringKeyMap });
+    }
+  }, [rawContacts]);
+
   // Drawer expansion states
   const [openDrawers, setOpenDrawers] = useState<Record<string, boolean>>({
     active: true,
@@ -99,24 +167,39 @@ export default function Students() {
       return nextTags;
     });
 
+    const existingForStudent = studentTagsMap[studentId] || [];
+    if (existingForStudent.some((t) => t.toLowerCase() === cleanName.toLowerCase())) {
+      return;
+    }
+    const nextForStudent = [...existingForStudent, cleanName];
+
     setStudentTagsMap((prev) => {
-      const existing = prev[studentId] || [];
-      if (existing.some((t) => t.toLowerCase() === cleanName.toLowerCase())) {
-        return prev;
-      }
-      const next = { ...prev, [studentId]: [...existing, cleanName] };
+      const next = { ...prev, [studentId]: nextForStudent };
       saveStudentTagsMap(next);
       return next;
+    });
+
+    updateStudentTagsMutation.mutate({
+      studentId,
+      tags: nextForStudent,
     });
   };
 
   const handleRemoveTag = (studentId: number, tagName: string) => {
+    const existingForStudent = studentTagsMap[studentId] || [];
+    const filteredForStudent = existingForStudent.filter(
+      (t) => t.toLowerCase() !== tagName.toLowerCase()
+    );
+
     setStudentTagsMap((prev) => {
-      const existing = prev[studentId] || [];
-      const filtered = existing.filter((t) => t.toLowerCase() !== tagName.toLowerCase());
-      const next = { ...prev, [studentId]: filtered };
+      const next = { ...prev, [studentId]: filteredForStudent };
       saveStudentTagsMap(next);
       return next;
+    });
+
+    updateStudentTagsMutation.mutate({
+      studentId,
+      tags: filteredForStudent,
     });
   };
 

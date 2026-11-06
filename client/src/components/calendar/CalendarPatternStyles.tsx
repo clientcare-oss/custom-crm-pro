@@ -834,3 +834,192 @@ export function CalendarPatternLegendBar({
     </div>
   );
 }
+
+export interface FormattedWaypointCalendarEvent {
+  startTimeLabel: string;
+  endTimeLabel: string;
+  timeRangeLabel: string;
+  studentLabel: string;
+  sessionTypeShort: string;
+  sessionTypeFull: string;
+  advocateFirstName: string;
+  advocateFullName: string;
+  isAssignedToMe: boolean;
+  assignedBadgeLabel: string;
+  assignedCompactLabel: string;
+}
+
+function isSameAdvocate(nameA?: string | null, nameB?: string | null): boolean {
+  if (!nameA || !nameB) return false;
+  const a = nameA.trim().toLowerCase();
+  const b = nameB.trim().toLowerCase();
+  if (a === b) return true;
+  return a.split(" ")[0] === b.split(" ")[0];
+}
+
+/**
+ * Formats any Waypoint calendar appointment into the standard embedded working order:
+ * 1. Time in front (e.g. "9:00 AM")
+ * 2. Student / Client Name (e.g. "Megan Gay", "Kate Mize", "Emma Carter")
+ * 3. Session / Meeting Type (e.g. "1:1 Advocate", "IEP", "504", "Discovery")
+ * 4. Assigned Advocate indicator ("Me · Byron" vs other staff member)
+ */
+export function formatWaypointCalendarEvent(
+  apt: {
+    startTime?: string | Date | null;
+    endTime?: string | Date | null;
+    timeStr?: string | null;
+    title?: string | null;
+    studentName?: string | null;
+    parentName?: string | null;
+    meetingType?: string | null;
+    assignedAdvocateName?: string | null;
+  },
+  loggedInAdvocateName = "Byron Honea"
+): FormattedWaypointCalendarEvent {
+  const startDate = apt.startTime ? new Date(apt.startTime) : null;
+  const endDate = apt.endTime ? new Date(apt.endTime) : null;
+
+  const startTimeLabel =
+    apt.timeStr ||
+    (startDate && !isNaN(startDate.getTime())
+      ? startDate.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        })
+      : "");
+
+  const endTimeLabel =
+    endDate && !isNaN(endDate.getTime())
+      ? endDate.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        })
+      : "";
+
+  const timeRangeLabel =
+    startTimeLabel && endTimeLabel ? `${startTimeLabel} – ${endTimeLabel}` : startTimeLabel;
+
+  let studentLabel = (apt.studentName || apt.parentName || "").trim();
+  const rawTitle = (apt.title || "").trim();
+  const rawMeetingType = (apt.meetingType || "").trim();
+
+  // If studentName/parentName was not explicitly set on the record, check if it's embedded in the title
+  if (!studentLabel && rawTitle) {
+    if (rawTitle.includes(" - ")) {
+      const parts = rawTitle.split(" - ").map((s) => s.trim());
+      if (
+        parts[0] &&
+        !/^(iep|504|1:1|one-to-one|discovery|records|hold|tentative|parent|client|internal)/i.test(
+          parts[0]
+        )
+      ) {
+        studentLabel = parts[0];
+      }
+    } else {
+      const suffixMatch = rawTitle.match(/^(.+?)\s+(IEP|504|1:1.*|Discovery.*)$/i);
+      if (
+        suffixMatch &&
+        !/^(hold|tentative|confirmed|annual|initial)$/i.test(suffixMatch[1].trim())
+      ) {
+        studentLabel = suffixMatch[1].trim();
+      }
+    }
+  }
+
+  // Build clean session/meeting type without repeating the student's name
+  let cleanedTypeSource = rawMeetingType || rawTitle || "Session";
+  if (rawTitle && (!rawMeetingType || rawTitle.length > rawMeetingType.length)) {
+    cleanedTypeSource = rawTitle;
+  }
+
+  if (studentLabel) {
+    const escapedStudent = studentLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    cleanedTypeSource = cleanedTypeSource
+      .replace(new RegExp(`^${escapedStudent}\\s*[-–—:•·]?\\s*`, "i"), "")
+      .replace(new RegExp(`\\s*[-–—:•·]?\\s*${escapedStudent}$`, "i"), "")
+      .trim();
+  }
+
+  const combinedLower = `${cleanedTypeSource} ${rawMeetingType} ${rawTitle}`.toLowerCase();
+
+  let sessionTypeShort = cleanedTypeSource || rawMeetingType || "Session";
+  let sessionTypeFull = cleanedTypeSource || rawMeetingType || "Session";
+
+  if (
+    combinedLower.includes("1:1") ||
+    combinedLower.includes("one-to-one") ||
+    combinedLower.includes("one to one")
+  ) {
+    sessionTypeShort = "1:1 Advocate";
+    sessionTypeFull =
+      cleanedTypeSource && cleanedTypeSource.toLowerCase().includes("1:1")
+        ? cleanedTypeSource
+        : "1:1 Advocate Session";
+  } else if (combinedLower.includes("iep")) {
+    sessionTypeShort = "IEP";
+    sessionTypeFull =
+      cleanedTypeSource && cleanedTypeSource.toLowerCase().includes("iep")
+        ? cleanedTypeSource
+        : "IEP Meeting";
+  } else if (combinedLower.includes("504")) {
+    sessionTypeShort = "504";
+    sessionTypeFull =
+      cleanedTypeSource && cleanedTypeSource.toLowerCase().includes("504")
+        ? cleanedTypeSource
+        : "504 Meeting";
+  } else if (combinedLower.includes("discovery") || combinedLower.includes("free")) {
+    sessionTypeShort = "Discovery";
+    sessionTypeFull =
+      cleanedTypeSource &&
+      (cleanedTypeSource.toLowerCase().includes("discovery") ||
+        cleanedTypeSource.toLowerCase().includes("free"))
+        ? cleanedTypeSource
+        : "Discovery Call";
+  } else if (combinedLower.includes("records review")) {
+    sessionTypeShort = "Records Review";
+    sessionTypeFull = "Records Review";
+  } else if (combinedLower.includes("progress")) {
+    sessionTypeShort = "Progress Update";
+    sessionTypeFull = "Progress Update";
+  } else if (combinedLower.includes("resolution") || combinedLower.includes("mediation")) {
+    sessionTypeShort = combinedLower.includes("mediation") ? "Mediation" : "Resolution";
+    sessionTypeFull = cleanedTypeSource || sessionTypeShort;
+  } else if (combinedLower.includes("tentative") || combinedLower.includes("hold")) {
+    sessionTypeShort = rawMeetingType ? rawMeetingType.replace(/\s+Meeting$/i, "") : "Hold";
+    sessionTypeFull = cleanedTypeSource || "Tentative Hold";
+  }
+
+  const advocateFullName = (apt.assignedAdvocateName || loggedInAdvocateName || "Byron Honea").trim();
+  const advocateFirstName = advocateFullName.split(" ")[0] || "Byron";
+  const isAssignedToMe = isSameAdvocate(advocateFullName, loggedInAdvocateName);
+
+  return {
+    startTimeLabel,
+    endTimeLabel,
+    timeRangeLabel,
+    studentLabel,
+    sessionTypeShort,
+    sessionTypeFull,
+    advocateFirstName,
+    advocateFullName,
+    isAssignedToMe,
+    assignedBadgeLabel: isAssignedToMe
+      ? `Me (${advocateFirstName})`
+      : `Assigned: ${advocateFirstName}`,
+    assignedCompactLabel: isAssignedToMe ? `Me · ${advocateFirstName}` : advocateFirstName,
+  };
+}
+
+/**
+ * Sorts appointments chronologically by startTime ascending so every calendar view
+ * displays morning-to-evening working order.
+ */
+export function sortAppointmentsChronologically<
+  T extends { startTime: string | Date }
+>(list: T[]): T[] {
+  return [...list].sort(
+    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  );
+}
+

@@ -12,7 +12,7 @@ import {
 import { generateAndArchiveReceiptPdf } from "../services/receiptPdfService";
 import { sendEmail } from "../_core/email";
 import { recordCaseActivity } from "../services/caseActivityService";
-import { triggerAutomationFlow } from "../db/automations";
+import { dispatchPaymentAutomationTriggers } from "../db/automations";
 
 // In-memory fallback stores for deterministic offline/test resilience
 export const inMemoryReceiptSettings = new Map<number, any>();
@@ -522,14 +522,36 @@ export const receiptsRouter = router({
         } catch (e) {}
       }
 
-      // 7. Dispatch Automations
+      // 7. Dispatch Automations (Accurately distinguishes payment_received, account-level first_payment_paid, and invoice_paid_in_full)
       const autoContactId = input.studentContactId || input.clientId;
       if (autoContactId) {
         try {
-          const payKey = `tx_${receiptNumber}_${autoContactId}`;
-          await triggerAutomationFlow("payment_received", autoContactId, false, { eventKey: payKey });
-          await triggerAutomationFlow("first_payment_paid", autoContactId, false, { eventKey: payKey });
-          await triggerAutomationFlow("invoice_paid_in_full", autoContactId, false, { eventKey: payKey });
+          const isFullOneTimeSettlement =
+            (input.transactionType === "standalone" || input.transactionType === "enrollment") &&
+            (!input.nextPaymentAmountCents || input.nextPaymentAmountCents <= 0);
+          await dispatchPaymentAutomationTriggers({
+            paymentId: input.stripePaymentIntentId || input.stripeInvoiceId || receiptNumber,
+            contactId: autoContactId,
+            parentContactId: input.clientId || clientContact?.id || null,
+            invoiceId: input.stripeInvoiceId || (isFullOneTimeSettlement ? receiptNumber : null),
+            status: "PAID",
+            amountCents: input.amountCents,
+            refundAmountCents: 0,
+            invoiceTotalCents: isFullOneTimeSettlement
+              ? input.amountCents
+              : input.amountCents + Number(input.nextPaymentAmountCents || 0),
+            invoicePaidBeforeCents: 0,
+            invoicePaidAfterCents: input.amountCents,
+            remainingBalanceCents: isFullOneTimeSettlement
+              ? 0
+              : Number(input.nextPaymentAmountCents || 100),
+            paymentType:
+              input.transactionType === "retainer"
+                ? "deposit"
+                : input.transactionType === "recurring"
+                  ? "subscription"
+                  : "one_time",
+          });
         } catch (e) {}
       }
 

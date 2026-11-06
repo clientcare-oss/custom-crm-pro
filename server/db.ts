@@ -79,6 +79,10 @@ import {
   getStudentsByParentContactId,
   bulkImportContacts,
   expressStudentSetup,
+  parseContactCustomTags,
+  getStudentCustomTags,
+  setStudentCustomTags,
+  syncBrowserStudentTagsToDb,
 } from "./db/contacts";
 import { getTasksByProject, createTask, updateTask, deleteTask, getTaskSteps } from "./db/tasks";
 import { getInvoicesByClient, getInvoiceById, getInvoiceLineItems, getContractsByClient, getVaultSubscription } from "./db/billing";
@@ -141,6 +145,10 @@ export {
   getStudentsByParentContactId,
   bulkImportContacts,
   expressStudentSetup,
+  parseContactCustomTags,
+  getStudentCustomTags,
+  setStudentCustomTags,
+  syncBrowserStudentTagsToDb,
   getTasksByProject,
   createTask,
   updateTask,
@@ -1628,3 +1636,9 @@ export * from "./db/proposedMeetings";
 export * from "./db/operationalBlocks";
 // ─── Family Enrollment Persistent Offers (Phase 2A, 2B, 2C) ────────────
 export * from "./db/familyEnrollment";
+export {
+  evaluateScheduledTimeTriggers,
+  processDueAutomationJobs,
+  dispatchPaymentAutomationTriggers,
+  handleAppointmentScheduleChange,
+} from "./db/automations";

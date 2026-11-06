@@ -275,5 +275,41 @@ export default {
     } catch (err) {
       return new Response(null, { status: 404 });
     }
-  }
+  },
+
+  async scheduled(event: any, env: any, ctx: any): Promise<void> {
+    if (env?.DB) {
+      (globalThis as any).__CF_ENV_DB__ = env.DB;
+    }
+    if (env?.AI) {
+      (globalThis as any).__CF_ENV_AI__ = env.AI;
+    }
+    (globalThis as any).__CF_ENV__ = env;
+    if (env) {
+      for (const key of Object.keys(env)) {
+        if (typeof env[key] === "string" && !process.env[key]) {
+          process.env[key] = env[key];
+        }
+      }
+    }
+
+    const work = async () => {
+      try {
+        const scheduledTime = event?.scheduledTime ? new Date(event.scheduledTime) : new Date();
+        await db.evaluateScheduledTimeTriggers({ now: scheduledTime });
+        await db.processDueAutomationJobs({
+          now: scheduledTime,
+          workerId: `cf-cron-${scheduledTime.getTime()}`,
+        });
+      } catch (err) {
+        console.error("[Worker Scheduled Automations Error]", err);
+      }
+    };
+
+    if (ctx && typeof ctx.waitUntil === "function") {
+      ctx.waitUntil(work());
+    } else {
+      await work();
+    }
+  },
 };

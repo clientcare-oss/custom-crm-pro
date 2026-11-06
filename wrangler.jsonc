@@ -21,6 +21,9 @@
   "ai": {
     "binding": "AI"
   },
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
   "env": {
     "staging": {
       "name": "custom-crm-pro-staging",

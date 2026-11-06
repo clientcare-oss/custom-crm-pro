@@ -34,6 +34,7 @@ export interface BottomConsoleAppointment {
   videoLink?: string;
   isHold?: boolean;
   proposedMeetingId?: number;
+  assignedAdvocateName?: string;
 }
 
 export interface BottomConsoleHoldGroup {
@@ -274,15 +275,20 @@ export default function CalendarBottomConsole({
                     {isPersonal && <User className="h-4 w-4" />}
                   </div>
 
-                  {/* Title & Info */}
+                  {/* Student first, then Session/Meeting Type & Advocate (preserving exact aesthetic) */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-serif text-sm font-bold text-[#FFF4D4] truncate group-hover:text-[#FFE394] transition-colors">
-                        {apt.title}
+                        {apt.studentName || apt.parentName || apt.title}
                       </span>
                     </div>
                     <div className="text-xs text-[#C6B697] truncate">
-                      {apt.studentName || apt.parentName}
+                      {apt.studentName || apt.parentName ? apt.title : apt.meetingType || "Session"}
+                      {apt.assignedAdvocateName && (
+                        <span className="text-[#FFE394] ml-1.5 font-semibold">
+                          • {apt.assignedAdvocateName.split(" ")[0]}
+                        </span>
+                      )}
                       {apt.contextTag && (
                         <span className="text-[#8C7A58] ml-1.5 font-normal">
                           • {apt.contextTag}

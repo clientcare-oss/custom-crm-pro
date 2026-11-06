@@ -150,14 +150,19 @@ export const appointmentsRouter = router({
         if (input.clientId) {
           try {
             const { triggerAutomationFlow } = await import("../db/automations");
-            const aptKey = `book_${input.clientId}_${new Date(input.startTime).getTime()}`;
+            const bookedAptId = (appointment as any)?.insertId || (appointment as any)?.id || new Date(input.startTime).getTime();
+            const aptKey = `apt_book_${bookedAptId}_${input.clientId}`;
             await triggerAutomationFlow("meeting_scheduled", input.clientId, false, {
               eventKey: aptKey,
+              appointmentId: typeof bookedAptId === "number" ? bookedAptId : undefined,
+              meetingType: input.meetingType,
               meetingTitle: input.title,
               eventDate: input.startTime,
             });
             await triggerAutomationFlow("session_scheduled", input.clientId, false, {
               eventKey: aptKey,
+              appointmentId: typeof bookedAptId === "number" ? bookedAptId : undefined,
+              meetingType: input.meetingType,
               meetingTitle: input.title,
               eventDate: input.startTime,
             });
@@ -345,15 +350,18 @@ export const appointmentsRouter = router({
         if (targetContactForAuto) {
           try {
             const { triggerAutomationFlow } = await import("../db/automations");
-            const schedKey = `apt_create_${createdAptId || Date.now()}_${targetContactForAuto}`;
+            const stableAptRef = createdAptId || `${targetContactForAuto}_${new Date(input.startTime).toISOString()}`;
+            const schedKey = `apt_create_${stableAptRef}_${targetContactForAuto}`;
             await triggerAutomationFlow("meeting_scheduled", targetContactForAuto, false, {
               eventKey: schedKey,
+              appointmentId: createdAptId ? Number(createdAptId) : undefined,
               meetingType: input.meetingType,
               meetingTitle: input.title,
               eventDate: input.startTime,
             });
             await triggerAutomationFlow("session_scheduled", targetContactForAuto, false, {
               eventKey: schedKey,
+              appointmentId: createdAptId ? Number(createdAptId) : undefined,
               meetingType: input.meetingType,
               meetingTitle: input.title,
               eventDate: input.startTime,
@@ -393,6 +401,21 @@ export const appointmentsRouter = router({
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
         const result = await db.updateAppointment(id, ctx.user.id, data);
+
+        // Recalculate or cancel pending appointment-anchored automation jobs on reschedule or cancellation
+        if (data.startTime || data.status) {
+          try {
+            const { handleAppointmentScheduleChange } = await import("../db/automations");
+            await handleAppointmentScheduleChange({
+              appointmentId: id,
+              contactId: data.clientId || data.parentContactId || null,
+              newScheduledAt: data.startTime || null,
+              status: data.status || null,
+            });
+          } catch (qErr) {
+            console.warn("[Appointment] Queued automation job update warning:", qErr);
+          }
+        }
 
         // When rescheduling or updating relationships, synchronize discovery calls and lead
         if (data.startTime || data.leadId || data.discoveryCallId) {
@@ -482,6 +505,13 @@ export const appointmentsRouter = router({
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        try {
+          const { handleAppointmentScheduleChange } = await import("../db/automations");
+          await handleAppointmentScheduleChange({
+            appointmentId: input.id,
+            status: "Cancelled",
+          });
+        } catch {}
         return await db.deleteAppointment(input.id, ctx.user.id);
       }),
 
@@ -493,6 +523,13 @@ export const appointmentsRouter = router({
       .mutation(async ({ ctx, input }) => {
         // Mark appointment as Cancelled
         await db.updateAppointment(input.id, ctx.user.id, { status: "Cancelled" });
+        try {
+          const { handleAppointmentScheduleChange } = await import("../db/automations");
+          await handleAppointmentScheduleChange({
+            appointmentId: input.id,
+            status: "Cancelled",
+          });
+        } catch {}
 
         if (input.notifyParent) {
           // Fetch the appointment to get parent email / name / time

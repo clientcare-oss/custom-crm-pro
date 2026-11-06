@@ -702,6 +702,7 @@ export const contactsRouter = router({
           approvingManager: z.string().optional(),
           scholarshipNotes: z.string().optional(),
           bestTimeToCall: z.string().optional(),
+          tags: z.union([z.string(), z.array(z.string())]).optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -819,6 +820,14 @@ export const contactsRouter = router({
         }
 
         const ownerId = ctx.user?.id || 1;
+        let newlyAddedTags: string[] = [];
+        if (input.tags !== undefined) {
+          const parsedTags = db.parseContactCustomTags(input.tags);
+          const tagDiff = await db.setStudentCustomTags(id, parsedTags, ownerId);
+          newlyAddedTags = tagDiff.addedTags;
+          (data as any).tags = JSON.stringify(tagDiff.currentTags);
+        }
+
         const res = await db.updateContact(id, ownerId, data);
 
         // Two-Way Quo Contact Sync (Outbound field update if enabled)
@@ -839,14 +848,15 @@ export const contactsRouter = router({
           } catch {}
         }
 
-        if (input.diagnosis || input.iepEligibility || input.planType) {
+        if (newlyAddedTags.length > 0) {
           try {
             const { triggerAutomationFlow } = await import("../db/automations");
-            const tagVal = input.diagnosis || input.iepEligibility || input.planType || "";
-            await triggerAutomationFlow("tags_added", id, false, {
-              eventKey: `contact_tag_${id}_${tagVal}`,
-              tagAdded: tagVal,
-            });
+            for (const addedTag of newlyAddedTags) {
+              await triggerAutomationFlow("tags_added", id, false, {
+                eventKey: `student_tag_added:${id}:${addedTag.toLowerCase()}`,
+                tagAdded: addedTag,
+              });
+            }
           } catch {}
         }
 
@@ -866,6 +876,60 @@ export const contactsRouter = router({
         }
 
         return res;
+      }),
+
+    updateStudentTags: requireStaffModule("students", "edit")
+      .input(
+        z.object({
+          studentId: z.number().optional(),
+          contactId: z.number().optional(),
+          tags: z.array(z.string()),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const targetStudentId = input.studentId ?? input.contactId;
+        if (!targetStudentId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "studentId or contactId is required.",
+          });
+        }
+        const ownerId = ctx.user?.id || 1;
+        const diff = await db.setStudentCustomTags(targetStudentId, input.tags, ownerId);
+
+        if (diff.addedTags.length > 0) {
+          try {
+            const { triggerAutomationFlow } = await import("../db/automations");
+            for (const addedTag of diff.addedTags) {
+              await triggerAutomationFlow("tags_added", targetStudentId, false, {
+                eventKey: `student_tag_added:${targetStudentId}:${addedTag.toLowerCase()}`,
+                tagAdded: addedTag,
+              });
+            }
+          } catch (err) {
+            console.warn("[updateStudentTags] Automation trigger warning:", err);
+          }
+        }
+
+        return {
+          success: true,
+          studentId: targetStudentId,
+          previousTags: diff.previousTags,
+          currentTags: diff.currentTags,
+          addedTags: diff.addedTags,
+          removedTags: diff.removedTags,
+        };
+      }),
+
+    syncBrowserStudentTags: requireStaffModule("students", "view")
+      .input(
+        z.object({
+          studentTagsMap: z.record(z.string(), z.array(z.string())),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const ownerId = ctx.user?.id || 1;
+        return await db.syncBrowserStudentTagsToDb(input.studentTagsMap, ownerId);
       }),
 
     updateStudentProfile: requireStaffModule("students", "edit")

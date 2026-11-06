@@ -304,7 +304,7 @@ const D1_CONTACT_COLUMNS = new Set([
   "portalAccess", "quoContactId", "quoSyncStatus", "quoLastSyncAt",
   "quoSyncError", "previousSchool", "goingToSchool", "planType", "pipelineStage",
   "planTier", "accountStatus", "billingStatus", "contractStatus",
-  "assignedAdvocateName", "activeWorkstreams", "planMonthsRemaining",
+  "assignedAdvocateName", "activeWorkstreams", "tags", "planMonthsRemaining",
   "planExpiresAt", "iepEligibility", "medicalDiagnoses", "lifecycleStage",
   "operationalState", "serviceStatus", "portalLifecycleStatus",
   "currentPrimaryAction", "currentActionDestination", "currentActionDueDate",
@@ -549,7 +549,7 @@ export async function updateContact(id: number, ownerId: number, data: any): Pro
         "gradeLevel", "countyDistrict", "challenges", "previousSchool", "goingToSchool",
         "planType", "pipelineStage", "planTier", "accountStatus", "billingStatus", "contractStatus",
         "bestTimeToCall", "parentContactId", "portalUserId", "caseId", "hourlyRate", "timezone",
-        "isDemoData", "referredBy"
+        "isDemoData", "referredBy", "tags"
       ];
       const fallbackData: Record<string, any> = {};
       for (const k of coreKeys) {
@@ -1233,5 +1233,173 @@ export async function expressStudentSetup(
     planTier: input.planTier || "$55",
     workspaceUrl: `/contacts/${studentContactId}`,
     meetingWorkspaceUrl: `/meeting-workspace/${studentContactId}`,
+  };
+}
+
+let _tagsColumnEnsured = false;
+const _inMemoryContactTagsFallback = new Map<number, string[]>();
+
+async function ensureContactsTagsColumn(): Promise<void> {
+  if (_tagsColumnEnsured) return;
+  _tagsColumnEnsured = true;
+  try {
+    const local = getLocalDbClient();
+    await local.execute("ALTER TABLE contacts ADD COLUMN tags TEXT");
+  } catch {
+    // Column already exists or local client unavailable
+  }
+  const cfDb = (globalThis as any).__CF_ENV_DB__;
+  if (cfDb) {
+    try {
+      await cfDb.prepare("ALTER TABLE contacts ADD COLUMN tags TEXT").run();
+    } catch {
+      // Column already exists
+    }
+  }
+  try {
+    const db = await getDb();
+    if (db) {
+      await (db as any).run?.(sql`ALTER TABLE contacts ADD COLUMN tags TEXT`);
+    }
+  } catch {
+    // Column already exists
+  }
+}
+
+export function parseContactCustomTags(rawTags: unknown): string[] {
+  if (!rawTags) return [];
+  let list: string[] = [];
+  if (Array.isArray(rawTags)) {
+    list = rawTags.map((t) => String(t ?? "").trim()).filter(Boolean);
+  } else if (typeof rawTags === "string") {
+    const trimmed = rawTags.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          list = parsed.map((t) => String(t ?? "").trim()).filter(Boolean);
+        }
+      } catch {
+        list = trimmed.split(",").map((t) => t.trim()).filter(Boolean);
+      }
+    } else {
+      list = trimmed.split(",").map((t) => t.trim()).filter(Boolean);
+    }
+  }
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  for (const tag of list) {
+    const key = tag.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(tag);
+    }
+  }
+  return deduped;
+}
+
+export async function getStudentCustomTags(contactId: number, ownerId = 1): Promise<string[]> {
+  await ensureContactsTagsColumn();
+  const contact = await getContactById(contactId, ownerId);
+  if (contact && contact.tags !== undefined && contact.tags !== null) {
+    const parsed = parseContactCustomTags(contact.tags);
+    _inMemoryContactTagsFallback.set(contactId, parsed);
+    return parsed;
+  }
+  return _inMemoryContactTagsFallback.get(contactId) ?? [];
+}
+
+export async function setStudentCustomTags(
+  contactId: number,
+  nextTagsInput: string[],
+  ownerId = 1
+): Promise<{
+  previousTags: string[];
+  currentTags: string[];
+  addedTags: string[];
+  removedTags: string[];
+}> {
+  await ensureContactsTagsColumn();
+  const previousTags = await getStudentCustomTags(contactId, ownerId);
+  const currentTags = parseContactCustomTags(nextTagsInput);
+
+  const prevLower = new Set(previousTags.map((t) => t.toLowerCase()));
+  const currLower = new Set(currentTags.map((t) => t.toLowerCase()));
+
+  const addedTags = currentTags.filter((t) => !prevLower.has(t.toLowerCase()));
+  const removedTags = previousTags.filter((t) => !currLower.has(t.toLowerCase()));
+
+  const serialized = JSON.stringify(currentTags);
+  _inMemoryContactTagsFallback.set(contactId, currentTags);
+
+  if (inMemoryContacts.has(contactId)) {
+    const existing = inMemoryContacts.get(contactId);
+    inMemoryContacts.set(contactId, { ...existing, tags: serialized });
+  }
+
+  try {
+    await updateContactById(contactId, { tags: serialized });
+  } catch {
+    // Fallback already updated in memory
+  }
+
+  return {
+    previousTags,
+    currentTags,
+    addedTags,
+    removedTags,
+  };
+}
+
+export async function syncBrowserStudentTagsToDb(
+  browserTagsMap: Record<string, string[]>,
+  ownerId = 1
+): Promise<{
+  mergedStudentTagsMap: Record<number, string[]>;
+  importedStudentsCount: number;
+  importedTagsCount: number;
+}> {
+  await ensureContactsTagsColumn();
+  let importedStudentsCount = 0;
+  let importedTagsCount = 0;
+
+  for (const [idStr, browserTags] of Object.entries(browserTagsMap || {})) {
+    const contactId = Number(idStr);
+    if (!Number.isFinite(contactId) || contactId <= 0) continue;
+    const cleanBrowserTags = parseContactCustomTags(browserTags);
+    if (cleanBrowserTags.length === 0) continue;
+
+    const existingTags = await getStudentCustomTags(contactId, ownerId);
+    const merged = parseContactCustomTags([...existingTags, ...cleanBrowserTags]);
+    if (merged.length > existingTags.length) {
+      importedStudentsCount++;
+      importedTagsCount += merged.length - existingTags.length;
+      await setStudentCustomTags(contactId, merged, ownerId);
+    }
+  }
+
+  const allContacts = await getContactsByOwner(ownerId);
+  const mergedStudentTagsMap: Record<number, string[]> = {};
+  for (const c of allContacts) {
+    if (!c || typeof c.id !== "number") continue;
+    const rawTags = (c as any).tags;
+    const tags = rawTags !== undefined && rawTags !== null
+      ? parseContactCustomTags(rawTags)
+      : (_inMemoryContactTagsFallback.get(c.id) ?? []);
+    if (tags.length > 0) {
+      mergedStudentTagsMap[c.id] = tags;
+    }
+  }
+  for (const [cid, tags] of Array.from(_inMemoryContactTagsFallback.entries())) {
+    if (tags.length > 0 && !mergedStudentTagsMap[cid]) {
+      mergedStudentTagsMap[cid] = tags;
+    }
+  }
+
+  return {
+    mergedStudentTagsMap,
+    importedStudentsCount,
+    importedTagsCount,
   };
 }

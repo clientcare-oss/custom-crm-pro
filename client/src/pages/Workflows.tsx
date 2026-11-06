@@ -621,6 +621,25 @@ export default function Workflows() {
 
       {/* Right: canvas */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Process-Mapping Notice Banner & Direct Link to PG-013 Automation Maker */}
+        <div className="bg-[#07162B] border-b border-[#3A2C18] px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold uppercase tracking-wider shrink-0">
+              Visual Process Map Only
+            </Badge>
+            <p className="text-xs text-[#D8C7A5] truncate">
+              <strong>PG-015 · Workflow Designer</strong> saves SOP and operational process diagrams for team reference—diagrams here do <strong>not</strong> execute live CRM actions or send messages.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setLocation("/automations")}
+            className="h-7 px-3 text-xs font-bold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 hover:opacity-95 shrink-0"
+          >
+            Open Real Automation Maker (PG-013) →
+          </Button>
+        </div>
+
         {!selectedId ? (
           <div className="flex-1 flex items-center justify-center bg-muted/20">
             <div className="text-center">

@@ -108,12 +108,14 @@ export default function TodaysAppointmentsTable({
     return new Date(selectedDate).toISOString().split("T")[0];
   }, [selectedDate]);
 
-  // Appointments for the selected day (not cancelled)
+  // Appointments for the selected day (not cancelled), sorted chronologically by startTime
   const dayAppointments = useMemo(() => {
-    return appointments.filter((apt) => {
-      const d = new Date(apt.startTime).toISOString().split("T")[0];
-      return d === selectedDateStr && apt.status !== "Cancelled";
-    });
+    return appointments
+      .filter((apt) => {
+        const d = new Date(apt.startTime).toISOString().split("T")[0];
+        return d === selectedDateStr && apt.status !== "Cancelled";
+      })
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
   }, [appointments, selectedDateStr]);
 
   const myAppointments = useMemo(() => {
