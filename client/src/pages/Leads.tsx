@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
@@ -28,11 +28,22 @@ import {
 
 export default function Leads() {
   const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<LeadFormData>(emptyForm);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("newClient") === "1") {
+        setEditingId(null);
+        setFormData(emptyForm);
+        setOpen(true);
+      }
+    }
+  }, [location]);
 
   const { data: leads, isLoading, refetch } = trpc.leads.list.useQuery(
     undefined,

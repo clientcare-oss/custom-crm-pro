@@ -61,6 +61,7 @@ import { LighthouseCottageIcon } from "@/components/ui/LighthouseCottageIcon";
 import { MarineRadarIcon } from "@/components/ui/MarineRadarIcon";
 import { getTestUnreadState } from "@/lib/testUnreadHelper";
 import { broadcastPageId } from "@/lib/pageIdRegistry";
+import { useWorkspaceLock } from "@/contexts/WorkspaceLockContext";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -542,6 +543,7 @@ function isStudentContact(c: any) {
 
 const SEARCHABLE_DIRECTORY: SearchDirectoryItem[] = [
   // Modules
+  { id: "mod-start", name: "Start Screen & Privacy Lock", category: "module", path: "/start", badge: "PG-000", keywords: ["start", "start screen", "privacy", "lock", "lock workspace", "pin", "private workspace", "launch"], icon: Lock },
   { id: "mod-crew", name: "Crew Quarters", category: "module", path: "/", badge: "PG-038", keywords: ["home", "dashboard", "personal", "employee", "my work"], icon: LighthouseCottageIcon as any },
   { id: "mod-call", name: "Call Center", category: "module", path: "/call-center", badge: "PG-018", keywords: ["calls", "logs", "phone", "dialer", "voice", "caller id", "quo"], icon: Headset },
   { id: "mod-leads", name: "Lead Center", category: "module", path: "/leads", badge: "PG-003", keywords: ["leads", "prospects", "intake", "pipeline", "discovery call", "forms"], icon: TrendingUp },
@@ -583,6 +585,7 @@ type DashboardLayoutContentProps = {
 
 function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
+  const { openStartScreen, lockWorkspace } = useWorkspaceLock();
   const { theme, toggleTheme } = useTheme();
   const isLight = theme === "blue";
   const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
@@ -1659,6 +1662,23 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                     </p>
                   </div>
                   <DropdownMenuItem
+                    onClick={() => openStartScreen()}
+                    className="cursor-pointer text-xs focus:bg-white/10"
+                  >
+                    <Sparkles className="mr-2 h-3.5 w-3.5 text-amber-400" />
+                    <span>Start Screen</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      openStartScreen();
+                      void lockWorkspace();
+                    }}
+                    className="cursor-pointer text-xs focus:bg-white/10"
+                  >
+                    <Lock className="mr-2 h-3.5 w-3.5 text-amber-400" />
+                    <span>Lock Workspace</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onClick={() => setLocation("/crew-quarters?tab=profile")}
                     className="cursor-pointer text-xs focus:bg-white/10"
                   >
@@ -1674,6 +1694,15 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <button
+                onClick={() => openStartScreen()}
+                title="Open Waypoint Start Screen"
+                data-testid="sidebar-start-screen-btn"
+                className="h-8 w-8 rounded-md bg-[#07172E] hover:border-[#D4AF37]/40 border border-[#172D4D] transition-colors flex items-center justify-center text-white/60 hover:text-amber-300 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer shadow-sm"
+              >
+                <Lock className="h-3.5 w-3.5 text-[#E5A946]" />
+              </button>
 
               <button
                 onClick={() => setIssueReporterOpen(true)}
@@ -1900,6 +1929,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
 }
 
 const PAGE_LIST = [
+  { id: "PG-000", name: "Start Screen & Privacy Lock", path: "/start" },
   { id: "PG-001", name: "Dashboard / Home Base", path: "/" },
   { id: "PG-002", name: "Contacts", path: "/contacts" },
   { id: "PG-003", name: "Lead Center", path: "/leads" },

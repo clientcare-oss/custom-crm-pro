@@ -72,8 +72,10 @@ import { stateLawLibraryRouter } from "./routers/stateLawLibrary";
 import { reviewTrackerRouter } from "./routers/reviewTracker";
 import { parentProfileRouter } from "./routers/parentProfile";
 import { federalLawRouter } from "./routers/federalLaw";
+import { workspaceLockRouter } from "./routers/workspaceLock";
 
 export const appRouter = router({
+  workspaceLock: workspaceLockRouter,
   parentProfile: parentProfileRouter,
   reviewTracker: reviewTrackerRouter,
   familyEnrollment: familyEnrollmentRouter,

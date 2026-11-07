@@ -15,6 +15,19 @@ import {
   type StaffAccessProfile,
   type CaseAccessLevel,
 } from "./staffAccess";
+import { isEmployeeWorkspaceLocked } from "../db/workspaceLock";
+
+const ALLOWED_WHILE_WORKSPACE_LOCKED = new Set([
+  "workspaceLock.getState",
+  "workspaceLock.unlockWithPin",
+  "workspaceLock.resetPinWithReauth",
+  "workspaceLock.setupPin",
+  "workspaceLock.lock",
+  "auth.me",
+  "auth.logout",
+  "system.getCompanyLogo",
+  "team.getMyStaffAccess",
+]);
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
@@ -41,6 +54,23 @@ const requireUser = t.middleware(async opts => {
       code: "FORBIDDEN",
       message: "Account is deactivated or not authorized.",
     });
+  }
+
+  // Enforce server-side Workspace Privacy Lock for staff sessions
+  const procPath = String((opts as any).path || "");
+  if (
+    staffAccess.isStaff &&
+    procPath &&
+    !procPath.startsWith("workspaceLock.") &&
+    !ALLOWED_WHILE_WORKSPACE_LOCKED.has(procPath)
+  ) {
+    const locked = await isEmployeeWorkspaceLocked(ctx.user);
+    if (locked) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "WORKSPACE_LOCKED: Your Waypoint workspace is locked. Enter your 4-digit PIN to unlock.",
+      });
+    }
   }
 
   // Enforce server-side role authority — client-supplied role values cannot escalate privileges

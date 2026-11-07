@@ -49,6 +49,7 @@ export * from "./db/parentProfile";
 export * from "./db/federalLaw";
 export * from "./db/compass";
 export * from "./db/pipeline";
+export * from "./db/workspaceLock";
 
 import { ENV } from './_core/env';
 

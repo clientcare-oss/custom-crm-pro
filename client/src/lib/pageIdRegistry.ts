@@ -8,6 +8,7 @@ export interface PageIdInfo {
 // ─── Static Exact Route Mappings ─────────────────────────────────────────────
 export const PAGE_IDS: Record<string, PageIdInfo> = {
   // Core Admin & Advocacy Suite
+  "/start":                           { id: "PG-000", name: "Waypoint Start Screen & Privacy Lock", category: "Core", description: "Private launch screen, customizable quick navigation, and 4-digit PIN privacy lock" },
   "/":                                { id: "PG-038", name: "Crew Quarters", category: "Core", description: "Personal employee home base and operational station" },
   "/crew-quarters":                   { id: "PG-038", name: "Crew Quarters", category: "Core", description: "Personal employee home base and operational station" },
   "/crew-quarters/messages":          { id: "PG-038-MSG", name: "Crew Messages Workspace", category: "Communications", description: "Internal team communication, direct messaging, and case collaboration" },

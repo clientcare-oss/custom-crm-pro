@@ -86,6 +86,8 @@ import LegacyStudentWorkspace from "./pages/archived/LegacyStudentWorkspace";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
+import { WorkspaceLockProvider, useWorkspaceLock } from "./contexts/WorkspaceLockContext";
+import WaypointStartScreen from "./components/start/WaypointStartScreen";
 import PageIdBadge from "./components/PageIdBadge";
 import { WaypointScanGlobalModal } from "./components/portal/WaypointScanGlobalModal";
 import { AutoTruncateTooltip } from "./components/AutoTruncateTooltip";
@@ -115,6 +117,7 @@ function Router() {
 
   const { user, loading } = useAuth();
   const [location] = useLocation();
+  const { isLocked, isStartScreenOpen } = useWorkspaceLock();
 
   const isPublicRoute =
     window.location.pathname === "/" ||
@@ -187,10 +190,23 @@ function Router() {
       );
     }
 
+    // Waypoint Start Screen & Privacy Lock:
+    // Keep DashboardLayout mounted inside a display:none container while the Start Screen
+    // or Privacy Lock is active so in-progress work (e.g. State Complaint Builder, IEP Comparator,
+    // unsaved drafts, and open tabs) is 100% preserved when locking and unlocking.
+    const showStartScreen = isLocked || isStartScreenOpen || location === "/start";
+
     return (
-      <DashboardLayout>
-        <Switch>
-          <Route path="/" component={CrewQuarters} />
+      <>
+        {showStartScreen && <WaypointStartScreen />}
+        <div
+          className={showStartScreen ? "hidden" : "contents"}
+          aria-hidden={showStartScreen ? "true" : undefined}
+        >
+          <DashboardLayout>
+            <Switch>
+              <Route path="/start" component={CrewQuarters} />
+              <Route path="/" component={CrewQuarters} />
           <Route path="/crew-quarters" component={CrewQuarters} />
           <Route path="/crew-messages" component={CrewQuarters} />
           <Route path="/crew-quarters/messages" component={CrewQuarters} />
@@ -299,6 +315,8 @@ function Router() {
           <Route component={NotFound} />
         </Switch>
       </DashboardLayout>
+        </div>
+      </>
     );
   }
 
@@ -325,6 +343,20 @@ function Router() {
   );
 }
 
+function GlobalOverlaysWhenUnlocked() {
+  const [location] = useLocation();
+  const { isLocked, isStartScreenOpen } = useWorkspaceLock();
+  if (isLocked || isStartScreenOpen || location === "/start") {
+    return null;
+  }
+  return (
+    <>
+      <PageIdBadge />
+      <WaypointScanGlobalModal />
+    </>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -332,13 +364,14 @@ function App() {
         <TerminologyProvider>
           <FirstMateProvider>
             <ActiveCallProvider>
-              <TooltipProvider>
-                <AutoTruncateTooltip />
-                <Toaster />
-                <Router />
-                <PageIdBadge />
-                <WaypointScanGlobalModal />
-              </TooltipProvider>
+              <WorkspaceLockProvider>
+                <TooltipProvider>
+                  <AutoTruncateTooltip />
+                  <Toaster />
+                  <Router />
+                  <GlobalOverlaysWhenUnlocked />
+                </TooltipProvider>
+              </WorkspaceLockProvider>
             </ActiveCallProvider>
           </FirstMateProvider>
         </TerminologyProvider>
