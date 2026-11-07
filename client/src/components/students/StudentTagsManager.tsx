@@ -35,91 +35,92 @@ export interface TagColorSpec {
 }
 
 /**
- * 10 tag color swatches arranged in 2 rows of 5, tuned to look rich and crisp
- * against Waypoint's deep navy & brass surfaces.
+ * 10 Waypoint Admiralty jewel & brass tag swatches arranged in 2 rows of 5.
+ * Designed with deep maritime/executive fills, luminous metallic borders,
+ * and warm high-contrast text to harmonize with Waypoint's Navy & Brass theme.
  */
 export const TAG_COLOR_PALETTE: TagColorSpec[] = [
   // Row 1
   {
     id: "green",
-    label: "Emerald Sage",
-    bg: "#D8F0CE",
-    text: "#143318",
-    border: "#9CD48A",
-    swatchBg: "#D8F0CE",
+    label: "Emerald Forest",
+    bg: "#0D3B2E",
+    text: "#B8F5D8",
+    border: "#2E8B6D",
+    swatchBg: "#155E48",
   },
   {
     id: "mint",
-    label: "Seafoam Mint",
-    bg: "#D6F3EE",
-    text: "#0E3631",
-    border: "#94DDD1",
-    swatchBg: "#D6F3EE",
+    label: "SeaGlass Teal",
+    bg: "#0B3948",
+    text: "#B6F0FA",
+    border: "#2B8CA3",
+    swatchBg: "#135C73",
   },
   {
     id: "blue",
-    label: "Admiralty Sky",
-    bg: "#D6E4FA",
-    text: "#122747",
-    border: "#96B8F2",
-    swatchBg: "#D6E4FA",
+    label: "Admiralty Cobalt",
+    bg: "#102B52",
+    text: "#C7E0FF",
+    border: "#3E79C9",
+    swatchBg: "#1B4887",
   },
   {
     id: "purple",
-    label: "Royal Lavender",
-    bg: "#E8D7F8",
-    text: "#2A1544",
-    border: "#C49EEB",
-    swatchBg: "#E8D7F8",
+    label: "Imperial Amethyst",
+    bg: "#28194D",
+    text: "#E5D4FF",
+    border: "#7D56C9",
+    swatchBg: "#422A7D",
   },
   {
     id: "pink",
-    label: "Rose Quartz",
-    bg: "#FADCEB",
-    text: "#451434",
-    border: "#EDA3CE",
-    swatchBg: "#FADCEB",
+    label: "Burgundy Plum",
+    bg: "#401535",
+    text: "#FAD1E8",
+    border: "#A34187",
+    swatchBg: "#692256",
   },
   // Row 2
   {
     id: "rose",
-    label: "Crimson Blush",
-    bg: "#F8DADA",
-    text: "#3D1414",
-    border: "#E8A2A2",
-    swatchBg: "#F8DADA",
+    label: "Crimson Garnet",
+    bg: "#4A151B",
+    text: "#FFD1D6",
+    border: "#BD3E4B",
+    swatchBg: "#75202A",
   },
   {
     id: "peach",
-    label: "Burnished Amber",
-    bg: "#FBE4C4",
-    text: "#3E2408",
-    border: "#EBB875",
-    swatchBg: "#FBE4C4",
+    label: "Burnished Copper",
+    bg: "#47230D",
+    text: "#FFE0BA",
+    border: "#C26D2E",
+    swatchBg: "#733915",
   },
   {
     id: "yellow",
-    label: "Sovereign Gold",
-    bg: "#FBF0C4",
-    text: "#3B2C06",
-    border: "#EBD378",
-    swatchBg: "#FBF0C4",
+    label: "Sovereign Brass",
+    bg: "#3B2A0C",
+    text: "#FFE394",
+    border: "#C5A059",
+    swatchBg: "#694B16",
   },
   {
     id: "taupe",
-    label: "Warm Parchment",
-    bg: "#E8DDD2",
-    text: "#30241A",
-    border: "#C9B49F",
-    swatchBg: "#E8DDD2",
+    label: "Aged Parchment",
+    bg: "#2D2319",
+    text: "#EADBC6",
+    border: "#8F7556",
+    swatchBg: "#4D3C2B",
   },
   {
     id: "stone",
-    label: "Slate Stone",
-    bg: "#E4E7EC",
-    text: "#1E2530",
-    border: "#B9C2D0",
-    swatchBg: "#E4E7EC",
+    label: "Gunmetal Slate",
+    bg: "#1A2536",
+    text: "#D5DFED",
+    border: "#556E91",
+    swatchBg: "#2B3D59",
   },
 ];
 
@@ -268,9 +269,9 @@ export function TagBadgePill({
         borderColor: spec.border,
       }}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-[6px] font-sans font-semibold border select-none transition-all shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.35)]",
+        "inline-flex items-center gap-1.5 rounded-[6px] font-sans font-semibold border select-none transition-all shrink-0 shadow-[0_2px_6px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.12)]",
         size === "sm" ? "px-2 py-0.5 text-[11px] leading-4" : "px-2.5 py-1 text-[12px] leading-4",
-        onClick && "cursor-pointer hover:brightness-95 active:scale-[0.98]",
+        onClick && "cursor-pointer hover:brightness-115 active:scale-[0.98]",
         className
       )}
     >
@@ -741,7 +742,7 @@ export function ManageCompanyTagsModal({
                         title={swatch.label}
                       >
                         {isSelected && (
-                          <Check className="w-3.5 h-3.5 text-[#111827] stroke-[2.8]" />
+                          <Check className="w-3.5 h-3.5 text-[#FFF4D4] stroke-[2.8] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
                         )}
                       </button>
                     );
