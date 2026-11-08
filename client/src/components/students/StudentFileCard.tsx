@@ -360,49 +360,16 @@ export function StudentFileCard({
             </div>
           </div>
 
-          {/* Grade & Family / Primary Parent + Stage & Employee Row */}
+          {/* Grade & Family / Primary Parent */}
           <div className="space-y-0.5">
-            <p className="font-serif text-[#3A4556] text-[11px] sm:text-[12px] leading-tight line-clamp-1 font-medium">
-              {gradeText} · <span className="font-sans font-semibold text-[#1B365D]">{familyOrParentText}</span>
+            <p className="font-serif text-[#3A4556] text-[11.5px] sm:text-[12.5px] leading-tight line-clamp-1 font-medium">
+              {gradeText}
             </p>
-            <div
-              className="flex items-center gap-1 pt-0.5 pointer-events-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Compact Stage Selector on Folder Card */}
-              <select
-                value={student.pipelineStage || "Discovery"}
-                onChange={(e) => onStageChange?.(student.id, e.target.value)}
-                title={`Stage: ${student.pipelineStage || "Discovery"}`}
-                className="h-4.5 max-w-[108px] rounded px-1 text-[9.5px] font-semibold bg-[#102B52] text-[#C7E0FF] border border-[#3E79C9]/80 truncate cursor-pointer focus:outline-hidden"
-              >
-                {availableStages.map((st) => (
-                  <option key={st} value={st} className="bg-[#071326] text-[#FFF4D4]">
-                    {st}
-                  </option>
-                ))}
-              </select>
-
-              {/* Compact Assigned Employee Selector on Folder Card */}
-              <select
-                value={student.assignedAdvocateName || "Byron Honea"}
-                onChange={(e) => onEmployeeChange?.(student.id, e.target.value)}
-                title={`Assigned Employee: ${student.assignedAdvocateName || "Byron Honea"}`}
-                className="h-4.5 rounded px-1 text-[9.5px] font-bold bg-[#3B2A0C] text-[#FFE394] border border-[#C5A059]/80 cursor-pointer focus:outline-hidden"
-              >
-                {CARD_EMPLOYEES.map((emp) => (
-                  <option key={emp.name} value={emp.name} className="bg-[#071326] text-[#FFF4D4]">
-                    {emp.initials} · {emp.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Compact Next Required Action on Folder Card */}
             <p
-              className="text-[9.5px] sm:text-[10px] font-medium text-[#2C3E55] truncate pt-0.5"
-              title={`Next Required Action: ${student.nextRequiredAction || getDefaultNextRequiredAction(student.pipelineStage)}`}
+              className="font-sans text-[#1B365D] text-[11px] sm:text-[12px] leading-tight truncate line-clamp-1 font-semibold tracking-tight"
+              title={student.parentName ? `Primary Parent: ${student.parentName}` : familyOrParentText}
             >
-              Next: {student.nextRequiredAction || getDefaultNextRequiredAction(student.pipelineStage)}
+              {familyOrParentText}
             </p>
           </div>
         </div>
@@ -435,17 +402,6 @@ export function StudentFileCard({
           >
             {diagTag}
           </span>
-
-          {/* Custom Tag Indicator on Card if present */}
-          {student.tags && student.tags.length > 0 && (
-            <span
-              className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-[#F9E2E2]/95 text-[#3B1A1A] border border-[#F1C4C4] truncate max-w-[85px] shadow-[0_1px_1px_rgba(0,0,0,0.06)]"
-              title={student.tags.join(", ")}
-            >
-              {student.tags[0]}
-              {student.tags.length > 1 ? ` +${student.tags.length - 1}` : ""}
-            </span>
-          )}
         </div>
       </div>
     </div>
