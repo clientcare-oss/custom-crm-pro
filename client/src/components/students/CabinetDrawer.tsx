@@ -19,6 +19,9 @@ interface CabinetDrawerProps {
   onStudentClick: (studentId: number) => void;
   onParentClick?: (parentId: number) => void;
   onMarkerChange?: (studentId: number, marker: MarkerType | "none") => void;
+  onStageChange?: (studentId: number, newStage: string) => void;
+  onEmployeeChange?: (studentId: number, employeeName: string) => void;
+  availableStages?: string[];
   viewMode?: "cards" | "list";
   children?: React.ReactNode;
   className?: string;
@@ -44,6 +47,9 @@ export function CabinetDrawer({
   onStudentClick,
   onParentClick,
   onMarkerChange,
+  onStageChange,
+  onEmployeeChange,
+  availableStages,
   viewMode = "cards",
   children,
   className,
@@ -158,6 +164,9 @@ export function CabinetDrawer({
                           index={rowIdx * cols + colIdx}
                           onClick={() => onStudentClick(student.id)}
                           onMarkerChange={onMarkerChange}
+                          onStageChange={onStageChange}
+                          onEmployeeChange={onEmployeeChange}
+                          availableStages={availableStages}
                         />
                       </div>
                     ))}

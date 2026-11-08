@@ -19,6 +19,127 @@ interface StageOverviewGridProps {
   onDropCardOnStage?: (cardId: number, targetStageName: string) => void;
 }
 
+interface StageJewelPalette {
+  bg: string;
+  selectedBg: string;
+  border: string;
+  topBar: string;
+  text: string;
+  countText: string;
+}
+
+/**
+ * Waypoint Admiralty Jewel & Brass palette for pipeline stage tiles,
+ * matching the rich jewel-toned Company Tags palette.
+ */
+const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
+  // 0: SeaGlass Teal (Discovery)
+  {
+    bg: "linear-gradient(180deg, #10495C 0%, #0A313F 100%)",
+    selectedBg: "linear-gradient(180deg, #17647D 0%, #0E4254 100%)",
+    border: "#2B8CA3",
+    topBar: "#38BDF8",
+    text: "#B6F0FA",
+    countText: "#E6FAFF",
+  },
+  // 1: Imperial Amethyst (Free Session)
+  {
+    bg: "linear-gradient(180deg, #321E61 0%, #211342 100%)",
+    selectedBg: "linear-gradient(180deg, #452A85 0%, #2C1A57 100%)",
+    border: "#7D56C9",
+    topBar: "#A78BFA",
+    text: "#E5D4FF",
+    countText: "#F5EEFF",
+  },
+  // 2: Burgundy Plum (Proposal)
+  {
+    bg: "linear-gradient(180deg, #4D1940 0%, #33102B 100%)",
+    selectedBg: "linear-gradient(180deg, #692257 0%, #451639 100%)",
+    border: "#A34187",
+    topBar: "#E879F9",
+    text: "#FAD1E8",
+    countText: "#FFEBF6",
+  },
+  // 3: Admiralty Cobalt (2-Week Follow-Up)
+  {
+    bg: "linear-gradient(180deg, #153769 0%, #0D2345 100%)",
+    selectedBg: "linear-gradient(180deg, #1E4C8F 0%, #13315E 100%)",
+    border: "#3E79C9",
+    topBar: "#60A5FA",
+    text: "#C7E0FF",
+    countText: "#EDF5FF",
+  },
+  // 4: Royal Indigo (30-Day Follow-Up)
+  {
+    bg: "linear-gradient(180deg, #1E2966 0%, #131B45 100%)",
+    selectedBg: "linear-gradient(180deg, #29388A 0%, #1A245C 100%)",
+    border: "#586DD4",
+    topBar: "#818CF8",
+    text: "#D6E0FF",
+    countText: "#F0F4FF",
+  },
+  // 5: Burnished Copper (60-Day Follow-Up / School Contact)
+  {
+    bg: "linear-gradient(180deg, #54290F 0%, #381B0A 100%)",
+    selectedBg: "linear-gradient(180deg, #703714 0%, #4A240D 100%)",
+    border: "#C26D2E",
+    topBar: "#FB923C",
+    text: "#FFE0BA",
+    countText: "#FFF2E2",
+  },
+  // 6: Crimson Garnet (Reconnect Review / State Complaint)
+  {
+    bg: "linear-gradient(180deg, #571820 0%, #3B1015 100%)",
+    selectedBg: "linear-gradient(180deg, #75202B 0%, #4F151C 100%)",
+    border: "#BD3E4B",
+    topBar: "#F87171",
+    text: "#FFD1D6",
+    countText: "#FFECEE",
+  },
+  // 7: Emerald Forest (Intake / Onboarding / Monitoring)
+  {
+    bg: "linear-gradient(180deg, #114A3A 0%, #0B3026 100%)",
+    selectedBg: "linear-gradient(180deg, #18634E 0%, #0F4234 100%)",
+    border: "#2E8B6D",
+    topBar: "#34D399",
+    text: "#B8F5D8",
+    countText: "#E8FDF3",
+  },
+  // 8: Sovereign Brass (Records Review / Renewal)
+  {
+    bg: "linear-gradient(180deg, #4A340F 0%, #30220A 100%)",
+    selectedBg: "linear-gradient(180deg, #634614 0%, #422F0D 100%)",
+    border: "#C5A059",
+    topBar: "#FBBF24",
+    text: "#FFE394",
+    countText: "#FFF6D6",
+  },
+  // 9: Aged Parchment (Archive / Closed)
+  {
+    bg: "linear-gradient(180deg, #382C20 0%, #241C14 100%)",
+    selectedBg: "linear-gradient(180deg, #4D3C2B 0%, #33281D 100%)",
+    border: "#8F7556",
+    topBar: "#D4B895",
+    text: "#EADBC6",
+    countText: "#F7EFE4",
+  },
+];
+
+function resolveStageJewelPalette(stageName: string, idx: number): StageJewelPalette {
+  const lower = (stageName || "").toLowerCase();
+  if (lower.includes("discovery") || lower.includes("upload")) return STAGE_JEWEL_PALETTES[0];
+  if (lower.includes("free session") || lower.includes("meeting")) return STAGE_JEWEL_PALETTES[1];
+  if (lower.includes("proposal")) return STAGE_JEWEL_PALETTES[2];
+  if (lower.includes("2-week")) return STAGE_JEWEL_PALETTES[3];
+  if (lower.includes("30-day")) return STAGE_JEWEL_PALETTES[4];
+  if (lower.includes("60-day") || lower.includes("school")) return STAGE_JEWEL_PALETTES[5];
+  if (lower.includes("reconnect") || lower.includes("complaint") || lower.includes("due process")) return STAGE_JEWEL_PALETTES[6];
+  if (lower.includes("intake") || lower.includes("onboarding") || lower.includes("billing") || lower.includes("monitoring")) return STAGE_JEWEL_PALETTES[7];
+  if (lower.includes("records") || lower.includes("renewal") || lower.includes("draft")) return STAGE_JEWEL_PALETTES[8];
+  if (lower.includes("closed") || lower.includes("archiv")) return STAGE_JEWEL_PALETTES[9];
+  return STAGE_JEWEL_PALETTES[idx % STAGE_JEWEL_PALETTES.length];
+}
+
 export function StageOverviewGrid({
   stages,
   cards,
@@ -85,17 +206,6 @@ export function StageOverviewGrid({
   const scrollByAmount = (delta: number) => {
     if (!railRef.current) return;
     railRef.current.scrollBy({ left: delta, behavior: "smooth" });
-  };
-
-  // Support Shift + wheel and vertical wheel inside rail for smooth horizontal scrolling
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    const el = railRef.current;
-    if (!el) return;
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // native trackpad horizontal gesture
-    if (e.shiftKey || el.scrollWidth > el.clientWidth) {
-      el.scrollLeft += e.deltaY;
-      updateScrollIndicators();
-    }
   };
 
   // Click-and-drag scrolling on the stage rail
@@ -170,18 +280,17 @@ export function StageOverviewGrid({
       <div
         ref={railRef}
         onScroll={updateScrollIndicators}
-        onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className="flex flex-nowrap items-end gap-1.5 w-full max-w-full overflow-x-auto pb-2 scroll-smooth"
+        className="flex flex-nowrap items-end gap-1.5 w-full max-w-full overflow-x-auto pb-2"
         style={{
           scrollbarWidth: "thin",
           scrollbarColor: "#233554 #050E1D",
         }}
       >
-        {/* 1. Left-Most "All" Summary Segment (Matches HoneyBook's dark "All" block) */}
+        {/* 1. Left-Most "All" Summary Segment (Sovereign Brass Jewel Fill) */}
         <div className="shrink-0 w-[116px] sm:w-[124px] flex flex-col justify-end">
           <div className="h-5 mb-1" />
           <button
@@ -193,23 +302,29 @@ export function StageOverviewGrid({
               if (didDragRailRef.current) return;
               onSelectStage(null);
             }}
+            style={{
+              background: !selectedStageName
+                ? "linear-gradient(180deg, #523A12 0%, #33230A 100%)"
+                : "linear-gradient(180deg, #3B2A0C 0%, #241907 100%)",
+              borderColor: !selectedStageName ? "#F2CD80" : "#C5A059",
+            }}
             className={cn(
-              "w-full h-[76px] rounded-lg px-3 py-2.5 text-left transition-all cursor-pointer border flex flex-col justify-between relative overflow-hidden",
+              "w-full h-[76px] rounded-lg px-3 py-2.5 text-left transition-all cursor-pointer border flex flex-col justify-between relative overflow-hidden hover:brightness-110",
               !selectedStageName
-                ? "bg-[#0D2142] border-[#C5A059] text-[#FFF4D4] shadow-[0_2px_12px_rgba(0,0,0,0.6)]"
-                : "bg-[#051022] hover:bg-[#0A192F] border-[#1E2E48] text-[#94A3B8] hover:text-[#FFF4D4]"
+                ? "shadow-[0_4px_16px_rgba(197,160,89,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)] ring-1 ring-[#FFE394]/50"
+                : "shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
             )}
           >
             <div
-              className="absolute top-0 left-0 right-0 h-[3px]"
+              className="absolute top-0 left-0 right-0 h-[3.5px]"
               style={{
-                backgroundColor: !selectedStageName ? "#C5A059" : "#334155",
+                backgroundColor: "#F2CD80",
               }}
             />
-            <span className="text-xl font-semibold tracking-tight text-[#FFF4D4] leading-none pt-0.5">
+            <span className="text-xl font-bold tracking-tight text-[#FFF4D4] leading-none pt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
               {cards.length}
             </span>
-            <span className="text-xs font-medium text-[#CBD5E1] truncate">
+            <span className="text-xs font-semibold text-[#FFE394] truncate">
               All
             </span>
           </button>
@@ -243,20 +358,20 @@ export function StageOverviewGrid({
             : null;
           const isFirstInLogicalGroup = logicalGroup !== prevLogicalGroup;
 
-          const topBarColor =
-            stage.accentColor || groupMeta?.barColor || "#60A5FA";
+          const jewel = resolveStageJewelPalette(stage.name, idx);
+          const topBarColor = stage.accentColor || jewel.topBar;
 
           return (
             <div
               key={stage.id}
               className="shrink-0 w-[132px] sm:w-[142px] flex flex-col justify-end"
             >
-              {/* Subtle Non-Interactive Group Label Above First Stage in Group */}
+              {/* Group Label Above First Stage in Group */}
               <div className="h-5 mb-1 flex items-center">
                 {isFirstInLogicalGroup && groupMeta ? (
                   <span
                     className={cn(
-                      "text-[10px] font-medium px-2 py-0.5 rounded border truncate",
+                      "text-[10px] font-semibold px-2.5 py-0.5 rounded-md border truncate shadow-xs",
                       groupMeta.badgeClass
                     )}
                   >
@@ -278,31 +393,36 @@ export function StageOverviewGrid({
                 onDragLeave={() => setDragOverStageName(null)}
                 onDrop={(e) => handleDropOnTile(e, stage.name)}
                 title={`${stage.name} (${count} ${count === 1 ? "case" : "cases"})`}
+                style={{
+                  background: isSelected || isDragOver ? jewel.selectedBg : jewel.bg,
+                  borderColor: isSelected ? "#F2CD80" : jewel.border,
+                }}
                 className={cn(
-                  "w-full h-[76px] rounded-lg px-3 py-2.5 text-left transition-all cursor-pointer border flex flex-col justify-between relative overflow-hidden group",
+                  "w-full h-[76px] rounded-lg px-3 py-2.5 text-left transition-all cursor-pointer border flex flex-col justify-between relative overflow-hidden group hover:brightness-115",
                   isSelected
-                    ? "bg-[#0D2142] border-[#C5A059] text-[#FFF4D4] shadow-[0_2px_12px_rgba(0,0,0,0.6)]"
-                    : isDragOver
-                      ? "bg-[#102B4E] border-[#C5A059]/80 text-[#FFF4D4]"
-                      : "bg-[#071326] hover:bg-[#0B1C36] border-[#1A2942] hover:border-[#2C4268] text-[#CBD5E1]"
+                    ? "shadow-[0_4px_16px_rgba(197,160,89,0.35),inset_0_1px_1px_rgba(255,255,255,0.22)] ring-1 ring-[#FFE394]/60"
+                    : "shadow-[0_3px_10px_rgba(0,0,0,0.55),inset_0_1px_1px_rgba(255,255,255,0.1)]"
                 )}
               >
-                {/* Thin Top Colored Border */}
+                {/* Top Colored Accent Bar */}
                 <div
-                  className="absolute top-0 left-0 right-0 h-[3px]"
+                  className="absolute top-0 left-0 right-0 h-[3.5px]"
                   style={{ backgroundColor: topBarColor }}
                 />
 
-                {/* Top Row: Prominent Count + Restrained Overdue Indicator + Subtle Progression Chevron */}
+                {/* Top Row: Prominent Count + Overdue Indicator + Progression Chevron */}
                 <div className="flex items-center justify-between w-full pt-0.5">
                   <span
-                    className={cn(
-                      "text-xl font-semibold tracking-tight leading-none",
-                      isSelected
-                        ? "text-[#FFE394]"
+                    style={{
+                      color: isSelected
+                        ? "#FFE394"
                         : count > 0
-                          ? "text-[#FFF4D4]"
-                          : "text-[#64748B]"
+                          ? jewel.countText
+                          : jewel.text,
+                    }}
+                    className={cn(
+                      "text-xl font-bold tracking-tight leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]",
+                      count === 0 && !isSelected && "opacity-75"
                     )}
                   >
                     {count}
@@ -311,28 +431,25 @@ export function StageOverviewGrid({
                   <div className="flex items-center gap-1">
                     {overdueCount > 0 && (
                       <span
-                        className="w-2 h-2 rounded-full bg-rose-400 shrink-0"
+                        className="w-2 h-2 rounded-full bg-rose-400 shrink-0 shadow-[0_0_6px_rgba(251,113,133,0.8)]"
                         title={`${overdueCount} case(s) need attention`}
                       />
                     )}
                     <ChevronRight
-                      className={cn(
-                        "h-3 w-3 transition-transform group-hover:translate-x-0.5",
-                        isSelected ? "text-[#C5A059]" : "text-[#334155]"
-                      )}
+                      style={{ color: isSelected ? "#FFE394" : jewel.text }}
+                      className="h-3.5 w-3.5 opacity-75 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5"
                     />
                   </div>
                 </div>
 
                 {/* Bottom Row: Short Stage Name */}
                 <span
+                  style={{
+                    color: isSelected ? "#FFF4D4" : jewel.text,
+                  }}
                   className={cn(
-                    "text-[11px] leading-snug line-clamp-2",
-                    isSelected
-                      ? "text-[#FFF4D4] font-semibold"
-                      : count > 0
-                        ? "text-[#CBD5E1] group-hover:text-[#FFF4D4]"
-                        : "text-[#64748B] group-hover:text-[#94A3B8]"
+                    "text-[11px] font-semibold leading-snug line-clamp-2 drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]",
+                    isSelected && "font-bold"
                   )}
                 >
                   {stage.name}

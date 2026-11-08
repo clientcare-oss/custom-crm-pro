@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { Folder, LayoutGrid, List, Plus, Search, X, Sparkles, Zap } from "lucide-react";
+import { Folder, LayoutGrid, List, Plus, Search, X, Sparkles, Zap, ChevronDown, ChevronUp, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StudentsHeader } from "@/components/students/StudentsHeader";
 import WaypointPillTab from "@/components/ui/WaypointPillTab";
 import { BrassAlphabetRail } from "@/components/students/BrassAlphabetRail";
-import { StudentFileCard, type StudentFolderData } from "@/components/students/StudentFileCard";
+import { StudentFileCard, type StudentFolderData, getDefaultNextRequiredAction } from "@/components/students/StudentFileCard";
 import { CabinetDrawer, type DrawerType } from "@/components/students/CabinetDrawer";
 import {
   type MarkerType,
@@ -44,13 +44,76 @@ import {
   ManageCompanyTagsModal,
   AddCustomStagePopover,
 } from "@/components/students/StudentTagsManager";
+import {
+  CollapsibleStudentsPipeline,
+  type PipelineActiveFilterSummary,
+} from "@/components/students/CollapsibleStudentsPipeline";
 
 export default function Students() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
 
-  // ─── Query Live Production Contacts ───
+  // ─── Query Live Production Contacts & Pipeline Metadata ───
   const { data: rawContacts, isLoading, refetch } = trpc.contacts.list.useQuery();
+  const { data: pipelineStages } = trpc.pipeline.stages.list.useQuery();
+  const { data: pipelineCards } = trpc.pipeline.cards.list.useQuery();
+
+  const [studentStageOverrides, setStudentStageOverrides] = useState<Record<number, string>>({});
+  const [studentEmployeeOverrides, setStudentEmployeeOverrides] = useState<Record<number, string>>({});
+
+  const updateStageMutation = trpc.pipeline.cards.updateStage.useMutation({
+    onSuccess: () => {
+      utils.pipeline.cards.list.invalidate();
+      utils.contacts.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Failed to update stage"),
+  });
+
+  const assignAdvocateMutation = trpc.pipeline.cards.assignAdvocate.useMutation({
+    onSuccess: () => {
+      utils.pipeline.cards.list.invalidate();
+      utils.contacts.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Failed to assign employee"),
+  });
+
+  const handleAssignStage = (studentId: number, newStage: string) => {
+    setStudentStageOverrides((prev) => ({ ...prev, [studentId]: newStage }));
+    toast.success(`Moved student to ${newStage}`);
+    updateStageMutation.mutate({ contactId: studentId, stage: newStage });
+  };
+
+  const handleAssignEmployee = (studentId: number, employeeName: string) => {
+    setStudentEmployeeOverrides((prev) => ({ ...prev, [studentId]: employeeName }));
+    toast.success(`Assigned employee: ${employeeName}`);
+    assignAdvocateMutation.mutate({ contactId: studentId, advocateName: employeeName });
+  };
+
+  const availableStageNames = useMemo(() => {
+    if (pipelineStages && Array.isArray(pipelineStages) && pipelineStages.length > 0) {
+      return pipelineStages
+        .filter((s: any) => !s.isArchived)
+        .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+        .map((s: any) => String(s.name));
+    }
+    return undefined;
+  }, [pipelineStages]);
+
+  const pipelineCardMap = useMemo(() => {
+    const map = new Map<number, { stage?: string; employee?: string; primaryTask?: string }>();
+    if (pipelineCards && Array.isArray(pipelineCards)) {
+      pipelineCards.forEach((pc: any) => {
+        if (pc && typeof pc.id === "number") {
+          map.set(pc.id, {
+            stage: pc.pipelineStage,
+            employee: pc.assignedAdvocateName,
+            primaryTask: pc.primaryTask,
+          });
+        }
+      });
+    }
+    return map;
+  }, [pipelineCards]);
 
   // ─── State Management ───
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,6 +127,22 @@ export default function Students() {
   const [selectedGradeFilter, setSelectedGradeFilter] = useState("ALL");
   const [selectedTagFilter, setSelectedTagFilter] = useState("ALL");
   const [newStudentOpen, setNewStudentOpen] = useState(false);
+
+  // ─── Collapsible Advocacy Pipeline State (Open / Closed to Save Space) ───
+  const [pipelineOpen, setPipelineOpen] = useState<boolean>(() => {
+    const saved = localStorage.getItem("waypoint_students_pipeline_open");
+    return saved !== null ? saved === "true" : true;
+  });
+  const [pipelineFilterSummary, setPipelineFilterSummary] =
+    useState<PipelineActiveFilterSummary | null>(null);
+
+  const handleTogglePipelineOpen = () => {
+    setPipelineOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem("waypoint_students_pipeline_open", String(next));
+      return next;
+    });
+  };
 
   // ─── Company Tags, Per-Student Tags & Custom Stages State ───
   const [companyTags, setCompanyTags] = useState<CompanyTag[]>(() => loadCompanyTags());
@@ -578,6 +657,26 @@ export default function Students() {
         else if (idx === 3) resolvedTags = ["IEP SOON"];
       }
 
+      const pCard = pipelineCardMap.get(c.id);
+      const resolvedStage =
+        studentStageOverrides[c.id] ||
+        pCard?.stage ||
+        c.pipelineStage ||
+        "Discovery";
+      const resolvedEmployee =
+        studentEmployeeOverrides[c.id] ||
+        pCard?.employee ||
+        c.assignedAdvocateName ||
+        "Byron Honea";
+      const resolvedInitials = resolvedEmployee
+        .split(/\s+/)
+        .map((p: string) => p[0]?.toUpperCase() || "")
+        .join("")
+        .slice(0, 2);
+      const resolvedNextAction = studentStageOverrides[c.id]
+        ? getDefaultNextRequiredAction(resolvedStage)
+        : pCard?.primaryTask || c.primaryTask || getDefaultNextRequiredAction(resolvedStage);
+
       return {
         id: c.id,
         firstName: c.firstName || "",
@@ -591,19 +690,22 @@ export default function Students() {
         parentContactId: c.parentContactId,
         parentName: (c.parentContactId ? parentMap.get(c.parentContactId) || null : null) || c.secondParentName || null,
         company: c.company,
-        pipelineStage: c.pipelineStage,
+        pipelineStage: resolvedStage,
+        assignedAdvocateName: resolvedEmployee,
+        assignedAdvocateInitials: resolvedInitials,
+        nextRequiredAction: resolvedNextAction,
         accountStatus: c.accountStatus,
         lifecycleStage: c.lifecycleStage,
         serviceStatus: c.serviceStatus,
-        upcomingMeetingDate: c.pipelineStage === "1st IEP Scheduled" ? "Scheduled" : null,
+        upcomingMeetingDate: resolvedStage === "1st IEP Scheduled" || resolvedStage === "Meeting Scheduled" ? "Scheduled" : null,
         needsAttention: c.accountStatus === "On Hold" || c.serviceStatus === "Paused",
-        priority: c.pipelineStage === "1st IEP Scheduled" || c.accountStatus === "Renewal Needed",
-        bookmarked: c.pipelineStage === "IEP Active",
+        priority: resolvedStage === "1st IEP Scheduled" || resolvedStage === "Meeting Scheduled" || c.accountStatus === "Renewal Needed",
+        bookmarked: resolvedStage === "IEP Active",
         markerType: studentMarkers[c.id],
         tags: resolvedTags,
       };
     });
-  }, [allContacts, parentMap, studentMarkers, studentTagsMap]);
+  }, [allContacts, parentMap, studentMarkers, studentTagsMap, pipelineCardMap, studentStageOverrides, studentEmployeeOverrides]);
 
   // ─── Categorization into Stages & Cabinet Compartments (Ordered/Filtered by Tags & Status) ───
   const { activeStudents, scholarshipStudents, renewalStudents, archivedStudents } = useMemo(() => {
@@ -708,6 +810,27 @@ export default function Students() {
           if (!hasTag) return false;
         }
 
+        // Collapsible Advocacy Pipeline filter (when a Pipeline Stage, View, Advocate, or Search is active)
+        if (pipelineFilterSummary?.hasActivePipelineFilter) {
+          if (pipelineFilterSummary.selectedStageName) {
+            const targetStage = pipelineFilterSummary.selectedStageName.toLowerCase();
+            const studentStage = (s.pipelineStage || "Discovery").toLowerCase();
+            const hasMatchingStageTag = (s.tags || []).some(
+              (t) => t.toLowerCase() === targetStage
+            );
+            if (studentStage !== targetStage && !hasMatchingStageTag) {
+              return false;
+            }
+          } else if (
+            pipelineFilterSummary.matchingStudentIds &&
+            pipelineFilterSummary.matchingStudentIds.size > 0
+          ) {
+            if (!pipelineFilterSummary.matchingStudentIds.has(s.id)) {
+              return false;
+            }
+          }
+        }
+
         return true;
       })
       .sort((a, b) => {
@@ -726,19 +849,19 @@ export default function Students() {
 
   const filteredActive = useMemo(
     () => filterList(activeStudents),
-    [activeStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]
+    [activeStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy, pipelineFilterSummary]
   );
   const filteredScholarship = useMemo(
     () => filterList(scholarshipStudents),
-    [scholarshipStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]
+    [scholarshipStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy, pipelineFilterSummary]
   );
   const filteredRenewal = useMemo(
     () => filterList(renewalStudents),
-    [renewalStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]
+    [renewalStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy, pipelineFilterSummary]
   );
   const filteredArchived = useMemo(
     () => filterList(archivedStudents),
-    [archivedStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]
+    [archivedStudents, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy, pipelineFilterSummary]
   );
 
   // Custom stage student lists (ordered/matched by each custom stage's linked tag)
@@ -752,7 +875,7 @@ export default function Students() {
       map[st.id] = filterList(matched);
     });
     return map;
-  }, [customStages, studentRecords, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]);
+  }, [customStages, studentRecords, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy, pipelineFilterSummary]);
 
   // Alphabet counts mapping
   const letterCounts = useMemo(() => {
@@ -773,7 +896,7 @@ export default function Students() {
 
   const allFilteredStudents = useMemo(
     () => filterList(studentRecords),
-    [studentRecords, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy]
+    [studentRecords, selectedLetter, searchQuery, selectedPlanFilter, selectedGradeFilter, selectedTagFilter, sortOrder, sortBy, pipelineFilterSummary]
   );
 
   const [listCategory, setListCategory] = useState<string>("all");
@@ -844,7 +967,7 @@ export default function Students() {
 
   return (
     <ScopedErrorBoundary moduleName="Students">
-      <div className="min-h-full bg-[#020712] text-[#F0DFC5] flex flex-col">
+      <div className="min-h-full w-full max-w-full min-w-0 overflow-x-hidden bg-[#020712] text-[#F0DFC5] flex flex-col">
         {/* ─── Top Full-Bleed Maritime Header Banner (Touches Left and Right Screen Edges With No Buffer) ─── */}
         <div
           className="w-full relative border-b border-[#8A6731]/60 shadow-[0_12px_36px_rgba(0,0,0,0.95)] overflow-hidden bg-[#030914] bg-no-repeat bg-cover bg-bottom min-h-[240px] sm:min-h-[265px] lg:min-h-[295px] flex flex-col justify-between"
@@ -1000,9 +1123,16 @@ export default function Students() {
           </div>
         </div>
 
+        {/* ─── Collapsible Pipeline Deck (Directly Below Quick View Items) ─── */}
+        <CollapsibleStudentsPipeline
+          isOpen={pipelineOpen}
+          onToggleOpen={handleTogglePipelineOpen}
+          onFilterStateChange={setPipelineFilterSummary}
+        />
+
         {/* ─── 3. Content Area: Clean Full-Bleed Table List View OR Full-Bleed Physical Filing Credenza ─── */}
         {viewMode === "list" ? (
-          <div className="w-full flex-1 flex flex-col pt-3 pb-12">
+          <div className="w-full max-w-full min-w-0 flex-1 flex flex-col pt-3 pb-12">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="w-12 h-12 rounded-full border-2 border-[#E9BA6B] border-t-transparent animate-spin mb-4" />
@@ -1015,6 +1145,9 @@ export default function Students() {
                 onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                 onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
                 onMarkerChange={handleMarkerChange}
+                onStageChange={handleAssignStage}
+                onEmployeeChange={handleAssignEmployee}
+                availableStages={availableStageNames}
                 companyTags={companyTags}
                 onAssignTag={handleAssignTag}
                 onRemoveTag={handleRemoveTag}
@@ -1061,6 +1194,9 @@ export default function Students() {
                       onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                       onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
                       onMarkerChange={handleMarkerChange}
+                      onStageChange={handleAssignStage}
+                      onEmployeeChange={handleAssignEmployee}
+                      availableStages={availableStageNames}
                       viewMode="cards"
                     />
 
@@ -1076,6 +1212,9 @@ export default function Students() {
                       onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                       onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
                       onMarkerChange={handleMarkerChange}
+                      onStageChange={handleAssignStage}
+                      onEmployeeChange={handleAssignEmployee}
+                      availableStages={availableStageNames}
                       viewMode="cards"
                     />
 
@@ -1091,6 +1230,9 @@ export default function Students() {
                       onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                       onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
                       onMarkerChange={handleMarkerChange}
+                      onStageChange={handleAssignStage}
+                      onEmployeeChange={handleAssignEmployee}
+                      availableStages={availableStageNames}
                       viewMode="cards"
                     />
 
@@ -1110,6 +1252,9 @@ export default function Students() {
                           onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                           onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
                           onMarkerChange={handleMarkerChange}
+                          onStageChange={handleAssignStage}
+                          onEmployeeChange={handleAssignEmployee}
+                          availableStages={availableStageNames}
                           viewMode="cards"
                         />
                       );
@@ -1127,6 +1272,9 @@ export default function Students() {
                       onStudentClick={(id) => setLocation(`/contacts/${id}`)}
                       onParentClick={(parentId) => setLocation(`/contacts/${parentId}`)}
                       onMarkerChange={handleMarkerChange}
+                      onStageChange={handleAssignStage}
+                      onEmployeeChange={handleAssignEmployee}
+                      availableStages={availableStageNames}
                       viewMode="cards"
                     />
                   </div>

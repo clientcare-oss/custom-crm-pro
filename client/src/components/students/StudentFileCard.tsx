@@ -17,6 +17,9 @@ export interface StudentFolderData {
   parentName?: string | null;
   company?: string | null;
   pipelineStage?: string | null;
+  assignedAdvocateName?: string | null;
+  assignedAdvocateInitials?: string | null;
+  nextRequiredAction?: string | null;
   accountStatus?: string | null;
   lifecycleStage?: string | null;
   serviceStatus?: string | null;
@@ -34,6 +37,9 @@ export interface StudentFileCardProps {
   index?: number;
   className?: string;
   onMarkerChange?: (studentId: number, marker: MarkerType | "none") => void;
+  onStageChange?: (studentId: number, newStage: string) => void;
+  onEmployeeChange?: (studentId: number, employeeName: string) => void;
+  availableStages?: string[];
 }
 
 export const STUDENT_FOLDER_BACKGROUNDS = [
@@ -44,12 +50,62 @@ export const STUDENT_FOLDER_BACKGROUNDS = [
   "/decor/student-folder-bg-5.png",
 ];
 
+export const CARD_EMPLOYEES = [
+  { name: "Byron Honea", initials: "BH" },
+  { name: "Erin Smith", initials: "ES" },
+  { name: "Marcus Sterling", initials: "MS" },
+  { name: "Kendra Lane", initials: "KL" },
+];
+
+export const DEFAULT_CARD_STAGES = [
+  "Discovery",
+  "Free Session",
+  "Proposal (14-Day Exp)",
+  "2-Week Follow-Up",
+  "30-Day Follow-Up",
+  "60-Day Follow-Up",
+  "Reconnect Review",
+  "Intake / Onboarding",
+  "Billing & Authorization",
+  "Client Upload Tasks",
+  "Records Review",
+  "School Contact",
+  "Meeting Scheduled",
+  "State Complaint",
+  "Monitoring",
+  "Renewal",
+  "Closed",
+];
+
+export function getDefaultNextRequiredAction(stage?: string | null): string {
+  const s = (stage || "Discovery").toLowerCase();
+  if (s.includes("discovery")) return "Complete discovery intake & review parent concerns";
+  if (s.includes("free session")) return "Host strategy session & outline next steps";
+  if (s.includes("proposal")) return "Follow up on service agreement & proposal";
+  if (s.includes("follow-up")) return "Send follow-up check-in & schedule consult";
+  if (s.includes("reconnect")) return "Review family reconnect notes & outreach";
+  if (s.includes("intake") || s.includes("onboarding")) return "Complete onboarding packet & records release";
+  if (s.includes("billing") || s.includes("authorization")) return "Verify billing authorization & agreement";
+  if (s.includes("upload")) return "Verify parent IEP & evaluation uploads";
+  if (s.includes("records")) return "Audit current IEP, evaluations & service minutes";
+  if (s.includes("school")) return "Draft parent concern letter & contact case manager";
+  if (s.includes("meeting")) return "Finalize parent agenda & meeting blueprint";
+  if (s.includes("complaint")) return "Compile evidence exhibits & compliance timeline";
+  if (s.includes("monitoring")) return "Monitor IEP implementation & progress logs";
+  if (s.includes("renewal")) return "Review annual renewal options with family";
+  if (s.includes("closed")) return "Archive final case summary";
+  return "Review current stage milestone";
+}
+
 export function StudentFileCard({
   student,
   onClick,
   index = 0,
   className,
   onMarkerChange,
+  onStageChange,
+  onEmployeeChange,
+  availableStages = DEFAULT_CARD_STAGES,
 }: StudentFileCardProps) {
   // Format student name: "Avery J.", "Ethan R.", etc.
   const rawFirst = (student.firstName || "Student").trim();
@@ -304,16 +360,49 @@ export function StudentFileCard({
             </div>
           </div>
 
-          {/* Grade & Family / Primary Parent */}
+          {/* Grade & Family / Primary Parent + Stage & Employee Row */}
           <div className="space-y-0.5">
-            <p className="font-serif text-[#3A4556] text-[11.5px] sm:text-[12.5px] leading-tight line-clamp-1 font-medium">
-              {gradeText}
+            <p className="font-serif text-[#3A4556] text-[11px] sm:text-[12px] leading-tight line-clamp-1 font-medium">
+              {gradeText} · <span className="font-sans font-semibold text-[#1B365D]">{familyOrParentText}</span>
             </p>
-            <p
-              className="font-sans text-[#1B365D] text-[11px] sm:text-[12px] leading-tight truncate line-clamp-1 font-semibold tracking-tight"
-              title={student.parentName ? `Primary Parent: ${student.parentName}` : familyOrParentText}
+            <div
+              className="flex items-center gap-1 pt-0.5 pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
             >
-              {familyOrParentText}
+              {/* Compact Stage Selector on Folder Card */}
+              <select
+                value={student.pipelineStage || "Discovery"}
+                onChange={(e) => onStageChange?.(student.id, e.target.value)}
+                title={`Stage: ${student.pipelineStage || "Discovery"}`}
+                className="h-4.5 max-w-[108px] rounded px-1 text-[9.5px] font-semibold bg-[#102B52] text-[#C7E0FF] border border-[#3E79C9]/80 truncate cursor-pointer focus:outline-hidden"
+              >
+                {availableStages.map((st) => (
+                  <option key={st} value={st} className="bg-[#071326] text-[#FFF4D4]">
+                    {st}
+                  </option>
+                ))}
+              </select>
+
+              {/* Compact Assigned Employee Selector on Folder Card */}
+              <select
+                value={student.assignedAdvocateName || "Byron Honea"}
+                onChange={(e) => onEmployeeChange?.(student.id, e.target.value)}
+                title={`Assigned Employee: ${student.assignedAdvocateName || "Byron Honea"}`}
+                className="h-4.5 rounded px-1 text-[9.5px] font-bold bg-[#3B2A0C] text-[#FFE394] border border-[#C5A059]/80 cursor-pointer focus:outline-hidden"
+              >
+                {CARD_EMPLOYEES.map((emp) => (
+                  <option key={emp.name} value={emp.name} className="bg-[#071326] text-[#FFF4D4]">
+                    {emp.initials} · {emp.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {/* Compact Next Required Action on Folder Card */}
+            <p
+              className="text-[9.5px] sm:text-[10px] font-medium text-[#2C3E55] truncate pt-0.5"
+              title={`Next Required Action: ${student.nextRequiredAction || getDefaultNextRequiredAction(student.pipelineStage)}`}
+            >
+              Next: {student.nextRequiredAction || getDefaultNextRequiredAction(student.pipelineStage)}
             </p>
           </div>
         </div>

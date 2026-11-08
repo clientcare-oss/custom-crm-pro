@@ -392,17 +392,6 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       isActive: (loc) => loc === "/contacts" || loc === "/contacts/new",
     },
     {
-      id: "advocacy",
-      icon: Workflow,
-      label: "Pipeline",
-      path: "/advocacy-pipeline",
-      isActive: (loc) =>
-        loc === "/advocacy-pipeline" ||
-        loc.startsWith("/advocacy-pipeline") ||
-        loc === "/pipeline" ||
-        loc.startsWith("/pipeline/"),
-    },
-    {
       id: "documents",
       icon: FileSignature,
       label: "Documents",
@@ -548,9 +537,8 @@ const SEARCHABLE_DIRECTORY: SearchDirectoryItem[] = [
   { id: "mod-call", name: "Call Center", category: "module", path: "/call-center", badge: "PG-018", keywords: ["calls", "logs", "phone", "dialer", "voice", "caller id", "quo"], icon: Headset },
   { id: "mod-leads", name: "Lead Center", category: "module", path: "/leads", badge: "PG-003", keywords: ["leads", "prospects", "intake", "pipeline", "discovery call", "forms"], icon: TrendingUp },
   { id: "mod-calendar", name: "Calendar & Appointments", category: "module", path: "/calendar", badge: "PG-007", keywords: ["schedule", "appointments", "sessions", "coverage", "booking"], icon: Calendar },
-  { id: "mod-students", name: "Students File Cabinet", category: "module", path: "/students", badge: "PG-004", keywords: ["students", "roster", "iep", "504", "cases", "files", "cabinet"], icon: GraduationCap },
+  { id: "mod-students", name: "Students & Pipeline", category: "module", path: "/students", badge: "PG-004", keywords: ["students", "roster", "iep", "504", "cases", "files", "cabinet", "pipeline", "stages"], icon: GraduationCap },
   { id: "mod-contacts", name: "Contacts Directory", category: "module", path: "/contacts", badge: "PG-002", keywords: ["clients", "parents", "directory", "people", "directory", "families"], icon: Users },
-  { id: "mod-advocacy", name: "Advocacy Pipeline", category: "module", path: "/advocacy-pipeline", badge: "PG-039", keywords: ["pipeline", "advocacy", "cases", "stages", "retention"], icon: Workflow },
   { id: "mod-agreements", name: "Agreements Engine", category: "module", path: "/agreements", badge: "PG-046", keywords: ["contracts", "signatures", "smart files", "agreements", "terms"], icon: FileSignature },
   { id: "mod-invoices", name: "Invoices & Billing", category: "module", path: "/invoices", badge: "PG-005", keywords: ["invoices", "payments", "receipts", "billing", "charges"], icon: Banknote },
   { id: "mod-templates", name: "Templates", category: "module", path: "/templates", badge: "PG-011", keywords: ["templates", "forms", "letters", "documents", "email templates"], icon: LayoutTemplate },

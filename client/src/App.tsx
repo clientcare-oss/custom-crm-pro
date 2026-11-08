@@ -225,8 +225,8 @@ function Router() {
           <Route path="/students" component={Students} />
           <Route path="/leads/:leadId/discovery" component={DiscoveryCallPage} />
           <Route path="/first-mate" component={FirstMate} />
-          <Route path="/advocacy-pipeline" component={AdvocacyPipeline} />
-          <Route path="/pipeline" component={AdvocacyPipeline} />
+          <Route path="/advocacy-pipeline">{() => <Redirect to="/students" />}</Route>
+          <Route path="/pipeline">{() => <Redirect to="/students" />}</Route>
           <Route path="/leads" component={Leads} />
           <Route path="/projects" component={Students} />
           <Route path="/invoices" component={Invoices} />
