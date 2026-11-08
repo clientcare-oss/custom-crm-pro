@@ -36,6 +36,8 @@ export default function Contacts() {
     company: "",
     jobTitle: "",
     bestTimeToCall: "",
+    secondParentName: "",
+    secondParentPhone: "",
     newStudentName: "",
     schoolName: "",
     gradeLevel: "",
@@ -66,6 +68,8 @@ export default function Contacts() {
         company: "",
         jobTitle: "",
         bestTimeToCall: "",
+        secondParentName: "",
+        secondParentPhone: "",
         newStudentName: "",
         schoolName: "",
         gradeLevel: "",
@@ -99,6 +103,8 @@ export default function Contacts() {
         company: "Sterling Family",
         jobTitle: "Parent / Guardian",
         bestTimeToCall: "Mornings before 11:00 AM",
+        secondParentName: "Jonathan Sterling",
+        secondParentPhone: "(404) 555-8834",
         newStudentName: "Lucas Sterling",
         schoolName: "North Atlanta High",
         gradeLevel: "10th Grade",
@@ -112,6 +118,8 @@ export default function Contacts() {
         company: "Vance Family",
         jobTitle: "Parent / Guardian",
         bestTimeToCall: "Afternoons after 2:00 PM",
+        secondParentName: "Rachel Vance",
+        secondParentPhone: "(404) 555-0192",
         newStudentName: "Maya Vance",
         schoolName: "Decatur High School",
         gradeLevel: "8th Grade",
@@ -125,6 +133,8 @@ export default function Contacts() {
         company: "Mitchell Family",
         jobTitle: "Parent / Guardian",
         bestTimeToCall: "Mid-day 12:00 PM - 1:00 PM",
+        secondParentName: "Marcus Mitchell",
+        secondParentPhone: "(770) 555-0140",
         newStudentName: "Elijah Mitchell",
         schoolName: "Walton High School",
         gradeLevel: "11th Grade",
@@ -151,6 +161,8 @@ export default function Contacts() {
         company: "",
         jobTitle: "",
         bestTimeToCall: "",
+        secondParentName: "",
+        secondParentPhone: "",
         newStudentName: "",
         schoolName: "",
         gradeLevel: "",
@@ -214,6 +226,10 @@ export default function Contacts() {
       firstName,
       lastName,
       phone: formatPhone(formData.phone),
+      secondParentName: formData.secondParentName.trim() || undefined,
+      secondParentPhone: formData.secondParentPhone.trim()
+        ? formatPhone(formData.secondParentPhone.trim())
+        : undefined,
     };
     if (editingId) {
       updateMutation.mutate({ id: editingId, ...data });
@@ -242,6 +258,8 @@ export default function Contacts() {
       company: "",
       jobTitle: "",
       bestTimeToCall: "",
+      secondParentName: "",
+      secondParentPhone: "",
       newStudentName: "",
       schoolName: "",
       gradeLevel: "",
@@ -260,6 +278,8 @@ export default function Contacts() {
       company: contact.company || "",
       jobTitle: contact.jobTitle || "",
       bestTimeToCall: contact.bestTimeToCall || "",
+      secondParentName: contact.secondParentName || "",
+      secondParentPhone: contact.secondParentPhone || "",
       newStudentName: "",
       schoolName: "",
       gradeLevel: "",
@@ -474,6 +494,31 @@ export default function Contacts() {
                         value={formData.phone}
                         onChange={(val) => setFormData({ ...formData, phone: val })}
                       />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2 p-3 rounded-xl bg-[#061121] border border-[#B88943]/30">
+                      <div className="space-y-2">
+                        <label className="block text-xs font-serif font-bold text-[#FCE09E]">
+                          Connected Spouse Name
+                        </label>
+                        <VoiceInput
+                          value={formData.secondParentName}
+                          onChange={(e) =>
+                            setFormData({ ...formData, secondParentName: e.target.value })
+                          }
+                          placeholder="e.g. Jonathan Sterling"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-xs font-serif font-bold text-[#FCE09E]">
+                          Connected Spouse Phone
+                        </label>
+                        <PhoneInput
+                          value={formData.secondParentPhone}
+                          onChange={(val) =>
+                            setFormData({ ...formData, secondParentPhone: val })
+                          }
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold">Company</label>

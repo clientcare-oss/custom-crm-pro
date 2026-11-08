@@ -62,6 +62,9 @@ export interface ContactItem {
   confirmedTimeZone?: string | null;
   timezone?: string | null;
   bestTimeToCall?: string | null;
+  secondParentName?: string | null;
+  secondParentPhone?: string | null;
+  secondParentEmail?: string | null;
   preferredCallingStartTime?: string | null;
   preferredCallingEndTime?: string | null;
   mayCallOutsidePreferredHours?: boolean | null;
@@ -125,6 +128,148 @@ export function isStudentContact(c?: ContactItem | null): boolean {
   return false;
 }
 
+export interface ResolvedSpouseInfo {
+  contactId: number | null;
+  name: string;
+  phone: string | null;
+  email: string | null;
+}
+
+function normStr(s?: string | null): string {
+  return (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function normPhoneDigits(p?: string | null): string {
+  const d = (p || "").replace(/\D/g, "");
+  return d.length === 11 && d.startsWith("1") ? d.slice(1) : d;
+}
+
+export function resolveConnectedSpouse(
+  contact?: ContactItem | null,
+  allContacts: ContactItem[] = []
+): ResolvedSpouseInfo | null {
+  if (!contact || isStudentContact(contact)) return null;
+
+  const fullName = (c: ContactItem) =>
+    `${c.firstName || ""} ${c.lastName || ""}`.trim();
+  const myName = normStr(fullName(contact));
+  const myPhone = normPhoneDigits(contact.phone);
+  const myEmail = normStr(contact.email);
+
+  const adults = allContacts.filter(
+    (c) => !isStudentContact(c) && c.id !== contact.id
+  );
+
+  // 1. Direct match via secondParentName / secondParentPhone / secondParentEmail
+  const spName = normStr(contact.secondParentName);
+  const spPhone = normPhoneDigits(contact.secondParentPhone);
+  const spEmail = normStr(contact.secondParentEmail);
+
+  if (spName || spPhone || spEmail) {
+    const matched = adults.find((c) => {
+      const cName = normStr(fullName(c));
+      const cPhone = normPhoneDigits(c.phone);
+      const cEmail = normStr(c.email);
+      if (spName && cName === spName) return true;
+      if (spPhone && spPhone.length >= 7 && cPhone === spPhone) return true;
+      if (spEmail && cEmail && cEmail === spEmail) return true;
+      return false;
+    });
+
+    if (matched) {
+      return {
+        contactId: matched.id,
+        name: fullName(matched),
+        phone: matched.phone || contact.secondParentPhone || null,
+        email: matched.email || contact.secondParentEmail || null,
+      };
+    }
+
+    return {
+      contactId: null,
+      name: (contact.secondParentName || "Spouse").trim(),
+      phone: contact.secondParentPhone || null,
+      email: contact.secondParentEmail || null,
+    };
+  }
+
+  // 2. Reverse match: another adult contact lists this contact as their secondParent
+  const reverseMatched = adults.find((c) => {
+    const cSpName = normStr(c.secondParentName);
+    const cSpPhone = normPhoneDigits(c.secondParentPhone);
+    const cSpEmail = normStr(c.secondParentEmail);
+    if (myName && cSpName && cSpName === myName) return true;
+    if (myPhone && myPhone.length >= 7 && cSpPhone === myPhone) return true;
+    if (myEmail && cSpEmail && cSpEmail === myEmail) return true;
+    return false;
+  });
+
+  if (reverseMatched) {
+    return {
+      contactId: reverseMatched.id,
+      name: fullName(reverseMatched),
+      phone: reverseMatched.phone || null,
+      email: reverseMatched.email || null,
+    };
+  }
+
+  // 3. Household / Family match among adult family contacts (same * Family company or same surname)
+  const myCompany = normStr(contact.company);
+  const myLast = normStr(contact.lastName);
+  const genericLastNames = new Set(["client", "test", "parent", "parent2", ""]);
+  const isDevPlaceholder = (c: ContactItem) =>
+    normStr(c.firstName).includes("[dev") || normStr(c.lastName).includes("test");
+
+  if (!isDevPlaceholder(contact)) {
+    const familyPartner = adults.find((c) => {
+      if (isDevPlaceholder(c)) return false;
+      if (normStr(c.firstName) === normStr(contact.firstName)) return false;
+
+      const cCompany = normStr(c.company);
+      if (
+        myCompany &&
+        myCompany.endsWith("family") &&
+        myCompany !== "test family" &&
+        cCompany === myCompany
+      ) {
+        return true;
+      }
+
+      const cLast = normStr(c.lastName);
+      if (
+        myLast &&
+        !genericLastNames.has(myLast) &&
+        cLast === myLast
+      ) {
+        const myHasKids = allContacts.some((k) => k.parentContactId === contact.id);
+        const cHasKids = allContacts.some((k) => k.parentContactId === c.id);
+        const myIsParent =
+          myHasKids ||
+          normStr(contact.jobTitle).includes("parent") ||
+          !contact.jobTitle;
+        const cIsParent =
+          cHasKids ||
+          normStr(c.jobTitle).includes("parent") ||
+          !c.jobTitle;
+        if (myIsParent && cIsParent) return true;
+      }
+
+      return false;
+    });
+
+    if (familyPartner) {
+      return {
+        contactId: familyPartner.id,
+        name: fullName(familyPartner),
+        phone: familyPartner.phone || null,
+        email: familyPartner.email || null,
+      };
+    }
+  }
+
+  return null;
+}
+
 export interface ContactsLedgerViewProps {
   contacts: ContactItem[];
   searchQuery: string;
@@ -158,6 +303,10 @@ export default function ContactsLedgerView({
   const utils = trpc.useUtils();
   const [quickStudentName, setQuickStudentName] = useState("");
   const [showQuickAddStudent, setShowQuickAddStudent] = useState(false);
+  const [showConnectSpouse, setShowConnectSpouse] = useState(false);
+  const [spouseNameInput, setSpouseNameInput] = useState("");
+  const [spousePhoneInput, setSpousePhoneInput] = useState("");
+  const [selectedExistingSpouseId, setSelectedExistingSpouseId] = useState<string>("");
 
   const quickAddStudentMutation = trpc.contacts.create.useMutation({
     onSuccess: () => {
@@ -168,6 +317,20 @@ export default function ContactsLedgerView({
       utils.pipeline.cards.list.invalidate();
     },
     onError: (err) => toast.error(err.message || "Failed to add linked student"),
+  });
+
+  const updateSpouseMutation = trpc.contacts.update.useMutation({
+    onSuccess: () => {
+      utils.contacts.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Failed to update connected spouse"),
+  });
+
+  const createSpouseMutation = trpc.contacts.create.useMutation({
+    onSuccess: () => {
+      utils.contacts.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Failed to create spouse contact"),
   });
 
   const restoreToQuoMutation = trpc.quo.restoreContactToQuo.useMutation({
@@ -384,6 +547,136 @@ export default function ContactsLedgerView({
     if (!activeContact) return [];
     return contacts.filter((c) => c.parentContactId === activeContact.id);
   }, [activeContact, contacts]);
+
+  // dossierSpouse: Connected spouse / co-parent for the active contact
+  const dossierSpouse = useMemo(() => {
+    return resolveConnectedSpouse(dossierContact, contacts);
+  }, [dossierContact, contacts]);
+
+  useEffect(() => {
+    setShowConnectSpouse(false);
+    setSelectedExistingSpouseId("");
+  }, [dossierContact?.id]);
+
+  // Navigate directly to the connected spouse's contact record (or create & open if only stored as secondParent fields)
+  const handleNavigateToSpouse = async (
+    spouseInfo: ResolvedSpouseInfo,
+    sourceContact: ContactItem
+  ) => {
+    if (spouseInfo.contactId) {
+      if (selectedLetter !== "HOME") setSelectedLetter("HOME");
+      if (category !== "all") setCategory("all");
+      setSelectedContactId(spouseInfo.contactId);
+      setMobileTab("dossier");
+      toast.success(`Opened connected spouse: ${spouseInfo.name}`);
+      return;
+    }
+
+    // Spouse exists in secondParentName/secondParentPhone but does not have a standalone contact row yet — create & open it
+    const parts = (spouseInfo.name || "Spouse").trim().split(/\s+/);
+    const sFirst = parts[0] || "Spouse";
+    const sLast = parts.slice(1).join(" ") || sourceContact.lastName || "Client";
+    const res = await createSpouseMutation.mutateAsync({
+      firstName: sFirst,
+      lastName: sLast,
+      phone: spouseInfo.phone ? formatPhone(spouseInfo.phone) : undefined,
+      email: spouseInfo.email || undefined,
+      company: sourceContact.company || `${sLast} Family`,
+      jobTitle: "Parent / Guardian",
+      secondParentName: `${sourceContact.firstName} ${sourceContact.lastName}`.trim(),
+      secondParentPhone: sourceContact.phone || undefined,
+      secondParentEmail: sourceContact.email || undefined,
+    });
+    if (res?.id) {
+      if (selectedLetter !== "HOME") setSelectedLetter("HOME");
+      if (category !== "all") setCategory("all");
+      setSelectedContactId(res.id);
+      setMobileTab("dossier");
+      toast.success(`Opened connected spouse: ${sFirst} ${sLast}`);
+    }
+  };
+
+  const handleSaveConnectedSpouse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!dossierContact) return;
+
+    // Option A: User picked an existing contact from the directory
+    if (selectedExistingSpouseId) {
+      const target = contacts.find((c) => c.id === Number(selectedExistingSpouseId));
+      if (!target) return;
+      const targetFullName = `${target.firstName} ${target.lastName}`.trim();
+      const myFullName = `${dossierContact.firstName} ${dossierContact.lastName}`.trim();
+      const effectivePhone = spousePhoneInput.trim()
+        ? formatPhone(spousePhoneInput.trim())
+        : target.phone || undefined;
+
+      await updateSpouseMutation.mutateAsync({
+        id: dossierContact.id,
+        secondParentName: targetFullName,
+        secondParentPhone: effectivePhone,
+        secondParentEmail: target.email || undefined,
+      });
+
+      await updateSpouseMutation.mutateAsync({
+        id: target.id,
+        ...(effectivePhone && effectivePhone !== target.phone ? { phone: effectivePhone } : {}),
+        secondParentName: myFullName,
+        secondParentPhone: dossierContact.phone || undefined,
+        secondParentEmail: dossierContact.email || undefined,
+      });
+
+      toast.success(`Connected spouse ${targetFullName}`);
+      setShowConnectSpouse(false);
+      return;
+    }
+
+    // Option B: User typed spouse name & phone number
+    const cleanName = spouseNameInput.trim();
+    const cleanPhone = spousePhoneInput.trim() ? formatPhone(spousePhoneInput.trim()) : "";
+    if (!cleanName) {
+      toast.error("Please enter the spouse's name or select an existing contact");
+      return;
+    }
+
+    const myFullName = `${dossierContact.firstName} ${dossierContact.lastName}`.trim();
+    await updateSpouseMutation.mutateAsync({
+      id: dossierContact.id,
+      secondParentName: cleanName,
+      secondParentPhone: cleanPhone || undefined,
+    });
+
+    // If spouse already has a contactId, update their record too; otherwise create a linked contact record for them
+    if (dossierSpouse?.contactId) {
+      const parts = cleanName.split(/\s+/);
+      const firstName = parts[0] || cleanName;
+      const lastName = parts.slice(1).join(" ") || dossierContact.lastName || "Client";
+      await updateSpouseMutation.mutateAsync({
+        id: dossierSpouse.contactId,
+        firstName,
+        lastName,
+        ...(cleanPhone ? { phone: cleanPhone } : {}),
+        secondParentName: myFullName,
+        secondParentPhone: dossierContact.phone || undefined,
+      });
+    } else {
+      const parts = cleanName.split(/\s+/);
+      const firstName = parts[0] || cleanName;
+      const lastName = parts.slice(1).join(" ") || dossierContact.lastName || "Client";
+      await createSpouseMutation.mutateAsync({
+        firstName,
+        lastName,
+        phone: cleanPhone || undefined,
+        company: dossierContact.company || `${lastName} Family`,
+        jobTitle: "Parent / Guardian",
+        secondParentName: myFullName,
+        secondParentPhone: dossierContact.phone || undefined,
+        secondParentEmail: dossierContact.email || undefined,
+      });
+    }
+
+    toast.success(`Connected spouse ${cleanName}`);
+    setShowConnectSpouse(false);
+  };
 
   // Initials generator
   const getInitials = (first?: string | null, last?: string | null) => {
@@ -664,6 +957,50 @@ export default function ContactsLedgerView({
                                 >
                                   {contact.lastName}, {contact.firstName}
                                 </h4>
+                                {(() => {
+                                  const rowSpouse = resolveConnectedSpouse(contact, contacts);
+                                  if (!rowSpouse) return null;
+                                  return (
+                                    <div
+                                      className="flex items-center gap-1.5 mt-0.5 flex-wrap"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleNavigateToSpouse(rowSpouse, contact);
+                                        }}
+                                        className={cn(
+                                          "inline-flex items-center gap-1 text-[10.5px] sm:text-[11px] font-serif font-semibold underline decoration-dotted underline-offset-2 transition-colors cursor-pointer",
+                                          isLight
+                                            ? "text-[#6E490A] hover:text-[#1C1405]"
+                                            : "text-[#FCE09E] hover:text-white"
+                                        )}
+                                        title={`Open spouse contact: ${rowSpouse.name}`}
+                                      >
+                                        <span>Spouse: {rowSpouse.name}</span>
+                                        <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-80" />
+                                      </button>
+                                      {rowSpouse.phone && (
+                                        <a
+                                          href={`tel:${rowSpouse.phone}`}
+                                          onClick={(e) => e.stopPropagation()}
+                                          className={cn(
+                                            "inline-flex items-center gap-1 text-[10.5px] sm:text-[11px] font-mono font-medium transition-colors",
+                                            isLight
+                                              ? "text-[#3D2704] hover:underline"
+                                              : "text-[#93C5FD] hover:text-white hover:underline"
+                                          )}
+                                          title={`Call spouse ${rowSpouse.name}: ${formatPhone(rowSpouse.phone)}`}
+                                        >
+                                          <Phone className="h-2.5 w-2.5 shrink-0 text-[#E5C175]" />
+                                          <span>{formatPhone(rowSpouse.phone)}</span>
+                                        </a>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                                 <p
                                   className={cn(
                                     "text-[10.5px] sm:text-[11.5px] truncate leading-tight mt-0.5",
@@ -878,6 +1215,227 @@ export default function ContactsLedgerView({
                       >
                         {dossierContact.firstName} {dossierContact.lastName}
                       </h2>
+
+                      {/* Connected Spouse Phone Number & Link to Their Contact (Directly Under Main Name) */}
+                      <div className="mt-1.5 space-y-1.5">
+                        {dossierSpouse ? (
+                          <div
+                            className={cn(
+                              "inline-flex items-center flex-wrap gap-2 px-2.5 py-1 rounded-lg border text-xs transition-all",
+                              isLight
+                                ? "bg-[#EADBBE]/90 border-[#9E8353] text-[#291A04]"
+                                : "bg-[#061529]/90 border-[#D4AF37]/45 text-[#F4E8D3] shadow-[0_2px_8px_rgba(0,0,0,0.45)]"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "text-[10.5px] font-serif font-bold uppercase tracking-wider",
+                                isLight ? "text-[#6E490A]" : "text-[#E5C175]"
+                              )}
+                            >
+                              Spouse:
+                            </span>
+
+                            {/* Link to Spouse Contact */}
+                            <button
+                              type="button"
+                              onClick={() => handleNavigateToSpouse(dossierSpouse, dossierContact)}
+                              className={cn(
+                                "inline-flex items-center gap-1 font-serif font-bold underline decoration-[#D4AF37]/80 underline-offset-2 cursor-pointer transition-colors",
+                                isLight
+                                  ? "text-[#1C1405] hover:text-[#6E490A]"
+                                  : "text-[#FFF2D9] hover:text-[#FFE394]"
+                              )}
+                              title={`Switch to ${dossierSpouse.name}'s contact dossier`}
+                            >
+                              <span>{dossierSpouse.name}</span>
+                              <ExternalLink className="h-3 w-3 shrink-0 text-[#E5C175]" />
+                            </button>
+
+                            <span className="opacity-40">·</span>
+
+                            {/* Connected Spouse Phone Number */}
+                            {dossierSpouse.phone ? (
+                              <a
+                                href={`tel:${dossierSpouse.phone}`}
+                                className={cn(
+                                  "inline-flex items-center gap-1 font-mono text-[11.5px] font-semibold transition-colors",
+                                  isLight
+                                    ? "text-[#291A04] hover:underline"
+                                    : "text-[#93C5FD] hover:text-white hover:underline"
+                                )}
+                                title={`Call connected spouse ${dossierSpouse.name}`}
+                              >
+                                <Phone className="h-3 w-3 shrink-0 text-[#E5C175]" />
+                                <span>{formatPhone(dossierSpouse.phone)}</span>
+                              </a>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSpouseNameInput(dossierSpouse.name);
+                                  setSpousePhoneInput(dossierSpouse.phone || "");
+                                  setSelectedExistingSpouseId(
+                                    dossierSpouse.contactId ? String(dossierSpouse.contactId) : ""
+                                  );
+                                  setShowConnectSpouse(true);
+                                }}
+                                className={cn(
+                                  "inline-flex items-center gap-1 text-[11px] font-serif italic underline cursor-pointer",
+                                  isLight ? "text-[#6E490A]" : "text-[#8CA4C4] hover:text-[#FFE394]"
+                                )}
+                              >
+                                <Phone className="h-3 w-3 shrink-0 text-[#E5C175]" />
+                                <span>+ Add spouse phone</span>
+                              </button>
+                            )}
+
+                            {/* Quick Edit Connected Spouse Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSpouseNameInput(dossierSpouse.name);
+                                setSpousePhoneInput(dossierSpouse.phone || "");
+                                setSelectedExistingSpouseId(
+                                  dossierSpouse.contactId ? String(dossierSpouse.contactId) : ""
+                                );
+                                setShowConnectSpouse((prev) => !prev);
+                              }}
+                              className={cn(
+                                "ml-0.5 p-0.5 rounded hover:bg-white/10 transition-colors cursor-pointer",
+                                isLight ? "text-[#5C4212]" : "text-[#A69371] hover:text-[#FFE394]"
+                              )}
+                              title="Edit connected spouse or phone number"
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSpouseNameInput(dossierContact.secondParentName || "");
+                              setSpousePhoneInput(dossierContact.secondParentPhone || "");
+                              setSelectedExistingSpouseId("");
+                              setShowConnectSpouse((prev) => !prev);
+                            }}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg border text-[11px] font-serif font-semibold transition-all cursor-pointer",
+                              isLight
+                                ? "bg-[#EAE0CA]/80 hover:bg-[#D9C7A7] text-[#4A3205] border-[#9E8353]"
+                                : "bg-[#061529]/80 hover:bg-[#0B2242] text-[#FCE09E] border-[#D4AF37]/40"
+                            )}
+                            title="Connect a spouse contact & phone number under this contact"
+                          >
+                            <Plus className="h-3 w-3 text-[#E5C175]" />
+                            <span>Connect Spouse &amp; Phone</span>
+                          </button>
+                        )}
+
+                        {/* Inline Spouse Connector / Editor Form */}
+                        {showConnectSpouse && (
+                          <form
+                            onSubmit={handleSaveConnectedSpouse}
+                            className={cn(
+                              "p-2.5 rounded-xl border space-y-2",
+                              isLight
+                                ? "bg-[#F8EFE0] border-[#B89B67]"
+                                : "bg-[#040E1E]/95 border-[#D4AF37]/50 shadow-lg"
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={cn(
+                                  "text-[10.5px] font-serif font-bold uppercase tracking-wider",
+                                  isLight ? "text-[#3D2908]" : "text-[#FCE09E]"
+                                )}
+                              >
+                                Connect Spouse Contact &amp; Phone
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setShowConnectSpouse(false)}
+                                className="text-xs opacity-70 hover:opacity-100 cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+
+                            {/* Select Existing Contact OR Enter New Spouse Name */}
+                            <select
+                              value={selectedExistingSpouseId}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setSelectedExistingSpouseId(val);
+                                if (val) {
+                                  const found = contacts.find((c) => c.id === Number(val));
+                                  if (found) {
+                                    setSpouseNameInput(`${found.firstName} ${found.lastName}`.trim());
+                                    setSpousePhoneInput(found.phone || "");
+                                  }
+                                }
+                              }}
+                              className={cn(
+                                "w-full h-8 px-2 rounded-lg text-xs border focus:outline-none",
+                                isLight
+                                  ? "bg-white border-[#B89B67] text-[#1C1405]"
+                                  : "bg-[#061428] border-[#1E3A63] text-[#F0DFC5]"
+                              )}
+                            >
+                              <option value="">-- Select existing contact or type below --</option>
+                              {contacts
+                                .filter((c) => !isStudentContact(c) && c.id !== dossierContact.id)
+                                .map((c) => (
+                                  <option key={c.id} value={c.id}>
+                                    {c.firstName} {c.lastName}
+                                    {c.phone ? ` (${formatPhone(c.phone)})` : ""}
+                                  </option>
+                                ))}
+                            </select>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                              <input
+                                type="text"
+                                value={spouseNameInput}
+                                onChange={(e) => setSpouseNameInput(e.target.value)}
+                                placeholder={`Spouse Name (e.g. David ${dossierContact.lastName || ""})`}
+                                className={cn(
+                                  "h-8 px-2.5 rounded-lg text-xs border focus:outline-none",
+                                  isLight
+                                    ? "bg-white border-[#B89B67] text-[#1C1405]"
+                                    : "bg-[#061428] border-[#1E3A63] text-white"
+                                )}
+                              />
+                              <input
+                                type="tel"
+                                value={spousePhoneInput}
+                                onChange={(e) => setSpousePhoneInput(e.target.value)}
+                                placeholder="Spouse Phone (e.g. (404) 555-0199)"
+                                className={cn(
+                                  "h-8 px-2.5 rounded-lg text-xs border focus:outline-none",
+                                  isLight
+                                    ? "bg-white border-[#B89B67] text-[#1C1405]"
+                                    : "bg-[#061428] border-[#1E3A63] text-white"
+                                )}
+                              />
+                            </div>
+
+                            <div className="flex justify-end">
+                              <button
+                                type="submit"
+                                disabled={
+                                  updateSpouseMutation.isPending || createSpouseMutation.isPending
+                                }
+                                className="h-7 px-3 rounded-lg text-xs font-serif font-bold bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#B88943] text-[#1A1208] cursor-pointer shadow-xs"
+                              >
+                                {updateSpouseMutation.isPending || createSpouseMutation.isPending
+                                  ? "Linking..."
+                                  : "Save & Link Spouse"}
+                              </button>
+                            </div>
+                          </form>
+                        )}
+                      </div>
 
                       {/* Professional subtitle (only if no linked students, e.g. advocate or school personnel) */}
                       {dossierStudents.length === 0 && dossierContact.jobTitle && (

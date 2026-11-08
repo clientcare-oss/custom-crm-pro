@@ -157,6 +157,9 @@ export const contactsRouter = router({
           notes: z.string().optional(),
           parentContactId: z.number().optional(),
           bestTimeToCall: z.string().optional(),
+          secondParentName: z.string().optional(),
+          secondParentPhone: z.string().optional(),
+          secondParentEmail: z.union([z.string().email(), z.literal("")]).optional(),
           schoolName: z.string().optional(),
           gradeLevel: z.string().optional(),
           planType: z.string().optional(),
@@ -702,6 +705,9 @@ export const contactsRouter = router({
           approvingManager: z.string().optional(),
           scholarshipNotes: z.string().optional(),
           bestTimeToCall: z.string().optional(),
+          secondParentName: z.string().optional(),
+          secondParentPhone: z.string().optional(),
+          secondParentEmail: z.union([z.string().email(), z.literal("")]).optional(),
           tags: z.union([z.string(), z.array(z.string())]).optional(),
         })
       )

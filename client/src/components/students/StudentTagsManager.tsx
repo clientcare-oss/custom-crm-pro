@@ -336,8 +336,15 @@ export function StudentTagCellPopover({
     });
   }, [companyTags, studentTags, searchText]);
 
-  const visibleTags = studentTags.slice(0, 2);
-  const overflowCount = Math.max(0, studentTags.length - 2);
+  const maxVisible = useMemo(() => {
+    if (variant !== "row") return 2;
+    if (studentTags.length <= 1) return 1;
+    const combinedLen = (studentTags[0]?.length || 0) + (studentTags[1]?.length || 0);
+    return combinedLen <= 12 ? 2 : 1;
+  }, [studentTags, variant]);
+
+  const visibleTags = studentTags.slice(0, maxVisible);
+  const overflowCount = Math.max(0, studentTags.length - maxVisible);
 
   return (
     <Popover
@@ -356,9 +363,9 @@ export function StudentTagCellPopover({
             e.stopPropagation();
           }}
           className={cn(
-            "group/tagcell inline-flex items-center gap-1.5 min-h-[30px] rounded-lg transition-all cursor-pointer select-none",
+            "group/tagcell inline-flex items-center gap-1 min-h-[28px] rounded-lg transition-all cursor-pointer select-none min-w-0",
             variant === "row"
-              ? "px-2 py-1 hover:bg-[#162F52]/80 border border-transparent hover:border-[#C5A059]/35 max-w-full"
+              ? "px-1.5 py-0.5 hover:bg-[#162F52]/80 border border-transparent hover:border-[#C5A059]/35 max-w-full overflow-hidden"
               : "px-1.5 py-0.5 hover:bg-black/10"
           )}
           title="Click to add or manage student tags"
@@ -382,7 +389,7 @@ export function StudentTagCellPopover({
                   key={tagName}
                   name={tagName}
                   colorId={getTagColor(tagName)}
-                  size={variant === "card" ? "sm" : "md"}
+                  size="sm"
                 />
               ))}
               {overflowCount > 0 && (

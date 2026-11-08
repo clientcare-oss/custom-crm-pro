@@ -140,9 +140,9 @@ export function StudentsListView({
 
   return (
     <div className={cn("w-full overflow-x-auto select-none", className)}>
-      <div className="w-full min-w-[1040px] px-1.5 sm:px-2 flex flex-col space-y-1.5">
+      <div className="w-full min-w-[920px] px-1.5 sm:px-2 flex flex-col space-y-1.5">
         {/* ─── List Header Mounted On Rounded Executive Navy Bar (Brighter than Rows) ─── */}
-        <div className="w-full grid grid-cols-[minmax(220px,2.1fr)_minmax(125px,1.1fr)_115px_minmax(195px,1.6fr)_minmax(110px,1fr)_minmax(110px,1fr)_72px_38px] items-center px-4 sm:px-6 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border border-[#2B4B72] bg-gradient-to-b from-[#254263] via-[#1A334E] to-[#13263A] shadow-[inset_0_1px_0_rgba(135,185,245,0.5),inset_0_-1px_0_rgba(0,0,0,0.65),0_3px_10px_rgba(0,0,0,0.55)] text-xs font-serif text-[#E2EDF8] tracking-wide mb-1 gap-2 sm:gap-3.5">
+        <div className="w-full grid grid-cols-[minmax(175px,1.8fr)_minmax(115px,1.05fr)_112px_minmax(110px,0.95fr)_minmax(110px,1fr)_minmax(110px,1fr)_64px_34px] items-center px-3.5 sm:px-4 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border border-[#2B4B72] bg-gradient-to-b from-[#254263] via-[#1A334E] to-[#13263A] shadow-[inset_0_1px_0_rgba(135,185,245,0.5),inset_0_-1px_0_rgba(0,0,0,0.65),0_3px_10px_rgba(0,0,0,0.55)] text-xs font-serif text-[#E2EDF8] tracking-wide mb-1 gap-2">
           {/* 1. Student */}
           <button
             type="button"
@@ -255,7 +255,7 @@ export function StudentsListView({
               key={student.id}
               onClick={() => onStudentClick(student.id)}
               className={cn(
-                "group w-full grid grid-cols-[minmax(220px,2.1fr)_minmax(125px,1.1fr)_115px_minmax(195px,1.6fr)_minmax(110px,1fr)_minmax(110px,1fr)_72px_38px] items-center px-4 sm:px-6 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border transition-all cursor-pointer gap-2 sm:gap-3.5",
+                "group w-full grid grid-cols-[minmax(175px,1.8fr)_minmax(115px,1.05fr)_112px_minmax(110px,0.95fr)_minmax(110px,1fr)_minmax(110px,1fr)_64px_34px] items-center px-3.5 sm:px-4 min-h-[48px] sm:min-h-[50px] py-2 sm:py-2.5 rounded-[8px] border transition-all cursor-pointer gap-2 overflow-hidden",
                 index % 2 === 0
                   ? "bg-gradient-to-b from-[#1C3A62] via-[#142D4E] to-[#0E223D] border-[#224876] shadow-[inset_0_1px_0_rgba(100,160,230,0.4),inset_0_-1px_0_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.4)] hover:from-[#23487A] hover:via-[#193760] hover:to-[#122C4D] hover:border-[#3368A8]"
                   : "bg-gradient-to-b from-[#132A48] via-[#0E2038] to-[#09172A] border-[#18355A] shadow-[inset_0_1px_0_rgba(75,130,195,0.3),inset_0_-1px_0_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.4)] hover:from-[#19355A] hover:via-[#132948] hover:to-[#0C1F37] hover:border-[#254E82]"

@@ -103,11 +103,11 @@ export interface FirstMateDraftCitation {
 
 export interface FirstMateReviewResponse {
   action:
-    | "explain_passage"
-    | "compare_eval_with_iep"
-    | "find_recommendations"
-    | "turn_into_question"
-    | "custom_question";
+  | "explain_passage"
+  | "compare_eval_with_iep"
+  | "find_recommendations"
+  | "turn_into_question"
+  | "custom_question";
   answerSummary: string;
   expandableDetails: string[];
   citations: FirstMateDraftCitation[];
@@ -241,7 +241,7 @@ export async function updateVaultRecordMetadata(params: {
          WHERE (studentContactId = ? OR clientId = ?) AND id != ? AND isCurrentPlan = 1`,
         [studentContactId, studentContactId, fileId]
       );
-    } catch {}
+    } catch { }
 
     for (const [, files] of Array.from(inMemoryVaultFiles.entries())) {
       for (const f of files) {
@@ -277,7 +277,7 @@ export async function updateVaultRecordMetadata(params: {
         [nextCategory, nextDocType, nextIsCurrentPlan, fileId]
       );
     }
-  } catch {}
+  } catch { }
 
   // Update target file in inMemoryVaultFiles
   let resolvedDate: string | null = documentDate ?? null;
@@ -351,9 +351,8 @@ export function buildDocumentTelemetry(
   if (index.overallStatus === "failed" || index.readablePageCount === 0) {
     limitationNote = `No readable text could be extracted from ${fileName} (${index.pageCount} pages).`;
   } else if (index.unreadablePageCount > 0 || index.partialPageCount > 0) {
-    limitationNote = `${index.readablePageCount} of ${index.pageCount} pages fully readable in ${fileName}; ${
-      index.unreadablePageCount + index.partialPageCount
-    } page(s) (${index.failedPages.map((p) => `p. ${p}`).join(", ")}) had limited or unreadable text.`;
+    limitationNote = `${index.readablePageCount} of ${index.pageCount} pages fully readable in ${fileName}; ${index.unreadablePageCount + index.partialPageCount
+      } page(s) (${index.failedPages.map((p) => `p. ${p}`).join(", ")}) had limited or unreadable text.`;
   }
 
   return {
@@ -378,42 +377,42 @@ const SECTION_KEYWORDS: Array<{
   section: ComparisonIepSection;
   keywords: RegExp;
 }> = [
-  {
-    section: "Present levels",
-    keywords:
-      /\b(present level|plaa?fp|baseline|wj-iv|wechsler|wisc|woodcock|standard score|percentile|reading comprehension|math computation|math reasoning|fluency|accuracy|grade level|subtest)\b/i,
-  },
-  {
-    section: "Goals",
-    keywords:
-      /\b(annual goal|measurable goal|mastery|criterion|word problem|multiplication|division|objective|progress monitoring|trial|by the end of)\b/i,
-  },
-  {
-    section: "Accommodations",
-    keywords:
-      /\b(accommodation|extended time|small group|preferential seating|visual schedule|noise-canceling|headphones|frequent breaks|chunking|check for understanding|read aloud|calculator|graphic organizer)\b/i,
-  },
-  {
-    section: "Services",
-    keywords:
-      /\b(related service|speech|language therapy|occupational therapy|physical therapy|counseling|minutes per week|min\/wk|push-in|pull-out|special education instruction|direct service)\b/i,
-  },
-  {
-    section: "Placement",
-    keywords:
-      /\b(least restrictive|lre|placement|general education|resource room|co-taught|inclusion|self-contained|setting|percent of day)\b/i,
-  },
-  {
-    section: "Behavior supports",
-    keywords:
-      /\b(behavior|fba|bip|functional behavior|sensory|dysregulation|elopement|de-escalation|positive behavior|check-in|token|replacement behavior)\b/i,
-  },
-  {
-    section: "Assistive technology",
-    keywords:
-      /\b(assistive technology|aac|speech-to-text|text-to-speech|device|word prediction|augmentative|communication support|chromebook)\b/i,
-  },
-];
+    {
+      section: "Present levels",
+      keywords:
+        /\b(present level|plaa?fp|baseline|wj-iv|wechsler|wisc|woodcock|standard score|percentile|reading comprehension|math computation|math reasoning|fluency|accuracy|grade level|subtest)\b/i,
+    },
+    {
+      section: "Goals",
+      keywords:
+        /\b(annual goal|measurable goal|mastery|criterion|word problem|multiplication|division|objective|progress monitoring|trial|by the end of)\b/i,
+    },
+    {
+      section: "Accommodations",
+      keywords:
+        /\b(accommodation|extended time|small group|preferential seating|visual schedule|noise-canceling|headphones|frequent breaks|chunking|check for understanding|read aloud|calculator|graphic organizer)\b/i,
+    },
+    {
+      section: "Services",
+      keywords:
+        /\b(related service|speech|language therapy|occupational therapy|physical therapy|counseling|minutes per week|min\/wk|push-in|pull-out|special education instruction|direct service)\b/i,
+    },
+    {
+      section: "Placement",
+      keywords:
+        /\b(least restrictive|lre|placement|general education|resource room|co-taught|inclusion|self-contained|setting|percent of day)\b/i,
+    },
+    {
+      section: "Behavior supports",
+      keywords:
+        /\b(behavior|fba|bip|functional behavior|sensory|dysregulation|elopement|de-escalation|positive behavior|check-in|token|replacement behavior)\b/i,
+    },
+    {
+      section: "Assistive technology",
+      keywords:
+        /\b(assistive technology|aac|speech-to-text|text-to-speech|device|word prediction|augmentative|communication support|chromebook)\b/i,
+    },
+  ];
 
 function classifySentenceSection(sentence: string): ComparisonIepSection {
   for (const entry of SECTION_KEYWORDS) {
@@ -716,8 +715,7 @@ export async function runEvaluationsToIepComparison(params: {
           };
 
           // Check if numbers or negation differ between evaluation excerpt and IEP excerpt
-          const evalNumbers: string[] =
-            item.sentence.match(/\b\d+(?:\.\d+)?%?\b/g) || [];
+          const evalNumbers: string[] = item.sentence.match(/\b\d+(?:\.\d+)?%?\b/g) || [];
           const iepNumbers: string[] =
             matchedIep.excerpt.match(/\b\d+(?:\.\d+)?%?\b/g) || [];
           const hasDifferentNumbers =
@@ -756,8 +754,8 @@ export async function runEvaluationsToIepComparison(params: {
         status === "Not located"
           ? `How has the team considered the ${sourceLabel} finding in ${evalFileName} (p. ${item.pdfPageNumber}) regarding ${item.section.toLowerCase()}, and should this be reflected in the IEP?`
           : status === "Needs review"
-          ? `Can we review the data on p. ${item.pdfPageNumber} of ${evalFileName} alongside p. ${iepPassageObj?.pdfPageNumber || 1} of the Current IEP to align the student's ${item.section.toLowerCase()}?`
-          : `Looking at ${evalFileName} (p. ${item.pdfPageNumber}) and the Current IEP (p. ${iepPassageObj?.pdfPageNumber || 1}), does the team agree the current ${item.section.toLowerCase()} provisions fully address this need?`;
+            ? `Can we review the data on p. ${item.pdfPageNumber} of ${evalFileName} alongside p. ${iepPassageObj?.pdfPageNumber || 1} of the Current IEP to align the student's ${item.section.toLowerCase()}?`
+            : `Looking at ${evalFileName} (p. ${item.pdfPageNumber}) and the Current IEP (p. ${iepPassageObj?.pdfPageNumber || 1}), does the team agree the current ${item.section.toLowerCase()} provisions fully address this need?`;
 
       connections.push({
         id: `cmp-${ev.index.fileId}-p${item.pdfPageNumber}-${i + 1}`,
@@ -795,11 +793,11 @@ export async function runEvaluationsToIepComparison(params: {
 export async function runFirstMateRecordsReview(params: {
   studentName: string;
   action:
-    | "explain_passage"
-    | "compare_eval_with_iep"
-    | "find_recommendations"
-    | "turn_into_question"
-    | "custom_question";
+  | "explain_passage"
+  | "compare_eval_with_iep"
+  | "find_recommendations"
+  | "turn_into_question"
+  | "custom_question";
   records: Array<{
     fileRecord: any;
     index: IndexedDocumentResult | null;
@@ -952,29 +950,24 @@ export async function runFirstMateRecordsReview(params: {
 
   if (action === "explain_passage") {
     answerSummary = focusExcerpt
-      ? `On PDF page ${primaryCitation?.pdfPageNumber || targetPageNum} of ${
-          primaryCitation?.fileName || "the selected document"
-        }, this passage documents ${classifiedSection.toLowerCase()} information for ${studentName}: "${focusExcerpt.slice(
-          0,
-          180
-        )}${focusExcerpt.length > 180 ? "…" : ""}"`
-      : `Page ${targetPageNum} of ${
-          activeIndex?.fileName || "the selected document"
-        } was reviewed.`;
+      ? `On PDF page ${primaryCitation?.pdfPageNumber || targetPageNum} of ${primaryCitation?.fileName || "the selected document"
+      }, this passage documents ${classifiedSection.toLowerCase()} information for ${studentName}: "${focusExcerpt.slice(
+        0,
+        180
+      )}${focusExcerpt.length > 180 ? "…" : ""}"`
+      : `Page ${targetPageNum} of ${activeIndex?.fileName || "the selected document"
+      } was reviewed.`;
 
     expandableDetails = [
       `Relevant IEP Section: ${classifiedSection}.`,
-      `Source Record: ${primaryCitation?.fileName || activeIndex?.fileName || "Selected Record"} (PDF p. ${
-        primaryCitation?.pdfPageNumber || targetPageNum
+      `Source Record: ${primaryCitation?.fileName || activeIndex?.fileName || "Selected Record"} (PDF p. ${primaryCitation?.pdfPageNumber || targetPageNum
       }${primaryCitation?.documentDate ? ` · Date: ${primaryCitation.documentDate}` : ""}).`,
       "What to check next: Verify whether this baseline or provision is matched by measurable goals, accommodations, or service minutes in the current IEP.",
     ];
 
-    const q = `Can the team clarify how the data on page ${
-      primaryCitation?.pdfPageNumber || targetPageNum
-    } of ${
-      primaryCitation?.fileName || "the record"
-    } informs ${studentName}'s current ${classifiedSection.toLowerCase()}?`;
+    const q = `Can the team clarify how the data on page ${primaryCitation?.pdfPageNumber || targetPageNum
+      } of ${primaryCitation?.fileName || "the record"
+      } informs ${studentName}'s current ${classifiedSection.toLowerCase()}?`;
     draftMeetingQuestions.push(q);
 
     if (focusExcerpt) {
@@ -982,9 +975,8 @@ export async function runFirstMateRecordsReview(params: {
         id: `fm-draft-${Date.now()}-1`,
         category: classifiedSection,
         section: classifiedSection,
-        text: `Review ${classifiedSection.toLowerCase()} passage on p. ${
-          primaryCitation?.pdfPageNumber || targetPageNum
-        } of ${primaryCitation?.fileName || "selected record"}: ${focusExcerpt.slice(0, 140)}`,
+        text: `Review ${classifiedSection.toLowerCase()} passage on p. ${primaryCitation?.pdfPageNumber || targetPageNum
+          } of ${primaryCitation?.fileName || "selected record"}: ${focusExcerpt.slice(0, 140)}`,
         quote: `PDF p. ${primaryCitation?.pdfPageNumber || targetPageNum}: "${focusExcerpt}"`,
         proposedMeetingQuestion: q,
         priority: "medium",
@@ -997,8 +989,7 @@ export async function runFirstMateRecordsReview(params: {
     answerSummary = `Reviewed ${readyRecords.length} selected source record(s) (${docNames}) across ${citations.length} cited passage(s).`;
     expandableDetails = citations.map(
       (c) =>
-        `${c.fileName} (PDF p. ${c.pdfPageNumber}${
-          c.documentDate ? ` · ${c.documentDate}` : ""
+        `${c.fileName} (PDF p. ${c.pdfPageNumber}${c.documentDate ? ` · ${c.documentDate}` : ""
         }): "${c.excerpt}"`
     );
     const q = `How has the IEP team integrated the evaluation findings from ${docNames} into ${studentName}'s Present Levels, Goals, and Accommodations?`;
@@ -1026,8 +1017,7 @@ export async function runFirstMateRecordsReview(params: {
     answerSummary = `Identified ${citations.length} source-linked passage(s) across the selected records that may warrant discussion with the IEP team.`;
     expandableDetails = citations.map(
       (c) =>
-        `[${classifySentenceSection(c.excerpt)}] ${c.fileName} (p. ${
-          c.pdfPageNumber
+        `[${classifySentenceSection(c.excerpt)}] ${c.fileName} (p. ${c.pdfPageNumber
         }): "${c.excerpt}"`
     );
 
@@ -1052,11 +1042,9 @@ export async function runFirstMateRecordsReview(params: {
       });
     }
   } else if (action === "turn_into_question") {
-    const q1 = `Based on ${
-      primaryCitation?.fileName || "the record"
-    } (PDF p. ${
-      primaryCitation?.pdfPageNumber || targetPageNum
-    }), how will the IEP team measure and support ${studentName}'s progress in ${classifiedSection.toLowerCase()}?`;
+    const q1 = `Based on ${primaryCitation?.fileName || "the record"
+      } (PDF p. ${primaryCitation?.pdfPageNumber || targetPageNum
+      }), how will the IEP team measure and support ${studentName}'s progress in ${classifiedSection.toLowerCase()}?`;
     const q2 = `If the team does not adopt a specific support for this ${classifiedSection.toLowerCase()} need, what evaluation data is the team relying on?`;
     answerSummary = q1;
     expandableDetails = [
@@ -1114,8 +1102,8 @@ export async function runFirstMateRecordsReview(params: {
       matchedSnippets.length > 0
         ? matchedSnippets.join("\n")
         : citations
-            .map((c) => `${c.fileName} (PDF p. ${c.pdfPageNumber}): "${c.excerpt}"`)
-            .join("\n");
+          .map((c) => `${c.fileName} (PDF p. ${c.pdfPageNumber}): "${c.excerpt}"`)
+          .join("\n");
 
     let llmAnswer: string | null = null;
     try {
@@ -1137,11 +1125,16 @@ ${contextBlock || "No matching text located."}`,
           },
         ],
       });
-      const rawContent = llmRes?.choices?.[0]?.message?.content;
-      if (typeof rawContent === "string" && rawContent.trim().length > 15) {
-        llmAnswer = rawContent.trim();
+      const rawLlmRes: any = llmRes;
+      if (typeof rawLlmRes === "string" && rawLlmRes.trim().length > 15) {
+        llmAnswer = rawLlmRes.trim();
+      } else if (
+        rawLlmRes?.choices?.[0]?.message?.content &&
+        typeof rawLlmRes.choices[0].message.content === "string"
+      ) {
+        llmAnswer = rawLlmRes.choices[0].message.content.trim();
       }
-    } catch {}
+    } catch { }
 
     answerSummary =
       llmAnswer ||
@@ -1152,8 +1145,8 @@ ${contextBlock || "No matching text located."}`,
       matchedSnippets.length > 0
         ? matchedSnippets
         : [
-            "Check the Records drawer to confirm all relevant evaluations and IEPs are selected for First Mate.",
-          ];
+          "Check the Records drawer to confirm all relevant evaluations and IEPs are selected for First Mate.",
+        ];
     if (userQ) {
       draftMeetingQuestions.push(
         userQ.endsWith("?") ? userQ : `Can the team address: ${userQ}?`
@@ -1172,4 +1165,3 @@ ${contextBlock || "No matching text located."}`,
     reviewLimitations,
   };
 }
-
