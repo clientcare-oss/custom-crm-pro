@@ -9,6 +9,7 @@ import QuickSetupModal from "@/components/QuickSetupModal";
 import { LeadCenterHeader } from "@/components/leads/LeadCenterHeader";
 import { DiscoveryCallsSection } from "@/components/leads/DiscoveryCallsSection";
 import { LeadPipelineColumn } from "@/components/leads/LeadPipelineColumn";
+import { LeadTunerConsole } from "@/components/leads/LeadTunerConsole";
 import { LeadModal } from "@/components/leads/LeadModal";
 import {
   LEAD_STATUSES,
@@ -31,6 +32,7 @@ export default function Leads() {
   const [location, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
+  const [classicView, setClassicView] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<LeadFormData>(emptyForm);
 
@@ -472,75 +474,109 @@ export default function Leads() {
 
   return (
     <ScopedErrorBoundary moduleName="Lead Center">
-      <div className="space-y-6 p-4 sm:p-6 lg:p-8 min-h-screen text-slate-100 relative bg-[#000820] w-full overflow-x-hidden">
-        {/* Header */}
-        <LeadCenterHeader
+      {!classicView ? (
+        <LeadTunerConsole
+          leads={leads || []}
+          allDiscoveryCalls={allDiscoveryCalls}
           onManageForms={() => setLocation("/leads/forms")}
           onViewDiscoveryProcess={() => setLocation("/leads/0/discovery")}
           onQuickSetup={() => setQuickSetupOpen(true)}
-          onAddLead={() => {
+          onAddLead={(defaultStatus) => {
             setEditingId(null);
-            setFormData(emptyForm);
+            setFormData({
+              ...emptyForm,
+              status: defaultStatus || "New",
+            });
             setOpen(true);
           }}
+          onEditLead={handleEdit}
+          onStartDiscoveryCall={(leadId) =>
+            setLocation(`/leads/${leadId || 0}/discovery`)
+          }
+          onToggleClassicView={() => setClassicView(true)}
         />
-
-        {/* Sections 1 & 2: Today's and Upcoming Discovery Calls */}
-        <DiscoveryCallsSection
-          todaysCalls={todaysCalls}
-          upcomingCalls={upcomingCalls}
-          onOpenRecord={handleOpenRecord}
-          onStartCall={(leadId) => setLocation(`/call-center?type=discovery&leadId=${leadId}`)}
-        />
-
-        {/* Clear Visual Maritime Brass Divider */}
-        <div className="border-t border-[#3A2C18] my-3" />
-
-        {/* Section 3: Discovery Pipeline */}
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-serif font-bold tracking-tight text-[#FFF4D4]">
-              Discovery Pipeline
-            </h2>
-            <p className="text-xs sm:text-sm text-[#C6B697] mt-0.5">
-              Track families through your discovery stages, consultation milestones, and client enrollment.
-            </p>
+      ) : (
+        <div className="space-y-6 p-4 sm:p-6 lg:p-8 min-h-screen text-slate-100 relative bg-[#000820] w-full overflow-x-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <LeadCenterHeader
+                onManageForms={() => setLocation("/leads/forms")}
+                onViewDiscoveryProcess={() => setLocation("/leads/0/discovery")}
+                onQuickSetup={() => setQuickSetupOpen(true)}
+                onAddLead={() => {
+                  setEditingId(null);
+                  setFormData(emptyForm);
+                  setOpen(true);
+                }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setClassicView(false)}
+              className="h-9 px-3.5 rounded-lg bg-[#102B4E] hover:bg-[#163A69] border border-[#C5A059]/60 text-[#FFE394] text-xs font-semibold cursor-pointer"
+            >
+              ← Return to Tuner Console
+            </button>
           </div>
 
-          {isLoading ? (
-            <div className="flex items-center justify-center rounded-2xl border border-[#3A2C18] bg-[#05142B]/50 p-12">
-              <Loader2 className="size-6 animate-spin text-[#FFE394]" />
+          {/* Sections 1 & 2: Today's and Upcoming Discovery Calls */}
+          <DiscoveryCallsSection
+            todaysCalls={todaysCalls}
+            upcomingCalls={upcomingCalls}
+            onOpenRecord={handleOpenRecord}
+            onStartCall={(leadId) => setLocation(`/call-center?type=discovery&leadId=${leadId}`)}
+          />
+
+          {/* Clear Visual Maritime Brass Divider */}
+          <div className="border-t border-[#3A2C18] my-3" />
+
+          {/* Section 3: Discovery Pipeline */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-serif font-bold tracking-tight text-[#FFF4D4]">
+                Discovery Pipeline
+              </h2>
+              <p className="text-xs sm:text-sm text-[#C6B697] mt-0.5">
+                Track families through your discovery stages, consultation milestones, and client enrollment.
+              </p>
             </div>
-          ) : (
-            <div className="flex items-start gap-4 overflow-x-auto pb-6 pt-1 select-none min-h-[calc(100vh-220px)] no-scrollbar">
-              {LEAD_STATUSES.map((status) => (
-                <LeadPipelineColumn
-                  key={status}
-                  status={status}
-                  leads={leadsByStatus[status]}
-                  onEdit={handleEdit}
-                  onBeginCall={(leadId) => setLocation(`/call-center?type=discovery&leadId=${leadId}`)}
-                  onViewContact={(contactId) => setLocation(`/contacts/${contactId}`)}
-                />
-              ))}
-            </div>
-          )}
+
+            {isLoading ? (
+              <div className="flex items-center justify-center rounded-2xl border border-[#3A2C18] bg-[#05142B]/50 p-12">
+                <Loader2 className="size-6 animate-spin text-[#FFE394]" />
+              </div>
+            ) : (
+              <div className="flex items-start gap-4 overflow-x-auto pb-6 pt-1 select-none min-h-[calc(100vh-220px)] no-scrollbar">
+                {LEAD_STATUSES.map((status) => (
+                  <LeadPipelineColumn
+                    key={status}
+                    status={status}
+                    leads={leadsByStatus[status]}
+                    onEdit={handleEdit}
+                    onBeginCall={(leadId) => setLocation(`/call-center?type=discovery&leadId=${leadId}`)}
+                    onViewContact={(contactId) => setLocation(`/contacts/${contactId}`)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+      )}
 
-        {/* Add/Edit Lead Modal */}
-        <LeadModal
-          open={open}
-          onOpenChange={setOpen}
-          editingId={editingId}
-          formData={formData}
-          setFormData={setFormData}
-          onSubmit={handleSubmit}
-          isPending={createMutation.isPending || updateMutation.isPending}
-        />
+      {/* Add/Edit Lead Modal */}
+      <LeadModal
+        open={open}
+        onOpenChange={setOpen}
+        editingId={editingId}
+        formData={formData}
+        setFormData={setFormData}
+        onSubmit={handleSubmit}
+        isPending={createMutation.isPending || updateMutation.isPending}
+      />
 
-        {/* Quick Setup Modal */}
-        <QuickSetupModal open={quickSetupOpen} onClose={() => setQuickSetupOpen(false)} />
-      </div>
+      {/* Quick Setup Modal */}
+      <QuickSetupModal open={quickSetupOpen} onClose={() => setQuickSetupOpen(false)} />
     </ScopedErrorBoundary>
   );
 }
