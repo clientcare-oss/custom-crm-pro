@@ -17,6 +17,12 @@ import { ComparisonItem, getStatusTheme } from "./types";
 
 interface DetailedChangesViewProps {
   items: ComparisonItem[];
+  selectedItemId?: string | null;
+  onSelectItem?: (id: string) => void;
+  onOpenInOriginalDocuments?: (id: string) => void;
+  onOpenNoteDrawer?: (id: string) => void;
+  comparisonGeneralNote?: string;
+  onUpdateComparisonGeneralNote?: (note: string) => void;
   advocateMode: boolean;
   onToggleStar: (id: string) => void;
   onToggleReviewed: (id: string) => void;
@@ -28,6 +34,12 @@ interface DetailedChangesViewProps {
 
 export function DetailedChangesView({
   items,
+  selectedItemId,
+  onSelectItem,
+  onOpenInOriginalDocuments,
+  onOpenNoteDrawer,
+  comparisonGeneralNote = "",
+  onUpdateComparisonGeneralNote,
   advocateMode,
   onToggleStar,
   onToggleReviewed,
@@ -150,6 +162,27 @@ export function DetailedChangesView({
 
       {/* ── MAIN DETAILED CONTENT (Right 9 Cols) ── */}
       <div className="lg:col-span-9 space-y-6">
+        {/* Broader Comparison-Level Notes Card */}
+        {onUpdateComparisonGeneralNote && (
+          <div className="bg-[#050C24]/95 border border-[#1E2B52] rounded-2xl p-4 space-y-2.5 shadow-md">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#FFE394] uppercase tracking-wider">
+                <MessageSquare className="h-4 w-4 text-[#E5C158]" />
+                <span>Broader Comparison Session Notes</span>
+              </div>
+              <span className="text-[10px] text-emerald-400 font-medium">
+                Auto-saved with comparison session
+              </span>
+            </div>
+            <textarea
+              value={comparisonGeneralNote}
+              onChange={(e) => onUpdateComparisonGeneralNote(e.target.value)}
+              placeholder="Record overall IEP comparison summary notes, cross-section observations, or agenda priorities for the IEP team..."
+              className="w-full h-20 bg-[#03081A] border border-[#1E2B52] rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+            />
+          </div>
+        )}
+
         {/* OVERVIEW TAB */}
         {activeTab === "overview" && (
           <div className="space-y-6 animate-fade-in">
@@ -225,6 +258,10 @@ export function DetailedChangesView({
                   <DetailedItemCard
                     key={item.id}
                     item={item}
+                    isSelected={selectedItemId === item.id}
+                    onSelect={onSelectItem}
+                    onOpenInOriginalDocuments={onOpenInOriginalDocuments}
+                    onOpenNoteDrawer={onOpenNoteDrawer}
                     advocateMode={advocateMode}
                     onToggleStar={onToggleStar}
                     onToggleReviewed={onToggleReviewed}
@@ -258,6 +295,10 @@ export function DetailedChangesView({
                   <DetailedItemCard
                     key={item.id}
                     item={item}
+                    isSelected={selectedItemId === item.id}
+                    onSelect={onSelectItem}
+                    onOpenInOriginalDocuments={onOpenInOriginalDocuments}
+                    onOpenNoteDrawer={onOpenNoteDrawer}
                     advocateMode={advocateMode}
                     onToggleStar={onToggleStar}
                     onToggleReviewed={onToggleReviewed}
@@ -283,6 +324,10 @@ export function DetailedChangesView({
                   <DetailedItemCard
                     key={item.id}
                     item={item}
+                    isSelected={selectedItemId === item.id}
+                    onSelect={onSelectItem}
+                    onOpenInOriginalDocuments={onOpenInOriginalDocuments}
+                    onOpenNoteDrawer={onOpenNoteDrawer}
                     advocateMode={advocateMode}
                     onToggleStar={onToggleStar}
                     onToggleReviewed={onToggleReviewed}
@@ -382,12 +427,20 @@ export function DetailedChangesView({
 // Sub-component for individual card in Detailed View
 function DetailedItemCard({
   item,
+  isSelected,
+  onSelect,
+  onOpenInOriginalDocuments,
+  onOpenNoteDrawer,
   advocateMode,
   onToggleStar,
   onToggleReviewed,
   onUpdateNote,
 }: {
   item: ComparisonItem;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
+  onOpenInOriginalDocuments?: (id: string) => void;
+  onOpenNoteDrawer?: (id: string) => void;
   advocateMode: boolean;
   onToggleStar: (id: string) => void;
   onToggleReviewed: (id: string) => void;
@@ -397,10 +450,19 @@ function DetailedItemCard({
   const [showNotesForm, setShowNotesForm] = useState(false);
   const theme = getStatusTheme(item.status);
 
+  React.useEffect(() => {
+    setLocalNote(item.userNote || "");
+  }, [item.userNote]);
+
   return (
     <Card
-      className={`bg-[#07162B]/50 hover:bg-[#07162B]/70 border transition-all text-left ${
-        item.isReviewed ? "opacity-65 border-emerald-500/20" : "border-white/10"
+      onClick={() => onSelect?.(item.id)}
+      className={`bg-[#07162B]/50 hover:bg-[#07162B]/70 border transition-all text-left cursor-pointer ${
+        isSelected
+          ? "border-[#6C5CE7]/70 ring-1 ring-[#6C5CE7]/40 shadow-[0_8px_24px_rgba(108,92,231,0.18)]"
+          : item.isReviewed
+            ? "opacity-75 border-emerald-500/20"
+            : "border-white/10"
       }`}
     >
       <CardContent className="p-5 space-y-4">
@@ -533,8 +595,30 @@ function DetailedItemCard({
                 <span>Prep</span>
               </button>
 
+              {onOpenInOriginalDocuments && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenInOriginalDocuments(item.id);
+                  }}
+                  className="p-1.5 rounded-lg border border-indigo-500/30 bg-indigo-950/40 text-indigo-300 hover:text-white text-xs flex items-center justify-center gap-1 transition-all cursor-pointer"
+                  title="Open corresponding source pages in Original Documents"
+                >
+                  <span>Original PDF</span>
+                </button>
+              )}
+
               <button
-                onClick={() => setShowNotesForm(!showNotesForm)}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onOpenNoteDrawer) {
+                    onOpenNoteDrawer(item.id);
+                  } else {
+                    setShowNotesForm(!showNotesForm);
+                  }
+                }}
                 className={`p-1.5 rounded-lg border text-xs flex items-center justify-center gap-1 transition-all cursor-pointer ${
                   item.userNote
                     ? "bg-indigo-500/20 border-indigo-500 text-indigo-300 font-bold"

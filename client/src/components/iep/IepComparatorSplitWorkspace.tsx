@@ -33,6 +33,8 @@ interface IepComparatorSplitWorkspaceProps {
   onSendToBlueprint: (item: ComparisonItem) => void;
   onOpenSchoolEmailModal: () => void;
   onSwitchToBoardView: () => void;
+  onOpenNoteDrawer?: (id: string) => void;
+  onOpenInOriginalDocuments?: (id: string) => void;
 }
 
 /**
@@ -119,6 +121,8 @@ export function IepComparatorSplitWorkspace({
   onSendToBlueprint,
   onOpenSchoolEmailModal,
   onSwitchToBoardView,
+  onOpenNoteDrawer,
+  onOpenInOriginalDocuments,
 }: IepComparatorSplitWorkspaceProps) {
   const [listFilter, setListFilter] = useState<"all" | "attention">("all");
   const [editingNote, setEditingNote] = useState(false);
@@ -389,11 +393,15 @@ export function IepComparatorSplitWorkspace({
               <span>{selectedItem.previousLocation || "Previous IEP"}</span>
               <button
                 type="button"
-                onClick={() =>
-                  toast.info(
-                    `Opening ${oldVersion.date} IEP at ${selectedItem.previousLocation || "Section"}`
-                  )
-                }
+                onClick={() => {
+                  if (onOpenInOriginalDocuments) {
+                    onOpenInOriginalDocuments(selectedItem.id);
+                  } else {
+                    toast.info(
+                      `Opening ${oldVersion.date} IEP at ${selectedItem.previousLocation || "Section"}`
+                    );
+                  }
+                }}
                 className="inline-flex items-center gap-1 text-[#C5CCF0] hover:text-white cursor-pointer transition-colors"
               >
                 <span>Open source</span>
@@ -453,11 +461,15 @@ export function IepComparatorSplitWorkspace({
               <span>{selectedItem.newLocation || "Proposed IEP"}</span>
               <button
                 type="button"
-                onClick={() =>
-                  toast.info(
-                    `Opening ${newVersion.date} Proposed IEP at ${selectedItem.newLocation || "Section"}`
-                  )
-                }
+                onClick={() => {
+                  if (onOpenInOriginalDocuments) {
+                    onOpenInOriginalDocuments(selectedItem.id);
+                  } else {
+                    toast.info(
+                      `Opening ${newVersion.date} Proposed IEP at ${selectedItem.newLocation || "Section"}`
+                    );
+                  }
+                }}
                 className="inline-flex items-center gap-1 text-[#C5CCF0] hover:text-white cursor-pointer transition-colors"
               >
                 <span>Open source</span>
@@ -554,11 +566,17 @@ export function IepComparatorSplitWorkspace({
 
             <button
               type="button"
-              onClick={handleOpenNoteEditor}
+              onClick={() => {
+                if (onOpenNoteDrawer) {
+                  onOpenNoteDrawer(selectedItem.id);
+                } else {
+                  handleOpenNoteEditor();
+                }
+              }}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#0B1428] hover:bg-[#12203D] border border-[#263556] text-xs font-medium text-[#DCE2F2] transition-all cursor-pointer"
             >
               <FileEdit className="h-3.5 w-3.5" />
-              <span>Add note</span>
+              <span>{selectedItem.userNote ? "Edit note" : "Add note"}</span>
             </button>
 
             <button

@@ -20,6 +20,10 @@ export type ItemStatus =
 
 export type ItemSeverity = "informational" | "review" | "high_attention";
 
+export type LocationConfidence = "exact" | "section_level" | "unverified";
+
+export type ComparatorWorkspaceView = "original_documents" | "cards" | "notes";
+
 export interface ComparisonItem {
   id: string;
   category: ItemCategory;
@@ -39,10 +43,19 @@ export interface ComparisonItem {
   reviewNote?: string;
   previousLocation?: string;
   newLocation?: string;
+  previousPage?: number;
+  newPage?: number;
+  previousSectionHeading?: string;
+  newSectionHeading?: string;
+  previousAnchorText?: string;
+  newAnchorText?: string;
+  locationConfidence?: LocationConfidence;
   userNote?: string;
   isReviewed?: boolean;
   isStarred?: boolean;
   linkedMinutes?: boolean;
+  meetingAgreementNote?: string;
+  sentToBlueprint?: boolean;
   numericDiff?: string;
   highlightedField?: string;
 }
@@ -104,9 +117,17 @@ export const MICHAEL_SHEEP_COMPARISON: ComparisonItem[] = [
       "Confirm the new target is supported by current baseline data.",
     previousLocation: "Page 9 · Section V",
     newLocation: "Page 8 · Section V",
+    previousPage: 9,
+    newPage: 8,
+    previousSectionHeading: "SECTION V: MEASURABLE ANNUAL GOALS — READING COMPREHENSION (GOAL 5.1)",
+    newSectionHeading: "SECTION V: MEASURABLE ANNUAL GOALS — READING COMPREHENSION (GOAL 5.1)",
+    previousAnchorText: "70% accuracy across three consecutive data probes",
+    newAnchorText: "80% accuracy across three consecutive data probes",
+    locationConfidence: "exact",
     numericDiff: "Criterion: 70% → 80%",
     highlightedField: "Accuracy Threshold",
     isReviewed: true,
+    meetingAgreementNote: "IEP team discussed Spring benchmark fluency growth on May 14, 2026; parent requested baseline work samples be attached to PWN.",
   },
   {
     id: "comp-2",
@@ -133,10 +154,18 @@ export const MICHAEL_SHEEP_COMPARISON: ComparisonItem[] = [
       "Request Prior Written Notice and standardized language scores before consenting to any service reduction.",
     previousLocation: "Page 14 · Section VII",
     newLocation: "Page 15 · Section VII",
+    previousPage: 14,
+    newPage: 15,
+    previousSectionHeading: "SECTION VII: SPECIAL EDUCATION & RELATED SERVICES MATRIX",
+    newSectionHeading: "SECTION VII: SPECIAL EDUCATION & RELATED SERVICES MATRIX",
+    previousAnchorText: "30 minutes per week of direct small-group speech-language therapy",
+    newAnchorText: undefined,
+    locationConfidence: "exact",
     numericDiff: "-30 min/week",
     highlightedField: "Direct Speech Minutes Removed",
     isReviewed: true,
     isStarred: true,
+    meetingAgreementNote: "District SLP proposed moving to consult; parent did not agree and formally requested comprehensive pragmatic language evaluation.",
   },
   {
     id: "comp-3",
@@ -163,6 +192,13 @@ export const MICHAEL_SHEEP_COMPARISON: ComparisonItem[] = [
       "Check teacher testing logs to verify whether Michael still requires double time on reading passages.",
     previousLocation: "Page 11 · Section VI",
     newLocation: "Page 11 · Section VI",
+    previousPage: 11,
+    newPage: 11,
+    previousSectionHeading: "SECTION VI: INSTRUCTIONAL & ASSESSMENT ACCOMMODATIONS",
+    newSectionHeading: "SECTION VI: INSTRUCTIONAL & ASSESSMENT ACCOMMODATIONS",
+    previousAnchorText: "100% extended time (double time) in a small-group setting",
+    newAnchorText: "50% extended time (time-and-a-half) in a small-group setting",
+    locationConfidence: "exact",
     numericDiff: "100% → 50% Extended Time",
     highlightedField: "Extended Time Allowance",
     isStarred: true,
@@ -190,8 +226,15 @@ export const MICHAEL_SHEEP_COMPARISON: ComparisonItem[] = [
       "How will breaks be requested so Michael does not miss core direct instruction?",
     reviewNote:
       "Ensure the break card protocol is non-stigmatizing and stops the testing clock during state exams.",
-    previousLocation: "Not in Previous IEP",
+    previousLocation: "Page 11 · Section VI (No matching entry)",
     newLocation: "Page 12 · Section VI",
+    previousPage: 11,
+    newPage: 12,
+    previousSectionHeading: "SECTION VI: INSTRUCTIONAL & ASSESSMENT ACCOMMODATIONS",
+    newSectionHeading: "SECTION VI: INSTRUCTIONAL & ASSESSMENT ACCOMMODATIONS (CONT.)",
+    previousAnchorText: undefined,
+    newAnchorText: "scheduled and unscheduled 5-minute regulation breaks",
+    locationConfidence: "exact",
     numericDiff: "New Support Added",
     highlightedField: "Instructional & Testing Breaks",
   },
@@ -220,6 +263,13 @@ export const MICHAEL_SHEEP_COMPARISON: ComparisonItem[] = [
       "Make sure 'visual graphic organizer' is also listed in Section VI Classroom Accommodations.",
     previousLocation: "Page 10 · Section V",
     newLocation: "Page 9 · Section V",
+    previousPage: 10,
+    newPage: 9,
+    previousSectionHeading: "SECTION V: MEASURABLE ANNUAL GOALS — WRITTEN EXPRESSION (GOAL 5.2)",
+    newSectionHeading: "SECTION V: MEASURABLE ANNUAL GOALS — WRITTEN EXPRESSION (GOAL 5.2)",
+    previousAnchorText: "compose a 5-sentence paragraph with a topic sentence",
+    newAnchorText: "Given a visual graphic organizer, Michael will compose",
+    locationConfidence: "exact",
     numericDiff: "Scaffold Condition Added",
     highlightedField: "Goal Condition Wording",
   },
@@ -248,6 +298,13 @@ export const MICHAEL_SHEEP_COMPARISON: ComparisonItem[] = [
       "Flag for immediate team discussion—parent has reported sensory overload on crowded buses.",
     previousLocation: "Page 17 · Section IX",
     newLocation: "Page 17 · Section IX",
+    previousPage: 17,
+    newPage: 17,
+    previousSectionHeading: "SECTION IX: SPECIAL TRANSPORTATION & TRANSIT SUPPORTS",
+    newSectionHeading: "SECTION IX: SPECIAL TRANSPORTATION & TRANSIT SUPPORTS",
+    previousAnchorText: "Curb-to-curb small-bus route with bus monitor",
+    newAnchorText: "Standard neighborhood bus route with preferential front-row seating",
+    locationConfidence: "section_level",
     numericDiff: "Special → Standard Bus",
     highlightedField: "Related Service Transportation",
     isStarred: true,
@@ -277,6 +334,13 @@ export const MICHAEL_SHEEP_COMPARISON: ComparisonItem[] = [
       "Verify whether supplementary aids and services were tried in general ed before increasing pull-out time.",
     previousLocation: "Page 18 · Section X",
     newLocation: "Page 19 · Section X",
+    previousPage: 18,
+    newPage: 19,
+    previousSectionHeading: "SECTION X: LEAST RESTRICTIVE ENVIRONMENT (LRE) & EDUCATIONAL PLACEMENT",
+    newSectionHeading: "SECTION X: LEAST RESTRICTIVE ENVIRONMENT (LRE) & EDUCATIONAL PLACEMENT",
+    previousAnchorText: "general education environment for 80% of the instructional day",
+    newAnchorText: "general education environment for 72% of the instructional day",
+    locationConfidence: "exact",
     numericDiff: "-8% General Ed Time",
     highlightedField: "LRE Inclusion Percentage",
   },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sheet,
   SheetContent,
@@ -21,6 +21,10 @@ import {
   ShieldAlert,
   ArrowRight,
   FileText,
+  Layers,
+  Check,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { ComparisonItem, getStatusTheme } from "./types";
 
@@ -32,6 +36,10 @@ interface ComparisonDetailDrawerProps {
   onToggleStar: (id: string) => void;
   onToggleReviewed: (id: string) => void;
   onUpdateNote: (id: string, note: string) => void;
+  comparisonGeneralNote?: string;
+  onUpdateComparisonGeneralNote?: (note: string) => void;
+  onSendToBlueprint?: (item: ComparisonItem) => void;
+  onOpenInOriginalDocuments?: (id: string) => void;
   onSelectNext?: () => void;
   onSelectPrev?: () => void;
   hasPrev?: boolean;
@@ -46,22 +54,69 @@ export function ComparisonDetailDrawer({
   onToggleStar,
   onToggleReviewed,
   onUpdateNote,
+  comparisonGeneralNote = "",
+  onUpdateComparisonGeneralNote,
+  onSendToBlueprint,
+  onOpenInOriginalDocuments,
   onSelectNext,
   onSelectPrev,
   hasPrev = false,
   hasNext = false,
 }: ComparisonDetailDrawerProps) {
   const [localNote, setLocalNote] = useState("");
+  const [localGeneralNote, setLocalGeneralNote] = useState(comparisonGeneralNote);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (item) {
       setLocalNote(item.userNote || "");
+      setSaveState(item.userNote ? "saved" : "idle");
     }
   }, [item?.id, item?.userNote]);
+
+  useEffect(() => {
+    setLocalGeneralNote(comparisonGeneralNote);
+  }, [comparisonGeneralNote]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   if (!item) return null;
 
   const theme = getStatusTheme(item.status);
+
+  const handleNoteChange = (val: string) => {
+    setLocalNote(val);
+    setSaveState("saving");
+    try {
+      onUpdateNote(item.id, val);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        setSaveState("saved");
+      }, 300);
+    } catch {
+      setSaveState("error");
+    }
+  };
+
+  const handleGeneralNoteChange = (val: string) => {
+    setLocalGeneralNote(val);
+    if (!onUpdateComparisonGeneralNote) return;
+    setSaveState("saving");
+    try {
+      onUpdateComparisonGeneralNote(val);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        setSaveState("saved");
+      }, 300);
+    } catch {
+      setSaveState("error");
+    }
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -214,32 +269,63 @@ export function ComparisonDetailDrawer({
             </div>
           )}
 
-          {/* Custom Notes Section */}
+          {/* Finding-Level Custom Notes Section */}
           <div className="space-y-2 bg-slate-950/50 p-4 rounded-xl border border-white/5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                 <MessageSquare className="h-3.5 w-3.5 text-indigo-400" />
-                Custom Notes for IEP Meeting
+                Finding Note ({item.title})
               </label>
-              {item.userNote && (
-                <span className="text-[10px] text-emerald-400">Saved</span>
+              {saveState === "saving" && (
+                <span className="inline-flex items-center gap-1 text-[10px] text-amber-300">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Saving...
+                </span>
+              )}
+              {saveState === "saved" && (
+                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400">
+                  <Check className="h-3 w-3" />
+                  Saved
+                </span>
+              )}
+              {saveState === "error" && (
+                <span className="inline-flex items-center gap-1 text-[10px] text-rose-400">
+                  <AlertCircle className="h-3 w-3" />
+                  Error saving note
+                </span>
               )}
             </div>
             <textarea
               value={localNote}
-              onChange={(e) => {
-                setLocalNote(e.target.value);
-                onUpdateNote(item.id, e.target.value);
-              }}
-              placeholder="Record notes, questions to bring up, or team commitments..."
+              onChange={(e) => handleNoteChange(e.target.value)}
+              placeholder="Record notes, questions to bring up, or team commitments for this finding..."
               className="w-full h-24 bg-slate-900 border border-white/10 rounded-lg p-3 text-xs text-slate-100 placeholder-slate-600 focus:border-indigo-500 focus:outline-none transition-colors"
             />
           </div>
+
+          {/* Broader Comparison-Level Notes Section */}
+          {onUpdateComparisonGeneralNote && (
+            <div className="space-y-2 bg-slate-950/50 p-4 rounded-xl border border-white/5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-[#E5C158]" />
+                  Overall Comparison Session Notes
+                </label>
+                <span className="text-[10px] text-slate-500">Shared across all findings</span>
+              </div>
+              <textarea
+                value={localGeneralNote}
+                onChange={(e) => handleGeneralNoteChange(e.target.value)}
+                placeholder="Broader comparison notes, overall parent priorities, or PWN follow-up summary..."
+                className="w-full h-20 bg-slate-900 border border-white/10 rounded-lg p-3 text-xs text-slate-100 placeholder-slate-600 focus:border-indigo-500 focus:outline-none transition-colors"
+              />
+            </div>
+          )}
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-white/10 bg-[#07162B] flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
+        <div className="p-4 border-t border-white/10 bg-[#07162B] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant={item.isStarred ? "default" : "outline"}
               size="sm"
@@ -251,7 +337,7 @@ export function ComparisonDetailDrawer({
               }`}
             >
               <Star className={`h-3.5 w-3.5 ${item.isStarred ? "fill-slate-950" : ""}`} />
-              {item.isStarred ? "In Prep Brief" : "Add to Prep Brief"}
+              {item.isStarred ? "Flagged" : "Flag for discussion"}
             </Button>
 
             <Button
@@ -267,6 +353,37 @@ export function ComparisonDetailDrawer({
               <CheckCircle2 className="h-3.5 w-3.5" />
               {item.isReviewed ? "Reviewed" : "Mark Reviewed"}
             </Button>
+
+            {onSendToBlueprint && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onSendToBlueprint(item)}
+                className={`text-xs gap-1.5 ${
+                  item.sentToBlueprint
+                    ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300"
+                    : "border-white/10 text-slate-300 hover:bg-white/5"
+                }`}
+              >
+                <Layers className="h-3.5 w-3.5" />
+                {item.sentToBlueprint ? "Sent to Blueprint" : "Send to Blueprint"}
+              </Button>
+            )}
+
+            {onOpenInOriginalDocuments && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  onOpenInOriginalDocuments(item.id);
+                  onClose();
+                }}
+                className="text-xs gap-1.5 text-indigo-300 hover:text-white"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                View in Original PDFs
+              </Button>
+            )}
           </div>
 
           <Button

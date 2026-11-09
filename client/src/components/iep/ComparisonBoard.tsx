@@ -14,6 +14,8 @@ interface ComparisonBoardProps {
   items: ComparisonItem[];
   selectedItem: ComparisonItem | null;
   onSelectItem: (item: ComparisonItem | null) => void;
+  onOpenNoteDrawer?: (item: ComparisonItem) => void;
+  onOpenInOriginalDocuments?: (item: ComparisonItem) => void;
   onToggleStar: (id: string) => void;
   onToggleReviewed: (id: string) => void;
   advocateMode: boolean;
@@ -26,6 +28,8 @@ export function ComparisonBoard({
   items,
   selectedItem,
   onSelectItem,
+  onOpenNoteDrawer,
+  onOpenInOriginalDocuments,
   onToggleStar,
   onToggleReviewed,
   newIepDate,
@@ -317,25 +321,47 @@ export function ComparisonBoard({
                     </span>
 
                     <div className="flex items-center gap-2">
-                      {item.userNote && (
-                        <span
-                          className="flex items-center gap-1 text-indigo-400 font-semibold"
-                          title="Has custom notes"
+                      {onOpenNoteDrawer && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectItem(item);
+                            onOpenNoteDrawer(item);
+                          }}
+                          className={`flex items-center gap-1 px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                            item.userNote
+                              ? "text-indigo-300 bg-indigo-950/60 border-indigo-500/40 font-semibold"
+                              : "text-slate-400 hover:text-white border-white/10"
+                          }`}
+                          title="Open Note Drawer for this finding"
                         >
-                          <MessageSquare className="h-3 w-3" /> Note
-                        </span>
+                          <MessageSquare className="h-3 w-3" />{" "}
+                          {item.userNote ? "Edit Note" : "Note"}
+                        </button>
+                      )}
+                      {onOpenInOriginalDocuments && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectItem(item);
+                            onOpenInOriginalDocuments(item);
+                          }}
+                          className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#182344] hover:bg-[#233262] border border-[#324685] text-[#C4B5FD] font-semibold transition-colors cursor-pointer"
+                          title="Open corresponding pages in Original Documents view"
+                        >
+                          Original PDF <ArrowRight className="h-3 w-3" />
+                        </button>
                       )}
                       {item.isStarred && (
                         <span
                           className="flex items-center gap-1 text-amber-400 font-semibold"
-                          title="In meeting prep brief"
+                          title="Flagged for discussion"
                         >
-                          <Star className="h-3 w-3 fill-amber-400" /> Prep
+                          <Star className="h-3 w-3 fill-amber-400" /> Flagged
                         </span>
                       )}
-                      <span className="text-indigo-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1 font-semibold">
-                        Inspect <ArrowRight className="h-3 w-3" />
-                      </span>
                     </div>
                   </div>
                 </div>

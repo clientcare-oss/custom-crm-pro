@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
@@ -8,26 +8,158 @@ import {
   CheckCircle2,
   X,
   ArrowRight,
+  Columns3,
 } from "lucide-react";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 import {
   ComparisonItem,
   MICHAEL_SHEEP_COMPARISON,
   IEP_VERSION_OPTIONS,
   IepVersionOption,
+  type ComparatorWorkspaceView,
 } from "@/components/iep/types";
+import { getOrBuildVersionPdf } from "@/components/iep/iepDocumentPdfBuilder";
 import { ComparisonHeader } from "@/components/iep/ComparisonHeader";
+import { OriginalDocumentsView } from "@/components/iep/OriginalDocumentsView";
 import { IepComparatorSplitWorkspace } from "@/components/iep/IepComparatorSplitWorkspace";
 import { ComparisonSummaryChips } from "@/components/iep/ComparisonSummaryChips";
 import { ComparisonBoard } from "@/components/iep/ComparisonBoard";
+import { DetailedChangesView } from "@/components/iep/DetailedChangesView";
 import { ComparisonDetailDrawer } from "@/components/iep/ComparisonDetailDrawer";
 import { ParentSchoolCorrectionEmailModal } from "@/components/iep/ParentSchoolCorrectionEmailModal";
 
+const DEFAULT_ORG_SCOPE = "waypoint-advocates-org";
+
+function isValidWorkspaceView(val: string | null): val is ComparatorWorkspaceView {
+  return val === "original_documents" || val === "cards" || val === "notes";
+}
+
 export default function IepComparator() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
 
-  // Main screen is "split" (matching the new design); "board" is the Connected Cards circuit view
-  const [currentView, setCurrentView] = useState<"split" | "board">("split");
+  // Optional ?contactId=... parameter to load student's stored IEP documents via trpc.iep.get
+  const contactIdParam = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get("contactId") || params.get("studentId");
+    const parsed = raw ? parseInt(raw, 10) : NaN;
+    return !Number.isNaN(parsed) && parsed > 0 ? parsed : null;
+  }, []);
+
+  const iepDocQuery = trpc.iep.get.useQuery(
+    { contactId: contactIdParam ?? 0 },
+    { enabled: Boolean(contactIdParam), retry: false }
+  );
+
+  // Scoped View Preferences (7. REMEMBER VIEW PREFERENCES)
+  // Scoped to user ID + organization scope so preferences never leak between users or organizations
+  const userIdScope = user?.id || "anonymous-staff";
+  const orgIdScope = DEFAULT_ORG_SCOPE;
+
+  const orgPrefKey = `waypoint:iep-comparator:org-default-view:${orgIdScope}`;
+  const userPrefKey = `waypoint:iep-comparator:user-preferred-view:${orgIdScope}:${userIdScope}`;
+  const lastSessionViewKey = `waypoint:iep-comparator:last-view:${orgIdScope}:${userIdScope}`;
+  const sessionStateKey = `waypoint:iep-comparator:session-state:${orgIdScope}:${userIdScope}:${contactIdParam || "default"}`;
+
+  const [orgDefaultView, setOrgDefaultViewState] = useState<ComparatorWorkspaceView>(() => {
+    if (typeof window === "undefined") return "original_documents";
+    const stored = window.localStorage.getItem(orgPrefKey);
+    return isValidWorkspaceView(stored) ? stored : "original_documents";
+  });
+
+  const [userPreferredView, setUserPreferredViewState] =
+    useState<ComparatorWorkspaceView | null>(() => {
+      if (typeof window === "undefined") return null;
+      const stored = window.localStorage.getItem(userPrefKey);
+      return isValidWorkspaceView(stored) ? stored : null;
+    });
+
+  // Resolve initial view:
+  // 1. Individual staff preference overrides organization default
+  // 2. Last selected view in session if remembered
+  // 3. Organization default
+  // 4. Fallback: "original_documents"
+  const [currentView, setCurrentViewState] = useState<ComparatorWorkspaceView>(() => {
+    if (typeof window === "undefined") return "original_documents";
+    const userPref = window.localStorage.getItem(userPrefKey);
+    if (isValidWorkspaceView(userPref)) return userPref;
+    const lastView = window.localStorage.getItem(lastSessionViewKey);
+    if (isValidWorkspaceView(lastView)) return lastView;
+    const orgDef = window.localStorage.getItem(orgPrefKey);
+    if (isValidWorkspaceView(orgDef)) return orgDef;
+    return "original_documents";
+  });
+
+  // Re-sync when user identity resolves
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const uPref = window.localStorage.getItem(userPrefKey);
+    const oPref = window.localStorage.getItem(orgPrefKey);
+    const lastV = window.localStorage.getItem(lastSessionViewKey);
+
+    setUserPreferredViewState(isValidWorkspaceView(uPref) ? uPref : null);
+    setOrgDefaultViewState(isValidWorkspaceView(oPref) ? oPref : "original_documents");
+
+    if (isValidWorkspaceView(uPref)) {
+      setCurrentViewState(uPref);
+    } else if (isValidWorkspaceView(lastV)) {
+      setCurrentViewState(lastV);
+    } else if (isValidWorkspaceView(oPref)) {
+      setCurrentViewState(oPref);
+    } else {
+      setCurrentViewState("original_documents");
+    }
+  }, [userPrefKey, orgPrefKey, lastSessionViewKey]);
+
+  const handleViewChange = useCallback(
+    (nextView: ComparatorWorkspaceView) => {
+      setCurrentViewState(nextView);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(lastSessionViewKey, nextView);
+      }
+    },
+    [lastSessionViewKey]
+  );
+
+  const handleSetUserPreferredView = useCallback(
+    (pref: ComparatorWorkspaceView | null) => {
+      setUserPreferredViewState(pref);
+      if (typeof window !== "undefined") {
+        if (pref) {
+          window.localStorage.setItem(userPrefKey, pref);
+          window.localStorage.setItem(lastSessionViewKey, pref);
+          setCurrentViewState(pref);
+          toast.success(`Personal default view set to ${pref.replace("_", " ")}`);
+        } else {
+          window.localStorage.removeItem(userPrefKey);
+          setCurrentViewState(orgDefaultView);
+          toast.info("Cleared personal override — using organization default view");
+        }
+      }
+    },
+    [userPrefKey, lastSessionViewKey, orgDefaultView]
+  );
+
+  const handleSetOrgDefaultView = useCallback(
+    (orgView: ComparatorWorkspaceView) => {
+      setOrgDefaultViewState(orgView);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(orgPrefKey, orgView);
+      }
+      if (!userPreferredView) {
+        setCurrentViewState(orgView);
+      }
+      toast.success(`Organization default view updated to ${orgView.replace("_", " ")}`);
+    },
+    [orgPrefKey, userPreferredView]
+  );
+
+  // Sub-mode inside "Cards" view: either Circuit Board ("circuit") or Split Card Inspection ("split_card")
+  const [cardsSubMode, setCardsSubMode] = useState<"circuit" | "split_card">("circuit");
+  const [advocateMode, setAdvocateMode] = useState<boolean>(false);
 
   // OLD file is ALWAYS on the left; NEW file is ALWAYS on the right
   const [oldVersion, setOldVersion] = useState<IepVersionOption>(
@@ -37,17 +169,99 @@ export default function IepComparator() {
     IEP_VERSION_OPTIONS[0] // May 14, 2026 (Proposed)
   );
 
-  // Comparison items list with local modifications (Notes, Flags, Reviewed)
-  const [items, setItems] = useState<ComparisonItem[]>(
-    MICHAEL_SHEEP_COMPARISON
-  );
+  // Comparison items list with persisted Notes, Flags, Reviewed state, and Blueprint status
+  const [items, setItems] = useState<ComparisonItem[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = window.localStorage.getItem(sessionStateKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.items) && parsed.items.length > 0) {
+            return parsed.items;
+          }
+        }
+      } catch {}
+    }
+    return MICHAEL_SHEEP_COMPARISON;
+  });
+
+  const [comparisonGeneralNote, setComparisonGeneralNote] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = window.localStorage.getItem(sessionStateKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (typeof parsed.comparisonGeneralNote === "string") {
+            return parsed.comparisonGeneralNote;
+          }
+        }
+      } catch {}
+    }
+    return "";
+  });
+
   const [selectedItemId, setSelectedItemId] = useState<string>(
     MICHAEL_SHEEP_COMPARISON[0].id
   );
 
-  // Connected Cards Board filter & detail drawer state
+  // Persist items & comparisonGeneralNote across reloads and view switches
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        sessionStateKey,
+        JSON.stringify({ items, comparisonGeneralNote })
+      );
+    } catch {}
+  }, [items, comparisonGeneralNote, sessionStateKey]);
+
+  // PDF Document Viewer state (preserved when switching between Original Documents, Cards, and Notes)
+  const [oldPdfBytes, setOldPdfBytes] = useState<Uint8Array | null>(null);
+  const [newPdfBytes, setNewPdfBytes] = useState<Uint8Array | null>(null);
+  const [isLoadingPdfs, setIsLoadingPdfs] = useState<boolean>(true);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  const [leftPage, setLeftPage] = useState<number>(
+    MICHAEL_SHEEP_COMPARISON[0].previousPage || 9
+  );
+  const [rightPage, setRightPage] = useState<number>(
+    MICHAEL_SHEEP_COMPARISON[0].newPage || 8
+  );
+  const [leftZoom, setLeftZoom] = useState<number>(1.0);
+  const [rightZoom, setRightZoom] = useState<number>(1.0);
+  const [leftFitWidth, setLeftFitWidth] = useState<boolean>(true);
+  const [rightFitWidth, setRightFitWidth] = useState<boolean>(true);
+
+  // Build or load actual PDF bytes for Previous IEP (Left) and Proposed IEP (Right)
+  useEffect(() => {
+    let cancelled = false;
+    async function loadVersionPdfs() {
+      setIsLoadingPdfs(true);
+      setPdfError(null);
+      try {
+        const [prevBuilt, nextBuilt] = await Promise.all([
+          getOrBuildVersionPdf(oldVersion.id),
+          getOrBuildVersionPdf(newVersion.id),
+        ]);
+        if (cancelled) return;
+        setOldPdfBytes(prevBuilt.bytes);
+        setNewPdfBytes(nextBuilt.bytes);
+      } catch (err: any) {
+        if (cancelled) return;
+        setPdfError(err?.message || "Failed to load IEP PDF documents.");
+      } finally {
+        if (!cancelled) setIsLoadingPdfs(false);
+      }
+    }
+    loadVersionPdfs();
+    return () => {
+      cancelled = true;
+    };
+  }, [oldVersion.id, newVersion.id]);
+
+  // Connected Cards Board filter & Contextual Note Drawer state
   const [activeFilter, setActiveFilter] = useState<string>("all");
-  const [drawerItem, setDrawerItem] = useState<ComparisonItem | null>(null);
+  const [noteDrawerOpen, setNoteDrawerOpen] = useState<boolean>(false);
 
   // Simple "Change files" modal state (Old File Always Left, New File Always Right)
   const [filePickerOpen, setFilePickerOpen] = useState<boolean>(false);
@@ -61,8 +275,51 @@ export default function IepComparator() {
   );
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
 
-  const selectedItem =
-    items.find((i) => i.id === selectedItemId) || items[0];
+  // Sync stored filenames if student contactId record exists
+  useEffect(() => {
+    if (iepDocQuery.data) {
+      if (iepDocQuery.data.previousFileName) {
+        setOldFileName(iepDocQuery.data.previousFileName);
+      }
+      if (iepDocQuery.data.currentFileName) {
+        setNewFileName(iepDocQuery.data.currentFileName);
+      }
+    }
+  }, [iepDocQuery.data]);
+
+  const selectedItem = useMemo(
+    () => items.find((i) => i.id === selectedItemId) || items[0],
+    [items, selectedItemId]
+  );
+
+  // Selecting a finding navigates each original IEP viewer to its corresponding page
+  const handleSelectFinding = useCallback(
+    (id: string) => {
+      setSelectedItemId(id);
+      const target = items.find((i) => i.id === id);
+      if (target) {
+        if (target.previousPage) setLeftPage(target.previousPage);
+        if (target.newPage) setRightPage(target.newPage);
+      }
+    },
+    [items]
+  );
+
+  const handleOpenInOriginalDocuments = useCallback(
+    (id: string) => {
+      handleSelectFinding(id);
+      handleViewChange("original_documents");
+    },
+    [handleSelectFinding, handleViewChange]
+  );
+
+  const handleOpenNoteDrawer = useCallback(
+    (id: string) => {
+      handleSelectFinding(id);
+      setNoteDrawerOpen(true);
+    },
+    [handleSelectFinding]
+  );
 
   const flaggedProblemCount = useMemo(
     () => items.filter((i) => i.isStarred && i.status !== "unchanged").length,
@@ -79,16 +336,22 @@ export default function IepComparator() {
     return items.filter((i) => i.status === activeFilter);
   }, [items, activeFilter]);
 
-  const drawerIndex = drawerItem
-    ? filteredBoardItems.findIndex((i) => i.id === drawerItem.id)
+  const drawerIndex = selectedItem
+    ? filteredBoardItems.findIndex((i) => i.id === selectedItem.id)
     : -1;
   const hasPrev = drawerIndex > 0;
   const hasNext =
     drawerIndex >= 0 && drawerIndex < filteredBoardItems.length - 1;
 
-  const handleUploadOldFile = (file: File) => {
+  const handleUploadOldFile = async (file: File) => {
     setOldFileName(file.name);
     const cleaned = file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " ");
+    try {
+      if (file.name.toLowerCase().endsWith(".pdf")) {
+        const buf = await file.arrayBuffer();
+        setOldPdfBytes(new Uint8Array(buf));
+      }
+    } catch {}
     setOldVersion({
       id: `old-${Date.now()}`,
       label: cleaned,
@@ -99,9 +362,15 @@ export default function IepComparator() {
     toast.success(`Old / Previous IEP loaded on Left: ${file.name}`);
   };
 
-  const handleUploadNewFile = (file: File) => {
+  const handleUploadNewFile = async (file: File) => {
     setNewFileName(file.name);
     const cleaned = file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " ");
+    try {
+      if (file.name.toLowerCase().endsWith(".pdf")) {
+        const buf = await file.arrayBuffer();
+        setNewPdfBytes(new Uint8Array(buf));
+      }
+    } catch {}
     setNewVersion({
       id: `new-${Date.now()}`,
       label: cleaned,
@@ -118,12 +387,7 @@ export default function IepComparator() {
         item.id === id ? { ...item, isStarred: !item.isStarred } : item
       )
     );
-    if (drawerItem?.id === id) {
-      setDrawerItem((curr) =>
-        curr ? { ...curr, isStarred: !curr.isStarred } : null
-      );
-    }
-    toast.success("Updated School Correction Email issues list");
+    toast.success("Updated discussion flag & School Email issues list");
   };
 
   const handleToggleReviewed = (id: string, advanceNext?: boolean) => {
@@ -134,19 +398,14 @@ export default function IepComparator() {
           : item
       )
     );
-    if (drawerItem?.id === id) {
-      setDrawerItem((curr) =>
-        curr ? { ...curr, isReviewed: !curr.isReviewed } : null
-      );
-    }
     if (advanceNext) {
       const changeItems = items.filter((i) => i.status !== "unchanged");
       const idx = changeItems.findIndex((i) => i.id === id);
       if (idx >= 0 && idx < changeItems.length - 1) {
-        setSelectedItemId(changeItems[idx + 1].id);
+        handleSelectFinding(changeItems[idx + 1].id);
       } else if (idx === changeItems.length - 1) {
-        setSelectedItemId(changeItems[0].id);
-        toast.success("All 7 changes reviewed!");
+        handleSelectFinding(changeItems[0].id);
+        toast.success("All 7 changes marked as reviewed!");
       }
     }
   };
@@ -155,9 +414,6 @@ export default function IepComparator() {
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, userNote: note } : item))
     );
-    if (drawerItem?.id === id) {
-      setDrawerItem((curr) => (curr ? { ...curr, userNote: note } : null));
-    }
   };
 
   const handleToggleLinkMinutes = (id: string) => {
@@ -171,8 +427,48 @@ export default function IepComparator() {
     toast.success("Meeting agreement link updated");
   };
 
+  // Deduplicated Send to Blueprint (6. PRESERVE REVIEW AND MEETING WORKFLOWS)
   const handleSendToBlueprint = (item: ComparisonItem) => {
-    toast.success(`"${item.title}" sent to Meeting Blueprint`);
+    if (item.sentToBlueprint) {
+      toast.info(
+        `"${item.title}" (${item.id}) is already in Meeting Blueprint — duplicate prevented.`
+      );
+      return;
+    }
+    setItems((prev) =>
+      prev.map((curr) =>
+        curr.id === item.id ? { ...curr, sentToBlueprint: true } : curr
+      )
+    );
+    // Persist downstream Blueprint item keyed by finding ID + source references
+    if (typeof window !== "undefined") {
+      try {
+        const key = "waypoint:meeting-blueprint:iep-comparator-items";
+        const existingRaw = window.localStorage.getItem(key);
+        const existing: Array<Record<string, unknown>> = existingRaw
+          ? JSON.parse(existingRaw)
+          : [];
+        const withoutDup = existing.filter((e) => e.findingId !== item.id);
+        withoutDup.push({
+          findingId: item.id,
+          title: item.title,
+          categoryLabel: item.categoryLabel,
+          status: item.status,
+          explanation: item.shortSummary || item.explanation,
+          suggestedQuestion: item.suggestedQuestion,
+          previousLocation: item.previousLocation,
+          newLocation: item.newLocation,
+          previousPage: item.previousPage,
+          newPage: item.newPage,
+          userNote: item.userNote,
+          sentAt: new Date().toISOString(),
+        });
+        window.localStorage.setItem(key, JSON.stringify(withoutDup));
+      } catch {}
+    }
+    toast.success(
+      `"${item.title}" sent to Meeting Blueprint with source page references`
+    );
   };
 
   const handleRunComparison = () => {
@@ -187,17 +483,23 @@ export default function IepComparator() {
   return (
     <ScopedErrorBoundary>
       <div
-        className="min-h-[calc(100vh-2rem)] w-full text-[#FBF6EC] px-4 sm:px-8 lg:px-10 py-6 md:py-8 select-none"
+        className="min-h-[calc(100vh-2rem)] w-full max-w-full overflow-x-hidden text-[#FBF6EC] px-2 sm:px-4 lg:px-5 py-4 select-none"
         style={{
           background:
-            "radial-gradient(ellipse at 50% 10%, #111D3B 0%, #070E1F 55%, #040813 100%)",
+            "radial-gradient(ellipse at 50% 0%, #0D1938 0%, #000820 60%, #000514 100%)",
         }}
       >
-        <div className="max-w-[1360px] mx-auto space-y-5">
-          {/* ── SIMPLE HEADER WITH OLD (LEFT) vs. NEW (RIGHT) BAR + SCHOOL EMAIL BANNER ── */}
+        <div className="max-w-[1680px] mx-auto space-y-3.5">
+          {/* ── TOP WORKSPACE HEADER WITH 3-VIEW SELECTOR (Original Documents | Cards | Notes) ── */}
           <ComparisonHeader
             currentView={currentView}
-            onViewChange={setCurrentView}
+            onViewChange={handleViewChange}
+            userPreferredView={userPreferredView}
+            orgDefaultView={orgDefaultView}
+            onSetUserPreferredView={handleSetUserPreferredView}
+            onSetOrgDefaultView={handleSetOrgDefaultView}
+            advocateMode={advocateMode}
+            onToggleAdvocateMode={() => setAdvocateMode((prev) => !prev)}
             oldVersion={oldVersion}
             newVersion={newVersion}
             onSelectOldVersion={(v) => {
@@ -219,61 +521,166 @@ export default function IepComparator() {
             studentGrade="8th Grade"
           />
 
-          {/* ── VIEW 1 (DEFAULT MAIN SCREEN): FOCUSED SPLIT COMPARISON WORKSPACE ── */}
-          {currentView === "split" && (
-            <IepComparatorSplitWorkspace
+          {/* ── VIEW 1 (DEFAULT): ORIGINAL DOCUMENTS SIDE-BY-SIDE PDF WORKSPACE ── */}
+          {currentView === "original_documents" && (
+            <OriginalDocumentsView
               items={items}
-              selectedItem={selectedItem}
-              onSelectItem={(item) => setSelectedItemId(item.id)}
-              oldVersion={oldVersion}
-              newVersion={newVersion}
+              selectedItemId={selectedItem.id}
+              onSelectItem={handleSelectFinding}
+              oldVersionId={oldVersion.id}
+              newVersionId={newVersion.id}
+              oldFileName={oldFileName}
+              newFileName={newFileName}
+              oldPdfBytes={oldPdfBytes}
+              newPdfBytes={newPdfBytes}
+              oldPdfUrl={iepDocQuery.data?.previousFileUrl}
+              newPdfUrl={iepDocQuery.data?.currentFileUrl}
+              isLoadingPdfs={isLoadingPdfs}
+              pdfError={pdfError}
+              leftPage={leftPage}
+              onLeftPageChange={setLeftPage}
+              rightPage={rightPage}
+              onRightPageChange={setRightPage}
+              leftZoom={leftZoom}
+              onLeftZoomChange={setLeftZoom}
+              rightZoom={rightZoom}
+              onRightZoomChange={setRightZoom}
+              leftFitWidth={leftFitWidth}
+              onLeftFitWidthChange={setLeftFitWidth}
+              rightFitWidth={rightFitWidth}
+              onRightFitWidthChange={setRightFitWidth}
               onToggleStar={handleToggleStar}
-              onToggleReviewed={handleToggleReviewed}
-              onUpdateNote={handleUpdateNote}
-              onToggleLinkMinutes={handleToggleLinkMinutes}
+              onToggleReviewed={(id) => handleToggleReviewed(id, false)}
+              onOpenNoteDrawer={handleOpenNoteDrawer}
               onSendToBlueprint={handleSendToBlueprint}
-              onOpenSchoolEmailModal={() => setSchoolEmailModalOpen(true)}
-              onSwitchToBoardView={() => setCurrentView("board")}
+              onToggleLinkMinutes={handleToggleLinkMinutes}
+              onOpenCorrectionEmailModal={() => setSchoolEmailModalOpen(true)}
+              advocateMode={advocateMode}
             />
           )}
 
-          {/* ── VIEW 2: CONNECTED CARDS CIRCUIT BOARD SCREEN ── */}
-          {currentView === "board" && (
-            <div className="space-y-6 text-left">
-              <ComparisonSummaryChips
-                items={items}
-                activeFilter={activeFilter}
-                onSelectFilter={setActiveFilter}
-              />
-              <ComparisonBoard
-                items={filteredBoardItems}
-                selectedItem={drawerItem}
-                onSelectItem={setDrawerItem}
-                onToggleStar={handleToggleStar}
-                onToggleReviewed={(id) => handleToggleReviewed(id, false)}
-                advocateMode={false}
-                oldIepDate={oldVersion.date}
-                newIepDate={newVersion.date}
-                onBackToMainView={() => setCurrentView("split")}
-              />
+          {/* ── VIEW 2: CARDS VIEW (Circuit Board Cards + Split Card Inspection) ── */}
+          {currentView === "cards" && (
+            <div className="space-y-4 text-left">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <ComparisonSummaryChips
+                  items={items}
+                  activeFilter={activeFilter}
+                  onSelectFilter={setActiveFilter}
+                />
+
+                <div className="inline-flex p-1 rounded-xl bg-[#050C20] border border-[#22325A]">
+                  <button
+                    type="button"
+                    onClick={() => setCardsSubMode("circuit")}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      cardsSubMode === "circuit"
+                        ? "bg-[#231D4E] text-white border border-[#6C5CE7]/60"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <GitCompare className="w-3.5 h-3.5" />
+                    <span>Connected Circuit Cards</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCardsSubMode("split_card")}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      cardsSubMode === "split_card"
+                        ? "bg-[#231D4E] text-white border border-[#6C5CE7]/60"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Columns3 className="w-3.5 h-3.5" />
+                    <span>Focused Card Inspector</span>
+                  </button>
+                </div>
+              </div>
+
+              {cardsSubMode === "circuit" ? (
+                <ComparisonBoard
+                  items={filteredBoardItems}
+                  selectedItem={selectedItem}
+                  onSelectItem={(item) => {
+                    if (item) {
+                      handleSelectFinding(item.id);
+                    }
+                  }}
+                  onOpenNoteDrawer={(item) => handleOpenNoteDrawer(item.id)}
+                  onOpenInOriginalDocuments={(item) =>
+                    handleOpenInOriginalDocuments(item.id)
+                  }
+                  onToggleStar={handleToggleStar}
+                  onToggleReviewed={(id) => handleToggleReviewed(id, false)}
+                  advocateMode={advocateMode}
+                  oldIepDate={oldVersion.date}
+                  newIepDate={newVersion.date}
+                  onBackToMainView={() => handleViewChange("original_documents")}
+                />
+              ) : (
+                <IepComparatorSplitWorkspace
+                  items={items}
+                  selectedItem={selectedItem}
+                  onSelectItem={(item) => handleSelectFinding(item.id)}
+                  oldVersion={oldVersion}
+                  newVersion={newVersion}
+                  onToggleStar={handleToggleStar}
+                  onToggleReviewed={handleToggleReviewed}
+                  onUpdateNote={handleUpdateNote}
+                  onToggleLinkMinutes={handleToggleLinkMinutes}
+                  onSendToBlueprint={handleSendToBlueprint}
+                  onOpenSchoolEmailModal={() => setSchoolEmailModalOpen(true)}
+                  onSwitchToBoardView={() => setCardsSubMode("circuit")}
+                  onOpenNoteDrawer={handleOpenNoteDrawer}
+                  onOpenInOriginalDocuments={handleOpenInOriginalDocuments}
+                />
+              )}
             </div>
+          )}
+
+          {/* ── VIEW 3: NOTES & DETAILED BRIEF VIEW ── */}
+          {currentView === "notes" && (
+            <DetailedChangesView
+              items={items}
+              selectedItemId={selectedItem.id}
+              onSelectItem={handleSelectFinding}
+              onOpenInOriginalDocuments={handleOpenInOriginalDocuments}
+              onOpenNoteDrawer={handleOpenNoteDrawer}
+              comparisonGeneralNote={comparisonGeneralNote}
+              onUpdateComparisonGeneralNote={setComparisonGeneralNote}
+              advocateMode={advocateMode}
+              onToggleStar={handleToggleStar}
+              onToggleReviewed={(id) => handleToggleReviewed(id, false)}
+              onUpdateNote={handleUpdateNote}
+              onPrintBrief={() => window.print()}
+              studentName="Michael Sheep"
+              studentGrade="8th Grade"
+            />
           )}
         </div>
 
-        {/* ── DEEP INSPECTION DRAWER FOR CONNECTED CARDS VIEW ── */}
+        {/* ── CONTEXTUAL NOTE & DETAIL DRAWER (Accessible from Original Documents, Cards, and Notes) ── */}
         <ComparisonDetailDrawer
-          item={drawerItem}
-          isOpen={!!drawerItem}
-          onClose={() => setDrawerItem(null)}
-          advocateMode={false}
+          item={selectedItem}
+          isOpen={noteDrawerOpen}
+          onClose={() => setNoteDrawerOpen(false)}
+          advocateMode={advocateMode}
           onToggleStar={handleToggleStar}
           onToggleReviewed={(id) => handleToggleReviewed(id, false)}
           onUpdateNote={handleUpdateNote}
+          comparisonGeneralNote={comparisonGeneralNote}
+          onUpdateComparisonGeneralNote={setComparisonGeneralNote}
+          onSendToBlueprint={handleSendToBlueprint}
+          onOpenInOriginalDocuments={handleOpenInOriginalDocuments}
           onSelectPrev={() => {
-            if (hasPrev) setDrawerItem(filteredBoardItems[drawerIndex - 1]);
+            if (hasPrev) {
+              handleSelectFinding(filteredBoardItems[drawerIndex - 1].id);
+            }
           }}
           onSelectNext={() => {
-            if (hasNext) setDrawerItem(filteredBoardItems[drawerIndex + 1]);
+            if (hasNext) {
+              handleSelectFinding(filteredBoardItems[drawerIndex + 1].id);
+            }
           }}
           hasPrev={hasPrev}
           hasNext={hasNext}
