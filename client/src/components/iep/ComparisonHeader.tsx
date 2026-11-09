@@ -1,6 +1,4 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import React, { useRef } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,30 +8,36 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
-  ArrowLeft,
-  Columns3,
-  Layers,
+  FileText,
+  FolderOpen,
+  Download,
+  ArrowLeftRight,
   ChevronDown,
-  RefreshCw,
-  Printer,
-  Sparkles,
-  GitCompare,
   Check,
-  Calendar,
+  Upload,
   User,
+  ArrowLeft,
+  GitCompare,
+  Columns3,
+  Mail,
+  AlertTriangle,
+  ArrowRight,
 } from "lucide-react";
+import PageIdBadge from "@/components/PageIdBadge";
 import { IEP_VERSION_OPTIONS, IepVersionOption } from "./types";
 
 interface ComparisonHeaderProps {
-  currentView: "board" | "detailed";
-  onViewChange: (view: "board" | "detailed") => void;
-  advocateMode: boolean;
-  onAdvocateModeChange: (enabled: boolean) => void;
-  newVersion: IepVersionOption;
+  currentView: "split" | "board";
+  onViewChange: (view: "split" | "board") => void;
   oldVersion: IepVersionOption;
-  onSelectNewVersion: (version: IepVersionOption) => void;
+  newVersion: IepVersionOption;
   onSelectOldVersion: (version: IepVersionOption) => void;
-  onResetUploads: () => void;
+  onSelectNewVersion: (version: IepVersionOption) => void;
+  onUploadOldFile: (file: File) => void;
+  onUploadNewFile: (file: File) => void;
+  onToggleFilePickerModal: () => void;
+  onOpenSchoolEmailModal: () => void;
+  flaggedProblemCount: number;
   onPrintBrief: () => void;
   onBackToTools: () => void;
   studentName?: string;
@@ -43,218 +47,281 @@ interface ComparisonHeaderProps {
 export function ComparisonHeader({
   currentView,
   onViewChange,
-  advocateMode,
-  onAdvocateModeChange,
-  newVersion,
   oldVersion,
-  onSelectNewVersion,
+  newVersion,
   onSelectOldVersion,
-  onResetUploads,
+  onSelectNewVersion,
+  onUploadOldFile,
+  onUploadNewFile,
+  onToggleFilePickerModal,
+  onOpenSchoolEmailModal,
+  flaggedProblemCount,
   onPrintBrief,
   onBackToTools,
   studentName = "Michael Sheep",
   studentGrade = "8th Grade",
 }: ComparisonHeaderProps) {
+  const oldFileInputRef = useRef<HTMLInputElement>(null);
+  const newFileInputRef = useRef<HTMLInputElement>(null);
+
   return (
-    <div className="space-y-4 text-left border-b border-white/10 pb-6">
-      {/* ── TOP NAV BAR: BADGE, STUDENT INFO, ACTIONS ── */}
+    <div className="space-y-3.5 text-left">
+      {/* Hidden Direct File Inputs so user can upload Old (Left) or New (Right) with 1 click */}
+      <input
+        ref={oldFileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onUploadOldFile(file);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={newFileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onUploadNewFile(file);
+          e.target.value = "";
+        }}
+      />
+
+      {/* ── TOP HEADER BAR: TITLE + STUDENT SUBTITLE + VIEW TOGGLE / CHANGE FILES / EXPORT ── */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        {/* Student & Breadcrumbs */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           <button
+            type="button"
             onClick={onBackToTools}
-            className="p-2 rounded-xl bg-slate-900 border border-white/10 hover:border-white/20 text-slate-400 hover:text-white transition-colors shrink-0"
+            className="mt-1.5 p-2 rounded-lg bg-[#0A1326] border border-[#22304D] text-[#9AA4BC] hover:text-white hover:border-[#3E5280] transition-colors cursor-pointer"
             title="Back to Tools"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-          {/* Student Avatar Icon */}
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500/20 to-amber-500/20 border border-white/10 flex items-center justify-center shrink-0">
-            <span className="font-serif font-black text-amber-300 text-sm">
-              {studentName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </span>
-          </div>
-
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/20">
-                PG-010-IEP · IEP Comparator
-              </span>
-              <span className="text-[10px] text-slate-500 font-mono">
-                Case Comparison Engine
-              </span>
+            <div className="flex items-center gap-3">
+              <h1
+                className="text-3xl sm:text-[38px] font-bold text-[#FBF6EC] tracking-tight leading-none"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              >
+                IEP Comparator
+              </h1>
+              <PageIdBadge id="PG-010-IEP" />
             </div>
-            <h1 className="text-xl md:text-2xl font-serif font-black text-white flex items-center gap-2 mt-0.5">
-              <span>{studentName}</span>
-              <span className="text-slate-600 font-normal">·</span>
-              <span className="text-sm md:text-base font-sans font-medium text-slate-300">
-                {studentGrade}
-              </span>
-            </h1>
+
+            <div className="flex items-center gap-2 text-[14px] text-[#B8C2D8] mt-2">
+              <User className="h-3.5 w-3.5 text-[#8E98B4]" />
+              <span className="font-medium text-[#E5E9F5]">{studentName}</span>
+              <span className="text-[#5E6B8A]">/</span>
+              <span>{studentGrade}</span>
+            </div>
           </div>
         </div>
 
-        {/* Global Toolbar Controls */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Advocate Mode Toggle */}
-          <label className="relative inline-flex items-center cursor-pointer select-none bg-slate-950/80 px-3 py-1.5 rounded-xl border border-white/10 hover:border-white/20 transition-colors">
-            <input
-              type="checkbox"
-              checked={advocateMode}
-              onChange={(e) => onAdvocateModeChange(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-7 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[8px] after:left-[14px] after:bg-slate-400 peer-checked:after:bg-amber-400 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500/20 peer-checked:border peer-checked:border-amber-500/40" />
-            <span className="text-xs text-slate-300 ml-2.5 font-mono font-bold uppercase tracking-wider">
-              Advocate Mode
-            </span>
-          </label>
+        {/* Top-Right Action Buttons: View Switcher (Main Split vs Connected Cards), Change files & Export brief */}
+        <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-center">
+          {/* View Mode Toggle: Main Split View vs Connected Cards View */}
+          <div className="inline-flex p-1 rounded-lg bg-[#070E1F] border border-[#28385C]">
+            <button
+              type="button"
+              onClick={() => onViewChange("split")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                currentView === "split"
+                  ? "bg-[#2C336A] text-white border border-[#6E78FF]/60 shadow-sm"
+                  : "text-[#9AA6C4] hover:text-white"
+              }`}
+              title="Main Split Comparison View"
+            >
+              <Columns3 className="h-3.5 w-3.5" />
+              <span>Main View</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewChange("board")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                currentView === "board"
+                  ? "bg-[#2C336A] text-white border border-[#6E78FF]/60 shadow-sm"
+                  : "text-[#9AA6C4] hover:text-white"
+              }`}
+              title="Connected Cards Circuit View (with connecting lines)"
+            >
+              <GitCompare className="h-3.5 w-3.5" />
+              <span>Cards View</span>
+            </button>
+          </div>
 
-          {/* Change Files */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onResetUploads}
-            className="border-white/10 text-slate-300 hover:bg-white/5 text-xs h-9"
+          <button
+            type="button"
+            onClick={onToggleFilePickerModal}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0B1428] hover:bg-[#12203D] border border-[#2A3958] hover:border-[#496090] text-[13.5px] font-medium text-[#E6EBF8] transition-all cursor-pointer shadow-sm"
           >
-            <RefreshCw className="h-3.5 w-3.5 mr-1.5 text-slate-400" /> Upload Different Files
-          </Button>
+            <FolderOpen className="h-4 w-4 text-[#A9B4D0]" />
+            <span>Change files</span>
+          </button>
 
-          {/* Print Summary Handout */}
-          <Button
-            size="sm"
+          <button
+            type="button"
             onClick={onPrintBrief}
-            className="bg-indigo-650 hover:bg-indigo-600 text-white text-xs h-9 px-4 font-bold shadow-md shadow-indigo-650/20"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0B1428] hover:bg-[#12203D] border border-[#2A3958] hover:border-[#496090] text-[13.5px] font-medium text-[#E6EBF8] transition-all cursor-pointer shadow-sm"
           >
-            <Printer className="h-3.5 w-3.5 mr-1.5" /> Print Summary Brief
-          </Button>
+            <Download className="h-4 w-4 text-[#A9B4D0]" />
+            <span>Export brief</span>
+          </button>
         </div>
       </div>
 
-      {/* ── WORKSTATION CONTROL STRIP: VIEW SELECTOR + VERSION DROPDOWNS ── */}
-      <div className="bg-[#07162B]/70 border border-white/10 rounded-2xl p-2.5 md:p-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* View Selector (Comparison Board | Detailed Changes) */}
-        <div className="inline-flex bg-slate-950/90 p-1 rounded-xl border border-white/10 shadow-inner">
-          <button
-            onClick={() => onViewChange("board")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
-              currentView === "board"
-                ? "bg-indigo-650 text-white shadow-md shadow-indigo-650/30 border border-indigo-400/30"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
-            }`}
+      {/* ── SIMPLE OLD (LEFT) vs. NEW (RIGHT) FILE SELECTOR BAR ── */}
+      <div className="w-full rounded-xl bg-[#070E1F]/95 border border-[#1E2B4A] px-4 py-2.5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.85)] flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5">
+        {/* LEFT PILL: ALWAYS OLD / PREVIOUS FILE */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="w-full sm:w-auto min-w-[250px] inline-flex items-center justify-between gap-3 px-4 py-2 rounded-lg bg-[#0D162B] hover:bg-[#13203B] border border-[#2C3A5E] hover:border-[#4D6194] text-[13px] text-[#DCE2F2] transition-all cursor-pointer shadow-sm group"
+              title="Choose Old / Previous IEP File (Always on Left)"
+            >
+              <div className="flex items-center gap-2.5 truncate">
+                <FileText className="h-4 w-4 text-[#9AA6C4] shrink-0" />
+                <span className="uppercase tracking-wider text-[11px] font-bold text-[#A6B2D0]">
+                  PREVIOUS
+                </span>
+                <span className="text-[#5C698A]">•</span>
+                <span className="font-medium text-[#F3F6FF] truncate">
+                  {oldVersion.date}
+                </span>
+              </div>
+              <ChevronDown className="h-3.5 w-3.5 text-[#7E8AA8] group-hover:text-white shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="center"
+            className="bg-[#0B1528] border border-[#2A3958] text-[#E6EBF8] w-72 z-50 p-1.5 shadow-2xl"
           >
-            <Columns3 className="h-3.5 w-3.5" />
-            <span>Comparison Board</span>
-            {currentView === "board" && (
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            )}
-          </button>
+            <DropdownMenuLabel className="text-[10.5px] uppercase tracking-wider text-[#9AA6C4]">
+              Left Side · Old / Previous IEP
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-[#1E2B48]" />
+            {IEP_VERSION_OPTIONS.map((v) => (
+              <DropdownMenuItem
+                key={v.id}
+                onClick={() => onSelectOldVersion(v)}
+                className="flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer hover:bg-white/[0.06]"
+              >
+                <div>
+                  <div className="text-xs font-semibold text-white">
+                    {v.date}
+                  </div>
+                  <div className="text-[11px] text-[#9AA6C4]">{v.badgeText}</div>
+                </div>
+                {oldVersion.id === v.id && (
+                  <Check className="h-4 w-4 text-[#FFE394]" />
+                )}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator className="bg-[#1E2B48]" />
+            <DropdownMenuItem
+              onClick={() => oldFileInputRef.current?.click()}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-xs font-semibold text-[#FFE394] hover:bg-[#162442]"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              <span>Upload Old / Previous File...</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          <button
-            onClick={() => onViewChange("detailed")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
-              currentView === "detailed"
-                ? "bg-indigo-650 text-white shadow-md shadow-indigo-650/30 border border-indigo-400/30"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <Layers className="h-3.5 w-3.5" />
-            <span>Detailed Changes</span>
-            {currentView === "detailed" && (
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            )}
-          </button>
+        {/* CENTER ARROW ICON: OLD (LEFT) ⇄ NEW (RIGHT) */}
+        <div className="flex items-center justify-center text-[#7E8AA8]">
+          <ArrowLeftRight className="h-4 w-4" />
         </div>
 
-        {/* ── Version Selector Strip: NEW IEP ⇄ OLD IEP ── */}
-        <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-          {/* NEW IEP Version Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 bg-slate-950/90 border border-indigo-500/30 hover:border-indigo-500/60 px-3 py-1.5 rounded-xl text-slate-200 cursor-pointer transition-colors group">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
-                  NEW IEP:
-                </span>
-                <span className="font-bold text-white group-hover:text-indigo-200">
-                  {newVersion.label}
-                </span>
-                <Badge className="bg-indigo-500/10 text-indigo-300 border-indigo-500/20 text-[9px] px-1.5 py-0 h-4">
-                  {newVersion.badgeText}
-                </Badge>
-                <ChevronDown className="h-3.5 w-3.5 text-slate-500 group-hover:text-slate-300" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="start"
-              className="bg-[#07162B] border border-white/10 text-slate-200 font-mono text-xs w-60 z-50"
+        {/* RIGHT PILL: ALWAYS NEW / PROPOSED FILE */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="w-full sm:w-auto min-w-[250px] inline-flex items-center justify-between gap-3 px-4 py-2 rounded-lg bg-gradient-to-r from-[#23275A] via-[#2B2F6B] to-[#202454] hover:brightness-110 border border-[#727CFF]/75 text-[13px] text-white transition-all cursor-pointer shadow-[0_0_22px_rgba(104,114,255,0.28)] group"
+              title="Choose New / Proposed IEP File (Always on Right)"
             >
-              <DropdownMenuLabel className="text-[10px] uppercase text-slate-400 font-sans tracking-wider">
-                Select Proposed / New IEP Version
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/10" />
-              {IEP_VERSION_OPTIONS.map((v) => (
-                <DropdownMenuItem
-                  key={v.id}
-                  onClick={() => onSelectNewVersion(v)}
-                  className="flex items-center justify-between cursor-pointer hover:bg-white/5"
-                >
-                  <div className="space-y-0.5">
-                    <div className="font-bold text-white">{v.label}</div>
-                    <div className="text-[10px] text-slate-400">{v.badgeText}</div>
+              <div className="flex items-center gap-2.5 truncate">
+                <FileText className="h-4 w-4 text-[#B8C0FF] shrink-0" />
+                <span className="uppercase tracking-wider text-[11px] font-bold text-[#D4D9FF]">
+                  PROPOSED
+                </span>
+                <span className="text-[#8E96D8]">•</span>
+                <span className="font-semibold text-white truncate">
+                  {newVersion.date}
+                </span>
+              </div>
+              <ChevronDown className="h-3.5 w-3.5 text-[#C2C8FF] group-hover:text-white shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="center"
+            className="bg-[#0B1528] border border-[#2A3958] text-[#E6EBF8] w-72 z-50 p-1.5 shadow-2xl"
+          >
+            <DropdownMenuLabel className="text-[10.5px] uppercase tracking-wider text-[#B8C0FF]">
+              Right Side · New / Proposed IEP
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-[#1E2B48]" />
+            {IEP_VERSION_OPTIONS.map((v) => (
+              <DropdownMenuItem
+                key={v.id}
+                onClick={() => onSelectNewVersion(v)}
+                className="flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer hover:bg-white/[0.06]"
+              >
+                <div>
+                  <div className="text-xs font-semibold text-white">
+                    {v.date}
                   </div>
-                  {newVersion.id === v.id && <Check className="h-3.5 w-3.5 text-indigo-400" />}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Interactive Swap / Bi-directional Icon */}
-          <span className="text-slate-500 px-1 font-sans text-sm font-black">⇄</span>
-
-          {/* OLD IEP Version Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 bg-slate-950/90 border border-amber-500/30 hover:border-amber-500/60 px-3 py-1.5 rounded-xl text-slate-200 cursor-pointer transition-colors group">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
-                  OLD IEP:
-                </span>
-                <span className="font-bold text-white group-hover:text-amber-200">
-                  {oldVersion.label}
-                </span>
-                <Badge className="bg-amber-500/10 text-amber-300 border-amber-500/20 text-[9px] px-1.5 py-0 h-4">
-                  {oldVersion.badgeText}
-                </Badge>
-                <ChevronDown className="h-3.5 w-3.5 text-slate-500 group-hover:text-slate-300" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-[#07162B] border border-white/10 text-slate-200 font-mono text-xs w-60 z-50"
+                  <div className="text-[11px] text-[#9AA6C4]">{v.badgeText}</div>
+                </div>
+                {newVersion.id === v.id && (
+                  <Check className="h-4 w-4 text-[#939BFF]" />
+                )}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator className="bg-[#1E2B48]" />
+            <DropdownMenuItem
+              onClick={() => newFileInputRef.current?.click()}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-xs font-semibold text-[#B8C0FF] hover:bg-[#1E2352]"
             >
-              <DropdownMenuLabel className="text-[10px] uppercase text-slate-400 font-sans tracking-wider">
-                Select Historical / Baseline Version
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/10" />
-              {IEP_VERSION_OPTIONS.map((v) => (
-                <DropdownMenuItem
-                  key={v.id}
-                  onClick={() => onSelectOldVersion(v)}
-                  className="flex items-center justify-between cursor-pointer hover:bg-white/5"
-                >
-                  <div className="space-y-0.5">
-                    <div className="font-bold text-white">{v.label}</div>
-                    <div className="text-[10px] text-slate-400">{v.badgeText}</div>
-                  </div>
-                  {oldVersion.id === v.id && <Check className="h-3.5 w-3.5 text-amber-400" />}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <Upload className="h-3.5 w-3.5" />
+              <span>Upload New / Proposed File...</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* ── PARENT SCHOOL CORRECTION EMAIL NEXT-STEP BANNER ── */}
+      <div className="w-full rounded-xl bg-gradient-to-r from-[#171836] via-[#121A38] to-[#0C142B] border border-[#4B3F28]/80 px-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 rounded-lg bg-[#2A2115] border border-[#C5A059]/50 text-[#FFE394] shrink-0">
+            <AlertTriangle className="h-4 w-4" />
+          </div>
+          <p className="text-xs sm:text-[13.5px] text-[#EDE8DC]">
+            <strong className="text-[#FFE394] font-semibold">
+              Waypoint found {flaggedProblemCount}{" "}
+              {flaggedProblemCount === 1 ? "problem" : "problems"}
+            </strong>{" "}
+            — use this email template to notify your school of any issues found
+            and request IEP corrections.
+          </p>
         </div>
+
+        <button
+          type="button"
+          onClick={onOpenSchoolEmailModal}
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-gradient-to-b from-[#E5C887] via-[#C69F56] to-[#987230] text-[#0E1322] font-bold text-xs border border-[#FCE7B6]/75 shadow-sm hover:brightness-110 transition-all cursor-pointer shrink-0 self-start sm:self-center"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+        >
+          <Mail className="h-3.5 w-3.5" />
+          <span>Open School Email Template ({flaggedProblemCount})</span>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </button>
       </div>
     </div>
   );
