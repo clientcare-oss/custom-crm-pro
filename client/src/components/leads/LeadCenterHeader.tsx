@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Zap, PhoneCall, ClipboardList, TrendingUp } from "lucide-react";
+import { Plus, Zap, PhoneCall, ClipboardList, Radio } from "lucide-react";
 import PageIdBadge from "@/components/PageIdBadge";
 
 interface LeadCenterHeaderProps {
@@ -20,7 +20,7 @@ export function LeadCenterHeader({
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-[#3A2C18]">
       <div className="flex items-center gap-3.5">
         <div className="w-11 h-11 rounded-xl bg-[#020A17] border border-[#3A2C18] flex items-center justify-center text-[#FFE394] shadow-md shadow-black/40 shrink-0">
-          <TrendingUp className="w-5 h-5" />
+          <Radio className="w-5 h-5" />
         </div>
         <div>
           <div className="flex items-center gap-2.5">
@@ -28,9 +28,13 @@ export function LeadCenterHeader({
               Lead Center
             </h1>
             <PageIdBadge id="PG-003" />
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#091D34] border border-[#C5A059]/50 text-[10px] font-mono font-bold text-[#FFE394]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              CB / VHF RESCUE WATCH
+            </span>
           </div>
           <p className="text-xs sm:text-sm text-[#C6B697] mt-0.5">
-            Track families through your discovery process, call pipeline, and prospective intake.
+            Standing watch on the family rescue frequency — hear every incoming call and dispatch advocacy help in time.
           </p>
         </div>
       </div>

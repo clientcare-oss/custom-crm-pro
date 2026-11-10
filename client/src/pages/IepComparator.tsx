@@ -40,6 +40,13 @@ export default function IepComparator() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
 
+  // Automatically collapse the main left CRM sidebar when entering IEP Comparator so both IEP pages have maximum horizontal space
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("waypoint:collapse-sidebar"));
+    }
+  }, []);
+
   // Optional ?contactId=... parameter to load student's stored IEP documents via trpc.iep.get
   const contactIdParam = useMemo(() => {
     if (typeof window === "undefined") return null;
@@ -483,13 +490,13 @@ export default function IepComparator() {
   return (
     <ScopedErrorBoundary>
       <div
-        className="min-h-[calc(100vh-2rem)] w-full max-w-full overflow-x-hidden text-[#FBF6EC] px-2 sm:px-4 lg:px-5 py-4 select-none"
+        className="min-h-[calc(100vh-1rem)] w-full max-w-full overflow-x-hidden text-[#FBF6EC] px-1.5 sm:px-2.5 py-2 select-none"
         style={{
           background:
-            "radial-gradient(ellipse at 50% 0%, #0D1938 0%, #000820 60%, #000514 100%)",
+            "radial-gradient(ellipse at 50% 0%, #102B4E 0%, #07162B 55%, #030D1A 100%)",
         }}
       >
-        <div className="max-w-[1680px] mx-auto space-y-3.5">
+        <div className="w-full max-w-none mx-auto space-y-2">
           {/* ── TOP WORKSPACE HEADER WITH 3-VIEW SELECTOR (Original Documents | Cards | Notes) ── */}
           <ComparisonHeader
             currentView={currentView}
@@ -638,24 +645,48 @@ export default function IepComparator() {
             </div>
           )}
 
-          {/* ── VIEW 3: NOTES & DETAILED BRIEF VIEW ── */}
+          {/* ── VIEW 3: NOTES & DETAILED BRIEF VIEW (Includes Phrase Sticky-Note Inspector + Full Notes Brief) ── */}
           {currentView === "notes" && (
-            <DetailedChangesView
-              items={items}
-              selectedItemId={selectedItem.id}
-              onSelectItem={handleSelectFinding}
-              onOpenInOriginalDocuments={handleOpenInOriginalDocuments}
-              onOpenNoteDrawer={handleOpenNoteDrawer}
-              comparisonGeneralNote={comparisonGeneralNote}
-              onUpdateComparisonGeneralNote={setComparisonGeneralNote}
-              advocateMode={advocateMode}
-              onToggleStar={handleToggleStar}
-              onToggleReviewed={(id) => handleToggleReviewed(id, false)}
-              onUpdateNote={handleUpdateNote}
-              onPrintBrief={() => window.print()}
-              studentName="Michael Sheep"
-              studentGrade="8th Grade"
-            />
+            <div className="space-y-6">
+              {/* Top: Sticky-Note Phrase Comparison & Review Note Card for the Active Finding */}
+              <IepComparatorSplitWorkspace
+                items={items}
+                selectedItem={selectedItem}
+                onSelectItem={(item) => handleSelectFinding(item.id)}
+                oldVersion={oldVersion}
+                newVersion={newVersion}
+                onToggleStar={handleToggleStar}
+                onToggleReviewed={handleToggleReviewed}
+                onUpdateNote={handleUpdateNote}
+                onToggleLinkMinutes={handleToggleLinkMinutes}
+                onSendToBlueprint={handleSendToBlueprint}
+                onOpenSchoolEmailModal={() => setSchoolEmailModalOpen(true)}
+                onSwitchToBoardView={() => {
+                  setCardsSubMode("circuit");
+                  handleViewChange("cards");
+                }}
+                onOpenNoteDrawer={handleOpenNoteDrawer}
+                onOpenInOriginalDocuments={handleOpenInOriginalDocuments}
+              />
+
+              {/* Below: All Surrounding Detailed Changes Sections, Session Notes & Prep Brief */}
+              <DetailedChangesView
+                items={items}
+                selectedItemId={selectedItem.id}
+                onSelectItem={handleSelectFinding}
+                onOpenInOriginalDocuments={handleOpenInOriginalDocuments}
+                onOpenNoteDrawer={handleOpenNoteDrawer}
+                comparisonGeneralNote={comparisonGeneralNote}
+                onUpdateComparisonGeneralNote={setComparisonGeneralNote}
+                advocateMode={advocateMode}
+                onToggleStar={handleToggleStar}
+                onToggleReviewed={(id) => handleToggleReviewed(id, false)}
+                onUpdateNote={handleUpdateNote}
+                onPrintBrief={() => window.print()}
+                studentName="Michael Sheep"
+                studentGrade="8th Grade"
+              />
+            </div>
           )}
         </div>
 

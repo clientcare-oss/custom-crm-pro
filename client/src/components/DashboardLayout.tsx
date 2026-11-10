@@ -738,19 +738,21 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
   const [goToPageOpen, setGoToPageOpen] = useState(false);
 
-  // Auto-collapse sidebar when entering State Complaint Workspace to maximize document canvas space
+  // Auto-collapse sidebar when entering State Complaint Workspace or IEP Comparator to maximize document canvas space
   const prevLocationRef = useRef<string>("");
   useEffect(() => {
-    const isStateComplaint =
+    const isAutoCollapseDocWorkspace =
       location.startsWith("/state-complaint-builder") ||
       location.startsWith("/tools/state-complaint-builder") ||
-      location.startsWith("/complaint");
-    const wasStateComplaint =
+      location.startsWith("/complaint") ||
+      location.startsWith("/tools/iep-comparator");
+    const wasAutoCollapseDocWorkspace =
       prevLocationRef.current.startsWith("/state-complaint-builder") ||
       prevLocationRef.current.startsWith("/tools/state-complaint-builder") ||
-      prevLocationRef.current.startsWith("/complaint");
+      prevLocationRef.current.startsWith("/complaint") ||
+      prevLocationRef.current.startsWith("/tools/iep-comparator");
 
-    if (isStateComplaint && !wasStateComplaint) {
+    if (isAutoCollapseDocWorkspace && !wasAutoCollapseDocWorkspace) {
       setOpen(false);
       if (isMobile) {
         setOpenMobile(false);
@@ -791,7 +793,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     if (
       path.startsWith("/state-complaint-builder") ||
       path.startsWith("/tools/state-complaint-builder") ||
-      path.startsWith("/complaint")
+      path.startsWith("/complaint") ||
+      path.startsWith("/tools/iep-comparator")
     ) {
       setOpen(false);
       if (isMobile) setOpenMobile(false);

@@ -15,6 +15,9 @@ import {
   Activity,
   Sparkles,
   Columns3,
+  Radio,
+  Mic,
+  LifeBuoy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import PageIdBadge from "@/components/PageIdBadge";
@@ -50,6 +53,8 @@ export interface TunerFamilyItem {
 export interface TunerStageMeta {
   id: TunerStageId;
   label: string;
+  cbChannel: string;
+  rescueSubtext: string;
   knobAngle: number; // degrees for the rotary indicator
   needlePercent: number; // % across the glass scale
   defaultStatus: LeadStatus;
@@ -59,6 +64,8 @@ export const TUNER_STAGES: TunerStageMeta[] = [
   {
     id: "new",
     label: "New inquiries",
+    cbChannel: "CH 09 • HAILING",
+    rescueSubtext: "Incoming family calls requesting advocacy rescue",
     knobAngle: -54,
     needlePercent: 13.5,
     defaultStatus: "New",
@@ -66,6 +73,8 @@ export const TUNER_STAGES: TunerStageMeta[] = [
   {
     id: "discovery",
     label: "Discovery",
+    cbChannel: "CH 16 • RESCUE WATCH",
+    rescueSubtext: "Listening to family calls & triaging next steps",
     knobAngle: -18,
     needlePercent: 38.5,
     defaultStatus: "Discovery Completed",
@@ -73,6 +82,8 @@ export const TUNER_STAGES: TunerStageMeta[] = [
   {
     id: "decision",
     label: "Decision",
+    cbChannel: "CH 22 • LIFEBOAT PLAN",
+    rescueSubtext: "Charting the advocacy rescue plan with the family",
     knobAngle: 18,
     needlePercent: 63.5,
     defaultStatus: "14 Day Follow-up",
@@ -80,6 +91,8 @@ export const TUNER_STAGES: TunerStageMeta[] = [
   {
     id: "onboarding",
     label: "Onboarding",
+    cbChannel: "CH 68 • SAFE HARBOR",
+    rescueSubtext: "Family brought aboard & launching active case",
     knobAngle: 54,
     needlePercent: 87.5,
     defaultStatus: "Approved for Enrollment",
@@ -504,7 +517,7 @@ export function LeadTunerConsole({
         {/* ─── 1. TOP HEADER BAR ─── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <h1
                 className="text-3xl sm:text-[38px] font-bold tracking-tight text-[#FFF4D4] leading-none"
                 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
@@ -512,12 +525,17 @@ export function LeadTunerConsole({
                 Lead Center
               </h1>
               <PageIdBadge id="PG-003" />
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#091D34] border border-[#C5A059]/55 text-[11px] font-mono font-bold uppercase tracking-wider text-[#FFE394] shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34D399]" />
+                <Radio className="w-3.5 h-3.5 text-[#DFBE77]" />
+                <span>CB / VHF CH-16 RESCUE WATCH • LIVE</span>
+              </span>
             </div>
             <p
               className="text-sm sm:text-[17px] text-[#C8B99B] mt-1.5"
               style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
             >
-              Tune in to the next family.
+              Standing watch on the family rescue frequency — hear every incoming call so we can help rescue them in time.
             </p>
           </div>
 
@@ -610,6 +628,61 @@ export function LeadTunerConsole({
             <span className="absolute bottom-2.5 left-2.5 w-2.5 h-2.5 rounded-full bg-gradient-to-br from-[#FFE5A3] via-[#B88B3A] to-[#4A3310] border border-[#241705] shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
             <span className="absolute bottom-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-gradient-to-br from-[#FFE5A3] via-[#B88B3A] to-[#4A3310] border border-[#241705] shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
 
+            {/* ── TOP CB / MARINE RESCUE TRANSCEIVER MONITOR BAR ── */}
+            <div className="mb-3.5 px-3.5 py-2 rounded-xl bg-[#040C1A]/95 border border-[#3A2C18] flex flex-wrap items-center justify-between gap-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.85)]">
+              {/* Left: CB Transceiver Callsign + S-Meter Signal Bars */}
+              <div className="flex items-center gap-3">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0A192F] border border-[#C5A059]/45">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#FFE394]">
+                    RX SQUELCH OPEN
+                  </span>
+                </div>
+
+                {/* 5-Bar CB Signal Strength Meter */}
+                <div className="hidden sm:flex items-end gap-0.5 h-3.5 px-1.5" title="Incoming CB Signal Strength: +20dB">
+                  <span className="w-1 h-1.5 rounded-xs bg-emerald-400" />
+                  <span className="w-1 h-2 rounded-xs bg-emerald-400" />
+                  <span className="w-1 h-2.5 rounded-xs bg-emerald-400" />
+                  <span className="w-1 h-3 rounded-xs bg-[#FFE394]" />
+                  <span className="w-1 h-3.5 rounded-xs bg-[#DFBE77] shadow-[0_0_6px_#FFE394]" />
+                </div>
+
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#C6B697] hidden md:inline">
+                  WAYPOINT CB RESCUE WATCH • {activeStageMeta.cbChannel}
+                </span>
+              </div>
+
+              {/* Center: Live Incoming Call Feed */}
+              <div className="flex items-center gap-2 min-w-0 flex-1 justify-center">
+                <LifeBuoy className="w-3.5 h-3.5 text-[#FFE394] shrink-0 animate-spin" style={{ animationDuration: "10s" }} />
+                <p className="text-xs text-[#FFF4D4] truncate">
+                  <strong className="text-[#FFE394] font-semibold">Incoming Rescue Call:</strong>{" "}
+                  “{currentStageFamilies[0]?.parentName || "Eleanor Vance"} calling in for{" "}
+                  {currentStageFamilies[0]?.studentName || "Leo"} ({currentStageFamilies[0]?.gradeLabel || "Grade 4"}) —{" "}
+                  <span className="italic text-[#D8C7A5]">
+                    {currentStageFamilies[0]?.whatFamilyWants || "Needs immediate IEP advocacy support"}
+                  </span>”
+                </p>
+              </div>
+
+              {/* Right: Push-To-Talk / Answer Call Button */}
+              <button
+                type="button"
+                onClick={() =>
+                  onStartDiscoveryCall(
+                    currentStageFamilies[0]?.rawLead?.id ||
+                      currentStageFamilies[0]?.id ||
+                      nextCallDisplay.leadId
+                  )
+                }
+                className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-[11px] inline-flex items-center gap-1.5 border border-[#FFE394]/70 shadow-[0_2px_8px_rgba(0,0,0,0.75)] hover:brightness-105 transition-all cursor-pointer shrink-0"
+              >
+                <Mic className="w-3 h-3 stroke-[2.4]" />
+                <span>Key Mic • Answer Call</span>
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
               {/* LEFT 8 COLS: Recessed Brass-Rimmed Frequency Glass Window */}
               <div className="lg:col-span-8">
@@ -660,6 +733,16 @@ export function LeadTunerConsole({
                             onClick={() => handleSelectStage(stage.id)}
                             className="group flex flex-col items-center justify-center px-1.5 py-1 transition-all cursor-pointer focus:outline-hidden"
                           >
+                            <span
+                              className={cn(
+                                "text-[9px] sm:text-[10px] font-mono uppercase tracking-widest mb-0.5 transition-colors",
+                                isSelected
+                                  ? "text-[#FFE394] font-bold"
+                                  : "text-[#9C8D74] group-hover:text-[#DFC89C]"
+                              )}
+                            >
+                              {stage.cbChannel}
+                            </span>
                             <span
                               className={cn(
                                 "font-serif text-xs sm:text-[17px] tracking-tight transition-colors line-clamp-1",
@@ -760,7 +843,10 @@ export function LeadTunerConsole({
                           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                         >
                           {currentStageFamilies.length}{" "}
-                          {currentStageFamilies.length === 1 ? "family" : "families"}
+                          {currentStageFamilies.length === 1
+                            ? "family calling in"
+                            : "families calling in"}{" "}
+                          • {activeStageMeta.rescueSubtext}
                         </span>
                       </div>
                     </div>
@@ -768,13 +854,13 @@ export function LeadTunerConsole({
                 </div>
               </div>
 
-              {/* RIGHT 4 COLS: Tactile Rotary Brass Knob ("SELECT STAGE") */}
+              {/* RIGHT 4 COLS: Tactile Rotary Brass CB Channel Knob ("TUNE RESCUE CHANNEL") */}
               <div className="lg:col-span-4 flex flex-col items-center justify-center py-1">
-                {/* SELECT STAGE Header with Flanking Brass Lines */}
-                <div className="flex items-center gap-2.5 w-full max-w-[240px] justify-center mb-2.5">
+                {/* TUNE RESCUE CHANNEL Header with Flanking Brass Lines */}
+                <div className="flex items-center gap-2.5 w-full max-w-[260px] justify-center mb-2.5">
                   <span className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-[#C5A059]/70" />
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#DFC89C]">
-                    SELECT STAGE
+                  <span className="text-[10.5px] font-semibold uppercase tracking-[0.2em] text-[#DFC89C]">
+                    TUNE RESCUE CHANNEL
                   </span>
                   <span className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-[#C5A059]/70" />
                 </div>
@@ -840,12 +926,25 @@ export function LeadTunerConsole({
                   </button>
                 </div>
 
-                <p
-                  className="font-serif italic text-xs text-[#C6B697] mt-2.5 text-center"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                >
-                  Turn the dial or choose a stage
-                </p>
+                {/* Recessed CB Speaker Grille Slots + Rescue Watch Caption */}
+                <div className="mt-2.5 flex flex-col items-center gap-1.5">
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#040B18] border border-[#3A2C18]/90 shadow-inner"
+                    title="CB Speaker Monitor Active"
+                  >
+                    <span className="w-5 h-1 rounded-full bg-[#01040A] border-b border-[#C5A059]/25" />
+                    <span className="w-7 h-1 rounded-full bg-[#01040A] border-b border-[#C5A059]/25" />
+                    <span className="w-9 h-1 rounded-full bg-[#01040A] border-b border-[#C5A059]/25" />
+                    <span className="w-7 h-1 rounded-full bg-[#01040A] border-b border-[#C5A059]/25" />
+                    <span className="w-5 h-1 rounded-full bg-[#01040A] border-b border-[#C5A059]/25" />
+                  </div>
+                  <p
+                    className="font-serif italic text-xs text-[#C6B697] text-center"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  >
+                    Turn the CB dial to monitor incoming family rescue calls
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -856,22 +955,29 @@ export function LeadTunerConsole({
           {/* LEFT 8 COLUMNS: Selected Stage Header + Family Accordion Cards */}
           <div className="lg:col-span-8 space-y-4">
             {/* Stage Section Header */}
-            <div>
-              <h2
-                className="text-2xl sm:text-[31px] font-bold text-[#FFF4D4] tracking-tight leading-tight"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              >
-                {activeStageMeta.label}
-              </h2>
-              <p className="text-xs sm:text-sm text-[#B8C7DC] mt-0.5">
-                {currentStageFamilies.length}{" "}
-                {currentStageFamilies.length === 1 ? "family" : "families"}
-                {scheduledCallsInStageCount > 0
-                  ? ` • ${scheduledCallsInStageCount} ${
-                      scheduledCallsInStageCount === 1 ? "call" : "calls"
-                    } coming up`
-                  : " • Ready for advocate action"}
-              </p>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2
+                    className="text-2xl sm:text-[31px] font-bold text-[#FFF4D4] tracking-tight leading-tight"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  >
+                    {activeStageMeta.label}
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#0B1C36] border border-[#C5A059]/45 text-[10.5px] font-mono font-bold text-[#FFE394]">
+                    {activeStageMeta.cbChannel}
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-[#B8C7DC] mt-0.5">
+                  {currentStageFamilies.length}{" "}
+                  {currentStageFamilies.length === 1 ? "family" : "families"} on frequency
+                  {scheduledCallsInStageCount > 0
+                    ? ` • ${scheduledCallsInStageCount} rescue ${
+                        scheduledCallsInStageCount === 1 ? "call" : "calls"
+                      } scheduled`
+                    : " • Standing by for advocate dispatch"}
+                </p>
+              </div>
             </div>
 
             {/* Family Cards Stack */}
@@ -929,17 +1035,18 @@ export function LeadTunerConsole({
                           </div>
                         </div>
 
-                        {/* Middle Section: WHAT THE FAMILY WANTS */}
+                        {/* Middle Section: INCOMING CALL TRANSMISSION / WHAT THE FAMILY NEEDS HELP RESCUING */}
                         <div className="mt-4 pt-3.5 border-t border-[#1E3558]/90">
-                          <div className="text-[10.5px] sm:text-[11px] font-bold uppercase tracking-[0.16em] text-[#D8B979]">
-                            WHAT THE FAMILY WANTS
+                          <div className="flex items-center gap-2 text-[10.5px] sm:text-[11px] font-bold uppercase tracking-[0.16em] text-[#D8B979]">
+                            <Radio className="w-3.5 h-3.5 text-[#FFE394]" />
+                            <span>INCOMING TRANSMISSION • WHAT THE FAMILY NEEDS HELP RESCUING</span>
                           </div>
                           <p className="text-sm sm:text-[15.5px] text-[#F0F6FC] mt-1 leading-relaxed">
                             {family.whatFamilyWants}
                           </p>
                         </div>
 
-                        {/* Bottom Action Row: Date/Time + Prepare for call + View intake ↗ */}
+                        {/* Bottom Action Row: Date/Time + Answer & Prepare for call + View intake ↗ */}
                         <div className="mt-4 pt-3.5 border-t border-[#1E3558]/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div className="flex items-center gap-2 text-xs sm:text-sm text-[#E2EDF8]">
                             <Calendar className="w-4 h-4 text-[#E5C175] shrink-0" />
@@ -959,8 +1066,8 @@ export function LeadTunerConsole({
                               }
                               className="h-9 px-4 rounded-lg bg-gradient-to-b from-[#EAD08A] via-[#CEA452] to-[#9E762A] hover:from-[#F2DC9C] hover:via-[#D8B05E] hover:to-[#AD8333] text-[#07162B] font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 border border-[#FFE5A3] shadow-[0_3px_10px_rgba(0,0,0,0.6)] transition-all cursor-pointer"
                             >
-                              <Phone className="w-3.5 h-3.5 stroke-[2.2]" />
-                              <span>Prepare for call</span>
+                              <Mic className="w-3.5 h-3.5 stroke-[2.2]" />
+                              <span>Answer & prepare rescue</span>
                             </button>
 
                             <button
@@ -1024,18 +1131,23 @@ export function LeadTunerConsole({
             </div>
           </div>
 
-          {/* RIGHT 4 COLUMNS: Next discovery call + Recent activity */}
+          {/* RIGHT 4 COLUMNS: Next rescue call + Incoming CB radio log */}
           <div className="lg:col-span-4 lg:border-l lg:border-[#3A2C18]/80 lg:pl-7 space-y-6">
-            {/* Widget 1: Next discovery call */}
+            {/* Widget 1: Next discovery / rescue call */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#E5C175]" />
-                <h3
-                  className="text-lg sm:text-xl font-bold text-[#FFF4D4]"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                >
-                  Next discovery call
-                </h3>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Radio className="w-4 h-4 text-[#E5C175]" />
+                  <h3
+                    className="text-lg sm:text-xl font-bold text-[#FFF4D4]"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  >
+                    Next rescue call
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-2 py-0.5 rounded">
+                  CH-16 DISPATCH
+                </span>
               </div>
 
               <div className="rounded-xl border border-[#2B4368] bg-gradient-to-b from-[#0B1D38] via-[#08162C] to-[#050F1F] p-4 sm:p-5 shadow-[0_10px_28px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.06)]">
@@ -1079,7 +1191,8 @@ export function LeadTunerConsole({
                   onClick={() => onStartDiscoveryCall(nextCallDisplay.leadId)}
                   className="mt-4 w-full h-9 rounded-full bg-[#091931] hover:bg-[#122B4E] border border-[#C5A059]/70 text-[#FFF4D4] hover:text-[#FFE394] text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition-all cursor-pointer"
                 >
-                  <span>Open call console</span>
+                  <Mic className="w-3.5 h-3.5 text-[#E5C175]" />
+                  <span>Answer on Call Console</span>
                   <ArrowRight className="w-3.5 h-3.5 text-[#E5C175]" />
                 </button>
               </div>
@@ -1088,7 +1201,7 @@ export function LeadTunerConsole({
             {/* Subtle Horizontal Divider */}
             <div className="border-t border-[#1E3354]" />
 
-            {/* Widget 2: Recent activity */}
+            {/* Widget 2: Incoming CB Radio Log */}
             <div className="space-y-3.5">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-[#E5C175]" />
@@ -1096,7 +1209,7 @@ export function LeadTunerConsole({
                   className="text-lg sm:text-xl font-bold text-[#FFF4D4]"
                   style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                 >
-                  Recent activity
+                  Incoming CB radio log
                 </h3>
               </div>
 
@@ -1105,10 +1218,10 @@ export function LeadTunerConsole({
                 <div className="relative">
                   <span className="absolute -left-5 top-1.5 w-2.5 h-2.5 rounded-full bg-[#FFE394] border border-[#07162B] shadow-[0_0_8px_#FFE394]" />
                   <div className="text-sm font-semibold text-[#FFF4D4]">
-                    New intake received
+                    Incoming distress / intake call received (CH-09)
                   </div>
                   <div className="text-xs text-[#9FB2CD] mt-0.5">
-                    Eleanor Vance • 2 hours ago
+                    Eleanor Vance • 2 hours ago • Reading & IEP rescue
                   </div>
                 </div>
 
@@ -1116,7 +1229,7 @@ export function LeadTunerConsole({
                 <div className="relative">
                   <span className="absolute -left-5 top-1.5 w-2.5 h-2.5 rounded-full bg-[#D5B067] border border-[#07162B] shadow-[0_0_6px_rgba(213,176,103,0.7)]" />
                   <div className="text-sm font-semibold text-[#FFF4D4]">
-                    Discovery call scheduled
+                    Rescue discovery call locked in (CH-16)
                   </div>
                   <div className="text-xs text-[#9FB2CD] mt-0.5">
                     Eleanor Vance • Thu, Nov 12 at 11:30 AM

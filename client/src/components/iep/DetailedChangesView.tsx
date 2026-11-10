@@ -12,8 +12,38 @@ import {
   CheckCircle2,
   HelpCircle,
   Sparkles,
+  FileText,
+  ExternalLink,
 } from "lucide-react";
 import { ComparisonItem, getStatusTheme } from "./types";
+
+function renderHighlightedPhrase(
+  fullText: string,
+  token: string | undefined,
+  variant: "old" | "new"
+) {
+  if (!token || !fullText.includes(token)) {
+    return <span>{fullText}</span>;
+  }
+  const parts = fullText.split(token);
+  const badgeClass =
+    variant === "old"
+      ? "inline-block px-2 py-0.5 mx-0.5 rounded bg-[#6E2538] text-[#FFD9E2] font-bold border border-[#A83854]/60"
+      : "inline-block px-2 py-0.5 mx-0.5 rounded bg-[#1B6B50] text-[#D7FBE8] font-bold border border-[#2FA87E]/60";
+
+  return (
+    <>
+      {parts.map((part, idx) => (
+        <React.Fragment key={idx}>
+          {part}
+          {idx < parts.length - 1 && (
+            <span className={badgeClass}>{token}</span>
+          )}
+        </React.Fragment>
+      ))}
+    </>
+  );
+}
 
 interface DetailedChangesViewProps {
   items: ComparisonItem[];
@@ -500,37 +530,115 @@ function DetailedItemCard({
           </div>
         </div>
 
-        {/* Side-by-side comparison snippet */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-slate-950/50 p-3.5 rounded-xl border border-white/5 text-xs">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-              Previous Version
-            </span>
-            <p className="text-slate-300 leading-normal">
-              {item.previousValue || (
-                <span className="text-slate-500 italic">Section not included in previous IEP.</span>
+        {/* Side-by-side Dog-Eared Sticky-Note Phrase Comparison Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+          {/* LEFT STICKY NOTE: PREVIOUS LANGUAGE */}
+          <div className="relative rounded-xl bg-[#0B1428] border border-[#233154] p-4 flex flex-col justify-between shadow-[0_12px_30px_rgba(0,0,0,0.65)] overflow-hidden">
+            <div
+              className="pointer-events-none absolute top-0 right-0 w-6 h-6 bg-[#1C2947] border-b border-l border-[#344670]"
+              style={{
+                clipPath: "polygon(0 0, 0 100%, 100% 100%)",
+              }}
+            />
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <FileText className="h-4 w-4 text-[#9AA6C4] mt-0.5 shrink-0" />
+                <div>
+                  <h4 className="text-xs font-bold text-[#E6EBF8]">Previous language</h4>
+                  <p className="text-[10px] text-[#8E98B4]">Mar 3, 2026</p>
+                </div>
+              </div>
+              <div className="text-[14px] leading-[1.6] text-[#F1F4FC] font-normal">
+                {item.previousValue ? (
+                  renderHighlightedPhrase(item.previousValue, item.oldHighlightToken, "old")
+                ) : (
+                  <span className="text-slate-500 italic">Section not included in previous IEP.</span>
+                )}
+              </div>
+              {(item.measurement || item.frequency) && (
+                <div className="pt-1 space-y-0.5 text-[11px] text-[#9AA6C4]">
+                  {item.measurement && <div>Measurement: {item.measurement}</div>}
+                  {item.frequency && <div>Frequency: {item.frequency}</div>}
+                </div>
               )}
-            </p>
-            {item.previousLocation && (
-              <span className="text-[9px] text-slate-500 block mt-2 text-right">
-                {item.previousLocation}
-              </span>
-            )}
+            </div>
+            <div className="pt-3 mt-3 border-t border-[#1A2642] flex items-center justify-between text-[11px] text-[#8E98B4]">
+              <span>{item.previousLocation || "Previous IEP"}</span>
+              {onOpenInOriginalDocuments && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenInOriginalDocuments(item.id);
+                  }}
+                  className="inline-flex items-center gap-1 text-[#C5CCF0] hover:text-white cursor-pointer transition-colors"
+                >
+                  <span>Open source</span>
+                  <ExternalLink className="h-3 w-3" />
+                </button>
+              )}
+            </div>
           </div>
-          <div className="bg-slate-950/50 p-3.5 rounded-xl border border-white/5 text-xs">
-            <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">
-              Proposed Version
-            </span>
-            <p className="text-slate-100 leading-normal">
-              {item.newValue || (
-                <span className="text-rose-400 italic">Section omitted in proposed IEP.</span>
+
+          {/* RIGHT STICKY NOTE: PROPOSED LANGUAGE */}
+          <div className="relative rounded-xl bg-[#0B1428] border border-[#2F3D6B] p-4 flex flex-col justify-between shadow-[0_12px_30px_rgba(0,0,0,0.65)] overflow-hidden">
+            <div
+              className="pointer-events-none absolute top-0 right-0 w-6 h-6 bg-[#243258] border-b border-l border-[#45588A]"
+              style={{
+                clipPath: "polygon(0 0, 0 100%, 100% 100%)",
+              }}
+            />
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <FileText className="h-4 w-4 text-[#B8C0FF] mt-0.5 shrink-0" />
+                <div>
+                  <h4 className="text-xs font-bold text-white">Proposed language</h4>
+                  <p className="text-[10px] text-[#A8B2D8]">May 14, 2026</p>
+                </div>
+              </div>
+              <div className="text-[14px] leading-[1.6] text-white font-normal">
+                {item.newValue ? (
+                  renderHighlightedPhrase(item.newValue, item.newHighlightToken, "new")
+                ) : (
+                  <span className="text-rose-400 italic">Section omitted in proposed IEP.</span>
+                )}
+              </div>
+              {(item.measurement || item.frequency) && (
+                <div className="pt-1 space-y-0.5 text-[11px] text-[#9AA6C4]">
+                  {item.measurement && <div>Measurement: {item.measurement}</div>}
+                  {item.frequency && <div>Frequency: {item.frequency}</div>}
+                </div>
               )}
+            </div>
+            <div className="pt-3 mt-3 border-t border-[#1A2642] flex items-center justify-between text-[11px] text-[#8E98B4]">
+              <span>{item.newLocation || "Proposed IEP"}</span>
+              {onOpenInOriginalDocuments && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenInOriginalDocuments(item.id);
+                  }}
+                  className="inline-flex items-center gap-1 text-[#C5CCF0] hover:text-white cursor-pointer transition-colors"
+                >
+                  <span>Open source</span>
+                  <ExternalLink className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Review Note Sticky Card for this Phrase */}
+        <div className="rounded-xl bg-[#0A1326]/95 border border-[#223052] p-3.5 flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-[#111D38] border border-[#29385C] text-[#E5B85B] shrink-0">
+            <MessageSquare className="h-4 w-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-xs font-bold text-[#E5B85B]">Review note</h4>
+            <p className="text-[13px] text-[#EEF2FC] mt-0.5">
+              {item.userNote || item.reviewNote || item.suggestedQuestion}
             </p>
-            {item.newLocation && (
-              <span className="text-[9px] text-slate-500 block mt-2 text-right">
-                {item.newLocation}
-              </span>
-            )}
           </div>
         </div>
 

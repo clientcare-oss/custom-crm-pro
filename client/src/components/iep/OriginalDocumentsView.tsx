@@ -1,42 +1,39 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
-  AlertCircle,
   Pencil,
+  MinusCircle,
   Plus,
   Type,
   ChevronRight,
   ChevronLeft,
-  ChevronDown,
-  ChevronUp,
   Flag,
   StickyNote,
   Layers,
-  ArrowRight,
   Check,
-  Mail,
   Link2,
-  PanelLeftClose,
-  PanelLeftOpen,
   FileText,
   Sparkles,
+  Mail,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
-import { type ComparisonItem, IEP_VERSION_OPTIONS } from "./types";
+import { ComparisonItem, IEP_VERSION_OPTIONS } from "./types";
 import { EmbeddedPdfDocumentPane } from "./EmbeddedPdfDocumentPane";
 
-export interface OriginalDocumentsViewProps {
+interface OriginalDocumentsViewProps {
   items: ComparisonItem[];
   selectedItemId: string | null;
   onSelectItem: (id: string) => void;
   oldVersionId: string;
   newVersionId: string;
-  oldFileName?: string | null;
-  newFileName?: string | null;
+  oldFileName?: string;
+  newFileName?: string;
   oldPdfBytes: Uint8Array | null;
   newPdfBytes: Uint8Array | null;
   oldPdfUrl?: string | null;
   newPdfUrl?: string | null;
-  isLoadingPdfs?: boolean;
-  pdfError?: string | null;
+  isLoadingPdfs: boolean;
+  pdfError: string | null;
   leftPage: number;
   onLeftPageChange: (page: number) => void;
   rightPage: number;
@@ -58,6 +55,30 @@ export interface OriginalDocumentsViewProps {
   advocateMode?: boolean;
 }
 
+function getShortDeltaTokens(item: ComparisonItem): { prevToken: string; nextToken: string } {
+  switch (item.id) {
+    case "comp-1":
+      return { prevToken: "70%", nextToken: "80%" };
+    case "comp-2":
+      return { prevToken: "30 min/wk", nextToken: "0 min/wk (Consult)" };
+    case "comp-3":
+      return { prevToken: "100% Double Time", nextToken: "50% Extended Time" };
+    case "comp-4":
+      return { prevToken: "Not in Previous", nextToken: "5-min Breaks" };
+    case "comp-5":
+      return { prevToken: "Standard Prompt", nextToken: "Graphic Organizer" };
+    case "comp-6":
+      return { prevToken: "Small Bus + Monitor", nextToken: "Standard Bus Route" };
+    case "comp-7":
+      return { prevToken: "80% Gen Ed", nextToken: "72% Gen Ed" };
+    default:
+      return {
+        prevToken: item.oldHighlightToken || "Baseline",
+        nextToken: item.newHighlightToken || "Proposed",
+      };
+  }
+}
+
 export function OriginalDocumentsView({
   items,
   selectedItemId,
@@ -70,8 +91,8 @@ export function OriginalDocumentsView({
   newPdfBytes,
   oldPdfUrl,
   newPdfUrl,
-  isLoadingPdfs = false,
-  pdfError = null,
+  isLoadingPdfs,
+  pdfError,
   leftPage,
   onLeftPageChange,
   rightPage,
@@ -93,9 +114,13 @@ export function OriginalDocumentsView({
   advocateMode = false,
 }: OriginalDocumentsViewProps) {
   const [queueFilter, setQueueFilter] = useState<"all" | "attention">("all");
-  const [isQueueCollapsed, setIsQueueCollapsed] = useState<boolean>(false);
+  const [showAllQueue, setShowAllQueue] = useState<boolean>(false);
+  const [linkedScrolling, setLinkedScrolling] = useState<boolean>(true);
+  const [leftExternalScroll, setLeftExternalScroll] = useState<number | null>(null);
+  const [rightExternalScroll, setRightExternalScroll] = useState<number | null>(null);
   const [expandedPane, setExpandedPane] = useState<"none" | "previous" | "updated">("none");
   const [mobileActiveDoc, setMobileActiveDoc] = useState<"previous" | "updated">("previous");
+  const [showPhraseSticky, setShowPhraseSticky] = useState<boolean>(false);
   const [meetingDrawerOpen, setMeetingDrawerOpen] = useState<boolean>(false);
 
   const oldVer =
@@ -143,41 +168,71 @@ export function OriginalDocumentsView({
     ? items.findIndex((i) => i.id === activeItem.id) + 1
     : 1;
 
+  // Compact 4-item list unless "View all 7 ->" is toggled (always keeping activeItem visible if beyond 4)
+  const displayedQueue = useMemo(() => {
+    if (showAllQueue || filteredQueue.length <= 4) return filteredQueue;
+    const topFour = filteredQueue.slice(0, 4);
+    if (activeItem && !topFour.some((i) => i.id === activeItem.id)) {
+      return [...filteredQueue.slice(0, 3), activeItem];
+    }
+    return topFour;
+  }, [filteredQueue, showAllQueue, activeItem]);
+
   const getRowIcon = (item: ComparisonItem) => {
     switch (item.status) {
       case "removed":
-        return <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />;
+        return <MinusCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />;
       case "added":
-        return <Plus className="w-3.5 h-3.5 text-emerald-400 shrink-0" />;
+        return <Plus className="w-3.5 h-3.5 text-[#C8D2EC] shrink-0" />;
       case "reworded":
-        return <Type className="w-3.5 h-3.5 text-indigo-300 shrink-0" />;
+        return <Type className="w-3.5 h-3.5 text-[#B4BFF5] shrink-0" />;
       default:
-        return <Pencil className="w-3.5 h-3.5 text-[#E5C158] shrink-0" />;
+        return <Pencil className="w-3.5 h-3.5 text-[#DFBE77] shrink-0" />;
     }
   };
 
-  const getRowBadge = (status: ComparisonItem["status"]) => {
+  const getStatusBadge = (status: ComparisonItem["status"]) => {
     switch (status) {
       case "removed":
         return {
           label: "Removed",
-          cls: "bg-rose-950/60 border-rose-500/35 text-rose-300",
+          cls: "bg-[#3A1926] border-rose-500/40 text-rose-300",
         };
       case "added":
         return {
           label: "Added",
-          cls: "bg-emerald-950/60 border-emerald-500/35 text-emerald-300",
+          cls: "bg-[#12352A] border-emerald-500/40 text-emerald-300",
         };
       case "reworded":
         return {
           label: "Reworded",
-          cls: "bg-indigo-950/60 border-indigo-400/35 text-indigo-300",
+          cls: "bg-[#1B2448] border-indigo-400/40 text-indigo-200",
         };
       default:
         return {
           label: "Modified",
-          cls: "bg-amber-950/50 border-[#C5A059]/40 text-[#FFE394]",
+          cls: "bg-[#332918] border-[#C5A059]/60 text-[#FFE394]",
         };
+    }
+  };
+
+  const handleSelectPrevChange = () => {
+    if (!activeItem) return;
+    const idx = filteredQueue.findIndex((i) => i.id === activeItem.id);
+    if (idx > 0) {
+      onSelectItem(filteredQueue[idx - 1].id);
+    } else if (filteredQueue.length > 0) {
+      onSelectItem(filteredQueue[filteredQueue.length - 1].id);
+    }
+  };
+
+  const handleSelectNextChange = () => {
+    if (!activeItem) return;
+    const idx = filteredQueue.findIndex((i) => i.id === activeItem.id);
+    if (idx >= 0 && idx + 1 < filteredQueue.length) {
+      onSelectItem(filteredQueue[idx + 1].id);
+    } else if (filteredQueue.length > 0) {
+      onSelectItem(filteredQueue[0].id);
     }
   };
 
@@ -192,127 +247,124 @@ export function OriginalDocumentsView({
     }
   };
 
+  const handleLeftUserScroll = useCallback(
+    (ratio: number) => {
+      if (linkedScrolling) {
+        setRightExternalScroll(ratio);
+      }
+    },
+    [linkedScrolling]
+  );
+
+  const handleRightUserScroll = useCallback(
+    (ratio: number) => {
+      if (linkedScrolling) {
+        setLeftExternalScroll(ratio);
+      }
+    },
+    [linkedScrolling]
+  );
+
+  if (!activeItem) return null;
+
+  const activeBadge = getStatusBadge(activeItem.status);
+  const { prevToken, nextToken } = getShortDeltaTokens(activeItem);
+
   return (
-    <div className="flex flex-col lg:flex-row gap-3 w-full min-w-0">
-      {/* LEFT COMPACT COLLAPSIBLE FINDINGS QUEUE */}
-      {isQueueCollapsed ? (
-        <div className="flex lg:flex-col items-center justify-between lg:justify-start gap-2 px-2 py-2.5 rounded-2xl bg-[#050C24]/95 border border-[#1E2B52] shrink-0">
-          <button
-            type="button"
-            onClick={() => setIsQueueCollapsed(false)}
-            className="p-2 rounded-xl bg-[#0D1738] hover:bg-[#172554] border border-[#2C3E75] text-slate-200 transition-all"
-            title="Expand findings queue"
-            aria-label="Expand findings queue"
-          >
-            <PanelLeftOpen className="w-4 h-4 text-[#C4B5FD]" />
-          </button>
-          <div className="flex lg:flex-col items-center gap-1.5">
-            <span className="text-[11px] font-bold text-white px-1.5 py-0.5 rounded bg-[#1E1942] border border-[#6C5CE7]/40">
-              {items.length}
-            </span>
-            <span className="text-[10px] text-slate-400 lg:[writing-mode:vertical-rl] lg:rotate-180 tracking-wider uppercase font-semibold">
-              Findings Queue ({reviewedCount}/{items.length})
-            </span>
-          </div>
-        </div>
-      ) : (
-        <aside className="w-full lg:w-[236px] xl:w-[248px] shrink-0 rounded-2xl bg-[#050C24]/95 border border-[#1E2B52] p-3 flex flex-col justify-between shadow-[0_14px_40px_rgba(0,0,0,0.65)]">
+    <div className="flex flex-col gap-2.5 w-full min-w-0 text-left">
+      {/* ===================================================================== */}
+      {/* TOP CONSOLE SPLIT CARD (Matches Picture: 7 changes Left | Detail Right) */}
+      {/* ===================================================================== */}
+      <div
+        className="rounded-xl border border-[#223052] shadow-[0_16px_42px_rgba(0,0,0,0.85)] overflow-hidden grid grid-cols-1 lg:grid-cols-12"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(10,20,44,0.96) 0%, rgba(6,13,30,0.98) 100%)",
+        }}
+      >
+        {/* ── LEFT COLUMN (4 Cols): COMPACT "7 changes" QUEUE ── */}
+        <div className="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-[#1B2848] p-3.5 sm:p-4 flex flex-col justify-between bg-[#070F22]/90">
           <div>
-            {/* Queue Header + Collapse Button */}
-            <div className="flex items-start justify-between gap-2 mb-3">
-              <div>
-                <h2
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                  className="text-xl font-semibold text-white tracking-tight leading-tight"
+            {/* Header Row: "7 changes" + [ All | Needs attention 3 ] */}
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <h2
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                className="text-xl font-bold text-[#FBF6EC] tracking-tight"
+              >
+                {items.length} changes
+              </h2>
+
+              <div className="inline-flex items-center p-0.5 rounded-lg bg-[#0B1630] border border-[#25355A]">
+                <button
+                  type="button"
+                  onClick={() => setQueueFilter("all")}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                    queueFilter === "all"
+                      ? "bg-gradient-to-b from-[#E5C887] via-[#C69F56] to-[#9E7936] text-[#07162B] shadow-sm"
+                      : "text-[#A8B4D0] hover:text-white"
+                  }`}
                 >
-                  {items.length} changes
-                </h2>
-                <p className="text-xs font-medium text-[#E5C158] mt-0.5">
-                  {needAttentionCount} need attention
-                </p>
+                  All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQueueFilter("attention")}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1 ${
+                    queueFilter === "attention"
+                      ? "bg-gradient-to-b from-[#E5C887] via-[#C69F56] to-[#9E7936] text-[#07162B] font-bold shadow-sm"
+                      : "text-[#C8D2EC] hover:text-white"
+                  }`}
+                >
+                  <span>Needs attention</span>
+                  <span
+                    className={`font-bold ${
+                      queueFilter === "attention" ? "text-[#07162B]" : "text-[#FFE394]"
+                    }`}
+                  >
+                    {needAttentionCount}
+                  </span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsQueueCollapsed(true)}
-                className="p-1.5 rounded-lg bg-[#081029] hover:bg-[#111C42] border border-[#1E2B52] text-slate-400 hover:text-white transition-colors"
-                title="Collapse review queue for wider document reading"
-                aria-label="Collapse review queue"
-              >
-                <PanelLeftClose className="w-4 h-4" />
-              </button>
             </div>
 
-            {/* Segmented Filter Pill */}
-            <div className="grid grid-cols-2 p-1 rounded-xl bg-[#03081A] border border-[#1B264B] mb-3">
-              <button
-                type="button"
-                onClick={() => setQueueFilter("all")}
-                className={`py-1.5 px-2.5 rounded-lg text-[11px] font-semibold transition-all ${
-                  queueFilter === "all"
-                    ? "bg-[#2C255A] text-white shadow-[0_2px_10px_rgba(109,92,231,0.3)] border border-[#6D5CE7]/45"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                All ({items.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setQueueFilter("attention")}
-                className={`py-1.5 px-2.5 rounded-lg text-[11px] font-semibold transition-all ${
-                  queueFilter === "attention"
-                    ? "bg-[#2C255A] text-white shadow-[0_2px_10px_rgba(109,92,231,0.3)] border border-[#6D5CE7]/45"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                Needs attention
-              </button>
-            </div>
-
-            {/* Findings List */}
-            <div className="space-y-1 max-h-[240px] lg:max-h-[460px] overflow-y-auto pr-0.5">
-              {filteredQueue.map((item) => {
-                const isSelected = activeItem?.id === item.id;
-                const badge = getRowBadge(item.status);
+            {/* Compact Rows */}
+            <div className="divide-y divide-[#15203B]">
+              {displayedQueue.map((item) => {
+                const isSelected = item.id === activeItem.id;
+                const badge = getStatusBadge(item.status);
                 return (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => onSelectItem(item.id)}
-                    className={`w-full text-left px-2.5 py-2.5 rounded-xl transition-all flex items-center justify-between gap-2 relative overflow-hidden ${
+                    className={`w-full px-3 py-2 flex items-center justify-between gap-2 text-left transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-gradient-to-r from-[#231C4C] via-[#1A163B] to-[#111530] border border-[#6C5CE7]/45 text-white shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
-                        : "bg-transparent hover:bg-white/[0.03] border border-transparent text-slate-300"
+                        ? "rounded-lg bg-gradient-to-r from-[#2B2419] via-[#222028] to-[#171C34] border border-[#C5A059]/65 text-white shadow-[0_4px_14px_rgba(0,0,0,0.5)]"
+                        : "hover:bg-white/[0.03] text-[#D8E0F2]"
                     }`}
                   >
-                    {isSelected && (
-                      <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r bg-[#E5C158]" />
-                    )}
-                    <div className="flex items-center gap-2 min-w-0 pl-1">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       {getRowIcon(item)}
-                      <div className="min-w-0">
-                        <span
-                          className={`block text-xs font-medium truncate ${
-                            isSelected ? "text-white font-semibold" : "text-slate-200"
-                          }`}
-                        >
-                          {item.title}
-                        </span>
-                        <span className="block text-[10px] text-slate-400 truncate">
-                          {item.previousPage ? `Pg ${item.previousPage}` : "—"} →{" "}
-                          {item.newPage ? `Pg ${item.newPage}` : "—"}
-                        </span>
-                      </div>
+                      <span
+                        className={`text-[13px] truncate ${
+                          isSelected ? "font-semibold text-[#FFF4D4]" : "font-medium"
+                        }`}
+                      >
+                        {item.title}
+                      </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span
-                        className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold border ${badge.cls}`}
-                      >
-                        {badge.label}
-                      </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {(isSelected || item.status === "removed") && (
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded font-semibold border ${badge.cls}`}
+                        >
+                          {badge.label}
+                        </span>
+                      )}
                       <ChevronRight
                         className={`w-3.5 h-3.5 ${
-                          isSelected ? "text-slate-200" : "text-slate-600"
+                          isSelected ? "text-[#FFE394]" : "text-[#6D7B9B]"
                         }`}
                       />
                     </div>
@@ -322,379 +374,480 @@ export function OriginalDocumentsView({
             </div>
           </div>
 
-          {/* Bottom Progress & School Email Action */}
-          <div className="pt-3 mt-3 border-t border-[#182344] space-y-2.5">
-            <div>
-              <div className="flex items-center justify-between text-[11px] italic text-slate-400 mb-1.5">
-                <span>
-                  {reviewedCount} of {items.length} reviewed
-                </span>
-                <span className="not-italic text-[10px] text-slate-500">
-                  {Math.round((reviewedCount / Math.max(1, items.length)) * 100)}%
-                </span>
-              </div>
-              <div className="w-full h-1.5 rounded-full bg-[#0E1733] overflow-hidden">
+          {/* Bottom "View all 7 ->" toggle */}
+          <div className="pt-2.5 mt-1 border-t border-[#15203B] flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setShowAllQueue((prev) => !prev)}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[#DFBE77] hover:text-[#FFE394] transition-colors cursor-pointer"
+            >
+              <span>
+                {showAllQueue
+                  ? "Show compact list"
+                  : `View all ${filteredQueue.length} →`}
+              </span>
+            </button>
+
+            <span className="text-[10.5px] text-[#7C8AA8] font-mono">
+              Pg {activeItem.previousPage || 9} → Pg {activeItem.newPage || 8}
+            </span>
+          </div>
+        </div>
+
+        {/* ── RIGHT COLUMN (8 Cols): ACTIVE FINDING HERO & TOKEN DELTA ── */}
+        <div className="lg:col-span-8 p-4 sm:p-5 flex flex-col justify-between gap-3.5">
+          {/* Top Overline Row: CHANGE 01 OF 07 · ANNUAL GOALS ... 2 of 7 reviewed [progress] */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9AA6C4]">
+              CHANGE {String(activeIndex).padStart(2, "0")} OF{" "}
+              {String(items.length).padStart(2, "0")} · {activeItem.categoryLabel}
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <span
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                className="text-xs italic text-[#C8D2EC]"
+              >
+                {reviewedCount} of {items.length} reviewed
+              </span>
+              <div className="w-28 h-2 rounded-full bg-[#17223D] overflow-hidden border border-[#25355A]/60">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#8B7AE6] to-[#B7A9FF] transition-all duration-300"
+                  className="h-full rounded-full bg-gradient-to-r from-[#FFE394] via-[#DFBE77] to-[#B68E40] transition-all duration-300"
                   style={{
                     width: `${(reviewedCount / Math.max(1, items.length)) * 100}%`,
                   }}
                 />
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={onOpenCorrectionEmailModal}
-              className="w-full flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-[#111938] hover:bg-[#19234B] border border-[#2C3B6E] text-[11px] font-medium text-[#D8C7A5] hover:text-white transition-all"
-            >
-              <Mail className="w-3.5 h-3.5 text-[#E5C158]" />
-              Draft Parent School Email ({needAttentionCount})
-            </button>
           </div>
-        </aside>
-      )}
 
-      {/* RIGHT MAIN WORKSPACE: COMPACT EXPLANATION BAR + SIDE-BY-SIDE ORIGINAL PDF VIEWERS */}
-      {activeItem && (
-        <section className="flex-1 min-w-0 flex flex-col gap-2.5">
-          {/* 4. COMPACT EXPLANATION BAR ABOVE THE DOCUMENT VIEWERS */}
-          <div className="rounded-2xl bg-[#050C24]/95 border border-[#1E2B52] px-4 py-3 shadow-[0_10px_28px_rgba(0,0,0,0.55)]">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              {/* Left: Category, Title, Change Type Badge, Short Plain-Language Explanation */}
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
-                    {activeItem.categoryLabel} / CHANGE {String(activeIndex).padStart(2, "0")} OF{" "}
-                    {String(items.length).padStart(2, "0")}
-                  </span>
-                  <span className="text-slate-600">•</span>
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                      getRowBadge(activeItem.status).cls
-                    }`}
-                  >
-                    <Pencil className="w-2.5 h-2.5" />
-                    {getRowBadge(activeItem.status).label}
-                  </span>
-                  {activeItem.severity === "high_attention" && (
-                    <span className="px-2 py-0.5 rounded-md bg-rose-500/15 border border-rose-500/35 text-[10px] font-semibold text-rose-300">
-                      Needs Attention
-                    </span>
-                  )}
-                  {activeItem.isReviewed && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/35 text-[10px] font-semibold text-emerald-300">
-                      <Check className="w-2.5 h-2.5" />
-                      Reviewed
-                    </span>
-                  )}
-                </div>
+          {/* Main Title + Status Pill + Short Plain-Language Explanation */}
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <h3
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                className="text-2xl sm:text-[31px] font-bold text-[#FBF6EC] tracking-tight leading-none"
+              >
+                {activeItem.title}
+              </h3>
 
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <h3
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                    className="text-lg sm:text-xl font-semibold text-white tracking-tight"
-                  >
-                    {activeItem.title}:
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-200 italic">
-                    {activeItem.shortSummary || activeItem.explanation}
+              <span
+                className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${activeBadge.cls}`}
+              >
+                {activeBadge.label}
+              </span>
+            </div>
+
+            <p
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              className="text-[15.5px] italic text-[#DCE4F5] mt-1.5"
+            >
+              {activeItem.shortSummary || activeItem.explanation}
+            </p>
+          </div>
+
+          {/* Center Previous -> Proposed Token Delta Comparison Pills (Matches Picture) */}
+          <div className="py-1 flex flex-wrap items-center justify-start sm:justify-center gap-4 sm:gap-6">
+            {/* Previous Value Pill */}
+            <div className="min-w-[170px] px-5 py-2 rounded-lg bg-[#0D162E] border border-[#2C3B5E] inline-flex items-center justify-center gap-3 shadow-inner">
+              <span className="text-xs text-[#9AA6C4] font-medium">Previous</span>
+              <span className="text-lg font-bold text-white tracking-tight">
+                {prevToken}
+              </span>
+            </div>
+
+            {/* Horizontal Arrow */}
+            <div className="flex items-center text-[#7E8CA8]" aria-hidden="true">
+              <div className="w-10 sm:w-14 h-[1.5px] bg-[#5E6E91]" />
+              <ChevronRight className="w-4 h-4 -ml-2 text-[#8E9BB8]" />
+            </div>
+
+            {/* Proposed Value Pill */}
+            <div className="min-w-[170px] px-5 py-2 rounded-lg bg-[#1F1B4A] border border-[#6C5CE7]/75 shadow-[0_0_24px_rgba(108,92,231,0.28)] inline-flex items-center justify-center gap-3">
+              <span className="text-xs text-[#C4B5FD] font-medium">Proposed</span>
+              <span className="text-lg font-bold text-white tracking-tight">
+                {nextToken}
+              </span>
+            </div>
+          </div>
+
+          {/* Optional Expandable Dog-Eared Phrase Sticky Note when toggled */}
+          {showPhraseSticky && (
+            <div className="pt-2 border-t border-[#1A2644] space-y-2 animate-fade-in">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="relative rounded-xl bg-[#0B1428] border border-[#233154] p-3 overflow-hidden">
+                  <div
+                    className="pointer-events-none absolute top-0 right-0 w-4 h-4 bg-[#1C2947] border-b border-l border-[#344670]"
+                    style={{ clipPath: "polygon(0 0, 0 100%, 100% 100%)" }}
+                  />
+                  <div className="text-[11px] font-bold text-[#E6EBF8] mb-1">
+                    Previous language ({oldVer.date})
+                  </div>
+                  <p className="text-xs text-[#F1F4FC] leading-relaxed">
+                    {activeItem.previousValue || "Not present in previous IEP."}
                   </p>
                 </div>
 
-                {advocateMode && activeItem.suggestedQuestion && (
-                  <div className="mt-2 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#111A3A] border border-[#2C3E75] text-xs text-[#FFE394]">
-                    <Sparkles className="w-3.5 h-3.5 text-[#E5C158] shrink-0" />
-                    <span className="truncate">
-                      <strong>Advocate Question:</strong> “{activeItem.suggestedQuestion}”
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Right: Selected Finding Actions Within Immediate Reach */}
-              <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => onToggleStar(activeItem.id)}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                    activeItem.isStarred
-                      ? "bg-amber-500/15 border-[#E5C158]/60 text-[#FFE394]"
-                      : "bg-[#081029] border-[#24325F] text-slate-300 hover:text-white hover:border-slate-500"
-                  }`}
-                >
-                  <Flag
-                    className={`w-3.5 h-3.5 ${
-                      activeItem.isStarred ? "text-[#E5C158] fill-[#E5C158]" : "text-slate-400"
-                    }`}
+                <div className="relative rounded-xl bg-[#0B1428] border border-[#2F3D6B] p-3 overflow-hidden">
+                  <div
+                    className="pointer-events-none absolute top-0 right-0 w-4 h-4 bg-[#243258] border-b border-l border-[#45588A]"
+                    style={{ clipPath: "polygon(0 0, 0 100%, 100% 100%)" }}
                   />
-                  {activeItem.isStarred ? "Flagged" : "Flag for discussion"}
-                </button>
-
+                  <div className="text-[11px] font-bold text-white mb-1">
+                    Proposed language ({newVer.date})
+                  </div>
+                  <p className="text-xs text-white leading-relaxed">
+                    {activeItem.newValue || "Removed in proposed IEP."}
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-lg bg-[#0A1326] border border-[#29385C] px-3 py-2 flex items-center justify-between gap-2 text-xs">
+                <div>
+                  <span className="font-bold text-[#E5B85B] mr-2">Review note:</span>
+                  <span className="text-[#EEF2FC]">
+                    {activeItem.userNote ||
+                      activeItem.reviewNote ||
+                      activeItem.suggestedQuestion}
+                  </span>
+                </div>
                 <button
                   type="button"
                   onClick={() => onOpenNoteDrawer(activeItem.id)}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                    activeItem.userNote
-                      ? "bg-[#1E1942] border-[#6C5CE7]/60 text-white"
-                      : "bg-[#081029] border-[#24325F] text-slate-300 hover:text-white hover:border-slate-500"
-                  }`}
+                  className="text-[11px] font-semibold text-[#FFE394] underline cursor-pointer shrink-0"
                 >
-                  <StickyNote className="w-3.5 h-3.5 text-[#C4B5FD]" />
-                  {activeItem.userNote ? "Edit note" : "Add note"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onSendToBlueprint(activeItem)}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                    activeItem.sentToBlueprint
-                      ? "bg-emerald-950/50 border-emerald-500/50 text-emerald-300"
-                      : "bg-[#081029] border-[#24325F] text-slate-200 hover:text-white hover:border-slate-500"
-                  }`}
-                >
-                  {activeItem.sentToBlueprint ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      Sent to Blueprint
-                    </>
-                  ) : (
-                    <>
-                      <Layers className="w-3.5 h-3.5 text-slate-400" />
-                      Send to Blueprint
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleMarkReviewedAndAdvance}
-                  title="Marks this finding as reviewed by staff/parent (does not approve or consent to the IEP change)"
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    activeItem.isReviewed
-                      ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-300"
-                      : "bg-gradient-to-r from-[#E6C574] via-[#D4AF57] to-[#B68F3A] text-[#07132A] border border-[#FFE394]/60 shadow-[0_4px_14px_rgba(212,175,87,0.3)] hover:brightness-105"
-                  }`}
-                >
-                  {activeItem.isReviewed ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      Reviewed
-                    </>
-                  ) : (
-                    <>
-                      Mark reviewed
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </>
-                  )}
+                  Edit
                 </button>
               </div>
-            </div>
-          </div>
-
-          {/* RESPONSIVE NARROW-WIDTH DOCUMENT SWITCHER (Visible only on phones below md when not expanded) */}
-          {expandedPane === "none" && (
-            <div className="flex md:hidden items-center justify-between gap-2 p-1 rounded-xl bg-[#050C24] border border-[#1E2B52]">
-              <button
-                type="button"
-                onClick={() => setMobileActiveDoc("previous")}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
-                  mobileActiveDoc === "previous"
-                    ? "bg-[#1A2447] text-white border border-slate-500/40"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                Previous IEP ({oldVer.date}) · Pg {leftPage}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMobileActiveDoc("updated")}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
-                  mobileActiveDoc === "updated"
-                    ? "bg-[#241D4F] text-white border border-[#6C5CE7]/60"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5 text-[#C4B5FD]" />
-                Updated IEP ({newVer.date}) · Pg {rightPage}
-              </button>
             </div>
           )}
 
-          {/* 2. SIDE-BY-SIDE EMBEDDED ORIGINAL PDF DOCUMENT VIEWERS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 h-[640px] min-h-[540px] w-full min-w-0">
-            {/* LEFT VIEWER: PREVIOUS IEP */}
-            {expandedPane !== "updated" && (
-              <div
-                className={`${
-                  expandedPane === "previous"
-                    ? "md:col-span-2"
-                    : mobileActiveDoc === "previous"
-                      ? "block"
-                      : "hidden md:block"
-                } h-full min-h-0 min-w-0`}
-              >
-                <EmbeddedPdfDocumentPane
-                  side="previous"
-                  roleBadge="PREVIOUS IEP"
-                  dateLabel={oldVer.date}
-                  fileName={oldFileName || `Michael_Sheep_IEP_${oldVer.date.replace(/[\s,]+/g, "_")}.pdf`}
-                  pdfBytes={oldPdfBytes}
-                  pdfUrl={oldPdfUrl}
-                  isLoadingDoc={isLoadingPdfs}
-                  docError={pdfError}
-                  currentPage={leftPage}
-                  onPageChange={onLeftPageChange}
-                  zoom={leftZoom}
-                  onZoomChange={onLeftZoomChange}
-                  fitWidth={leftFitWidth}
-                  onFitWidthChange={onLeftFitWidthChange}
-                  isExpanded={expandedPane === "previous"}
-                  onToggleExpand={() =>
-                    setExpandedPane((prev) => (prev === "previous" ? "none" : "previous"))
-                  }
-                  findingTargetPage={activeItem.previousPage}
-                  findingAnchorText={activeItem.previousAnchorText}
-                  findingHighlightToken={activeItem.oldHighlightToken}
-                  locationConfidence={activeItem.locationConfidence}
-                  isAbsentInThisVersion={activeItem.status === "added"}
-                  absentReasonText={
-                    activeItem.status === "added"
-                      ? "No matching language found in Previous IEP (new addition in Proposed IEP)"
-                      : undefined
-                  }
-                  sectionLocationLabel={activeItem.previousLocation}
-                />
-              </div>
-            )}
-
-            {/* RIGHT VIEWER: UPDATED / PROPOSED IEP */}
-            {expandedPane !== "previous" && (
-              <div
-                className={`${
-                  expandedPane === "updated"
-                    ? "md:col-span-2"
-                    : mobileActiveDoc === "updated"
-                      ? "block"
-                      : "hidden md:block"
-                } h-full min-h-0 min-w-0`}
-              >
-                <EmbeddedPdfDocumentPane
-                  side="updated"
-                  roleBadge="PROPOSED IEP"
-                  dateLabel={newVer.date}
-                  fileName={newFileName || `Michael_Sheep_IEP_${newVer.date.replace(/[\s,]+/g, "_")}.pdf`}
-                  pdfBytes={newPdfBytes}
-                  pdfUrl={newPdfUrl}
-                  isLoadingDoc={isLoadingPdfs}
-                  docError={pdfError}
-                  currentPage={rightPage}
-                  onPageChange={onRightPageChange}
-                  zoom={rightZoom}
-                  onZoomChange={onRightZoomChange}
-                  fitWidth={rightFitWidth}
-                  onFitWidthChange={onRightFitWidthChange}
-                  isExpanded={expandedPane === "updated"}
-                  onToggleExpand={() =>
-                    setExpandedPane((prev) => (prev === "updated" ? "none" : "updated"))
-                  }
-                  findingTargetPage={activeItem.newPage}
-                  findingAnchorText={activeItem.newAnchorText}
-                  findingHighlightToken={activeItem.newHighlightToken}
-                  locationConfidence={activeItem.locationConfidence}
-                  isAbsentInThisVersion={activeItem.status === "removed"}
-                  absentReasonText={
-                    activeItem.status === "removed"
-                      ? "No matching direct service language found in Proposed IEP (verify Section VII)"
-                      : undefined
-                  }
-                  sectionLocationLabel={activeItem.newLocation}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* 6. COLLAPSIBLE MEETING AGREEMENT & REVIEW NOTE BAR (Collapsed by default to preserve reading space) */}
-          <div className="rounded-xl bg-[#050C24]/95 border border-[#1E2B52] overflow-hidden">
+          {/* Bottom Action Row: Flag | Add note | Send to Blueprint | [ ✓ Mark reviewed ] */}
+          <div className="pt-2.5 border-t border-[#18233E] flex flex-wrap items-center justify-between gap-3">
+            {/* Left subtle helper: Phrase sticky note quick toggle */}
             <button
               type="button"
-              onClick={() => setMeetingDrawerOpen((prev) => !prev)}
-              className="w-full px-4 py-2.5 flex items-center justify-between gap-3 text-left hover:bg-white/[0.02] transition-colors"
+              onClick={() => setShowPhraseSticky((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 text-[11px] text-[#9AA6C4] hover:text-[#FFE394] transition-colors cursor-pointer"
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-200">
-                  <Link2 className="w-3.5 h-3.5 text-[#9B8AFB]" />
-                  Meeting agreement:
-                </span>
-                <span
-                  className={`text-xs font-medium ${
-                    activeItem.linkedMinutes ? "text-emerald-400" : "text-slate-400"
-                  }`}
-                >
-                  {activeItem.linkedMinutes
-                    ? "Linked to May 14, 2026 IEP Meeting Minutes"
-                    : "Not linked"}
-                </span>
-                {activeItem.userNote && (
-                  <>
-                    <span className="text-slate-600">•</span>
-                    <span className="text-xs text-[#FFE394] truncate max-w-md">
-                      Saved Note: “{activeItem.userNote}”
-                    </span>
-                  </>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0 text-xs text-slate-400">
-                <span>{meetingDrawerOpen ? "Hide details" : "Expand meeting agreement & notes"}</span>
-                {meetingDrawerOpen ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </div>
+              <StickyNote className="w-3.5 h-3.5 text-[#DFBE77]" />
+              <span>{showPhraseSticky ? "Hide phrase sticky note" : "Phrase sticky note"}</span>
             </button>
 
-            {meetingDrawerOpen && (
-              <div className="px-4 pb-3.5 pt-2 border-t border-[#182344] bg-[#04091E] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="space-y-1 text-xs text-slate-300 max-w-3xl">
-                  <p>
-                    <strong className="text-white">Review guidance:</strong>{" "}
-                    {activeItem.userNote || activeItem.reviewNote || activeItem.explanation}
-                  </p>
-                  {activeItem.meetingAgreementNote && (
-                    <p className="text-slate-400">
-                      <strong className="text-slate-200">Meeting Minute Record:</strong>{" "}
-                      {activeItem.meetingAgreementNote}
-                    </p>
-                  )}
-                </div>
+            {/* Right Primary Actions (Matches Picture) */}
+            <div className="flex flex-wrap items-center gap-4 ml-auto">
+              <button
+                type="button"
+                onClick={() => onToggleStar(activeItem.id)}
+                className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                  activeItem.isStarred
+                    ? "text-[#FFE394] font-semibold"
+                    : "text-[#C8D2EC] hover:text-white"
+                }`}
+              >
+                <Flag
+                  className={`w-3.5 h-3.5 ${
+                    activeItem.isStarred ? "fill-[#FFE394] text-[#FFE394]" : ""
+                  }`}
+                />
+                <span>{activeItem.isStarred ? "Flagged" : "Flag"}</span>
+              </button>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => onToggleLinkMinutes(activeItem.id)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141C3D] hover:bg-[#1E2A5A] border border-[#324582] text-xs font-medium text-[#C4B5FD] transition-all"
-                  >
-                    <Link2 className="w-3.5 h-3.5" />
-                    {activeItem.linkedMinutes ? "Unlink minutes" : "Link meeting minutes"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onOpenNoteDrawer(activeItem.id)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1E1942] hover:bg-[#2A235B] border border-[#6C5CE7]/50 text-xs font-medium text-white transition-all"
-                  >
-                    <StickyNote className="w-3.5 h-3.5 text-[#C4B5FD]" />
-                    Open Note Drawer
-                  </button>
-                </div>
-              </div>
-            )}
+              <button
+                type="button"
+                onClick={() => onOpenNoteDrawer(activeItem.id)}
+                className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                  activeItem.userNote
+                    ? "text-[#FFE394] font-semibold"
+                    : "text-[#C8D2EC] hover:text-white"
+                }`}
+              >
+                <StickyNote className="w-3.5 h-3.5" />
+                <span>{activeItem.userNote ? "Edit note" : "Add note"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onSendToBlueprint(activeItem)}
+                className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                  activeItem.sentToBlueprint
+                    ? "text-emerald-300 font-semibold"
+                    : "text-[#C8D2EC] hover:text-white"
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>
+                  {activeItem.sentToBlueprint ? "In Blueprint" : "Send to Blueprint"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleMarkReviewedAndAdvance}
+                title="Marks this finding as reviewed (distinct from agreeing to the IEP change)"
+                className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeItem.isReviewed
+                    ? "bg-emerald-500/20 border border-emerald-500/45 text-emerald-300"
+                    : "bg-gradient-to-b from-[#E5C887] via-[#C69F56] to-[#987230] text-[#07162B] border border-[#FFE394]/75 shadow-[0_4px_14px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.5)] hover:brightness-105"
+                }`}
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>{activeItem.isReviewed ? "Reviewed" : "Mark reviewed"}</span>
+              </button>
+            </div>
           </div>
-        </section>
+        </div>
+      </div>
+
+      {/* ===================================================================== */}
+      {/* MIDDLE BAR: < Previous change  |  🔗 Linked scrolling  |  Next change > */}
+      {/* ===================================================================== */}
+      <div className="flex items-center justify-between gap-3 px-0.5 py-0.5">
+        <button
+          type="button"
+          onClick={handleSelectPrevChange}
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#091328] hover:bg-[#112040] border border-[#223258] text-xs font-medium text-[#C8D2EC] hover:text-white transition-all cursor-pointer shadow-sm"
+        >
+          <ChevronLeft className="w-3.5 h-3.5 text-[#8E9BB8]" />
+          <span>Previous change</span>
+        </button>
+
+        {/* Center Linked Scrolling Toggle */}
+        <div className="inline-flex items-center gap-2.5">
+          <Link2 className="w-3.5 h-3.5 text-[#DFBE77]" />
+          <span className="text-xs font-medium text-[#DCE4F5]">Linked scrolling</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={linkedScrolling}
+            onClick={() => setLinkedScrolling((prev) => !prev)}
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border transition-colors duration-200 ${
+              linkedScrolling
+                ? "bg-gradient-to-r from-[#DFBE77] to-[#B68E40] border-[#FFE394]/70"
+                : "bg-[#0D1730] border-[#29385C]"
+            }`}
+            title="Toggle synchronized vertical scrolling between Previous IEP and Proposed IEP"
+          >
+            <span
+              className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full transition duration-200 mt-[2px] ${
+                linkedScrolling
+                  ? "translate-x-4 bg-[#07162B] shadow-sm"
+                  : "translate-x-0.5 bg-[#8E9BB8]"
+              }`}
+            />
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSelectNextChange}
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#091328] hover:bg-[#112040] border border-[#223258] text-xs font-medium text-[#C8D2EC] hover:text-white transition-all cursor-pointer shadow-sm"
+        >
+          <span>Next change</span>
+          <ChevronRight className="w-3.5 h-3.5 text-[#8E9BB8]" />
+        </button>
+      </div>
+
+      {/* RESPONSIVE MOBILE DOCUMENT SWITCHER (Below md) */}
+      {expandedPane === "none" && (
+        <div className="flex md:hidden items-center justify-between gap-2 p-1 rounded-xl bg-[#071128] border border-[#223258]">
+          <button
+            type="button"
+            onClick={() => setMobileActiveDoc("previous")}
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+              mobileActiveDoc === "previous"
+                ? "bg-[#14254B] text-white border border-[#C5A059]/50"
+                : "text-[#9AA6C4]"
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            Previous IEP ({oldVer.date}) · Pg {leftPage}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileActiveDoc("updated")}
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+              mobileActiveDoc === "updated"
+                ? "bg-[#14254B] text-white border border-[#C5A059]/50"
+                : "text-[#9AA6C4]"
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5 text-[#C4B5FD]" />
+            Proposed IEP ({newVer.date}) · Pg {rightPage}
+          </button>
+        </div>
       )}
+
+      {/* ===================================================================== */}
+      {/* TWO SIDE-BY-SIDE ORIGINAL PDF DOCUMENT VIEWERS                        */}
+      {/* ===================================================================== */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 h-[calc(100vh-305px)] min-h-[680px] w-full min-w-0">
+        {/* LEFT VIEWER: PREVIOUS IEP */}
+        {expandedPane !== "updated" && (
+          <div
+            className={`${
+              expandedPane === "previous"
+                ? "md:col-span-2"
+                : mobileActiveDoc === "previous"
+                  ? "block"
+                  : "hidden md:block"
+            } h-full min-h-0 min-w-0`}
+          >
+            <EmbeddedPdfDocumentPane
+              side="previous"
+              roleBadge="PREVIOUS IEP"
+              dateLabel={oldVer.date}
+              fileName={
+                oldFileName ||
+                `Michael_Sheep_IEP_${oldVer.date.replace(/[\s,]+/g, "_")}.pdf`
+              }
+              pdfBytes={oldPdfBytes}
+              pdfUrl={oldPdfUrl}
+              isLoadingDoc={isLoadingPdfs}
+              docError={pdfError}
+              currentPage={leftPage}
+              onPageChange={onLeftPageChange}
+              zoom={leftZoom}
+              onZoomChange={onLeftZoomChange}
+              fitWidth={leftFitWidth}
+              onFitWidthChange={onLeftFitWidthChange}
+              isExpanded={expandedPane === "previous"}
+              onToggleExpand={() =>
+                setExpandedPane((prev) =>
+                  prev === "previous" ? "none" : "previous"
+                )
+              }
+              findingTargetPage={activeItem.previousPage}
+              findingAnchorText={activeItem.previousAnchorText}
+              findingHighlightToken={activeItem.oldHighlightToken}
+              locationConfidence={activeItem.locationConfidence}
+              isAbsentInThisVersion={activeItem.status === "added"}
+              absentReasonText={
+                activeItem.status === "added"
+                  ? "No matching language found in Previous IEP (new addition in Proposed IEP)"
+                  : undefined
+              }
+              sectionLocationLabel={activeItem.previousLocation}
+              externalScrollRatio={leftExternalScroll}
+              onUserScrollRatio={handleLeftUserScroll}
+            />
+          </div>
+        )}
+
+        {/* RIGHT VIEWER: PROPOSED IEP */}
+        {expandedPane !== "previous" && (
+          <div
+            className={`${
+              expandedPane === "updated"
+                ? "md:col-span-2"
+                : mobileActiveDoc === "updated"
+                  ? "block"
+                  : "hidden md:block"
+            } h-full min-h-0 min-w-0`}
+          >
+            <EmbeddedPdfDocumentPane
+              side="updated"
+              roleBadge="PROPOSED IEP"
+              dateLabel={newVer.date}
+              fileName={
+                newFileName ||
+                `Michael_Sheep_IEP_${newVer.date.replace(/[\s,]+/g, "_")}.pdf`
+              }
+              pdfBytes={newPdfBytes}
+              pdfUrl={newPdfUrl}
+              isLoadingDoc={isLoadingPdfs}
+              docError={pdfError}
+              currentPage={rightPage}
+              onPageChange={onRightPageChange}
+              zoom={rightZoom}
+              onZoomChange={onRightZoomChange}
+              fitWidth={rightFitWidth}
+              onFitWidthChange={onRightFitWidthChange}
+              isExpanded={expandedPane === "updated"}
+              onToggleExpand={() =>
+                setExpandedPane((prev) =>
+                  prev === "updated" ? "none" : "updated"
+                )
+              }
+              findingTargetPage={activeItem.newPage}
+              findingAnchorText={activeItem.newAnchorText}
+              findingHighlightToken={activeItem.newHighlightToken}
+              locationConfidence={activeItem.locationConfidence}
+              isAbsentInThisVersion={activeItem.status === "removed"}
+              absentReasonText={
+                activeItem.status === "removed"
+                  ? "No matching language found in Proposed IEP (direct service removed from matrix)"
+                  : undefined
+              }
+              sectionLocationLabel={activeItem.newLocation}
+              externalScrollRatio={rightExternalScroll}
+              onUserScrollRatio={handleRightUserScroll}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* ===================================================================== */}
+      {/* COLLAPSED-BY-DEFAULT MEETING AGREEMENT & WORKFLOW BAR BELOW DOCS      */}
+      {/* ===================================================================== */}
+      <div className="rounded-xl bg-[#070E22]/90 border border-[#1E2C4F] px-3.5 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => setMeetingDrawerOpen((prev) => !prev)}
+            className="inline-flex items-center gap-2 text-xs text-[#9AA6C4] hover:text-white transition-colors cursor-pointer"
+          >
+            <Link2 className="w-3.5 h-3.5 text-[#DFBE77]" />
+            <span className="font-semibold text-[#DCE4F5]">Meeting agreement:</span>
+            <span
+              className={
+                activeItem.linkedMinutes ? "text-emerald-300 font-medium" : "text-[#8E9BB8]"
+              }
+            >
+              {activeItem.linkedMinutes
+                ? `Linked to ${newVer.date} IEP Meeting Minutes`
+                : "Not linked"}
+            </span>
+            {meetingDrawerOpen ? (
+              <ChevronUp className="w-3.5 h-3.5 text-[#8E9BB8]" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 text-[#8E9BB8]" />
+            )}
+          </button>
+
+          <div className="flex items-center gap-3">
+            {advocateMode && activeItem.suggestedQuestion && (
+              <span className="hidden xl:inline-flex items-center gap-1.5 text-[11px] text-[#FFE394]">
+                <Sparkles className="w-3 h-3 text-[#DFBE77]" />
+                Ask: “{activeItem.suggestedQuestion}”
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={onOpenCorrectionEmailModal}
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#DFBE77] hover:text-white transition-colors cursor-pointer"
+            >
+              <Mail className="w-3 h-3" />
+              <span>Include in Parent Correction Email</span>
+            </button>
+          </div>
+        </div>
+
+        {meetingDrawerOpen && (
+          <div className="mt-2.5 pt-2.5 border-t border-[#1A2644] flex flex-wrap items-center justify-between gap-3 text-xs text-[#9AA6C4]">
+            <p className="max-w-2xl">
+              Link <strong className="text-white">{activeItem.title}</strong> to the official
+              IEP Team Meeting Minutes or Prior Written Notice (PWN) record.
+            </p>
+            <button
+              type="button"
+              onClick={() => onToggleLinkMinutes(activeItem.id)}
+              className="px-3 py-1 rounded-lg bg-[#142242] hover:bg-[#1C2F5A] border border-[#344875] text-white font-semibold cursor-pointer"
+            >
+              {activeItem.linkedMinutes ? "Unlink Meeting Minutes" : "Link Meeting Minutes"}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-

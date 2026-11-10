@@ -25,8 +25,37 @@ import {
   Check,
   Loader2,
   AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 import { ComparisonItem, getStatusTheme } from "./types";
+
+function renderStickyHighlightedPhrase(
+  fullText: string,
+  token: string | undefined,
+  variant: "old" | "new"
+) {
+  if (!token || !fullText.includes(token)) {
+    return <span>{fullText}</span>;
+  }
+  const parts = fullText.split(token);
+  const badgeClass =
+    variant === "old"
+      ? "inline-block px-2 py-0.5 mx-0.5 rounded bg-[#6E2538] text-[#FFD9E2] font-bold border border-[#A83854]/60"
+      : "inline-block px-2 py-0.5 mx-0.5 rounded bg-[#1B6B50] text-[#D7FBE8] font-bold border border-[#2FA87E]/60";
+
+  return (
+    <>
+      {parts.map((part, idx) => (
+        <React.Fragment key={idx}>
+          {part}
+          {idx < parts.length - 1 && (
+            <span className={badgeClass}>{token}</span>
+          )}
+        </React.Fragment>
+      ))}
+    </>
+  );
+}
 
 interface ComparisonDetailDrawerProps {
   item: ComparisonItem | null;
@@ -188,41 +217,130 @@ export function ComparisonDetailDrawer({
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Side-by-Side Comparison Snippets */}
-          <div className="space-y-2">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-              <span>Textual Comparison</span>
-              <span className="text-slate-500 font-normal">Side-by-side textual diff</span>
+          {/* Dog-Eared Sticky-Note Phrase Cards (OLD Always Left, NEW Always Right) + Review Note Sticky Card */}
+          <div className="space-y-3">
+            <div className="text-[10px] font-bold text-[#FFE394] uppercase tracking-wider flex items-center justify-between">
+              <span>Phrase Sticky Notes — Previous vs. Proposed Language</span>
+              <span className="text-slate-400 font-normal">Exact phrase highlight</span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Proposed (New) */}
-              <div className="bg-slate-950/60 p-4 rounded-xl border border-indigo-500/20 space-y-2">
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="font-bold text-indigo-400 uppercase tracking-wider">New IEP (Proposed)</span>
-                  <span className="text-slate-500 font-mono text-[9px]">{item.newLocation || "Page N/A"}</span>
-                </div>
-                <p className="text-xs text-slate-200 leading-relaxed font-sans">
-                  {item.newValue || (
-                    <span className="text-rose-400 italic">
-                      Item omitted or discontinued in proposed version.
-                    </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+              {/* LEFT STICKY NOTE: OLD / PREVIOUS LANGUAGE */}
+              <div className="relative rounded-xl bg-[#0B1428] border border-[#233154] p-4 flex flex-col justify-between shadow-[0_12px_30px_rgba(0,0,0,0.65)] overflow-hidden">
+                {/* Dog-ear folded corner top-right */}
+                <div
+                  className="pointer-events-none absolute top-0 right-0 w-6 h-6 bg-[#1C2947] border-b border-l border-[#344670]"
+                  style={{
+                    clipPath: "polygon(0 0, 0 100%, 100% 100%)",
+                  }}
+                />
+
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <FileText className="h-4 w-4 text-[#9AA6C4] mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="text-xs font-bold text-[#E6EBF8]">Previous language</h4>
+                      <p className="text-[10px] text-[#8E98B4]">Mar 3, 2026</p>
+                    </div>
+                  </div>
+
+                  <div className="text-[14px] leading-[1.6] text-[#F1F4FC] font-normal">
+                    {renderStickyHighlightedPhrase(
+                      item.previousValue || "Not present in previous IEP.",
+                      item.oldHighlightToken,
+                      "old"
+                    )}
+                  </div>
+
+                  {(item.measurement || item.frequency) && (
+                    <div className="pt-1 space-y-0.5 text-[11px] text-[#9AA6C4]">
+                      {item.measurement && <div>Measurement: {item.measurement}</div>}
+                      {item.frequency && <div>Frequency: {item.frequency}</div>}
+                    </div>
                   )}
-                </p>
+                </div>
+
+                <div className="pt-3 mt-3 border-t border-[#1A2642] flex items-center justify-between text-[11px] text-[#8E98B4]">
+                  <span>{item.previousLocation || "Previous IEP"}</span>
+                  {onOpenInOriginalDocuments && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenInOriginalDocuments(item.id);
+                        onClose();
+                      }}
+                      className="inline-flex items-center gap-1 text-[#C5CCF0] hover:text-white cursor-pointer transition-colors"
+                    >
+                      <span>Open source</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Baseline (Old) */}
-              <div className="bg-slate-950/60 p-4 rounded-xl border border-amber-500/20 space-y-2">
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="font-bold text-amber-400 uppercase tracking-wider">Old IEP (Baseline)</span>
-                  <span className="text-slate-500 font-mono text-[9px]">{item.previousLocation || "Page N/A"}</span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed font-sans">
-                  {item.previousValue || (
-                    <span className="text-emerald-400 italic">
-                      Not previously included in baseline IEP.
-                    </span>
+              {/* RIGHT STICKY NOTE: NEW / PROPOSED LANGUAGE */}
+              <div className="relative rounded-xl bg-[#0B1428] border border-[#2F3D6B] p-4 flex flex-col justify-between shadow-[0_12px_30px_rgba(0,0,0,0.65)] overflow-hidden">
+                {/* Dog-ear folded corner top-right */}
+                <div
+                  className="pointer-events-none absolute top-0 right-0 w-6 h-6 bg-[#243258] border-b border-l border-[#45588A]"
+                  style={{
+                    clipPath: "polygon(0 0, 0 100%, 100% 100%)",
+                  }}
+                />
+
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <FileText className="h-4 w-4 text-[#B8C0FF] mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="text-xs font-bold text-white">Proposed language</h4>
+                      <p className="text-[10px] text-[#A8B2D8]">May 14, 2026</p>
+                    </div>
+                  </div>
+
+                  <div className="text-[14px] leading-[1.6] text-white font-normal">
+                    {renderStickyHighlightedPhrase(
+                      item.newValue || "Removed in proposed IEP.",
+                      item.newHighlightToken,
+                      "new"
+                    )}
+                  </div>
+
+                  {(item.measurement || item.frequency) && (
+                    <div className="pt-1 space-y-0.5 text-[11px] text-[#9AA6C4]">
+                      {item.measurement && <div>Measurement: {item.measurement}</div>}
+                      {item.frequency && <div>Frequency: {item.frequency}</div>}
+                    </div>
                   )}
+                </div>
+
+                <div className="pt-3 mt-3 border-t border-[#1A2642] flex items-center justify-between text-[11px] text-[#8E98B4]">
+                  <span>{item.newLocation || "Proposed IEP"}</span>
+                  {onOpenInOriginalDocuments && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenInOriginalDocuments(item.id);
+                        onClose();
+                      }}
+                      className="inline-flex items-center gap-1 text-[#C5CCF0] hover:text-white cursor-pointer transition-colors"
+                    >
+                      <span>Open source</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Review Note Sticky Card for this Phrase */}
+            <div className="rounded-xl bg-[#0A1326]/95 border border-[#3A2C18] p-4 flex items-start gap-3.5 shadow-md">
+              <div className="p-2 rounded-lg bg-[#111D38] border border-[#3A2C18] text-[#E5B85B] shrink-0">
+                <MessageSquare className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0 space-y-1">
+                <h4 className="text-xs font-bold text-[#E5B85B]">Review note</h4>
+                <p className="text-[13.5px] text-[#EEF2FC] leading-relaxed">
+                  {localNote || item.reviewNote || item.suggestedQuestion}
                 </p>
               </div>
             </div>
