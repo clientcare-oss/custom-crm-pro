@@ -9,7 +9,7 @@ import {
   ChevronRight, Info, X, Loader2, RefreshCw, User,
   Sparkles, Eye, Settings,
   AlertTriangle, CheckCircle2, Split, HelpCircle, Maximize,
-  ZoomIn, ZoomOut, Copy, Send
+  ZoomIn, ZoomOut, Copy, Send, History, Lightbulb, Wand2, BookOpen
 } from "lucide-react";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import AiPromptVault from "@/components/automations/AiPromptVault";
@@ -23,6 +23,18 @@ import {
   AutomationSimulationWorkspace,
   RunManualAutomationModal,
 } from "@/components/automations/AutomationSimulationAndModals";
+import {
+  PreMadeTemplatesSection,
+  BuildAutomationWithAiSection,
+  SuggestAutomationSection,
+  AutomationHistorySection,
+  PREMADE_AUTOMATION_TEMPLATES,
+  type HubAutomationTemplate,
+} from "@/components/automations/AutomationsHubSections";
+import {
+  AutomationsMasterDetailView,
+  SIGNATURE_SHOWCASE_AUTOMATIONS,
+} from "@/components/automations/AutomationsMasterDetailView";
 
 // ============ TYPES & SCHEMAS ============
 interface AutomationStep {
@@ -402,7 +414,9 @@ export default function Automations() {
     onError: (err) => toast.error(err.message || "Failed to save trigger request"),
   });
 
-  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [automations, setAutomations] = useState<Automation[]>(
+    () => SIGNATURE_SHOWCASE_AUTOMATIONS as Automation[]
+  );
   const [pageTab, setPageTab] = useState<"workflows" | "ai-vault">(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -446,10 +460,116 @@ export default function Automations() {
   };
 
   const [activeView, setActiveView] = useState<"list" | "edit" | "simulate">("list");
+  const [hubSection, setHubSection] = useState<
+    "automations" | "history" | "suggest" | "ai-builder" | "templates"
+  >("automations");
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [zoomLevel, setZoomLevel] = useState(100);
+
+  const handleOpenTemplateInBuilder = (template: HubAutomationTemplate) => {
+    const newAuto: Automation = {
+      id: `auto-${Date.now()}`,
+      name: template.name,
+      description: template.description,
+      triggerEvent: template.triggerEvent,
+      triggerConfig: {
+        meetingType: template.triggerConfig?.meetingType || "Any Meeting",
+        projectDateSource:
+          template.triggerConfig?.projectDateSource || "appointment_date",
+        googleReviewUrl:
+          template.triggerConfig?.googleReviewUrl ||
+          "https://g.page/r/waypoint-advocates/review",
+        pastScheduledPolicy:
+          template.triggerConfig?.pastScheduledPolicy || "skip_past_steps",
+      },
+      isActive: false,
+      activeRunsCount: 0,
+      steps: template.steps.map((s, idx) => ({
+        id: `step-${Date.now()}-${idx}`,
+        type: s.type,
+        title: s.title,
+        delayValue: s.delayValue,
+        delayUnit: s.delayUnit,
+        delayAnchor: s.delayAnchor,
+        config: {
+          templateId: s.config.templateId,
+          templateName: s.config.templateName,
+          emailSubject: s.config.emailSubject,
+          emailBody: s.config.emailBody,
+          fileId: s.config.fileId,
+          fileName: s.config.fileName,
+          notifyParentByEmail: s.config.notifyParentByEmail ?? true,
+          taskTitle: s.config.taskTitle,
+          taskPriority: s.config.taskPriority || "high",
+          createImmediateTaskWithDueDate:
+            s.config.createImmediateTaskWithDueDate ?? true,
+          hasCondition: s.config.hasCondition || false,
+        },
+      })),
+    };
+    setAutomations((prev) => [newAuto, ...prev]);
+    setSelectedAutomation(newAuto);
+    setHubSection("automations");
+    setActiveView("edit");
+    setConfiguringTrigger(false);
+    setActiveStepId(newAuto.steps[0]?.id || null);
+    toast.success(`Loaded "${template.name}" into the Visual Builder!`);
+  };
+
+  const handleInstallHubTemplate = async (
+    template: HubAutomationTemplate,
+    activateNow: boolean
+  ) => {
+    await saveMutation.mutateAsync({
+      name: template.name,
+      description: template.description,
+      triggerEvent: template.triggerEvent,
+      isActive: activateNow,
+      triggerConfig: {
+        meetingType: template.triggerConfig?.meetingType || "Any Meeting",
+        projectDateSource:
+          template.triggerConfig?.projectDateSource || "appointment_date",
+        googleReviewUrl:
+          template.triggerConfig?.googleReviewUrl ||
+          "https://g.page/r/waypoint-advocates/review",
+        pastScheduledPolicy:
+          template.triggerConfig?.pastScheduledPolicy || "skip_past_steps",
+      },
+      steps: template.steps.map((s) => ({
+        type: s.type,
+        title: s.title,
+        delayValue: s.delayValue,
+        delayUnit: s.delayUnit,
+        delayAnchor: s.delayAnchor,
+        config: s.config,
+      })),
+    });
+    toast.success(
+      `"${template.name}" added to your Automations as ${
+        activateNow ? "Active" : "a Draft"
+      }!`
+    );
+    setHubSection("automations");
+    setActiveView("list");
+    refreshAll();
+  };
+
+  const handleHubSuggestionSubmit = async (payload: {
+    category: string;
+    triggerText: string;
+    desiredOutcome: string;
+  }) => {
+    const desc = payload.desiredOutcome
+      ? `[${payload.category}] Trigger: ${payload.triggerText} | Actions: ${payload.desiredOutcome}`
+      : `[${payload.category}] ${payload.triggerText}`;
+    await requestTriggerMutation.mutateAsync({
+      description: desc,
+      requestedTriggerText: payload.triggerText,
+      useCaseCategory: payload.category,
+    });
+  };
 
   // Email preview modal state (supports both template preview and custom step override preview)
   const [previewEmailStep, setPreviewEmailStep] = useState<{
@@ -515,25 +635,46 @@ export default function Automations() {
           config: s.config || {}
         }))
       }));
-      setAutomations(mapped);
+      const existingNames = new Set(
+        mapped.map((m) => m.name.trim().toLowerCase())
+      );
+      const showcasePresets = (
+        SIGNATURE_SHOWCASE_AUTOMATIONS as Automation[]
+      ).filter((sc) => !existingNames.has(sc.name.trim().toLowerCase()));
+      const combined = [...showcasePresets, ...mapped];
+      setAutomations(combined);
 
       const params = new URLSearchParams(window.location.search);
       const requestedTrigger = params.get("trigger");
       const requestedId = params.get("id");
       if (requestedTrigger && !selectedAutomation) {
-        const found = mapped.find(m => m.triggerEvent === requestedTrigger);
+        const found = combined.find((m) => m.triggerEvent === requestedTrigger);
         if (found) {
           setSelectedAutomation(found);
           setActiveView("edit");
         }
       } else if (requestedId && !selectedAutomation) {
-        const found = mapped.find(m => String(m.id) === requestedId);
+        const found = combined.find((m) => String(m.id) === requestedId);
         if (found) {
           setSelectedAutomation(found);
           setActiveView("edit");
         }
-      } else if (selectedAutomation && !selectedAutomation.id.startsWith("auto-")) {
-        const updatedSelection = mapped.find(m => String(m.id) === String(selectedAutomation.id));
+      } else if (!selectedAutomation) {
+        const defaultNotYet =
+          combined.find((m) => m.name === "Not yet • Stay in touch") ||
+          combined[0] ||
+          null;
+        if (defaultNotYet) {
+          setSelectedAutomation(defaultNotYet);
+        }
+      } else if (
+        selectedAutomation &&
+        !selectedAutomation.id.startsWith("auto-") &&
+        !selectedAutomation.id.startsWith("showcase-")
+      ) {
+        const updatedSelection = combined.find(
+          (m) => String(m.id) === String(selectedAutomation.id)
+        );
         if (updatedSelection && activeView === "list") {
           setSelectedAutomation(updatedSelection);
         }
@@ -575,8 +716,17 @@ export default function Automations() {
 
     try {
       const nextActive = !item.isActive;
+      setAutomations((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, isActive: nextActive } : a))
+      );
+      if (selectedAutomation?.id === id) {
+        setSelectedAutomation({ ...selectedAutomation, isActive: nextActive });
+      }
       await saveMutation.mutateAsync({
-        id: id.startsWith("auto-") ? undefined : Number(id),
+        id:
+          id.startsWith("auto-") || id.startsWith("showcase-")
+            ? undefined
+            : Number(id),
         name: item.name,
         description: item.description,
         triggerEvent: item.triggerEvent,
@@ -771,8 +921,11 @@ export default function Automations() {
     }
 
     try {
+      const isUnsavedId =
+        selectedAutomation.id.startsWith("auto-") ||
+        selectedAutomation.id.startsWith("showcase-");
       const result = await saveMutation.mutateAsync({
-        id: selectedAutomation.id.startsWith("auto-") ? undefined : Number(selectedAutomation.id),
+        id: isUnsavedId ? undefined : Number(selectedAutomation.id),
         name: selectedAutomation.name,
         description: selectedAutomation.description,
         triggerEvent: selectedAutomation.triggerEvent,
@@ -789,7 +942,7 @@ export default function Automations() {
       });
       toast.success("Automation workflow saved to database!");
       const savedId = Number(result.id);
-      if (selectedAutomation.id.startsWith("auto-")) {
+      if (isUnsavedId) {
         setSelectedAutomation({
           ...selectedAutomation,
           id: String(savedId)
@@ -932,261 +1085,243 @@ export default function Automations() {
 
   return (
     <ScopedErrorBoundary moduleName="Automations Engine">
-      <div className="min-h-screen w-full relative text-[#F0DFC5] p-4 sm:p-6 lg:p-8 bg-[#000820] overflow-x-hidden">
-        <div className="max-w-7xl mx-auto w-full space-y-7">
+      <div
+        className="min-h-screen w-full relative text-[#F0DFC5] px-4 sm:px-7 lg:px-10 py-6 bg-[#040E1E] overflow-x-hidden flex flex-col justify-between"
+        style={{
+          backgroundImage:
+            "radial-gradient(ellipse at 50% 0%, #0E2344 0%, #061326 55%, #030A16 100%)",
+        }}
+      >
+        <div className="max-w-7xl mx-auto w-full space-y-5">
 
-          {/* ─── Top Header Deck & Tab Switcher ─── */}
-          <div className="w-full flex flex-col gap-4 border-b border-[#3A2C18] pb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A059] px-2.5 py-0.5 rounded-full bg-[#1F1404] border border-[#8C6418]">
-                    PG-013 · Autonomous Systems
-                  </span>
-                </div>
-                <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-wide text-[#FFF4D4]">
-                  Automations Engine
-                </h1>
-                <p className="font-serif text-xs sm:text-sm text-[#E8D1A7] leading-relaxed max-w-2xl">
-                  Trigger-based action sequences, durable background scheduling, Smart File portal assignments, and verified client communications.
-                </p>
-              </div>
+          {/* ─── Top Header Row: Title on Left, "✦ Build with AI" & "+ New automation" on Right ─── */}
+          <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
+            <div>
+              <h1 className="font-serif text-3xl sm:text-4xl font-normal tracking-tight text-[#FFF4D4]">
+                Automations
+              </h1>
+              <p className="text-xs sm:text-sm text-[#9FB2CC] mt-1">
+                Thoughtful follow-up. Every step connected.
+              </p>
+            </div>
 
-              {/* Navigation Tab Bar: Sequences vs Waypoint AI */}
-              <div className="flex items-center gap-2 bg-[#020A17]/85 p-1.5 rounded-xl border border-[#3A2C18] w-fit shadow-inner">
+            <div className="flex items-center gap-3 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  handleTabSwitch("workflows");
+                  setHubSection("ai-builder");
+                  setActiveView("list");
+                }}
+                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer inline-flex items-center gap-2 border ${
+                  hubSection === "ai-builder"
+                    ? "bg-[#122849] text-[#FFE394] border-[#C5A059]/60 shadow"
+                    : "bg-transparent hover:bg-white/5 text-[#E5C98B] border-transparent"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#E5C98B]" />
+                <span>Build with AI</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCreateNew}
+                className="bg-gradient-to-b from-[#E8CD92] via-[#D4AF63] to-[#B58E43] text-[#07162B] font-semibold text-xs px-4 py-2.5 rounded-lg border border-[#FFE8AD]/60 shadow-[0_2px_12px_rgba(212,175,99,0.3)] hover:brightness-105 active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <Plus className="w-4 h-4 stroke-[2.2]" />
+                <span>New automation</span>
+              </button>
+            </div>
+          </div>
+
+          {/* ─── Underline Tab Bar: Workflows [9] | Activity | Templates (+ Gear Icon on Right) ─── */}
+          <div className="w-full flex items-center justify-between border-b border-[#192D4B]">
+            <div className="flex items-center gap-1 overflow-x-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  handleTabSwitch("workflows");
+                  setHubSection("automations");
+                  setActiveView("list");
+                }}
+                className={`relative px-4 py-2.5 text-xs font-medium transition-all cursor-pointer inline-flex items-center gap-2 rounded-t-lg ${
+                  hubSection === "automations"
+                    ? "bg-[#0C1E38]/90 text-white border-b-2 border-[#D8B572]"
+                    : "text-[#94A8C4] hover:text-white"
+                }`}
+              >
+                <span>Workflows</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#9E7D3B]/40 border border-[#D8B572]/50 text-[#FFE394]">
+                  {automations.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  handleTabSwitch("workflows");
+                  setHubSection("history");
+                  setActiveView("list");
+                }}
+                className={`relative px-4 py-2.5 text-xs font-medium transition-all cursor-pointer inline-flex items-center gap-2 rounded-t-lg ${
+                  hubSection === "history"
+                    ? "bg-[#0C1E38]/90 text-white border-b-2 border-[#D8B572]"
+                    : "text-[#94A8C4] hover:text-white"
+                }`}
+              >
+                <span>Activity</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  handleTabSwitch("workflows");
+                  setHubSection("templates");
+                  setActiveView("list");
+                }}
+                className={`relative px-4 py-2.5 text-xs font-medium transition-all cursor-pointer inline-flex items-center gap-2 rounded-t-lg ${
+                  hubSection === "templates"
+                    ? "bg-[#0C1E38]/90 text-white border-b-2 border-[#D8B572]"
+                    : "text-[#94A8C4] hover:text-white"
+                }`}
+              >
+                <span>Templates</span>
+              </button>
+
+              {hubSection === "suggest" && (
                 <button
                   type="button"
-                  onClick={() => handleTabSwitch("workflows")}
-                  className="py-2 px-3.5 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
+                  onClick={() => {
+                    handleTabSwitch("workflows");
+                    setHubSection("suggest");
+                    setActiveView("list");
+                  }}
+                  className="relative px-4 py-2.5 text-xs font-medium transition-all cursor-pointer inline-flex items-center gap-1.5 rounded-t-lg bg-[#0C1E38]/90 text-white border-b-2 border-[#D8B572]"
                 >
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>Workflow Sequences</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-[#07162B]/20 text-[#07162B]">
-                    {automations.length}
-                  </span>
+                  <Lightbulb className="w-3.5 h-3.5 text-[#D8B572]" />
+                  <span>Suggest an automation</span>
                 </button>
+              )}
 
+              {hubSection === "ai-builder" && (
                 <button
                   type="button"
-                  onClick={() => handleTabSwitch("ai-vault")}
-                  className="py-2 px-3.5 rounded-lg font-serif text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5 border border-transparent"
+                  onClick={() => {
+                    handleTabSwitch("workflows");
+                    setHubSection("ai-builder");
+                    setActiveView("list");
+                  }}
+                  className="relative px-4 py-2.5 text-xs font-medium transition-all cursor-pointer inline-flex items-center gap-1.5 rounded-t-lg bg-[#0C1E38]/90 text-white border-b-2 border-[#D8B572]"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Waypoint AI</span>
-                  <span className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded border bg-amber-950/80 text-amber-300 border-amber-500/40">
-                    PG-013-AI
-                  </span>
+                  <Sparkles className="w-3.5 h-3.5 text-[#D8B572]" />
+                  <span>Build with AI</span>
                 </button>
-              </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pr-1">
+              <button
+                type="button"
+                onClick={() => handleTabSwitch("ai-vault")}
+                title="Waypoint AI Prompt Vault & Queue Settings (PG-013-AI)"
+                className="p-2 rounded-lg text-[#94A8C4] hover:text-[#FFE394] hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
           {/* ─── WORKFLOWS CONTENT ─── */}
           <div className="w-full space-y-6">
 
-            {/* ── VIEW 1: DASHBOARD LISTING ── */}
-            {activeView === "list" && (
-              <div className="space-y-6">
-                {/* Accurate Stats & Provider Status Banner */}
-                <AutomationStatsBanner
-                  stats={automationStats}
-                  onProcessDueJobs={() => processDueJobsMutation.mutate({ limit: 50 })}
-                  isProcessingJobs={processDueJobsMutation.isPending}
-                />
+            {/* ── VIEW 1A: DEDICATED ACTIVITY / HISTORY LEDGER TAB ── */}
+            {activeView === "list" && hubSection === "history" && (
+              <AutomationHistorySection
+                stats={automationStats}
+                automationRuns={automationRuns || []}
+                automationJobs={automationJobs || []}
+                onRefresh={refreshAll}
+                onProcessDueJobs={() => processDueJobsMutation.mutate({ limit: 50 })}
+                isProcessingJobs={processDueJobsMutation.isPending}
+                onRetryRun={(runId) =>
+                  retryRunMutation.mutate({ runId, clearFailureFlags: true })
+                }
+                onCancelRun={(runId) =>
+                  cancelRunMutation.mutate({ runId, reason: "Canceled by staff from PG-013" })
+                }
+                onCancelJob={(jobId) =>
+                  cancelJobMutation.mutate({ jobId, reason: "Step canceled by staff from PG-013" })
+                }
+                onResolveHeldJob={(jobId, action) =>
+                  resolveHeldJobMutation.mutate({ jobId, action })
+                }
+                isBusy={
+                  retryRunMutation.isPending ||
+                  cancelRunMutation.isPending ||
+                  cancelJobMutation.isPending ||
+                  resolveHeldJobMutation.isPending
+                }
+              />
+            )}
 
-                {/* Header Action Strip */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#3A2C18] pb-4 gap-4 text-left">
-                  <div>
-                    <h2 className="text-xl font-bold tracking-tight text-[#FFF4D4] font-serif">
-                      Workflow Automations
-                    </h2>
-                    <p className="text-xs text-[#C6B697] mt-0.5">
-                      Build trigger-based action flows to automate verified email delivery, portal Smart File assignments, and internal advocate tasks.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2.5">
-                    <button
-                      type="button"
-                      onClick={handleSeedStarters}
-                      className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] font-serif text-xs font-semibold py-2 px-3.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
-                    >
-                      <RefreshCw className="h-3.5 w-3.5 text-[#C5A059]" /> Seed Starter Drafts
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleCreateNew}
-                      className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-serif font-bold text-xs border border-[#FFE394]/50 shadow-md hover:brightness-110 active:scale-95 py-2 px-4 rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
-                    >
-                      <Plus className="h-4 w-4" /> New Automation
-                    </button>
-                  </div>
-                </div>
+            {/* ── VIEW 1B: SUGGEST AN AUTOMATION TAB ── */}
+            {activeView === "list" && hubSection === "suggest" && (
+              <SuggestAutomationSection
+                triggerRequests={triggerRequests || []}
+                onSubmitSuggestion={handleHubSuggestionSubmit}
+                isSubmitting={requestTriggerMutation.isPending}
+                onOpenTemplateInBuilder={handleOpenTemplateInBuilder}
+                onInstallTemplate={handleInstallHubTemplate}
+              />
+            )}
 
-                {/* Search Bar */}
-                <div className="flex items-center bg-[#020A17]/90 border border-[#3A2C18] rounded-xl px-4 py-2.5 shadow-inner">
-                  <Sliders className="h-4 w-4 text-[#7E97B8] mr-3" />
-                  <input
-                    type="text"
-                    placeholder="Search workflows, triggers, or descriptions..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-transparent border-0 text-[#F0F6FC] text-xs w-full focus:ring-0 focus:outline-none placeholder-[#647C9D] font-serif"
-                  />
-                </div>
+            {/* ── VIEW 1C: BUILD AUTOMATION WITH AI TAB ── */}
+            {activeView === "list" && hubSection === "ai-builder" && (
+              <BuildAutomationWithAiSection
+                onOpenInBuilder={handleOpenTemplateInBuilder}
+                onSaveGenerated={handleInstallHubTemplate}
+                isSaving={saveMutation.isPending}
+              />
+            )}
 
-                {filteredAutomations.length === 0 ? (
-                  <div className="text-center py-20 border border-dashed border-[#3A2C18] rounded-2xl bg-[#05142B]/40">
-                    <Zap className="h-12 w-12 text-[#C5A059]/40 mx-auto mb-4" />
-                    <h3 className="text-base font-serif font-bold text-[#FFF4D4] mb-1">
-                      No automations configured
-                    </h3>
-                    <p className="text-xs text-[#C6B697] max-w-sm mx-auto">
-                      Seed the starter draft templates or create a custom sequence to get started.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {filteredAutomations.map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => {
-                          setSelectedAutomation(item);
-                          setActiveView("edit");
-                          setConfiguringTrigger(false);
-                        }}
-                        className="bg-[#05142B]/90 hover:bg-[#07162B] border border-[#3A2C18] hover:border-[#C5A059]/60 rounded-xl p-5 cursor-pointer transition-all flex flex-col justify-between min-h-[205px] group text-left shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]"
-                      >
-                        <div>
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-1">
-                              <h3 className="font-serif font-bold text-base text-[#FFF4D4] group-hover:text-[#FFE394] transition-colors">
-                                {item.name}
-                              </h3>
-                              <p className="text-xs text-[#C6B697] leading-relaxed line-clamp-2 pr-4">
-                                {item.description || "No description configured."}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-2 mt-3.5">
-                                <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-[#020A17] border border-[#3A2C18] px-2 py-0.5 rounded text-[#FFE394]">
-                                  Trigger: {getTriggerLabel(item.triggerEvent) || "Set trigger in sidebar"}
-                                </span>
-                                <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-[#020A17] border border-[#3A2C18] px-2 py-0.5 rounded text-[#8CA4C4]">
-                                  {item.steps.length} {item.steps.length === 1 ? "Step" : "Steps"}
-                                </span>
-                                {item.isActive ? (
-                                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded text-emerald-400">
-                                    Active
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-900 border border-slate-600/40 px-2 py-0.5 rounded text-slate-300">
-                                    Draft / Paused
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+            {/* ── VIEW 1D: PRE-MADE TEMPLATES TAB ── */}
+            {activeView === "list" && hubSection === "templates" && (
+              <PreMadeTemplatesSection
+                onOpenInBuilder={handleOpenTemplateInBuilder}
+                onInstallTemplate={handleInstallHubTemplate}
+                isSaving={saveMutation.isPending}
+              />
+            )}
 
-                            {/* Toggle active switch */}
-                            <label
-                              className="relative inline-flex items-center cursor-pointer shrink-0"
-                              onClick={(e) => e.stopPropagation()}
-                              title={item.isActive ? "Pause automation" : "Activate automation"}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={item.isActive}
-                                onChange={() => handleToggleActive(item.id)}
-                                className="sr-only peer"
-                              />
-                              <div className="w-9 h-5 bg-[#020A17] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#8CA4C4] peer-checked:after:bg-[#07162B] after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#C5A059] peer-checked:border peer-checked:border-[#FFE394]"></div>
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* Accurate Per-Automation Run Status Breakdown + Card Controls */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#3A2C18]/60 pt-3.5 mt-3.5">
-                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
-                            <span className="px-2 py-0.5 rounded bg-sky-950/60 border border-sky-500/30 text-sky-300">
-                              Queued: {item.queuedRunsCount ?? 0}
-                            </span>
-                            <span className="px-2 py-0.5 rounded bg-indigo-950/60 border border-indigo-500/30 text-indigo-300">
-                              Running: {item.runningRunsCount ?? 0}
-                            </span>
-                            <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/30 text-emerald-300">
-                              Completed: {item.completedRunsCount ?? 0}
-                            </span>
-                            <span className="px-2 py-0.5 rounded bg-rose-950/60 border border-rose-500/30 text-rose-300">
-                              Failed: {item.failedRunsCount ?? 0}
-                            </span>
-                          </div>
-
-                          <div
-                            className="flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {item.triggerEvent === "manual_trigger" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setRunNowTargetAutomation(item);
-                                  setRunNowPreviewSteps([]);
-                                  setRunNowPreviewLogs([]);
-                                }}
-                                className="h-7 px-2.5 text-[10px] font-bold border-amber-500/40 bg-amber-950/50 text-[#FFE394] hover:bg-amber-900/60"
-                              >
-                                <Play className="h-3 w-3 mr-1 fill-[#FFE394]" />
-                                Run Now
-                              </Button>
-                            )}
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              title="Duplicate as inactive draft"
-                              onClick={(e) => handleDuplicate(item.id, e)}
-                              className="h-8 w-8 text-[#A69371] hover:text-[#FFE394] hover:bg-white/5 rounded-lg"
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              title="Delete automation (preserves completed run history)"
-                              onClick={(e) => handleDelete(item.id, e)}
-                              className="h-8 w-8 text-[#A69371] hover:text-rose-400 hover:bg-rose-500/10 rounded-lg"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Durable Queue & Execution History Ledger */}
-                <AutomationExecutionLedger
-                  automationRuns={automationRuns || []}
-                  automationJobs={automationJobs || []}
-                  onRefresh={refreshAll}
-                  onRetryRun={(runId) =>
-                    retryRunMutation.mutate({ runId, clearFailureFlags: true })
-                  }
-                  onCancelRun={(runId) =>
-                    cancelRunMutation.mutate({ runId, reason: "Canceled by staff from PG-013" })
-                  }
-                  onCancelJob={(jobId) =>
-                    cancelJobMutation.mutate({ jobId, reason: "Step canceled by staff from PG-013" })
-                  }
-                  onResolveHeldJob={(jobId, action) =>
-                    resolveHeldJobMutation.mutate({ jobId, action })
-                  }
-                  isBusy={
-                    retryRunMutation.isPending ||
-                    cancelRunMutation.isPending ||
-                    cancelJobMutation.isPending ||
-                    resolveHeldJobMutation.isPending
-                  }
-                />
-              </div>
+            {/* ── VIEW 1E: MASTER-DETAIL WORKFLOWS CONSOLE (MATCHING REFERENCE DESIGN) ── */}
+            {activeView === "list" && hubSection === "automations" && (
+              <AutomationsMasterDetailView
+                automations={automations}
+                selectedAutomation={selectedAutomation}
+                onSelectAutomation={(item) => setSelectedAutomation(item)}
+                onEditWorkflow={(item) => {
+                  setSelectedAutomation(item);
+                  setActiveView("edit");
+                  setConfiguringTrigger(false);
+                }}
+                onToggleActive={handleToggleActive}
+                onDuplicate={handleDuplicate}
+                onDelete={handleDelete}
+                onRunNow={(item) => {
+                  setSelectedAutomation(item);
+                  setSimLogs([]);
+                  setSimStepPreviews([]);
+                  setIsSimulating(false);
+                  setActiveView("simulate");
+                }}
+                onViewActivity={() => setHubSection("history")}
+                onSuggestAutomation={() => setHubSection("suggest")}
+                onBrowseTemplates={() => setHubSection("templates")}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                stats={automationStats}
+                getTriggerLabel={getTriggerLabel}
+              />
             )}
 
             {/* ── VIEW 2: CANVAS BUILDER & CONFIG DRAWER ── */}
@@ -2593,6 +2728,47 @@ export default function Automations() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* ─── Bottom Workspace Status Bar: "🕒 Eastern time | ⚙️ Queue settings" ─── */}
+        <div className="max-w-7xl mx-auto w-full pt-5 mt-6 border-t border-[#152640] flex flex-wrap items-center justify-between gap-4 text-xs text-[#8DA2C0]">
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-[#6E85A6]" />
+              <span>Eastern time</span>
+            </span>
+            <span className="text-[#273E5F]">|</span>
+            <button
+              type="button"
+              onClick={() => {
+                setHubSection("history");
+                setActiveView("list");
+              }}
+              className="inline-flex items-center gap-1.5 hover:text-[#FFE394] transition-colors cursor-pointer"
+            >
+              <Settings className="w-3.5 h-3.5 text-[#6E85A6]" />
+              <span>Queue settings</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={handleSeedStarters}
+              className="text-[11px] text-[#7E95B4] hover:text-[#FFE394] transition-colors cursor-pointer"
+            >
+              Seed starter drafts
+            </button>
+            <span className="text-[#273E5F]">|</span>
+            <button
+              type="button"
+              onClick={() => handleTabSwitch("ai-vault")}
+              className="text-[11px] text-[#7E95B4] hover:text-[#FFE394] transition-colors cursor-pointer inline-flex items-center gap-1"
+            >
+              <Sparkles className="w-3 h-3 text-[#D8B572]" />
+              <span>Waypoint AI Vault (PG-013-AI)</span>
+            </button>
+          </div>
         </div>
       </div>
     </ScopedErrorBoundary>
