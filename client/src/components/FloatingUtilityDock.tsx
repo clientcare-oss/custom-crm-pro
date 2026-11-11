@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useFirstMate } from "@/contexts/FirstMateContext";
-import { resolvePageId, PAGE_IDS } from "@/lib/pageIdRegistry";
+import { resolvePageId, PAGE_IDS, getRegisteredSubpagesForPageId } from "@/lib/pageIdRegistry";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -206,6 +206,8 @@ export default function FloatingUtilityDock() {
     window.addEventListener("waypoint:page-id-change", handlePageIdChange);
     return () => window.removeEventListener("waypoint:page-id-change", handlePageIdChange);
   }, []);
+
+  const activeSubpages = getRegisteredSubpagesForPageId(activePage.id);
 
   const handleCopyPageId = (e?: React.MouseEvent) => {
     if (e) {
@@ -691,6 +693,63 @@ export default function FloatingUtilityDock() {
           </div>
         )}
       </aside>
+
+      {/* ── Compact Page Hierarchy / Subpage Popover (opens only when Page ID pill is clicked and page has subpages) ── */}
+      {isExpanded && pageOpen && activeSubpages.length > 0 && (
+        <div
+          data-testid="page-id-subpages-popover"
+          className="fixed bottom-12 right-3 z-50 w-72 rounded-xl border border-[#1E3358] bg-[#000820]/95 backdrop-blur-xl p-2.5 shadow-[0_12px_32px_rgba(0,0,0,0.85)] text-xs animate-in fade-in slide-in-from-bottom-2 duration-150"
+        >
+          <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-white/10">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              Registered Subpages
+            </span>
+            <span className="text-[10px] font-mono text-[#D4AF37]">
+              {activePage.id}
+            </span>
+          </div>
+          <div className="space-y-1 max-h-48 overflow-y-auto pr-0.5">
+            {activeSubpages.map((sub) => {
+              const isCurrent = sub.id === activePage.id;
+              return (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${sub.id} · ${sub.name}`);
+                    toast.success(`Copied ${sub.id} · ${sub.name}`);
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-left transition-colors cursor-pointer",
+                    isCurrent
+                      ? "bg-[#102347] border border-[#D4AF37]/40 text-white"
+                      : "hover:bg-white/[0.06] text-slate-300 border border-transparent"
+                  )}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className={cn(
+                        "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0",
+                        isCurrent
+                          ? "bg-[#D4AF37]/20 text-[#FFE394] border border-[#D4AF37]/40"
+                          : "bg-white/10 text-slate-300"
+                      )}
+                    >
+                      {sub.id}
+                    </span>
+                    <span className="text-[11px] truncate">{sub.name}</span>
+                  </div>
+                  {isCurrent && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-[#FFE394] shrink-0">
+                      Current
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── First Mate Session Context Menu (opens above dock) ── */}
       {firstMateMenuOpen && (

@@ -1,13 +1,18 @@
 import React from "react";
-import { Headset, ExternalLink, PhoneCall } from "lucide-react";
+import { Headset, ExternalLink, PhoneCall, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NoActiveCallHeroProps {
   onOpenQuoPhone: () => void;
   onOpenCallWorkspace?: () => void;
+  onStartNewInquiry?: () => void;
 }
 
-export function NoActiveCallHero({ onOpenQuoPhone, onOpenCallWorkspace }: NoActiveCallHeroProps) {
+export function NoActiveCallHero({
+  onOpenQuoPhone,
+  onOpenCallWorkspace,
+  onStartNewInquiry,
+}: NoActiveCallHeroProps) {
   return (
     <div className="relative overflow-hidden rounded-2xl bg-[#05142B]/90 border border-[#3A2C18] p-5 sm:p-6 text-center shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] select-none">
       {/* Background Nautical Bathymetric Ocean Wave SVG in Aged Brass */}
@@ -78,10 +83,23 @@ export function NoActiveCallHero({ onOpenQuoPhone, onOpenCallWorkspace }: NoActi
             </a>
           </Button>
 
+          {onStartNewInquiry && (
+            <Button
+              variant="outline"
+              onClick={onStartNewInquiry}
+              data-testid="call-center-hero-new-inquiry-btn"
+              className="border border-[#C5A059]/60 bg-[#05102B] text-[#FFE394] hover:bg-[#0C204B] hover:text-white font-semibold px-5 py-2.5 h-auto rounded-xl gap-2 text-xs sm:text-sm cursor-pointer transition-all"
+            >
+              <UserPlus className="h-3.5 w-3.5 text-[#FFE394]" />
+              New Service Inquiry
+            </Button>
+          )}
+
           {onOpenCallWorkspace && (
             <Button
               variant="outline"
               onClick={onOpenCallWorkspace}
+              data-testid="call-center-open-workspace-btn"
               className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] font-semibold px-5 py-2.5 h-auto rounded-xl gap-2 text-xs sm:text-sm cursor-pointer transition-all"
             >
               <PhoneCall className="h-3.5 w-3.5 text-[#FFE394]" />

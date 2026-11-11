@@ -86,8 +86,24 @@ export const discoveryRouter = router({
           .where(and(deq(discoveryCalls.leadId, leadId), deq(discoveryCalls.ownerId, ctx.user.id)))
           .limit(1);
         if (existing) {
+          let mergedPricingNotes = data.pricingNotes;
+          if (data.pricingNotes && existing.pricingNotes) {
+            try {
+              const oldParsed = JSON.parse(existing.pricingNotes);
+              const newParsed = JSON.parse(data.pricingNotes);
+              if (oldParsed?.leadJourney && typeof newParsed === "object" && !newParsed.leadJourney) {
+                mergedPricingNotes = JSON.stringify({
+                  ...newParsed,
+                  leadJourney: oldParsed.leadJourney,
+                });
+              }
+            } catch {
+              // keep data.pricingNotes as-is
+            }
+          }
           await dbConn.update(discoveryCalls).set({
             ...data,
+            ...(mergedPricingNotes !== undefined ? { pricingNotes: mergedPricingNotes } : {}),
             ...(contactId ? { contactId } : {}),
           }).where(deq(discoveryCalls.id, existing.id));
         } else {
@@ -97,6 +113,25 @@ export const discoveryRouter = router({
             contactId: contactId || null,
             ...data,
           });
+        }
+
+        // Synchronize in-memory discovery call record used by Lead Journey Workspace
+        try {
+          const { inMemoryDiscoveryCalls } = await import("../services/leadJourneyService");
+          const memExisting = inMemoryDiscoveryCalls.get(leadId) || existing || {
+            id: existing?.id || 9500 + leadId,
+            leadId,
+            ownerId: ctx.user.id,
+            contactId: contactId || null,
+          };
+          inMemoryDiscoveryCalls.set(leadId, {
+            ...memExisting,
+            ...data,
+            ...(contactId ? { contactId } : {}),
+            updatedAt: new Date(),
+          });
+        } catch (memErr) {
+          console.warn("[Discovery] Could not sync inMemoryDiscoveryCalls:", memErr);
         }
 
         // Synchronize outcome status & notes back to the original Lead Center record
@@ -360,9 +395,17 @@ export const discoveryRouter = router({
       await dbConn.insert(discoveryQuestions).values(
         defaults.map((q, i) => ({ ownerId: ctx.user.id, ...q, sortOrder: i }))
       );
-      return await dbConn.select().from(discoveryQuestions)
+      const seeded = await dbConn.select().from(discoveryQuestions)
         .where(deq(discoveryQuestions.ownerId, ctx.user.id))
         .orderBy(dasc(discoveryQuestions.sortOrder));
+      if (seeded.length > 0) return seeded;
+      return defaults.map((q, i) => ({
+        id: i + 1,
+        ownerId: ctx.user.id,
+        ...q,
+        sortOrder: i,
+        isActive: true,
+      }));
     }),
 
     // Create a new discovery question

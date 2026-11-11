@@ -223,11 +223,15 @@ function Router() {
           <Route path="/project-workspace/:id" component={StudentWorkspace} />
           <Route path="/contacts" component={Contacts} />
           <Route path="/students" component={Students} />
-          <Route path="/leads/:leadId/discovery" component={DiscoveryCallPage} />
+          <Route path="/leads/forms" component={LeadForms} />
+          <Route path="/lead-forms" component={LeadForms} />
+          <Route path="/leads/:leadId/discovery/session" component={Leads} />
+          <Route path="/leads/:leadId/:stage" component={Leads} />
+          <Route path="/leads/:leadId" component={Leads} />
+          <Route path="/leads" component={Leads} />
           <Route path="/first-mate" component={FirstMate} />
           <Route path="/advocacy-pipeline">{() => <Redirect to="/students" />}</Route>
           <Route path="/pipeline">{() => <Redirect to="/students" />}</Route>
-          <Route path="/leads" component={Leads} />
           <Route path="/projects" component={Students} />
           <Route path="/invoices" component={Invoices} />
           <Route path="/agreements" component={Agreements} />

@@ -913,6 +913,17 @@ export default function UnassignedCallLogs() {
               } catch {}
               toast.success("Opening Quo desktop app...");
             }}
+            onStartNewInquiry={() => {
+              setShowCallWorkspace(true);
+              startCall({
+                callerCategory: "new_lead",
+                callType: "New Lead / Sales",
+              });
+              setTimeout(() => {
+                const el = document.getElementById("call-workspace");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 100);
+            }}
             onOpenCallWorkspace={() => {
               setShowCallWorkspace(true);
               setTimeout(() => {

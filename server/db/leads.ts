@@ -1,6 +1,9 @@
 import { eq, desc, and } from "drizzle-orm";
 import { leads, contacts } from "../../drizzle/schema";
 import { getDb } from "./connection";
+import { inMemoryContacts } from "./contacts";
+
+export const inMemoryLeads = new Map<number, any>();
 
 /**
  * Hydrates a lead with contact and student information if parentName or studentName is missing
@@ -91,11 +94,26 @@ export async function getLeadsByOwner(ownerId?: number) {
       studentMap.set(c.parentContactId, c);
     }
   }
+  for (const [cid, c] of Array.from(inMemoryContacts.entries())) {
+    if (!contactMap.has(cid)) contactMap.set(cid, c);
+    if (c.parentContactId && !studentMap.has(c.parentContactId)) {
+      studentMap.set(c.parentContactId, c);
+    }
+  }
+
+  for (const ml of Array.from(inMemoryLeads.values())) {
+    if (!rawLeads.some((r: any) => r.id === ml.id)) {
+      rawLeads.unshift(ml);
+    }
+  }
 
   return rawLeads.map((l) => hydrateLeadWithContact(l, contactMap, studentMap));
 }
 
 export async function getLeadById(id: number, ownerId?: number) {
+  if (inMemoryLeads.has(id)) {
+    return inMemoryLeads.get(id);
+  }
   const cfDb = (globalThis as any).__CF_ENV_DB__;
   let lead: any = undefined;
 
@@ -139,13 +157,39 @@ export async function createLead(data: any, ownerId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  return await db.insert(leads).values({
+  const res: any = await db.insert(leads).values({
     ...data,
     ownerId,
   });
+  let insertedId =
+    res?.[0]?.insertId ??
+    res?.insertId ??
+    Number(res?.lastInsertRowid ?? res?.[0]?.lastInsertRowid ?? 0);
+  if (!insertedId) {
+    insertedId = 9000 + inMemoryLeads.size + 1;
+  }
+  const now = new Date();
+  const record = {
+    id: insertedId,
+    ownerId,
+    status: "New",
+    createdAt: now,
+    updatedAt: now,
+    ...data,
+  };
+  inMemoryLeads.set(insertedId, record);
+  return { insertId: insertedId, id: insertedId, ...res };
 }
 
 export async function updateLead(id: number, ownerId: number, data: any) {
+  if (inMemoryLeads.has(id)) {
+    const existing = inMemoryLeads.get(id);
+    inMemoryLeads.set(id, {
+      ...existing,
+      ...data,
+      updatedAt: new Date(),
+    });
+  }
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 

@@ -168,11 +168,41 @@ export const DYNAMIC_ROUTES: DynamicRoutePattern[] = [
     category: "Public",
   },
   
-  // Discovery Call Process / Lead Discovery
+  // Lead Center Stage & Discovery Subpages
+  {
+    matcher: (path) => /^\/leads\/[^/]+\/inquiry/.test(path),
+    id: "PG-003-INQ",
+    name: "Lead Center → Inquiry",
+    category: "CRM",
+  },
+  {
+    matcher: (path) => /^\/leads\/[^/]+\/discovery\/session/.test(path),
+    id: "PG-003-SES",
+    name: "Lead Center → Discovery Session",
+    category: "CRM",
+  },
   {
     matcher: (path) => /^\/leads\/[^/]+\/discovery/.test(path),
-    id: "PG-003-DC",
-    name: "Discovery Call Process",
+    id: "PG-003-DSC",
+    name: "Lead Center → Discovery",
+    category: "CRM",
+  },
+  {
+    matcher: (path) => /^\/leads\/[^/]+\/decision/.test(path),
+    id: "PG-003-DEC",
+    name: "Lead Center → Decision",
+    category: "CRM",
+  },
+  {
+    matcher: (path) => /^\/leads\/[^/]+\/onboarding/.test(path),
+    id: "PG-003-ONB",
+    name: "Lead Center → Onboarding",
+    category: "CRM",
+  },
+  {
+    matcher: (path) => /^\/leads\/\d+$/.test(path),
+    id: "PG-003-INQ",
+    name: "Lead Center → Family Workspace",
     category: "CRM",
   },
   
@@ -389,6 +419,64 @@ export const STUDENT_WORKSPACE_TAB_IDS: Record<string, PageIdInfo> = {
   "documents":     { id: "PG-030-DOC", name: "Student Workspace → Documents", category: "Vault", description: "Case document vault and student files mirror" },
 };
 
+// ─── Lead Center (PG-003) Stage & Subpage ID Mappings ────────────────────────
+export const LEAD_CENTER_STAGE_IDS: Record<string, PageIdInfo> = {
+  "overview":          { id: "PG-003", name: "Lead Center Overview", category: "CRM", description: "Family inquiry queue, stage filters, and follow-up radar" },
+  "inquiry":           { id: "PG-003-INQ", name: "Lead Center → New Leads", category: "CRM", description: "Prepare family inquiry, students, concerns, and desired outcome for discovery" },
+  "discovery":         { id: "PG-003-DSC", name: "Lead Center → Discovery", category: "CRM", description: "Discovery scheduling, appointment status, and call outcomes" },
+  "discovery-session": { id: "PG-003-SES", name: "Lead Center → Discovery Session", category: "CRM", description: "Live discovery workspace with prompts, notes, and outcome completion" },
+  "session":           { id: "PG-003-SES", name: "Lead Center → Discovery Session", category: "CRM", description: "Live discovery workspace with prompts, notes, and outcome completion" },
+  "dc":                { id: "PG-003-DC", name: "Lead Center → Discovery Call Process", category: "CRM", description: "Discovery call workspace" },
+  "decision":          { id: "PG-003-DEC", name: "Lead Center → Decision", category: "CRM", description: "Manage family decision: Considering, Needs time, Ready to proceed, Declined" },
+  "onboarding":        { id: "PG-003-ONB", name: "Lead Center → Onboarding", category: "CRM", description: "Connected agreement, payment, intake, and portal activation tracker" },
+  "active":            { id: "PG-003-ONB", name: "Lead Center → Active Client Transition", category: "CRM", description: "Activated family client transition view" },
+};
+
+export function resolveLeadCenterStageId(stageKey: string, isSessionView = false): PageIdInfo {
+  if (isSessionView || stageKey === "session" || stageKey === "discovery-session") {
+    return LEAD_CENTER_STAGE_IDS["discovery-session"];
+  }
+  const normalized = (stageKey || "overview").toLowerCase().trim();
+  return LEAD_CENTER_STAGE_IDS[normalized] || LEAD_CENTER_STAGE_IDS["overview"];
+}
+
+/**
+ * Returns the registered hierarchy / subpages for a given Page ID prefix (e.g. PG-003, PG-043, PG-038, PG-030)
+ * so the bottom-right Page ID utility pill can display them compactly when opened.
+ */
+export function getRegisteredSubpagesForPageId(pageId: string): PageIdInfo[] {
+  const upper = (pageId || "").toUpperCase();
+  if (upper === "PG-003" || upper.startsWith("PG-003-")) {
+    return [
+      LEAD_CENTER_STAGE_IDS["inquiry"],
+      LEAD_CENTER_STAGE_IDS["discovery"],
+      LEAD_CENTER_STAGE_IDS["discovery-session"],
+      LEAD_CENTER_STAGE_IDS["decision"],
+      LEAD_CENTER_STAGE_IDS["onboarding"],
+    ];
+  }
+  if (upper === "PG-043" || upper.startsWith("PG-043-")) {
+    return [
+      MEETING_WORKSPACE_TAB_IDS["assemble"],
+      MEETING_WORKSPACE_TAB_IDS["blueprint"],
+      MEETING_WORKSPACE_TAB_IDS["meeting-space"],
+    ];
+  }
+  if (upper === "PG-038" || upper.startsWith("PG-038-")) {
+    return Object.values(CREW_QUARTERS_TAB_IDS);
+  }
+  if (upper === "PG-030" || upper.startsWith("PG-030-")) {
+    return Object.values(STUDENT_WORKSPACE_TAB_IDS);
+  }
+  if (upper === "PG-013" || upper.startsWith("PG-013-")) {
+    return [
+      AUTOMATIONS_TAB_IDS["workflows"],
+      AUTOMATIONS_TAB_IDS["ai-vault"],
+    ];
+  }
+  return [];
+}
+
 // ─── Meeting Workspace (PG-043) Sub-ID Mappings ──────────────────────────────
 export const MEETING_WORKSPACE_TAB_IDS: Record<string, PageIdInfo> = {
   "assemble":       { id: "PG-043-ASM", name: "Meeting Workspace → 1. Assemble", category: "Advocacy", description: "Option 1: Assemble — Build the case (IEP Intel, Parent Intel, and Parent Concern Statement)" },
@@ -438,9 +526,18 @@ export function resolvePortalTabId(tabId: string): PageIdInfo | null {
 /**
  * Broadcasts a custom page ID update so that the global corner PageIdBadge reflects sub-views immediately.
  */
-export function broadcastPageId(idInfo: PageIdInfo) {
+export function broadcastPageId(idInfo: PageIdInfo | string) {
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("waypoint:page-id-change", { detail: idInfo }));
+    const resolved: PageIdInfo =
+      typeof idInfo === "string"
+        ? Object.values(LEAD_CENTER_STAGE_IDS).find((p) => p.id === idInfo) ||
+          Object.values(PAGE_IDS).find((p) => p.id === idInfo) || {
+            id: idInfo,
+            name: "Lead Center",
+            category: "CRM",
+          }
+        : idInfo;
+    window.dispatchEvent(new CustomEvent("waypoint:page-id-change", { detail: resolved }));
   }
 }
 
@@ -567,6 +664,35 @@ export function resolvePageId(pathname: string, search = ""): PageIdInfo {
       return STUDENT_WORKSPACE_TAB_IDS[tabParam];
     }
     return STUDENT_WORKSPACE_TAB_IDS["overview"];
+  }
+
+  // Check Lead Center stages (/leads, /leads/:leadId, /leads/:leadId/:stage, or ?stage=...)
+  if (cleanPath === "/leads" || cleanPath.startsWith("/leads/")) {
+    if (cleanPath === "/leads/forms") {
+      return PAGE_IDS["/leads/forms"];
+    }
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const stageParam = (urlParams.get("stage") || urlParams.get("tab") || "").toLowerCase();
+    const viewParam = (urlParams.get("view") || "").toLowerCase();
+
+    if (viewParam === "session" || cleanPath.endsWith("/discovery/session")) {
+      return LEAD_CENTER_STAGE_IDS["discovery-session"];
+    }
+    if (stageParam && LEAD_CENTER_STAGE_IDS[stageParam]) {
+      return LEAD_CENTER_STAGE_IDS[stageParam];
+    }
+    if (cleanPath.endsWith("/inquiry")) return LEAD_CENTER_STAGE_IDS["inquiry"];
+    if (cleanPath.endsWith("/discovery")) return LEAD_CENTER_STAGE_IDS["discovery"];
+    if (cleanPath.endsWith("/decision")) return LEAD_CENTER_STAGE_IDS["decision"];
+    if (cleanPath.endsWith("/onboarding")) return LEAD_CENTER_STAGE_IDS["onboarding"];
+    if (/^\/leads\/\d+$/.test(cleanPath)) return LEAD_CENTER_STAGE_IDS["inquiry"];
+    if (cleanPath === "/leads") {
+      const leadIdParam = urlParams.get("leadId");
+      if (leadIdParam) {
+        return LEAD_CENTER_STAGE_IDS[stageParam || "inquiry"] || LEAD_CENTER_STAGE_IDS["inquiry"];
+      }
+      return PAGE_IDS["/leads"];
+    }
   }
 
   // Check Meeting Workspace sub-options (/meeting-workspace?tab=assemble|blueprint|meeting-space, /meeting-workspace/:studentId?tab=...)
