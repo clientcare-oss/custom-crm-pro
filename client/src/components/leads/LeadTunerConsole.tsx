@@ -1,14 +1,8 @@
 import React, { useEffect } from "react";
 import {
-  FileText,
   MoreHorizontal,
   Plus,
-  ChevronLeft,
-  ChevronRight,
   Phone,
-  Radio,
-  Mic,
-  LifeBuoy,
   Sparkles,
   UserPlus,
 } from "lucide-react";
@@ -40,7 +34,7 @@ export const TUNER_STAGES: TunerStageMeta[] = [
     cbChannel: "CH 09 • NEW LEADS",
     rescueSubtext: "Incoming family inquiries ready to schedule discovery",
     knobAngle: -54,
-    needlePercent: 13.5,
+    needlePercent: 12.5,
   },
   {
     id: "discovery",
@@ -48,7 +42,7 @@ export const TUNER_STAGES: TunerStageMeta[] = [
     cbChannel: "CH 16 • DISCOVERY",
     rescueSubtext: "Scheduled discovery calls & live family conversations",
     knobAngle: -18,
-    needlePercent: 38.5,
+    needlePercent: 37.5,
   },
   {
     id: "decision",
@@ -56,7 +50,7 @@ export const TUNER_STAGES: TunerStageMeta[] = [
     cbChannel: "CH 22 • DECISION",
     rescueSubtext: "Service plan offers, agreements & initial payment readiness",
     knobAngle: 18,
-    needlePercent: 63.5,
+    needlePercent: 62.5,
   },
   {
     id: "onboarding",
@@ -85,20 +79,36 @@ interface LeadTunerConsoleProps {
   onOpenLead?: (leadId: number, stage: WorkspaceStageTab) => void;
   isClientOpen?: boolean;
   openedClientName?: string;
+  openedClientStudentName?: string;
+  openedClientStatusLabel?: string;
+  openedClientNextAction?: string;
+  openedClientCurrentStage?: WorkspaceStageTab;
+}
+
+function getInitials(name?: string): string {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) return "FM";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] || ""}${parts[parts.length - 1][0] || ""}`.toUpperCase();
 }
 
 export function LeadTunerConsole({
   selectedStage,
   onSelectStage,
   stageCounts,
-  currentStageLeads,
   onManageForms,
   onNewInquiry,
   onAddTestLead,
   isAddingTestLead = false,
-  onOpenLead,
   isClientOpen = false,
   openedClientName,
+  openedClientStudentName,
+  openedClientStatusLabel,
+  openedClientNextAction,
+  openedClientCurrentStage,
 }: LeadTunerConsoleProps) {
   const activeStageIndex = Math.max(
     0,
@@ -106,6 +116,18 @@ export function LeadTunerConsole({
   );
   const activeStageMeta = TUNER_STAGES[activeStageIndex] || TUNER_STAGES[0];
   const activeStageCount = stageCounts[selectedStage] ?? 0;
+
+  const clientCurrentStageIndex = Math.max(
+    0,
+    TUNER_STAGES.findIndex(
+      (s) => s.id === (openedClientCurrentStage || selectedStage)
+    )
+  );
+  const clientFirstName =
+    String(openedClientName || "Family")
+      .trim()
+      .split(/\s+/)[0] || "Family";
+  const clientInitials = getInitials(openedClientName);
 
   const handleStepStage = (delta: number) => {
     const nextIdx =
@@ -137,52 +159,38 @@ export function LeadTunerConsole({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeStageIndex, selectedStage]);
 
-  const featuredLead = currentStageLeads[0] || null;
-
   return (
-    <div className="w-full space-y-3.5" data-testid="lead-tuner-console">
-      {/* ─── 1. TOP HEADER BAR ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2.5 flex-nowrap overflow-hidden">
-            <h1
-              className="text-2xl sm:text-[32px] font-bold tracking-tight text-[#FFF4D4] leading-none shrink-0"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              Lead Center
-            </h1>
-            <span className="inline-flex items-center justify-center gap-2 min-w-[215px] px-2.5 py-0.5 rounded-full bg-[#091D34] border border-[#C5A059]/55 text-[10.5px] font-mono font-bold uppercase tracking-wider text-[#FFE394] shadow-[0_2px_10px_rgba(0,0,0,0.6)] shrink-0 whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse motion-reduce:animate-none shadow-[0_0_8px_#34D399] shrink-0" />
-              <Radio className="w-3.5 h-3.5 text-[#DFBE77] shrink-0" />
-              <span>{activeStageMeta.cbChannel} • LIVE</span>
-            </span>
-          </div>
-          <p
-            className="text-xs sm:text-sm text-[#C8B99B] mt-1 truncate"
+    <div className="w-full space-y-2.5" data-testid="lead-tuner-console">
+      {/* ─── 1. TOP HEADER BAR: WAYPOINT CRM ——— Lead Center | + New inquiry ─── */}
+      <div className="flex items-center justify-between gap-3 px-2">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <span
+            className="text-[11px] sm:text-xs font-serif uppercase tracking-[0.24em] text-[#D8C7A5] whitespace-nowrap"
             style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
           >
-            New Leads → Discovery → Decision → Onboarding — tune the radio to view each stage or progress a family forward.
-          </p>
+            WAYPOINT CRM
+          </span>
+          <span
+            aria-hidden="true"
+            className="w-8 sm:w-16 h-[1px] bg-gradient-to-r from-[#C5A059]/40 via-[#DFBE77]/80 to-[#C5A059]/40 shrink-0"
+          />
+          <h1
+            className="text-2xl sm:text-[32px] font-bold tracking-tight text-white leading-none truncate"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          >
+            Lead Center
+          </h1>
         </div>
 
-        {/* Right Header Controls: Manage forms | ••• | + New Service Inquiry */}
-        <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
-          <button
-            type="button"
-            onClick={onManageForms}
-            className="h-9 px-3.5 rounded-lg bg-[#0B1C36]/90 hover:bg-[#12294D] border border-[#2B4368] hover:border-[#C5A059]/60 text-[#E2EDF8] hover:text-[#FFF4D4] text-xs font-medium inline-flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all cursor-pointer"
-          >
-            <FileText className="w-3.5 h-3.5 text-[#B8CCE4]" />
-            <span>Manage forms</span>
-          </button>
-
+        {/* Right Header Controls: + New inquiry (+ discreet 3-dot menu for Add Test Lead / Manage Forms) */}
+        <div className="flex items-center gap-2 shrink-0">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 data-testid="lead-center-more-options-btn"
                 aria-label="More Lead Center options"
-                className="h-9 w-9 rounded-lg bg-[#0B1C36]/90 hover:bg-[#12294D] border border-[#2B4368] hover:border-[#C5A059]/60 text-[#E2EDF8] hover:text-[#FFE394] inline-flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all cursor-pointer"
+                className="h-8 w-8 rounded-full bg-[#09152B]/80 hover:bg-[#12264A] border border-[#C5A059]/40 hover:border-[#FFE394]/70 text-[#D8C7A5] hover:text-[#FFE394] inline-flex items-center justify-center transition-all cursor-pointer"
               >
                 <MoreHorizontal className="w-4 h-4" />
               </button>
@@ -228,394 +236,472 @@ export function LeadTunerConsole({
             type="button"
             onClick={onNewInquiry}
             data-testid="new-service-inquiry-btn"
-            className="h-9 px-4 rounded-lg bg-gradient-to-b from-[#EAD08A] via-[#CEA452] to-[#9E762A] hover:from-[#F2DC9C] hover:via-[#D8B05E] hover:to-[#AD8333] text-[#07162B] font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 border border-[#FFE5A3]/80 shadow-[0_4px_14px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.45)] transition-all cursor-pointer"
+            className="h-9 px-5 rounded-full bg-gradient-to-b from-[#EAD08A] via-[#C89D4C] to-[#987026] hover:from-[#F3DC9B] hover:via-[#D5AA58] hover:to-[#A87D2E] text-[#07162B] font-serif font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 border border-[#FFE5A3]/85 shadow-[0_4px_14px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.5)] transition-all cursor-pointer"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>New Service Inquiry</span>
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>New inquiry</span>
           </button>
         </div>
       </div>
 
-      {/* ─── 2. BESPOKE BRASS & NAVY RADIO TUNER STAGE CONSOLE ─── */}
-      <div
-        className="relative rounded-[20px] p-[2.5px] shadow-[0_14px_38px_rgba(0,0,0,0.9),0_0_0_1px_rgba(0,0,0,0.8)]"
-        style={{
-          background:
-            "linear-gradient(180deg, #E5C67E 0%, #9F7833 25%, #5A4016 55%, #B88E42 85%, #6A4C1B 100%)",
-        }}
-      >
-        {/* Inner Navy Leather Instrument Chassis */}
-        <div
-          className="relative rounded-[18px] px-3.5 sm:px-5 py-3 sm:py-3.5 border border-[#FFE394]/30 overflow-hidden"
-          style={{
-            backgroundColor: "#040D22",
-            backgroundImage: `
-              radial-gradient(ellipse at 30% 50%, rgba(197, 160, 89, 0.08) 0%, transparent 65%),
-              repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px),
-              repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px)
-            `,
-            boxShadow:
-              "inset 0 3px 12px rgba(0,0,0,0.85), inset 0 -2px 8px rgba(0,0,0,0.8)",
-          }}
-        >
-          {/* 4 Corner Brass Rivets */}
-          <span className="absolute top-2 left-2 w-2 h-2 rounded-full bg-gradient-to-br from-[#FFE5A3] via-[#B88B3A] to-[#4A3310] border border-[#241705] shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-gradient-to-br from-[#FFE5A3] via-[#B88B3A] to-[#4A3310] border border-[#241705] shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
-          <span className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-gradient-to-br from-[#FFE5A3] via-[#B88B3A] to-[#4A3310] border border-[#241705] shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
-          <span className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-gradient-to-br from-[#FFE5A3] via-[#B88B3A] to-[#4A3310] border border-[#241705] shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
+      {/* ─── 2. PHOTOREALISTIC BRASS & NAVY CB RADIO CHASSIS WITH LIVE INTERACTIVE OVERLAYS ─── */}
+      <div className="relative w-full aspect-[1004/318] select-none">
+        {/* Base High-Res Radio Hardware Artwork (Switches cleanly between Browse Mode & Single-Client Mode) */}
+        <img
+          src={
+            isClientOpen
+              ? "/images/lead-center-radio-client-clean.png?v=2"
+              : "/images/lead-center-radio-chassis-clean.png?v=5"
+          }
+          alt="Waypoint Lead Center Radio Console"
+          draggable={false}
+          className="w-full h-full object-contain pointer-events-none block"
+        />
 
-          {/* ── TOP CB / MARINE RESCUE TRANSCEIVER MONITOR BAR (LOCKED SINGLE-LINE DIMENSIONS) ── */}
-          <div className="mb-2.5 h-9 px-3 rounded-xl bg-[#020817]/95 border border-[#3A2C18] flex items-center justify-between gap-2.5 flex-nowrap overflow-hidden shadow-[inset_0_2px_6px_rgba(0,0,0,0.85)]">
-            {/* Left: CB Transceiver Callsign + S-Meter Signal Bars */}
-            <div className="flex items-center gap-2 shrink-0 md:w-[325px]">
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#0A192F] border border-[#C5A059]/45 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping motion-reduce:animate-none" />
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#FFE394] whitespace-nowrap">
-                  STAGE TUNER
-                </span>
-              </div>
-
-              {/* 5-Bar CB Signal Strength Meter */}
-              <div
-                className="hidden sm:flex items-end gap-0.5 h-3 px-1 shrink-0"
-                title="Channel Signal Active"
-              >
-                <span className="w-1 h-1.5 rounded-xs bg-emerald-400" />
-                <span className="w-1 h-2 rounded-xs bg-emerald-400" />
-                <span className="w-1 h-2.5 rounded-xs bg-emerald-400" />
-                <span className="w-1 h-3 rounded-xs bg-[#FFE394]" />
-                <span className="w-1 h-3.5 rounded-xs bg-[#DFBE77] shadow-[0_0_6px_#FFE394]" />
-              </div>
-
+        {/* ── DYNAMIC BRASS PLAQUES FOR SINGLE-CLIENT MODE ── */}
+        {isClientOpen && (
+          <>
+            {/* Top-Center Brass Plaque: "{FIRST_NAME}'S JOURNEY" */}
+            <div
+              className="absolute flex items-center justify-center pointer-events-none px-2"
+              style={{
+                left: "46.6%",
+                top: "9.1%",
+                width: "22.2%",
+                height: "7.8%",
+              }}
+            >
               <span
-                className="text-[10.5px] font-mono uppercase tracking-wider text-[#C6B697] hidden md:inline truncate whitespace-nowrap"
-                data-testid="radio-channel-display"
+                className="font-serif font-bold uppercase tracking-[0.22em] text-[#1C1204] drop-shadow-[0_1px_0_rgba(255,236,185,0.5)] truncate"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(7px, 0.95vw, 12px)",
+                }}
               >
-                {activeStageMeta.cbChannel} • {activeStageCount}{" "}
-                {activeStageCount === 1 ? "LEAD" : "LEADS"}
+                {clientFirstName.toUpperCase()}&apos;S JOURNEY
               </span>
             </div>
 
-            {/* Center: Current Stage Operational Summary */}
-            <div className="flex items-center gap-2 min-w-0 flex-1 justify-center overflow-hidden">
-              <LifeBuoy className="w-3.5 h-3.5 text-[#FFE394] shrink-0" />
-              <p className="text-xs text-[#FFF4D4] truncate whitespace-nowrap">
-                {featuredLead ? (
-                  <>
-                    <strong className="text-[#FFE394] font-semibold">
-                      {activeStageMeta.label}:
-                    </strong>{" "}
-                    {featuredLead.parentName}
-                    {featuredLead.studentNames?.length > 0
-                      ? ` (${featuredLead.studentNames.join(", ")})`
-                      : ""}{" "}
-                    —{" "}
-                    <span className="text-[#D8C7A5]">
-                      {featuredLead.statusSummary} · Next: {featuredLead.nextActionLabel}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-[#D8C7A5]">
-                    {activeStageMeta.label} — {activeStageMeta.rescueSubtext}
-                  </span>
-                )}
-              </p>
-            </div>
-
-            {/* Right: Fixed-Width Slot for Top Lead Action so Bar Never Resizes */}
-            <div className="hidden sm:flex items-center justify-end w-[170px] shrink-0">
-              {featuredLead && onOpenLead ? (
-                <button
-                  type="button"
-                  onClick={() => onOpenLead(featuredLead.id, selectedStage)}
-                  className="h-6 max-w-[170px] px-2.5 rounded-md bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-[11px] inline-flex items-center gap-1.5 border border-[#FFE394]/70 shadow-[0_2px_8px_rgba(0,0,0,0.75)] hover:brightness-105 transition-colors cursor-pointer overflow-hidden"
-                >
-                  <Mic className="w-3 h-3 stroke-[2.4] shrink-0" />
-                  <span className="truncate whitespace-nowrap">
-                    Open {featuredLead.parentName}
-                  </span>
-                </button>
-              ) : (
-                <span className="text-[10.5px] font-mono uppercase tracking-wider text-[#6E84A3] whitespace-nowrap">
-                  0 IN STAGE
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-            {/* LEFT 8 COLS: Recessed Brass-Rimmed Frequency Glass Window */}
-            <div className="lg:col-span-8 min-w-0">
-              <div
-                className="rounded-[22px] p-[2.5px] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,240,190,0.4)]"
+            {/* Bottom-Left Brass Plaque: "FAMILY WORKSPACE" */}
+            <div
+              className="absolute flex items-center justify-center pointer-events-none px-1"
+              style={{
+                left: "13.3%",
+                top: "83.6%",
+                width: "13.5%",
+                height: "6.0%",
+              }}
+            >
+              <span
+                className="font-serif font-bold uppercase tracking-[0.15em] text-[#1C1204] drop-shadow-[0_1px_0_rgba(255,236,185,0.5)] whitespace-nowrap"
                 style={{
-                  background:
-                    "linear-gradient(180deg, #6E501E 0%, #D5B168 50%, #593E14 100%)",
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(5.5px, 0.68vw, 8.5px)",
                 }}
               >
-                <div
-                  className="relative rounded-[20px] px-2 sm:px-5 pt-3 pb-2.5 overflow-hidden border border-[#FFE5A3]/35"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, #091529 0%, #102038 52%, #192434 85%, #20232A 100%)",
-                    boxShadow:
-                      "inset 0 6px 18px rgba(0,0,0,0.9), inset 0 -4px 12px rgba(0,0,0,0.65)",
-                  }}
-                >
-                  {/* Dynamic Warm Golden Spotlight Glow Behind Active Stage */}
-                  <div
-                    className="pointer-events-none absolute inset-y-0 w-44 -translate-x-1/2 transition-all duration-300 motion-reduce:transition-none ease-out"
-                    style={{
-                      left: `${activeStageMeta.needlePercent}%`,
-                      background:
-                        "radial-gradient(ellipse at 50% 62%, rgba(255, 205, 105, 0.36) 0%, rgba(212, 155, 62, 0.14) 45%, transparent 75%)",
-                    }}
-                  />
+                FAMILY WORKSPACE
+              </span>
+            </div>
+          </>
+        )}
 
-                  {/* Top Glass Highlight Reflection */}
-                  <div
-                    className="pointer-events-none absolute inset-x-6 top-1 h-[1px] opacity-40"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)",
-                    }}
-                  />
-
-                  {/* 4 Stage Columns Inside the Tuner Window — Fixed Geometry & Zero Truncation */}
-                  <div
-                    className="relative z-10 grid grid-cols-4 divide-x divide-[#C5A059]/25"
-                    role="tablist"
-                    aria-label="Lead Center Stages"
-                  >
-                    {TUNER_STAGES.map((stage) => {
-                      const count = stageCounts[stage.id] ?? 0;
-                      const isSelected = stage.id === selectedStage;
-                      return (
-                        <button
-                          key={stage.id}
-                          type="button"
-                          role="tab"
-                          aria-selected={isSelected}
-                          data-testid={`radio-stage-${stage.id}`}
-                          onClick={() => onSelectStage(stage.id)}
-                          className="group min-w-0 h-[68px] flex flex-col items-center justify-center px-1 sm:px-2 py-1 transition-colors cursor-pointer focus:outline-hidden overflow-hidden"
-                        >
-                          <span
-                            className={cn(
-                              "h-3.5 leading-none flex items-center text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider mb-0.5 transition-colors whitespace-nowrap",
-                              isSelected
-                                ? "text-[#FFE394] font-bold"
-                                : "text-[#9C8D74] group-hover:text-[#DFC89C]"
-                            )}
-                          >
-                            {stage.cbChannel}
-                          </span>
-                          <span
-                            className={cn(
-                              "h-6 leading-none flex items-center font-serif text-[11px] sm:text-[15px] md:text-[17px] tracking-tight transition-colors whitespace-nowrap",
-                              isSelected
-                                ? "font-bold text-[#FFFFFF] drop-shadow-[0_0_10px_rgba(255,227,148,0.6)]"
-                                : "font-medium text-[#D0C5B0] group-hover:text-[#FFF4D4]"
-                            )}
-                            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                          >
-                            {stage.label}
-                          </span>
-
-                          <span
-                            data-testid={`radio-stage-count-${stage.id}`}
-                            className={cn(
-                              "mt-1 min-w-[28px] sm:min-w-[32px] h-5 sm:h-5.5 px-2 rounded-full text-xs font-bold inline-flex items-center justify-center transition-colors shrink-0",
-                              isSelected
-                                ? "bg-gradient-to-b from-[#FFE08C] to-[#C8963E] text-[#1A1205] border border-[#FFF3C4] shadow-[0_0_14px_rgba(255,215,115,0.75)]"
-                                : "bg-[#2C2823]/90 text-[#DFC89C] border border-[#7D6335]/60 group-hover:border-[#C5A059]"
-                            )}
-                          >
-                            {count}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Horizontal Brass Frequency Scale + Ticks + Sliding Conical Brass Needle */}
-                  <div className="relative z-10 mt-3 pt-1.5 pb-2 px-2">
-                    {/* Horizontal Scale Line */}
-                    <div className="relative h-[2px] w-full bg-gradient-to-r from-[#6E5528] via-[#E5C175] to-[#6E5528] shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                      {/* Scale Tick Marks */}
-                      {[6, 13.5, 21, 29, 38.5, 47, 55, 63.5, 72, 80, 87.5, 94].map(
-                        (pct, idx) => {
-                          const isMajor =
-                            pct === 13.5 ||
-                            pct === 38.5 ||
-                            pct === 63.5 ||
-                            pct === 87.5;
-                          return (
-                            <span
-                              key={idx}
-                              style={{ left: `${pct}%` }}
-                              className={cn(
-                                "absolute -translate-x-1/2 -top-1.5 w-[1.5px]",
-                                isMajor
-                                  ? "h-3.5 -top-1.5 bg-[#FFE394]"
-                                  : "h-2 -top-1 bg-[#C5A059]/65"
-                              )}
-                            />
-                          );
-                        }
-                      )}
-
-                      {/* Glowing Conical Brass Pointer Needle */}
-                      <div
-                        data-testid="radio-tuning-needle"
-                        className="absolute -top-3.5 -translate-x-1/2 flex flex-col items-center transition-all duration-300 motion-reduce:transition-none ease-out"
-                        style={{ left: `${activeStageMeta.needlePercent}%` }}
-                      >
-                        <div className="w-3 h-3 rounded-full bg-[#FFE394] blur-[4px] opacity-90 -mb-2" />
-                        <svg
-                          width="15"
-                          height="24"
-                          viewBox="0 0 16 28"
-                          fill="none"
-                          className="drop-shadow-[0_3px_6px_rgba(0,0,0,0.9)]"
-                        >
-                          <path
-                            d="M8 0L13.5 26H2.5L8 0Z"
-                            fill="url(#needle-brass-grad)"
-                            stroke="#FFE8A3"
-                            strokeWidth="0.7"
-                          />
-                          <defs>
-                            <linearGradient
-                              id="needle-brass-grad"
-                              x1="2.5"
-                              y1="0"
-                              x2="13.5"
-                              y2="26"
-                              gradientUnits="userSpaceOnUse"
-                            >
-                              <stop stopColor="#FFF6D6" />
-                              <stop offset="0.45" stopColor="#DDA84B" />
-                              <stop offset="1" stopColor="#6E4812" />
-                            </linearGradient>
-                          </defs>
-                        </svg>
-                      </div>
-                    </div>
-
-                    {/* Active Stage Family Count Label Under Needle — Locked Single Line */}
-                    <div className="mt-2.5 h-5 flex items-center justify-center overflow-hidden px-2">
-                      <span
-                        className="font-serif italic text-xs text-[#FFF4D4] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] truncate whitespace-nowrap max-w-full block"
-                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                      >
-                        Viewing <strong className="text-[#FFE394] not-italic">{activeStageMeta.label}</strong> ({activeStageCount}{" "}
-                        {activeStageCount === 1 ? "family" : "families"}) •{" "}
-                        {activeStageMeta.rescueSubtext}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        {/* ── OVERLAY A: LEFT CRT SCREEN LIVE READOUT ── */}
+        {isClientOpen ? (
+          /* SINGLE-CLIENT CRT VIEW ("NOW VIEWING" + Initials Circle + Parent + Student + Green Status Dot) */
+          <div
+            className="absolute flex flex-col items-center justify-between text-center pointer-events-none px-2"
+            style={{
+              left: "6.8%",
+              top: "15.2%",
+              width: "24.5%",
+              height: "64.2%",
+            }}
+          >
+            {/* Top Header: —— NOW VIEWING —— */}
+            <div className="w-full flex items-center justify-center gap-1.5">
+              <span className="w-5 sm:w-7 h-[1px] bg-gradient-to-r from-transparent to-[#CBD5E1]/70" />
+              <span
+                className="font-serif uppercase tracking-[0.18em] text-[#E2E8F0] whitespace-nowrap"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(6.5px, 0.78vw, 10px)",
+                }}
+              >
+                NOW VIEWING
+              </span>
+              <span className="w-5 sm:w-7 h-[1px] bg-gradient-to-l from-transparent to-[#CBD5E1]/70" />
             </div>
 
-            {/* RIGHT 4 COLS: Tactile Rotary Brass CB Channel Knob */}
-            <div className="lg:col-span-4 flex flex-col items-center justify-center py-0.5 shrink-0">
-              <div className="flex items-center gap-2.5 w-full max-w-[240px] justify-center mb-1.5">
-                <span className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-[#C5A059]/70" />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#DFC89C] whitespace-nowrap">
-                  TUNE STAGE DIAL
-                </span>
-                <span className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-[#C5A059]/70" />
+            {/* Circular Initials Ring (EV) */}
+            <div
+              className="rounded-full border-[1.5px] border-[#E2E8F0]/85 bg-[#0A1936]/80 shadow-[0_0_10px_rgba(148,163,184,0.35),inset_0_0_6px_rgba(255,255,255,0.18)] flex items-center justify-center font-serif font-bold text-white shrink-0"
+              style={{
+                width: "clamp(20px, 2.7vw, 35px)",
+                height: "clamp(20px, 2.7vw, 35px)",
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontSize: "clamp(8px, 1.05vw, 13.5px)",
+              }}
+            >
+              {clientInitials}
+            </div>
+
+            {/* Parent Name + PARENT Label */}
+            <div className="flex flex-col items-center leading-none">
+              <div
+                data-testid="radio-channel-display"
+                className="font-serif font-bold text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] line-clamp-2"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(11px, 1.8vw, 22px)",
+                  lineHeight: 1.04,
+                }}
+              >
+                {openedClientName || "Family Inquiry"}
               </div>
+              <span
+                className="mt-0.5 font-serif uppercase tracking-[0.22em] text-[#CBD5E1]/90"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(5.5px, 0.65vw, 8.5px)",
+                }}
+              >
+                PARENT
+              </span>
+            </div>
 
-              {/* Left Step < | Machined Brass Rotary Dial | Right Step > */}
-              <div className="flex items-center justify-center gap-3.5">
-                <button
-                  type="button"
-                  onClick={() => handleStepStage(-1)}
-                  aria-label="Previous stage"
-                  data-testid="radio-prev-stage-btn"
-                  className="w-8 h-8 rounded-full bg-[#09182E] hover:bg-[#122B4E] border border-[#C5A059]/70 text-[#FFE394] flex items-center justify-center shadow-[0_3px_8px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.15)] transition-colors cursor-pointer shrink-0"
-                  title="Previous Stage (Arrow Left)"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
+            {/* Horizontal Divider */}
+            <div className="w-[78%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/45 to-transparent" />
 
-                {/* 3D Machined Conical Brass Knob (Click to cycle stage) */}
+            {/* Student Name + STUDENT Label */}
+            <div className="flex flex-col items-center leading-none">
+              <div
+                className="font-serif italic text-[#F1F5F9] drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] truncate max-w-full"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(9px, 1.25vw, 15.5px)",
+                }}
+              >
+                {openedClientStudentName || "Student"}
+              </div>
+              <span
+                className="mt-0.5 font-serif uppercase tracking-[0.22em] text-[#CBD5E1]/85"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(5.5px, 0.62vw, 8px)",
+                }}
+              >
+                STUDENT
+              </span>
+            </div>
+
+            {/* Horizontal Divider */}
+            <div className="w-[70%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent" />
+
+            {/* Green Glowing Status Dot + Sub-Status Label */}
+            <div className="flex items-center justify-center gap-1.5">
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#4ADE80] shadow-[0_0_8px_#4ADE80,0_0_12px_#22C55E] shrink-0" />
+              <span
+                className="font-serif italic text-[#F1F5F9] leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] whitespace-nowrap"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(8px, 1.05vw, 13px)",
+                }}
+              >
+                {openedClientStatusLabel || "Intake received"}
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* BROWSE ALL FAMILIES CRT VIEW */
+          <div
+            className="absolute flex flex-col items-center justify-between text-center pointer-events-none px-1"
+            style={{
+              left: "6.8%",
+              top: "38.2%",
+              width: "24.5%",
+              height: "39.0%",
+            }}
+          >
+            {/* Active Stage Title */}
+            <div
+              data-testid="radio-channel-display"
+              className="font-serif font-bold text-white leading-none tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] whitespace-nowrap"
+              style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontSize: "clamp(13px, 2.55vw, 31px)",
+              }}
+            >
+              {activeStageMeta.label}
+            </div>
+
+            {/* Top Horizontal Divider */}
+            <div className="w-[82%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/55 to-transparent" />
+
+            {/* Live Family Count */}
+            <div
+              className="font-serif italic text-[#F1F5F9] leading-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)] whitespace-nowrap"
+              style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontSize: "clamp(10px, 1.8vw, 22px)",
+              }}
+            >
+              {activeStageCount}{" "}
+              {activeStageCount === 1 ? "family" : "families"}
+            </div>
+
+            {/* Bottom Horizontal Divider */}
+            <div className="w-[70%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent" />
+
+            {/* Subtitle */}
+            <div
+              className="font-serif italic text-[#CBD5E1] leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] whitespace-nowrap"
+              style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontSize: "clamp(8px, 1.15vw, 14px)",
+              }}
+            >
+              Open a family below
+            </div>
+          </div>
+        )}
+
+        {/* ── OVERLAY B: CENTER 4-STAGE TUNER GLASS WINDOW (`x: 35.7%..74.2%, y: 21.0%..51.8%`) ── */}
+        <div
+          className="absolute rounded-[11px] overflow-hidden flex flex-col justify-between"
+          style={{
+            left: "35.7%",
+            top: "21.0%",
+            width: "38.5%",
+            height: "30.8%",
+          }}
+        >
+          {/* Warm Amber/Gold Spotlight Glow Behind Selected Stage */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 w-[34%] -translate-x-1/2 transition-all duration-300 motion-reduce:transition-none ease-out"
+            style={{
+              left: `${activeStageMeta.needlePercent}%`,
+              background:
+                "radial-gradient(ellipse at 50% 68%, rgba(255, 195, 85, 0.42) 0%, rgba(212, 148, 48, 0.16) 52%, transparent 80%)",
+            }}
+          />
+
+          {/* 4 Clickable Stage Columns */}
+          <div
+            className="relative z-10 grid grid-cols-4 divide-x divide-[#C5A059]/30 h-[74%] items-start pt-[2.5%]"
+            role="tablist"
+            aria-label="Lead Center Stages"
+          >
+            {TUNER_STAGES.map((stage, stageIdx) => {
+              const count = stageCounts[stage.id] ?? 0;
+              const isSelected = stage.id === selectedStage;
+              const clientStageState =
+                stageIdx < clientCurrentStageIndex
+                  ? "COMPLETE"
+                  : stageIdx === clientCurrentStageIndex
+                  ? "CURRENT"
+                  : "UPCOMING";
+
+              return (
                 <button
+                  key={stage.id}
                   type="button"
-                  onClick={() => handleStepStage(1)}
-                  data-testid="radio-rotary-dial"
-                  aria-label={`Current stage: ${activeStageMeta.label}. Click to tune next stage`}
-                  title={`Current stage: ${activeStageMeta.label} (Click to turn dial)`}
-                  className="group relative w-20 h-20 sm:w-22 sm:h-22 rounded-full p-[4px] flex items-center justify-center shadow-[0_10px_24px_rgba(0,0,0,0.95),0_0_0_2px_#2A1C08] cursor-pointer focus:outline-hidden shrink-0"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, #F0D28C 0%, #9E762C 45%, #4A320E 100%)",
-                  }}
+                  role="tab"
+                  aria-selected={isSelected}
+                  data-testid={`radio-stage-${stage.id}`}
+                  onClick={() => onSelectStage(stage.id)}
+                  className="group h-full min-w-0 px-1 flex flex-col items-center justify-start gap-1 sm:gap-1.5 transition-colors cursor-pointer focus:outline-hidden"
                 >
-                  {/* Outer Knurled Dark Bezel Ring */}
-                  <div className="w-full h-full rounded-full p-[4px] bg-[#181209] border border-[#FFE394]/40 flex items-center justify-center shadow-inner">
-                    {/* Conical Brushed Brass Face */}
-                    <div
-                      className="relative w-full h-full rounded-full border border-[#FFE5A3]/60 shadow-[inset_0_2px_6px_rgba(255,255,255,0.35),inset_0_-4px_8px_rgba(0,0,0,0.7)] transition-transform duration-300 motion-reduce:transition-none ease-out"
+                  <span
+                    className={cn(
+                      "font-serif leading-none tracking-tight transition-colors whitespace-nowrap",
+                      isSelected
+                        ? "font-bold text-[#FFFDF5] drop-shadow-[0_0_10px_rgba(255,215,120,0.85)]"
+                        : "font-medium text-[#D8CFC0] group-hover:text-white"
+                    )}
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize: "clamp(9px, 1.32vw, 16.5px)",
+                    }}
+                  >
+                    {stage.label}
+                  </span>
+
+                  {isClientOpen ? (
+                    /* Single-Client Mode: CURRENT / UPCOMING / COMPLETE */
+                    <span
+                      data-testid={`radio-stage-count-${stage.id}`}
+                      className={cn(
+                        "font-serif italic uppercase tracking-[0.08em] leading-none transition-colors whitespace-nowrap mt-0.5",
+                        clientStageState === "CURRENT"
+                          ? "text-[#FFE394] font-semibold drop-shadow-[0_0_8px_rgba(255,215,120,0.75)]"
+                          : clientStageState === "COMPLETE"
+                          ? "text-[#D8C7A5]"
+                          : "text-[#94A3B8]/90 group-hover:text-[#CBD5E1]"
+                      )}
                       style={{
-                        transform: `rotate(${activeStageMeta.knobAngle}deg)`,
-                        background: `conic-gradient(
-                          from 0deg at 50% 50%,
-                          #6E4F1D 0deg,
-                          #D5B067 40deg,
-                          #FFF0C2 65deg,
-                          #B88D3D 105deg,
-                          #4E3610 155deg,
-                          #A67C33 200deg,
-                          #F2D388 245deg,
-                          #8C6523 305deg,
-                          #6E4F1D 360deg
-                        )`,
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                        fontSize: "clamp(6.5px, 0.78vw, 10px)",
                       }}
                     >
-                      {/* Illuminated Ivory/Gold Indicator Notch at Top of Knob */}
-                      <span className="absolute top-1.5 left-1/2 -translate-x-1/2 w-[3px] h-3.5 rounded-full bg-[#FFFDF5] shadow-[0_0_8px_#FFE394,0_1px_2px_rgba(0,0,0,0.9)]" />
-                    </div>
-                  </div>
+                      {clientStageState}
+                    </span>
+                  ) : (
+                    /* Browse Mode: Stage Count Bubble */
+                    <span
+                      data-testid={`radio-stage-count-${stage.id}`}
+                      className={cn(
+                        "inline-flex items-center justify-center rounded-full min-w-[22px] sm:min-w-[28px] px-2 py-[1px] sm:py-[2px] font-serif font-bold leading-none transition-all whitespace-nowrap",
+                        isSelected
+                          ? "bg-gradient-to-b from-[#FFE59E] via-[#D6A648] to-[#9E711E] text-[#07162B] border border-[#FFF4D4] shadow-[0_0_10px_rgba(255,215,120,0.7),0_2px_4px_rgba(0,0,0,0.8)]"
+                          : "bg-[#061124]/95 text-[#E5D7B8] border border-[#C5A059]/55 shadow-[inset_0_1px_2px_rgba(0,0,0,0.85)] group-hover:border-[#FFE394]/80 group-hover:text-[#FFF4D4]"
+                      )}
+                      style={{
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                        fontSize: "clamp(8px, 1.05vw, 13px)",
+                      }}
+                    >
+                      {count}
+                    </span>
+                  )}
                 </button>
+              );
+            })}
+          </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleStepStage(1)}
-                  aria-label="Next stage"
-                  data-testid="radio-next-stage-btn"
-                  className="w-8 h-8 rounded-full bg-[#09182E] hover:bg-[#122B4E] border border-[#C5A059]/70 text-[#FFE394] flex items-center justify-center shadow-[0_3px_8px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.15)] transition-colors cursor-pointer shrink-0"
-                  title="Next Stage (Arrow Right)"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+          {/* Horizontal Gold Frequency Scale + Tick Marks + Sliding Glowing Needle (Pinned Near Bottom Edge) */}
+          <div className="relative z-10 h-[24%] flex items-end pb-[4.5%] px-[3%]">
+            <div className="relative h-[1.5px] w-full bg-gradient-to-r from-[#6E5528] via-[#E5C175] to-[#6E5528]">
+              {/* Tick Marks Along Bottom Scale */}
+              {Array.from({ length: 29 }).map((_, idx) => {
+                const pct = 3 + (idx * 94) / 28;
+                const isMajor = idx % 7 === 0;
+                const isMedium = idx % 7 === 3 || idx % 7 === 4;
+                return (
+                  <span
+                    key={idx}
+                    style={{ left: `${pct}%` }}
+                    className={cn(
+                      "absolute -translate-x-1/2 w-[1px] sm:w-[1.5px]",
+                      isMajor
+                        ? "h-1.5 sm:h-2.5 -top-1.5 sm:-top-2.5 bg-[#FFE394]"
+                        : isMedium
+                        ? "h-1 sm:h-1.5 -top-1 sm:-top-1.5 bg-[#C5A059]/80"
+                        : "h-0.5 sm:h-1 -top-0.5 sm:-top-1 bg-[#C5A059]/50"
+                    )}
+                  />
+                );
+              })}
 
-              {/* Recessed CB Speaker Grille Slots + Caption */}
-              <div className="mt-2 flex flex-col items-center gap-1 w-full overflow-hidden">
+              {/* Glowing Vertical Gold Needle & Luminous Orb */}
+              <div
+                data-testid="radio-tuning-needle"
+                className="absolute -top-2.5 sm:-top-3.5 -translate-x-1/2 flex flex-col items-center transition-all duration-300 motion-reduce:transition-none ease-out"
+                style={{ left: `${activeStageMeta.needlePercent}%` }}
+              >
+                {!isClientOpen && (
+                  <div className="w-[2px] sm:w-[2.5px] h-2.5 sm:h-3.5 rounded-full bg-gradient-to-b from-[#FFFDF5] via-[#FFE394] to-[#E5A93C] shadow-[0_0_8px_#FFE394,0_0_14px_#F59E0B]" />
+                )}
                 <div
-                  className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#040B18] border border-[#3A2C18]/90 shadow-inner shrink-0"
-                  title="Stage Tuner Active"
-                >
-                  <span className="w-4 h-1 rounded-full bg-[#01040A] border-b border-[#C5A059]/25" />
-                  <span className="w-6 h-1 rounded-full bg-[#01040A] border-b border-[#C5A059]/25" />
-                  <span className="w-8 h-1 rounded-full bg-[#01040A] border-b border-[#C5A059]/25" />
-                  <span className="w-6 h-1 rounded-full bg-[#01040A] border-b border-[#C5A059]/25" />
-                  <span className="w-4 h-1 rounded-full bg-[#01040A] border-b border-[#C5A059]/25" />
-                </div>
-                <p
-                  className="font-serif italic text-[11px] text-[#C6B697] text-center truncate whitespace-nowrap max-w-full"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                >
-                  Tuning changes viewed stage · Explicit actions progress a lead
-                </p>
+                  className={cn(
+                    "w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full bg-gradient-to-b from-[#FFFDF5] via-[#FFE394] to-[#B87D1E] border border-[#FFF6D6] shadow-[0_0_12px_#FFE394,0_0_20px_#F59E0B]",
+                    !isClientOpen ? "-mt-0.5" : "mt-1.5 sm:mt-2"
+                  )}
+                />
               </div>
             </div>
           </div>
         </div>
+
+        {/* ── OVERLAY C: STATUS PILL (`x: 36.8%..74.2%, y: 56.8%..65.4%`) ── */}
+        <div
+          className="absolute flex items-center justify-center gap-2 pointer-events-none"
+          style={{
+            left: "36.8%",
+            top: "56.8%",
+            width: "37.4%",
+            height: "8.6%",
+          }}
+        >
+          <span
+            className="font-serif uppercase tracking-[0.22em] text-[#D8C7A5]"
+            style={{
+              fontFamily: "'Playfair Display', Georgia, serif",
+              fontSize: "clamp(7px, 0.9vw, 11px)",
+            }}
+          >
+            {isClientOpen ? "NEXT:" : "VIEWING:"}
+          </span>
+          <span
+            className="font-serif italic font-semibold text-[#FFF4D4]"
+            style={{
+              fontFamily: "'Playfair Display', Georgia, serif",
+              fontSize: "clamp(9px, 1.25vw, 15.5px)",
+            }}
+          >
+            {isClientOpen
+              ? openedClientNextAction || "Schedule discovery"
+              : activeStageMeta.label}
+          </span>
+        </div>
+
+        {/* ── OVERLAY D: INTERACTIVE "VIEW STAGE" BUTTONS & ROTARY KNOB ── */}
+        {/* Left Step Button `◀` */}
+        <button
+          type="button"
+          onClick={() => handleStepStage(-1)}
+          aria-label="Previous stage"
+          data-testid="radio-prev-stage-btn"
+          title="Previous Stage (Arrow Left)"
+          className="absolute rounded-full hover:ring-2 hover:ring-[#FFE394]/80 focus:outline-hidden cursor-pointer transition-all"
+          style={{
+            left: "75.8%",
+            top: "33.5%",
+            width: "2.9%",
+            height: "9.2%",
+          }}
+        />
+
+        {/* Central 3D Rotary Knob (Whole Knob Physically Rotates Inside Dark Socket) */}
+        <button
+          type="button"
+          onClick={() => handleStepStage(1)}
+          data-testid="radio-rotary-dial"
+          aria-label={`Current stage: ${activeStageMeta.label}. Click to tune next stage`}
+          title={`Current stage: ${activeStageMeta.label} (Click to turn dial)`}
+          className="absolute rounded-full hover:brightness-105 focus:outline-hidden cursor-pointer transition-transform duration-300 motion-reduce:transition-none ease-out flex items-center justify-center"
+          style={{
+            left: "78.64%",
+            top: "22.01%",
+            width: "9.16%",
+            height: "28.93%",
+            transform: `rotate(${activeStageMeta.knobAngle}deg)`,
+          }}
+        >
+          <img
+            src="/images/lead-center-radio-knob.png?v=5"
+            alt=""
+            draggable={false}
+            className="w-full h-full object-contain pointer-events-none block rounded-full"
+          />
+        </button>
+
+        {/* Right Step Button `▶` */}
+        <button
+          type="button"
+          onClick={() => handleStepStage(1)}
+          aria-label="Next stage"
+          data-testid="radio-next-stage-btn"
+          title="Next Stage (Arrow Right)"
+          className="absolute rounded-full hover:ring-2 hover:ring-[#FFE394]/80 focus:outline-hidden cursor-pointer transition-all"
+          style={{
+            left: "87.5%",
+            top: "33.5%",
+            width: "2.9%",
+            height: "9.2%",
+          }}
+        />
       </div>
     </div>
   );

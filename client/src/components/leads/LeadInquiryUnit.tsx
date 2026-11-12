@@ -3,34 +3,26 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Calendar,
   PhoneCall,
   AlertCircle,
-  CheckCircle2,
+  Check,
   Plus,
   Save,
   Loader2,
   GraduationCap,
   User,
   Link2,
-  MoreHorizontal,
   ArrowRight,
   Globe,
   UserCheck,
   MessageSquarePlus,
   ClipboardCheck,
-  Sparkles,
-  FileCheck2,
-  Compass,
+  ChevronRight,
+  Clock,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,6 +33,7 @@ interface LeadInquiryUnitProps {
     stage: "inquiry" | "discovery" | "decision" | "onboarding",
     sessionMode?: boolean
   ) => void;
+  onBackToList?: () => void;
 }
 
 export function LeadInquiryUnit({
@@ -79,18 +72,33 @@ export function LeadInquiryUnit({
         ]
   );
 
-  // Schedule Discovery panel is open by default so staff immediately see how to progress the lead
-  const [showScheduler, setShowScheduler] = useState(true);
+  const isAlreadyScheduled = Boolean(
+    journey.appointmentState === "scheduled" && journey.scheduledAppointment
+  );
+  const isNeedsRescheduling = journey.appointmentState === "needs_rescheduling";
+
+  // Inline scheduling drawer & collapsible sections
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [intakeExpanded, setIntakeExpanded] = useState(false);
+  const [familyFileTab, setFamilyFileTab] = useState<"contacts" | "notes">(
+    "contacts"
+  );
+  const [showContactDetailsInline, setShowContactDetailsInline] =
+    useState(false);
+
   const tomorrowDefault = new Date(Date.now() + 86400000);
   tomorrowDefault.setHours(10, 0, 0, 0);
   const [scheduleDate, setScheduleDate] = useState(
-    tomorrowDefault.toISOString().slice(0, 10)
+    journey.scheduledAppointment?.startTime
+      ? new Date(journey.scheduledAppointment.startTime)
+          .toISOString()
+          .slice(0, 10)
+      : tomorrowDefault.toISOString().slice(0, 10)
   );
   const [scheduleTime, setScheduleTime] = useState("10:00");
   const [scheduleNotes, setScheduleNotes] = useState("");
 
   // Contact attempt & direct-to-decision inline drawers
-  const [showAttemptBox, setShowAttemptBox] = useState(false);
   const [attemptNote, setAttemptNote] = useState("");
   const [showDirectDecisionBox, setShowDirectDecisionBox] = useState(false);
   const [directDecisionNote, setDirectDecisionNote] = useState("");
@@ -117,16 +125,15 @@ export function LeadInquiryUnit({
   ]);
 
   const updateInquiryMutation = trpc.leads.updateInquiry.useMutation({
-    onSuccess: (updated, vars) => {
+    onSuccess: (_updated, vars) => {
       onRefresh();
       if (vars.sendSchedulingLink) {
         toast.success(
           "Scheduling link sent · Lead stays in New Leads while awaiting booking"
         );
       } else if (vars.recordContactAttempt) {
-        toast.success("Contact attempt recorded");
+        toast.success("Note & contact attempt recorded");
         setAttemptNote("");
-        setShowAttemptBox(false);
       } else if (vars.progressDirectlyToDecision) {
         toast.success("Progressed directly to Decision");
         setShowDirectDecisionBox(false);
@@ -140,21 +147,39 @@ export function LeadInquiryUnit({
 
   const scheduleDiscoveryMutation = trpc.leads.scheduleDiscovery.useMutation({
     onSuccess: () => {
-      toast.success("Discovery call scheduled · Moved to Stage 2: Discovery");
+      toast.success(
+        "Discovery appointment scheduled · Lead remains in New Leads until discovery conversation starts"
+      );
+      setShowScheduler(false);
       onRefresh();
-      onNavigateStage("discovery", false);
     },
     onError: (err) => toast.error(err.message),
   });
 
   const startDiscoveryNowMutation = trpc.leads.startDiscoveryNow.useMutation({
     onSuccess: () => {
-      toast.success("Live discovery session started");
+      toast.success(
+        "Live discovery session started · Moved to Stage 2: Discovery"
+      );
       onRefresh();
       onNavigateStage("discovery", true);
     },
     onError: (err) => toast.error(err.message),
   });
+
+  const markAppointmentOutcomeMutation =
+    trpc.leads.completeDiscovery.useMutation({
+      onSuccess: (_, vars) => {
+        toast.success(
+          vars.outcome === "cancelled"
+            ? "Appointment canceled · Status updated to Needs rescheduling"
+            : "Missed appointment recorded · Status updated to Needs rescheduling"
+        );
+        setShowScheduler(true);
+        onRefresh();
+      },
+      onError: (err) => toast.error(err.message),
+    });
 
   const handleSaveInquiry = () => {
     updateInquiryMutation.mutate({
@@ -178,6 +203,7 @@ export function LeadInquiryUnit({
       toast.error(
         "Please enter an email address or phone number before sending a scheduling link."
       );
+      setIntakeExpanded(true);
       return;
     }
     updateInquiryMutation.mutate({
@@ -229,15 +255,11 @@ export function LeadInquiryUnit({
       startTime,
       durationMinutes: 30,
       assignedAdvocateName: assignedAdvocate || "Byron Honea",
+      timeZone: timeZone || "Eastern",
       notes: scheduleNotes.trim() || undefined,
     });
   };
 
-  const hasParentContact = Boolean(
-    lead.parentName &&
-      lead.parentName !== "Unknown Parent" &&
-      (parentPhone.trim() || parentEmail.trim())
-  );
   const validStudents = studentList.filter((s) => s.firstName?.trim());
   const hasStudentProfile = validStudents.length > 0;
   const hasConcernsAndOutcome = Boolean(concerns.trim());
@@ -258,626 +280,405 @@ export function LeadInquiryUnit({
     blockingIssues.push("Main concerns are needed to prepare for discovery.");
   }
 
-  const isPreFilledReady = blockingIssues.length === 0;
+  const isPreFilledReady =
+    Boolean(journey.intakeCompleted) || blockingIssues.length === 0;
+
+  const parentFullName = lead.parentName || "Eleanor Vance";
+  const parentFirstName =
+    parentFullName.trim().split(/\s+/)[0] || "Family";
+  const studentDisplayName =
+    validStudents.length > 0
+      ? validStudents
+          .map((s) => `${s.firstName || ""} ${s.lastName || ""}`.trim())
+          .join(", ")
+      : lead.studentName || lead.childName || "Student";
+
+  const combinedHistory = [
+    ...(journey.sharedHistory || []),
+    ...(journey.callAttempts || []),
+  ];
+
+  // Primary objective headline on the left
+  const primaryObjectiveTitle = isAlreadyScheduled
+    ? "Start discovery"
+    : isNeedsRescheduling
+    ? "Reschedule discovery"
+    : "Schedule discovery";
 
   return (
-    <div data-testid="lead-inquiry-unit" className="space-y-4">
-      {/* ─── 1. STAFF GUIDE & CLIENT ACCOUNT SETUP STATUS BANNER ─── */}
-      <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-[#07152E] via-[#061126] to-[#040C1C] p-4 sm:p-5 shadow-[0_10px_28px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(103,232,249,0.12)] space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-3 border-b border-cyan-400/20">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#081A38] border border-cyan-400/45 text-xs font-mono font-bold uppercase tracking-wider text-cyan-200">
-                <Compass className="w-3.5 h-3.5 text-cyan-300" />
-                Stage 1 of 4 · Client Account & Intake Setup
+    <div
+      data-testid="lead-inquiry-unit"
+      className="pt-3 pb-6 px-1 sm:px-3 space-y-7"
+    >
+      {/* ─── UPPER TWO-COLUMN SECTION (MATCHING REFERENCE IMAGE) ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+        {/* ═══ LEFT COLUMN: NEXT FOR {FIRST_NAME}, 3-STEP CHECKLIST & GOLD CTA ═══ */}
+        <div className="lg:col-span-7 space-y-5 pt-1">
+          {/* Eyebrow: NEXT FOR ELEANOR ─────────────── */}
+          <div className="flex items-center gap-4">
+            <span
+              data-testid="workspace-status-next-summary"
+              className="text-xs sm:text-[13px] font-semibold uppercase tracking-[0.22em] text-[#D8B467] shrink-0"
+            >
+              NEXT FOR {parentFirstName.toUpperCase()}
+            </span>
+            <div className="h-px flex-1 bg-gradient-to-r from-[#C5A059]/55 via-[#C5A059]/25 to-transparent" />
+          </div>
+
+          {/* Main Large Serif Title: "Schedule discovery" / "Start discovery" */}
+          <h2
+            className="text-3xl sm:text-[42px] font-serif font-bold text-[#FFFDF7] tracking-tight leading-[1.1] drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)]"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          >
+            {primaryObjectiveTitle}
+          </h2>
+
+          {/* 3-Row Checklist with Thin Horizontal Dividers */}
+          <div className="divide-y divide-[#C5A059]/25 border-b border-[#C5A059]/25 max-w-[600px]">
+            {/* Row 1: Family account created */}
+            <div className="py-3.5 flex items-center gap-3.5">
+              <span className="w-6 h-6 rounded-full bg-gradient-to-b from-[#34D399] to-[#059669] border border-[#6EE7B7]/80 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.4)] shrink-0">
+                <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
               </span>
+              <span className="text-base sm:text-[18px] text-[#E6ECF5] font-normal">
+                Family account created
+              </span>
+            </div>
 
-              {journey.schedulingLinkSent && (
-                <Badge
-                  data-testid="scheduling-link-sent-badge"
-                  className="bg-cyan-500/15 text-cyan-200 border-cyan-400/35 text-xs"
+            {/* Row 2: Intake received */}
+            <div className="py-3.5 flex items-center justify-between gap-3.5">
+              <div className="flex items-center gap-3.5">
+                {isPreFilledReady ? (
+                  <span className="w-6 h-6 rounded-full bg-gradient-to-b from-[#34D399] to-[#059669] border border-[#6EE7B7]/80 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.4)] shrink-0">
+                    <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
+                  </span>
+                ) : (
+                  <span className="w-5 h-5 mx-0.5 rounded-full bg-gradient-to-b from-[#FDE68A] via-[#EAB308] to-[#B45309] border border-[#FEF08A] shadow-[0_0_10px_rgba(234,179,8,0.55)] shrink-0" />
+                )}
+                <span
+                  data-testid="intake-status-badge"
+                  className="text-base sm:text-[18px] text-[#E6ECF5] font-normal"
                 >
-                  <Link2 className="w-3.5 h-3.5 mr-1" />
-                  Scheduling link sent
-                </Badge>
-              )}
+                  {isPreFilledReady
+                    ? "Intake received"
+                    : `Intake incomplete (${blockingIssues.length} item${
+                        blockingIssues.length === 1 ? "" : "s"
+                      })`}
+                </span>
+              </div>
 
-              {isPreFilledReady ? (
-                <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-400/35 text-xs">
-                  <FileCheck2 className="w-3.5 h-3.5 mr-1" />
-                  Account Pre-Filled from Lead Intake · Ready for Discovery
-                </Badge>
-              ) : (
-                <Badge className="bg-amber-500/15 text-amber-300 border-amber-400/35 text-xs">
-                  <AlertCircle className="w-3.5 h-3.5 mr-1" />
-                  {blockingIssues.length} Setup Item(s) Needed Below
-                </Badge>
+              {!isPreFilledReady && (
+                <button
+                  type="button"
+                  onClick={() => setIntakeExpanded(true)}
+                  className="text-xs text-[#DFBE77] hover:text-[#FFF4D4] underline underline-offset-4 cursor-pointer"
+                >
+                  Complete intake
+                </button>
               )}
             </div>
 
-            <h2
-              className="text-lg sm:text-xl font-serif font-bold text-white"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              Setting Up {lead.parentName || "Client"}’s Family Account & Discovery Readiness
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300">
-              {isPreFilledReady
-                ? "This family's lead form is already filled out below. Verify their account details on the left, then use Step 3 on the right to schedule or launch their Discovery Call."
-                : "Complete the missing family and student account details on the left, then schedule their Discovery Call on the right to advance them to Stage 2."}
-            </p>
+            {/* Row 3: Choose a discovery time / Discovery scheduled */}
+            <div className="py-3.5 flex items-center justify-between gap-3.5">
+              <div className="flex items-center gap-3.5">
+                {isAlreadyScheduled && journey.scheduledAppointment ? (
+                  <>
+                    <span className="w-6 h-6 rounded-full bg-gradient-to-b from-[#34D399] to-[#059669] border border-[#6EE7B7]/80 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.4)] shrink-0">
+                      <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
+                    </span>
+                    <span
+                      data-testid="appointment-status-badge"
+                      className="text-base sm:text-[19px] font-serif font-bold text-[#FFFDF7]"
+                      style={{
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                      }}
+                    >
+                      Discovery scheduled ·{" "}
+                      <span
+                        data-testid="scheduled-appointment-datetime"
+                        className="text-[#FFE394]"
+                      >
+                        {journey.scheduledAppointment.formattedDateTimeTz}
+                      </span>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-5 h-5 mx-0.5 rounded-full bg-gradient-to-b from-[#FFE8A3] via-[#DFB24C] to-[#9E7220] border border-[#FFF4D4]/80 shadow-[0_0_12px_rgba(223,178,76,0.65)] shrink-0" />
+                    <span
+                      data-testid="appointment-status-badge"
+                      className="text-base sm:text-[19px] font-serif font-bold text-[#FFFDF7]"
+                      style={{
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                      }}
+                    >
+                      {isNeedsRescheduling
+                        ? "Choose a new discovery time"
+                        : journey.schedulingLinkSent
+                        ? "Choose a discovery time (Awaiting booking)"
+                        : "Choose a discovery time"}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {journey.schedulingLinkSent && !isAlreadyScheduled && (
+                <span
+                  data-testid="scheduling-link-sent-badge"
+                  className="text-xs font-medium text-[#FFE394] bg-[#C5A059]/15 border border-[#C5A059]/40 px-2.5 py-0.5 rounded-full"
+                >
+                  Awaiting booking
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Quick Top Action Triggers */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <Button
+          {/* Primary Brushed-Gold Button + Inline Links Row */}
+          <div className="pt-2 flex flex-wrap items-center gap-x-7 gap-y-3">
+            {isAlreadyScheduled ? (
+              <>
+                <button
+                  type="button"
+                  data-testid="start-scheduled-discovery-primary-btn"
+                  disabled={startDiscoveryNowMutation.isPending}
+                  onClick={() =>
+                    startDiscoveryNowMutation.mutate({ leadId: lead.id })
+                  }
+                  className="relative inline-flex items-center justify-center min-w-[250px] h-14 px-8 rounded-[14px] bg-gradient-to-b from-[#F3DC99] via-[#D4AF5A] to-[#9E782F] text-[#071326] border border-[#FFE8A3]/85 shadow-[0_10px_24px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.65)] hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-3.5 w-2 h-2 rounded-full bg-[#78581C] shadow-[inset_0_1px_1px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.4)]"
+                  />
+                  <span
+                    className="text-lg sm:text-[21px] font-serif font-bold tracking-tight"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                    }}
+                  >
+                    {startDiscoveryNowMutation.isPending
+                      ? "Starting discovery..."
+                      : "Start discovery"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  data-testid="manage-reschedule-appointment-btn"
+                  onClick={() => setShowScheduler((prev) => !prev)}
+                  className="text-sm sm:text-[16px] text-[#E6ECF5] hover:text-[#FFE394] underline underline-offset-[6px] decoration-[#C5A059]/60 hover:decoration-[#FFE394] transition-colors cursor-pointer"
+                >
+                  {showScheduler
+                    ? "Hide appointment details"
+                    : "Manage or reschedule appointment"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  data-testid="schedule-discovery-primary-btn"
+                  onClick={() => {
+                    setShowScheduler((prev) => !prev);
+                    setTimeout(() => {
+                      const el = document.getElementById(
+                        "schedule-discovery-date-input"
+                      );
+                      if (el) el.focus();
+                    }, 50);
+                  }}
+                  className="relative inline-flex items-center justify-center min-w-[260px] h-14 px-8 rounded-[14px] bg-gradient-to-b from-[#F3DC99] via-[#D4AF5A] to-[#9E782F] text-[#071326] border border-[#FFE8A3]/85 shadow-[0_10px_24px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.65)] hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-3.5 w-2 h-2 rounded-full bg-[#78581C] shadow-[inset_0_1px_1px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.4)]"
+                  />
+                  <span
+                    className="text-lg sm:text-[21px] font-serif font-bold tracking-tight"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                    }}
+                  >
+                    {isNeedsRescheduling
+                      ? "Reschedule discovery"
+                      : "Schedule discovery"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowScheduler(true);
+                    setTimeout(() => {
+                      const el = document.getElementById(
+                        "schedule-discovery-date-input"
+                      );
+                      if (el) el.focus();
+                    }, 50);
+                  }}
+                  className="text-sm sm:text-[16px] text-[#E6ECF5] hover:text-[#FFE394] underline underline-offset-[6px] decoration-[#C5A059]/60 hover:decoration-[#FFE394] transition-colors cursor-pointer"
+                >
+                  Already scheduled? Add details
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Secondary Immediate / Cold-Call & Link Actions Strip */}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1 text-xs sm:text-sm text-[#C6B697]">
+            <button
               type="button"
-              variant="outline"
+              data-testid="start-discovery-now-btn"
+              disabled={startDiscoveryNowMutation.isPending}
+              onClick={() =>
+                startDiscoveryNowMutation.mutate({ leadId: lead.id })
+              }
+              className="inline-flex items-center gap-1.5 text-[#DFBE77] hover:text-[#FFF4D4] font-semibold underline underline-offset-4 decoration-[#C5A059]/50 cursor-pointer"
+            >
+              <PhoneCall className="w-3.5 h-3.5" />
+              Start discovery now (Cold call / live phone)
+            </button>
+
+            <span className="text-[#C5A059]/40">·</span>
+
+            <button
+              type="button"
               data-testid="send-scheduling-link-btn"
               disabled={updateInquiryMutation.isPending}
               onClick={handleSendSchedulingLink}
-              className="h-9 border-cyan-500/35 bg-[#050E22] text-slate-200 hover:bg-[#0A1D3D] hover:border-cyan-400/70 hover:text-white text-xs font-semibold cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-[#C6B697] hover:text-[#FFF4D4] underline underline-offset-4 decoration-[#C5A059]/40 cursor-pointer"
             >
-              <Link2 className="w-3.5 h-3.5 mr-1.5 text-cyan-300" />
-              {journey.schedulingLinkSent ? "Resend Link" : "Send Scheduling Link"}
-            </Button>
+              <Link2 className="w-3.5 h-3.5" />
+              {journey.schedulingLinkSent
+                ? "Follow up / resend scheduling link"
+                : "Send booking link"}
+            </button>
 
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="record-contact-attempt-btn"
-              onClick={() => setShowAttemptBox((prev) => !prev)}
-              className="h-9 border-cyan-500/35 bg-[#050E22] text-slate-200 hover:bg-[#0A1D3D] hover:border-cyan-400/70 hover:text-white text-xs font-semibold cursor-pointer"
-            >
-              <MessageSquarePlus className="w-3.5 h-3.5 mr-1.5 text-cyan-300" />
-              Record Contact Attempt
-            </Button>
+            <span className="text-[#C5A059]/40">·</span>
 
-            <Button
-              type="button"
-              data-testid="schedule-discovery-primary-btn"
-              onClick={() => {
-                setShowScheduler(true);
-                const el = document.getElementById("schedule-discovery-date-input");
-                if (el) el.focus();
-              }}
-              className="h-9 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold hover:brightness-110 text-xs cursor-pointer shadow-md"
-            >
-              <Calendar className="w-3.5 h-3.5 mr-1.5" />
-              Schedule Discovery
-            </Button>
-
-            {/* Contextual Secondary Actions Menu */}
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  data-testid="new-lead-contextual-menu-btn"
-                  className="h-9 w-9 p-0 border-cyan-500/35 bg-[#050E22] text-slate-200 hover:bg-[#0A1D3D] hover:border-cyan-400/70 cursor-pointer"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-60 bg-[#050E22] border border-cyan-400/45 text-white"
-              >
-                <DropdownMenuItem
-                  data-testid="start-discovery-now-btn"
-                  onClick={() => startDiscoveryNowMutation.mutate({ leadId: lead.id })}
-                  className="text-xs cursor-pointer focus:bg-[#0C2248] focus:text-white gap-2"
-                >
-                  <PhoneCall className="w-3.5 h-3.5 text-cyan-300" />
-                  <span>Start Discovery Now (Live Call)</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-cyan-500/20" />
-                <DropdownMenuItem
-                  data-testid="progress-directly-to-decision-menu-item"
-                  onClick={() => setShowDirectDecisionBox(true)}
-                  className="text-xs cursor-pointer focus:bg-[#0C2248] focus:text-white gap-2"
-                >
-                  <ArrowRight className="w-3.5 h-3.5 text-cyan-300" />
-                  <span>Progress directly to Decision</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* 3-Step Employee Playbook Strip: Tells Staff Exactly What To Do On This Page */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="rounded-xl border border-cyan-500/25 bg-[#040B1A]/90 p-3.5 flex items-start gap-3">
-            <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${
-                hasParentContact && hasStudentProfile
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/45"
-                  : "bg-amber-500/20 text-amber-300 border border-amber-400/45"
-              }`}
-            >
-              {hasParentContact && hasStudentProfile ? "✓" : "1"}
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-white">
-                  Step 1 · Verify Client & Student Account
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
-                {hasParentContact && hasStudentProfile
-                  ? `Pre-filled for ${lead.parentName} & ${validStudents.map((s) => s.firstName).join(", ")}. Confirm time zone (${timeZone}) & advocate.`
-                  : "Enter parent contact info, time zone, and student name/grade below."}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-cyan-500/25 bg-[#040B1A]/90 p-3.5 flex items-start gap-3">
-            <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${
-                hasConcernsAndOutcome
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/45"
-                  : "bg-amber-500/20 text-amber-300 border border-amber-400/45"
-              }`}
-            >
-              {hasConcernsAndOutcome ? "✓" : "2"}
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-white block">
-                Step 2 · Review Intake Story & Goals
-              </span>
-              <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
-                {hasConcernsAndOutcome
-                  ? "Main school concerns and desired outcome are recorded. Edit or add notes below if needed."
-                  : "Summarize the family's school/IEP concerns and desired outcome below."}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-cyan-400/50 bg-[#081A38] p-3.5 flex items-start gap-3 shadow-[0_0_16px_rgba(34,211,238,0.12)]">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-b from-cyan-300 to-cyan-500 text-[#030917] flex items-center justify-center text-xs font-extrabold shrink-0 mt-0.5">
-              3
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-cyan-200 block">
-                Step 3 · Progress to Stage 2 (Discovery)
-              </span>
-              <p className="text-[11px] text-slate-200 mt-0.5 leading-snug">
-                Book the Discovery Call in the right-hand panel (or click{" "}
-                <strong className="text-[#FFE394]">Start Live Call</strong>) to advance this family to Discovery.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Record Contact Attempt Inline Box */}
-      {showAttemptBox && (
-        <form
-          onSubmit={handleRecordAttempt}
-          data-testid="record-contact-attempt-panel"
-          className="rounded-xl border border-cyan-400/40 bg-[#061126] p-4 space-y-3"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-white">
-              Record Contact Attempt (Keeps lead in New Leads)
-            </span>
             <button
               type="button"
-              onClick={() => setShowAttemptBox(false)}
-              className="text-xs text-slate-400 hover:text-white cursor-pointer"
+              data-testid="progress-directly-to-decision-menu-item"
+              onClick={() => setShowDirectDecisionBox((prev) => !prev)}
+              className="inline-flex items-center gap-1 text-[#A69371] hover:text-[#FFF4D4] underline underline-offset-4 decoration-[#C5A059]/30 cursor-pointer"
             >
-              Cancel
+              Bypass to Decision
             </button>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              data-testid="contact-attempt-note-input"
-              value={attemptNote}
-              onChange={(e) => setAttemptNote(e.target.value)}
-              placeholder="e.g. Left voicemail and texted intake link; family will reply this evening."
-              className="h-9 bg-[#030917] border-[#1A325E] text-white text-xs flex-1"
-            />
-            <Button
-              type="submit"
-              data-testid="save-contact-attempt-btn"
-              disabled={updateInquiryMutation.isPending}
-              className="h-9 bg-[#0A1E40] border border-cyan-400/50 text-cyan-200 text-xs font-bold cursor-pointer"
+
+          {/* Scheduled Appointment Details Card (When Scheduled) */}
+          {isAlreadyScheduled && journey.scheduledAppointment && (
+            <div
+              data-testid="scheduled-discovery-appointment-card"
+              className="rounded-xl border border-[#C5A059]/50 bg-[#061329]/95 p-4 space-y-3 shadow-[0_10px_28px_rgba(0,0,0,0.65)] max-w-[600px]"
             >
-              Save Attempt
-            </Button>
-          </div>
-        </form>
-      )}
-
-      {/* Contextual Option: Progress Directly to Decision */}
-      {showDirectDecisionBox && (
-        <form
-          onSubmit={handleProgressDirectlyToDecision}
-          data-testid="direct-to-decision-panel"
-          className="rounded-xl border border-cyan-400/45 bg-[#061126] p-4 space-y-3"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-semibold text-white block">
-                Progress Directly to Decision
-              </span>
-              <span className="text-[11px] text-slate-300">
-                Use when discovery is unnecessary (e.g. returning family or prior consultation completed).
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowDirectDecisionBox(false)}
-              className="text-xs text-slate-400 hover:text-white cursor-pointer"
-            >
-              Cancel
-            </button>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              data-testid="direct-to-decision-note-input"
-              value={directDecisionNote}
-              onChange={(e) => setDirectDecisionNote(e.target.value)}
-              placeholder="Optional note explaining why discovery is bypassed..."
-              className="h-9 bg-[#030917] border-[#1A325E] text-white text-xs flex-1"
-            />
-            <Button
-              type="submit"
-              data-testid="confirm-direct-to-decision-btn"
-              disabled={updateInquiryMutation.isPending}
-              className="h-9 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-semibold text-xs cursor-pointer"
-            >
-              Move to Decision →
-            </Button>
-          </div>
-        </form>
-      )}
-
-      {/* Missing Blocking Information Alert */}
-      {blockingIssues.length > 0 && (
-        <div
-          data-testid="inquiry-blocking-issues"
-          className="rounded-xl border border-[#D4AF37]/45 bg-[#07142C] p-4 space-y-2"
-        >
-          <div className="flex items-center gap-2 text-xs font-semibold text-[#FFE394]">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>Missing information blocking next action</span>
-          </div>
-          <ul className="list-disc list-inside text-xs text-slate-200 space-y-1">
-            {blockingIssues.map((issue, i) => (
-              <li key={i}>{issue}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* ─── 2. TWO-COLUMN CLIENT ACCOUNT SETUP & STAGE PROGRESSION WORKSPACE ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* LEFT 7 COLUMNS: Client Account Setup & Pre-Filled Lead Form Dossier */}
-        <div className="lg:col-span-7 space-y-4">
-          {/* Card A: Parent / Guardian Account & Time Zone */}
-          <div className="rounded-xl border border-cyan-500/25 bg-[#061126] p-5 space-y-4 shadow-[0_8px_24px_rgba(0,0,0,0.55)]">
-            <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2.5">
-              <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-cyan-200 flex items-center gap-2">
-                <User className="w-4 h-4 text-cyan-300" />
-                1. Parent / Guardian Account & Assignment
-              </h3>
-              <span className="text-xs text-emerald-300 flex items-center gap-1 font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                {lead.source || "Lead Intake Record"}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
-                  Parent / Guardian Phone *
-                </label>
-                <Input
-                  value={parentPhone}
-                  onChange={(e) => setParentPhone(e.target.value)}
-                  placeholder="(404) 555-0100"
-                  className="h-9 bg-[#030917] border-[#1A325E] text-white text-xs"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
-                  Parent / Guardian Email *
-                </label>
-                <Input
-                  value={parentEmail}
-                  onChange={(e) => setParentEmail(e.target.value)}
-                  placeholder="parent@example.com"
-                  className="h-9 bg-[#030917] border-[#1A325E] text-white text-xs"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
-                  Preferred Contact Method
-                </label>
-                <select
-                  value={preferredContactMethod}
-                  onChange={(e) => setPreferredContactMethod(e.target.value)}
-                  className="w-full h-9 rounded-md bg-[#030917] border border-[#1A325E] px-2.5 text-xs text-white"
-                >
-                  <option value="Phone">Phone</option>
-                  <option value="Email">Email</option>
-                  <option value="Text / SMS">Text / SMS</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
-                  Best Time / Availability
-                </label>
-                <Input
-                  value={availability}
-                  onChange={(e) => setAvailability(e.target.value)}
-                  placeholder="e.g. Weekday mornings"
-                  className="h-9 bg-[#030917] border-[#1A325E] text-white text-xs"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-slate-300 font-semibold flex items-center gap-1 mb-1">
-                  <Globe className="w-3.5 h-3.5 text-cyan-300" />
-                  Family Time Zone
-                </label>
-                <select
-                  data-testid="inquiry-timezone-select"
-                  value={timeZone}
-                  onChange={(e) => setTimeZone(e.target.value)}
-                  className="w-full h-9 rounded-md bg-[#030917] border border-[#1A325E] px-2.5 text-xs text-white"
-                >
-                  <option value="Eastern">Eastern Time (ET)</option>
-                  <option value="Central">Central Time (CT)</option>
-                  <option value="Mountain">Mountain Time (MT)</option>
-                  <option value="Pacific">Pacific Time (PT)</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-slate-300 font-semibold flex items-center gap-1 mb-1">
-                  <UserCheck className="w-3.5 h-3.5 text-cyan-300" />
-                  Assigned Lead Advocate
-                </label>
-                <Input
-                  data-testid="inquiry-advocate-input"
-                  value={assignedAdvocate}
-                  onChange={(e) => setAssignedAdvocate(e.target.value)}
-                  placeholder="Byron Honea"
-                  className="h-9 bg-[#030917] border-[#1A325E] text-white text-xs"
-                />
-              </div>
-            </div>
-
-            {/* Students Sub-Section */}
-            <div className="pt-3 border-t border-cyan-500/20 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-cyan-200 flex items-center gap-1.5">
-                  <GraduationCap className="w-4 h-4 text-cyan-300" />
-                  Student Profile(s) ({studentList.length})
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setStudentList((prev) => [
-                      ...prev,
-                      {
-                        firstName: "",
-                        lastName: parentContact?.lastName || "",
-                        gradeLevel: "",
-                        schoolName: "",
-                        iepOr504: "IEP",
-                      },
-                    ])
-                  }
-                  className="inline-flex items-center gap-1 text-xs font-bold text-cyan-300 hover:text-white cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Another Student
-                </button>
-              </div>
-
-              {studentList.map((stu, idx) => (
-                <div
-                  key={stu.id || idx}
-                  className="rounded-lg border border-cyan-500/25 bg-[#040B1A] p-3 space-y-2.5"
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="text-[11px] text-slate-300 font-medium block mb-0.5">
-                        Student First Name *
-                      </label>
-                      <Input
-                        value={stu.firstName || ""}
-                        onChange={(e) =>
-                          setStudentList((prev) =>
-                            prev.map((s, i) =>
-                              i === idx ? { ...s, firstName: e.target.value } : s
-                            )
-                          )
-                        }
-                        placeholder="First Name"
-                        className="h-8 bg-[#030814] border-[#1A325E] text-white text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-slate-300 font-medium block mb-0.5">
-                        Student Last Name
-                      </label>
-                      <Input
-                        value={stu.lastName || ""}
-                        onChange={(e) =>
-                          setStudentList((prev) =>
-                            prev.map((s, i) =>
-                              i === idx ? { ...s, lastName: e.target.value } : s
-                            )
-                          )
-                        }
-                        placeholder="Last Name"
-                        className="h-8 bg-[#030814] border-[#1A325E] text-white text-xs"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <div>
-                      <label className="text-[11px] text-slate-300 font-medium block mb-0.5">
-                        Grade Level
-                      </label>
-                      <Input
-                        value={stu.gradeLevel || ""}
-                        onChange={(e) =>
-                          setStudentList((prev) =>
-                            prev.map((s, i) =>
-                              i === idx ? { ...s, gradeLevel: e.target.value } : s
-                            )
-                          )
-                        }
-                        placeholder="e.g. 4th Grade"
-                        className="h-8 bg-[#030814] border-[#1A325E] text-white text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-slate-300 font-medium block mb-0.5">
-                        School Name
-                      </label>
-                      <Input
-                        value={stu.schoolName || ""}
-                        onChange={(e) =>
-                          setStudentList((prev) =>
-                            prev.map((s, i) =>
-                              i === idx ? { ...s, schoolName: e.target.value } : s
-                            )
-                          )
-                        }
-                        placeholder="School or District"
-                        className="h-8 bg-[#030814] border-[#1A325E] text-white text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-slate-300 font-medium block mb-0.5">
-                        Current Plan Status
-                      </label>
-                      <select
-                        value={stu.iepOr504 || "IEP"}
-                        onChange={(e) =>
-                          setStudentList((prev) =>
-                            prev.map((s, i) =>
-                              i === idx ? { ...s, iepOr504: e.target.value } : s
-                            )
-                          )
-                        }
-                        className="w-full h-8 rounded-md bg-[#030814] border border-[#1A325E] px-2 text-xs text-white"
-                      >
-                        <option value="IEP">IEP</option>
-                        <option value="504">504 Plan</option>
-                        <option value="504 Plan">504 Plan</option>
-                        <option value="Evaluation Needed">Seeking Evaluation</option>
-                        <option value="General">General</option>
-                      </select>
-                    </div>
-                  </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#FFE394]">
+                  <Calendar className="w-4 h-4 text-[#DFBE77]" />
+                  <span>Scheduled Discovery Call</span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Card B: Pre-Filled Intake Story — Main Concerns & Desired Outcome */}
-          <div className="rounded-xl border border-cyan-500/25 bg-[#061126] p-5 space-y-4 shadow-[0_8px_24px_rgba(0,0,0,0.55)]">
-            <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2.5">
-              <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-cyan-200 flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4 text-cyan-300" />
-                2. Family Intake Summary (Concerns & Desired Outcome)
-              </h3>
-              <span className="text-xs text-slate-400">
-                Carries forward into Discovery & Decision
-              </span>
-            </div>
-
-            <div className="space-y-3.5">
-              <div>
-                <label className="text-xs font-bold text-white block mb-1">
-                  Main School / IEP / 504 Concerns *
-                </label>
-                <Textarea
-                  data-testid="inquiry-concerns-input"
-                  value={concerns}
-                  onChange={(e) => setConcerns(e.target.value)}
-                  placeholder="Summarize the family's primary school, IEP/504, evaluation, or placement concerns..."
-                  rows={3}
-                  className="bg-[#030917] border-[#1A325E] text-white text-xs leading-relaxed resize-none"
-                />
+                <span
+                  data-testid="scheduled-appointment-tz"
+                  className="text-xs text-[#C6B697]"
+                >
+                  Timezone: {journey.scheduledAppointment.timeZone} (
+                  {journey.scheduledAppointment.timeZoneAbbr}) · Advocate:{" "}
+                  {journey.scheduledAppointment.assignedAdvocateName}
+                </span>
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-white block mb-1">
-                  Desired Advocacy Outcome
-                </label>
-                <Textarea
-                  data-testid="inquiry-desired-outcome-input"
-                  value={desiredOutcome}
-                  onChange={(e) => setDesiredOutcome(e.target.value)}
-                  placeholder="What is the family hoping to achieve with Waypoint Advocates?"
-                  rows={3}
-                  className="bg-[#030917] border-[#1A325E] text-white text-xs leading-relaxed resize-none"
-                />
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#C5A059]/25">
+                <span className="text-xs text-[#C6B697]">
+                  If the call could not take place:
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-testid="mark-appointment-missed-btn"
+                    disabled={markAppointmentOutcomeMutation.isPending}
+                    onClick={() =>
+                      markAppointmentOutcomeMutation.mutate({
+                        leadId: lead.id,
+                        outcome: "no_answer",
+                        note: "Missed scheduled discovery call; needs rescheduling.",
+                      })
+                    }
+                    className="h-7 border-amber-400/40 bg-[#1C1206] text-amber-200 hover:bg-[#2E1E0A] text-xs cursor-pointer"
+                  >
+                    Mark Missed
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-testid="cancel-scheduled-appointment-btn"
+                    disabled={markAppointmentOutcomeMutation.isPending}
+                    onClick={() =>
+                      markAppointmentOutcomeMutation.mutate({
+                        leadId: lead.id,
+                        outcome: "cancelled",
+                        note: "Discovery appointment canceled; needs rescheduling.",
+                      })
+                    }
+                    className="h-7 border-rose-400/40 bg-[#1F0910] text-rose-200 hover:bg-[#330F1A] text-xs cursor-pointer"
+                  >
+                    Cancel Call
+                  </Button>
+                </div>
               </div>
             </div>
+          )}
 
-            <div className="flex items-center justify-between pt-3 border-t border-cyan-500/20">
-              <span className="text-xs text-slate-300">
-                Save any updates to the family’s account or intake details before progressing.
+          {/* Missed or Canceled Appointment Banner */}
+          {isNeedsRescheduling && (
+            <div
+              data-testid="needs-rescheduling-banner"
+              className="rounded-xl border border-rose-400/50 bg-[#1C0B16]/90 p-3.5 text-xs text-rose-200 flex items-center justify-between gap-3 max-w-[600px]"
+            >
+              <span className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                Previous discovery appointment was missed or canceled — Needs rescheduling.
               </span>
-              <Button
+              <button
                 type="button"
-                size="sm"
-                data-testid="save-inquiry-details-btn"
-                disabled={updateInquiryMutation.isPending}
-                onClick={handleSaveInquiry}
-                className="h-9 bg-[#091D3E] border border-cyan-400/50 text-cyan-200 hover:bg-[#0E2B5C] hover:text-white text-xs font-bold cursor-pointer"
+                onClick={() => setShowScheduler(true)}
+                className="font-bold text-[#FFE394] underline cursor-pointer shrink-0"
               >
-                {updateInquiryMutation.isPending ? (
-                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                ) : (
-                  <Save className="w-3.5 h-3.5 mr-1.5" />
-                )}
-                Save Account & Intake Details
-              </Button>
+                Pick new time
+              </button>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* RIGHT 5 COLUMNS: Step 3 — Progress This Client to Stage 2 (Discovery) */}
-        <div className="lg:col-span-5 space-y-4">
+          {/* Inline Collapsible Scheduling Form (Admiralty Navy & Brass) */}
           {showScheduler && (
             <form
               onSubmit={handleScheduleDiscovery}
               data-testid="inquiry-schedule-discovery-panel"
-              className="rounded-xl border border-cyan-400/50 bg-gradient-to-b from-[#081A38] to-[#050F24] p-5 space-y-4 shadow-[0_14px_34px_rgba(0,0,0,0.75),0_0_20px_rgba(34,211,238,0.1)]"
+              className="rounded-xl border border-[#C5A059]/60 bg-[#061329] p-5 space-y-4 shadow-[0_14px_34px_rgba(0,0,0,0.8)] max-w-[600px]"
             >
-              <div className="space-y-1 border-b border-cyan-400/25 pb-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-cyan-200 bg-[#041024] px-2.5 py-0.5 rounded border border-cyan-400/45">
-                    Step 3 · Primary Next Action
-                  </span>
-                  <span className="text-xs text-emerald-300 font-bold">
-                    Moves to Stage 2 →
-                  </span>
-                </div>
+              <div className="flex items-center justify-between border-b border-[#C5A059]/25 pb-2.5">
                 <h3
-                  className="text-base sm:text-lg font-serif font-bold text-white pt-1"
+                  className="text-base sm:text-lg font-serif font-bold text-[#FFF4D4]"
                   style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                 >
-                  Schedule Discovery Call
+                  {isAlreadyScheduled || isNeedsRescheduling
+                    ? "Reschedule Discovery Appointment"
+                    : "Schedule Discovery Appointment"}
                 </h3>
-                <p className="text-xs text-slate-300">
-                  Books the consultation on the Waypoint Calendar and automatically moves{" "}
-                  <strong className="text-white">{lead.parentName}</strong> from{" "}
-                  <strong className="text-cyan-300">New Leads → Discovery</strong>.
-                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowScheduler(false)}
+                  className="text-xs text-[#C6B697] hover:text-white cursor-pointer"
+                >
+                  Close
+                </button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-200 font-semibold mb-1 block">
+                  <label className="text-xs text-[#D8C7A5] font-semibold mb-1 block">
                     Consultation Date *
                   </label>
                   <Input
@@ -885,19 +686,19 @@ export function LeadInquiryUnit({
                     type="date"
                     value={scheduleDate}
                     onChange={(e) => setScheduleDate(e.target.value)}
-                    className="h-9 bg-[#030917] border-[#1A325E] text-white text-xs"
+                    className="h-9 bg-[#030A18] border-[#3A2C18] text-white text-xs"
                     required
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-200 font-semibold mb-1 block">
+                  <label className="text-xs text-[#D8C7A5] font-semibold mb-1 block">
                     Time ({timeZone}) *
                   </label>
                   <Input
                     type="time"
                     value={scheduleTime}
                     onChange={(e) => setScheduleTime(e.target.value)}
-                    className="h-9 bg-[#030917] border-[#1A325E] text-white text-xs"
+                    className="h-9 bg-[#030A18] border-[#3A2C18] text-white text-xs"
                     required
                   />
                 </div>
@@ -905,112 +706,707 @@ export function LeadInquiryUnit({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-200 font-semibold mb-1 block">
+                  <label className="text-xs text-[#D8C7A5] font-semibold mb-1 block">
                     Responsible Advocate
                   </label>
                   <Input
                     value={assignedAdvocate}
                     onChange={(e) => setAssignedAdvocate(e.target.value)}
-                    className="h-9 bg-[#030917] border-[#1A325E] text-white text-xs"
+                    className="h-9 bg-[#030A18] border-[#3A2C18] text-white text-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-200 font-semibold mb-1 block">
+                  <label className="text-xs text-[#D8C7A5] font-semibold mb-1 block">
                     Meeting Prep Note
                   </label>
                   <Input
                     value={scheduleNotes}
                     onChange={(e) => setScheduleNotes(e.target.value)}
                     placeholder="e.g. Phone or Zoom preference"
-                    className="h-9 bg-[#030917] border-[#1A325E] text-white text-xs"
+                    className="h-9 bg-[#030A18] border-[#3A2C18] text-white text-xs"
                   />
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                data-testid="confirm-schedule-discovery-btn"
-                disabled={scheduleDiscoveryMutation.isPending}
-                className="w-full h-11 text-sm bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-extrabold hover:brightness-110 cursor-pointer shadow-[0_4px_14px_rgba(197,160,89,0.5)]"
-              >
-                {scheduleDiscoveryMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                    Scheduling & Moving to Discovery...
-                  </>
-                ) : (
-                  <>
-                    <Calendar className="w-4 h-4 mr-1.5" />
-                    Confirm & Schedule Discovery →
-                  </>
-                )}
-              </Button>
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <Button
+                  type="submit"
+                  data-testid="confirm-schedule-discovery-btn"
+                  disabled={scheduleDiscoveryMutation.isPending}
+                  className="h-10 px-6 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold hover:brightness-110 cursor-pointer"
+                >
+                  {scheduleDiscoveryMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : isAlreadyScheduled || isNeedsRescheduling ? (
+                    "Confirm Rescheduled Discovery"
+                  ) : (
+                    "Confirm Discovery Time"
+                  )}
+                </Button>
+              </div>
             </form>
           )}
 
-          {/* Other Ways to Progress or Follow Up with This Family */}
-          <div className="rounded-xl border border-cyan-500/25 bg-[#061126] p-4 space-y-3">
-            <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-cyan-200 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-cyan-300" />
-              Other Actions for This Family
-            </h4>
+          {/* Direct to Decision Inline Box */}
+          {showDirectDecisionBox && (
+            <form
+              onSubmit={handleProgressDirectlyToDecision}
+              data-testid="direct-to-decision-panel"
+              className="rounded-xl border border-[#C5A059]/45 bg-[#061329] p-4 space-y-3 max-w-[600px]"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-[#FFF4D4]">
+                  Progress Directly to Decision
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowDirectDecisionBox(false)}
+                  className="text-xs text-[#C6B697] hover:text-white cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  data-testid="direct-to-decision-note-input"
+                  value={directDecisionNote}
+                  onChange={(e) => setDirectDecisionNote(e.target.value)}
+                  placeholder="Optional note explaining why discovery is bypassed..."
+                  className="h-9 bg-[#030917] border-[#3A2C18] text-white text-xs flex-1"
+                />
+                <Button
+                  type="submit"
+                  data-testid="confirm-direct-to-decision-btn"
+                  disabled={updateInquiryMutation.isPending}
+                  className="h-9 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-semibold text-xs cursor-pointer"
+                >
+                  Move to Decision →
+                </Button>
+              </div>
+            </form>
+          )}
+        </div>
 
-            <div className="space-y-2.5">
+        {/* ═══ RIGHT COLUMN: STITCHED LEATHER "FAMILY FILE" DOSSIER WITH CONTACTS & NOTES TABS ═══ */}
+        <div className="lg:col-span-5 pt-1">
+          <div className="relative mx-auto max-w-[460px] lg:max-w-none">
+            {/* Protruding Top Folder Tabs (`Contacts` and `Notes`) */}
+            <div className="flex items-end justify-center gap-2 pl-6 pr-6 -mb-[2px] relative z-10">
+              {/* Contacts Tab */}
               <button
                 type="button"
-                onClick={() => startDiscoveryNowMutation.mutate({ leadId: lead.id })}
-                disabled={startDiscoveryNowMutation.isPending}
-                className="w-full p-3.5 rounded-xl border border-cyan-400/40 bg-[#081A38] hover:bg-[#0D2652] hover:border-cyan-300 text-left flex items-center justify-between gap-3 transition-colors cursor-pointer"
+                data-testid="toggle-contact-drawer-btn"
+                onClick={() => setFamilyFileTab("contacts")}
+                className={`relative inline-flex items-center justify-center min-w-[136px] h-10 px-6 rounded-t-xl font-serif font-bold text-sm sm:text-[16px] transition-all cursor-pointer ${
+                  familyFileTab === "contacts"
+                    ? "bg-gradient-to-b from-[#F4DF9E] via-[#D4AF5A] to-[#9A7328] text-[#071428] border-t border-x border-[#FFE8A3] shadow-[0_-4px_14px_rgba(0,0,0,0.6)]"
+                    : "bg-[#091731] text-[#D8C7A5] border-t border-x border-[#C5A059]/35 hover:text-[#FFF4D4] hover:bg-[#0D2144]"
+                }`}
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
               >
-                <div>
-                  <span className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
-                    <PhoneCall className="w-4 h-4 text-emerald-300" />
-                    Family is on the Phone Now · Start Live Discovery
-                  </span>
-                  <span className="text-xs text-slate-300 block mt-0.5">
-                    Skips calendar booking and opens the live Discovery Session script immediately.
-                  </span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-cyan-300 shrink-0" />
+                <span
+                  aria-hidden="true"
+                  className={`absolute left-2.5 w-1.5 h-1.5 rounded-full ${
+                    familyFileTab === "contacts"
+                      ? "bg-[#6E5015] shadow-[0_1px_0_rgba(255,255,255,0.45)]"
+                      : "bg-[#C5A059]/50"
+                  }`}
+                />
+                <span>Contacts</span>
+                <span
+                  aria-hidden="true"
+                  className={`absolute right-2.5 w-1.5 h-1.5 rounded-full ${
+                    familyFileTab === "contacts"
+                      ? "bg-[#6E5015] shadow-[0_1px_0_rgba(255,255,255,0.45)]"
+                      : "bg-[#C5A059]/50"
+                  }`}
+                />
               </button>
 
+              {/* Notes Tab */}
               <button
                 type="button"
-                onClick={handleSendSchedulingLink}
-                disabled={updateInquiryMutation.isPending}
-                className="w-full p-3.5 rounded-xl border border-cyan-500/25 bg-[#040B1A] hover:bg-[#081A38] hover:border-cyan-400/50 text-left flex items-center justify-between gap-3 transition-colors cursor-pointer"
+                data-testid="toggle-history-drawer-btn"
+                onClick={() => setFamilyFileTab("notes")}
+                className={`relative inline-flex items-center justify-center min-w-[130px] h-10 px-6 rounded-t-xl font-serif font-bold text-sm sm:text-[16px] transition-all cursor-pointer ${
+                  familyFileTab === "notes"
+                    ? "bg-gradient-to-b from-[#F4DF9E] via-[#D4AF5A] to-[#9A7328] text-[#071428] border-t border-x border-[#FFE8A3] shadow-[0_-4px_14px_rgba(0,0,0,0.6)]"
+                    : "bg-[#091731] text-[#D8C7A5] border-t border-x border-[#C5A059]/35 hover:text-[#FFF4D4] hover:bg-[#0D2144]"
+                }`}
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
               >
-                <div>
-                  <span className="text-xs sm:text-sm font-semibold text-white flex items-center gap-1.5">
-                    <Link2 className="w-4 h-4 text-cyan-300" />
-                    Send Self-Scheduling Link to Family
+                <span>Notes</span>
+                {combinedHistory.length > 0 && (
+                  <span
+                    className={`ml-1.5 text-[11px] px-1.5 py-0.2 rounded-full font-sans font-bold ${
+                      familyFileTab === "notes"
+                        ? "bg-[#071428]/20 text-[#071428]"
+                        : "bg-[#C5A059]/20 text-[#FFE394]"
+                    }`}
+                  >
+                    {combinedHistory.length}
                   </span>
-                  <span className="text-xs text-slate-300 block mt-0.5">
-                    Marks status as “Scheduling link sent” and keeps family in New Leads until they book.
-                  </span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
+                )}
               </button>
+            </div>
 
-              <button
-                type="button"
-                onClick={() => setShowDirectDecisionBox(true)}
-                className="w-full p-3.5 rounded-xl border border-cyan-500/25 bg-[#040B1A] hover:bg-[#081A38] hover:border-cyan-400/50 text-left flex items-center justify-between gap-3 transition-colors cursor-pointer"
+            {/* Back Folder Leather Lip Layer */}
+            <div
+              aria-hidden="true"
+              className="absolute -top-1 left-2 right-2 h-6 rounded-t-2xl bg-[#0B1B38] border-t border-x border-[#C5A059]/35 -z-0"
+            />
+
+            {/* Main Stitched Navy Leather Folder Card */}
+            <div className="relative z-10 rounded-2xl bg-gradient-to-b from-[#0A1A36] via-[#071329] to-[#050E20] p-2.5 border border-[#C5A059]/55 shadow-[0_18px_40px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.08)]">
+              {/* Right Leather Clasp Tab */}
+              <div
+                aria-hidden="true"
+                className="hidden sm:block absolute -right-2 top-1/2 -translate-y-1/2 w-5 h-24 rounded-l-xl rounded-r-md bg-gradient-to-r from-[#061124] to-[#0A1B38] border border-[#C5A059]/45 shadow-[-4px_4px_10px_rgba(0,0,0,0.7)]"
               >
-                <div>
-                  <span className="text-xs sm:text-sm font-semibold text-white flex items-center gap-1.5">
-                    <ArrowRight className="w-4 h-4 text-cyan-300" />
-                    Bypass Discovery · Move Directly to Decision
+                <div className="absolute inset-1 rounded-l-lg border border-dashed border-[#C5A059]/40" />
+              </div>
+
+              {/* Inner Dashed Gold Stitched Perimeter */}
+              <div className="relative rounded-xl border border-dashed border-[#C5A059]/55 px-6 py-5 space-y-4">
+                {/* 4 Brass Corner Rivets */}
+                <span
+                  aria-hidden="true"
+                  className="absolute top-2.5 left-2.5 w-2.5 h-2.5 rounded-full bg-gradient-to-b from-[#FFE394] to-[#8C6520] shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-gradient-to-b from-[#FFE394] to-[#8C6520] shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-2.5 left-2.5 w-2.5 h-2.5 rounded-full bg-gradient-to-b from-[#FFE394] to-[#8C6520] shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-gradient-to-b from-[#FFE394] to-[#8C6520] shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                />
+
+                {/* Top Centered Divider: —— FAMILY FILE —— */}
+                <div className="flex items-center justify-center gap-3 pt-0.5">
+                  <div className="h-px w-12 sm:w-16 bg-gradient-to-r from-transparent to-[#C5A059]/65" />
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#D8B467]">
+                    FAMILY FILE
                   </span>
-                  <span className="text-xs text-slate-300 block mt-0.5">
-                    For returning families or cases where discovery is already complete.
-                  </span>
+                  <div className="h-px w-12 sm:w-16 bg-gradient-to-l from-transparent to-[#C5A059]/65" />
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
-              </button>
+
+                {familyFileTab === "contacts" ? (
+                  <div className="space-y-4 pr-2">
+                    {/* Parent / Primary Contact Section */}
+                    <div className="space-y-1">
+                      <h3
+                        data-testid="workspace-family-name"
+                        className="text-2xl sm:text-[28px] font-serif font-bold text-[#FFFDF7] leading-tight"
+                        style={{
+                          fontFamily: "'Playfair Display', Georgia, serif",
+                        }}
+                      >
+                        {parentFullName}
+                      </h3>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#B8C4D9]">
+                        PARENT / PRIMARY CONTACT
+                      </p>
+                      <div className="pt-1.5">
+                        <button
+                          type="button"
+                          data-testid="view-contact-details-btn"
+                          onClick={() =>
+                            setShowContactDetailsInline((prev) => !prev)
+                          }
+                          className="text-sm text-[#E6ECF5] hover:text-[#FFE394] underline underline-offset-4 decoration-[#C5A059]/65 transition-colors cursor-pointer"
+                        >
+                          {showContactDetailsInline
+                            ? "Hide contact details"
+                            : "View contact details"}
+                        </button>
+                      </div>
+
+                      {showContactDetailsInline && (
+                        <div
+                          data-testid="inline-contact-details-box"
+                          className="mt-2.5 rounded-lg bg-[#030A18]/90 border border-[#C5A059]/35 p-3 space-y-1.5 text-xs text-[#E2E8F0]"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-3.5 h-3.5 text-[#DFBE77]" />
+                            <span>
+                              {parentPhone || "No phone recorded"} (
+                              {preferredContactMethod})
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-3.5 h-3.5 text-[#DFBE77]" />
+                            <span>{parentEmail || "No email recorded"}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[#C6B697]">
+                            <Clock className="w-3.5 h-3.5 text-[#DFBE77]" />
+                            <span>
+                              {timeZone} Time · Advocate: {assignedAdvocate}
+                            </span>
+                          </div>
+                          <div className="pt-1">
+                            <button
+                              type="button"
+                              onClick={() => setIntakeExpanded(true)}
+                              className="text-[11px] text-[#FFE394] underline cursor-pointer"
+                            >
+                              Edit in Intake details below
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Horizontal Thin Brass Rule */}
+                    <div className="h-px bg-[#C5A059]/40" />
+
+                    {/* Student Section */}
+                    <div className="space-y-1 pb-1">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#B8C4D9]">
+                        STUDENT
+                      </p>
+                      <p
+                        className="text-xl sm:text-[25px] font-serif font-bold text-[#FFFDF7] leading-tight"
+                        style={{
+                          fontFamily: "'Playfair Display', Georgia, serif",
+                        }}
+                      >
+                        {studentDisplayName}
+                      </p>
+                      {validStudents[0]?.gradeLevel && (
+                        <p className="text-xs text-[#C6B697]">
+                          {validStudents[0].gradeLevel}
+                          {validStudents[0]?.iepOr504
+                            ? ` · ${validStudents[0].iepOr504}`
+                            : ""}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Notes Tab Content */
+                  <div
+                    data-testid="family-file-notes-panel"
+                    className="space-y-3 pr-2"
+                  >
+                    <form
+                      onSubmit={handleRecordAttempt}
+                      data-testid="record-contact-attempt-panel"
+                      className="space-y-2"
+                    >
+                      <Input
+                        data-testid="contact-attempt-note-input"
+                        value={attemptNote}
+                        onChange={(e) => setAttemptNote(e.target.value)}
+                        placeholder="Add a call note or contact attempt..."
+                        className="h-8 bg-[#030A18] border-[#C5A059]/40 text-white text-xs"
+                      />
+                      <div className="flex justify-end">
+                        <Button
+                          type="submit"
+                          size="sm"
+                          data-testid="save-contact-attempt-btn"
+                          disabled={updateInquiryMutation.isPending}
+                          className="h-7 px-3 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs cursor-pointer"
+                        >
+                          <MessageSquarePlus className="w-3 h-3 mr-1" />
+                          Save Note
+                        </Button>
+                      </div>
+                    </form>
+
+                    <div className="max-h-36 overflow-y-auto space-y-2 pr-1">
+                      {combinedHistory.length === 0 ? (
+                        <p className="text-xs text-[#C6B697] italic py-2">
+                          No call notes or contact attempts logged yet.
+                        </p>
+                      ) : (
+                        combinedHistory.slice(0, 6).map((item: any, idx: number) => (
+                          <div
+                            key={item.id || idx}
+                            className="rounded-lg bg-[#030A18]/85 border border-[#C5A059]/25 p-2.5 text-xs space-y-0.5"
+                          >
+                            <p className="text-[#FFF4D4] leading-snug">
+                              {item.summary || item.note || item.title}
+                            </p>
+                            {item.timestamp && (
+                              <span className="text-[10px] text-[#A69371] block">
+                                {new Date(item.timestamp).toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ─── FULL-WIDTH BOTTOM ACCORDION BAR: `> Intake details` ─── */}
+      <div className="pt-2">
+        <div className="border-y border-[#C5A059]/35">
+          <button
+            type="button"
+            data-testid="toggle-intake-details-btn"
+            onClick={() => setIntakeExpanded((prev) => !prev)}
+            className="w-full py-3.5 px-2 flex items-center justify-between gap-3 text-left hover:bg-[#0A1B38]/40 transition-colors cursor-pointer group"
+          >
+            <div className="flex items-center gap-3">
+              <ChevronRight
+                className={`w-4 h-4 text-[#D8B467] transition-transform duration-200 ${
+                  intakeExpanded ? "rotate-90" : ""
+                }`}
+              />
+              <span
+                className="text-lg sm:text-[20px] font-serif font-bold text-[#FFFDF7] group-hover:text-[#FFE394] transition-colors"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              >
+                Intake details
+              </span>
+            </div>
+
+            {!isPreFilledReady && (
+              <span className="text-xs text-[#FFE394] font-medium">
+                {blockingIssues.length} missing item
+                {blockingIssues.length === 1 ? "" : "s"}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Expanded Editable Intake Details Form */}
+        {intakeExpanded && (
+          <div
+            data-testid="expanded-intake-details-panel"
+            className="pt-5 space-y-5"
+          >
+            {blockingIssues.length > 0 && (
+              <div
+                data-testid="inquiry-blocking-issues"
+                className="rounded-xl border border-[#D4AF37]/45 bg-[#07142C] p-4 space-y-2"
+              >
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#FFE394]">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>Missing intake details</span>
+                </div>
+                <ul className="list-disc list-inside text-xs text-slate-200 space-y-1">
+                  {blockingIssues.map((issue, i) => (
+                    <li key={i}>{issue}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              {/* Left 7 Cols: Parent & Student Info */}
+              <div className="lg:col-span-7 rounded-xl border border-[#C5A059]/35 bg-[#061329]/95 p-5 space-y-4 shadow-[0_8px_24px_rgba(0,0,0,0.65)]">
+                <div className="flex items-center justify-between border-b border-[#C5A059]/25 pb-2.5">
+                  <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#FFE394] flex items-center gap-2">
+                    <User className="w-4 h-4 text-[#DFBE77]" />
+                    Parent / Guardian Account & Assignment
+                  </h3>
+                  <span className="text-xs text-[#C6B697]">
+                    {lead.source || "Lead Intake Record"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-[#D8C7A5] font-semibold block mb-1">
+                      Parent / Guardian Phone *
+                    </label>
+                    <Input
+                      value={parentPhone}
+                      onChange={(e) => setParentPhone(e.target.value)}
+                      placeholder="(404) 555-0100"
+                      className="h-9 bg-[#030917] border-[#3A2C18] text-white text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-[#D8C7A5] font-semibold block mb-1">
+                      Parent / Guardian Email *
+                    </label>
+                    <Input
+                      value={parentEmail}
+                      onChange={(e) => setParentEmail(e.target.value)}
+                      placeholder="parent@example.com"
+                      className="h-9 bg-[#030917] border-[#3A2C18] text-white text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-[#D8C7A5] font-semibold block mb-1">
+                      Preferred Contact Method
+                    </label>
+                    <select
+                      value={preferredContactMethod}
+                      onChange={(e) =>
+                        setPreferredContactMethod(e.target.value)
+                      }
+                      className="w-full h-9 rounded-md bg-[#030917] border border-[#3A2C18] px-2.5 text-xs text-white"
+                    >
+                      <option value="Phone">Phone</option>
+                      <option value="Email">Email</option>
+                      <option value="Text / SMS">Text / SMS</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-[#D8C7A5] font-semibold block mb-1">
+                      Best Time / Availability
+                    </label>
+                    <Input
+                      value={availability}
+                      onChange={(e) => setAvailability(e.target.value)}
+                      placeholder="e.g. Weekday mornings"
+                      className="h-9 bg-[#030917] border-[#3A2C18] text-white text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-[#D8C7A5] font-semibold flex items-center gap-1 mb-1">
+                      <Globe className="w-3.5 h-3.5 text-[#DFBE77]" />
+                      Family Time Zone
+                    </label>
+                    <select
+                      data-testid="inquiry-timezone-select"
+                      value={timeZone}
+                      onChange={(e) => setTimeZone(e.target.value)}
+                      className="w-full h-9 rounded-md bg-[#030917] border border-[#3A2C18] px-2.5 text-xs text-white"
+                    >
+                      <option value="Eastern">Eastern Time (ET)</option>
+                      <option value="Central">Central Time (CT)</option>
+                      <option value="Mountain">Mountain Time (MT)</option>
+                      <option value="Pacific">Pacific Time (PT)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-[#D8C7A5] font-semibold flex items-center gap-1 mb-1">
+                      <UserCheck className="w-3.5 h-3.5 text-[#DFBE77]" />
+                      Assigned Lead Advocate
+                    </label>
+                    <Input
+                      data-testid="inquiry-advocate-input"
+                      value={assignedAdvocate}
+                      onChange={(e) => setAssignedAdvocate(e.target.value)}
+                      placeholder="Byron Honea"
+                      className="h-9 bg-[#030917] border-[#3A2C18] text-white text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Students Sub-Section */}
+                <div className="pt-3 border-t border-[#C5A059]/25 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#FFE394] flex items-center gap-1.5">
+                      <GraduationCap className="w-4 h-4 text-[#DFBE77]" />
+                      Student Profile(s) ({studentList.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setStudentList((prev) => [
+                          ...prev,
+                          {
+                            firstName: "",
+                            lastName: parentContact?.lastName || "",
+                            gradeLevel: "",
+                            schoolName: "",
+                            iepOr504: "IEP",
+                          },
+                        ])
+                      }
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[#DFBE77] hover:text-white cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add Another Student
+                    </button>
+                  </div>
+
+                  {studentList.map((stu, idx) => (
+                    <div
+                      key={stu.id || idx}
+                      className="rounded-lg border border-[#C5A059]/25 bg-[#040B1A] p-3 space-y-2.5"
+                    >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="text-[11px] text-[#D8C7A5] font-medium block mb-0.5">
+                            Student First Name *
+                          </label>
+                          <Input
+                            value={stu.firstName || ""}
+                            onChange={(e) =>
+                              setStudentList((prev) =>
+                                prev.map((s, i) =>
+                                  i === idx
+                                    ? { ...s, firstName: e.target.value }
+                                    : s
+                                )
+                              )
+                            }
+                            placeholder="First Name"
+                            className="h-8 bg-[#030814] border-[#3A2C18] text-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-[#D8C7A5] font-medium block mb-0.5">
+                            Student Last Name
+                          </label>
+                          <Input
+                            value={stu.lastName || ""}
+                            onChange={(e) =>
+                              setStudentList((prev) =>
+                                prev.map((s, i) =>
+                                  i === idx
+                                    ? { ...s, lastName: e.target.value }
+                                    : s
+                                )
+                              )
+                            }
+                            placeholder="Last Name"
+                            className="h-8 bg-[#030814] border-[#3A2C18] text-white text-xs"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div>
+                          <label className="text-[11px] text-[#D8C7A5] font-medium block mb-0.5">
+                            Grade Level
+                          </label>
+                          <Input
+                            value={stu.gradeLevel || ""}
+                            onChange={(e) =>
+                              setStudentList((prev) =>
+                                prev.map((s, i) =>
+                                  i === idx
+                                    ? { ...s, gradeLevel: e.target.value }
+                                    : s
+                                )
+                              )
+                            }
+                            placeholder="e.g. 4th Grade"
+                            className="h-8 bg-[#030814] border-[#3A2C18] text-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-[#D8C7A5] font-medium block mb-0.5">
+                            School Name
+                          </label>
+                          <Input
+                            value={stu.schoolName || ""}
+                            onChange={(e) =>
+                              setStudentList((prev) =>
+                                prev.map((s, i) =>
+                                  i === idx
+                                    ? { ...s, schoolName: e.target.value }
+                                    : s
+                                )
+                              )
+                            }
+                            placeholder="School or District"
+                            className="h-8 bg-[#030814] border-[#3A2C18] text-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-[#D8C7A5] font-medium block mb-0.5">
+                            Current Plan Status
+                          </label>
+                          <select
+                            value={stu.iepOr504 || "IEP"}
+                            onChange={(e) =>
+                              setStudentList((prev) =>
+                                prev.map((s, i) =>
+                                  i === idx
+                                    ? { ...s, iepOr504: e.target.value }
+                                    : s
+                                )
+                              )
+                            }
+                            className="w-full h-8 rounded-md bg-[#030814] border border-[#3A2C18] px-2 text-xs text-white"
+                          >
+                            <option value="IEP">IEP</option>
+                            <option value="504">504 Plan</option>
+                            <option value="504 Plan">504 Plan</option>
+                            <option value="Evaluation Needed">
+                              Seeking Evaluation
+                            </option>
+                            <option value="General">General</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right 5 Cols: Concerns & Desired Outcome */}
+              <div className="lg:col-span-5 rounded-xl border border-[#C5A059]/35 bg-[#061329]/95 p-5 space-y-4 shadow-[0_8px_24px_rgba(0,0,0,0.65)]">
+                <div className="flex items-center justify-between border-b border-[#C5A059]/25 pb-2.5">
+                  <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#FFE394] flex items-center gap-2">
+                    <ClipboardCheck className="w-4 h-4 text-[#DFBE77]" />
+                    Family Intake Story & Goals
+                  </h3>
+                </div>
+
+                <div className="space-y-3.5">
+                  <div>
+                    <label className="text-xs font-bold text-[#FFF4D4] block mb-1">
+                      Main School / IEP / 504 Concerns *
+                    </label>
+                    <Textarea
+                      data-testid="inquiry-concerns-input"
+                      value={concerns}
+                      onChange={(e) => setConcerns(e.target.value)}
+                      placeholder="Summarize the family's primary school, IEP/504, evaluation, or placement concerns..."
+                      rows={4}
+                      className="bg-[#030917] border-[#3A2C18] text-white text-xs leading-relaxed resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-[#FFF4D4] block mb-1">
+                      Desired Advocacy Outcome
+                    </label>
+                    <Textarea
+                      data-testid="inquiry-desired-outcome-input"
+                      value={desiredOutcome}
+                      onChange={(e) => setDesiredOutcome(e.target.value)}
+                      placeholder="What is the family hoping to achieve with Waypoint Advocates?"
+                      rows={3}
+                      className="bg-[#030917] border-[#3A2C18] text-white text-xs leading-relaxed resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end pt-3 border-t border-[#C5A059]/25">
+                  <Button
+                    type="button"
+                    size="sm"
+                    data-testid="save-inquiry-details-btn"
+                    disabled={updateInquiryMutation.isPending}
+                    onClick={handleSaveInquiry}
+                    className="h-9 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] hover:brightness-110 text-xs font-bold cursor-pointer"
+                  >
+                    {updateInquiryMutation.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    ) : (
+                      <Save className="w-3.5 h-3.5 mr-1.5" />
+                    )}
+                    Save Account & Intake Details
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

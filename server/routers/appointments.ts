@@ -417,8 +417,44 @@ export const appointmentsRouter = router({
           }
         }
 
+        // Synchronize inMemoryLeadAppointments and discoveryCall journey when appointment is rescheduled or cancelled
+        try {
+          const {
+            inMemoryLeadAppointments,
+            inMemoryDiscoveryCalls,
+            serializeDiscoveryPricingBlob,
+            parseDiscoveryPricingBlob,
+          } = await import("../services/leadJourneyService");
+          const existingMemApt = inMemoryLeadAppointments.get(id);
+          if (existingMemApt) {
+            inMemoryLeadAppointments.set(id, { ...existingMemApt, ...data });
+          }
+          const targetLeadId = data.leadId || existingMemApt?.leadId;
+          if (targetLeadId && (data.status === "Cancelled" || data.startTime)) {
+            const memCall = inMemoryDiscoveryCalls.get(targetLeadId);
+            const isCancelled = data.status === "Cancelled";
+            if (memCall) {
+              const { journey } = parseDiscoveryPricingBlob(memCall.pricingNotes);
+              const updatedPricing = serializeDiscoveryPricingBlob(memCall.pricingNotes, {
+                discoveryState: isCancelled
+                  ? "unscheduled"
+                  : journey.discoveryStartedAt
+                  ? "in_progress"
+                  : "scheduled",
+                discoveryOutcome: isCancelled ? "cancelled" : "pending",
+                appointmentStatus: isCancelled ? "cancelled" : "scheduled",
+              });
+              inMemoryDiscoveryCalls.set(targetLeadId, {
+                ...memCall,
+                ...(data.startTime ? { scheduledAt: data.startTime } : {}),
+                pricingNotes: updatedPricing,
+              });
+            }
+          }
+        } catch {}
+
         // When rescheduling or updating relationships, synchronize discovery calls and lead
-        if (data.startTime || data.leadId || data.discoveryCallId) {
+        if (data.startTime || data.leadId || data.discoveryCallId || data.status === "Cancelled") {
           try {
             const { appointments, discoveryCalls, leads } = await import("../../drizzle/schema");
             const { eq: deq, and: dand } = await import("drizzle-orm");

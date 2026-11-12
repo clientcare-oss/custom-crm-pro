@@ -88,17 +88,21 @@ describe("Lead Center Complete Journey (Inquiry → Discovery → Decision → O
     expect(matchCheck.exactMatches[0].existingLeadId).toBe(createdLeadId);
   });
 
-  it("2. Opens the new inquiry in the Lead Center with all family, multi-student, concern, and desired outcome details", async () => {
+  it("2. Opens the new inquiry in the Lead Center with separate intake, appointment, and stage states", async () => {
     const workspace = await getHydratedLeadWorkspace(createdLeadId, ownerId);
     expect(workspace).not.toBeNull();
     expect(workspace!.journey.stage).toBe("inquiry");
     expect(workspace!.journey.stageLabel).toBe("New Leads");
+    expect(workspace!.journey.intakeCompleted).toBe(true);
+    expect(workspace!.journey.appointmentState).toBe("needs_scheduling");
+    expect(workspace!.journey.statusSummary).toBe("Needs scheduling");
+    expect(workspace!.journey.nextActionLabel).toBe("Schedule discovery");
     expect(workspace!.students.length).toBe(2);
     expect(workspace!.journey.concerns).toContain("School denied reading evaluation");
     expect(workspace!.journey.desiredOutcome).toContain("Comprehensive reading support");
     expect(workspace!.journey.blockingIssues.length).toBe(0);
 
-    // Update inquiry details & send scheduling link (keeps lead in New Leads without moving to Discovery)
+    // Update inquiry details & send scheduling link (keeps lead in New Leads with Awaiting booking -> Follow up)
     const updated = await updateInquiryDetails({
       ownerId,
       leadId: createdLeadId,
@@ -111,10 +115,12 @@ describe("Lead Center Complete Journey (Inquiry → Discovery → Decision → O
     expect(updated!.journey.concerns).toContain("proposed placement change");
     expect(updated!.journey.stage).toBe("inquiry");
     expect(updated!.journey.schedulingLinkSent).toBe(true);
-    expect(updated!.journey.statusSummary).toContain("Scheduling link sent");
+    expect(updated!.journey.appointmentState).toBe("awaiting_booking");
+    expect(updated!.journey.statusSummary).toBe("Awaiting booking");
+    expect(updated!.journey.nextActionLabel).toBe("Follow up");
   });
 
-  it("3. Schedules discovery using the appointment system and links it to the Discovery unit", async () => {
+  it("3. Schedules discovery using the appointment system while keeping the lead in New Leads until discovery starts", async () => {
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const workspace = await scheduleLeadDiscovery({
       ownerId,
@@ -122,17 +128,38 @@ describe("Lead Center Complete Journey (Inquiry → Discovery → Decision → O
       startTime: tomorrow,
       durationMinutes: 30,
       assignedAdvocateName: "Byron Honea",
+      timeZone: "Eastern",
       notes: "Focus on reading evaluation denial and speech minutes",
     });
 
     expect(workspace).not.toBeNull();
-    expect(workspace!.journey.stage).toBe("discovery");
+    // Booking an appointment does NOT move a lead into Discovery!
+    expect(workspace!.journey.stage).toBe("inquiry");
     expect(workspace!.journey.discoveryState).toBe("scheduled");
-    expect(workspace!.appointments.length).toBeGreaterThan(0);
-    expect(workspace!.journey.nextActionLabel).toContain("Run Discovery");
+    expect(workspace!.journey.appointmentState).toBe("scheduled");
+    expect(workspace!.journey.scheduledAppointment).not.toBeNull();
+    expect(workspace!.journey.scheduledAppointment!.formattedDateTimeTz).toContain("ET");
+    expect(workspace!.appointments.length).toBe(1);
+    expect(workspace!.journey.statusSummary).toContain("Discovery scheduled");
+    expect(workspace!.journey.nextActionLabel).toBe("Start discovery");
+
+    // Rescheduling updates the existing appointment without creating duplicates
+    const nextDay = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    const rescheduled = await scheduleLeadDiscovery({
+      ownerId,
+      leadId: createdLeadId,
+      startTime: nextDay,
+      durationMinutes: 30,
+      assignedAdvocateName: "Byron Honea",
+      timeZone: "Central",
+      notes: "Moved to Central time per family request",
+    });
+    expect(rescheduled!.journey.stage).toBe("inquiry");
+    expect(rescheduled!.appointments.length).toBe(1);
+    expect(rescheduled!.journey.scheduledAppointment!.formattedDateTimeTz).toContain("CT");
   });
 
-  it("4. Starts discovery now, saves draft notes, and preserves work across stage views", async () => {
+  it("4. Starts discovery now (explicitly moving lead into Discovery), saves draft notes, and offers Resume discovery when interrupted", async () => {
     const started = await startLeadDiscoveryNow({
       ownerId,
       leadId: createdLeadId,
@@ -141,6 +168,9 @@ describe("Lead Center Complete Journey (Inquiry → Discovery → Decision → O
 
     expect(started!.journey.stage).toBe("discovery");
     expect(started!.journey.discoveryState).toBe("in_progress");
+    expect(started!.journey.hasStartedDiscovery).toBe(true);
+    expect(started!.journey.statusSummary).toBe("Discovery in progress");
+    expect(started!.journey.nextActionLabel).toBe("Resume discovery");
 
     // Verify serializeDiscoveryPricingBlob preserves existing top-level fields and journey metadata
     const merged = serializeDiscoveryPricingBlob(
@@ -406,5 +436,93 @@ describe("Lead Center Complete Journey (Inquiry → Discovery → Decision → O
       "PG-003-DEC",
       "PG-003-ONB",
     ]);
+  });
+
+  it("13. Verifies cold-call discovery started immediately, missed/canceled appointment in New Leads, and single lead record preservation", async () => {
+    // Path A: Cold-call lead created with minimal intake, started immediately without booking a future appointment
+    const coldSuffix = `${uniqueSuffix}-cold`;
+    const coldInquiry = await createServiceInquiry({
+      ownerId,
+      parentFirstName: "Marcus",
+      parentLastName: `Vance-${coldSuffix}`,
+      parentPhone: `404777${uniqueSuffix.slice(-4)}`,
+      students: [{ firstName: "Eli", lastName: `Vance-${coldSuffix}` }],
+      concerns: "",
+      desiredOutcome: "",
+      actorName: "Byron Honea",
+    });
+
+    const coldBeforeStart = await getHydratedLeadWorkspace(coldInquiry.leadId, ownerId);
+    expect(coldBeforeStart!.journey.stage).toBe("inquiry");
+    expect(coldBeforeStart!.journey.intakeCompleted).toBe(false);
+    expect(coldBeforeStart!.journey.statusSummary).toBe("Needs scheduling");
+    expect(coldBeforeStart!.journey.nextActionLabel).toBe("Schedule discovery");
+
+    // Start discovery immediately on cold call without scheduling an appointment first
+    const coldStarted = await startLeadDiscoveryNow({
+      ownerId,
+      leadId: coldInquiry.leadId,
+      actorName: "Byron Honea",
+    });
+    expect(coldStarted!.journey.stage).toBe("discovery");
+    expect(coldStarted!.journey.statusSummary).toBe("Discovery in progress");
+    expect(coldStarted!.journey.nextActionLabel).toBe("Resume discovery");
+    expect(coldStarted!.appointments.length).toBe(0);
+
+    // Collect missing intake details during discovery
+    const coldIntakeCollected = await updateInquiryDetails({
+      ownerId,
+      leadId: coldInquiry.leadId,
+      concerns: "Collected during live cold-call discovery: speech evaluation needed.",
+      desiredOutcome: "Full speech-language evaluation within 60 days.",
+    });
+    expect(coldIntakeCollected!.journey.stage).toBe("discovery");
+    expect(coldIntakeCollected!.journey.intakeCompleted).toBe(true);
+    expect(coldIntakeCollected!.journey.statusSummary).toBe("Discovery in progress");
+    expect(coldIntakeCollected!.journey.nextActionLabel).toBe("Resume discovery");
+
+    // Path B: Lead in New Leads books appointment, then misses/cancels BEFORE discovery starts -> stays in New Leads with Needs rescheduling -> Reschedule discovery
+    const cancelSuffix = `${uniqueSuffix}-cancel`;
+    const bookedInquiry = await createServiceInquiry({
+      ownerId,
+      parentFirstName: "Hannah",
+      parentLastName: `Abbott-${cancelSuffix}`,
+      parentPhone: `404888${uniqueSuffix.slice(-4)}`,
+      students: [{ firstName: "Nora", lastName: `Abbott-${cancelSuffix}` }],
+      concerns: "IEP annual review preparation",
+      desiredOutcome: "Updated reading accommodations",
+      actorName: "Byron Honea",
+    });
+
+    await scheduleLeadDiscovery({
+      ownerId,
+      leadId: bookedInquiry.leadId,
+      startTime: new Date(Date.now() + 3600000),
+      timeZone: "Eastern",
+    });
+
+    const afterCancel = await completeLeadDiscovery({
+      ownerId,
+      leadId: bookedInquiry.leadId,
+      outcome: "cancelled",
+      note: "Parent had a work conflict and asked to reschedule.",
+    });
+    expect(afterCancel!.journey.stage).toBe("inquiry");
+    expect(afterCancel!.journey.appointmentState).toBe("needs_rescheduling");
+    expect(afterCancel!.journey.statusSummary).toBe("Needs rescheduling");
+    expect(afterCancel!.journey.nextActionLabel).toBe("Reschedule discovery");
+
+    // Confirm listHydratedLeads has exactly one lead record for each family with matching status and next action
+    const allHydrated = await listHydratedLeads(ownerId);
+    const coldLeads = allHydrated.filter((l: any) => l.id === coldInquiry.leadId);
+    const cancelLeads = allHydrated.filter((l: any) => l.id === bookedInquiry.leadId);
+    expect(coldLeads.length).toBe(1);
+    expect(coldLeads[0].stage).toBe("discovery");
+    expect(coldLeads[0].statusSummary).toBe("Discovery in progress");
+    expect(coldLeads[0].nextActionLabel).toBe("Resume discovery");
+    expect(cancelLeads.length).toBe(1);
+    expect(cancelLeads[0].stage).toBe("inquiry");
+    expect(cancelLeads[0].statusSummary).toBe("Needs rescheduling");
+    expect(cancelLeads[0].nextActionLabel).toBe("Reschedule discovery");
   });
 });

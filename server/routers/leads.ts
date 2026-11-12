@@ -182,6 +182,7 @@ export const leadsRouter = router({
         startTime: z.union([z.date(), z.string()]),
         durationMinutes: z.number().optional(),
         assignedAdvocateName: z.string().optional(),
+        timeZone: z.string().optional(),
         notes: z.string().optional(),
       })
     )
@@ -192,6 +193,7 @@ export const leadsRouter = router({
         startTime: new Date(input.startTime),
         durationMinutes: input.durationMinutes,
         assignedAdvocateName: input.assignedAdvocateName,
+        timeZone: input.timeZone,
         notes: input.notes,
         actorName: ctx.user.name || ctx.user.email || "Waypoint Staff",
       });

@@ -82,11 +82,11 @@ export const discoveryRouter = router({
         }
 
         // Upsert
+        let mergedPricingNotes = data.pricingNotes;
         const [existing] = await dbConn.select().from(discoveryCalls)
           .where(and(deq(discoveryCalls.leadId, leadId), deq(discoveryCalls.ownerId, ctx.user.id)))
           .limit(1);
         if (existing) {
-          let mergedPricingNotes = data.pricingNotes;
           if (data.pricingNotes && existing.pricingNotes) {
             try {
               const oldParsed = JSON.parse(existing.pricingNotes);
@@ -127,6 +127,7 @@ export const discoveryRouter = router({
           inMemoryDiscoveryCalls.set(leadId, {
             ...memExisting,
             ...data,
+            ...(mergedPricingNotes !== undefined ? { pricingNotes: mergedPricingNotes } : {}),
             ...(contactId ? { contactId } : {}),
             updatedAt: new Date(),
           });

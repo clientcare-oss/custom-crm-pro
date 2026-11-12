@@ -84,10 +84,38 @@ export function LeadDiscoveryUnit({
   });
 
   const [activePromptTab, setActivePromptTab] = useState<
-    "prompts" | "story" | "scripts"
+    "prompts" | "story" | "intake" | "scripts"
   >("prompts");
   const [expandedPromptId, setExpandedPromptId] = useState<number | null>(null);
   const [copiedScript, setCopiedScript] = useState<string | null>(null);
+
+  // Inline intake fields for cold-call discovery collection
+  const [intakeParentPhone, setIntakeParentPhone] = useState(lead.parentPhone || "");
+  const [intakeParentEmail, setIntakeParentEmail] = useState(lead.parentEmail || "");
+  const [intakeStudentFirst, setIntakeStudentFirst] = useState(
+    students[0]?.firstName || lead.studentName?.split(" ")[0] || ""
+  );
+  const [intakeStudentLast, setIntakeStudentLast] = useState(
+    students[0]?.lastName || lead.studentName?.split(" ").slice(1).join(" ") || ""
+  );
+  const [intakeStudentGrade, setIntakeStudentGrade] = useState(
+    students[0]?.gradeLevel || lead.studentGrade || ""
+  );
+  const [intakeStudentSchool, setIntakeStudentSchool] = useState(
+    students[0]?.schoolName || ""
+  );
+  const [intakeConcerns, setIntakeConcerns] = useState(journey.concerns || "");
+  const [intakeDesiredOutcome, setIntakeDesiredOutcome] = useState(
+    journey.desiredOutcome || ""
+  );
+
+  const updateIntakeDuringDiscoveryMutation = trpc.leads.updateInquiry.useMutation({
+    onSuccess: () => {
+      toast.success("Intake details saved to family record");
+      onRefresh();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   // Scheduling controls
   const tomorrowDefault = new Date(Date.now() + 86400000);
@@ -365,7 +393,9 @@ export function LeadDiscoveryUnit({
                 className="h-9 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-semibold hover:brightness-110 text-xs cursor-pointer"
               >
                 <PhoneCall className="w-3.5 h-3.5 mr-1.5" />
-                Start Discovery Now
+                {journey.hasStartedDiscovery || journey.hasSavedDiscoveryProgress
+                  ? "Resume discovery"
+                  : "Start discovery now"}
               </Button>
             </div>
           </div>
@@ -484,7 +514,9 @@ export function LeadDiscoveryUnit({
                 className="h-9 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-semibold hover:brightness-110 text-xs cursor-pointer"
               >
                 <PhoneCall className="w-3.5 h-3.5 mr-1.5" />
-                Start Discovery
+                {journey.hasStartedDiscovery || journey.hasSavedDiscoveryProgress
+                  ? "Resume discovery"
+                  : "Start discovery"}
               </Button>
             </div>
           </div>
@@ -764,6 +796,41 @@ export function LeadDiscoveryUnit({
         </form>
       )}
 
+      {/* ── Interrupted / Saved Progress Banner when viewing Discovery outside active session ── */}
+      {!isSessionMode &&
+        dState === "in_progress" &&
+        journey.discoveryOutcome !== "completed" && (
+          <div
+            data-testid="discovery-interrupted-resume-banner"
+            className="rounded-xl border border-amber-400/50 bg-gradient-to-r from-[#1A1405] via-[#0B1733] to-[#040D26] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Badge className="bg-amber-500/20 text-amber-200 border-amber-400/45 text-[11px]">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Discovery in progress · Saved progress retained
+                </Badge>
+                <span className="text-xs text-[#FFE394] font-semibold">
+                  Next: Resume discovery
+                </span>
+              </div>
+              <p className="text-xs text-slate-200">
+                This discovery conversation was started and saved progress is retained. Click{" "}
+                <strong className="text-white">Resume discovery</strong> to continue where you left off.
+              </p>
+            </div>
+            <Button
+              type="button"
+              data-testid="resume-discovery-primary-btn"
+              onClick={() => onSetSessionMode(true)}
+              className="h-9 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold hover:brightness-110 text-xs cursor-pointer shrink-0"
+            >
+              <PhoneCall className="w-3.5 h-3.5 mr-1.5" />
+              Resume discovery →
+            </Button>
+          </div>
+        )}
+
       {/* ── Live / Active Discovery Session Workspace (`PG-003-SES`) ── */}
       {(dState === "in_progress" || isSessionMode) && (
         <div
@@ -793,7 +860,30 @@ export function LeadDiscoveryUnit({
               </h3>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                data-testid="pause-discovery-session-btn"
+                onClick={() => {
+                  saveDraftMutation.mutate({
+                    leadId: lead.id,
+                    theirStoryNotes,
+                    howItWorksNotes,
+                    additionalNotes,
+                    questionNotes: JSON.stringify(questionNotes),
+                  });
+                  toast.success(
+                    "Discovery progress saved · Click Resume discovery anytime to continue"
+                  );
+                  onSetSessionMode(false);
+                }}
+                className="h-8 border-amber-400/45 bg-[#191205] text-amber-200 hover:bg-[#2B1F09] text-xs cursor-pointer"
+              >
+                <Clock className="w-3.5 h-3.5 mr-1.5" />
+                Save & Pause (Resume Later)
+              </Button>
               <Button
                 type="button"
                 size="sm"
@@ -841,15 +931,22 @@ export function LeadDiscoveryUnit({
           </div>
 
           {/* Focused Workspace Sub-Navigation (Avoids a long wall of fields) */}
-          <div className="flex items-center gap-2 border-b border-[#162952] pb-2">
+          <div className="flex flex-wrap items-center gap-2 border-b border-[#162952] pb-2">
             {[
               { id: "prompts", label: `Discovery Prompts (${questions.length})` },
               { id: "story", label: "Their Story & Session Notes" },
+              {
+                id: "intake",
+                label: journey.intakeCompleted
+                  ? "Intake Details (Complete)"
+                  : "Collect Missing Intake Details",
+              },
               { id: "scripts", label: "Opening & Voicemail Scripts" },
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
+                data-testid={`discovery-subtab-${tab.id}`}
                 onClick={() => setActivePromptTab(tab.id as any)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                   activePromptTab === tab.id
@@ -987,6 +1084,162 @@ export function LeadDiscoveryUnit({
                   placeholder="Notes on plans discussed (Navigator, Anchor, Family) and questions answered..."
                   className="bg-[#02091A] border-[#162952] text-white text-xs leading-relaxed resize-none"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2.5: Collect or Update Intake Details During Discovery (Supports Cold Calls) */}
+          {activePromptTab === "intake" && (
+            <div
+              data-testid="discovery-inline-intake-panel"
+              className="rounded-lg border border-[#162952] bg-[#02091A] p-4 space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-semibold text-white">
+                    Family & Student Intake Details
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Existing intake information is shown below. Any missing intake details collected during this discovery call can be saved directly to the family record.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  data-testid="save-discovery-intake-btn"
+                  disabled={updateIntakeDuringDiscoveryMutation.isPending}
+                  onClick={() => {
+                    updateIntakeDuringDiscoveryMutation.mutate({
+                      leadId: lead.id,
+                      parent: {
+                        phone: intakeParentPhone,
+                        email: intakeParentEmail,
+                      },
+                      students: intakeStudentFirst.trim()
+                        ? [
+                            {
+                              id: students[0]?.id || undefined,
+                              firstName: intakeStudentFirst.trim(),
+                              lastName:
+                                intakeStudentLast.trim() ||
+                                lead.parentName?.split(" ").slice(-1)[0] ||
+                                "Student",
+                              gradeLevel: intakeStudentGrade,
+                              schoolName: intakeStudentSchool,
+                              iepOr504: students[0]?.iepOr504 || "IEP",
+                            },
+                          ]
+                        : undefined,
+                      concerns: intakeConcerns,
+                      desiredOutcome: intakeDesiredOutcome,
+                    });
+                  }}
+                  className="h-8 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-semibold text-xs cursor-pointer"
+                >
+                  <Save className="w-3.5 h-3.5 mr-1.5" />
+                  Save Intake Details
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[11px] text-slate-300 mb-1 block">
+                    Parent Phone
+                  </label>
+                  <Input
+                    data-testid="discovery-intake-phone"
+                    value={intakeParentPhone}
+                    onChange={(e) => setIntakeParentPhone(e.target.value)}
+                    placeholder="(555) 000-0000"
+                    className="h-8 bg-[#040D26] border-[#162952] text-white text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-300 mb-1 block">
+                    Parent Email
+                  </label>
+                  <Input
+                    data-testid="discovery-intake-email"
+                    value={intakeParentEmail}
+                    onChange={(e) => setIntakeParentEmail(e.target.value)}
+                    placeholder="parent@example.com"
+                    className="h-8 bg-[#040D26] border-[#162952] text-white text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-300 mb-1 block">
+                    Student First Name
+                  </label>
+                  <Input
+                    data-testid="discovery-intake-student-first"
+                    value={intakeStudentFirst}
+                    onChange={(e) => setIntakeStudentFirst(e.target.value)}
+                    placeholder="Student first name"
+                    className="h-8 bg-[#040D26] border-[#162952] text-white text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-300 mb-1 block">
+                    Student Last Name
+                  </label>
+                  <Input
+                    value={intakeStudentLast}
+                    onChange={(e) => setIntakeStudentLast(e.target.value)}
+                    placeholder="Student last name"
+                    className="h-8 bg-[#040D26] border-[#162952] text-white text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-300 mb-1 block">
+                    Grade Level
+                  </label>
+                  <Input
+                    value={intakeStudentGrade}
+                    onChange={(e) => setIntakeStudentGrade(e.target.value)}
+                    placeholder="e.g. 4th Grade"
+                    className="h-8 bg-[#040D26] border-[#162952] text-white text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-300 mb-1 block">
+                    School / District
+                  </label>
+                  <Input
+                    value={intakeStudentSchool}
+                    onChange={(e) => setIntakeStudentSchool(e.target.value)}
+                    placeholder="School or district"
+                    className="h-8 bg-[#040D26] border-[#162952] text-white text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] text-slate-300 mb-1 block">
+                    Main Concerns
+                  </label>
+                  <Textarea
+                    data-testid="discovery-intake-concerns"
+                    value={intakeConcerns}
+                    onChange={(e) => setIntakeConcerns(e.target.value)}
+                    rows={3}
+                    placeholder="Capture main special education / IEP / 504 concerns..."
+                    className="bg-[#040D26] border-[#162952] text-white text-xs resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-300 mb-1 block">
+                    Desired Outcome
+                  </label>
+                  <Textarea
+                    data-testid="discovery-intake-desired-outcome"
+                    value={intakeDesiredOutcome}
+                    onChange={(e) => setIntakeDesiredOutcome(e.target.value)}
+                    rows={3}
+                    placeholder="What outcome is the family hoping to achieve?"
+                    className="bg-[#040D26] border-[#162952] text-white text-xs resize-none"
+                  />
+                </div>
               </div>
             </div>
           )}

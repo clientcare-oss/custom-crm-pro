@@ -171,7 +171,7 @@ export async function updateInquiryDetails(params: {
     schedulingLinkSent = true;
     schedulingLinkSentAt = nowIso;
     nextActionObj = {
-      label: "Schedule Discovery",
+      label: "Follow up",
       dueDate: null,
       type: "awaiting_scheduling_link",
     };
@@ -180,7 +180,7 @@ export async function updateInquiryDetails(params: {
       timestamp: nowIso,
       type: "inquiry",
       title: "Discovery Scheduling Link Sent",
-      summary: `Sent scheduling link to ${params.parent?.email || workspace.lead.parentEmail || workspace.lead.parentPhone || workspace.lead.parentName}. Lead remains in New Leads until appointment is booked.`,
+      summary: `Sent scheduling link to ${params.parent?.email || workspace.lead.parentEmail || workspace.lead.parentPhone || workspace.lead.parentName}. Lead remains in New Leads until discovery conversation starts.`,
       actor,
       stage: "inquiry",
     });
@@ -285,7 +285,10 @@ export async function updateInquiryDetails(params: {
 }
 
 /**
- * Schedules a Discovery Call using the existing appointment system and links it to the lead and discovery unit.
+ * Schedules or reschedules a Discovery Call using the existing appointment system and links it to the lead.
+ * Booking an appointment does NOT move a lead into Discovery — the lead remains in New Leads (`inquiry`)
+ * until staff explicitly starts the discovery conversation.
+ * Reuses existing appointment record for this lead when rescheduling to prevent duplicate appointments.
  */
 export async function scheduleLeadDiscovery(params: {
   ownerId: number;
@@ -293,6 +296,7 @@ export async function scheduleLeadDiscovery(params: {
   startTime: Date;
   durationMinutes?: number;
   assignedAdvocateName?: string;
+  timeZone?: string;
   notes?: string;
   actorName?: string;
 }) {
@@ -307,6 +311,9 @@ export async function scheduleLeadDiscovery(params: {
   const parentId = workspace.parentContact?.id || workspace.lead.contactId || undefined;
   const studentId = workspace.students[0]?.id || undefined;
   const studentNames = workspace.students.map((s: any) => `${s.firstName} ${s.lastName}`.trim()).join(", ");
+  const dCall = workspace.discoveryCall;
+  const { journey } = parseDiscoveryPricingBlob(dCall?.pricingNotes);
+  const resolvedTz = params.timeZone || journey.timeZone || "Eastern";
 
   const aptPayload = {
     clientId: studentId || parentId,
@@ -324,18 +331,40 @@ export async function scheduleLeadDiscovery(params: {
     parentPhone: workspace.lead.parentPhone,
     studentName: studentNames || workspace.lead.studentName,
     assignedAdvocateName: params.assignedAdvocateName || params.actorName || "Byron Honea",
+    clientTimeZone: resolvedTz,
     status: "Scheduled" as const,
   };
 
-  // Create real calendar appointment
-  const aptRes = await db.createAppointment(aptPayload, params.ownerId);
+  // Check if an existing discovery appointment already exists for this lead so we update instead of duplicating
+  const existingApt =
+    workspace.appointments?.find(
+      (a: any) =>
+        (a.leadId && Number(a.leadId) === Number(params.leadId)) ||
+        (dCall?.appointmentId && Number(a.id) === Number(dCall.appointmentId)) ||
+        String(a.meetingType || a.title || "").toLowerCase().includes("discovery")
+    ) || null;
 
-  const appointmentId = extractInsertId(aptRes) || Date.now();
-  inMemoryLeadAppointments.set(appointmentId, {
-    id: appointmentId,
-    ownerId: params.ownerId,
-    ...aptPayload,
-  });
+  let appointmentId: number;
+  if (existingApt?.id) {
+    appointmentId = Number(existingApt.id);
+    try {
+      await db.updateAppointment(appointmentId, params.ownerId, aptPayload as any);
+    } catch {}
+    inMemoryLeadAppointments.set(appointmentId, {
+      ...existingApt,
+      id: appointmentId,
+      ownerId: params.ownerId,
+      ...aptPayload,
+    });
+  } else {
+    const aptRes = await db.createAppointment(aptPayload as any, params.ownerId);
+    appointmentId = extractInsertId(aptRes) || Date.now();
+    inMemoryLeadAppointments.set(appointmentId, {
+      id: appointmentId,
+      ownerId: params.ownerId,
+      ...aptPayload,
+    });
+  }
 
   // Reconcile obsolete booking reminders
   const studentIds = workspace.students.map((s: any) => s.id).filter(Boolean);
@@ -346,8 +375,6 @@ export async function scheduleLeadDiscovery(params: {
     transitionReason: "discovery_booked",
   });
 
-  const dCall = workspace.discoveryCall;
-  const { journey } = parseDiscoveryPricingBlob(dCall?.pricingNotes);
   const nowIso = new Date().toISOString();
   const formattedTime = params.startTime.toLocaleDateString("en-US", {
     month: "short",
@@ -356,15 +383,20 @@ export async function scheduleLeadDiscovery(params: {
     minute: "2-digit",
   });
 
+  // Preserve stage: booking an appointment does NOT move a lead into Discovery!
+  const preservedStage: LeadStage = workspace.journey.hasStartedDiscovery
+    ? "discovery"
+    : "inquiry";
+
   const history: SharedHistoryEntry[] = [
     {
       id: `hist_${Date.now()}_sched`,
       timestamp: nowIso,
       type: "discovery",
-      title: "Discovery Call Scheduled",
-      summary: `Scheduled for ${formattedTime}${params.notes ? ` · ${params.notes}` : ""}`,
+      title: existingApt ? "Discovery Call Rescheduled" : "Discovery Call Scheduled",
+      summary: `Scheduled for ${formattedTime} (${resolvedTz})${params.notes ? ` · ${params.notes}` : ""}`,
       actor: params.actorName || "Waypoint Staff",
-      stage: "discovery",
+      stage: preservedStage,
       outcome: "scheduled",
     },
     ...(journey.sharedHistory || []),
@@ -382,12 +414,16 @@ export async function scheduleLeadDiscovery(params: {
   ];
 
   const updatedBlob = serializeDiscoveryPricingBlob(dCall?.pricingNotes, {
-    stage: "discovery",
+    stage: preservedStage,
     isClosed: false,
-    discoveryState: "scheduled",
+    discoveryState: workspace.journey.hasStartedDiscovery ? "in_progress" : "scheduled",
     discoveryOutcome: "pending",
+    appointmentStatus: "scheduled",
+    timeZone: resolvedTz,
+    assignedAdvocate:
+      params.assignedAdvocateName || journey.assignedAdvocate || "Byron Honea",
     nextAction: {
-      label: `Conduct discovery (${formattedTime})`,
+      label: workspace.journey.hasStartedDiscovery ? "Resume discovery" : "Start discovery",
       dueDate: params.startTime.toISOString(),
       type: "conduct_discovery",
     },
@@ -399,7 +435,7 @@ export async function scheduleLeadDiscovery(params: {
     const updatedFields = {
       scheduledAt: params.startTime,
       appointmentId: appointmentId || dCall.appointmentId,
-      status: "Preparing",
+      status: workspace.journey.hasStartedDiscovery ? "In Progress" : "Preparing",
       pricingNotes: updatedBlob,
     };
     await dbConn
@@ -415,7 +451,7 @@ export async function scheduleLeadDiscovery(params: {
 
   if (parentId) {
     await db.updateContactById(parentId, {
-      currentPrimaryAction: `Discovery Call (${formattedTime})`,
+      currentPrimaryAction: `Start discovery (${formattedTime})`,
       currentActionDueDate: params.startTime,
     });
   }
@@ -425,6 +461,7 @@ export async function scheduleLeadDiscovery(params: {
 
 /**
  * Starts a live Discovery session immediately (`Start Discovery Now` or `Start Discovery`).
+ * This is the ONLY action that transitions a lead from New Leads (`inquiry`) into `Discovery` (`discovery`).
  */
 export async function startLeadDiscoveryNow(params: {
   ownerId: number;
@@ -440,14 +477,17 @@ export async function startLeadDiscoveryNow(params: {
   const dCall = workspace.discoveryCall;
   const { journey } = parseDiscoveryPricingBlob(dCall?.pricingNotes);
   const nowIso = new Date().toISOString();
+  const isResuming = Boolean(journey.discoveryStartedAt || workspace.journey.hasStartedDiscovery);
 
   const history: SharedHistoryEntry[] = [
     {
       id: `hist_${Date.now()}_start`,
       timestamp: nowIso,
       type: "discovery",
-      title: "Discovery Session Started",
-      summary: "Live discovery conversation in progress.",
+      title: isResuming ? "Discovery Session Resumed" : "Discovery Session Started",
+      summary: isResuming
+        ? "Resumed live discovery conversation with saved progress."
+        : "Live discovery conversation started.",
       actor: params.actorName || "Waypoint Staff",
       stage: "discovery",
       outcome: "in_progress",
@@ -460,8 +500,9 @@ export async function startLeadDiscoveryNow(params: {
     isClosed: false,
     discoveryState: "in_progress",
     discoveryOutcome: "pending",
+    discoveryStartedAt: journey.discoveryStartedAt || nowIso,
     nextAction: {
-      label: "Complete discovery session",
+      label: "Resume discovery",
       dueDate: nowIso,
       type: "complete_discovery",
     },
@@ -613,10 +654,18 @@ export async function completeLeadDiscovery(params: {
     });
   } else {
     // Non-terminal outcomes: "no_answer" | "reschedule_needed" | "cancelled"
-    // Stay in Discovery! Do NOT move to Decision or mark Lost.
-    nextStage = "discovery";
+    // If discovery conversation was never started, stay in New Leads (`inquiry`); otherwise stay in `discovery`.
+    nextStage = workspace.journey.hasStartedDiscovery ? "discovery" : "inquiry";
     isClosed = false;
-    callDbStatus = "Preparing";
+    callDbStatus = workspace.journey.hasStartedDiscovery ? "In Progress" : "Preparing";
+
+    const existingApt =
+      workspace.appointments?.find(
+        (a: any) =>
+          (a.leadId && Number(a.leadId) === Number(params.leadId)) ||
+          (dCall?.appointmentId && Number(a.id) === Number(dCall.appointmentId)) ||
+          String(a.meetingType || a.title || "").toLowerCase().includes("discovery")
+      ) || null;
 
     if (params.rescheduleStartTime) {
       dState = "scheduled";
@@ -627,7 +676,7 @@ export async function completeLeadDiscovery(params: {
         minute: "2-digit",
       });
       nextActionObj = {
-        label: params.nextActionLabel || `Rescheduled discovery (${formatted})`,
+        label: params.nextActionLabel || "Start discovery",
         dueDate: params.rescheduleStartTime.toISOString(),
         type: "conduct_discovery",
       };
@@ -646,26 +695,46 @@ export async function completeLeadDiscovery(params: {
         parentPhone: workspace.lead.parentPhone,
         status: "Scheduled" as const,
       };
-      const rApt = await db.createAppointment(reschedPayload, params.ownerId);
-      const rAptId = extractInsertId(rApt) || Date.now();
-      inMemoryLeadAppointments.set(rAptId, {
-        id: rAptId,
-        ownerId: params.ownerId,
-        ...reschedPayload,
-      });
+      if (existingApt?.id) {
+        const rAptId = Number(existingApt.id);
+        try {
+          await db.updateAppointment(rAptId, params.ownerId, reschedPayload as any);
+        } catch {}
+        inMemoryLeadAppointments.set(rAptId, {
+          ...existingApt,
+          id: rAptId,
+          ownerId: params.ownerId,
+          ...reschedPayload,
+        });
+      } else {
+        const rApt = await db.createAppointment(reschedPayload, params.ownerId);
+        const rAptId = extractInsertId(rApt) || Date.now();
+        inMemoryLeadAppointments.set(rAptId, {
+          id: rAptId,
+          ownerId: params.ownerId,
+          ...reschedPayload,
+        });
+      }
       await db.updateLead(params.leadId, params.ownerId, {
         discoveryCallDate: params.rescheduleStartTime,
       });
     } else {
       dState = "unscheduled";
+      if (existingApt?.id) {
+        const rAptId = Number(existingApt.id);
+        const cancelStatus = params.outcome === "cancelled" ? "Cancelled" : "No-Show";
+        try {
+          await db.updateAppointment(rAptId, params.ownerId, { status: cancelStatus } as any);
+        } catch {}
+        inMemoryLeadAppointments.set(rAptId, {
+          ...existingApt,
+          id: rAptId,
+          status: cancelStatus,
+        });
+      }
       const tomorrow = new Date(now.getTime() + 86400000);
       const defaultDate = params.nextActionDate || tomorrow;
-      const defaultLabel =
-        params.outcome === "no_answer"
-          ? "Retry the call tomorrow"
-          : params.outcome === "reschedule_needed"
-          ? "Contact family to reschedule"
-          : "Follow up after cancellation";
+      const defaultLabel = "Reschedule discovery";
       nextActionObj = {
         label: params.nextActionLabel || defaultLabel,
         dueDate: defaultDate.toISOString(),
@@ -698,7 +767,15 @@ export async function completeLeadDiscovery(params: {
     isClosed,
     closedStage,
     discoveryState: dState,
-    discoveryOutcome: params.outcome,
+    discoveryOutcome: params.rescheduleStartTime ? "pending" : params.outcome,
+    appointmentStatus:
+      params.outcome === "completed" || params.outcome === "declined"
+        ? journey.appointmentStatus
+        : params.rescheduleStartTime
+        ? "scheduled"
+        : params.outcome === "cancelled"
+        ? "cancelled"
+        : "missed",
     callAttempts: updatedAttempts,
     ...(params.outcome === "declined"
       ? {

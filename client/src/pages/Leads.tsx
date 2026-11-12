@@ -48,7 +48,12 @@ import {
 type DiscoverySubFilter = "all" | "today" | "upcoming" | "needs_followup";
 type DecisionSubFilter = "active" | "closed";
 type OnboardingSubFilter = "active" | "completed";
-type NewLeadsSubFilter = "all" | "link_sent" | "needs_followup";
+type NewLeadsSubFilter =
+  | "all"
+  | "needs_scheduling"
+  | "link_sent"
+  | "scheduled"
+  | "needs_followup";
 
 function parseLeadRoute(pathname: string, search: string): {
   leadId: number | null;
@@ -213,6 +218,15 @@ export default function Leads() {
       toast.success("Lead reopened in Decision stage");
     },
     onError: (err) => toast.error(err.message || "Could not reopen lead"),
+  });
+
+  const startDiscoveryHeaderMutation = trpc.leads.startDiscoveryNow.useMutation({
+    onSuccess: () => {
+      utils.leads.listHydrated.invalidate();
+      utils.leads.getWorkspace.invalidate();
+      handleNavigateStage("discovery", true);
+    },
+    onError: (err) => toast.error(err.message || "Could not start discovery"),
   });
 
   const createTestLeadMutation = trpc.leads.createInquiry.useMutation({
@@ -495,13 +509,38 @@ export default function Leads() {
     };
 
     if (selectedRadioStage === "inquiry") {
-      // Stage 1: New Leads — ALL leads in inquiry, newest first by default
+      // Stage 1: New Leads — ALL leads who have not started their discovery conversation (including scheduled & unscheduled)
       return hydratedLeads
         .filter((l: any) => {
           if (l.stage !== "inquiry" || l.isClosed) return false;
-          if (newLeadsFilter === "link_sent" && !l.schedulingLinkSent)
+          const aptState =
+            l.appointmentState ||
+            (l.scheduledAppointment
+              ? "scheduled"
+              : l.schedulingLinkSent
+              ? "awaiting_booking"
+              : "needs_scheduling");
+          if (
+            newLeadsFilter === "needs_scheduling" &&
+            aptState !== "needs_scheduling" &&
+            aptState !== "needs_rescheduling"
+          ) {
             return false;
-          if (newLeadsFilter === "needs_followup" && !l.isOverdue) return false;
+          }
+          if (newLeadsFilter === "link_sent" && aptState !== "awaiting_booking") {
+            return false;
+          }
+          if (newLeadsFilter === "scheduled" && aptState !== "scheduled") {
+            return false;
+          }
+          if (
+            newLeadsFilter === "needs_followup" &&
+            !l.isOverdue &&
+            aptState !== "needs_rescheduling" &&
+            aptState !== "awaiting_booking"
+          ) {
+            return false;
+          }
           return matchesSearch(l);
         })
         .sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
@@ -601,6 +640,14 @@ export default function Leads() {
   const activeStageMeta =
     TUNER_STAGES.find((s) => s.id === selectedRadioStage) || TUNER_STAGES[0];
 
+  const openedHydratedLead = useMemo(
+    () =>
+      effectiveLeadId
+        ? hydratedLeads.find((l: any) => l.id === effectiveLeadId) || null
+        : null,
+    [hydratedLeads, effectiveLeadId]
+  );
+
   return (
     <ScopedErrorBoundary moduleName="Lead Center">
       <div
@@ -630,230 +677,46 @@ export default function Leads() {
               setLocation(`/leads/${leadId}/${stage}`)
             }
             isClientOpen={Boolean(effectiveLeadId)}
-            openedClientName={workspace?.lead?.parentName}
+            openedClientName={
+              workspace?.lead?.parentName || openedHydratedLead?.parentName
+            }
+            openedClientStudentName={
+              workspace?.students?.length
+                ? workspace.students
+                    .map((s: any) => `${s.firstName} ${s.lastName}`.trim())
+                    .join(", ")
+                : workspace?.lead?.childName || openedHydratedLead?.childName
+            }
+            openedClientStatusLabel={
+              workspace?.journey?.statusSummary ||
+              openedHydratedLead?.statusSummary ||
+              "Needs scheduling"
+            }
+            openedClientNextAction={
+              workspace?.journey?.nextActionLabel ||
+              openedHydratedLead?.nextActionLabel ||
+              "Schedule discovery"
+            }
+            openedClientCurrentStage={defaultTabForPersisted}
           />
 
           {/* ─── 2. SINGLE FOCUSED STAGE WORKING AREA DIRECTLY BELOW RADIO ─── */}
           {effectiveLeadId ? (
-            /* ── IN-CONTEXT OPENED LEAD WORKSPACE (FUTURISTIC SCI-FI HUD CONTAINER) ── */
-            <div
-              className="relative rounded-2xl border border-cyan-400/45 bg-[#040B1B]/95 p-4 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_32px_rgba(34,211,238,0.14),inset_0_0_32px_rgba(56,189,248,0.06)] space-y-5 overflow-hidden"
-              style={{
-                backgroundImage:
-                  "radial-gradient(ellipse at 50% 0%, rgba(14, 116, 144, 0.16) 0%, transparent 65%), linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px)",
-                backgroundSize: "100% 100%, 28px 28px, 28px 28px",
-              }}
-              data-testid="lead-stage-in-context-workspace"
-            >
-              {/* Sci-Fi Top Laser Filament & 4 Tactical Corner Brackets */}
+            activeStageTab === "inquiry" ? (
+              /* ── PG-003-INQ · NEW LEADS FAMILY WORKSPACE (ADMIRALTY NAVY & BRASS BELOW RADIO) ── */
               <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-12 top-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400/80 to-transparent shadow-[0_0_12px_#22d3ee]"
-              />
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400/80 rounded-tl-sm"
-              />
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400/80 rounded-tr-sm"
-              />
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400/80 rounded-bl-sm"
-              />
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400/80 rounded-br-sm"
-              />
-
-              {workspaceQuery.isLoading || !workspace ? (
-                <div className="rounded-2xl border border-cyan-400/30 bg-[#061229]/90 p-10 flex items-center justify-center gap-3">
-                  <Loader2 className="w-6 h-6 animate-spin text-cyan-300" />
-                  <span className="text-base font-mono text-cyan-100">
-                    INITIALIZING LEAD DETAILS PROFILE...
-                  </span>
-                </div>
-              ) : (
-                <>
-                  {/* Top Lead Details Profile · Futuristic Command Header */}
-                  <div className="relative rounded-xl border border-cyan-400/35 bg-gradient-to-r from-[#07152E]/95 via-[#091B3A]/95 to-[#061126]/95 p-4 sm:p-5 shadow-[0_12px_32px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(103,232,249,0.18)] space-y-4">
-                    {/* Row 1: Large Sci-Fi Go Back Button + Holographic Telemetry Label + Quick Action Toggles */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-cyan-400/20">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setLocation("/leads")}
-                          data-testid="back-to-lead-center-btn"
-                          className="group inline-flex items-center gap-2.5 h-11 px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-white bg-gradient-to-b from-[#0E254C] to-[#07152E] hover:from-[#133266] hover:to-[#0A1E40] border border-cyan-400/65 hover:border-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all cursor-pointer shrink-0"
-                        >
-                          <ArrowLeft className="w-5 h-5 text-cyan-300 group-hover:-translate-x-0.5 transition-transform stroke-[2.5]" />
-                          Go Back to {activeStageMeta.label} List
-                        </button>
-
-                        <span
-                          data-testid="single-client-view-badge"
-                          className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-[#041024] border border-cyan-400/50 text-cyan-200 text-xs font-mono font-bold uppercase tracking-[0.14em] shadow-[0_0_14px_rgba(34,211,238,0.18),inset_0_0_10px_rgba(34,211,238,0.08)]"
-                        >
-                          <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse" />
-                          LEAD DETAILS PROFILE // SINGLE CLIENT VIEW
-                        </span>
-                      </div>
-
-                      {/* Right: Progressive Disclosure Drawer Toggles + Primary Action */}
-                      <div className="flex flex-wrap items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setOpenDrawer(
-                              openDrawer === "contacts" ? null : "contacts"
-                            )
-                          }
-                          data-testid="toggle-contact-drawer-btn"
-                          className={`inline-flex items-center gap-2 h-10 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
-                            openDrawer === "contacts"
-                              ? "bg-[#0E2954] text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
-                              : "bg-[#050E22] text-slate-200 border-cyan-500/35 hover:bg-[#0A1B3D] hover:border-cyan-400/70 hover:text-white"
-                          }`}
-                        >
-                          <Users className="w-4 h-4 text-cyan-300" />
-                          Family & Contacts
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setOpenDrawer(
-                              openDrawer === "history" ? null : "history"
-                            )
-                          }
-                          data-testid="toggle-history-drawer-btn"
-                          className={`inline-flex items-center gap-2 h-10 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
-                            openDrawer === "history"
-                              ? "bg-[#0E2954] text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
-                              : "bg-[#050E22] text-slate-200 border-cyan-500/35 hover:bg-[#0A1B3D] hover:border-cyan-400/70 hover:text-white"
-                          }`}
-                        >
-                          <History className="w-4 h-4 text-cyan-300" />
-                          History & Notes
-                          <span className="px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-400/40 text-xs font-mono font-bold text-cyan-300">
-                            {(workspace.journey.sharedHistory?.length || 0) +
-                              (workspace.journey.callAttempts?.length || 0)}
-                          </span>
-                        </button>
-
-                        {activeStageTab === "inquiry" && (
-                          <button
-                            type="button"
-                            onClick={() => handleNavigateStage("discovery", true)}
-                            className="inline-flex items-center gap-2 h-10 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] border border-[#FFE394] shadow-[0_4px_14px_rgba(197,160,89,0.45)] hover:brightness-110 cursor-pointer"
-                          >
-                            <PhoneCall className="w-4 h-4" />
-                            Start Discovery Now
-                          </button>
-                        )}
-
-                        {activeStageTab === "discovery" &&
-                          workspace.journey.discoveryOutcome !== "completed" &&
-                          !isSessionMode && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleNavigateStage("discovery", true)
-                              }
-                              className="inline-flex items-center gap-2 h-10 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] border border-[#FFE394] shadow-[0_4px_14px_rgba(197,160,89,0.45)] hover:brightness-110 cursor-pointer"
-                            >
-                              <PhoneCall className="w-4 h-4" />
-                              Run Discovery
-                            </button>
-                          )}
-
-                        {activeStageTab === "discovery" &&
-                          workspace.journey.discoveryOutcome === "completed" && (
-                            <button
-                              type="button"
-                              onClick={() => handleNavigateStage("decision")}
-                              className="inline-flex items-center gap-2 h-10 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] border border-[#FFE394] shadow-[0_4px_14px_rgba(197,160,89,0.45)] hover:brightness-110 cursor-pointer"
-                            >
-                              Open Decision
-                              <ArrowRight className="w-4 h-4" />
-                            </button>
-                          )}
-                      </div>
-                    </div>
-
-                    {/* Row 2: Prominent Client Name + Student + Stage & Next Action */}
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex flex-wrap items-center gap-3 min-w-0">
-                        <h2
-                          className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
-                          style={{
-                            fontFamily: "'Playfair Display', Georgia, serif",
-                          }}
-                          data-testid="workspace-family-name"
-                        >
-                          {workspace.lead.parentName || "Family Inquiry"}
-                        </h2>
-
-                        {workspace.students?.length > 0 && (
-                          <span className="text-xs sm:text-sm text-cyan-100 font-semibold inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#051229] border border-cyan-400/35">
-                            <Users className="w-4 h-4 text-cyan-300" />
-                            Student:{" "}
-                            {workspace.students
-                              .map((s: any) =>
-                                `${s.firstName} ${s.lastName}`.trim()
-                              )
-                              .join(", ")}
-                          </span>
-                        )}
-
-                        <span className="text-xs font-mono uppercase tracking-wider px-3 py-1 rounded-lg font-bold bg-[#051229] text-[#FFE394] border border-[#C5A059]/45">
-                          Stage: {workspace.journey.stageLabel}
-                        </span>
-                      </div>
-
-                      <div
-                        className="flex flex-wrap items-center gap-2 text-xs sm:text-sm bg-[#040D20]/90 border border-cyan-400/30 px-3.5 py-1.5 rounded-xl"
-                        data-testid="workspace-status-next-summary"
-                      >
-                        <span className="text-slate-200 font-medium">
-                          {workspace.journey.statusSummary}
-                        </span>
-                        <span className="text-cyan-400">·</span>
-                        <span
-                          className={`font-bold ${
-                            workspace.journey.isOverdue
-                              ? "text-rose-300"
-                              : "text-cyan-300"
-                          }`}
-                        >
-                          Next: {workspace.journey.nextActionLabel}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Stage Navigation Strip (`New Leads · Discovery · Decision · Onboarding`) */}
-                    <LeadStageStrip
-                      currentPersistedStage={persistedStage}
-                      viewedStage={activeStageTab}
-                      onSelectStage={(st) => handleNavigateStage(st, false)}
-                      isClosed={workspace.journey.isClosed}
-                    />
+                className="relative pt-1 pb-4 space-y-2"
+                data-testid="lead-stage-in-context-workspace"
+              >
+                {workspaceQuery.isLoading || !workspace ? (
+                  <div className="rounded-2xl border border-[#C5A059]/30 bg-[#061229]/90 p-10 flex items-center justify-center gap-3">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#DFBE77]" />
+                    <span className="text-base font-serif text-[#FFF4D4]">
+                      Loading family workspace...
+                    </span>
                   </div>
-
-                  {/* Progressive Disclosure Drawers for Contacts or Shared History */}
-                  <LeadContextDrawers
-                    workspace={workspace}
-                    openDrawer={openDrawer}
-                    onClose={() => setOpenDrawer(null)}
-                    onUpdated={() => {
-                      workspaceQuery.refetch();
-                      leadsQuery.refetch();
-                    }}
-                  />
-
-                  {/* Active Stage Unit */}
-                  {activeStageTab === "inquiry" && (
+                ) : (
+                  <>
                     <LeadInquiryUnit
                       workspace={workspace}
                       onRefresh={() => {
@@ -861,539 +724,707 @@ export default function Leads() {
                         leadsQuery.refetch();
                       }}
                       onNavigateStage={handleNavigateStage}
+                      onBackToList={() => setLocation("/leads")}
                     />
-                  )}
 
-                  {activeStageTab === "discovery" && (
-                    <LeadDiscoveryUnit
-                      workspace={workspace}
-                      isSessionMode={isSessionMode}
-                      onSetSessionMode={(s) =>
-                        handleNavigateStage("discovery", s)
-                      }
-                      onRefresh={() => {
-                        workspaceQuery.refetch();
-                        leadsQuery.refetch();
-                      }}
-                      onNavigateStage={handleNavigateStage}
-                    />
-                  )}
-
-                  {activeStageTab === "decision" && (
-                    <LeadDecisionUnit
-                      workspace={workspace}
-                      onRefresh={() => {
-                        workspaceQuery.refetch();
-                        leadsQuery.refetch();
-                      }}
-                      onStageChange={(st) => handleNavigateStage(st, false)}
-                    />
-                  )}
-
-                  {activeStageTab === "onboarding" && (
-                    <LeadOnboardingUnit
-                      workspace={workspace}
-                      onRefresh={() => {
-                        workspaceQuery.refetch();
-                        leadsQuery.refetch();
-                      }}
-                    />
-                  )}
-
-                  {/* Bottom Sci-Fi HUD Go Back Bar for Easy Return to List */}
-                  <div className="rounded-xl border border-cyan-400/35 bg-[#061229]/95 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-[0_10px_28px_rgba(0,0,0,0.65)]">
-                    <div className="flex items-center gap-2.5 text-xs sm:text-sm font-mono text-cyan-200/90">
-                      <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
-                      <span>
-                        ACTIVE DOSSIER: <strong className="text-white">{workspace.lead.parentName}</strong> // SINGLE CLIENT VIEW
-                      </span>
+                    <div className="pt-2 px-2 flex items-center justify-between text-xs text-[#C6B697]">
+                      <button
+                        type="button"
+                        onClick={() => setLocation("/leads")}
+                        data-testid="back-to-lead-center-btn"
+                        className="inline-flex items-center gap-1.5 text-[#D8B467] hover:text-[#FFF4D4] transition-colors cursor-pointer"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        Back to {activeStageMeta.label} List
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setLocation("/leads")}
-                      data-testid="bottom-back-to-lead-center-btn"
-                      className="group inline-flex items-center gap-2.5 h-11 px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-white bg-gradient-to-b from-[#0E254C] to-[#07152E] hover:from-[#133266] hover:to-[#0A1E40] border border-cyan-400/65 hover:border-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all cursor-pointer"
-                    >
-                      <ArrowLeft className="w-5 h-5 text-cyan-300 group-hover:-translate-x-0.5 transition-transform stroke-[2.5]" />
-                      Go Back to {activeStageMeta.label} List
-                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+              /* ── IN-CONTEXT OPENED LEAD WORKSPACE FOR DISCOVERY / DECISION / ONBOARDING ── */
+              <div
+                className="relative rounded-2xl border border-cyan-400/45 bg-[#040B1B]/95 p-4 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_32px_rgba(34,211,238,0.14),inset_0_0_32px_rgba(56,189,248,0.06)] space-y-5 overflow-hidden"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(ellipse at 50% 0%, rgba(14, 116, 144, 0.16) 0%, transparent 65%), linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px)",
+                  backgroundSize: "100% 100%, 28px 28px, 28px 28px",
+                }}
+                data-testid="lead-stage-in-context-workspace"
+              >
+                {/* Sci-Fi Top Laser Filament & 4 Tactical Corner Brackets */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-12 top-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400/80 to-transparent shadow-[0_0_12px_#22d3ee]"
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400/80 rounded-tl-sm"
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400/80 rounded-tr-sm"
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400/80 rounded-bl-sm"
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400/80 rounded-br-sm"
+                />
+
+                {workspaceQuery.isLoading || !workspace ? (
+                  <div className="rounded-2xl border border-cyan-400/30 bg-[#061229]/90 p-10 flex items-center justify-center gap-3">
+                    <Loader2 className="w-6 h-6 animate-spin text-cyan-300" />
+                    <span className="text-base font-mono text-cyan-100">
+                      INITIALIZING LEAD DETAILS PROFILE...
+                    </span>
                   </div>
-                </>
-              )}
-            </div>
+                ) : (
+                  <>
+                    {/* Top Lead Details Profile · Futuristic Command Header */}
+                    <div className="relative rounded-xl border border-cyan-400/35 bg-gradient-to-r from-[#07152E]/95 via-[#091B3A]/95 to-[#061126]/95 p-4 sm:p-5 shadow-[0_12px_32px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(103,232,249,0.18)] space-y-4">
+                      {/* Row 1: Large Sci-Fi Go Back Button + Holographic Telemetry Label + Quick Action Toggles */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-cyan-400/20">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setLocation("/leads")}
+                            data-testid="back-to-lead-center-btn"
+                            className="group inline-flex items-center gap-2.5 h-11 px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-white bg-gradient-to-b from-[#0E254C] to-[#07152E] hover:from-[#133266] hover:to-[#0A1E40] border border-cyan-400/65 hover:border-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all cursor-pointer shrink-0"
+                          >
+                            <ArrowLeft className="w-5 h-5 text-cyan-300 group-hover:-translate-x-0.5 transition-transform stroke-[2.5]" />
+                            Go Back to {activeStageMeta.label} List
+                          </button>
+
+                          <span
+                            data-testid="single-client-view-badge"
+                            className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-[#041024] border border-cyan-400/50 text-cyan-200 text-xs font-mono font-bold uppercase tracking-[0.14em] shadow-[0_0_14px_rgba(34,211,238,0.18),inset_0_0_10px_rgba(34,211,238,0.08)]"
+                          >
+                            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse" />
+                            LEAD DETAILS PROFILE // SINGLE CLIENT VIEW
+                          </span>
+                        </div>
+
+                        {/* Right: Progressive Disclosure Drawer Toggles + Primary Action */}
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOpenDrawer(
+                                openDrawer === "contacts" ? null : "contacts"
+                              )
+                            }
+                            data-testid="toggle-contact-drawer-btn"
+                            className={`inline-flex items-center gap-2 h-10 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
+                              openDrawer === "contacts"
+                                ? "bg-[#0E2954] text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
+                                : "bg-[#050E22] text-slate-200 border-cyan-500/35 hover:bg-[#0A1B3D] hover:border-cyan-400/70 hover:text-white"
+                            }`}
+                          >
+                            <Users className="w-4 h-4 text-cyan-300" />
+                            Family & Contacts
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOpenDrawer(
+                                openDrawer === "history" ? null : "history"
+                              )
+                            }
+                            data-testid="toggle-history-drawer-btn"
+                            className={`inline-flex items-center gap-2 h-10 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
+                              openDrawer === "history"
+                                ? "bg-[#0E2954] text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
+                                : "bg-[#050E22] text-slate-200 border-cyan-500/35 hover:bg-[#0A1B3D] hover:border-cyan-400/70 hover:text-white"
+                            }`}
+                          >
+                            <History className="w-4 h-4 text-cyan-300" />
+                            History & Notes
+                            <span className="px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-400/40 text-xs font-mono font-bold text-cyan-300">
+                              {(workspace.journey.sharedHistory?.length || 0) +
+                                (workspace.journey.callAttempts?.length || 0)}
+                            </span>
+                          </button>
+
+                          {activeStageTab === "discovery" &&
+                            workspace.journey.discoveryOutcome !== "completed" &&
+                            !isSessionMode && (
+                              <button
+                                type="button"
+                                disabled={startDiscoveryHeaderMutation.isPending}
+                                onClick={() =>
+                                  startDiscoveryHeaderMutation.mutate({
+                                    leadId: workspace.lead.id,
+                                  })
+                                }
+                                data-testid="header-resume-discovery-btn"
+                                className="inline-flex items-center gap-2 h-10 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] border border-[#FFE394] shadow-[0_4px_14px_rgba(197,160,89,0.45)] hover:brightness-110 cursor-pointer"
+                              >
+                                <PhoneCall className="w-4 h-4" />
+                                {workspace.journey.hasStartedDiscovery ||
+                                workspace.journey.hasSavedDiscoveryProgress
+                                  ? "Resume discovery"
+                                  : "Start discovery"}
+                              </button>
+                            )}
+
+                          {activeStageTab === "discovery" &&
+                            workspace.journey.discoveryOutcome === "completed" && (
+                              <button
+                                type="button"
+                                onClick={() => handleNavigateStage("decision")}
+                                className="inline-flex items-center gap-2 h-10 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] border border-[#FFE394] shadow-[0_4px_14px_rgba(197,160,89,0.45)] hover:brightness-110 cursor-pointer"
+                              >
+                                Open Decision
+                                <ArrowRight className="w-4 h-4" />
+                              </button>
+                            )}
+                        </div>
+                      </div>
+
+                      {/* Row 2: Prominent Client Name + Student + Stage & Next Action */}
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-3 min-w-0">
+                          <h2
+                            className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
+                            style={{
+                              fontFamily: "'Playfair Display', Georgia, serif",
+                            }}
+                            data-testid="workspace-family-name"
+                          >
+                            {workspace.lead.parentName || "Family Inquiry"}
+                          </h2>
+
+                          {workspace.students?.length > 0 && (
+                            <span className="text-xs sm:text-sm text-cyan-100 font-semibold inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#051229] border border-cyan-400/35">
+                              <Users className="w-4 h-4 text-cyan-300" />
+                              Student:{" "}
+                              {workspace.students
+                                .map((s: any) =>
+                                  `${s.firstName} ${s.lastName}`.trim()
+                                )
+                                .join(", ")}
+                            </span>
+                          )}
+
+                          <span className="text-xs font-mono uppercase tracking-wider px-3 py-1 rounded-lg font-bold bg-[#051229] text-[#FFE394] border border-[#C5A059]/45">
+                            Stage: {workspace.journey.stageLabel}
+                          </span>
+                        </div>
+
+                        <div
+                          className="flex flex-wrap items-center gap-2 text-xs sm:text-sm bg-[#040D20]/90 border border-cyan-400/30 px-3.5 py-1.5 rounded-xl"
+                          data-testid="workspace-status-next-summary"
+                        >
+                          <span className="text-slate-200 font-medium">
+                            {workspace.journey.statusSummary}
+                          </span>
+                          <span className="text-cyan-400">·</span>
+                          <span
+                            className={`font-bold ${
+                              workspace.journey.isOverdue
+                                ? "text-rose-300"
+                                : "text-cyan-300"
+                            }`}
+                          >
+                            Next: {workspace.journey.nextActionLabel}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Stage Navigation Strip (`New Leads · Discovery · Decision · Onboarding`) */}
+                      <LeadStageStrip
+                        currentPersistedStage={persistedStage}
+                        viewedStage={activeStageTab}
+                        onSelectStage={(st) => handleNavigateStage(st, false)}
+                        isClosed={workspace.journey.isClosed}
+                      />
+                    </div>
+
+                    {/* Progressive Disclosure Drawers for Contacts or Shared History */}
+                    <LeadContextDrawers
+                      workspace={workspace}
+                      openDrawer={openDrawer}
+                      onClose={() => setOpenDrawer(null)}
+                      onUpdated={() => {
+                        workspaceQuery.refetch();
+                        leadsQuery.refetch();
+                      }}
+                    />
+
+                    {activeStageTab === "discovery" && (
+                      <LeadDiscoveryUnit
+                        workspace={workspace}
+                        isSessionMode={isSessionMode}
+                        onSetSessionMode={(s) =>
+                          handleNavigateStage("discovery", s)
+                        }
+                        onRefresh={() => {
+                          workspaceQuery.refetch();
+                          leadsQuery.refetch();
+                        }}
+                        onNavigateStage={handleNavigateStage}
+                      />
+                    )}
+
+                    {activeStageTab === "decision" && (
+                      <LeadDecisionUnit
+                        workspace={workspace}
+                        onRefresh={() => {
+                          workspaceQuery.refetch();
+                          leadsQuery.refetch();
+                        }}
+                        onStageChange={(st) => handleNavigateStage(st, false)}
+                      />
+                    )}
+
+                    {activeStageTab === "onboarding" && (
+                      <LeadOnboardingUnit
+                        workspace={workspace}
+                        onRefresh={() => {
+                          workspaceQuery.refetch();
+                          leadsQuery.refetch();
+                        }}
+                      />
+                    )}
+
+                    {/* Bottom Sci-Fi HUD Go Back Bar for Easy Return to List */}
+                    <div className="rounded-xl border border-cyan-400/35 bg-[#061229]/95 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-[0_10px_28px_rgba(0,0,0,0.65)]">
+                      <div className="flex items-center gap-2.5 text-xs sm:text-sm font-mono text-cyan-200/90">
+                        <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+                        <span>
+                          ACTIVE DOSSIER: <strong className="text-white">{workspace.lead.parentName}</strong> // SINGLE CLIENT VIEW
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setLocation("/leads")}
+                        data-testid="bottom-back-to-lead-center-btn"
+                        className="group inline-flex items-center gap-2.5 h-11 px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-white bg-gradient-to-b from-[#0E254C] to-[#07152E] hover:from-[#133266] hover:to-[#0A1E40] border border-cyan-400/65 hover:border-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all cursor-pointer"
+                      >
+                        <ArrowLeft className="w-5 h-5 text-cyan-300 group-hover:-translate-x-0.5 transition-transform stroke-[2.5]" />
+                        Go Back to {activeStageMeta.label} List
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )
           ) : (
-            /* ── STAGE WORKING AREA: SELECTED STAGE'S LEAD LIST & TOOLS ── */
+            /* ── STAGE WORKING AREA: SELECTED STAGE'S LEAD LIST (EXACT PICTURE MATCH) ── */
             <div
-              className="min-h-[420px] rounded-2xl border border-[#1B305C] bg-[#05102B]/95 p-4 sm:p-5 shadow-[0_12px_32px_rgba(0,0,0,0.65)] space-y-4"
+              className="min-h-[420px] pt-2 px-1 sm:px-2 space-y-4"
               data-testid={`stage-working-area-${selectedRadioStage}`}
             >
-              {/* Stage Working Area Top Bar: Stage Title + Compact Filters + Search */}
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-3 border-b border-[#16284C]">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0 flex-1 overflow-hidden">
-                  <div className="min-w-0 sm:w-[290px] lg:w-[320px] shrink-0">
-                    <div className="flex items-center gap-2">
-                      <h2
-                        className="text-xl sm:text-2xl font-serif font-bold text-[#FFF4D4] whitespace-nowrap"
-                        style={{
-                          fontFamily: "'Playfair Display', Georgia, serif",
-                        }}
-                        data-testid="working-area-stage-heading"
-                      >
-                        {activeStageMeta.label}
-                      </h2>
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0C204B] text-[#FFE394] border border-[#C5A059]/45 shrink-0">
-                        {currentStageLeads.length}
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#93A8C8] mt-0.5 truncate whitespace-nowrap">
-                      {activeStageMeta.rescueSubtext}
-                    </p>
-                  </div>
-
-                  {/* Stage-Specific Compact Sub-Filters */}
-                  {selectedRadioStage === "inquiry" && (
-                    <div
-                      className="flex items-center gap-1.5 flex-nowrap shrink-0"
-                      data-testid="new-leads-filters"
-                    >
-                      {(
-                        [
-                          { key: "all", label: "All" },
-                          { key: "link_sent", label: "Scheduling link sent" },
-                          { key: "needs_followup", label: "Needs follow-up" },
-                        ] as const
-                      ).map((f) => (
-                        <button
-                          key={f.key}
-                          type="button"
-                          onClick={() => setNewLeadsFilter(f.key)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap ${
-                            newLeadsFilter === f.key
-                              ? "bg-[#122856] text-white border-[#D8B979]"
-                              : "bg-[#030A1C] text-[#93A8C8] border-[#16284C] hover:text-white"
-                          }`}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {selectedRadioStage === "discovery" && (
-                    <div
-                      className="flex items-center gap-1.5 flex-nowrap shrink-0"
-                      data-testid="discovery-stage-filters"
-                    >
-                      {(
-                        [
-                          { key: "all", label: "All" },
-                          { key: "today", label: "Today" },
-                          { key: "upcoming", label: "Upcoming" },
-                          { key: "needs_followup", label: "Needs follow-up" },
-                        ] as const
-                      ).map((f) => (
-                        <button
-                          key={f.key}
-                          type="button"
-                          data-testid={`discovery-filter-${f.key}`}
-                          onClick={() => setDiscoveryFilter(f.key)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap ${
-                            discoveryFilter === f.key
-                              ? "bg-[#122856] text-white border-[#D8B979]"
-                              : "bg-[#030A1C] text-[#93A8C8] border-[#16284C] hover:text-white"
-                          }`}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {selectedRadioStage === "decision" && (
-                    <div
-                      className="flex items-center gap-1.5 flex-nowrap shrink-0"
-                      data-testid="decision-stage-filters"
-                    >
-                      <button
-                        type="button"
-                        data-testid="decision-filter-active"
-                        onClick={() => setDecisionFilter("active")}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap ${
-                          decisionFilter === "active"
-                            ? "bg-[#122856] text-white border-[#D8B979]"
-                            : "bg-[#030A1C] text-[#93A8C8] border-[#16284C] hover:text-white"
-                        }`}
-                      >
-                        Active ({stageCounts.decision})
-                      </button>
-                      <button
-                        type="button"
-                        data-testid="decision-filter-closed"
-                        onClick={() => setDecisionFilter("closed")}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap ${
-                          decisionFilter === "closed"
-                            ? "bg-[#122856] text-white border-[#D8B979]"
-                            : "bg-[#030A1C] text-[#93A8C8] border-[#16284C] hover:text-white"
-                        }`}
-                      >
-                        Closed ({stageCounts.closedDecision})
-                      </button>
-                    </div>
-                  )}
-
-                  {selectedRadioStage === "onboarding" && (
-                    <div
-                      className="flex items-center gap-1.5 flex-nowrap shrink-0"
-                      data-testid="onboarding-stage-filters"
-                    >
-                      <button
-                        type="button"
-                        data-testid="onboarding-filter-active"
-                        onClick={() => setOnboardingFilter("active")}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap ${
-                          onboardingFilter === "active"
-                            ? "bg-[#122856] text-white border-[#D8B979]"
-                            : "bg-[#030A1C] text-[#93A8C8] border-[#16284C] hover:text-white"
-                        }`}
-                      >
-                        Active Setup ({stageCounts.onboarding})
-                      </button>
-                      <button
-                        type="button"
-                        data-testid="onboarding-filter-completed"
-                        onClick={() => setOnboardingFilter("completed")}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer whitespace-nowrap ${
-                          onboardingFilter === "completed"
-                            ? "bg-[#122856] text-white border-[#D8B979]"
-                            : "bg-[#030A1C] text-[#93A8C8] border-[#16284C] hover:text-white"
-                        }`}
-                      >
-                        Completed ({stageCounts.completedOnboarding})
-                      </button>
-                    </div>
-                  )}
+              {/* Row 1: Stage Title | Count on Left + Gold-Rimmed Search Pill on Right */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-baseline gap-3">
+                  <h2
+                    className="text-2xl sm:text-[30px] font-serif font-bold text-white leading-none"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                    }}
+                    data-testid="working-area-stage-heading"
+                  >
+                    {activeStageMeta.label}
+                  </h2>
+                  <span className="text-[#C5A059]/60 text-lg font-light">|</span>
+                  <span
+                    className="text-base sm:text-lg font-serif italic text-[#E2E8F0]"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                    }}
+                  >
+                    {currentStageLeads.length}{" "}
+                    {currentStageLeads.length === 1 ? "family" : "families"}
+                  </span>
                 </div>
 
-                {/* Compact Search Input */}
-                <div className="relative w-full lg:w-64 shrink-0">
-                  <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
+                {/* Gold-Rimmed Pill Search Input */}
+                <div className="relative w-full sm:w-80 shrink-0">
+                  <Search className="w-4 h-4 text-[#C5A059] absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={`Search ${activeStageMeta.label.toLowerCase()}...`}
+                    placeholder="Search families..."
                     data-testid="lead-search-input"
-                    className="w-full rounded-lg bg-[#030A1C] border border-[#1E335C] pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-[#64748B] focus:outline-none focus:border-[#D8B979]"
+                    className="w-full rounded-full bg-[#040B1C]/90 border border-[#C5A059]/65 pl-10 pr-4 py-1.5 text-sm font-serif italic text-white placeholder:text-[#B8CCE4]/80 focus:outline-none focus:border-[#FFE394] shadow-[inset_0_2px_6px_rgba(0,0,0,0.85)]"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                    }}
                   />
                 </div>
               </div>
 
-              {/* Clean Stage Lead List */}
+              {/* Row 2: Stage-Specific Sub-Filters with Gold Active Pill & Pipe Dividers */}
+              <div className="flex flex-wrap items-center gap-2">
+                {selectedRadioStage === "inquiry" && (
+                  <div
+                    className="flex flex-wrap items-center gap-2"
+                    data-testid="new-leads-filters"
+                  >
+                    {(
+                      [
+                        { key: "all", label: "All" },
+                        { key: "needs_scheduling", label: "Needs scheduling" },
+                        { key: "link_sent", label: "Link sent" },
+                        { key: "scheduled", label: "Scheduled" },
+                        { key: "needs_followup", label: "Follow-up due" },
+                      ] as const
+                    ).map((f, idx, arr) => {
+                      const isActive = newLeadsFilter === f.key;
+                      return (
+                        <React.Fragment key={f.key}>
+                          <button
+                            type="button"
+                            data-testid={`new-leads-filter-${f.key}`}
+                            onClick={() => setNewLeadsFilter(f.key)}
+                            className={
+                              isActive
+                                ? "px-4 py-0.5 rounded-full bg-gradient-to-b from-[#EAD08A] via-[#C89D4C] to-[#987026] text-[#07162B] font-serif font-bold text-xs sm:text-sm border border-[#FFE5A3]/85 shadow-[0_2px_8px_rgba(0,0,0,0.65)] cursor-pointer"
+                                : "px-2 py-0.5 text-xs sm:text-sm font-serif text-[#E2E8F0] hover:text-[#FFE394] transition-colors cursor-pointer"
+                            }
+                            style={{
+                              fontFamily: "'Playfair Display', Georgia, serif",
+                            }}
+                          >
+                            {f.label}
+                          </button>
+                          {idx < arr.length - 1 && (
+                            <span className="text-[#C5A059]/45 text-xs select-none">
+                              |
+                            </span>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {selectedRadioStage === "discovery" && (
+                  <div
+                    className="flex flex-wrap items-center gap-2"
+                    data-testid="discovery-stage-filters"
+                  >
+                    {(
+                      [
+                        { key: "all", label: "All" },
+                        { key: "today", label: "Today" },
+                        { key: "upcoming", label: "Upcoming" },
+                        { key: "needs_followup", label: "Follow-up due" },
+                      ] as const
+                    ).map((f, idx, arr) => {
+                      const isActive = discoveryFilter === f.key;
+                      return (
+                        <React.Fragment key={f.key}>
+                          <button
+                            type="button"
+                            data-testid={`discovery-filter-${f.key}`}
+                            onClick={() => setDiscoveryFilter(f.key)}
+                            className={
+                              isActive
+                                ? "px-4 py-0.5 rounded-full bg-gradient-to-b from-[#EAD08A] via-[#C89D4C] to-[#987026] text-[#07162B] font-serif font-bold text-xs sm:text-sm border border-[#FFE5A3]/85 shadow-[0_2px_8px_rgba(0,0,0,0.65)] cursor-pointer"
+                                : "px-2 py-0.5 text-xs sm:text-sm font-serif text-[#E2E8F0] hover:text-[#FFE394] transition-colors cursor-pointer"
+                            }
+                            style={{
+                              fontFamily: "'Playfair Display', Georgia, serif",
+                            }}
+                          >
+                            {f.label}
+                          </button>
+                          {idx < arr.length - 1 && (
+                            <span className="text-[#C5A059]/45 text-xs select-none">
+                              |
+                            </span>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {selectedRadioStage === "decision" && (
+                  <div
+                    className="flex flex-wrap items-center gap-2"
+                    data-testid="decision-stage-filters"
+                  >
+                    <button
+                      type="button"
+                      data-testid="decision-filter-active"
+                      onClick={() => setDecisionFilter("active")}
+                      className={
+                        decisionFilter === "active"
+                          ? "px-4 py-0.5 rounded-full bg-gradient-to-b from-[#EAD08A] via-[#C89D4C] to-[#987026] text-[#07162B] font-serif font-bold text-xs sm:text-sm border border-[#FFE5A3]/85 shadow-[0_2px_8px_rgba(0,0,0,0.65)] cursor-pointer"
+                          : "px-2 py-0.5 text-xs sm:text-sm font-serif text-[#E2E8F0] hover:text-[#FFE394] transition-colors cursor-pointer"
+                      }
+                      style={{
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                      }}
+                    >
+                      Active ({stageCounts.decision})
+                    </button>
+                    <span className="text-[#C5A059]/45 text-xs select-none">
+                      |
+                    </span>
+                    <button
+                      type="button"
+                      data-testid="decision-filter-closed"
+                      onClick={() => setDecisionFilter("closed")}
+                      className={
+                        decisionFilter === "closed"
+                          ? "px-4 py-0.5 rounded-full bg-gradient-to-b from-[#EAD08A] via-[#C89D4C] to-[#987026] text-[#07162B] font-serif font-bold text-xs sm:text-sm border border-[#FFE5A3]/85 shadow-[0_2px_8px_rgba(0,0,0,0.65)] cursor-pointer"
+                          : "px-2 py-0.5 text-xs sm:text-sm font-serif text-[#E2E8F0] hover:text-[#FFE394] transition-colors cursor-pointer"
+                      }
+                      style={{
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                      }}
+                    >
+                      Closed ({stageCounts.closedDecision})
+                    </button>
+                  </div>
+                )}
+
+                {selectedRadioStage === "onboarding" && (
+                  <div
+                    className="flex flex-wrap items-center gap-2"
+                    data-testid="onboarding-stage-filters"
+                  >
+                    <button
+                      type="button"
+                      data-testid="onboarding-filter-active"
+                      onClick={() => setOnboardingFilter("active")}
+                      className={
+                        onboardingFilter === "active"
+                          ? "px-4 py-0.5 rounded-full bg-gradient-to-b from-[#EAD08A] via-[#C89D4C] to-[#987026] text-[#07162B] font-serif font-bold text-xs sm:text-sm border border-[#FFE5A3]/85 shadow-[0_2px_8px_rgba(0,0,0,0.65)] cursor-pointer"
+                          : "px-2 py-0.5 text-xs sm:text-sm font-serif text-[#E2E8F0] hover:text-[#FFE394] transition-colors cursor-pointer"
+                      }
+                      style={{
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                      }}
+                    >
+                      Active Setup ({stageCounts.onboarding})
+                    </button>
+                    <span className="text-[#C5A059]/45 text-xs select-none">
+                      |
+                    </span>
+                    <button
+                      type="button"
+                      data-testid="onboarding-filter-completed"
+                      onClick={() => setOnboardingFilter("completed")}
+                      className={
+                        onboardingFilter === "completed"
+                          ? "px-4 py-0.5 rounded-full bg-gradient-to-b from-[#EAD08A] via-[#C89D4C] to-[#987026] text-[#07162B] font-serif font-bold text-xs sm:text-sm border border-[#FFE5A3]/85 shadow-[0_2px_8px_rgba(0,0,0,0.65)] cursor-pointer"
+                          : "px-2 py-0.5 text-xs sm:text-sm font-serif text-[#E2E8F0] hover:text-[#FFE394] transition-colors cursor-pointer"
+                      }
+                      style={{
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                      }}
+                    >
+                      Completed ({stageCounts.completedOnboarding})
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Row 3: Brass-Divided Table of Families */}
               {leadsQuery.isLoading ? (
-                <div className="py-10 flex items-center justify-center gap-2 text-xs text-[#93A8C8]">
-                  <Loader2 className="w-4 h-4 animate-spin text-[#D8B979]" />
+                <div className="py-12 flex items-center justify-center gap-2 text-sm font-serif italic text-[#D8C7A5]">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#DFBE77]" />
                   Loading {activeStageMeta.label.toLowerCase()}...
                 </div>
               ) : currentStageLeads.length === 0 ? (
-                <div className="py-10 text-center space-y-2.5 rounded-xl border border-[#16284C] bg-[#030A1C]/60">
-                  <p className="text-sm text-[#CBD5E1] font-medium">
-                    No leads currently in this {activeStageMeta.label} view.
+                <div className="py-12 text-center space-y-2 border-t border-b border-[#C5A059]/35">
+                  <p
+                    className="text-base font-serif text-[#FFF4D4]"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                    }}
+                  >
+                    No families currently in this {activeStageMeta.label} view.
                   </p>
-                  <p className="text-xs text-[#7E95B8]">
+                  <p
+                    className="text-xs font-serif italic text-[#B8CCE4]"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                    }}
+                  >
                     {selectedRadioStage === "inquiry"
-                      ? "Add a New Service Inquiry or tune the radio dial to inspect Discovery, Decision, or Onboarding."
-                      : "Tune the radio dial to another stage or adjust the stage filter above."}
+                      ? "Click + New inquiry above or tune the stage dial to browse other stages."
+                      : "Tune the stage dial to another stage or switch the filter above."}
                   </p>
                 </div>
               ) : (
-                <div className="divide-y divide-[#16284C] rounded-xl border border-[#16284C] bg-[#030A1C]/90 overflow-hidden">
-                  {currentStageLeads.map((lead: any) => {
-                    const targetStage: WorkspaceStageTab =
-                      lead.stage === "active"
-                        ? "onboarding"
-                        : lead.stage || selectedRadioStage;
+                <div className="w-full">
+                  {/* Table Column Header Bar */}
+                  <div className="grid grid-cols-12 items-center gap-3 py-2.5 px-2 border-t border-b border-[#C5A059]/45 text-[10.5px] sm:text-[11px] font-serif uppercase tracking-[0.22em] text-[#D8C7A5]">
+                    <div className="col-span-6 sm:col-span-5 pl-1">
+                      FAMILY / STUDENT
+                    </div>
+                    <div className="col-span-3 hidden sm:block">STATUS</div>
+                    <div className="col-span-3 sm:col-span-2">NEXT ACTION</div>
+                    <div className="col-span-3 sm:col-span-2 text-right pr-2" />
+                  </div>
 
-                    // Concise stage-specific status badge
-                    const conciseStatus =
-                      selectedRadioStage === "discovery"
-                        ? lead.callStatusLabel || "Scheduled"
-                        : selectedRadioStage === "decision"
-                        ? lead.decisionStatusLabel || "Considering"
-                        : selectedRadioStage === "inquiry"
-                        ? lead.schedulingLinkSent
-                          ? "Scheduling link sent"
-                          : "New lead"
-                        : lead.stage === "active"
-                        ? "Active Client"
-                        : lead.statusSummary || "In Onboarding";
+                  {/* Family Rows */}
+                  <div className="divide-y divide-[#C5A059]/30 border-b border-[#C5A059]/45">
+                    {currentStageLeads.map((lead: any) => {
+                      const targetStage: WorkspaceStageTab =
+                        lead.stage === "active"
+                          ? "onboarding"
+                          : lead.stage || selectedRadioStage;
 
-                    // Appointment or next-follow-up date display
-                    const dateInfoText = (() => {
-                      if (lead.discoveryCallDate && selectedRadioStage === "discovery") {
-                        const d = new Date(lead.discoveryCallDate);
-                        if (!isNaN(d.getTime())) {
-                          const isToday = isSameCalendarDay(d, new Date());
-                          const isPast =
-                            d.getTime() < Date.now() &&
-                            !isToday &&
-                            lead.discoveryOutcome !== "completed";
-                          const formatted = d.toLocaleString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          });
-                          if (isToday) return `Today · ${formatted}`;
-                          if (isPast) return `Past call (needs outcome) · ${formatted}`;
-                          return `Scheduled · ${formatted}`;
-                        }
-                      }
-                      if (lead.nextFollowUpAt) {
-                        const d = new Date(lead.nextFollowUpAt);
-                        if (!isNaN(d.getTime())) {
-                          return `Follow-up: ${d.toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}`;
-                        }
-                      }
-                      return null;
-                    })();
+                      // Compute 2-letter Initials for Gold-Ringed Avatar
+                      const initials = (lead.parentName || "FA")
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((part: string) => part[0]?.toUpperCase() || "")
+                        .join("");
 
-                    // Primary Action label for this row
-                    const primaryActionLabel =
-                      selectedRadioStage === "inquiry"
-                        ? "Schedule Discovery"
-                        : selectedRadioStage === "discovery"
-                        ? "Run Discovery"
-                        : selectedRadioStage === "decision"
-                        ? lead.isClosed
-                          ? "Reopen"
-                          : lead.nextActionLabel || "Prepare offer"
-                        : lead.stage === "active"
-                        ? "Open Workspace"
-                        : lead.nextActionLabel || "Continue Onboarding";
+                      const studentDisplay =
+                        lead.studentNames?.length > 0
+                          ? lead.studentNames.join(", ")
+                          : lead.studentName || "Pending student";
 
-                    return (
-                      <div
-                        key={lead.id}
-                        data-testid={`lead-row-${lead.id}`}
-                        onClick={() =>
-                          setLocation(`/leads/${lead.id}/${targetStage}`)
-                        }
-                        className="p-3.5 sm:p-4 hover:bg-[#081738] transition-colors cursor-pointer flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3"
-                      >
-                        {/* Left: Parent/Family Name, Student Info, Relevant Status, Date */}
-                        <div className="space-y-1 min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm sm:text-base font-semibold text-white">
-                              {lead.parentName}
-                            </span>
+                      // Status Column Text (Unified dynamic status across list, workspace & radio)
+                      const statusText =
+                        selectedRadioStage === "inquiry"
+                          ? lead.statusSummary || "Needs scheduling"
+                          : selectedRadioStage === "discovery"
+                          ? lead.statusSummary || "Discovery in progress"
+                          : selectedRadioStage === "decision"
+                          ? lead.statusSummary || lead.decisionStatusLabel || "Considering"
+                          : lead.stage === "active"
+                          ? "Active client"
+                          : lead.statusSummary || "In onboarding";
 
-                            {lead.studentNames?.length > 0 && (
-                              <span className="text-xs text-[#93A8C8]">
-                                · Student{lead.studentNames.length > 1 ? "s" : ""}:{" "}
-                                <strong className="text-[#E2E8F0] font-medium">
-                                  {lead.studentNames.join(", ")}
-                                </strong>
-                              </span>
-                            )}
+                      // Next Action Column Text (Unified dynamic next action across list, workspace & radio)
+                      const nextActionText =
+                        selectedRadioStage === "inquiry"
+                          ? lead.nextActionLabel || "Schedule discovery"
+                          : selectedRadioStage === "discovery"
+                          ? lead.nextActionLabel || "Resume discovery"
+                          : selectedRadioStage === "decision"
+                          ? lead.isClosed
+                            ? "Reopen"
+                            : lead.nextActionLabel || "Review offer"
+                          : lead.stage === "active"
+                          ? "Open workspace"
+                          : lead.nextActionLabel || "Continue setup";
 
-                            {/* Relevant Concise Status Pill */}
+                      return (
+                        <div
+                          key={lead.id}
+                          data-testid={`lead-row-${lead.id}`}
+                          onClick={() =>
+                            setLocation(`/leads/${lead.id}/${targetStage}`)
+                          }
+                          className="grid grid-cols-12 items-center gap-3 py-3.5 px-2 hover:bg-[#091938]/55 transition-colors cursor-pointer"
+                        >
+                          {/* Col 1: Gold-Ringed Initials Circle + Family Name + Student Subtitle */}
+                          <div className="col-span-6 sm:col-span-5 flex items-center gap-3.5 min-w-0">
+                            <div
+                              className="w-11 h-11 rounded-full border-2 border-[#C5A059]/80 bg-gradient-to-b from-[#0E2248] to-[#051026] text-white font-serif font-bold text-sm sm:text-base flex items-center justify-center shrink-0 shadow-[0_3px_10px_rgba(0,0,0,0.75)]"
+                              style={{
+                                fontFamily: "'Playfair Display', Georgia, serif",
+                              }}
+                            >
+                              {initials}
+                            </div>
+                            <div className="min-w-0">
+                              <div
+                                className="text-base sm:text-[19px] font-serif font-bold text-white leading-tight truncate"
+                                style={{
+                                  fontFamily:
+                                    "'Playfair Display', Georgia, serif",
+                                }}
+                              >
+                                {lead.parentName}
+                              </div>
+                              <div
+                                className="text-xs sm:text-sm font-serif italic text-[#CBD5E1] mt-0.5 truncate"
+                                style={{
+                                  fontFamily:
+                                    "'Playfair Display', Georgia, serif",
+                                }}
+                              >
+                                Student: {studentDisplay}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Col 2: Status */}
+                          <div className="col-span-3 hidden sm:flex items-center">
                             <span
                               data-testid={`lead-status-pill-${lead.id}`}
-                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
-                                conciseStatus === "Completed" ||
-                                conciseStatus === "Ready to proceed" ||
-                                conciseStatus === "Active Client"
-                                  ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-                                  : conciseStatus === "No answer" ||
-                                    conciseStatus === "Reschedule needed" ||
-                                    conciseStatus === "Declined" ||
-                                    lead.isOverdue
-                                  ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
-                                  : "bg-[#0C204B] text-[#FFE394] border-[#28447A]"
-                              }`}
+                              className="text-sm sm:text-base font-serif text-[#F1F5F9]"
+                              style={{
+                                fontFamily:
+                                  "'Playfair Display', Georgia, serif",
+                              }}
                             >
-                              {conciseStatus}
+                              {statusText}
                             </span>
-
-                            {lead.isOverdue && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30">
-                                <AlertTriangle className="w-3 h-3" />
-                                Needs follow-up
-                              </span>
-                            )}
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-2.5 text-xs text-[#8DA2C4]">
-                            {dateInfoText && (
-                              <span className="inline-flex items-center gap-1 text-[#FFE394] font-medium">
-                                <Calendar className="w-3.5 h-3.5 text-[#D8B979]" />
-                                {dateInfoText}
-                              </span>
-                            )}
-                            <span>{lead.statusSummary}</span>
-                            {lead.nextActionLabel &&
-                              lead.nextActionLabel !== lead.statusSummary && (
-                                <>
-                                  <span className="text-[#334E83]">·</span>
-                                  <span className="text-[#D8B979] font-medium">
-                                    Next: {lead.nextActionLabel}
-                                  </span>
-                                </>
-                              )}
-                            {lead.concerns && (
-                              <>
-                                <span className="text-[#334E83]">·</span>
-                                <span className="truncate max-w-md text-[#7E95B8]">
-                                  {lead.concerns}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Right: One Clear Primary Action + Contextual Secondary Menu */}
-                        <div
-                          className="flex items-center gap-2 shrink-0"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            type="button"
-                            data-testid={`primary-action-lead-${lead.id}`}
-                            onClick={() => {
-                              if (
-                                selectedRadioStage === "decision" &&
-                                lead.isClosed
-                              ) {
-                                reopenDecisionMutation.mutate({
-                                  leadId: lead.id,
-                                  choice: "considering",
-                                  note: "Reopened from Decision Closed list",
-                                });
-                                return;
-                              }
-                              if (selectedRadioStage === "discovery") {
-                                setLocation(
-                                  `/leads/${lead.id}/discovery/session`
-                                );
-                                return;
-                              }
-                              setLocation(`/leads/${lead.id}/${targetStage}`);
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] shadow-md hover:brightness-105 transition-all cursor-pointer"
-                          >
-                            <span>{primaryActionLabel}</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
-
-                          {/* Contextual Secondary Actions Menu */}
-                          <DropdownMenu modal={false}>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
-                                data-testid={`lead-row-menu-${lead.id}`}
-                                aria-label={`More actions for ${lead.parentName}`}
-                                className="h-8 w-8 rounded-lg bg-[#05102B] hover:bg-[#102452] border border-[#1E335C] text-[#93A8C8] hover:text-white inline-flex items-center justify-center transition-colors cursor-pointer"
-                              >
-                                <MoreHorizontal className="w-4 h-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="w-56 bg-[#07162B] border border-[#3A2C18] text-[#FFF4D4] shadow-2xl"
+                          {/* Col 3: Next Action */}
+                          <div className="col-span-3 sm:col-span-2 flex items-center">
+                            <span
+                              className="text-sm sm:text-base font-serif text-[#F1F5F9]"
+                              style={{
+                                fontFamily:
+                                  "'Playfair Display', Georgia, serif",
+                              }}
                             >
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  setLocation(`/leads/${lead.id}/${targetStage}`)
+                              {nextActionText}
+                            </span>
+                          </div>
+
+                          {/* Col 4: Open family -> Pill Button */}
+                          <div
+                            className="col-span-3 sm:col-span-2 flex items-center justify-end"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              data-testid={`primary-action-lead-${lead.id}`}
+                              onClick={() => {
+                                if (
+                                  selectedRadioStage === "decision" &&
+                                  lead.isClosed
+                                ) {
+                                  reopenDecisionMutation.mutate({
+                                    leadId: lead.id,
+                                    choice: "considering",
+                                    note: "Reopened from Decision Closed list",
+                                  });
+                                  return;
                                 }
-                                className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] text-xs py-2"
-                              >
-                                Open {activeStageMeta.label} Workspace
-                              </DropdownMenuItem>
-
-                              {selectedRadioStage === "inquiry" && (
-                                <>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      updateInquiryMutation.mutate({
-                                        leadId: lead.id,
-                                        sendSchedulingLink: true,
-                                      })
-                                    }
-                                    className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"
-                                  >
-                                    <Send className="w-3.5 h-3.5 text-[#D8B979]" />
-                                    <span>Send scheduling link</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      updateInquiryMutation.mutate({
-                                        leadId: lead.id,
-                                        recordContactAttempt:
-                                          "Called / reached out from New Leads list",
-                                      })
-                                    }
-                                    className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"
-                                  >
-                                    <PhoneCall className="w-3.5 h-3.5 text-[#D8B979]" />
-                                    <span>Record contact attempt</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator className="bg-[#3A2C18]/60" />
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      updateInquiryMutation.mutate({
-                                        leadId: lead.id,
-                                        progressDirectlyToDecision: true,
-                                        directToDecisionNote:
-                                          "Progressed directly to Decision (discovery unnecessary)",
-                                      })
-                                    }
-                                    className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"
-                                  >
-                                    <Sparkles className="w-3.5 h-3.5 text-[#D8B979]" />
-                                    <span>Progress directly to Decision</span>
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-
-                              {selectedRadioStage === "discovery" && (
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    setLocation(
-                                      `/leads/${lead.id}/discovery/session`
-                                    )
-                                  }
-                                  className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"
-                                >
-                                  <PhoneCall className="w-3.5 h-3.5 text-[#D8B979]" />
-                                  <span>Run Discovery Session</span>
-                                </DropdownMenuItem>
-                              )}
-
-                              {selectedRadioStage === "decision" && lead.isClosed && (
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    reopenDecisionMutation.mutate({
-                                      leadId: lead.id,
-                                      choice: "considering",
-                                      note: "Reopened in Decision stage",
-                                    })
-                                  }
-                                  className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"
-                                >
-                                  <RotateCcw className="w-3.5 h-3.5 text-[#D8B979]" />
-                                  <span>Reopen Lead in Decision</span>
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                setLocation(`/leads/${lead.id}/${targetStage}`);
+                              }}
+                              className="inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 rounded-full border border-[#C5A059]/80 bg-gradient-to-b from-[#0E2248] to-[#051026] hover:from-[#163266] hover:to-[#0A1D3E] hover:border-[#FFE394] text-[#FFF4D4] text-xs sm:text-sm font-serif shadow-[0_3px_10px_rgba(0,0,0,0.7)] transition-all cursor-pointer whitespace-nowrap"
+                              style={{
+                                fontFamily:
+                                  "'Playfair Display', Georgia, serif",
+                              }}
+                            >
+                              <span>
+                                {selectedRadioStage === "decision" &&
+                                lead.isClosed
+                                  ? "Reopen"
+                                  : "Open family"}
+                              </span>
+                              <ArrowRight className="w-3.5 h-3.5 text-[#DFBE77]" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>

@@ -47,6 +47,25 @@ export type LeadStage = "inquiry" | "discovery" | "decision" | "onboarding" | "a
 
 export type DiscoveryState = "unscheduled" | "scheduled" | "in_progress" | "completed";
 
+export type LeadAppointmentState =
+  | "needs_scheduling"
+  | "awaiting_booking"
+  | "scheduled"
+  | "needs_rescheduling";
+
+export interface ScheduledDiscoveryAppointmentInfo {
+  id: number | null;
+  startTime: string;
+  endTime: string | null;
+  timeZone: string;
+  timeZoneAbbr: string;
+  formattedDateTimeTz: string;
+  formattedShort: string;
+  assignedAdvocateName: string;
+  status: string;
+  notes?: string | null;
+}
+
 export type DiscoveryOutcome =
   | "pending"
   | "completed"
@@ -141,6 +160,8 @@ export interface PersistedLeadJourneyMeta {
   closedStage?: LeadStage;
   discoveryState?: DiscoveryState;
   discoveryOutcome?: DiscoveryOutcome;
+  discoveryStartedAt?: string | null;
+  appointmentStatus?: "unscheduled" | "scheduled" | "cancelled" | "missed";
   concerns?: string;
   desiredOutcome?: string;
   preferredContactMethod?: string;
@@ -503,11 +524,286 @@ function safeIsoDate(val: any): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString();
 }
 
+export function formatDiscoveryAppointmentTime(
+  startTimeVal: any,
+  timeZoneRaw?: string | null
+): {
+  timeZone: string;
+  timeZoneAbbr: string;
+  ianaTimeZone: string;
+  formattedDateTimeTz: string;
+  formattedShort: string;
+} {
+  const raw = (timeZoneRaw || "Eastern").trim();
+  const lower = raw.toLowerCase();
+  let timeZone = "Eastern";
+  let timeZoneAbbr = "ET";
+  let ianaTimeZone = "America/New_York";
+
+  if (lower.includes("central") || lower === "ct" || lower === "cst" || lower === "cdt" || lower.includes("chicago")) {
+    timeZone = "Central";
+    timeZoneAbbr = "CT";
+    ianaTimeZone = "America/Chicago";
+  } else if (lower.includes("mountain") || lower === "mt" || lower === "mst" || lower === "mdt" || lower.includes("denver")) {
+    timeZone = "Mountain";
+    timeZoneAbbr = "MT";
+    ianaTimeZone = "America/Denver";
+  } else if (lower.includes("pacific") || lower === "pt" || lower === "pst" || lower === "pdt" || lower.includes("los_angeles")) {
+    timeZone = "Pacific";
+    timeZoneAbbr = "PT";
+    ianaTimeZone = "America/Los_Angeles";
+  } else if (lower.includes("alaska") || lower === "akt" || lower.includes("anchorage")) {
+    timeZone = "Alaska";
+    timeZoneAbbr = "AKT";
+    ianaTimeZone = "America/Anchorage";
+  } else if (lower.includes("hawaii") || lower === "hst" || lower.includes("honolulu")) {
+    timeZone = "Hawaii";
+    timeZoneAbbr = "HST";
+    ianaTimeZone = "Pacific/Honolulu";
+  } else if (lower.includes("eastern") || lower === "et" || lower === "est" || lower === "edt" || lower.includes("new_york")) {
+    timeZone = "Eastern";
+    timeZoneAbbr = "ET";
+    ianaTimeZone = "America/New_York";
+  } else if (raw) {
+    timeZone = raw;
+    timeZoneAbbr = raw;
+  }
+
+  const d = new Date(startTimeVal);
+  if (isNaN(d.getTime())) {
+    return {
+      timeZone,
+      timeZoneAbbr,
+      ianaTimeZone,
+      formattedDateTimeTz: `Scheduled (${timeZoneAbbr})`,
+      formattedShort: `Scheduled (${timeZoneAbbr})`,
+    };
+  }
+
+  let datePart = "";
+  let shortDatePart = "";
+  let timePart = "";
+  try {
+    datePart = d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: ianaTimeZone,
+    });
+    shortDatePart = d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      timeZone: ianaTimeZone,
+    });
+    timePart = d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: ianaTimeZone,
+    });
+  } catch {
+    datePart = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    shortDatePart = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    timePart = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  }
+
+  return {
+    timeZone,
+    timeZoneAbbr,
+    ianaTimeZone,
+    formattedDateTimeTz: `${datePart} at ${timePart} ${timeZoneAbbr}`,
+    formattedShort: `${shortDatePart}, ${timePart} ${timeZoneAbbr}`,
+  };
+}
+
+export function matchAppointmentsForLead(params: {
+  lead: any;
+  discoveryCall: any;
+  parentContact: any;
+  students?: any[];
+  allAppointments: any[];
+}): any[] {
+  const { lead, discoveryCall, parentContact, students = [], allAppointments = [] } = params;
+  if (!lead && !parentContact) return [];
+
+  const familyContactIds = new Set<number>();
+  if (lead?.contactId) familyContactIds.add(Number(lead.contactId));
+  if (parentContact?.id) familyContactIds.add(Number(parentContact.id));
+  for (const s of students) {
+    if (s?.id) familyContactIds.add(Number(s.id));
+  }
+
+  const cleanParentPhone = normalizePhone(lead?.parentPhone || parentContact?.phone);
+  const cleanParentName = (
+    lead?.parentName ||
+    (parentContact ? `${parentContact.firstName || ""} ${parentContact.lastName || ""}`.trim() : "")
+  )
+    .trim()
+    .toLowerCase();
+
+  const seenIds = new Set<number | string>();
+  const matched: any[] = [];
+
+  for (const a of allAppointments) {
+    if (!a) continue;
+    const key = a.id ?? `${a.leadId}_${a.startTime}`;
+    if (seenIds.has(key)) continue;
+
+    let isMatch = false;
+    if (lead?.id && a.leadId && Number(a.leadId) === Number(lead.id)) {
+      isMatch = true;
+    } else if (discoveryCall?.id && a.discoveryCallId && Number(a.discoveryCallId) === Number(discoveryCall.id)) {
+      isMatch = true;
+    } else if (discoveryCall?.appointmentId && a.id && Number(a.id) === Number(discoveryCall.appointmentId)) {
+      isMatch = true;
+    } else if (a.parentContactId && familyContactIds.has(Number(a.parentContactId))) {
+      isMatch = true;
+    } else if (a.clientId && familyContactIds.has(Number(a.clientId))) {
+      isMatch = true;
+    } else if (cleanParentPhone && cleanParentPhone.length >= 10 && a.parentPhone) {
+      if (normalizePhone(a.parentPhone) === cleanParentPhone) {
+        isMatch = true;
+      }
+    } else if (
+      cleanParentName &&
+      cleanParentName !== "unknown family" &&
+      cleanParentName !== "unknown parent" &&
+      a.parentName &&
+      String(a.parentName).trim().toLowerCase() === cleanParentName
+    ) {
+      isMatch = true;
+    }
+
+    if (isMatch) {
+      seenIds.add(key);
+      matched.push(a);
+    }
+  }
+
+  return matched.sort((x, y) => {
+    const tx = x?.startTime ? new Date(x.startTime).getTime() : 0;
+    const ty = y?.startTime ? new Date(y.startTime).getTime() : 0;
+    if (ty !== tx) return ty - tx;
+    return Number(y?.id || 0) - Number(x?.id || 0);
+  });
+}
+
+export function resolveDiscoveryAppointmentInfo(params: {
+  lead: any;
+  discoveryCall: any;
+  journey: PersistedLeadJourneyMeta;
+  matchedAppointments?: any[];
+}): {
+  appointmentState: LeadAppointmentState;
+  scheduledAppointment: ScheduledDiscoveryAppointmentInfo | null;
+  hasBookedAppointment: boolean;
+  isMissedOrCanceled: boolean;
+} {
+  const { lead, discoveryCall, journey, matchedAppointments = [] } = params;
+  const tzRaw = journey.timeZone || "Eastern";
+
+  // Filter for discovery-relevant appointments
+  const discoveryAppointments = matchedAppointments.filter((a: any) => {
+    if (!a) return false;
+    if (lead?.id && Number(a.leadId) === Number(lead.id)) return true;
+    if (discoveryCall?.id && Number(a.discoveryCallId) === Number(discoveryCall.id)) return true;
+    if (discoveryCall?.appointmentId && Number(a.id) === Number(discoveryCall.appointmentId)) return true;
+    const mType = String(a.meetingType || a.title || "").toLowerCase();
+    return !mType || mType.includes("discovery") || mType.includes("consult") || mType.includes("intake");
+  });
+
+  const activeApt = discoveryAppointments.find(
+    (a: any) =>
+      a.status !== "Cancelled" &&
+      a.status !== "Canceled" &&
+      a.status !== "No-Show" &&
+      a.status !== "Missed"
+  );
+  const canceledOrMissedApt = discoveryAppointments.find(
+    (a: any) =>
+      a.status === "Cancelled" ||
+      a.status === "Canceled" ||
+      a.status === "No-Show" ||
+      a.status === "Missed"
+  );
+
+  const outcomeIsMissedOrCanceled =
+    journey.discoveryOutcome === "no_answer" ||
+    journey.discoveryOutcome === "reschedule_needed" ||
+    journey.discoveryOutcome === "follow_up_later" ||
+    journey.discoveryOutcome === "cancelled" ||
+    journey.appointmentStatus === "cancelled" ||
+    journey.appointmentStatus === "missed";
+
+  // Check if discovery was explicitly rescheduled after a previous miss/cancellation
+  const fallbackScheduledTime =
+    !outcomeIsMissedOrCanceled || journey.discoveryState === "scheduled"
+      ? discoveryCall?.scheduledAt || lead?.discoveryCallDate || null
+      : null;
+
+  const isExplicitlyUnscheduledAfterMiss =
+    outcomeIsMissedOrCanceled && journey.discoveryState !== "scheduled";
+
+  if (!isExplicitlyUnscheduledAfterMiss && (activeApt || fallbackScheduledTime)) {
+    const startRaw = activeApt?.startTime || fallbackScheduledTime;
+    const endRaw = activeApt?.endTime || null;
+    const aptTz = activeApt?.clientTimeZone || activeApt?.timeZone || tzRaw;
+    const fmt = formatDiscoveryAppointmentTime(startRaw, aptTz);
+    const startIso = safeIsoDate(startRaw) || new Date().toISOString();
+    const endIso = safeIsoDate(endRaw);
+
+    return {
+      appointmentState: "scheduled",
+      hasBookedAppointment: true,
+      isMissedOrCanceled: false,
+      scheduledAppointment: {
+        id: activeApt?.id ?? discoveryCall?.appointmentId ?? null,
+        startTime: startIso,
+        endTime: endIso,
+        timeZone: fmt.timeZone,
+        timeZoneAbbr: fmt.timeZoneAbbr,
+        formattedDateTimeTz: fmt.formattedDateTimeTz,
+        formattedShort: fmt.formattedShort,
+        assignedAdvocateName:
+          activeApt?.assignedAdvocateName || journey.assignedAdvocate || "Byron Honea",
+        status: activeApt?.status || "Scheduled",
+        notes: activeApt?.description || null,
+      },
+    };
+  }
+
+  if (outcomeIsMissedOrCanceled || canceledOrMissedApt) {
+    return {
+      appointmentState: "needs_rescheduling",
+      hasBookedAppointment: false,
+      isMissedOrCanceled: true,
+      scheduledAppointment: null,
+    };
+  }
+
+  if (Boolean(journey.schedulingLinkSent)) {
+    return {
+      appointmentState: "awaiting_booking",
+      hasBookedAppointment: false,
+      isMissedOrCanceled: false,
+      scheduledAppointment: null,
+    };
+  }
+
+  return {
+    appointmentState: "needs_scheduling",
+    hasBookedAppointment: false,
+    isMissedOrCanceled: false,
+    scheduledAppointment: null,
+  };
+}
+
 export function deriveStageAndOutcomeSummary(
   lead: any,
   discoveryCall: any,
   parentContact: any,
-  activeOffer: any
+  activeOffer: any,
+  matchedAppointments: any[] = [],
+  students: any[] = []
 ): {
   stage: LeadStage;
   stageLabel: string;
@@ -521,8 +817,66 @@ export function deriveStageAndOutcomeSummary(
   nextActionLabel: string;
   nextActionDueDate: string | null;
   isOverdue: boolean;
+  intakeCompleted: boolean;
+  appointmentState: LeadAppointmentState;
+  scheduledAppointment: ScheduledDiscoveryAppointmentInfo | null;
+  hasStartedDiscovery: boolean;
+  hasSavedDiscoveryProgress: boolean;
 } {
   const { journey } = parseDiscoveryPricingBlob(discoveryCall?.pricingNotes);
+
+  // Separate Fact 1: Intake completion
+  const parentNameCheck =
+    (parentContact ? `${parentContact.firstName || ""} ${parentContact.lastName || ""}`.trim() : "") ||
+    lead?.parentName ||
+    "";
+  const hasContactInfo = Boolean(
+    parentContact?.phone || lead?.parentPhone || parentContact?.email
+  );
+  const hasStudentInfo = Boolean(students.length > 0 || lead?.studentName);
+  const concernsText =
+    journey.concerns ||
+    parentContact?.challenges ||
+    students[0]?.challenges ||
+    discoveryCall?.theirStoryNotes ||
+    "";
+  const intakeCompleted = Boolean(
+    parentNameCheck &&
+      parentNameCheck !== "Unknown Parent" &&
+      parentNameCheck !== "Unknown Family" &&
+      hasContactInfo &&
+      hasStudentInfo &&
+      concernsText.trim().length > 0
+  );
+
+  // Separate Fact 2: Discovery appointment status
+  const aptInfo = resolveDiscoveryAppointmentInfo({
+    lead,
+    discoveryCall,
+    journey,
+    matchedAppointments,
+  });
+
+  // Separate Fact 3: Actual workflow stage & whether discovery conversation has started
+  const hasSavedNotes = Boolean(
+    (discoveryCall?.theirStoryNotes &&
+      discoveryCall.theirStoryNotes.trim() &&
+      discoveryCall.theirStoryNotes.trim() !== (journey.concerns || "").trim()) ||
+      (discoveryCall?.howItWorksNotes && discoveryCall.howItWorksNotes.trim()) ||
+      (discoveryCall?.additionalNotes && discoveryCall.additionalNotes.trim()) ||
+      (discoveryCall?.questionNotes &&
+        discoveryCall.questionNotes !== "{}" &&
+        discoveryCall.questionNotes.trim().length > 2)
+  );
+
+  const hasStartedDiscovery = Boolean(
+    journey.discoveryStartedAt ||
+      journey.discoveryState === "in_progress" ||
+      discoveryCall?.status === "In Progress" ||
+      (journey.stage === "discovery" && hasSavedNotes)
+  );
+
+  const hasSavedDiscoveryProgress = Boolean(hasStartedDiscovery || hasSavedNotes);
 
   // 1. Determine if Active Client
   const isOfferActive = activeOffer?.status === "active";
@@ -544,6 +898,11 @@ export function deriveStageAndOutcomeSummary(
       nextActionLabel: journey.nextAction?.label || "Open Student Workspace",
       nextActionDueDate: null,
       isOverdue: false,
+      intakeCompleted,
+      appointmentState: aptInfo.appointmentState,
+      scheduledAppointment: aptInfo.scheduledAppointment,
+      hasStartedDiscovery: true,
+      hasSavedDiscoveryProgress: true,
     };
   }
 
@@ -576,6 +935,11 @@ export function deriveStageAndOutcomeSummary(
       nextActionLabel: "Reopen",
       nextActionDueDate: null,
       isOverdue: false,
+      intakeCompleted,
+      appointmentState: aptInfo.appointmentState,
+      scheduledAppointment: aptInfo.scheduledAppointment,
+      hasStartedDiscovery,
+      hasSavedDiscoveryProgress,
     };
   }
 
@@ -624,6 +988,11 @@ export function deriveStageAndOutcomeSummary(
       nextActionLabel: journey.nextAction?.label || nextStep,
       nextActionDueDate: journey.nextAction?.dueDate || null,
       isOverdue: false,
+      intakeCompleted,
+      appointmentState: aptInfo.appointmentState,
+      scheduledAppointment: aptInfo.scheduledAppointment,
+      hasStartedDiscovery: true,
+      hasSavedDiscoveryProgress: true,
     };
   }
 
@@ -730,61 +1099,61 @@ export function deriveStageAndOutcomeSummary(
       nextActionLabel: journey.nextAction?.label || nextActionLabel,
       nextActionDueDate: dueDate || null,
       isOverdue,
+      intakeCompleted,
+      appointmentState: aptInfo.appointmentState,
+      scheduledAppointment: aptInfo.scheduledAppointment,
+      hasStartedDiscovery: true,
+      hasSavedDiscoveryProgress: true,
     };
   }
 
-  // 5. Determine Discovery stage
-  const scheduledDate =
-    discoveryCall?.scheduledAt || lead?.discoveryCallDate || null;
-  const inDiscoveryStage =
-    journey.stage === "discovery" ||
-    Boolean(scheduledDate) ||
-    discoveryCall?.status === "In Progress";
-
-  if (inDiscoveryStage) {
+  // 5. Determine Discovery stage ONLY when staff explicitly started the discovery conversation!
+  // Booking an appointment does NOT move a lead into Discovery.
+  if (hasStartedDiscovery) {
     const outcome: DiscoveryOutcome = journey.discoveryOutcome || "pending";
-    let dState: DiscoveryState = journey.discoveryState || "unscheduled";
-    if (discoveryCall?.status === "In Progress" || journey.discoveryState === "in_progress") {
-      dState = "in_progress";
-    } else if (scheduledDate && outcome === "pending") {
-      dState = "scheduled";
+    let dState: DiscoveryState = "in_progress";
+    if (
+      outcome === "no_answer" ||
+      outcome === "reschedule_needed" ||
+      outcome === "follow_up_later" ||
+      outcome === "cancelled"
+    ) {
+      dState = aptInfo.hasBookedAppointment ? "scheduled" : "unscheduled";
     }
 
     const dueDate =
-      safeIsoDate(journey.nextAction?.dueDate) || safeIsoDate(scheduledDate);
+      safeIsoDate(journey.nextAction?.dueDate) ||
+      safeIsoDate(aptInfo.scheduledAppointment?.startTime);
     const isOverdue = Boolean(
       dueDate && new Date(dueDate).getTime() < new Date().setHours(0, 0, 0, 0)
     );
 
-    let callStatusLabel: "Scheduled" | "Completed" | "No answer" | "Reschedule needed" | "Canceled" | "Unscheduled" =
-      "Scheduled";
-    let statusSummary = "Scheduled";
-    let nextActionLabel = "Run Discovery";
+    let callStatusLabel:
+      | "Scheduled"
+      | "Completed"
+      | "No answer"
+      | "Reschedule needed"
+      | "Canceled"
+      | "Unscheduled" = "Scheduled";
+    let statusSummary = "Discovery in progress";
+    let nextActionLabel = "Resume discovery";
 
     if (outcome === "no_answer") {
       callStatusLabel = "No answer";
-      statusSummary = "No answer";
-      nextActionLabel = journey.nextAction?.label || "Retry the call tomorrow";
+      statusSummary = "Needs rescheduling";
+      nextActionLabel = journey.nextAction?.label || "Reschedule discovery";
     } else if (outcome === "reschedule_needed" || outcome === "follow_up_later") {
       callStatusLabel = "Reschedule needed";
-      statusSummary = outcome === "follow_up_later" ? "Follow up later" : "Reschedule needed";
-      nextActionLabel = journey.nextAction?.label || "Reschedule discovery call";
+      statusSummary = "Needs rescheduling";
+      nextActionLabel = journey.nextAction?.label || "Reschedule discovery";
     } else if (outcome === "cancelled") {
       callStatusLabel = "Canceled";
-      statusSummary = "Canceled";
-      nextActionLabel = journey.nextAction?.label || "Follow up to reschedule";
-    } else if (dState === "in_progress") {
+      statusSummary = "Needs rescheduling";
+      nextActionLabel = journey.nextAction?.label || "Reschedule discovery";
+    } else {
       callStatusLabel = "Scheduled";
       statusSummary = "Discovery in progress";
-      nextActionLabel = "Run Discovery";
-    } else if (scheduledDate) {
-      callStatusLabel = "Scheduled";
-      statusSummary = "Scheduled";
-      nextActionLabel = "Run Discovery";
-    } else {
-      callStatusLabel = "Unscheduled";
-      statusSummary = "Reschedule needed";
-      nextActionLabel = "Schedule Discovery";
+      nextActionLabel = "Resume discovery";
     }
 
     return {
@@ -800,24 +1169,85 @@ export function deriveStageAndOutcomeSummary(
       nextActionLabel,
       nextActionDueDate: dueDate,
       isOverdue,
+      intakeCompleted,
+      appointmentState: aptInfo.appointmentState,
+      scheduledAppointment: aptInfo.scheduledAppointment,
+      hasStartedDiscovery: true,
+      hasSavedDiscoveryProgress: true,
     };
   }
 
   // 6. Default: New Leads stage (`stage === "inquiry"`)
-  const isLinkSent = Boolean(journey.schedulingLinkSent);
+  // Contains every lead who has not started their discovery conversation:
+  // - No appointment: "Needs scheduling" -> "Schedule discovery"
+  // - Link sent without booking: "Awaiting booking" -> "Follow up"
+  // - Appointment booked: "Discovery scheduled · <date/time/tz>" -> "Start discovery"
+  // - Missed or canceled appointment: "Needs rescheduling" -> "Reschedule discovery"
+  let statusSummary = "Needs scheduling";
+  let nextActionLabel = "Schedule discovery";
+  let callStatusLabel:
+    | "Scheduled"
+    | "Completed"
+    | "No answer"
+    | "Reschedule needed"
+    | "Canceled"
+    | "Unscheduled" = "Unscheduled";
+  let dState: DiscoveryState = "unscheduled";
+
+  if (aptInfo.appointmentState === "scheduled" && aptInfo.scheduledAppointment) {
+    statusSummary = `Discovery scheduled · ${aptInfo.scheduledAppointment.formattedShort}`;
+    nextActionLabel = "Start discovery";
+    callStatusLabel = "Scheduled";
+    dState = "scheduled";
+  } else if (aptInfo.appointmentState === "needs_rescheduling") {
+    statusSummary = "Needs rescheduling";
+    nextActionLabel = "Reschedule discovery";
+    callStatusLabel =
+      journey.discoveryOutcome === "cancelled"
+        ? "Canceled"
+        : journey.discoveryOutcome === "no_answer"
+        ? "No answer"
+        : "Reschedule needed";
+    dState = "unscheduled";
+  } else if (aptInfo.appointmentState === "awaiting_booking") {
+    statusSummary = "Awaiting booking";
+    nextActionLabel = "Follow up";
+    callStatusLabel = "Unscheduled";
+    dState = "unscheduled";
+  } else {
+    statusSummary = "Needs scheduling";
+    nextActionLabel = "Schedule discovery";
+    callStatusLabel = "Unscheduled";
+    dState = "unscheduled";
+  }
+
+  const dueDate =
+    safeIsoDate(aptInfo.scheduledAppointment?.startTime) ||
+    safeIsoDate(journey.nextAction?.dueDate) ||
+    null;
+  const isOverdue = Boolean(
+    (dueDate && new Date(dueDate).getTime() < new Date().setHours(0, 0, 0, 0)) ||
+      aptInfo.appointmentState === "needs_rescheduling"
+  );
+
   return {
     stage: "inquiry",
     stageLabel: "New Leads",
     isClosed: false,
-    discoveryState: "unscheduled",
-    discoveryOutcome: "pending",
+    discoveryState: dState,
+    discoveryOutcome: journey.discoveryOutcome || "pending",
     decisionChoice: "undecided",
-    callStatusLabel: "Unscheduled",
+    callStatusLabel,
     decisionStatusLabel: "Considering",
-    statusSummary: isLinkSent ? "Scheduling link sent" : "New lead · Ready for discovery",
-    nextActionLabel: journey.nextAction?.label || "Schedule Discovery",
-    nextActionDueDate: journey.nextAction?.dueDate || null,
-    isOverdue: false,
+    statusSummary,
+    nextActionLabel,
+    nextActionDueDate: dueDate,
+    isOverdue,
+    intakeCompleted,
+    appointmentState: aptInfo.appointmentState,
+    scheduledAppointment: aptInfo.scheduledAppointment,
+    hasStartedDiscovery: false,
+    hasSavedDiscoveryProgress,
   };
 }
 
@@ -1349,6 +1779,21 @@ export async function listHydratedLeads(ownerId: number) {
     }
   }
 
+  let dbAppointments: any[] = [];
+  try {
+    dbAppointments = await db.getAppointmentsByOwner(ownerId);
+  } catch {}
+  const appointmentsById = new Map<number | string, any>();
+  for (const a of dbAppointments) {
+    if (a) appointmentsById.set(a.id ?? `${a.leadId}_${a.startTime}`, a);
+  }
+  for (const [memId, memApt] of Array.from(inMemoryLeadAppointments.entries())) {
+    if (memApt) {
+      appointmentsById.set(memId, { ...(appointmentsById.get(memId) || {}), ...memApt });
+    }
+  }
+  const allAppointments = Array.from(appointmentsById.values());
+
   return rawLeads.map((lead: any) => {
     const contact = lead.contactId ? contactById.get(lead.contactId) : null;
     const parentContact =
@@ -1367,7 +1812,22 @@ export async function listHydratedLeads(ownerId: number) {
       dbOffer || memOffer ? { ...(dbOffer || {}), ...(memOffer || {}) } : null;
     const { journey } = parseDiscoveryPricingBlob(dCall?.pricingNotes);
 
-    const summary = deriveStageAndOutcomeSummary(lead, dCall, parentContact, activeOffer);
+    const leadAppointments = matchAppointmentsForLead({
+      lead,
+      discoveryCall: dCall,
+      parentContact,
+      students,
+      allAppointments,
+    });
+
+    const summary = deriveStageAndOutcomeSummary(
+      lead,
+      dCall,
+      parentContact,
+      activeOffer,
+      leadAppointments,
+      students
+    );
 
     const studentNames =
       students.length > 0
@@ -1388,8 +1848,11 @@ export async function listHydratedLeads(ownerId: number) {
       studentCount: Math.max(1, studentNames.length),
       concerns: journey.concerns || parentContact?.challenges || students[0]?.challenges || "",
       desiredOutcome: journey.desiredOutcome || "",
-      timeZone: journey.timeZone || "Eastern",
-      assignedAdvocate: journey.assignedAdvocate || "Byron Honea",
+      timeZone: summary.scheduledAppointment?.timeZone || journey.timeZone || "Eastern",
+      assignedAdvocate:
+        summary.scheduledAppointment?.assignedAdvocateName ||
+        journey.assignedAdvocate ||
+        "Byron Honea",
       schedulingLinkSent: Boolean(journey.schedulingLinkSent),
       stage: summary.stage,
       stageLabel: summary.stageLabel,
@@ -1403,6 +1866,11 @@ export async function listHydratedLeads(ownerId: number) {
       nextActionLabel: summary.nextActionLabel,
       nextActionDueDate: summary.nextActionDueDate,
       isOverdue: summary.isOverdue,
+      intakeCompleted: summary.intakeCompleted,
+      appointmentState: summary.appointmentState,
+      scheduledAppointment: summary.scheduledAppointment,
+      hasStartedDiscovery: summary.hasStartedDiscovery,
+      hasSavedDiscoveryProgress: summary.hasSavedDiscoveryProgress,
       callAttemptsCount: journey.callAttempts?.length || 0,
     };
   });
@@ -1468,20 +1936,31 @@ export async function getHydratedLeadWorkspace(leadId: number, ownerId: number) 
   const { journey } = parseDiscoveryPricingBlob(dCall?.pricingNotes);
 
   // Get appointments linked to this lead or family
-  let allAppointments = await db.getAppointmentsByOwner(ownerId);
-  if (allAppointments.length === 0 && inMemoryLeadAppointments.size > 0) {
-    allAppointments = Array.from(inMemoryLeadAppointments.values());
+  let dbAppointments: any[] = [];
+  try {
+    dbAppointments = await db.getAppointmentsByOwner(ownerId);
+  } catch {}
+  const appointmentsById = new Map<number | string, any>();
+  for (const a of dbAppointments) {
+    if (a) appointmentsById.set(a.id ?? `${a.leadId}_${a.startTime}`, a);
   }
+  for (const [memId, memApt] of Array.from(inMemoryLeadAppointments.entries())) {
+    if (memApt) {
+      appointmentsById.set(memId, { ...(appointmentsById.get(memId) || {}), ...memApt });
+    }
+  }
+  const allAppointments = Array.from(appointmentsById.values());
   const familyContactIds = new Set<number>();
   if (parentContact?.id) familyContactIds.add(parentContact.id);
   for (const s of students) if (s.id) familyContactIds.add(s.id);
 
-  const leadAppointments = allAppointments.filter(
-    (a: any) =>
-      a.leadId === leadId ||
-      (a.parentContactId && familyContactIds.has(a.parentContactId)) ||
-      (a.clientId && familyContactIds.has(a.clientId))
-  );
+  const leadAppointments = matchAppointmentsForLead({
+    lead,
+    discoveryCall: dCall,
+    parentContact,
+    students,
+    allAppointments,
+  });
 
   // Get family enrollment state
   const enrollmentState = await getFamilyEnrollmentState({
@@ -1495,7 +1974,14 @@ export async function getHydratedLeadWorkspace(leadId: number, ownerId: number) 
     enrollmentState.activeOffer || memOffer
       ? { ...(enrollmentState.activeOffer || {}), ...(memOffer || {}) }
       : null;
-  const summary = deriveStageAndOutcomeSummary(lead, dCall, parentContact, activeOffer);
+  const summary = deriveStageAndOutcomeSummary(
+    lead,
+    dCall,
+    parentContact,
+    activeOffer,
+    leadAppointments,
+    students
+  );
 
   // Identify blocking issues for Inquiry stage (missing info that actually blocks next action)
   const parentName =
@@ -1780,13 +2266,22 @@ export async function getHydratedLeadWorkspace(leadId: number, ownerId: number) 
       nextActionLabel: summary.nextActionLabel,
       nextActionDueDate: summary.nextActionDueDate,
       isOverdue: summary.isOverdue,
+      intakeCompleted: summary.intakeCompleted,
+      appointmentState: summary.appointmentState,
+      scheduledAppointment: summary.scheduledAppointment,
+      hasStartedDiscovery: summary.hasStartedDiscovery,
+      hasSavedDiscoveryProgress: summary.hasSavedDiscoveryProgress,
+      discoveryStartedAt: journey.discoveryStartedAt || null,
       concerns,
       desiredOutcome,
       preferredContactMethod:
         journey.preferredContactMethod || parentContact?.preferredCommunicationMethod || "Phone",
       availability: journey.availability || parentContact?.bestTimeToCall || "",
-      timeZone: journey.timeZone || "Eastern",
-      assignedAdvocate: journey.assignedAdvocate || "Byron Honea",
+      timeZone: summary.scheduledAppointment?.timeZone || journey.timeZone || "Eastern",
+      assignedAdvocate:
+        summary.scheduledAppointment?.assignedAdvocateName ||
+        journey.assignedAdvocate ||
+        "Byron Honea",
       schedulingLinkSent: Boolean(journey.schedulingLinkSent),
       schedulingLinkSentAt: journey.schedulingLinkSentAt || null,
       offerPrepared,
