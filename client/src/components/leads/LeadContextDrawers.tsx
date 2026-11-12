@@ -50,21 +50,21 @@ export function LeadContextDrawers({
   return (
     <div
       data-testid={`lead-context-drawer-${openDrawer}`}
-      className="rounded-xl border border-[#1E3358] bg-[#040D26] p-5 text-slate-100 shadow-[0_14px_36px_rgba(0,0,0,0.75)] space-y-4 animate-in fade-in duration-150"
+      className="rounded-xl border border-cyan-400/35 bg-[#061126] p-5 text-white shadow-[0_14px_36px_rgba(0,0,0,0.75)] space-y-4 animate-in fade-in duration-150"
     >
-      <div className="flex items-center justify-between border-b border-[#162952] pb-3">
+      <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
         <div className="flex items-center gap-2">
           {openDrawer === "contacts" ? (
             <>
-              <Users className="w-4 h-4 text-[#FFE394]" />
-              <h3 className="text-sm font-semibold text-white">
+              <Users className="w-4 h-4 text-cyan-300" />
+              <h3 className="text-sm font-bold text-white">
                 Family & Student Contact Details
               </h3>
             </>
           ) : (
             <>
-              <History className="w-4 h-4 text-[#FFE394]" />
-              <h3 className="text-sm font-semibold text-white">
+              <History className="w-4 h-4 text-cyan-300" />
+              <h3 className="text-sm font-bold text-white">
                 Shared Communication & Attempt History
               </h3>
             </>
@@ -73,7 +73,7 @@ export function LeadContextDrawers({
         <button
           type="button"
           onClick={onClose}
-          className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+          className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
@@ -82,25 +82,25 @@ export function LeadContextDrawers({
       {openDrawer === "contacts" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Parent Contact Card */}
-          <div className="rounded-lg border border-[#162952] bg-[#02091A] p-4 space-y-2.5">
+          <div className="rounded-lg border border-cyan-500/25 bg-[#040B1A] p-4 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Parent / Guardian
               </span>
-              <Badge className="bg-[#0D1E47] text-slate-200 border-[#1E3358] text-[10px]">
+              <Badge className="bg-[#091D3E] text-cyan-200 border-cyan-400/40 text-[10px]">
                 {journey.preferredContactMethod || "Phone"} Preferred
               </Badge>
             </div>
-            <p className="text-sm font-semibold text-white">
+            <p className="text-sm font-bold text-white">
               {lead.parentName || "Unknown Parent"}
             </p>
             <div className="space-y-1.5 text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <Phone className="w-3.5 h-3.5 text-cyan-300" />
                 <span>{lead.parentPhone || "No phone on file"}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <Mail className="w-3.5 h-3.5 text-cyan-300" />
                 <span>{lead.parentEmail || parentContact?.email || "No email on file"}</span>
               </div>
               {journey.availability && (
@@ -113,9 +113,9 @@ export function LeadContextDrawers({
           </div>
 
           {/* Students List */}
-          <div className="rounded-lg border border-[#162952] bg-[#02091A] p-4 space-y-2.5">
+          <div className="rounded-lg border border-cyan-500/25 bg-[#040B1A] p-4 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Students ({students.length})
               </span>
             </div>
@@ -123,12 +123,12 @@ export function LeadContextDrawers({
               {students.map((stu: any, idx: number) => (
                 <div
                   key={stu.id || idx}
-                  className="flex items-center justify-between rounded-lg border border-[#162952]/80 bg-[#040D26] px-3 py-2"
+                  className="flex items-center justify-between rounded-lg border border-cyan-500/20 bg-[#061126] px-3 py-2"
                 >
                   <div className="flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4 text-[#FFE394]" />
+                    <GraduationCap className="w-4 h-4 text-cyan-300" />
                     <div>
-                      <p className="text-xs font-semibold text-white">
+                      <p className="text-xs font-bold text-white">
                         {stu.firstName} {stu.lastName}
                       </p>
                       <p className="text-[11px] text-slate-400">
@@ -156,7 +156,7 @@ export function LeadContextDrawers({
               value={quickNote}
               onChange={(e) => setQuickNote(e.target.value)}
               placeholder="Log a communication note or call update to shared family history..."
-              className="h-9 bg-[#02091A] border-[#162952] text-white text-xs"
+              className="h-9 bg-[#030917] border-[#1A325E] text-white text-xs"
             />
             <Button
               type="button"
@@ -168,7 +168,7 @@ export function LeadContextDrawers({
                   callNotes: quickNote.trim(),
                 })
               }
-              className="h-9 bg-[#102347] border border-[#D4AF37]/50 text-[#FFE394] hover:bg-[#162F5E] text-xs shrink-0 cursor-pointer"
+              className="h-9 bg-[#091D3E] border border-cyan-400/50 text-cyan-200 hover:bg-[#0E2B5C] text-xs font-bold shrink-0 cursor-pointer"
             >
               <Send className="w-3.5 h-3.5 mr-1.5" />
               Log Note
@@ -178,7 +178,7 @@ export function LeadContextDrawers({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-72 overflow-y-auto pr-1">
             {/* Left: Journey & Call Attempts Timeline */}
             <div className="space-y-2">
-              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Journey & Call Attempts ({(journey.sharedHistory?.length || 0) + (journey.callAttempts?.length || 0)})
               </h4>
 
@@ -187,17 +187,17 @@ export function LeadContextDrawers({
                   {journey.callAttempts.map((att: any) => (
                     <div
                       key={att.id}
-                      className="rounded-lg border border-[#162952] bg-[#02091A] p-2.5 text-xs space-y-1"
+                      className="rounded-lg border border-cyan-500/20 bg-[#040B1A] p-2.5 text-xs space-y-1"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-[#FFE394]">
+                        <span className="font-semibold text-cyan-300">
                           Call Attempt · {att.outcomeLabel}
                         </span>
                         <span className="text-[10px] text-slate-400">
                           {new Date(att.timestamp).toLocaleString()}
                         </span>
                       </div>
-                      {att.note && <p className="text-slate-300">{att.note}</p>}
+                      {att.note && <p className="text-white">{att.note}</p>}
                       {att.nextAction && (
                         <p className="text-[11px] text-slate-400">
                           Next: {att.nextAction}
@@ -211,7 +211,7 @@ export function LeadContextDrawers({
               {(journey.sharedHistory || []).map((item: any) => (
                 <div
                   key={item.id}
-                  className="rounded-lg border border-[#162952] bg-[#02091A] p-2.5 text-xs space-y-1"
+                  className="rounded-lg border border-cyan-500/20 bg-[#040B1A] p-2.5 text-xs space-y-1"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-white">{item.title}</span>
@@ -235,14 +235,14 @@ export function LeadContextDrawers({
 
             {/* Right: Originating Call Center Logs & Automation Reconciliations */}
             <div className="space-y-2">
-              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Connected Call Logs & Automation Reconciliation
               </h4>
 
               {callLogs.map((cl: any) => (
                 <div
                   key={cl.id}
-                  className="rounded-lg border border-[#162952] bg-[#02091A] p-2.5 text-xs space-y-1"
+                  className="rounded-lg border border-cyan-500/20 bg-[#040B1A] p-2.5 text-xs space-y-1"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-white">
@@ -265,7 +265,7 @@ export function LeadContextDrawers({
               {(journey.reconciledEvents || []).map((rec: any, idx: number) => (
                 <div
                   key={idx}
-                  className="rounded-lg border border-[#1E3358] bg-[#06122E] p-2.5 text-xs space-y-1"
+                  className="rounded-lg border border-cyan-400/30 bg-[#081A38] p-2.5 text-xs space-y-1"
                 >
                   <div className="flex items-center gap-1.5 text-emerald-300 font-medium">
                     <ShieldCheck className="w-3.5 h-3.5" />

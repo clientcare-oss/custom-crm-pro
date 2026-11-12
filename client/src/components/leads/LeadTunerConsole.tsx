@@ -10,13 +10,14 @@ import {
   Mic,
   LifeBuoy,
   Sparkles,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import PageIdBadge from "@/components/PageIdBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { WorkspaceStageTab } from "./LeadStageStrip";
@@ -79,7 +80,11 @@ interface LeadTunerConsoleProps {
   currentStageLeads: any[];
   onManageForms: () => void;
   onNewInquiry: () => void;
+  onAddTestLead?: () => void;
+  isAddingTestLead?: boolean;
   onOpenLead?: (leadId: number, stage: WorkspaceStageTab) => void;
+  isClientOpen?: boolean;
+  openedClientName?: string;
 }
 
 export function LeadTunerConsole({
@@ -89,7 +94,11 @@ export function LeadTunerConsole({
   currentStageLeads,
   onManageForms,
   onNewInquiry,
+  onAddTestLead,
+  isAddingTestLead = false,
   onOpenLead,
+  isClientOpen = false,
+  openedClientName,
 }: LeadTunerConsoleProps) {
   const activeStageIndex = Math.max(
     0,
@@ -142,9 +151,6 @@ export function LeadTunerConsole({
             >
               Lead Center
             </h1>
-            <div className="shrink-0">
-              <PageIdBadge id="PG-003" />
-            </div>
             <span className="inline-flex items-center justify-center gap-2 min-w-[215px] px-2.5 py-0.5 rounded-full bg-[#091D34] border border-[#C5A059]/55 text-[10.5px] font-mono font-bold uppercase tracking-wider text-[#FFE394] shadow-[0_2px_10px_rgba(0,0,0,0.6)] shrink-0 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse motion-reduce:animate-none shadow-[0_0_8px_#34D399] shrink-0" />
               <Radio className="w-3.5 h-3.5 text-[#DFBE77] shrink-0" />
@@ -170,10 +176,11 @@ export function LeadTunerConsole({
             <span>Manage forms</span>
           </button>
 
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
+                data-testid="lead-center-more-options-btn"
                 aria-label="More Lead Center options"
                 className="h-9 w-9 rounded-lg bg-[#0B1C36]/90 hover:bg-[#12294D] border border-[#2B4368] hover:border-[#C5A059]/60 text-[#E2EDF8] hover:text-[#FFE394] inline-flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all cursor-pointer"
               >
@@ -184,6 +191,22 @@ export function LeadTunerConsole({
               align="end"
               className="w-60 bg-[#07162B] border border-[#3A2C18] text-[#FFF4D4] shadow-2xl"
             >
+              {onAddTestLead && (
+                <>
+                  <DropdownMenuItem
+                    data-testid="add-test-lead-menu-item"
+                    disabled={isAddingTestLead}
+                    onClick={onAddTestLead}
+                    className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2 font-semibold text-[#FFE394]"
+                  >
+                    <UserPlus className="w-3.5 h-3.5 text-[#DFBE77]" />
+                    <span>
+                      {isAddingTestLead ? "Adding Test Lead..." : "Add Test Lead"}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-[#3A2C18]/60" />
+                </>
+              )}
               <DropdownMenuItem
                 onClick={() => onSelectStage("discovery")}
                 className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"

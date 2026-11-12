@@ -43,11 +43,11 @@ export function LeadStageStrip({
   const isViewingHistoricalOrOtherStage = viewedStage !== activePersistedTab;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       <nav
         aria-label="Lead Journey Stages"
         data-testid="lead-stage-navigation-strip"
-        className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl border border-[#162952] bg-[#040D26]/95 p-1.5"
+        className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl border border-cyan-400/30 bg-[#040C1E]/95 p-1.5 shadow-inner"
       >
         {STAGE_STEPS.map((step, idx) => {
           const isCompleted = persistedIndex > step.order || currentPersistedStage === "active";
@@ -69,15 +69,15 @@ export function LeadStageStrip({
               className={cn(
                 "group relative flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition-all cursor-pointer border",
                 isViewed
-                  ? "bg-[#0D1E47] border-[#D4AF37]/60 text-white shadow-[0_4px_14px_rgba(0,0,0,0.45)]"
+                  ? "bg-gradient-to-r from-[#0C2248] to-[#081733] border-cyan-400/80 text-white shadow-[0_0_16px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(103,232,249,0.25)]"
                   : isCompleted
-                  ? "bg-[#06122E] border-[#162952] text-slate-200 hover:bg-[#09193D] hover:border-[#243E73]"
+                  ? "bg-[#06132B] border-cyan-500/25 text-slate-200 hover:bg-[#0A1D3E] hover:border-cyan-400/50"
                   : isCurrentPersisted
-                  ? "bg-[#081638] border-[#284782] text-white hover:bg-[#0D1E47]"
-                  : "bg-[#030A1E]/70 border-transparent text-slate-400 hover:bg-[#06122E] hover:text-slate-200"
+                  ? "bg-[#081836] border-cyan-400/40 text-white hover:bg-[#0C2248]"
+                  : "bg-[#030917]/85 border-[#142547] text-slate-400 hover:bg-[#07152E] hover:text-slate-200"
               )}
             >
-              <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
                 {isCompleted ? (
                   <CheckCircle2
                     className="w-4 h-4 text-emerald-400 shrink-0"
@@ -85,7 +85,7 @@ export function LeadStageStrip({
                   />
                 ) : isCurrentPersisted ? (
                   <CircleDot
-                    className="w-4 h-4 text-[#FFE394] shrink-0"
+                    className="w-4 h-4 text-cyan-300 shrink-0"
                     aria-hidden="true"
                   />
                 ) : (
@@ -95,31 +95,25 @@ export function LeadStageStrip({
                   />
                 )}
 
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-semibold tracking-tight truncate">
-                      {idx + 1}. {step.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className={cn(
-                        "text-[10px] font-medium",
-                        isCompleted
-                          ? "text-emerald-300/90"
-                          : isCurrentPersisted
-                          ? "text-[#FFE394]"
-                          : "text-slate-400"
-                      )}
-                    >
-                      {stateLabel}
-                    </span>
-                  </div>
-                </div>
+                <span className="text-xs sm:text-sm font-bold tracking-tight truncate">
+                  {idx + 1}. {step.label}
+                </span>
+                <span
+                  className={cn(
+                    "text-[11px] font-semibold hidden md:inline",
+                    isCompleted
+                      ? "text-emerald-300"
+                      : isCurrentPersisted
+                      ? "text-cyan-300"
+                      : "text-slate-400"
+                  )}
+                >
+                  · {stateLabel}
+                </span>
               </div>
 
               {isViewed && (
-                <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/10 text-slate-200 shrink-0">
+                <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-400/15 border border-cyan-400/40 text-cyan-200 shrink-0">
                   Viewing
                 </span>
               )}
@@ -132,11 +126,11 @@ export function LeadStageStrip({
       {isViewingHistoricalOrOtherStage && (
         <div
           data-testid="stage-review-mode-banner"
-          className="flex items-center justify-between gap-3 rounded-lg border border-[#1E3358] bg-[#06122E] px-3.5 py-2 text-xs text-slate-300"
+          className="flex items-center justify-between gap-3 rounded-xl border border-cyan-400/40 bg-[#071630] px-4 py-2.5 text-xs sm:text-sm text-slate-200"
         >
           <span>
             Reviewing <strong className="text-white capitalize">{viewedStage}</strong> stage · Family’s active stage remains{" "}
-            <strong className="text-[#FFE394] capitalize">
+            <strong className="text-cyan-300 capitalize">
               {currentPersistedStage === "active" ? "Active Client" : activePersistedTab}
             </strong>{" "}
             (completed work is preserved).
@@ -144,10 +138,10 @@ export function LeadStageStrip({
           <button
             type="button"
             onClick={() => onSelectStage(activePersistedTab)}
-            className="inline-flex items-center gap-1 font-medium text-[#FFE394] hover:text-white shrink-0 cursor-pointer"
+            className="inline-flex items-center gap-1.5 font-bold text-cyan-300 hover:text-white shrink-0 cursor-pointer"
           >
             Return to {activePersistedTab}
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       )}

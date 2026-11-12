@@ -157,17 +157,54 @@ export async function createLead(data: any, ownerId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const res: any = await db.insert(leads).values({
-    ...data,
-    ownerId,
-  });
-  let insertedId =
-    res?.[0]?.insertId ??
-    res?.insertId ??
-    Number(res?.lastInsertRowid ?? res?.[0]?.lastInsertRowid ?? 0);
-  if (!insertedId) {
-    insertedId = 9000 + inMemoryLeads.size + 1;
+  let insertedId = 0;
+  let res: any = null;
+
+  try {
+    res = await db
+      .insert(leads)
+      .values({
+        ...data,
+        ownerId,
+      })
+      .returning({ id: leads.id });
+    insertedId = Number(
+      res?.[0]?.id ??
+        res?.[0]?.insertId ??
+        res?.insertId ??
+        res?.lastInsertRowid ??
+        0
+    );
+  } catch {
+    res = await db.insert(leads).values({
+      ...data,
+      ownerId,
+    });
+    insertedId = Number(
+      res?.[0]?.insertId ??
+        res?.insertId ??
+        res?.lastInsertRowid ??
+        res?.[0]?.lastInsertRowid ??
+        0
+    );
   }
+
+  if (!insertedId) {
+    let maxExistingId = 9500;
+    try {
+      const existingRows = await db.select({ id: leads.id }).from(leads);
+      for (const r of existingRows || []) {
+        if (typeof r?.id === "number" && r.id > maxExistingId) {
+          maxExistingId = r.id;
+        }
+      }
+    } catch {}
+    for (const k of Array.from(inMemoryLeads.keys())) {
+      if (k > maxExistingId) maxExistingId = k;
+    }
+    insertedId = maxExistingId + 1;
+  }
+
   const now = new Date();
   const record = {
     id: insertedId,
@@ -178,7 +215,7 @@ export async function createLead(data: any, ownerId: number) {
     ...data,
   };
   inMemoryLeads.set(insertedId, record);
-  return { insertId: insertedId, id: insertedId, ...res };
+  return { ...(res && typeof res === "object" && !Array.isArray(res) ? res : {}), insertId: insertedId, id: insertedId };
 }
 
 export async function updateLead(id: number, ownerId: number, data: any) {

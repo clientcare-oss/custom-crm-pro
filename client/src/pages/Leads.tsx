@@ -215,6 +215,127 @@ export default function Leads() {
     onError: (err) => toast.error(err.message || "Could not reopen lead"),
   });
 
+  const createTestLeadMutation = trpc.leads.createInquiry.useMutation({
+    onSuccess: async (res, vars) => {
+      setSelectedRadioStage("inquiry");
+      setNewLeadsFilter("all");
+      setSearchQuery("");
+      if (effectiveLeadId) {
+        setLocation("/leads");
+      }
+      await Promise.all([
+        utils.leads.list.invalidate(),
+        utils.leads.listHydrated.invalidate(),
+        utils.contacts.list.invalidate(),
+        leadsQuery.refetch(),
+      ]);
+      const parentFull = `${vars.parent.firstName} ${vars.parent.lastName || ""}`.trim();
+      toast.success(`Test lead added: ${parentFull} · Ready in New Leads`, {
+        action: {
+          label: "Open Lead",
+          onClick: () => setLocation(`/leads/${res.leadId}/inquiry`),
+        },
+      });
+    },
+    onError: (err) => toast.error(err.message || "Could not add test lead"),
+  });
+
+  const handleAddTestLead = () => {
+    const samples = [
+      {
+        firstName: "Eleanor",
+        lastName: "Vance",
+        studentFirst: "Leo",
+        studentGrade: "4th Grade",
+        schoolName: "Morningside Elementary",
+        iepOr504: "IEP",
+        concerns:
+          "IEP reading goals have not been updated in two years; requesting specialized reading intervention and updated present levels.",
+        desiredOutcome:
+          "Comprehensive IEP goal overhaul, Wilson reading support, and advocacy at upcoming annual review.",
+      },
+      {
+        firstName: "Marcus",
+        lastName: "Sterling",
+        studentFirst: "Maya",
+        studentGrade: "7th Grade",
+        schoolName: "Inman Middle School",
+        iepOr504: "IEP",
+        concerns:
+          "Executive functioning accommodations are not being implemented consistently across core classes.",
+        desiredOutcome:
+          "Enforce classroom accommodations, update Behavior Intervention Plan, and establish weekly progress tracking.",
+      },
+      {
+        firstName: "Clara",
+        lastName: "Kensington",
+        studentFirst: "Noah",
+        studentGrade: "2nd Grade",
+        schoolName: "Springdale Park Elementary",
+        iepOr504: "504",
+        concerns:
+          "Currently on a 504 Plan for dyslexia and speech-language, but struggling significantly with decoding and written expression.",
+        desiredOutcome:
+          "Transition from 504 Plan to full IEP eligibility with an Independent Educational Evaluation (IEE).",
+      },
+      {
+        firstName: "Julian",
+        lastName: "Mercer",
+        studentFirst: "Caleb",
+        studentGrade: "5th Grade",
+        schoolName: "Peachtree Charter",
+        iepOr504: "IEP",
+        concerns:
+          "School proposed reducing speech and occupational therapy service minutes without updated evaluation data.",
+        desiredOutcome:
+          "Prevent reduction of related service minutes and request Prior Written Notice review before placement changes.",
+      },
+      {
+        firstName: "Hannah",
+        lastName: "Bennett",
+        studentFirst: "Eli",
+        studentGrade: "9th Grade",
+        schoolName: "Midtown High School",
+        iepOr504: "IEP",
+        concerns:
+          "Transitioning to high school schedule; extended time and assistive technology supports were omitted from the draft IEP.",
+        desiredOutcome:
+          "Restore assistive technology and testing accommodations and build a strong high school transition plan.",
+      },
+    ];
+
+    const pick = samples[hydratedLeads.length % samples.length];
+    const randDigits = String(1000 + Math.floor(Math.random() * 9000));
+    const uniqueTag = Math.floor(100 + Math.random() * 900);
+
+    createTestLeadMutation.mutate({
+      forceCreateSeparate: true,
+      parent: {
+        firstName: pick.firstName,
+        lastName: `${pick.lastName}`,
+        phone: `(404) 555-${randDigits}`,
+        email: `${pick.firstName.toLowerCase()}.${pick.lastName.toLowerCase()}${uniqueTag}@example.com`,
+        preferredContactMethod: "Phone",
+        availability: "Weekday mornings (Eastern Time)",
+        city: "Atlanta",
+        state: "GA",
+      },
+      students: [
+        {
+          firstName: pick.studentFirst,
+          lastName: pick.lastName,
+          gradeLevel: pick.studentGrade,
+          schoolName: pick.schoolName,
+          iepOr504: pick.iepOr504,
+        },
+      ],
+      concerns: pick.concerns,
+      desiredOutcome: pick.desiredOutcome,
+      source: "Test Lead Generator (PG-003)",
+      callNotes: "Sample family inquiry created from Lead Center three-dot menu for workflow testing.",
+    });
+  };
+
   // Sync viewed stage override when route changes
   useEffect(() => {
     setViewedStageOverride(routeState.stageParam);
@@ -261,7 +382,17 @@ export default function Leads() {
   // Broadcast accurate Page ID (`PG-003`, `PG-003-INQ`, `PG-003-DSC`, `PG-003-SES`, `PG-003-DEC`, `PG-003-ONB`)
   useEffect(() => {
     if (!effectiveLeadId) {
-      broadcastPageId("PG-003");
+      if (selectedRadioStage === "discovery") {
+        broadcastPageId("PG-003-DSC");
+      } else if (selectedRadioStage === "decision") {
+        broadcastPageId("PG-003-DEC");
+      } else if (selectedRadioStage === "onboarding") {
+        broadcastPageId("PG-003-ONB");
+      } else if (routeState.stageParam === "inquiry") {
+        broadcastPageId("PG-003-INQ");
+      } else {
+        broadcastPageId("PG-003");
+      }
       return;
     }
     if (activeStageTab === "inquiry") {
@@ -279,6 +410,8 @@ export default function Leads() {
     }
   }, [
     effectiveLeadId,
+    selectedRadioStage,
+    routeState.stageParam,
     activeStageTab,
     isSessionMode,
     workspace?.journey?.discoveryState,
@@ -491,98 +624,84 @@ export default function Leads() {
             currentStageLeads={currentStageLeads}
             onManageForms={() => setLocation("/leads/forms")}
             onNewInquiry={() => setNewInquiryOpen(true)}
+            onAddTestLead={handleAddTestLead}
+            isAddingTestLead={createTestLeadMutation.isPending}
             onOpenLead={(leadId, stage) =>
               setLocation(`/leads/${leadId}/${stage}`)
             }
+            isClientOpen={Boolean(effectiveLeadId)}
+            openedClientName={workspace?.lead?.parentName}
           />
 
           {/* ─── 2. SINGLE FOCUSED STAGE WORKING AREA DIRECTLY BELOW RADIO ─── */}
           {effectiveLeadId ? (
-            /* ── IN-CONTEXT OPENED LEAD WORKSPACE ── */
+            /* ── IN-CONTEXT OPENED LEAD WORKSPACE (FUTURISTIC SCI-FI HUD CONTAINER) ── */
             <div
-              className="space-y-4"
+              className="relative rounded-2xl border border-cyan-400/45 bg-[#040B1B]/95 p-4 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_32px_rgba(34,211,238,0.14),inset_0_0_32px_rgba(56,189,248,0.06)] space-y-5 overflow-hidden"
+              style={{
+                backgroundImage:
+                  "radial-gradient(ellipse at 50% 0%, rgba(14, 116, 144, 0.16) 0%, transparent 65%), linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px)",
+                backgroundSize: "100% 100%, 28px 28px, 28px 28px",
+              }}
               data-testid="lead-stage-in-context-workspace"
             >
+              {/* Sci-Fi Top Laser Filament & 4 Tactical Corner Brackets */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-12 top-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400/80 to-transparent shadow-[0_0_12px_#22d3ee]"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400/80 rounded-tl-sm"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400/80 rounded-tr-sm"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400/80 rounded-bl-sm"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400/80 rounded-br-sm"
+              />
+
               {workspaceQuery.isLoading || !workspace ? (
-                <div className="rounded-2xl border border-[#182B52] bg-[#040D26]/90 p-10 flex items-center justify-center gap-3">
-                  <Loader2 className="w-5 h-5 animate-spin text-[#D8B979]" />
-                  <span className="text-sm text-[#93A8C8]">
-                    Loading family Lead Center workspace...
+                <div className="rounded-2xl border border-cyan-400/30 bg-[#061229]/90 p-10 flex items-center justify-center gap-3">
+                  <Loader2 className="w-6 h-6 animate-spin text-cyan-300" />
+                  <span className="text-base font-mono text-cyan-100">
+                    INITIALIZING LEAD DETAILS PROFILE...
                   </span>
                 </div>
               ) : (
                 <>
-                  {/* Top Family Lead Workspace Header */}
-                  <div className="rounded-2xl border border-[#1B305C] bg-[#05102B]/95 p-4 sm:p-5 shadow-[0_14px_38px_rgba(0,0,0,0.65)] space-y-3.5">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                      {/* Left: Back to stage list button + Family Name + Compact Status & Next Action */}
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setLocation("/leads")}
-                            data-testid="back-to-lead-center-btn"
-                            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#FFE394] hover:text-white px-2.5 py-1 rounded-lg border border-[#C5A059]/45 bg-[#030A1C] transition-colors cursor-pointer"
-                          >
-                            <ArrowLeft className="w-3.5 h-3.5" />
-                            Back to {activeStageMeta.label} list
-                          </button>
+                  {/* Top Lead Details Profile · Futuristic Command Header */}
+                  <div className="relative rounded-xl border border-cyan-400/35 bg-gradient-to-r from-[#07152E]/95 via-[#091B3A]/95 to-[#061126]/95 p-4 sm:p-5 shadow-[0_12px_32px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(103,232,249,0.18)] space-y-4">
+                    {/* Row 1: Large Sci-Fi Go Back Button + Holographic Telemetry Label + Quick Action Toggles */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-cyan-400/20">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setLocation("/leads")}
+                          data-testid="back-to-lead-center-btn"
+                          className="group inline-flex items-center gap-2.5 h-11 px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-white bg-gradient-to-b from-[#0E254C] to-[#07152E] hover:from-[#133266] hover:to-[#0A1E40] border border-cyan-400/65 hover:border-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all cursor-pointer shrink-0"
+                        >
+                          <ArrowLeft className="w-5 h-5 text-cyan-300 group-hover:-translate-x-0.5 transition-transform stroke-[2.5]" />
+                          Go Back to {activeStageMeta.label} List
+                        </button>
 
-                          <span className="text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-[#0C204B] text-[#D8B979] border border-[#243B67]">
-                            Stage: {workspace.journey.stageLabel}
-                          </span>
-
-                          {workspace.students?.length > 0 && (
-                            <span className="text-xs text-[#93A8C8] flex items-center gap-1">
-                              <Users className="w-3.5 h-3.5 text-[#7E95B8]" />
-                              {workspace.students
-                                .map((s: any) =>
-                                  `${s.firstName} ${s.lastName}`.trim()
-                                )
-                                .join(", ")}
-                              {workspace.students.length > 1 && (
-                                <span className="ml-1 px-1.5 py-0.2 rounded bg-[#0C204B] text-[10px] text-[#D8B979]">
-                                  {workspace.students.length} students
-                                </span>
-                              )}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex flex-wrap items-baseline gap-3 pt-0.5">
-                          <h2
-                            className="text-xl sm:text-2xl font-serif text-white tracking-tight"
-                            style={{
-                              fontFamily: "'Playfair Display', Georgia, serif",
-                            }}
-                            data-testid="workspace-family-name"
-                          >
-                            {workspace.lead.parentName || "Family Inquiry"}
-                          </h2>
-
-                          <div
-                            className="flex flex-wrap items-center gap-2 text-xs"
-                            data-testid="workspace-status-next-summary"
-                          >
-                            <span className="text-[#CBD5E1] font-medium">
-                              {workspace.journey.statusSummary}
-                            </span>
-                            <span className="text-[#475569]">·</span>
-                            <span
-                              className={`font-semibold ${
-                                workspace.journey.isOverdue
-                                  ? "text-rose-300"
-                                  : "text-[#D8B979]"
-                              }`}
-                            >
-                              Next: {workspace.journey.nextActionLabel}
-                            </span>
-                          </div>
-                        </div>
+                        <span
+                          data-testid="single-client-view-badge"
+                          className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-[#041024] border border-cyan-400/50 text-cyan-200 text-xs font-mono font-bold uppercase tracking-[0.14em] shadow-[0_0_14px_rgba(34,211,238,0.18),inset_0_0_10px_rgba(34,211,238,0.08)]"
+                        >
+                          <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse" />
+                          LEAD DETAILS PROFILE // SINGLE CLIENT VIEW
+                        </span>
                       </div>
 
-                      {/* Right: Progressive Disclosure Drawer Toggles + One Clear Primary Action */}
-                      <div className="flex flex-wrap items-center gap-2">
+                      {/* Right: Progressive Disclosure Drawer Toggles + Primary Action */}
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <button
                           type="button"
                           onClick={() =>
@@ -591,13 +710,13 @@ export default function Leads() {
                             )
                           }
                           data-testid="toggle-contact-drawer-btn"
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                          className={`inline-flex items-center gap-2 h-10 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
                             openDrawer === "contacts"
-                              ? "bg-[#122856] text-white border-[#D8B979]"
-                              : "bg-[#030A1C] text-[#CBD5E1] border-[#1E335C] hover:border-[#345494]"
+                              ? "bg-[#0E2954] text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
+                              : "bg-[#050E22] text-slate-200 border-cyan-500/35 hover:bg-[#0A1B3D] hover:border-cyan-400/70 hover:text-white"
                           }`}
                         >
-                          <Users className="w-3.5 h-3.5 text-[#D8B979]" />
+                          <Users className="w-4 h-4 text-cyan-300" />
                           Family & Contacts
                         </button>
 
@@ -609,15 +728,15 @@ export default function Leads() {
                             )
                           }
                           data-testid="toggle-history-drawer-btn"
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                          className={`inline-flex items-center gap-2 h-10 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
                             openDrawer === "history"
-                              ? "bg-[#122856] text-white border-[#D8B979]"
-                              : "bg-[#030A1C] text-[#CBD5E1] border-[#1E335C] hover:border-[#345494]"
+                              ? "bg-[#0E2954] text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
+                              : "bg-[#050E22] text-slate-200 border-cyan-500/35 hover:bg-[#0A1B3D] hover:border-cyan-400/70 hover:text-white"
                           }`}
                         >
-                          <History className="w-3.5 h-3.5 text-[#D8B979]" />
+                          <History className="w-4 h-4 text-cyan-300" />
                           History & Notes
-                          <span className="px-1.5 py-0.2 rounded-full bg-[#0C204B] text-[10px] text-[#D8B979]">
+                          <span className="px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-400/40 text-xs font-mono font-bold text-cyan-300">
                             {(workspace.journey.sharedHistory?.length || 0) +
                               (workspace.journey.callAttempts?.length || 0)}
                           </span>
@@ -627,9 +746,9 @@ export default function Leads() {
                           <button
                             type="button"
                             onClick={() => handleNavigateStage("discovery", true)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] shadow-md hover:brightness-105 cursor-pointer"
+                            className="inline-flex items-center gap-2 h-10 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] border border-[#FFE394] shadow-[0_4px_14px_rgba(197,160,89,0.45)] hover:brightness-110 cursor-pointer"
                           >
-                            <PhoneCall className="w-3.5 h-3.5" />
+                            <PhoneCall className="w-4 h-4" />
                             Start Discovery Now
                           </button>
                         )}
@@ -642,9 +761,9 @@ export default function Leads() {
                               onClick={() =>
                                 handleNavigateStage("discovery", true)
                               }
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] shadow-md hover:brightness-105 cursor-pointer"
+                              className="inline-flex items-center gap-2 h-10 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] border border-[#FFE394] shadow-[0_4px_14px_rgba(197,160,89,0.45)] hover:brightness-110 cursor-pointer"
                             >
-                              <PhoneCall className="w-3.5 h-3.5" />
+                              <PhoneCall className="w-4 h-4" />
                               Run Discovery
                             </button>
                           )}
@@ -654,16 +773,66 @@ export default function Leads() {
                             <button
                               type="button"
                               onClick={() => handleNavigateStage("decision")}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] shadow-md hover:brightness-105 cursor-pointer"
+                              className="inline-flex items-center gap-2 h-10 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#040B1C] border border-[#FFE394] shadow-[0_4px_14px_rgba(197,160,89,0.45)] hover:brightness-110 cursor-pointer"
                             >
                               Open Decision
-                              <ArrowRight className="w-3.5 h-3.5" />
+                              <ArrowRight className="w-4 h-4" />
                             </button>
                           )}
                       </div>
                     </div>
 
-                    {/* Compact Stage Navigation Strip (`New Leads · Discovery · Decision · Onboarding`) */}
+                    {/* Row 2: Prominent Client Name + Student + Stage & Next Action */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex flex-wrap items-center gap-3 min-w-0">
+                        <h2
+                          className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
+                          style={{
+                            fontFamily: "'Playfair Display', Georgia, serif",
+                          }}
+                          data-testid="workspace-family-name"
+                        >
+                          {workspace.lead.parentName || "Family Inquiry"}
+                        </h2>
+
+                        {workspace.students?.length > 0 && (
+                          <span className="text-xs sm:text-sm text-cyan-100 font-semibold inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#051229] border border-cyan-400/35">
+                            <Users className="w-4 h-4 text-cyan-300" />
+                            Student:{" "}
+                            {workspace.students
+                              .map((s: any) =>
+                                `${s.firstName} ${s.lastName}`.trim()
+                              )
+                              .join(", ")}
+                          </span>
+                        )}
+
+                        <span className="text-xs font-mono uppercase tracking-wider px-3 py-1 rounded-lg font-bold bg-[#051229] text-[#FFE394] border border-[#C5A059]/45">
+                          Stage: {workspace.journey.stageLabel}
+                        </span>
+                      </div>
+
+                      <div
+                        className="flex flex-wrap items-center gap-2 text-xs sm:text-sm bg-[#040D20]/90 border border-cyan-400/30 px-3.5 py-1.5 rounded-xl"
+                        data-testid="workspace-status-next-summary"
+                      >
+                        <span className="text-slate-200 font-medium">
+                          {workspace.journey.statusSummary}
+                        </span>
+                        <span className="text-cyan-400">·</span>
+                        <span
+                          className={`font-bold ${
+                            workspace.journey.isOverdue
+                              ? "text-rose-300"
+                              : "text-cyan-300"
+                          }`}
+                        >
+                          Next: {workspace.journey.nextActionLabel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Stage Navigation Strip (`New Leads · Discovery · Decision · Onboarding`) */}
                     <LeadStageStrip
                       currentPersistedStage={persistedStage}
                       viewedStage={activeStageTab}
@@ -730,6 +899,25 @@ export default function Leads() {
                       }}
                     />
                   )}
+
+                  {/* Bottom Sci-Fi HUD Go Back Bar for Easy Return to List */}
+                  <div className="rounded-xl border border-cyan-400/35 bg-[#061229]/95 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-[0_10px_28px_rgba(0,0,0,0.65)]">
+                    <div className="flex items-center gap-2.5 text-xs sm:text-sm font-mono text-cyan-200/90">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+                      <span>
+                        ACTIVE DOSSIER: <strong className="text-white">{workspace.lead.parentName}</strong> // SINGLE CLIENT VIEW
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setLocation("/leads")}
+                      data-testid="bottom-back-to-lead-center-btn"
+                      className="group inline-flex items-center gap-2.5 h-11 px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold text-white bg-gradient-to-b from-[#0E254C] to-[#07152E] hover:from-[#133266] hover:to-[#0A1E40] border border-cyan-400/65 hover:border-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all cursor-pointer"
+                    >
+                      <ArrowLeft className="w-5 h-5 text-cyan-300 group-hover:-translate-x-0.5 transition-transform stroke-[2.5]" />
+                      Go Back to {activeStageMeta.label} List
+                    </button>
+                  </div>
                 </>
               )}
             </div>
@@ -1102,7 +1290,7 @@ export default function Leads() {
                           </button>
 
                           {/* Contextual Secondary Actions Menu */}
-                          <DropdownMenu>
+                          <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
                               <button
                                 type="button"

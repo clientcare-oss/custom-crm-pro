@@ -497,6 +497,12 @@ export async function checkInquiryMatches(params: {
 /**
  * Helper to derive stage, outcome, and next action cleanly from a lead, discoveryCall, parentContact, and activeOffer.
  */
+function safeIsoDate(val: any): string | null {
+  if (!val) return null;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export function deriveStageAndOutcomeSummary(
   lead: any,
   discoveryCall: any,
@@ -642,13 +648,11 @@ export function deriveStageAndOutcomeSummary(
         : "considering");
 
     const dueDate =
-      journey.decision?.followUpDate ||
-      journey.decision?.conversationScheduledAt ||
-      journey.decision?.nextContactDate ||
-      journey.nextAction?.dueDate ||
-      (parentContact?.currentActionDueDate
-        ? new Date(parentContact.currentActionDueDate).toISOString()
-        : null);
+      safeIsoDate(journey.decision?.followUpDate) ||
+      safeIsoDate(journey.decision?.conversationScheduledAt) ||
+      safeIsoDate(journey.decision?.nextContactDate) ||
+      safeIsoDate(journey.nextAction?.dueDate) ||
+      safeIsoDate(parentContact?.currentActionDueDate);
 
     const isOverdue = Boolean(
       dueDate && new Date(dueDate).getTime() < new Date().setHours(0, 0, 0, 0)
@@ -747,8 +751,7 @@ export function deriveStageAndOutcomeSummary(
     }
 
     const dueDate =
-      journey.nextAction?.dueDate ||
-      (scheduledDate ? new Date(scheduledDate).toISOString() : null);
+      safeIsoDate(journey.nextAction?.dueDate) || safeIsoDate(scheduledDate);
     const isOverdue = Boolean(
       dueDate && new Date(dueDate).getTime() < new Date().setHours(0, 0, 0, 0)
     );
@@ -1063,11 +1066,14 @@ export async function createServiceInquiry(params: {
     .where(and(eq(discoveryCalls.leadId, leadId), eq(discoveryCalls.ownerId, ownerId)))
     .limit(1);
   const existingCall = dbExistingCall || inMemoryDiscoveryCalls.get(leadId);
+  const isUpdatingExistingLead = Boolean(existingLead);
 
   const nowIso = new Date().toISOString();
   const initialHistory: SharedHistoryEntry[] = [];
-  const { journey: priorJourney } = parseDiscoveryPricingBlob(existingCall?.pricingNotes);
-  if (priorJourney.sharedHistory) {
+  const { journey: priorJourney } = isUpdatingExistingLead
+    ? parseDiscoveryPricingBlob(existingCall?.pricingNotes)
+    : { journey: {} as PersistedLeadJourneyMeta };
+  if (isUpdatingExistingLead && priorJourney.sharedHistory) {
     initialHistory.push(...priorJourney.sharedHistory);
   }
 
@@ -1083,19 +1089,28 @@ export async function createServiceInquiry(params: {
     stage: "inquiry",
   });
 
+  const resolvedStage: LeadStage = isUpdatingExistingLead
+    ? priorJourney.stage || "inquiry"
+    : "inquiry";
+
   const updatedPricingBlob = serializeDiscoveryPricingBlob(
-    existingCall?.pricingNotes,
+    isUpdatingExistingLead ? existingCall?.pricingNotes : null,
     {
-      stage: priorJourney.stage || "inquiry",
+      stage: resolvedStage,
       isClosed: false,
-      discoveryState: priorJourney.discoveryState || "unscheduled",
-      discoveryOutcome: priorJourney.discoveryOutcome || "pending",
+      discoveryState: isUpdatingExistingLead
+        ? priorJourney.discoveryState || "unscheduled"
+        : "unscheduled",
+      discoveryOutcome: isUpdatingExistingLead
+        ? priorJourney.discoveryOutcome || "pending"
+        : "pending",
       concerns,
       desiredOutcome,
       preferredContactMethod: parent.preferredContactMethod || "Phone",
       availability: parent.availability || "",
-      originatingCallLogId: params.originatingCallLogId || priorJourney.originatingCallLogId || null,
-      nextAction: priorJourney.nextAction || {
+      originatingCallLogId:
+        params.originatingCallLogId || priorJourney.originatingCallLogId || null,
+      nextAction: (isUpdatingExistingLead && priorJourney.nextAction) || {
         label: "Schedule Discovery",
         dueDate: null,
         type: "schedule_discovery",
@@ -1110,11 +1125,20 @@ export async function createServiceInquiry(params: {
   if (existingCall) {
     const updatedFields = {
       contactId: parentContactId,
-      studentContactId: studentContactIds[0] || existingCall.studentContactId,
-      theirStoryNotes: existingCall.theirStoryNotes || concerns || null,
-      additionalNotes: params.callNotes
-        ? `${existingCall.additionalNotes ? existingCall.additionalNotes + "\n" : ""}${params.callNotes}`
-        : existingCall.additionalNotes,
+      studentContactId:
+        studentContactIds[0] ||
+        (isUpdatingExistingLead ? existingCall.studentContactId : null),
+      status: isUpdatingExistingLead ? existingCall.status || "Preparing" : "Preparing",
+      scheduledAt: isUpdatingExistingLead ? existingCall.scheduledAt : null,
+      theirStoryNotes:
+        (isUpdatingExistingLead ? existingCall.theirStoryNotes : null) ||
+        concerns ||
+        null,
+      additionalNotes: isUpdatingExistingLead
+        ? params.callNotes
+          ? `${existingCall.additionalNotes ? existingCall.additionalNotes + "\n" : ""}${params.callNotes}`
+          : existingCall.additionalNotes
+        : params.callNotes || null,
       pricingNotes: updatedPricingBlob,
     };
     await dbConn
@@ -1174,7 +1198,7 @@ export async function createServiceInquiry(params: {
     parentContactId,
     studentContactIds,
     students: studentRecords,
-    stage: (priorJourney.stage || "inquiry") as LeadStage,
+    stage: resolvedStage,
     confirmation: "Inquiry saved · Ready for discovery",
     confirmationText: "Inquiry saved · Ready for discovery",
   };
