@@ -654,9 +654,15 @@ export default function Automations() {
           setActiveView("edit");
         }
       } else if (requestedId && !selectedAutomation) {
-        const found = combined.find((m) => String(m.id) === requestedId);
+        const found = combined.find(
+          (m) =>
+            String(m.id) === requestedId ||
+            (requestedId === "showcase-not-yet" &&
+              m.name === "Not yet • Stay in touch")
+        );
         if (found) {
           setSelectedAutomation(found);
+          setActiveStepId(found.steps?.[0]?.id || null);
           setActiveView("edit");
         }
       } else if (!selectedAutomation) {

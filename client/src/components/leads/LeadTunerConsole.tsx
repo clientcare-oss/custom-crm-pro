@@ -1,10 +1,13 @@
 import React, { useEffect } from "react";
+import { Link } from "wouter";
 import {
+  ArrowRight,
   MoreHorizontal,
   Plus,
   Phone,
   Sparkles,
   UserPlus,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -86,13 +89,36 @@ interface LeadTunerConsoleProps {
 }
 
 function getInitials(name?: string): string {
-  const parts = String(name || "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const cleaned = String(name || "")
+    .replace(/^\[TEST\]\s*/i, "")
+    .replace(/\d{6,}/g, "")
+    .trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "FM";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return `${parts[0][0] || ""}${parts[parts.length - 1][0] || ""}`.toUpperCase();
+}
+
+function formatCrtStudentDisplay(raw?: string): string {
+  if (!raw) return "Student";
+  const cleanedList = Array.from(
+    new Set(
+      raw
+        .split(",")
+        .map((s) =>
+          s
+            .replace(/\d{6,}/g, "")
+            .replace(/\s+/g, " ")
+            .trim()
+        )
+        .filter(Boolean)
+    )
+  );
+  if (cleanedList.length === 0) return "Student";
+  if (cleanedList.length === 1) return cleanedList[0];
+  const joined = cleanedList.join(", ");
+  if (joined.length <= 20) return joined;
+  return `${cleanedList[0]} +${cleanedList.length - 1}`;
 }
 
 export function LeadTunerConsole({
@@ -162,118 +188,160 @@ export function LeadTunerConsole({
   return (
     <div className="w-full space-y-2.5" data-testid="lead-tuner-console">
       {/* ─── 1. TOP HEADER BAR: WAYPOINT CRM ——— Lead Center | + New inquiry ─── */}
-      <div className="flex items-center justify-between gap-3 px-2">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-          <span
-            className="text-[11px] sm:text-xs font-serif uppercase tracking-[0.24em] text-[#D8C7A5] whitespace-nowrap"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-          >
-            WAYPOINT CRM
-          </span>
-          <span
-            aria-hidden="true"
-            className="w-8 sm:w-16 h-[1px] bg-gradient-to-r from-[#C5A059]/40 via-[#DFBE77]/80 to-[#C5A059]/40 shrink-0"
-          />
-          <h1
-            className="text-2xl sm:text-[32px] font-bold tracking-tight text-white leading-none truncate"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-          >
-            Lead Center
-          </h1>
-        </div>
-
-        {/* Right Header Controls: + New inquiry (+ discreet 3-dot menu for Add Test Lead / Manage Forms) */}
-        <div className="flex items-center gap-2 shrink-0">
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                data-testid="lead-center-more-options-btn"
-                aria-label="More Lead Center options"
-                className="h-8 w-8 rounded-full bg-[#09152B]/80 hover:bg-[#12264A] border border-[#C5A059]/40 hover:border-[#FFE394]/70 text-[#D8C7A5] hover:text-[#FFE394] inline-flex items-center justify-center transition-all cursor-pointer"
-              >
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-60 bg-[#07162B] border border-[#3A2C18] text-[#FFF4D4] shadow-2xl"
+      <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between gap-3 px-2">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <span
+              className="text-[11px] sm:text-xs font-serif uppercase tracking-[0.24em] text-[#D8C7A5] whitespace-nowrap"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
             >
-              {onAddTestLead && (
-                <>
-                  <DropdownMenuItem
-                    data-testid="add-test-lead-menu-item"
-                    disabled={isAddingTestLead}
-                    onClick={onAddTestLead}
-                    className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2 font-semibold text-[#FFE394]"
-                  >
-                    <UserPlus className="w-3.5 h-3.5 text-[#DFBE77]" />
-                    <span>
-                      {isAddingTestLead ? "Adding Test Lead..." : "Add Test Lead"}
-                    </span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-[#3A2C18]/60" />
-                </>
-              )}
-              <DropdownMenuItem
-                onClick={() => onSelectStage("discovery")}
-                className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"
-              >
-                <Phone className="w-3.5 h-3.5 text-[#C5A059]" />
-                <span>Tune to Discovery Stage</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onManageForms}
-                className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" />
-                <span>Lead Forms & Intake Routing</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              WAYPOINT CRM
+            </span>
+            <span
+              aria-hidden="true"
+              className="w-8 sm:w-16 h-[1px] bg-gradient-to-r from-[#C5A059]/40 via-[#DFBE77]/80 to-[#C5A059]/40 shrink-0"
+            />
+            <h1
+              className="text-2xl sm:text-[32px] font-bold tracking-tight text-white leading-none truncate"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              Lead Center
+            </h1>
+          </div>
 
-          <button
-            type="button"
-            onClick={onNewInquiry}
-            data-testid="new-service-inquiry-btn"
-            className="h-9 px-5 rounded-full bg-gradient-to-b from-[#EAD08A] via-[#C89D4C] to-[#987026] hover:from-[#F3DC9B] hover:via-[#D5AA58] hover:to-[#A87D2E] text-[#07162B] font-serif font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 border border-[#FFE5A3]/85 shadow-[0_4px_14px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.5)] transition-all cursor-pointer"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>New inquiry</span>
-          </button>
+          {/* Right Header Controls: Follow-up automation link + New inquiry (+ discreet 3-dot menu) */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+            <Link
+              href="/automations?id=showcase-not-yet"
+              data-testid="header-followup-automation-link"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-serif italic text-[#DFBE77] hover:text-[#FFF4D4] underline decoration-[#C5A059]/60 underline-offset-4 transition-colors cursor-pointer whitespace-nowrap"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              <span>Follow-up automation</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  data-testid="lead-center-more-options-btn"
+                  aria-label="More Lead Center options"
+                  className="h-8 w-8 rounded-full bg-[#09152B]/80 hover:bg-[#12264A] border border-[#C5A059]/40 hover:border-[#FFE394]/70 text-[#D8C7A5] hover:text-[#FFE394] inline-flex items-center justify-center transition-all cursor-pointer"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-60 bg-[#07162B] border border-[#3A2C18] text-[#FFF4D4] shadow-2xl"
+              >
+                {onAddTestLead && (
+                  <>
+                    <DropdownMenuItem
+                      data-testid="add-test-lead-menu-item"
+                      disabled={isAddingTestLead}
+                      onClick={onAddTestLead}
+                      className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2 font-semibold text-[#FFE394]"
+                    >
+                      <UserPlus className="w-3.5 h-3.5 text-[#DFBE77]" />
+                      <span>
+                        {isAddingTestLead
+                          ? "Adding Test Lead..."
+                          : "Add Test Lead"}
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-[#3A2C18]/60" />
+                  </>
+                )}
+                <DropdownMenuItem
+                  onClick={() => onSelectStage("discovery")}
+                  className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"
+                >
+                  <Phone className="w-3.5 h-3.5 text-[#C5A059]" />
+                  <span>Tune to Discovery Stage</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={onManageForms}
+                  className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" />
+                  <span>Lead Forms & Intake Routing</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/automations?id=showcase-not-yet"
+                    className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2 flex items-center"
+                  >
+                    <Zap className="w-3.5 h-3.5 text-[#C5A059]" />
+                    <span>Edit Follow-up Automation</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <button
+              type="button"
+              onClick={onNewInquiry}
+              data-testid="new-service-inquiry-btn"
+              className="h-9 px-5 rounded-full bg-gradient-to-b from-[#EAD08A] via-[#C89D4C] to-[#987026] hover:from-[#F3DC9B] hover:via-[#D5AA58] hover:to-[#A87D2E] text-[#07162B] font-serif font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 border border-[#FFE5A3]/85 shadow-[0_4px_14px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.5)] transition-all cursor-pointer"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>New inquiry</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* ─── 2. PHOTOREALISTIC BRASS & NAVY CB RADIO CHASSIS WITH LIVE INTERACTIVE OVERLAYS ─── */}
-      <div className="relative w-full aspect-[1004/318] select-none">
-        {/* Base High-Res Radio Hardware Artwork (Switches cleanly between Browse Mode & Single-Client Mode) */}
-        <img
-          src={
-            isClientOpen
-              ? "/images/lead-center-radio-client-clean.png?v=2"
-              : "/images/lead-center-radio-chassis-clean.png?v=5"
-          }
-          alt="Waypoint Lead Center Radio Console"
-          draggable={false}
-          className="w-full h-full object-contain pointer-events-none block"
-        />
+      <div className="relative max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative w-full aspect-[1004/318] select-none">
+          {/* Base High-Res Radio Hardware Artwork (Switches cleanly between Browse Mode & Single-Client Mode) */}
+          <img
+            src={
+              isClientOpen
+                ? "/images/lead-center-radio-client-clean.png?v=2"
+                : "/images/lead-center-radio-chassis-clean.png?v=5"
+            }
+            alt="Waypoint Lead Center Radio Console"
+            draggable={false}
+            className="w-full h-full object-contain pointer-events-none block"
+            style={{
+              WebkitMaskImage:
+                "linear-gradient(to right, transparent 0%, black 1.7%, black 98.8%, transparent 100%)",
+              maskImage:
+                "linear-gradient(to right, transparent 0%, black 1.7%, black 98.8%, transparent 100%)",
+            }}
+          />
+
+          {/* Subtle bottom-left & bottom-right outer corner blend so side purple glow fades cleanly into navy outside the brass feet */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage: [
+                "radial-gradient(ellipse 6.2% 22% at 0% 94%, #000820 45%, transparent 100%)",
+                "radial-gradient(ellipse 6.5% 22% at 100% 94%, #000820 45%, transparent 100%)",
+              ].join(", "),
+            }}
+          />
 
         {/* ── DYNAMIC BRASS PLAQUES FOR SINGLE-CLIENT MODE ── */}
         {isClientOpen && (
           <>
-            {/* Top-Center Brass Plaque: "{FIRST_NAME}'S JOURNEY" */}
+            {/* Top-Center Brass Plaque: "{FIRST_NAME}'S JOURNEY" (Exact brass face: x 43.92%..71.91%, y 7.86%..15.09%) */}
             <div
-              className="absolute flex items-center justify-center pointer-events-none px-2"
+              className="absolute flex items-center justify-center pointer-events-none overflow-hidden px-4"
               style={{
-                left: "46.6%",
-                top: "9.1%",
-                width: "22.2%",
-                height: "7.8%",
+                left: "43.92%",
+                top: "7.86%",
+                width: "27.99%",
+                height: "7.23%",
               }}
             >
               <span
-                className="font-serif font-bold uppercase tracking-[0.22em] text-[#1C1204] drop-shadow-[0_1px_0_rgba(255,236,185,0.5)] truncate"
+                className="max-w-full font-serif font-bold uppercase tracking-[0.22em] pl-[0.22em] leading-none text-center text-[#1C1204] drop-shadow-[0_1px_0_rgba(255,236,185,0.5)] truncate"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
                   fontSize: "clamp(7px, 0.95vw, 12px)",
@@ -283,21 +351,21 @@ export function LeadTunerConsole({
               </span>
             </div>
 
-            {/* Bottom-Left Brass Plaque: "FAMILY WORKSPACE" */}
+            {/* Bottom-Left Brass Plaque: "FAMILY WORKSPACE" (Exact brass face: x 11.85%..27.39%, y 82.39%..87.11%) */}
             <div
-              className="absolute flex items-center justify-center pointer-events-none px-1"
+              className="absolute flex items-center justify-center pointer-events-none overflow-hidden px-2.5"
               style={{
-                left: "13.3%",
-                top: "83.6%",
-                width: "13.5%",
-                height: "6.0%",
+                left: "11.85%",
+                top: "82.39%",
+                width: "15.54%",
+                height: "4.72%",
               }}
             >
               <span
-                className="font-serif font-bold uppercase tracking-[0.15em] text-[#1C1204] drop-shadow-[0_1px_0_rgba(255,236,185,0.5)] whitespace-nowrap"
+                className="max-w-full font-serif font-bold uppercase tracking-[0.14em] pl-[0.14em] leading-none text-center text-[#1C1204] drop-shadow-[0_1px_0_rgba(255,236,185,0.5)] truncate"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(5.5px, 0.68vw, 8.5px)",
+                  fontSize: "clamp(5.5px, 0.65vw, 8.2px)",
                 }}
               >
                 FAMILY WORKSPACE
@@ -306,23 +374,23 @@ export function LeadTunerConsole({
           </>
         )}
 
-        {/* ── OVERLAY A: LEFT CRT SCREEN LIVE READOUT ── */}
+        {/* ── OVERLAY A: LEFT CRT SCREEN LIVE READOUT (STRICTLY SCOPED INSIDE INNER GLASS: x 8.4%..29.6%) ── */}
         {isClientOpen ? (
           /* SINGLE-CLIENT CRT VIEW ("NOW VIEWING" + Initials Circle + Parent + Student + Green Status Dot) */
           <div
-            className="absolute flex flex-col items-center justify-between text-center pointer-events-none px-2"
+            className="absolute flex flex-col items-center justify-between text-center pointer-events-none overflow-hidden px-2"
             style={{
-              left: "6.8%",
+              left: "8.4%",
               top: "15.2%",
-              width: "24.5%",
+              width: "21.2%",
               height: "64.2%",
             }}
           >
             {/* Top Header: —— NOW VIEWING —— */}
-            <div className="w-full flex items-center justify-center gap-1.5">
-              <span className="w-5 sm:w-7 h-[1px] bg-gradient-to-r from-transparent to-[#CBD5E1]/70" />
+            <div className="w-full min-w-0 overflow-hidden flex items-center justify-center gap-1.5">
+              <span className="w-4 sm:w-6 h-[1px] bg-gradient-to-r from-transparent to-[#CBD5E1]/70 shrink-0" />
               <span
-                className="font-serif uppercase tracking-[0.18em] text-[#E2E8F0] whitespace-nowrap"
+                className="font-serif uppercase tracking-[0.18em] text-[#E2E8F0] whitespace-nowrap truncate"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
                   fontSize: "clamp(6.5px, 0.78vw, 10px)",
@@ -330,7 +398,7 @@ export function LeadTunerConsole({
               >
                 NOW VIEWING
               </span>
-              <span className="w-5 sm:w-7 h-[1px] bg-gradient-to-l from-transparent to-[#CBD5E1]/70" />
+              <span className="w-4 sm:w-6 h-[1px] bg-gradient-to-l from-transparent to-[#CBD5E1]/70 shrink-0" />
             </div>
 
             {/* Circular Initials Ring (EV) */}
@@ -347,14 +415,18 @@ export function LeadTunerConsole({
             </div>
 
             {/* Parent Name + PARENT Label */}
-            <div className="flex flex-col items-center leading-none">
+            <div className="w-full min-w-0 overflow-hidden px-1 flex flex-col items-center leading-none">
               <div
                 data-testid="radio-channel-display"
-                className="font-serif font-bold text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] line-clamp-2"
+                title={openedClientName || "Family Inquiry"}
+                className="w-full max-w-full truncate font-serif font-bold text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(11px, 1.8vw, 22px)",
-                  lineHeight: 1.04,
+                  fontSize:
+                    (openedClientName || "").length > 16
+                      ? "clamp(9.5px, 1.35vw, 17px)"
+                      : "clamp(11px, 1.7vw, 21px)",
+                  lineHeight: 1.08,
                 }}
               >
                 {openedClientName || "Family Inquiry"}
@@ -371,18 +443,20 @@ export function LeadTunerConsole({
             </div>
 
             {/* Horizontal Divider */}
-            <div className="w-[78%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/45 to-transparent" />
+            <div className="w-[78%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/45 to-transparent shrink-0" />
 
             {/* Student Name + STUDENT Label */}
-            <div className="flex flex-col items-center leading-none">
+            <div className="w-full min-w-0 overflow-hidden px-1 flex flex-col items-center leading-none">
               <div
-                className="font-serif italic text-[#F1F5F9] drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] truncate max-w-full"
+                title={openedClientStudentName || "Student"}
+                className="w-full max-w-full truncate font-serif italic text-[#F1F5F9] drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)]"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(9px, 1.25vw, 15.5px)",
+                  fontSize: "clamp(8.5px, 1.15vw, 14.5px)",
+                  lineHeight: 1.12,
                 }}
               >
-                {openedClientStudentName || "Student"}
+                {formatCrtStudentDisplay(openedClientStudentName)}
               </div>
               <span
                 className="mt-0.5 font-serif uppercase tracking-[0.22em] text-[#CBD5E1]/85"
@@ -396,16 +470,16 @@ export function LeadTunerConsole({
             </div>
 
             {/* Horizontal Divider */}
-            <div className="w-[70%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent" />
+            <div className="w-[70%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent shrink-0" />
 
             {/* Green Glowing Status Dot + Sub-Status Label */}
-            <div className="flex items-center justify-center gap-1.5">
+            <div className="w-full min-w-0 overflow-hidden px-1 flex items-center justify-center gap-1.5">
               <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#4ADE80] shadow-[0_0_8px_#4ADE80,0_0_12px_#22C55E] shrink-0" />
               <span
-                className="font-serif italic text-[#F1F5F9] leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] whitespace-nowrap"
+                className="max-w-full truncate font-serif italic text-[#F1F5F9] leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(8px, 1.05vw, 13px)",
+                  fontSize: "clamp(8px, 1.0vw, 12.5px)",
                 }}
               >
                 {openedClientStatusLabel || "Intake received"}
@@ -415,35 +489,35 @@ export function LeadTunerConsole({
         ) : (
           /* BROWSE ALL FAMILIES CRT VIEW */
           <div
-            className="absolute flex flex-col items-center justify-between text-center pointer-events-none px-1"
+            className="absolute flex flex-col items-center justify-between text-center pointer-events-none overflow-hidden px-2"
             style={{
-              left: "6.8%",
+              left: "8.4%",
               top: "38.2%",
-              width: "24.5%",
+              width: "21.2%",
               height: "39.0%",
             }}
           >
             {/* Active Stage Title */}
             <div
               data-testid="radio-channel-display"
-              className="font-serif font-bold text-white leading-none tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] whitespace-nowrap"
+              className="w-full max-w-full truncate font-serif font-bold text-white leading-none tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
               style={{
                 fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(13px, 2.55vw, 31px)",
+                fontSize: "clamp(13px, 2.35vw, 29px)",
               }}
             >
               {activeStageMeta.label}
             </div>
 
             {/* Top Horizontal Divider */}
-            <div className="w-[82%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/55 to-transparent" />
+            <div className="w-[82%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/55 to-transparent shrink-0" />
 
             {/* Live Family Count */}
             <div
-              className="font-serif italic text-[#F1F5F9] leading-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)] whitespace-nowrap"
+              className="w-full max-w-full truncate font-serif italic text-[#F1F5F9] leading-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]"
               style={{
                 fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(10px, 1.8vw, 22px)",
+                fontSize: "clamp(10px, 1.75vw, 21px)",
               }}
             >
               {activeStageCount}{" "}
@@ -451,14 +525,14 @@ export function LeadTunerConsole({
             </div>
 
             {/* Bottom Horizontal Divider */}
-            <div className="w-[70%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent" />
+            <div className="w-[70%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent shrink-0" />
 
             {/* Subtitle */}
             <div
-              className="font-serif italic text-[#CBD5E1] leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] whitespace-nowrap"
+              className="w-full max-w-full truncate font-serif italic text-[#CBD5E1] leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
               style={{
                 fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(8px, 1.15vw, 14px)",
+                fontSize: "clamp(8px, 1.1vw, 13.5px)",
               }}
             >
               Open a family below
@@ -600,32 +674,25 @@ export function LeadTunerConsole({
                 className="absolute -top-2.5 sm:-top-3.5 -translate-x-1/2 flex flex-col items-center transition-all duration-300 motion-reduce:transition-none ease-out"
                 style={{ left: `${activeStageMeta.needlePercent}%` }}
               >
-                {!isClientOpen && (
-                  <div className="w-[2px] sm:w-[2.5px] h-2.5 sm:h-3.5 rounded-full bg-gradient-to-b from-[#FFFDF5] via-[#FFE394] to-[#E5A93C] shadow-[0_0_8px_#FFE394,0_0_14px_#F59E0B]" />
-                )}
-                <div
-                  className={cn(
-                    "w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full bg-gradient-to-b from-[#FFFDF5] via-[#FFE394] to-[#B87D1E] border border-[#FFF6D6] shadow-[0_0_12px_#FFE394,0_0_20px_#F59E0B]",
-                    !isClientOpen ? "-mt-0.5" : "mt-1.5 sm:mt-2"
-                  )}
-                />
+                <div className="w-[2px] sm:w-[2.5px] h-2.5 sm:h-3.5 rounded-full bg-gradient-to-b from-[#FFFDF5] via-[#FFE394] to-[#E5A93C] shadow-[0_0_8px_#FFE394,0_0_14px_#F59E0B]" />
+                <div className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 -mt-0.5 rounded-full bg-gradient-to-b from-[#FFFDF5] via-[#FFE394] to-[#B87D1E] border border-[#FFF6D6] shadow-[0_0_12px_#FFE394,0_0_20px_#F59E0B]" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── OVERLAY C: STATUS PILL (`x: 36.8%..74.2%, y: 56.8%..65.4%`) ── */}
+        {/* ── OVERLAY C: STATUS PILL (Exact inner recessed face: x 37.15%..75.30%, y 55.66%..64.15%) ── */}
         <div
-          className="absolute flex items-center justify-center gap-2 pointer-events-none"
+          className="absolute flex items-center justify-center gap-2 pointer-events-none overflow-hidden px-3"
           style={{
-            left: "36.8%",
-            top: "56.8%",
-            width: "37.4%",
-            height: "8.6%",
+            left: "37.15%",
+            top: "55.66%",
+            width: "38.15%",
+            height: "8.49%",
           }}
         >
           <span
-            className="font-serif uppercase tracking-[0.22em] text-[#D8C7A5]"
+            className="font-serif uppercase tracking-[0.22em] leading-none text-[#D8C7A5] shrink-0"
             style={{
               fontFamily: "'Playfair Display', Georgia, serif",
               fontSize: "clamp(7px, 0.9vw, 11px)",
@@ -634,7 +701,7 @@ export function LeadTunerConsole({
             {isClientOpen ? "NEXT:" : "VIEWING:"}
           </span>
           <span
-            className="font-serif italic font-semibold text-[#FFF4D4]"
+            className="min-w-0 truncate font-serif italic font-semibold leading-none text-[#FFF4D4] -mt-[1px]"
             style={{
               fontFamily: "'Playfair Display', Georgia, serif",
               fontSize: "clamp(9px, 1.25vw, 15.5px)",
@@ -687,21 +754,22 @@ export function LeadTunerConsole({
           />
         </button>
 
-        {/* Right Step Button `▶` */}
-        <button
-          type="button"
-          onClick={() => handleStepStage(1)}
-          aria-label="Next stage"
-          data-testid="radio-next-stage-btn"
-          title="Next Stage (Arrow Right)"
-          className="absolute rounded-full hover:ring-2 hover:ring-[#FFE394]/80 focus:outline-hidden cursor-pointer transition-all"
-          style={{
-            left: "87.5%",
-            top: "33.5%",
-            width: "2.9%",
-            height: "9.2%",
-          }}
-        />
+          {/* Right Step Button `▶` */}
+          <button
+            type="button"
+            onClick={() => handleStepStage(1)}
+            aria-label="Next stage"
+            data-testid="radio-next-stage-btn"
+            title="Next Stage (Arrow Right)"
+            className="absolute rounded-full hover:ring-2 hover:ring-[#FFE394]/80 focus:outline-hidden cursor-pointer transition-all"
+            style={{
+              left: "87.5%",
+              top: "33.5%",
+              width: "2.9%",
+              height: "9.2%",
+            }}
+          />
+        </div>
       </div>
     </div>
   );
