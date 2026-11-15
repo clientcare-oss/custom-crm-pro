@@ -27,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 import {
+  CENSUS_TRACT_SPED_GUARDRAIL_DISCLAIMER,
   DEFAULT_SATELLITE_IMAGERY_CONFIG,
   DEFAULT_SCORING_WEIGHTS,
   DEMO_COUNTY_CALIBRATION_BY_FIPS,
@@ -42,9 +43,11 @@ import {
   type ChoroplethMeasureKey,
   type FamilyPriorityKey,
   type MapLayerKey,
+  type PillarMetrics,
   type PlaceCommunityRecord,
   type PlacesCategoryTab,
   type PlacesMapDisplayMode,
+  type PlaceSubCountyTractRecord,
   type SpecializedFacilityCategory,
   type SpecializedFacilityRecord,
 } from "../../../shared/waypointPlaces";
@@ -223,21 +226,15 @@ export default function WaypointPlaces() {
     };
   }, []);
 
-  // Lock page-level document scrolling while Waypoint Places is active in full-map exploration mode,
-  // and restore normal document scrolling immediately upon leaving Waypoint Places.
+  // Ensure page-level document scrolling is unlocked so users can smoothly scroll down
+  // beside the map or below the map without cards overlapping.
   useEffect(() => {
     if (typeof document === "undefined") return;
     const htmlEl = document.documentElement;
     const bodyEl = document.body;
-    const prevHtmlOverflowY = htmlEl.style.overflowY;
-    const prevBodyOverflowY = bodyEl.style.overflowY;
-    htmlEl.style.overflowY = "hidden";
-    bodyEl.style.overflowY = "hidden";
+    htmlEl.style.overflowY = "";
+    bodyEl.style.overflowY = "";
     window.scrollTo(0, 0);
-    return () => {
-      htmlEl.style.overflowY = prevHtmlOverflowY;
-      bodyEl.style.overflowY = prevBodyOverflowY;
-    };
   }, []);
 
   const communities = snapshot?.communities?.length
@@ -255,60 +252,72 @@ export default function WaypointPlaces() {
   // Active Category Tab ("communities" | "schools" | "housing" | "family_life")
   const [categoryTab, setCategoryTab] = useState<PlacesCategoryTab>("communities");
 
-  // Contextual Slide-Out Drawers: Closed by default so the Map fills 80–88%+ of the available content area
-  const [leftPanelOpen, setLeftPanelOpen] = useState(false);
-  const [rightPanelOpen, setRightPanelOpen] = useState(false);
+  // Below-Map Sections: Open by default BELOW the map so the map stays 100% unobstructed and users can scroll down!
+  const [leftPanelOpen, setLeftPanelOpen] = useState(true);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
 
   // Compact, dismissible 50-state IEP continuity strip
   const [iepBannerDismissed, setIepBannerDismissed] = useState(false);
 
-  // Selected Georgia Community (defaults to Forsyth County, GA - FIPS 13117)
-  const [selectedFips, setSelectedFips] = useState<string>("13117");
+  // Selected Georgia Community (respects ?fips= query param or defaults to Cobb County, GA - FIPS 13067)
+  const [selectedFips, setSelectedFips] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const fipsParam = new URLSearchParams(window.location.search).get("fips");
+      if (fipsParam && /^\d{5}$/.test(fipsParam)) return fipsParam;
+    }
+    return "13067";
+  });
   const [dynamicCountyOverride, setDynamicCountyOverride] = useState<{
     fips: string;
     name: string;
     coordinates: [number, number];
   } | null>(null);
 
-  // "Find Your Fit" checkboxes & committed priorities
+  // "Find Your Fit" checkboxes & committed priorities (defaults to verified ACS/NCES pillars)
   const [draftPriorities, setDraftPriorities] = useState<FamilyPriorityKey[]>([
-    "academics",
-    "specializedPrograms",
-    "safetyWellBeing",
+    "affordability",
+    "familyLifestyle",
+    "commute",
   ]);
   const [appliedPriorities, setAppliedPriorities] = useState<FamilyPriorityKey[]>([
-    "academics",
-    "specializedPrograms",
-    "safetyWellBeing",
+    "affordability",
+    "familyLifestyle",
+    "commute",
   ]);
 
-  // Map Layers state (Community hub markers default to false so actual polygon choropleth boundaries are primary)
+  // Map Layers state: Default to clean county boundaries (zero pin clutter on initial load).
+  // Parents & elders can turn on Schools, Therapy & Doctors, or Specialized Programs with 1 click.
   const [activeLayers, setActiveLayers] = useState<Record<MapLayerKey, boolean>>({
     school_districts: true,
     community_scores: false,
     school_locations: false,
-    specialized_residential: true,
+    specialized_residential: false,
+    therapy_providers: false,
     neighborhoods: false,
     parks_recreation: false,
   });
 
-  // Choropleth Measure & Granularity state
+  // Selected sub-county Census Tract (11-digit GEOID) for neighborhood-level inspection
+  const [selectedTract, setSelectedTract] = useState<PlaceSubCountyTractRecord | null>(null);
+
+  // Choropleth Measure & Granularity state (defaults to verified Affordability indicator)
   const [choroplethMeasure, setChoroplethMeasure] =
-    useState<ChoroplethMeasureKey>("communityQuality");
+    useState<ChoroplethMeasureKey>("affordability");
   const [granularityMode, setGranularityMode] =
     useState<ChoroplethGranularityMode>("auto");
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [savedFipsList, setSavedFipsList] = useState<string[]>(["13117"]);
+  const [savedFipsList, setSavedFipsList] = useState<string[]>(["13067", "13117"]);
 
   /**
-   * SCORING INTEGRITY + CHOROPLETH DEMONSTRATION GUARDRAIL:
-   * Clearly badged Fictional Calibration Demo scores are enabled by default during
-   * development so geographic polygon score shading is immediately active, while
-   * unscored counties (~117 in GA) and states show as "No Verified Data".
-   * Turning off "Demo Scores" immediately switches 100% of polygons to "No Verified Data".
+   * SCORING INTEGRITY GUARDRAIL:
+   * Real Verified Data Mode (`showModelCalibration = false`) is the default experience.
+   * Only verified public sources (U.S. Census Bureau ACS 5-Year + NCES CCD) drive map shading
+   * and scores by default, while unimported pillars (GOSA CCRPI Academics, FBI Safety) remain
+   * strictly `null` ("Unavailable / Source Pending"). Staff or users may explicitly opt into
+   * `Demo Scores` (`showModelCalibration = true`) to preview synthetic 6-pillar calibration.
    */
-  const [showModelCalibration, setShowModelCalibration] = useState<boolean>(true);
+  const [showModelCalibration, setShowModelCalibration] = useState<boolean>(false);
 
   // Modals / Drawers for Compare, Score Details, Rights & Accountability, Specialized & Residential, and Staff Places Studio
   const [compareOpen, setCompareOpen] = useState(false);
@@ -396,34 +405,47 @@ export default function WaypointPlaces() {
     };
   }, [communities, selectedFips, dynamicCountyOverride]);
 
-  const isVerifiedSource = selectedCommunity.dataStatus === "verified_public_source";
+  const isVerifiedSource =
+    selectedCommunity.dataStatus === "verified_public_source" ||
+    Boolean(selectedCommunity.verifiedPillars);
   const canShowScores = isVerifiedSource || showModelCalibration;
+
+  const activeScoringPillars: PillarMetrics = useMemo(() => {
+    if (showModelCalibration) {
+      return selectedCommunity.calibrationPillars;
+    }
+    return (
+      selectedCommunity.verifiedPillars || {
+        communityQuality: null,
+        academics: null,
+        specializedPrograms: null,
+        safetyWellBeing: null,
+        familyLifestyle: null,
+        affordability: null,
+        commute: null,
+      }
+    );
+  }, [showModelCalibration, selectedCommunity]);
 
   const communityQualityScore = useMemo(() => {
     if (!canShowScores) return null;
     return (
-      selectedCommunity.calibrationPillars.communityQuality ??
-      computeCommunityQualityScore(selectedCommunity.calibrationPillars, weights)
+      activeScoringPillars.communityQuality ??
+      computeCommunityQualityScore(activeScoringPillars, weights)
     );
-  }, [selectedCommunity, weights, canShowScores]);
+  }, [activeScoringPillars, weights, canShowScores]);
 
   const familyFitScore = useMemo(() => {
     if (!canShowScores) return null;
-    if (
-      selectedCommunity.fips === "13117" &&
-      appliedPriorities.length === 3 &&
-      appliedPriorities.includes("academics") &&
-      appliedPriorities.includes("specializedPrograms") &&
-      appliedPriorities.includes("safetyWellBeing")
-    ) {
-      return 94;
-    }
-    return computeFamilyFitScore(
-      selectedCommunity.calibrationPillars,
+    const directFit = computeFamilyFitScore(
+      activeScoringPillars,
       appliedPriorities,
       weights
     );
-  }, [selectedCommunity, appliedPriorities, weights, canShowScores]);
+    if (directFit !== null) return directFit;
+    // If the user selected only unimported pillars in Verified Mode, return null ("No Verified Data for Selected Pillars")
+    return null;
+  }, [activeScoringPillars, appliedPriorities, weights, canShowScores]);
 
   const handleTogglePriority = (key: FamilyPriorityKey) => {
     setDraftPriorities((prev) =>
@@ -494,6 +516,7 @@ export default function WaypointPlaces() {
     center?: [number, number]
   ) => {
     setSelectedFips(fips);
+    setSelectedTract(null);
     if (fallbackName) {
       setDynamicCountyOverride({
         fips,
@@ -501,6 +524,59 @@ export default function WaypointPlaces() {
         coordinates: center || [-83.45, 32.85],
       });
     }
+  };
+
+  // Sub-county Census Tracts, TIGERweb LEA Boundaries, and CMS NPPES NPI Therapy Providers for active county
+  const { data: neighborhoodTractsData } =
+    trpc.waypointPlaces.getCountyNeighborhoodTracts.useQuery(
+      { countyFips5: selectedCommunity.fips },
+      { enabled: Boolean(selectedCommunity.fips) }
+    );
+
+  const subCountyTracts = useMemo(
+    () => neighborhoodTractsData?.tracts ?? [],
+    [neighborhoodTractsData?.tracts]
+  );
+  const schoolDistrictBoundaries = useMemo(
+    () =>
+      neighborhoodTractsData?.schoolDistrictBoundaries ??
+      snapshot?.schoolDistrictBoundaries ??
+      [],
+    [neighborhoodTractsData?.schoolDistrictBoundaries, snapshot?.schoolDistrictBoundaries]
+  );
+  const allTherapyProviders = useMemo(
+    () =>
+      snapshot?.therapyProviders ??
+      neighborhoodTractsData?.therapyProviders ??
+      [],
+    [snapshot?.therapyProviders, neighborhoodTractsData?.therapyProviders]
+  );
+  const countyTherapyProviders = useMemo(
+    () =>
+      allTherapyProviders.filter((p) => p.countyFips5 === selectedCommunity.fips),
+    [allTherapyProviders, selectedCommunity.fips]
+  );
+
+  // Haversine distance helper in miles from the active neighborhood tract (or county centroid)
+  const activeReferenceCoords: [number, number] = useMemo(
+    () => selectedTract?.centroid ?? selectedCommunity.coordinates,
+    [selectedTract, selectedCommunity.coordinates]
+  );
+
+  const computeDistanceMiles = (targetCoords: [number, number]): number => {
+    const [lon1, lat1] = activeReferenceCoords;
+    const [lon2, lat2] = targetCoords;
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const R = 3958.8; // Earth radius in miles
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    return Number((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1));
   };
 
   const isSaved = savedFipsList.includes(selectedCommunity.fips);
@@ -539,189 +615,79 @@ export default function WaypointPlaces() {
       <div
         data-testid="waypoint-places-workspace"
         data-focus-mode={String(focusMode)}
-        className={`${crmSidebar ? "h-full max-h-full" : "h-svh max-h-svh"} flex-1 min-h-0 w-full max-w-full overflow-hidden bg-[#000820] text-[#F4F6FB] flex flex-col gap-1.5 p-2 select-none`}
+        className={`${crmSidebar ? "h-full max-h-full" : "h-svh max-h-svh"} flex-1 min-h-0 w-full max-w-full overflow-y-auto bg-[#0C213E] text-[#FFF8E7] flex flex-col gap-3.5 p-3.5 select-none custom-scrollbar`}
         style={{
           background:
-            "radial-gradient(ellipse at 50% 0%, rgba(28, 56, 118, 0.35) 0%, #020B26 48%, #000820 100%)",
+            "radial-gradient(ellipse at 50% 0%, #1E4478 0%, #10294C 48%, #091830 100%)",
         }}
       >
         {/* ================================================================= */}
-        {/* 1. COMPACT NAVIGATION BAR (Map-First Header · No inline Page ID)  */}
+        {/* 1. FLAGSHIP CENTERPIECE MASTHEAD (Larger Title + Moving Truck)    */}
         {/* ================================================================= */}
-        <header className="flex flex-wrap items-center justify-between gap-2 px-1 py-1 border-b border-[#1D2F52]/80 shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <CompassRoseEmblem />
-            <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 min-w-0">
-              <h1
-                className="text-base sm:text-lg font-bold tracking-[0.06em] text-[#F4F6FB] leading-none"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              >
-                WAYPOINT PLACES
-              </h1>
-              <p
-                className="hidden sm:inline text-xs text-[#CBD5E1] tracking-wide"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              >
-                Find a place where your family can thrive.
-              </p>
+        <header className="relative overflow-hidden rounded-2xl bg-[#000F26] border-2 border-[#DFBE77]/80 px-5 py-2.5 shadow-[0_14px_34px_rgba(0,0,0,0.78),0_0_26px_rgba(223,190,119,0.2),inset_0_1px_1px_rgba(255,244,212,0.32)] shrink-0">
+          {/* Subtle Top Gold Filigree Shimmer Line */}
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-[2px] z-20"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent 5%, #FFE394 35%, #FFF8E7 50%, #FFE394 65%, transparent 95%)",
+            }}
+          />
+
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 items-center gap-4">
+            {/* Left (lg:col-span-4): High-Impact Flagship Title */}
+            <div className="lg:col-span-4 flex items-center gap-4 min-w-0">
+              <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-gradient-to-b from-[#173A70] to-[#081730] border-2 border-[#FFE394]/85 shadow-[0_6px_18px_rgba(0,0,0,0.75),0_0_18px_rgba(255,227,148,0.3),inset_0_1px_1px_rgba(255,255,255,0.28)] flex items-center justify-center shrink-0">
+                <CompassRoseEmblem />
+              </div>
+
+              <div className="min-w-0">
+                <h1
+                  className="text-3xl sm:text-4xl xl:text-[42px] font-bold tracking-[0.02em] bg-gradient-to-b from-[#FFFFFF] via-[#FFF4D4] to-[#E5C170] bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(255,227,148,0.32)] leading-[1.05]"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  Waypoint Places
+                </h1>
+                <p className="text-xs sm:text-sm text-[#EADBC0] font-medium mt-1 leading-snug">
+                  Find a community where your child’s education and your family can thrive.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            {/* Restore 50-State IEP Continuity Strip if dismissed */}
-            {iepBannerDismissed && (
-              <button
-                type="button"
-                data-testid="restore-iep-banner-btn"
-                onClick={() => setIepBannerDismissed(false)}
-                className="px-2 py-1 rounded-lg bg-[#040E26] border border-[#D4AF63]/40 text-[10.5px] text-[#F3D68B] hover:bg-[#0D2149] flex items-center gap-1 cursor-pointer"
-                title="Show 50-State IEP Continuity Message"
+            {/* Center (lg:col-span-4): Transparent Waypoint Moving Truck & 50-State Route Object */}
+            <div className="lg:col-span-4 relative h-[155px] sm:h-[176px] w-full flex items-center justify-center">
+              <img
+                src="/assets/waypoint-moving-truck-hero.png?v=3"
+                alt="Waypoint Moving Truck traveling across the 50 states between family homes"
+                className="max-h-full max-w-full h-full w-auto object-contain select-none pointer-events-none"
+              />
+            </div>
+
+            {/* Right (lg:col-span-4): Integrated Beveled 50-State IEP Continuity Card */}
+            {!iepBannerDismissed && (
+              <div
+                data-testid="iep-50-states-banner"
+                className="lg:col-span-4 relative rounded-2xl bg-gradient-to-b from-[#081A38] via-[#05122A] to-[#030B1D] border-2 border-[#18335E] px-5 py-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(147,197,253,0.2)]"
               >
-                <Sparkles className="h-3 w-3 text-[#D4AF63]" />
-                <span>50-State IEP</span>
-              </button>
+                <div className="w-11 h-[3px] rounded-full bg-[#DFB468] mb-2" />
+                <p className="text-base sm:text-lg font-medium text-[#F8FAFC] leading-snug tracking-[-0.01em]">
+                  Did you know your child’s IEP follows them{" "}
+                  <span className="text-[#DFB468] font-semibold">to any state</span>, and so does{" "}
+                  <span className="text-[#DFB468] font-semibold">Waypoint</span>?
+                </p>
+                <p className="text-xs sm:text-sm text-[#8CAAD0] font-normal mt-1">
+                  Supporting your family in all 50 states.
+                </p>
+              </div>
             )}
-
-            {/* Temporary CRM Focus Mode (Collapses CRM Sidebar & Restores on Exit/Unmount) */}
-            <button
-              type="button"
-              data-testid="places-focus-mode-btn"
-              onClick={handleToggleFocusMode}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
-                focusMode
-                  ? "bg-[#142E61] text-[#F3D68B] border-[#D4AF63]/70"
-                  : "bg-[#040E26] text-[#CBD5E1] border-[#24355A] hover:text-white hover:bg-[#0B1F44]"
-              }`}
-              title={
-                focusMode
-                  ? "Exit Focus Mode and restore CRM sidebar"
-                  : "Enter Focus Mode (temporarily collapse CRM sidebar for maximum map room)"
-              }
-            >
-              {focusMode ? (
-                <Minimize2 className="h-3.5 w-3.5 text-[#D4AF63]" />
-              ) : (
-                <Maximize2 className="h-3.5 w-3.5 text-[#D4AF63]" />
-              )}
-              <span>{focusMode ? "Exit Focus" : "Focus Mode"}</span>
-            </button>
-
-            {/* Primary Navigation */}
-            <nav className="flex flex-wrap items-center divide-x divide-[#1D2F52] rounded-lg bg-[#040E26] border border-[#24355A] overflow-hidden shadow-md">
-              <button
-                type="button"
-                data-testid="nav-explore-btn"
-                onClick={() => {
-                  setCompareOpen(false);
-                  setScoreDetailsOpen(false);
-                }}
-                className="px-2.5 py-1 flex items-center gap-1.5 text-[11px] text-[#F3D68B] bg-[#0B1F44] hover:bg-[#102956] transition-colors cursor-pointer"
-              >
-                <Compass className="h-3.5 w-3.5 text-[#D4AF63]" />
-                <span>Explore</span>
-              </button>
-              <button
-                type="button"
-                data-testid="nav-compare-btn"
-                onClick={() => setCompareOpen(true)}
-                className="px-2.5 py-1 flex items-center gap-1.5 text-[11px] text-[#CBD5E1] hover:text-white hover:bg-[#0B1F44]/60 transition-colors cursor-pointer"
-              >
-                <Scale className="h-3.5 w-3.5 text-[#D4AF63]" />
-                <span>Compare</span>
-              </button>
-              <button
-                type="button"
-                data-testid="nav-score-details-btn"
-                onClick={() => setScoreDetailsOpen(true)}
-                className="px-2.5 py-1 flex items-center gap-1.5 text-[11px] text-[#CBD5E1] hover:text-white hover:bg-[#0B1F44]/60 transition-colors cursor-pointer"
-              >
-                <FileBarChart2 className="h-3.5 w-3.5 text-[#D4AF63]" />
-                <span>Score Details</span>
-              </button>
-              <button
-                type="button"
-                data-testid="nav-rights-accountability-btn"
-                onClick={() => setRightsModalOpen(true)}
-                className="px-2.5 py-1 flex items-center gap-1.5 text-[11px] text-[#F3D68B] hover:text-white hover:bg-[#0B1F44]/60 transition-colors cursor-pointer"
-              >
-                <Shield className="h-3.5 w-3.5 text-[#D4AF63]" />
-                <span>Rights & Accountability</span>
-              </button>
-              <button
-                type="button"
-                data-testid="nav-specialized-residential-btn"
-                onClick={() => handleOpenSpecializedModal("all")}
-                className="px-2.5 py-1 flex items-center gap-1.5 text-[11px] text-[#F3D68B] hover:text-white hover:bg-[#0B1F44]/60 transition-colors cursor-pointer"
-              >
-                <Hospital className="h-3.5 w-3.5 text-[#D4AF63]" />
-                <span>Specialized & Residential</span>
-              </button>
-              <button
-                type="button"
-                data-testid="nav-save-share-btn"
-                onClick={() => {
-                  const shareUrl = `${window.location.origin}/tools/waypoint-places?fips=${selectedCommunity.fips}`;
-                  navigator.clipboard.writeText(shareUrl);
-                  toast.success(`Copied ${selectedCommunity.name} link to clipboard`);
-                }}
-                className="px-2.5 py-1 flex items-center gap-1.5 text-[11px] text-[#CBD5E1] hover:text-white hover:bg-[#0B1F44]/60 transition-colors cursor-pointer"
-              >
-                <Bookmark className="h-3.5 w-3.5 text-[#D4AF63]" />
-                <span>Save & Share</span>
-              </button>
-              <button
-                type="button"
-                data-testid="nav-places-studio-btn"
-                onClick={() => setStudioOpen(true)}
-                className="px-2.5 py-1 flex items-center gap-1.5 text-[11px] text-[#93C5FD] hover:text-white hover:bg-[#0B1F44]/60 transition-colors cursor-pointer"
-              >
-                <Sliders className="h-3.5 w-3.5 text-[#93C5FD]" />
-                <span>Places Studio</span>
-              </button>
-            </nav>
           </div>
         </header>
 
-        {/* Compact, Dismissible 50-State IEP Continuity Strip */}
-        {!iepBannerDismissed && (
-          <div
-            data-testid="iep-50-states-banner"
-            className="rounded-lg bg-[#040E26]/95 border border-[#D4AF63]/40 px-3 py-1 shadow-[0_4px_14px_rgba(0,0,0,0.55)] flex items-center justify-between gap-2 shrink-0"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Sparkles className="h-3.5 w-3.5 text-[#F3D68B] shrink-0" />
-              <p className="text-[11.5px] sm:text-xs text-[#F4F6FB] truncate">
-                <span className="font-semibold text-[#F3D68B]">
-                  Did you know your child’s IEP follows them, and so does Waypoint?
-                </span>{" "}
-                <span className="text-[#CBD5E1]">
-                  Supporting your family in all 50 states.
-                </span>
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded-full bg-[#0B1F44] border border-[#2A3F6A] text-[10px] font-medium text-[#93C5FD]">
-                Nationwide Advocacy Continuity
-              </span>
-              <button
-                type="button"
-                data-testid="dismiss-iep-banner-btn"
-                onClick={() => setIepBannerDismissed(true)}
-                className="p-0.5 rounded text-[#94A3B8] hover:text-white hover:bg-[#10254D] cursor-pointer"
-                title="Dismiss 50-state banner"
-                aria-label="Dismiss 50-state IEP continuity strip"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* ================================================================= */}
-        {/* 2. FULL-MAP WORKSPACE (80–90% Content Area + Slide-Out Drawers)   */}
+        {/* 2. CLEAN MAP WORKSPACE + BELOW-MAP SCROLLABLE ADMIRALTY GUIDE     */}
         {/* ================================================================= */}
-        <div className="relative flex-1 min-h-0 w-full flex flex-col overflow-hidden rounded-xl">
-          {/* Primary Full-Viewport MapLibre + Vector Choropleth Environment */}
+        <div className="w-full flex flex-col gap-4 pb-12 shrink-0">
+          {/* Primary MapLibre + Vector Choropleth Environment + Right Scroll Rail + Below-Map Shading Deck */}
           <GeorgiaMapCanvas
             communities={communities}
             schoolDistricts={schoolDistricts}
@@ -754,60 +720,62 @@ export default function WaypointPlaces() {
             onToggleModelCalibration={setShowModelCalibration}
             specializedFacilities={specializedSnapshot?.facilities ?? []}
             onOpenSpecializedExplorer={handleOpenSpecializedModal}
+            subCountyTracts={subCountyTracts}
+            schoolDistrictBoundaries={schoolDistrictBoundaries}
+            therapyProviders={allTherapyProviders}
+            selectedTractGeoid={selectedTract?.geoid11 ?? null}
+            onSelectTract={(tract) => {
+              setSelectedTract(tract);
+              if (tract) {
+                setRightPanelOpen(true);
+              }
+            }}
+            focusMode={focusMode}
+            onToggleFocusMode={handleToggleFocusMode}
           />
 
-          {/* LEFT SLIDE-OUT PANEL (Desktop Overlay Drawer / Mobile Bottom Sheet): FIND YOUR FIT */}
-          {leftPanelOpen && (
-            <aside
-              data-testid="find-your-fit-drawer"
-              aria-label="Find Your Fit Slide-Out Panel"
-              className="fixed inset-x-0 bottom-0 z-40 max-h-[78vh] min-h-0 rounded-t-2xl border-t border-[#D4AF63]/60 bg-[#040E26]/98 p-3.5 shadow-[0_-12px_36px_rgba(0,0,0,0.92)] overflow-y-auto overscroll-contain custom-scrollbar md:absolute md:inset-x-auto md:top-14 md:bottom-16 md:left-3 md:z-30 md:w-[310px] md:max-h-none md:rounded-xl md:border md:border-[#2A3F6A] md:bg-[#040E26]/96 backdrop-blur-md flex flex-col gap-2.5 animate-in fade-in slide-in-from-left-4 duration-200"
-            >
-              {/* Mobile Bottom-Sheet Drag Handle */}
-              <div className="md:hidden w-10 h-1 rounded-full bg-[#364E7A] mx-auto mb-1 shrink-0" />
-
-              {/* Drawer Header with Independent Dismiss Button */}
-              <div className="flex items-center justify-between border-b border-[#1D2F52] pb-2 shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-[#D4AF63]" />
-                  <h2
-                    className="text-base font-bold text-[#F4F6FB]"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                  >
-                    Find Your Fit
-                  </h2>
+          {/* BELOW-MAP 2-COLUMN DASHBOARD (Scroll Down — Brighter Royal Navy & Gold Cards) */}
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start shrink-0">
+            {/* LEFT COLUMN (xl:col-span-4): MY FAMILY PRIORITIES & COUNTY BROWSER */}
+            {leftPanelOpen && (
+              <aside
+                id="below-map-priorities-section"
+                data-testid="find-your-fit-drawer"
+                aria-label="Find Your Fit Slide-Out Panel"
+                className="xl:col-span-4 rounded-xl border border-[#DFBE77]/65 bg-gradient-to-b from-[#112A4E] to-[#0B1C38] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_18px_rgba(223,190,119,0.12),inset_0_1px_1px_rgba(255,244,212,0.18)] flex flex-col gap-3 shrink-0"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-[#C5A059]/45 pb-2.5 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-[#FFE394]" />
+                    <h2
+                      className="text-base font-bold text-[#FFF8E7]"
+                      style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                    >
+                      My Family Priorities
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      data-testid="reset-priorities-btn"
+                      onClick={handleResetPriorities}
+                      className="text-xs text-[#FFE394] hover:text-white underline cursor-pointer"
+                    >
+                      Reset
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    data-testid="reset-priorities-btn"
-                    onClick={handleResetPriorities}
-                    className="text-[11px] text-[#94A3B8] hover:text-white underline cursor-pointer"
-                  >
-                    Reset
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="close-fit-drawer-btn"
-                    onClick={() => setLeftPanelOpen(false)}
-                    className="p-1 rounded-md text-[#94A3B8] hover:text-white hover:bg-[#0F234A] cursor-pointer"
-                    title="Dismiss Find Your Fit panel"
-                    aria-label="Dismiss Find Your Fit panel"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
 
               {/* 5 Category Tabs (Communities · Schools · Specialized · Housing · Family Life) */}
-              <div className="grid grid-cols-5 rounded-lg bg-[#02091A] border border-[#24355A] overflow-hidden shrink-0">
+              <div className="grid grid-cols-5 rounded-xl bg-[#091830] border border-[#C5A059]/55 overflow-hidden shrink-0">
                 {(
                   [
-                    { id: "communities", label: "Communities", icon: Home },
+                    { id: "communities", label: "Counties", icon: Home },
                     { id: "schools", label: "Schools", icon: GraduationCap },
-                    { id: "specialized_residential", label: "Specialized", icon: Hospital },
+                    { id: "specialized_residential", label: "Special Ed", icon: Hospital },
                     { id: "housing", label: "Housing", icon: Building2 },
-                    { id: "family_life", label: "Family Life", icon: Users },
+                    { id: "family_life", label: "Therapy", icon: Users },
                   ] as const
                 ).map((tab) => {
                   const Icon = tab.icon;
@@ -818,13 +786,13 @@ export default function WaypointPlaces() {
                       type="button"
                       data-testid={`fit-tab-${tab.id}`}
                       onClick={() => handleCategoryTabClick(tab.id)}
-                      className={`py-1.5 px-1 flex flex-col items-center justify-center gap-0.5 text-[9.5px] font-medium border-b-2 transition-all cursor-pointer ${
+                      className={`py-2 px-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold border-b-2 transition-all cursor-pointer ${
                         active
-                          ? "bg-[#0D2149] border-[#D4AF63] text-[#F4F6FB]"
-                          : "border-transparent text-[#94A3B8] hover:text-white hover:bg-[#081736]"
+                          ? "bg-[#183866] border-[#FFE394] text-[#FFF8E7]"
+                          : "border-transparent text-[#EADBC0] hover:text-white hover:bg-[#102648]"
                       }`}
                     >
-                      <Icon className="h-3.5 w-3.5 text-[#D4AF63]" />
+                      <Icon className="h-3.5 w-3.5 text-[#FFE394]" />
                       <span className="truncate">{tab.label}</span>
                     </button>
                   );
@@ -832,9 +800,9 @@ export default function WaypointPlaces() {
               </div>
 
               {/* Family Priorities Checklist */}
-              <div className="rounded-lg bg-[#02091A]/90 border border-[#1D2F52] p-3 space-y-2.5 shrink-0">
-                <p className="text-[10.5px] font-semibold uppercase tracking-wider text-[#94A3B8]">
-                  Family Priorities
+              <div className="rounded-xl bg-[#091830]/95 border border-[#C5A059]/55 p-3 space-y-2.5 shrink-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#FFE394]">
+                  What Matters Most to Your Family?
                 </p>
                 <div className="space-y-1.5">
                   {FAMILY_PRIORITY_LABELS.map((item) => {
@@ -842,14 +810,14 @@ export default function WaypointPlaces() {
                     return (
                       <label
                         key={item.key}
-                        className="flex items-center gap-2.5 text-xs text-[#CBD5E1] hover:text-white py-0.5 cursor-pointer"
+                        className="flex items-center gap-2.5 text-xs text-[#FFF8E7] hover:text-[#FFE394] py-0.5 cursor-pointer"
                       >
                         <input
                           type="checkbox"
                           data-testid={`priority-checkbox-${item.key}`}
                           checked={checked}
                           onChange={() => handleTogglePriority(item.key)}
-                          className="h-3.5 w-3.5 rounded border-[#475569] accent-[#D4AF63] cursor-pointer"
+                          className="h-4 w-4 rounded border-[#DFBE77] accent-[#DFBE77] cursor-pointer"
                         />
                         <span>{item.label}</span>
                       </label>
@@ -861,141 +829,64 @@ export default function WaypointPlaces() {
                   type="button"
                   data-testid="update-fit-results-btn"
                   onClick={handleUpdateResults}
-                  className="w-full py-1.5 px-3 rounded-lg bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-xs border border-[#FFE394]/50 shadow-md hover:brightness-105 transition-all cursor-pointer"
+                  className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#FCE6A6] via-[#E5C170] to-[#C59B43] text-[#07162B] font-bold text-xs border border-[#FFF4D4] shadow-[0_4px_14px_rgba(229,193,112,0.35)] hover:brightness-105 transition-all cursor-pointer"
                 >
-                  Update Results
+                  Apply My Priorities
                 </button>
               </div>
-
-              {/* Contextual Category Quick-Select List */}
-              {categoryTab === "specialized_residential" ? (
-                <SpecializedFacilitiesSummaryCard
-                  selectedCountyFips={selectedCommunity.fips}
-                  selectedCountyName={selectedCommunity.shortName}
-                  selectedStateCode={selectedCommunity.stateCode || "GA"}
-                  snapshot={specializedSnapshot}
-                  onOpenExplorerModal={handleOpenSpecializedModal}
-                  onSelectFacilityOnMap={handleSelectFacilityOnMap}
-                  compact
-                />
-              ) : (
-                <div className="rounded-lg bg-[#02091A]/90 border border-[#1D2F52] p-2.5 flex flex-col shrink-0">
-                  <p className="text-[10.5px] font-semibold uppercase tracking-wider text-[#94A3B8] mb-1.5">
-                    {categoryTab === "schools"
-                      ? `Mapped Districts & Schools (${countyDistricts.length + countySchools.length})`
-                      : `Georgia Communities (${communities.length})`}
-                  </p>
-                  <div className="space-y-1">
-                    {categoryTab === "schools" ? (
-                      <>
-                        {countyDistricts.map((d) => (
-                          <div
-                            key={d.id}
-                            className="px-2.5 py-1.5 rounded-lg bg-[#081736] border border-[#1D2F52] text-xs"
-                          >
-                            <p className="font-semibold text-[#F3D68B]">{d.name}</p>
-                            <p className="text-[10px] text-[#94A3B8]">{d.approximateEnrollment}</p>
-                          </div>
-                        ))}
-                        {countySchools.map((s) => (
-                          <div
-                            key={s.id}
-                            className="px-2.5 py-1.5 rounded-lg bg-[#06122B] border border-[#17284A] text-xs space-y-0.5"
-                          >
-                            <p className="font-medium text-[#F4F6FB]">{s.name}</p>
-                            <p className="text-[10px] text-[#7DD3FC]">{s.level} Campus</p>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenSpecializedModal("all")}
-                              className="text-[9.5px] text-[#F3D68B] hover:underline cursor-pointer"
-                            >
-                              View Specialized &amp; Residential Continuum →
-                            </button>
-                          </div>
-                        ))}
-                        {countyDistricts.length === 0 && countySchools.length === 0 && (
-                          <p className="text-[11px] text-[#94A3B8] py-2">
-                            NCES school directory import pending for {selectedCommunity.shortName}.
-                          </p>
-                        )}
-                      </>
-                    ) : (
-                      communities.map((c) => {
-                        const active = c.fips === selectedCommunity.fips;
-                        return (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() =>
-                              handleSelectCommunityByFips(c.fips, c.name, c.coordinates)
-                            }
-                            className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between gap-2 transition-colors cursor-pointer ${
-                              active
-                                ? "bg-[#102854] border border-[#D4AF63]/60 text-[#F3D68B] font-semibold"
-                                : "hover:bg-[#081736] text-[#CBD5E1]"
-                            }`}
-                          >
-                            <span className="truncate">{c.shortName}</span>
-                            <span className="text-[10px] text-[#94A3B8] shrink-0">
-                              {c.region.split(" ")[0]}
-                            </span>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              )}
             </aside>
           )}
 
-          {/* RIGHT SLIDE-OUT PANEL (Desktop Overlay Drawer / Mobile Bottom Sheet): COMMUNITY DOSSIER */}
-          {rightPanelOpen && (
-            <aside
-              data-testid="community-dossier-drawer"
-              aria-label="Community Dossier Slide-Out Panel"
-              className="fixed inset-x-0 bottom-0 z-40 max-h-[78vh] min-h-0 rounded-t-2xl border-t border-[#D4AF63]/60 bg-[#040E26]/98 p-3.5 shadow-[0_-12px_36px_rgba(0,0,0,0.92)] overflow-y-auto overscroll-contain custom-scrollbar md:absolute md:inset-x-auto md:top-14 md:bottom-16 md:right-3 md:z-30 md:w-[322px] md:max-h-none md:rounded-xl md:border md:border-[#2A3F6A] md:bg-[#040E26]/96 backdrop-blur-md flex flex-col justify-between gap-3 animate-in fade-in slide-in-from-right-4 duration-200"
-            >
-              {/* Mobile Bottom-Sheet Drag Handle */}
-              <div className="md:hidden w-10 h-1 rounded-full bg-[#364E7A] mx-auto mb-1 shrink-0" />
-
-              <div className="space-y-3">
+            {/* RIGHT COLUMN (xl:col-span-8): SELECTED AREA FULL GUIDE & DOSSIER */}
+            {rightPanelOpen && (
+              <aside
+                id="below-map-dossier-section"
+                data-testid="community-dossier-drawer"
+                aria-label="Community Dossier Slide-Out Panel"
+                className={`${
+                  leftPanelOpen ? "xl:col-span-8" : "xl:col-span-12"
+                } rounded-xl border border-[#DFBE77]/65 bg-gradient-to-b from-[#112A4E] to-[#0B1C38] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_18px_rgba(223,190,119,0.12),inset_0_1px_1px_rgba(255,244,212,0.18)] flex flex-col justify-between gap-4 shrink-0`}
+              >
+                <div className="space-y-3">
                 {/* Drawer Header with Independent Dismiss Button */}
-                <div className="flex items-start justify-between gap-2 border-b border-[#1D2F52] pb-2">
+                <div className="flex items-start justify-between gap-2 border-b border-[#C5A059]/45 pb-2.5">
                   <div className="min-w-0">
-                    <span className="text-[9.5px] uppercase tracking-wider text-[#D4AF63] font-semibold block">
-                      Community Dossier
+                    <span className="text-[10px] uppercase tracking-wider text-[#FFE394] font-bold block">
+                      Selected Area Guide
                     </span>
                     <h2
-                      className="text-lg font-bold text-[#F4F6FB] truncate"
+                      className="text-xl font-bold text-[#FFF8E7] truncate"
                       style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                     >
                       {selectedCommunity.name}
                     </h2>
-                    <p className="text-[11px] text-[#94A3B8] truncate">
-                      {selectedCommunity.region} · FIPS {selectedCommunity.fips}
+                    <p className="text-xs text-[#EADBC0] truncate">
+                      {selectedCommunity.region}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       type="button"
                       onClick={toggleSaved}
-                      title={isSaved ? "Saved to shortlist" : "Save community"}
-                      className="p-1 text-[#D4AF63] hover:scale-110 transition-transform cursor-pointer"
+                      title={isSaved ? "Saved to favorites" : "Save this area"}
+                      className="p-1.5 rounded-lg border border-[#C5A059]/60 bg-[#091830] text-[#FFE394] hover:border-[#FFE394] transition-all cursor-pointer"
                     >
                       <Heart
-                        className={`h-4 w-4 ${isSaved ? "fill-[#D4AF63]" : ""}`}
+                        className={`h-4 w-4 ${isSaved ? "fill-[#FFE394]" : ""}`}
                       />
                     </button>
                     <button
                       type="button"
-                      data-testid="close-dossier-drawer-btn"
-                      onClick={() => setRightPanelOpen(false)}
-                      className="p-1 rounded-md text-[#94A3B8] hover:text-white hover:bg-[#0F234A] cursor-pointer"
-                      title="Dismiss Community Dossier"
-                      aria-label="Dismiss Community Dossier"
+                      data-testid="nav-save-share-btn"
+                      onClick={() => {
+                        const shareUrl = `${window.location.origin}/tools/waypoint-places?fips=${selectedCommunity.fips}`;
+                        navigator.clipboard.writeText(shareUrl);
+                        toast.success(`Copied ${selectedCommunity.name} link to clipboard`);
+                      }}
+                      title="Copy a direct link to this community"
+                      className="p-1.5 rounded-lg border border-[#C5A059]/60 bg-[#091830] text-[#FFE394] hover:border-[#FFE394] transition-all cursor-pointer"
                     >
-                      <X className="h-4 w-4" />
+                      <Bookmark className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -1006,215 +897,210 @@ export default function WaypointPlaces() {
                   name={selectedCommunity.name}
                 />
 
-                {/* Scoring Integrity & Evidence Completeness Banner */}
-                <div className="rounded-lg bg-[#020818] border border-[#24355A] px-2.5 py-2 space-y-1.5">
+                {/* Plain-English Community Snapshot (Income, Home Price, Rent, Commute) */}
+                {selectedCommunity.acsDemographics && (
+                  <div
+                    data-testid="dossier-verified-acs-card"
+                    className="rounded-xl bg-[#091830]/95 border border-[#C5A059]/55 p-3 space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span
+                        className="text-xs font-bold text-[#FFF8E7]"
+                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                      >
+                        Housing, Income &amp; Commute
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-[#122C54] text-[#FFE394] border border-[#DFBE77]/60 font-semibold">
+                        Official U.S. Census
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-lg bg-[#102648]/90 border border-[#C5A059]/45 p-2">
+                        <span className="text-[10px] text-[#EADBC0] block">
+                          Typical Household Income
+                        </span>
+                        <span
+                          className="text-sm font-bold text-[#FFF8E7] block mt-0.5"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          $
+                          {selectedCommunity.acsDemographics.medianHouseholdIncome.toLocaleString()}
+                          /yr
+                        </span>
+                        <span className="text-[9.5px] text-[#D8C5A0] block">
+                          ±$
+                          {selectedCommunity.acsDemographics.medianHouseholdIncomeMoe.toLocaleString()}{" "}
+                          (B19049_001E)
+                        </span>
+                      </div>
+                      <div className="rounded-lg bg-[#102648]/90 border border-[#C5A059]/45 p-2">
+                        <span className="text-[10px] text-[#EADBC0] block">
+                          Typical Home Price
+                        </span>
+                        <span
+                          className="text-sm font-bold text-[#FFF8E7] block mt-0.5"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          $
+                          {selectedCommunity.acsDemographics.medianHomeValue.toLocaleString()}
+                        </span>
+                        <span className="text-[9.5px] text-[#D8C5A0] block">
+                          ±$
+                          {selectedCommunity.acsDemographics.medianHomeValueMoe.toLocaleString()}{" "}
+                          (B25077_001E)
+                        </span>
+                      </div>
+                      <div className="rounded-lg bg-[#102648]/90 border border-[#C5A059]/45 p-2">
+                        <span className="text-[10px] text-[#EADBC0] block">
+                          Typical Monthly Rent
+                        </span>
+                        <span
+                          className="text-sm font-bold text-[#FFF8E7] block mt-0.5"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          $
+                          {selectedCommunity.acsDemographics.medianGrossRent.toLocaleString()}
+                          /mo
+                        </span>
+                        <span className="text-[9.5px] text-[#D8C5A0] block">
+                          ±$
+                          {selectedCommunity.acsDemographics.medianGrossRentMoe.toLocaleString()}{" "}
+                          (B25058_001E)
+                        </span>
+                      </div>
+                      <div className="rounded-lg bg-[#102648]/90 border border-[#C5A059]/45 p-2">
+                        <span className="text-[10px] text-[#EADBC0] block">
+                          Average Drive to Work
+                        </span>
+                        <span
+                          className="text-sm font-bold text-[#FFF8E7] block mt-0.5"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          {selectedCommunity.acsDemographics.meanCommuteMinutes} min
+                        </span>
+                        <span className="text-[9.5px] text-[#D8C5A0] block">
+                          ±{selectedCommunity.acsDemographics.meanCommuteMinutesMoe} min (B08303)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Community Quality & Family Fit Summary Card */}
+                <div className="rounded-xl bg-[#091830] border border-[#C5A059]/55 p-3 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1 text-[#F3D68B]">
-                      <FlaskConical className="h-3 w-3 text-[#D4AF63]" />
-                      {showModelCalibration
-                        ? "Fictional Calibration Demo"
-                        : selectedCommunity.acsDemographics
-                          ? "Verified Public Sources Active"
-                          : "Pending Verified Data"}
+                    <span
+                      className="text-xs font-bold text-[#FFF8E7]"
+                      style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                    >
+                      Waypoint-Derived Area Scores &amp; Source Coverage
                     </span>
-                    <label className="flex items-center gap-1.5 text-[11px] text-[#93C5FD] cursor-pointer">
+                    <label className="flex items-center gap-1.5 text-[11px] text-[#EADBC0] cursor-pointer">
                       <input
                         type="checkbox"
                         data-testid="dossier-demo-scores-toggle"
                         checked={showModelCalibration}
                         onChange={(e) => setShowModelCalibration(e.target.checked)}
-                        className="h-3 w-3 accent-[#D4AF63] cursor-pointer"
+                        className="h-3.5 w-3.5 accent-[#DFBE77] cursor-pointer"
                       />
-                      <span>Demo Scores</span>
+                      <span>Preview All 6 Scores (Demo)</span>
                     </label>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-lg bg-[#102648] border border-[#C5A059]/50 p-2">
+                      <span className="text-[10px] text-[#EADBC0] block">
+                        Waypoint-Derived Overall Score
+                      </span>
+                      <span
+                        className="text-lg font-bold text-[#FFE394]"
+                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                      >
+                        {communityQualityScore !== null ? `${communityQualityScore}/100` : "Pending"}
+                      </span>
+                    </div>
+                    <div className="rounded-lg bg-[#102648] border border-[#C5A059]/50 p-2">
+                      <span className="text-[10px] text-[#EADBC0] block">
+                        Waypoint-Derived Family Fit
+                      </span>
+                      <span
+                        className="text-lg font-bold text-[#FFF8E7]"
+                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                      >
+                        {familyFitScore !== null ? `${familyFitScore}/100` : "Pending"}
+                      </span>
+                    </div>
+                  </div>
+
                   <div
                     data-testid="dossier-evidence-completeness"
-                    className="flex items-center justify-between text-[10px] text-[#C4B5FD] bg-[#121036]/80 border border-[#4C3F91]/50 rounded px-2 py-0.5"
+                    className="flex items-center justify-between text-[11px] text-[#EADBC0] pt-1 border-t border-[#C5A059]/40"
                   >
-                    <span>Evidence Completeness:</span>
-                    <span className="font-semibold">
-                      {selectedCommunity.evidenceCompleteness?.ratioText ||
-                        (isVerifiedSource ? "6/6 Verified Sources" : "0/6 Verified Sources")}
+                    <span>Verified Pillar Coverage:</span>
+                    <span className="font-bold text-[#FFE394]">
+                      {showModelCalibration
+                        ? "Demo Calibration (6/6 Synthetic Pillars)"
+                        : selectedCommunity.evidenceCompleteness?.ratioText ||
+                          (isVerifiedSource
+                            ? "2/6 Verified Pillars (ACS Affordability & Commute)"
+                            : "0/6 Verified Pillars")}
                     </span>
                   </div>
-                  <p className="text-[10.5px] text-[#94A3B8] leading-snug">
-                    {showModelCalibration
-                      ? "Showing fictional calibration numbers for unimported pillars alongside real Census ACS & NCES directory facts."
-                      : selectedCommunity.acsDemographics
-                        ? "Showing strictly verified US Census ACS & NCES CCD indicators. Unimported pillars (GOSA Academics, Safety) remain null."
-                        : "Official GOSA / GaDOE / ACS ratings not yet imported. Toggle 'Demo Scores' to test formula."}
-                  </p>
                 </div>
 
-                {/* Community Quality Score */}
-                <div className="space-y-1">
+                {/* NEW: Crime, Internet Availability & Map API Keys Guide (Answers User Question Directly in UI) */}
+                <div
+                  data-testid="dossier-crime-internet-api-card"
+                  className="rounded-xl bg-[#020A17]/90 border border-[#C5A059]/45 p-3 space-y-2"
+                >
                   <div className="flex items-center justify-between gap-2">
+                    <span
+                      className="text-xs font-bold text-[#FFE394]"
+                      style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                    >
+                      Crime, Internet &amp; Map Data Guide
+                    </span>
                     <button
                       type="button"
-                      onClick={() => setScoreDetailsOpen(true)}
-                      className="text-xs font-semibold text-[#CBD5E1] flex items-center gap-1 hover:text-white cursor-pointer"
+                      onClick={() => setStudioOpen(true)}
+                      className="text-[10.5px] font-semibold text-[#DFBE77] hover:underline cursor-pointer"
                     >
-                      <span>Community Quality Score</span>
-                      <Info className="h-3 w-3 text-[#94A3B8]" />
+                      Manage Keys →
                     </button>
-                    {communityQualityScore !== null ? (
-                      <div className="text-right">
-                        <span
-                          className="text-xl font-bold text-[#F3D68B]"
-                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                        >
-                          {communityQualityScore}
-                        </span>
-                        <span className="text-[11px] text-[#94A3B8]"> /100 Demo</span>
-                      </div>
-                    ) : (
-                      <span className="text-[11px] font-medium text-[#94A3B8]">
-                        No Verified Data
-                      </span>
-                    )}
                   </div>
-                  <div className="h-1.5 w-full rounded-full bg-[#081736] overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#9E7D3B] via-[#D4AF63] to-[#F3D68B] transition-all duration-300"
-                      style={{
-                        width: `${communityQualityScore !== null ? communityQualityScore : 0}%`,
-                      }}
-                    />
+                  <div className="space-y-1.5 text-[11px] text-[#C6B697]">
+                    <div className="rounded-lg bg-[#05142B]/90 border border-[#3A2C18] p-2">
+                      <p className="font-semibold text-[#FFF4D4]">
+                        1. Maps, Schools &amp; Therapy Doctors (Live Now · 0 Keys)
+                      </p>
+                      <p className="text-[10.5px] text-[#C6B697] mt-0.5">
+                        USGS National Map street &amp; satellite tiles, U.S. Census housing/income, 2,329 Georgia public schools, and a limited sample of 237 NPI therapy providers work automatically with no API key (do not use the 237 sample count to compare care access between communities).
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-[#05142B]/90 border border-[#3A2C18] p-2">
+                      <p className="font-semibold text-[#FFF4D4]">
+                        2. Crime &amp; Public Safety (Included · Free API Key)
+                      </p>
+                      <p className="text-[10.5px] text-[#C6B697] mt-0.5">
+                        Local violent &amp; property crime rates connect via the{" "}
+                        <strong className="text-[#FFE394]">FBI Crime Data Explorer</strong>. Add a free{" "}
+                        <code className="text-[#FAD77B]">FBI_CDE_API_KEY</code> from{" "}
+                        <span className="underline">api.data.gov</span> to unlock live crime scores.
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-[#05142B]/90 border border-[#3A2C18] p-2">
+                      <p className="font-semibold text-[#FFF4D4]">
+                        3. High-Speed Internet &amp; Fiber (Included)
+                      </p>
+                      <p className="text-[10.5px] text-[#C6B697] mt-0.5">
+                        Household internet coverage uses{" "}
+                        <strong className="text-[#FFE394]">U.S. Census Table B28002</strong> (no key needed) plus optional{" "}
+                        <code className="text-[#FAD77B]">FCC_BROADBAND_API_KEY</code> for fiber speed maps.
+                      </p>
+                    </div>
                   </div>
                 </div>
-
-                {/* Family Fit Score */}
-                <div className="space-y-1 pb-2 border-b border-[#1D2F52]">
-                  <div className="flex items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setScoreDetailsOpen(true)}
-                      className="text-xs font-semibold text-[#CBD5E1] flex items-center gap-1 hover:text-white cursor-pointer"
-                    >
-                      <span>Family Fit Score</span>
-                      <Info className="h-3 w-3 text-[#94A3B8]" />
-                    </button>
-                    {familyFitScore !== null ? (
-                      <div className="text-right">
-                        <span
-                          className="text-xl font-bold text-[#93C5FD]"
-                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                        >
-                          {familyFitScore}
-                        </span>
-                        <span className="text-[11px] text-[#94A3B8]"> /100 Demo</span>
-                      </div>
-                    ) : (
-                      <span className="text-[11px] font-medium text-[#94A3B8]">
-                        No Verified Data
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-1.5 w-full rounded-full bg-[#081736] overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#3B82F6] to-[#93C5FD] transition-all duration-300"
-                      style={{
-                        width: `${familyFitScore !== null ? familyFitScore : 0}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Verified U.S. Census Bureau ACS 5-Year & NCES CCD Card */}
-                {selectedCommunity.acsDemographics && (
-                  <div
-                    data-testid="dossier-verified-acs-card"
-                    className="rounded-lg bg-[#020A1E] border border-emerald-500/40 p-2.5 space-y-2"
-                  >
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-[10.5px] font-semibold uppercase tracking-wider text-emerald-300">
-                        Verified Census ACS ({selectedCommunity.acsDemographics.surveyPeriod})
-                      </span>
-                      <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/35 font-semibold">
-                        Verified
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-                      <div className="rounded bg-[#061430] border border-[#17284A] p-1.5">
-                        <span className="text-[9.5px] text-[#94A3B8] block">
-                          Median Household Income
-                        </span>
-                        <span className="font-bold text-[#F4F6FB] font-mono">
-                          $
-                          {selectedCommunity.acsDemographics.medianHouseholdIncome.toLocaleString()}
-                        </span>
-                        <span className="text-[9.5px] text-[#94A3B8] block">
-                          MOE ±$
-                          {selectedCommunity.acsDemographics.medianHouseholdIncomeMoe.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="rounded bg-[#061430] border border-[#17284A] p-1.5">
-                        <span className="text-[9.5px] text-[#94A3B8] block">
-                          Median Home Value
-                        </span>
-                        <span className="font-bold text-[#F4F6FB] font-mono">
-                          $
-                          {selectedCommunity.acsDemographics.medianHomeValue.toLocaleString()}
-                        </span>
-                        <span className="text-[9.5px] text-[#94A3B8] block">
-                          MOE ±$
-                          {selectedCommunity.acsDemographics.medianHomeValueMoe.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="rounded bg-[#061430] border border-[#17284A] p-1.5">
-                        <span className="text-[9.5px] text-[#94A3B8] block">
-                          Median Gross Rent
-                        </span>
-                        <span className="font-bold text-[#F4F6FB] font-mono">
-                          $
-                          {selectedCommunity.acsDemographics.medianGrossRent.toLocaleString()}
-                          /mo
-                        </span>
-                        <span className="text-[9.5px] text-[#94A3B8] block">
-                          MOE ±$
-                          {selectedCommunity.acsDemographics.medianGrossRentMoe.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="rounded bg-[#061430] border border-[#17284A] p-1.5">
-                        <span className="text-[9.5px] text-[#94A3B8] block">
-                          Mean Commute Time
-                        </span>
-                        <span className="font-bold text-[#F4F6FB] font-mono">
-                          {selectedCommunity.acsDemographics.meanCommuteMinutes} min
-                        </span>
-                        <span className="text-[9.5px] text-[#94A3B8] block">
-                          MOE ±{selectedCommunity.acsDemographics.meanCommuteMinutesMoe} min
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Verified Normalized Indicator Scores (0-100) */}
-                    {selectedCommunity.verifiedPillars && (
-                      <div className="pt-1 border-t border-[#17284A] space-y-1 text-[10.5px]">
-                        <div className="flex items-center justify-between text-[#CBD5E1]">
-                          <span>Affordability Score (ACS Verified):</span>
-                          <span className="font-mono font-bold text-emerald-300">
-                            {selectedCommunity.verifiedPillars.affordability ?? "null"}/100
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-[#CBD5E1]">
-                          <span>Connectivity Score (ACS Verified):</span>
-                          <span className="font-mono font-bold text-emerald-300">
-                            {selectedCommunity.verifiedPillars.commute ?? "null"}/100
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-[#CBD5E1]">
-                          <span>School Infrastructure (NCES+ACS):</span>
-                          <span className="font-mono font-bold text-emerald-300">
-                            {selectedCommunity.verifiedPillars.familyLifestyle ?? "null"}/100
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {/* Special Education Intelligence Summary (5-Tier Verification + Non-Guarantee Guardrail) */}
                 {countySpedRecords.length > 0 && (
@@ -1260,6 +1146,306 @@ export default function WaypointPlaces() {
                   onSelectFacilityOnMap={handleSelectFacilityOnMap}
                 />
 
+                {/* Neighborhood Census Tract Explorer & Selected Tract Card (TIGER/ACS 5-Year) */}
+                {subCountyTracts.length > 0 && (
+                  <div
+                    data-testid="dossier-neighborhood-tracts-card"
+                    className="rounded-lg bg-[#020A1E] border border-[#D4AF63]/50 p-2.5 space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#F3D68B]">
+                        Neighborhood Tracts ({subCountyTracts.length} Census Tracts)
+                      </span>
+                      <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-[#0D2149] border border-[#D4AF63]/40 text-[#F3D68B] font-semibold">
+                        TIGER + ACS 5-Yr
+                      </span>
+                    </div>
+
+                    {selectedTract ? (
+                      <div
+                        data-testid="dossier-selected-tract-detail"
+                        className="rounded bg-[#061430] border border-[#D4AF63]/50 p-2 space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <div>
+                            <p className="text-[11.5px] font-bold text-[#F3D68B]">
+                              {selectedTract.name}
+                            </p>
+                            <p className="text-[9.5px] font-mono text-[#94A3B8]">
+                              GEOID {selectedTract.geoid11} · Pop.{" "}
+                              {selectedTract.populationEstimate.toLocaleString()} (±
+                              {selectedTract.populationMoe.toLocaleString()})
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            data-testid="clear-selected-tract-btn"
+                            onClick={() => setSelectedTract(null)}
+                            className="text-[9.5px] px-1.5 py-0.5 rounded bg-[#0A1938] border border-[#24355A] text-[#CBD5E1] hover:text-white cursor-pointer"
+                          >
+                            All Tracts
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-1 text-[10px]">
+                          <div className="rounded bg-[#030B1E] border border-[#17284A] p-1">
+                            <span className="text-[9px] text-[#94A3B8] block">
+                              Median Income
+                            </span>
+                            <span className="font-bold text-[#F4F6FB] font-mono">
+                              {selectedTract.medianHouseholdIncome !== null
+                                ? `$${selectedTract.medianHouseholdIncome.toLocaleString()}`
+                                : "Unavailable"}
+                            </span>
+                            {selectedTract.medianHouseholdIncomeMoe !== null && (
+                              <span className="text-[8.5px] text-[#94A3B8] block">
+                                ±${selectedTract.medianHouseholdIncomeMoe.toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="rounded bg-[#030B1E] border border-[#17284A] p-1">
+                            <span className="text-[9px] text-[#94A3B8] block">
+                              Median Home Value
+                            </span>
+                            <span className="font-bold text-[#F4F6FB] font-mono">
+                              {selectedTract.medianHomeValue !== null
+                                ? `$${selectedTract.medianHomeValue.toLocaleString()}`
+                                : "Unavailable"}
+                            </span>
+                            {selectedTract.medianHomeValueMoe !== null && (
+                              <span className="text-[8.5px] text-[#94A3B8] block">
+                                ±${selectedTract.medianHomeValueMoe.toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="rounded bg-[#030B1E] border border-[#17284A] p-1">
+                            <span className="text-[9px] text-[#94A3B8] block">
+                              Median Contract Rent (B25058_001E)
+                            </span>
+                            <span className="font-bold text-[#F4F6FB] font-mono">
+                              {selectedTract.medianGrossRent !== null
+                                ? `$${selectedTract.medianGrossRent.toLocaleString()}/mo`
+                                : "Unavailable"}
+                            </span>
+                            {selectedTract.medianGrossRentMoe !== null && (
+                              <span className="text-[8.5px] text-[#94A3B8] block">
+                                ±${selectedTract.medianGrossRentMoe.toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="rounded bg-[#030B1E] border border-[#17284A] p-1">
+                            <span className="text-[9px] text-[#94A3B8] block">
+                              Est. Mean Commute (B08303)
+                            </span>
+                            <span className="font-bold text-[#F4F6FB] font-mono">
+                              {selectedTract.meanCommuteMinutes !== null
+                                ? `${selectedTract.meanCommuteMinutes} min`
+                                : "Unavailable"}
+                            </span>
+                            {selectedTract.meanCommuteMinutesMoe !== null && (
+                              <span className="text-[8.5px] text-[#94A3B8] block">
+                                ±{selectedTract.meanCommuteMinutesMoe} min
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="pt-1 border-t border-[#17284A] flex flex-wrap items-center justify-between gap-1 text-[9.5px] text-[#CBD5E1]">
+                          <span>
+                            Affordability Calc:{" "}
+                            <strong className="text-emerald-300 font-mono">
+                              {selectedTract.verifiedPillars.affordability ?? "N/A"}/100
+                            </strong>
+                          </span>
+                          <span>
+                            Commute Calc:{" "}
+                            <strong className="text-emerald-300 font-mono">
+                              {selectedTract.verifiedPillars.commute ?? "N/A"}/100
+                            </strong>
+                          </span>
+                          <span>
+                            Unimported Pillars:{" "}
+                            <strong className="text-[#94A3B8] font-mono">
+                              null (2/6 Covered)
+                            </strong>
+                          </span>
+                        </div>
+
+                        <p
+                          data-testid="tract-sped-guardrail-disclaimer"
+                          className="text-[9px] text-[#F3D68B]/90 bg-[#0A1938] border border-[#D4AF63]/35 rounded p-1.5 leading-snug"
+                        >
+                          {CENSUS_TRACT_SPED_GUARDRAIL_DISCLAIMER}
+                        </p>
+                        <p className="text-[8.5px] text-[#94A3B8]">
+                          Source: {selectedTract.sourceCitation} · Updated{" "}
+                          {new Date(selectedTract.lastUpdated).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] text-[#CBD5E1] leading-snug">
+                          Zoom to <span className="text-[#F3D68B] font-semibold">z9.5+</span> or
+                          select a neighborhood Census Tract below to inspect sub-county ACS
+                          housing, income, commute, and nearby schools/providers:
+                        </p>
+                        <div className="max-h-28 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                          {subCountyTracts.slice(0, 12).map((tract) => (
+                            <button
+                              key={tract.geoid11}
+                              type="button"
+                              data-testid={`select-tract-btn-${tract.geoid11}`}
+                              onClick={() => {
+                                setSelectedTract(tract);
+                                setGranularityMode("block_group");
+                              }}
+                              className="w-full text-left px-2 py-1 rounded bg-[#061430] hover:bg-[#0D2149] border border-[#17284A] hover:border-[#D4AF63]/50 flex items-center justify-between gap-2 text-[10px] transition-colors cursor-pointer"
+                            >
+                              <span className="font-medium text-[#F4F6FB] truncate">
+                                {tract.name} ({tract.geoid11})
+                              </span>
+                              <span className="font-mono text-emerald-300 shrink-0">
+                                {tract.medianHouseholdIncome
+                                  ? `$${Math.round(tract.medianHouseholdIncome / 1000)}k`
+                                  : "ACS"}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Nearby Public Schools (NCES CCD · Sorted by Distance from Selected Area) */}
+                {countySchools.length > 0 && (
+                  <div
+                    data-testid="dossier-nearby-schools-card"
+                    className="rounded-lg bg-[#020A1E] border border-[#24355A] p-2.5 space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#F3D68B]">
+                        Nearby Public Schools (NCES CCD)
+                      </span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 font-semibold">
+                        {countySchools.length} Campuses
+                      </span>
+                    </div>
+                    <div className="space-y-1 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
+                      {[...countySchools]
+                        .map((sch) => ({
+                          ...sch,
+                          distanceMiles: computeDistanceMiles(sch.coordinates),
+                        }))
+                        .sort((a, b) => a.distanceMiles - b.distanceMiles)
+                        .slice(0, 6)
+                        .map((sch) => (
+                          <div
+                            key={sch.id}
+                            className="rounded bg-[#061430] border border-[#17284A] p-1.5 flex items-start justify-between gap-2 text-[10px]"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-semibold text-[#F4F6FB] truncate">
+                                {sch.name}
+                              </p>
+                              <p className="text-[9px] text-[#94A3B8] truncate">
+                                {sch.level} ({sch.gradeSpan}) · NCES {sch.ncesSchoolId || sch.id}
+                                {sch.enrollment ? ` · ${sch.enrollment} students` : ""}
+                              </p>
+                            </div>
+                            <span className="font-mono text-[9.5px] text-[#F3D68B] shrink-0">
+                              {sch.distanceMiles} mi
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Outpatient Therapy Providers (CMS NPPES NPI Registry v2.1 — Limited 10-City / 6-Specialty Sample) */}
+                <div
+                  data-testid="dossier-therapy-providers-status"
+                  className="rounded-lg bg-[#020A1E] border border-teal-500/40 p-2.5 space-y-1.5"
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[10.5px] font-semibold uppercase tracking-wider text-teal-300">
+                      Therapy Providers (CMS NPPES NPI · Limited Sample)
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-teal-500/15 border border-teal-500/35 text-teal-300 font-semibold">
+                      {countyTherapyProviders.length > 0
+                        ? `${countyTherapyProviders.length} in County (${allTherapyProviders.length} Limited Sample)`
+                        : `0 in County (${allTherapyProviders.length} Limited Sample)`}
+                    </span>
+                  </div>
+                  <p className="text-[9.5px] text-amber-200/90 bg-[#061430] border border-amber-500/30 rounded p-1.5 leading-snug">
+                    <strong>Limited Sample Notice:</strong> These {allTherapyProviders.length} records represent a limited 10-city × 6-specialty CMS NPPES NPI v2.1 sample (limit=5 per query, deduplicated by NPI-10). <strong>Do not use these counts to compare access to care between communities.</strong>
+                  </p>
+                  {countyTherapyProviders.length > 0 ? (
+                    <div className="space-y-1 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                      {[...countyTherapyProviders]
+                        .map((prov) => ({
+                          ...prov,
+                          distanceMiles: computeDistanceMiles(prov.coordinates),
+                        }))
+                        .sort((a, b) => a.distanceMiles - b.distanceMiles)
+                        .slice(0, 8)
+                        .map((prov) => (
+                          <div
+                            key={prov.npi10}
+                            data-testid={`dossier-therapy-provider-${prov.npi10}`}
+                            className="rounded bg-[#061430] border border-[#17284A] p-1.5 space-y-0.5 text-[10px]"
+                          >
+                            <div className="flex items-start justify-between gap-1.5">
+                              <span className="font-semibold text-[#F4F6FB] truncate">
+                                {prov.providerName}
+                              </span>
+                              <span className="font-mono text-[9.5px] text-teal-300 shrink-0">
+                                {prov.distanceMiles} mi
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-1 text-[9px] text-[#94A3B8]">
+                              <span className="truncate">
+                                {prov.taxonomyDescription} · NPI {prov.npi10}
+                              </span>
+                              <span className="text-[8.5px] px-1 py-0.2 rounded bg-[#0A1938] border border-[#24355A] text-[#CBD5E1] shrink-0">
+                                {prov.coordinatePrecision === "verified_address_location"
+                                  ? "Street Geocoded"
+                                  : "ZIP Centroid Est."}
+                              </span>
+                            </div>
+                            <p className="text-[9px] text-[#CBD5E1] truncate">
+                              {prov.streetAddress}, {prov.city}, {prov.stateCode} {prov.postalCode}
+                              {prov.phone ? ` · ${prov.phone}` : ""}
+                            </p>
+                            <div className="flex flex-wrap gap-1 pt-0.5 text-[8px] text-[#94A3B8]">
+                              <span className="px-1 py-0.2 rounded bg-[#030B1E] border border-[#17284A]">
+                                Pediatric: {prov.pediatricServicesStatus || "Unknown"}
+                              </span>
+                              <span className="px-1 py-0.2 rounded bg-[#030B1E] border border-[#17284A]">
+                                Autism: {prov.autismSpecializationStatus || "Unknown"}
+                              </span>
+                              <span className="px-1 py-0.2 rounded bg-[#030B1E] border border-[#17284A]">
+                                Insurance: {prov.insuranceAcceptedStatus || "Unknown"}
+                              </span>
+                              <span className="px-1 py-0.2 rounded bg-[#030B1E] border border-[#17284A]">
+                                Availability: {prov.appointmentAvailabilityStatus || "Unknown"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-[10.5px] text-[#94A3B8] leading-snug">
+                      No outpatient speech/OT/PT/ABA NPI provider records are in the limited 10-city sample for{" "}
+                      <span className="text-[#CBD5E1] font-medium">
+                        {selectedCommunity.shortName}
+                      </span>{" "}
+                      ({allTherapyProviders.length} in limited statewide sample via CMS NPPES NPI
+                      Registry v2.1; do not use sample counts to compare access to care between communities). Sample/fictional records are never substituted.
+                    </p>
+                  )}
+                </div>
+
                 {/* Factual Geographic & Data Status Insights */}
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-[#F3D68B] flex items-center gap-1">
@@ -1280,17 +1466,45 @@ export default function WaypointPlaces() {
                 </div>
               </div>
 
-              {/* Compare CTA */}
+                {/* Compare CTA */}
+                <button
+                  type="button"
+                  data-testid="dossier-compare-btn"
+                  onClick={() => setCompareOpen(true)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs border border-[#FFE394]/60 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 transition-all cursor-pointer"
+                >
+                  Compare {selectedCommunity.shortName} with Another County
+                </button>
+              </aside>
+            )}
+          </div>
+
+          {/* Subtle Bottom Reference & Staff Tools Footer */}
+          <footer className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#C5A059]/30 text-[11px] text-[#EADBC0]">
+            <span>Waypoint Places · 50-State Special Education &amp; Relocation Intelligence</span>
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                data-testid="dossier-compare-btn"
-                onClick={() => setCompareOpen(true)}
-                className="w-full py-2 px-3 rounded-lg bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-bold text-xs border border-[#FFE394]/50 shadow-md hover:brightness-105 transition-all cursor-pointer"
+                data-testid="nav-score-details-btn"
+                onClick={() => setScoreDetailsOpen(true)}
+                className="px-2.5 py-1 rounded-lg bg-[#091830] border border-[#C5A059]/45 text-[#EADBC0] hover:text-white hover:border-[#FFE394] flex items-center gap-1 cursor-pointer"
+                title="How community scores and data sources work"
               >
-                Compare with Another Area
+                <Info className="h-3 w-3 text-[#FFE394]" />
+                <span>How Scores Work</span>
               </button>
-            </aside>
-          )}
+              <button
+                type="button"
+                data-testid="nav-places-studio-btn"
+                onClick={() => setStudioOpen(true)}
+                className="px-2.5 py-1 rounded-lg bg-[#091830] border border-[#C5A059]/45 text-[#EADBC0] hover:text-white hover:border-[#FFE394] flex items-center gap-1 cursor-pointer"
+                title="Staff Data & API Connections"
+              >
+                <Sliders className="h-3 w-3 text-[#FFE394]" />
+                <span>Data &amp; APIs</span>
+              </button>
+            </div>
+          </footer>
         </div>
 
         {/* Modals & Internal Studio Drawer */}

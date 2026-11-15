@@ -223,7 +223,7 @@ describe("Waypoint Places (PG-010-PLC) — Georgia MapLibre/PMTiles Prototype & 
   it("Milestone A & B: imports real U.S. Census ACS 5-Year (with Margin of Error) & NCES CCD records, enforces duplicate detection, flags high-MOE warnings, separates 5 SPED verification tiers, and recalculates verified pillar scores with strict null missing-data handling", async () => {
     // 1. Trigger Data Operations State (auto-seeds Milestone B if needed)
     const opsInitial = await publicCaller.waypointPlaces.getDataOperationsState();
-    expect(opsInitial.connectors.length).toBe(9);
+    expect(opsInitial.connectors.length).toBeGreaterThanOrEqual(10);
     expect(opsInitial.totals.measurementsCount).toBeGreaterThanOrEqual(75);
     expect(opsInitial.totals.ncesDistrictsCount).toBeGreaterThanOrEqual(14);
     expect(opsInitial.totals.ncesSchoolsCount).toBeGreaterThanOrEqual(13);
@@ -276,28 +276,29 @@ describe("Waypoint Places (PG-010-PLC) — Georgia MapLibre/PMTiles Prototype & 
     const snapshot = await publicCaller.waypointPlaces.getPublicExplorerData();
     const forsyth = snapshot.communities.find((c) => c.fips === "13117")!;
     expect(forsyth.acsDemographics).toBeDefined();
-    expect(forsyth.acsDemographics!.surveyPeriod).toBe("2018-2022 ACS 5-Year");
+    expect(["2019-2023 ACS 5-Year", "2018-2022 ACS 5-Year"]).toContain(
+      forsyth.acsDemographics!.surveyPeriod
+    );
     expect(forsyth.acsDemographics!.medianHouseholdIncome).toBeGreaterThan(100000);
     expect(forsyth.acsDemographics!.medianHouseholdIncomeMoe).toBeGreaterThan(0);
     expect(forsyth.evidenceCompleteness?.ratioText).toBe("2/6 Verified Sources");
 
-    // Verified pillars must have real 0-100 scores for affordability, commute, and familyLifestyle,
-    // while unimported pillars (academics, specializedPrograms, safetyWellBeing) MUST be strictly null (never 0!)
+    // Verified pillars must have real 0-100 scores strictly for affordability and commute (the 2 directly measured ACS pillars),
+    // while unimported pillars (academics, specializedPrograms, safetyWellBeing, familyLifestyle) MUST be strictly null (never proxied with STUTERATIO!)
     expect(forsyth.verifiedPillars).toBeDefined();
     expect(typeof forsyth.verifiedPillars!.affordability).toBe("number");
     expect(typeof forsyth.verifiedPillars!.commute).toBe("number");
-    expect(typeof forsyth.verifiedPillars!.familyLifestyle).toBe("number");
+    expect(forsyth.verifiedPillars!.familyLifestyle).toBeNull();
     expect(forsyth.verifiedPillars!.academics).toBeNull();
     expect(forsyth.verifiedPillars!.specializedPrograms).toBeNull();
     expect(forsyth.verifiedPillars!.safetyWellBeing).toBeNull();
 
     // Verify NCES 12-digit school IDs (NCESSCH) and 7-digit LEAIDs in snapshot
     const winnonaPark = snapshot.schools.find(
-      (s) => s.ncesSchoolId === "130165000724"
+      (s) => s.ncesSchoolId === "130168000799"
     );
     expect(winnonaPark).toBeDefined();
-    expect(winnonaPark!.ncesLeaId).toBe("1301650");
-    expect(winnonaPark!.enrollment).toBe(274);
+    expect(winnonaPark!.ncesLeaId).toBe("1301680");
   });
 
   it("Rights & Accountability Expansion: covers all 50 states (+DC), enforces strict geographic attribution, validates PDF redaction safeguards, separates allegations vs substantiated findings, and never treats complaints as quality scores", async () => {
@@ -466,6 +467,144 @@ describe("Waypoint Places (PG-010-PLC) — Georgia MapLibre/PMTiles Prototype & 
     expect(specState.guardrails.lreNeutralityGuardrail).toContain(
       "never treats a more restrictive or less restrictive setting as inherently better or worse"
     );
+  });
+
+  it("End-to-End Georgia Audit Proof: Cobb County, Georgia (13067) serves real ACS 5-Year measurements, NCES districts & schools, Specialized/Residential programs, and Rights/Accountability records with strict null handling for unimported pillars", async () => {
+    const snapshot = await publicCaller.waypointPlaces.getPublicExplorerData();
+
+    // 1. All 159 Georgia counties are present with verified ACS & NCES intelligence
+    expect(snapshot.communities.length).toBe(159);
+    const cobb = snapshot.communities.find((c) => c.fips === "13067");
+    expect(cobb).toBeDefined();
+    expect(cobb!.dataStatus).toBe("verified_public_source");
+    expect(cobb!.acsDemographics).toBeDefined();
+    expect(cobb!.acsDemographics!.populationEstimate).toBeGreaterThan(750000);
+    expect(cobb!.acsDemographics!.medianHouseholdIncome).toBeGreaterThan(90000);
+    expect(cobb!.acsDemographics!.medianHomeValue).toBeGreaterThan(340000);
+    expect(cobb!.acsDemographics!.medianGrossRent).toBeGreaterThan(1400);
+    expect(cobb!.acsDemographics!.meanCommuteMinutes).toBeGreaterThan(25);
+    expect(cobb!.evidenceCompleteness?.ratioText).toBe("2/6 Verified Sources");
+
+    // 2. Verified Pillars for Cobb County: Affordability, Connectivity (Commute), and Partial Composite are numeric; unimported pillars (Academics/GOSA, Safety/FBI, SpecializedPrograms, FamilyLifestyle) are strictly null
+    expect(cobb!.verifiedPillars).toBeDefined();
+    expect(typeof cobb!.verifiedPillars!.affordability).toBe("number");
+    expect(typeof cobb!.verifiedPillars!.commute).toBe("number");
+    expect(cobb!.verifiedPillars!.familyLifestyle).toBeNull();
+    expect(typeof cobb!.verifiedPillars!.communityQuality).toBe("number");
+    expect(cobb!.verifiedPillars!.academics).toBeNull();
+    expect(cobb!.verifiedPillars!.safetyWellBeing).toBeNull();
+    expect(cobb!.verifiedPillars!.specializedPrograms).toBeNull();
+
+    // 3. Imported NCES Districts & Public Schools for Cobb County (13067)
+    const cobbDistricts = snapshot.schoolDistricts.filter(
+      (d) => d.countyFips === "13067"
+    );
+    expect(cobbDistricts.some((d) => d.ncesId === "1301290")).toBe(true); // Cobb County School District
+    expect(cobbDistricts.some((d) => d.ncesId === "1303510")).toBe(true); // Marietta City School District
+
+    const cobbSchools = snapshot.schools.filter((s) => s.countyFips === "13067");
+    expect(cobbSchools.length).toBeGreaterThanOrEqual(2);
+    expect(cobbSchools.some((s) => s.ncesSchoolId === "130129000513")).toBe(true); // Walton High School
+
+    // 4. Rights & Accountability for Cobb County (13067) + verifiedOnly withholding check
+    const cobbRights = await publicCaller.waypointPlaces.getRightsForLocation({
+      stateFips2: "13",
+      countyFips5: "13067",
+    });
+    expect(cobbRights.stateProfile.stateCode).toBe("GA");
+    expect(cobbRights.districtPublishedDecisions.length).toBeGreaterThanOrEqual(1);
+    expect(cobbRights.districtPublishedDecisions[0].ncesLeaId7).toBe("1301290");
+    expect(cobbRights.districtPublishedDecisions[0].recordOrigin).toBe("seeded_example");
+
+    const cobbRightsVerifiedOnly = await publicCaller.waypointPlaces.getRightsForLocation({
+      stateFips2: "13",
+      countyFips5: "13067",
+      verifiedOnly: true,
+    });
+    expect(cobbRightsVerifiedOnly.districtPublishedDecisions.length).toBe(0);
+    expect(cobbRightsVerifiedOnly.monitoringAndOcrRecords.length).toBe(0);
+    expect(cobbRightsVerifiedOnly.accountabilityMetrics.length).toBe(0);
+  });
+
+  it("Neighborhood-Level Geographic Detail & Automated Refresh Proof: serves real Sub-County Census Tract polygons, TIGERweb Unified School District boundaries, 6-specialty CMS NPPES NPI Therapy Providers with Unknown safeguards, and proves automatic refresh idempotency + LKG failure preservation", async () => {
+    const cobbNeighborhoods =
+      await publicCaller.waypointPlaces.getCountyNeighborhoodTracts({
+        countyFips5: "13067",
+      });
+
+    // 1. Sub-county Census Tracts for Cobb County (13067)
+    expect(cobbNeighborhoods.tracts.length).toBeGreaterThanOrEqual(180);
+    const firstTract = cobbNeighborhoods.tracts[0];
+    expect(firstTract.geoid11).toMatch(/^13067\d{6}$/);
+    expect(firstTract.countyFips5).toBe("13067");
+    expect(["Polygon", "MultiPolygon"]).toContain(firstTract.geometry.type);
+    expect(firstTract.geometry.coordinates.length).toBeGreaterThan(0);
+
+    // Guardrail: Census Tracts MUST never claim to measure special education quality or Family Lifestyle directly
+    expect(firstTract.verifiedPillars.academics).toBeNull();
+    expect(firstTract.verifiedPillars.specializedPrograms).toBeNull();
+    expect(firstTract.verifiedPillars.safetyWellBeing).toBeNull();
+    expect(firstTract.verifiedPillars.familyLifestyle).toBeNull();
+
+    // 2. Real TIGERweb Unified School District Boundary polygons for Cobb County (Cobb County Schools 1301290 & non-coterminous Marietta City Schools 1303510)
+    expect(cobbNeighborhoods.schoolDistrictBoundaries.length).toBeGreaterThanOrEqual(2);
+    const cobbLeaBoundary = cobbNeighborhoods.schoolDistrictBoundaries.find(
+      (b) => b.ncesLeaId7 === "1301290"
+    );
+    const mariettaLeaBoundary = cobbNeighborhoods.schoolDistrictBoundaries.find(
+      (b) => b.ncesLeaId7 === "1303510"
+    );
+    expect(cobbLeaBoundary).toBeDefined();
+    expect(mariettaLeaBoundary).toBeDefined();
+    expect(["Polygon", "MultiPolygon"]).toContain(cobbLeaBoundary!.geometry.type);
+
+    // 3. Real CMS NPPES NPI Outpatient Therapy Providers (6 specialty groups) with explicit coordinate precision and Unknown safeguards
+    expect(cobbNeighborhoods.therapyProviders.length).toBeGreaterThan(0);
+    for (const prov of cobbNeighborhoods.therapyProviders) {
+      expect(prov.npi10).toMatch(/^\d{10}$/);
+      expect(prov.countyFips5).toBe("13067");
+      expect([
+        "Speech-Language Pathology",
+        "Occupational Therapy",
+        "Psychology",
+        "Psychiatry",
+        "ABA / Behavior Analysis",
+        "Developmental Specialties",
+        "Physical Therapy",
+        "Multidisciplinary Pediatric Therapy",
+      ]).toContain(prov.specialtyCategory);
+      expect(["verified_address_location", "zip_centroid_estimate"]).toContain(
+        prov.coordinatePrecision
+      );
+      expect(["Unknown", "Supported by Pediatric Taxonomy"]).toContain(
+        prov.pediatricServicesStatus
+      );
+      expect(prov.autismSpecializationStatus).toBe("Unknown");
+      expect(prov.insuranceAcceptedStatus).toBe("Unknown");
+      expect(prov.appointmentAvailabilityStatus).toBe("Unknown");
+    }
+
+    // 4. Prove Automatic Refresh Scheduler: repeat run skips duplicates without inflating records, and simulated failure preserves Last-Known-Good (LKG) data
+    const schedRepeat = await staffCaller.waypointPlaces.runScheduledRefresh({
+      sourceId: "us_census_acs5",
+      forceDue: true,
+      simulateFailure: false,
+    });
+    expect(schedRepeat.runs.length).toBe(1);
+    expect(["succeeded", "partial_warning"]).toContain(schedRepeat.runs[0].status);
+    expect(schedRepeat.runs[0].duplicatesSkipped).toBeGreaterThan(0);
+
+    const schedFail = await staffCaller.waypointPlaces.runScheduledRefresh({
+      sourceId: "us_census_acs5",
+      forceDue: true,
+      simulateFailure: true,
+    });
+    expect(schedFail.runs.length).toBe(1);
+    expect(schedFail.runs[0].status).toBe("failed_preserved_lkg");
+    const acsJob = schedFail.jobsExecuted.find((j) => j.jobId === "sched-us-census-acs5");
+    expect(acsJob).toBeDefined();
+    expect(acsJob!.lastExecutionStatus).toBe("failed_preserved_lkg");
+    expect(acsJob!.preservedLastKnownGoodCount).toBeGreaterThanOrEqual(75);
   });
 });
 

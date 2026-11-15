@@ -555,6 +555,42 @@ export function PlacesStudioDrawer({
         >
           {activeTab === "data_ops" ? (
             <div data-testid="studio-data-ops-panel" className="space-y-5">
+              {/* Build & Runtime Verification Banner */}
+              {ops?.buildInfo && (
+                <div
+                  data-testid="studio-build-runtime-banner"
+                  className="rounded-xl bg-[#020818] border border-[#D4AF63]/50 p-3 space-y-2 text-xs"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-[#102854] border border-[#D4AF63]/60 text-[#F3D68B] font-mono font-bold">
+                        {ops.buildInfo.buildId}
+                      </span>
+                      <span className="text-[#CBD5E1]">
+                        PID <strong className="font-mono text-white">{ops.buildInfo.processPid}</strong> · DB{" "}
+                        <code className="text-emerald-300">{ops.buildInfo.sqliteDbPath}</code>
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#94A3B8]">
+                      Tile Provider: <strong className="text-[#F3D68B]">USGS National Map Public Domain (0 Keys)</strong>
+                    </span>
+                  </div>
+                  <div
+                    data-testid="studio-refresh-execution-status"
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-[#1D2F52] text-[11px]"
+                  >
+                    <div className="rounded bg-[#061430] border border-emerald-500/40 px-2.5 py-1.5">
+                      <span className="text-[#94A3B8] block">Local Automatic Execution:</span>
+                      <strong className="text-emerald-300">{ops.buildInfo.localAutoRefreshStatus}</strong>
+                    </div>
+                    <div className="rounded bg-[#061430] border border-amber-500/40 px-2.5 py-1.5">
+                      <span className="text-[#94A3B8] block">Deployed Cloudflare Cron Execution:</span>
+                      <strong className="text-amber-300">{ops.buildInfo.cloudflareCronRefreshStatus}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Top Summary Metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                 <div className="rounded-xl bg-[#020818] border border-[#24355A] p-3">

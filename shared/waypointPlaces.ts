@@ -32,6 +32,7 @@ export type MapLayerKey =
   | "community_scores"
   | "school_locations"
   | "specialized_residential"
+  | "therapy_providers"
   | "neighborhoods"
   | "parks_recreation";
 
@@ -85,8 +86,12 @@ export interface PlaceSchoolRecord {
   streetAddress?: string;
   city?: string;
   zip?: string;
-  surveyPeriod?: string; // e.g. "NCES CCD 2022-2023"
+  surveyPeriod?: string; // e.g. "NCES CCD 2024-2025"
   verificationTier?: PlacesVerificationTier;
+  /** Exact NCES CCD SCHOOL_LEVEL ("Elementary" | "Middle" | "High" | "Other" | "Secondary" | "Prekindergarten") */
+  schoolLevelRaw?: string;
+  /** Exact NCES CCD SCHOOL_TYPE_TEXT ("Regular School" | "Special Education School" | "Alternative Education School") */
+  schoolTypeText?: string;
 }
 
 export interface PlaceSchoolDistrictRecord {
@@ -1363,6 +1368,7 @@ export type DataSourceConnectorId =
   | "us_census_acs5"
   | "nces_ccd_directory"
   | "census_tiger_boundaries"
+  | "cms_nppes_npi_providers"
   | "fcc_broadband_map"
   | "fbi_cde_safety"
   | "fema_nri_hazard"
@@ -1491,7 +1497,7 @@ export interface DataImportRunRecord {
   sourceId: DataSourceConnectorId;
   sourceName: string;
   stateFips2: string;
-  status: "succeeded" | "partial_warning" | "failed";
+  status: "succeeded" | "partial_warning" | "failed" | "failed_preserved_lkg";
   startedAt: string;
   completedAt: string;
   durationMs: number;
@@ -1693,8 +1699,145 @@ export function computeNormalizedFamilyLifestyleScore(params: {
   );
 }
 
+export const CENSUS_TRACT_SPED_GUARDRAIL_DISCLAIMER =
+  "Census Tracts and Block Groups measure household socioeconomic, housing, and commuting context (U.S. Census Bureau ACS 5-Year Estimates) and NEVER directly measure special education program quality or individualized IEP service availability.";
+
+export interface PlaceSubCountyTractRecord {
+  /** 11-digit Census Tract GEOID (e.g. "13067030104") */
+  geoid11: string;
+  /** Official Census Tract label (e.g. "Census Tract 301.04") */
+  name: string;
+  /** Parent 5-digit County FIPS (e.g. "13067") */
+  countyFips5: string;
+  countyName: string;
+  stateCode: string;
+  /** Real TIGER/Line / ACS Boundary Polygon or MultiPolygon in WGS84 (EPSG:4326) */
+  geometry: {
+    type: "Polygon" | "MultiPolygon";
+    coordinates: any;
+  };
+  centroid: [number, number];
+  /** Real U.S. Census Bureau ACS 5-Year Estimates & 90% Margins of Error */
+  populationEstimate: number;
+  populationMoe: number;
+  medianHouseholdIncome: number;
+  medianHouseholdIncomeMoe: number;
+  medianHomeValue: number;
+  medianHomeValueMoe: number;
+  medianGrossRent: number;
+  medianGrossRentMoe: number;
+  meanCommuteMinutes: number;
+  meanCommuteMinutesMoe: number;
+  priceToIncomeRatio: number | null;
+  rentToIncomePct: number | null;
+  highMoeWarning: boolean;
+  /**
+   * Verified Pillar Metrics at the Census Tract level.
+   * STRICT GUARDRAIL: `academics`, `specializedPrograms`, and `safetyWellBeing` are ALWAYS `null`
+   * at the Census Tract level because Census Tracts never measure special education quality or school performance.
+   */
+  verifiedPillars: PillarMetrics;
+  surveyPeriod: string;
+  sourceCitation: string;
+  verificationTier: PlacesVerificationTier;
+  dataKind: "confirmed_acs_estimate";
+  spedGuardrailNotice: string;
+  lastUpdated: string;
+}
+
+export type TherapySpecialtyCategory =
+  | "Speech-Language Pathology"
+  | "Occupational Therapy"
+  | "Psychology"
+  | "Psychiatry"
+  | "ABA / Behavior Analysis"
+  | "Developmental Specialties"
+  | "Physical Therapy"
+  | "Multidisciplinary Pediatric Therapy";
+
+export interface PlaceTherapyProviderRecord {
+  id: string;
+  /** 10-digit National Provider Identifier from CMS NPPES Registry */
+  npi10: string;
+  providerName: string;
+  enumerationType: "NPI-1" | "NPI-2";
+  specialtyCategory: TherapySpecialtyCategory;
+  taxonomyCode: string;
+  taxonomyDescription: string;
+  streetAddress: string;
+  city: string;
+  stateCode: string;
+  postalCode: string;
+  countyFips5: string;
+  countyName: string;
+  phone: string | null;
+  coordinates: [number, number];
+  /** Explicitly distinguishes address-level coordinates from ZIP-centroid estimates */
+  coordinatePrecision: "verified_address_location" | "zip_centroid_estimate";
+  /**
+   * Mandatory NPPES Provenance Guardrails (Requirement #5):
+   * Keep pediatric services, autism specialization, insurance, and appointment availability
+   * strictly "Unknown" unless explicitly supported by the official NPPES taxonomy/record.
+   */
+  pediatricServicesStatus?: "Unknown" | "Supported by Pediatric Taxonomy";
+  autismSpecializationStatus?: "Unknown";
+  insuranceAcceptedStatus?: "Unknown";
+  appointmentAvailabilityStatus?: "Unknown";
+  verificationTier: PlacesVerificationTier;
+  sourceCitation: string;
+  lastUpdated: string;
+}
+
+export interface AutomatedRefreshJobRecord {
+  jobId: string;
+  sourceId: DataSourceConnectorId;
+  sourceName: string;
+  cronExpression: string;
+  intervalMs: number;
+  enabled: boolean;
+  lastExecutionAt: string | null;
+  lastExecutionStatus: "succeeded" | "partial_warning" | "failed_preserved_lkg" | "never_run";
+  nextExecutionAt: string;
+  consecutiveFailures: number;
+  preservedLastKnownGoodCount: number;
+  lastDuplicatesSkippedCount: number;
+  lastRecordsUpsertedCount: number;
+  lastError: string | null;
+}
+
+export interface PlaceSchoolDistrictBoundaryRecord {
+  ncesLeaId7: string;
+  name: string;
+  countyFips5: string;
+  stateFips2: string;
+  geometry: {
+    type: "Polygon" | "MultiPolygon";
+    coordinates: any;
+  };
+  sourceCitation: string;
+  lastUpdated: string;
+}
+
+export const WAYPOINT_PLACES_BUILD_ID = "WP-2026.11.15-REV6";
+
+export interface PlacesBuildAndRuntimeInfo {
+  buildId: string;
+  serverStartedAt: string;
+  processPid: number;
+  sqliteDbPath: string;
+  verifiedPillarsCount: number;
+  totalPillarsCount: number;
+  verifiedPillarsList: string[];
+  tileProviderSummary: string;
+  nppesCoverageSummary: string;
+  localAutoRefreshStatus: string;
+  cloudflareCronRefreshStatus: string;
+}
+
 export * from "./waypointPlacesRights";
 export * from "./waypointPlacesSpecialized";
+
+
 
 
 

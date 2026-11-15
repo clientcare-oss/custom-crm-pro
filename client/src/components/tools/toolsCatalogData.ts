@@ -26,6 +26,16 @@ export interface InstrumentDefinition {
   categoryOverline: string;
   stageTitle: string;
   stageSubtitle: string;
+  inspectorSubtitle?: string;
+  valueHeadline?: string;
+  valueSubheadline?: string;
+  questionsCarousel?: string[];
+  previewTranscript?: Array<{
+    speaker: string;
+    time: string;
+    text: string;
+    isUser?: boolean;
+  }>;
   includedLabel: string;
   previewCardTitle: string;
   previewLines: Array<{
@@ -63,31 +73,60 @@ export function buildAllInstruments({
       id: "first-mate",
       sku: "PG-037 · LIVE AI COPILOT",
       drawerTitle: "First Mate",
-      drawerSubtitle: "Support during meetings",
+      drawerSubtitle: "Know what to ask at your IEP meeting.",
       icon: Users,
       categoryOverline: "MEETING SUPPORT",
       stageTitle: "First Mate",
       stageSubtitle: "Stay present. Keep your next question close.",
-      includedLabel: "Included in your plan",
-      previewCardTitle: "Live meeting",
+      inspectorSubtitle: "Your IEP meeting companion",
+      valueHeadline: "Walk into your next meeting prepared.",
+      valueSubheadline: "Keep your questions, notes, and next steps together.",
+      questionsCarousel: [
+        "What baseline data supports this present level?",
+        "Which research-based intervention will be used?",
+        "How will the team measure progress?",
+        "How often will we receive raw progress monitoring data?",
+        "What happens if the benchmark is not met by quarter two?",
+        "Will you include that commitment in the Prior Written Notice?",
+      ],
+      previewTranscript: [
+        {
+          speaker: "School team",
+          time: "10:14 AM",
+          text: "We're seeing progress in reading fluency this quarter.",
+        },
+        {
+          speaker: "You",
+          time: "10:16 AM",
+          text: "Can you share how progress will be measured going forward?",
+          isUser: true,
+        },
+        {
+          speaker: "School team",
+          time: "10:17 AM",
+          text: "We'll use weekly reading data and report it at each progress update.",
+        },
+      ],
+      includedLabel: "Included with Tools Access",
+      previewCardTitle: "Meeting transcript",
       previewLines: [
         {
           speaker: "Team:",
-          text: "He's making progress in small group with reading fluency.",
+          text: "We're seeing progress in reading fluency this quarter.",
         },
         {
           speaker: "Parent:",
-          text: "Can you say more about how that progress is measured?",
+          text: "Can you share how progress will be measured going forward?",
         },
         {
           speaker: "Team:",
-          text: "We're using weekly fluency checks and tracking the results.",
+          text: "We'll use weekly reading data and report it at each progress update.",
         },
       ],
-      placardHeader: "A QUESTION TO ASK",
+      placardHeader: "Question for the team",
       placardQuote: "How will the team measure progress?",
-      ctaLabel: "Open First Mate",
-      secondaryActionLabel: "Launch Pop-out Window",
+      ctaLabel: "Launch First Mate",
+      secondaryActionLabel: "Open in separate window",
       onSecondaryAction: () => {
         window.open(
           "/first-mate/popout",
@@ -95,7 +134,7 @@ export function buildAllInstruments({
           "width=440,height=720,menubar=no,toolbar=no"
         );
       },
-      capabilities: ["Live guidance", "Meeting notes", "Follow-up questions"],
+      capabilities: ["Live guidance", "Saved meeting notes", "Follow-up questions"],
       howItWorksSteps: [
         {
           title: "1. Launch before or during your IEP meeting",
@@ -120,79 +159,26 @@ export function buildAllInstruments({
         ),
     },
 
-    // 2. State Complaint Builder
-    {
-      id: "state-complaint-builder",
-      sku: "PG-020 · COMPLIANCE ENGINE",
-      drawerTitle: "State Complaint Builder",
-      drawerSubtitle: "Prepare a structured draft",
-      icon: FileText,
-      categoryOverline: "CONCERN & DISPUTE RESOLUTION",
-      stageTitle: "State Complaint Builder",
-      stageSubtitle:
-        "Turn timeline facts and IDEA violations into a clear filing.",
-      includedLabel: "Included in your plan",
-      previewCardTitle: "Drafting workspace",
-      previewLines: [
-        {
-          speaker: "Issue:",
-          text: "Speech-language therapy minutes were missed for 6 consecutive weeks.",
-        },
-        {
-          speaker: "Evidence:",
-          text: "IEP Section VII service log vs. district quarterly therapy attendance report.",
-        },
-        {
-          speaker: "Remedy:",
-          text: "Request 18 hours of compensatory speech-language instruction.",
-        },
-      ],
-      placardHeader: "KEY REMEDY PROMPT",
-      placardQuote: "What compensatory services will make your child whole?",
-      ctaLabel: "Open Complaint Builder",
-      capabilities: [
-        "Violation mapping",
-        "Evidence exhibits",
-        "Proposed remedies",
-      ],
-      howItWorksSteps: [
-        {
-          title: "1. Select the procedural or substantive violation",
-          detail:
-            "Choose from IDEA violation categories such as missed services, evaluation delays, or PWN omissions.",
-        },
-        {
-          title: "2. Attach dates and documentary exhibits",
-          detail:
-            "Link IEP pages, emails, and service logs directly to each factual statement.",
-        },
-        {
-          title: "3. Generate a state-ready formal draft",
-          detail:
-            "Export a structured complaint complete with legal citations and proposed compensatory remedies.",
-        },
-      ],
-      taskCategory: "concern",
-      onOpen: () =>
-        setLocation(
-          contactId
-            ? `/tools/state-complaint-builder?contactId=${contactId}`
-            : "/tools/state-complaint-builder"
-        ),
-    },
-
-    // 3. PWN Decoder
+    // 2. PWN Decoder
     {
       id: "pwn-decoder",
       sku: "PG-010-PWN · NOTICE ANALYZER",
       drawerTitle: "PWN Decoder",
-      drawerSubtitle: "Review a district decision",
+      drawerSubtitle: "Understand the school's written decision.",
       icon: Search,
       categoryOverline: "DOCUMENT ANALYSIS",
       stageTitle: "PWN Decoder",
       stageSubtitle:
         "See what the district proposed, refused, and left unsaid.",
-      includedLabel: "Included in your plan",
+      inspectorSubtitle: "Prior Written Notice translator",
+      valueHeadline: "Spot every proposal, refusal, and missing rationale.",
+      valueSubheadline: "Check all 7 federal IDEA notice requirements in seconds.",
+      questionsCarousel: [
+        "Which evaluation data supported this refusal?",
+        "What other options did the IEP team consider and reject?",
+        "Can you issue a formal Prior Written Notice for that decision?",
+      ],
+      includedLabel: "Included with Tools Access",
       previewCardTitle: "Notice scan",
       previewLines: [
         {
@@ -208,9 +194,9 @@ export function buildAllInstruments({
           text: "Request the specific assessment data used to justify the refusal.",
         },
       ],
-      placardHeader: "A QUESTION TO ASK",
+      placardHeader: "Question for the team",
       placardQuote: "Which evaluation data supported this refusal?",
-      ctaLabel: "Open PWN Decoder",
+      ctaLabel: "Launch PWN Decoder",
       capabilities: [
         "7 federal checks",
         "Missing rationale scan",
@@ -242,18 +228,159 @@ export function buildAllInstruments({
         ),
     },
 
-    // 4. IEP Review / IEP Comparator
+    // 3. Parent Concerns (Worksheet Studio)
+    {
+      id: "worksheet-builder",
+      sku: "PG-010-WS · PRACTICE STUDIO",
+      drawerTitle: "Parent Concerns",
+      drawerSubtitle: "Turn your priorities into a clear statement.",
+      icon: Sparkles,
+      categoryOverline: "MEETING PREPARATION",
+      stageTitle: "Parent Concerns",
+      stageSubtitle:
+        "Turn everyday observations into a clear written parent input statement for the IEP.",
+      inspectorSubtitle: "Guided parent input & prep studio",
+      valueHeadline: "Make sure your voice is part of the official IEP record.",
+      valueSubheadline: "Organize strengths, concerns, and requests before the meeting.",
+      questionsCarousel: [
+        "Will you attach our written parent concerns statement verbatim to the IEP?",
+        "How does the draft address the reading fatigue we see at home?",
+        "What accommodations can support multi-step directions in class?",
+      ],
+      includedLabel: "Included with Tools Access",
+      previewCardTitle: "Parent concerns draft",
+      previewLines: [
+        {
+          speaker: "Strength:",
+          text: "Creative problem solver who thrives with visual schedules and hands-on tasks.",
+        },
+        {
+          speaker: "Concern:",
+          text: "Homework takes 2+ hours nightly due to multi-step decoding fatigue.",
+        },
+        {
+          speaker: "Request:",
+          text: "Attach this written parent input statement to the official IEP record.",
+        },
+      ],
+      placardHeader: "Question for the team",
+      placardQuote: "What is your top priority for the team to address today?",
+      ctaLabel: "Launch Parent Concerns",
+      capabilities: [
+        "Guided concern builder",
+        "Official IEP input format",
+        "Printable PDF export",
+      ],
+      howItWorksSteps: [
+        {
+          title: "1. Choose an intake or parent concerns template",
+          detail:
+            "Select from Parent Concerns Agenda, Vision Statement, or Accommodation Checklist.",
+        },
+        {
+          title: "2. Customize sections with guided prompts",
+          detail:
+            "Turn home observations into clear, actionable items for the IEP team.",
+        },
+        {
+          title: "3. Export a clean printable PDF",
+          detail:
+            "Share with the IEP team ahead of time so parent input is recorded verbatim.",
+        },
+      ],
+      taskCategory: "concern",
+      onOpen: () =>
+        setLocation(
+          contactId
+            ? `/tools/worksheet-builder?contactId=${contactId}`
+            : "/tools/worksheet-builder"
+        ),
+    },
+
+    // 4. State Complaint Builder
+    {
+      id: "state-complaint-builder",
+      sku: "PG-020 · COMPLIANCE ENGINE",
+      drawerTitle: "State Complaint Builder",
+      drawerSubtitle: "Organize concerns into a structured draft.",
+      icon: FileText,
+      categoryOverline: "CONCERN & DISPUTE RESOLUTION",
+      stageTitle: "State Complaint Builder",
+      stageSubtitle:
+        "Turn timeline facts and IDEA violations into a clear filing.",
+      inspectorSubtitle: "Structured IDEA compliance & filing studio",
+      valueHeadline: "Organize timeline facts and IDEA violations clearly.",
+      valueSubheadline: "Link exhibits, dates, and proposed compensatory remedies.",
+      includedLabel: "Included with Tools Access",
+      previewCardTitle: "Drafting workspace",
+      previewLines: [
+        {
+          speaker: "Issue:",
+          text: "Speech-language therapy minutes were missed for 6 consecutive weeks.",
+        },
+        {
+          speaker: "Evidence:",
+          text: "IEP Section VII service log vs. district quarterly therapy attendance report.",
+        },
+        {
+          speaker: "Remedy:",
+          text: "Request 18 hours of compensatory speech-language instruction.",
+        },
+      ],
+      placardHeader: "Question for the team",
+      placardQuote: "What compensatory services will make your child whole?",
+      ctaLabel: "Launch State Complaint Builder",
+      capabilities: [
+        "Violation mapping",
+        "Evidence exhibits",
+        "Proposed remedies",
+      ],
+      howItWorksSteps: [
+        {
+          title: "1. Select the procedural or substantive violation",
+          detail:
+            "Choose from IDEA violation categories such as missed services, evaluation delays, or PWN omissions.",
+        },
+        {
+          title: "2. Attach dates and documentary exhibits",
+          detail:
+            "Link IEP pages, emails, and service logs directly to each factual statement.",
+        },
+        {
+          title: "3. Generate a state-ready formal draft",
+          detail:
+            "Export a structured complaint complete with legal citations and proposed compensatory remedies.",
+        },
+      ],
+      taskCategory: "concern",
+      onOpen: () =>
+        setLocation(
+          contactId
+            ? `/tools/state-complaint-builder?contactId=${contactId}`
+            : "/tools/state-complaint-builder"
+        ),
+    },
+
+    // 5. IEP Comparator
     {
       id: "iep-review",
       sku: "PG-010-IEP · DIFF ENGINE",
-      drawerTitle: "IEP Review",
-      drawerSubtitle: "Find gaps and prepare questions",
+      drawerTitle: "IEP Comparator",
+      drawerSubtitle: "See what changed before you agree.",
       icon: Layers,
       categoryOverline: "DOCUMENT COMPARISON & REVIEW",
-      stageTitle: "IEP Review & Comparator",
+      stageTitle: "IEP Comparator",
       stageSubtitle:
         "Compare drafts side-by-side to uncover service changes and gaps.",
-      includedLabel: "Included in your plan",
+      inspectorSubtitle: "Side-by-side IEP diff & gap checker",
+      valueHeadline: "See every added, changed, or reduced service before signing.",
+      valueSubheadline: "Compare current and proposed IEPs line by line.",
+      questionsCarousel: [
+        "Why were direct therapy minutes reduced in this draft?",
+        "Present Levels note decoding needs—where is the corresponding annual goal?",
+        "Can we keep current accommodations in place while we review new data?",
+      ],
+      includedLabel: "Included with Tools Access",
       previewCardTitle: "Draft comparison",
       previewLines: [
         {
@@ -269,9 +396,9 @@ export function buildAllInstruments({
           text: "Ask the team to align service minutes with current evaluation baselines.",
         },
       ],
-      placardHeader: "A QUESTION TO ASK",
+      placardHeader: "Question for the team",
       placardQuote: "Why were direct therapy minutes reduced in this draft?",
-      ctaLabel: "Open IEP Comparator",
+      ctaLabel: "Launch IEP Comparator",
       secondaryActionLabel: "Quick PDF Compare Modal",
       onSecondaryAction: onOpenIepComparisonModal,
       capabilities: [
@@ -293,7 +420,7 @@ export function buildAllInstruments({
         {
           title: "3. Bring prioritized questions to the table",
           detail:
-            "Export your findings straight into First Mate or Worksheet Studio before the meeting.",
+            "Export your findings straight into First Mate or Parent Concerns before the meeting.",
         },
       ],
       taskCategory: "document",
@@ -305,73 +432,74 @@ export function buildAllInstruments({
         ),
     },
 
-    // 5. Worksheet Studio
+    // 6. Document Vault (Secure Smart Files & Vault)
     {
-      id: "worksheet-builder",
-      sku: "PG-010-WS · PRACTICE STUDIO",
-      drawerTitle: "Worksheet Studio",
-      drawerSubtitle: "Custom intake forms & prep sheets",
-      icon: Sparkles,
-      categoryOverline: "MEETING PREPARATION",
-      stageTitle: "Worksheet Studio",
+      id: "document-vault",
+      sku: "PG-033 · SMART FILES SUITE",
+      drawerTitle: "Document Vault",
+      drawerSubtitle: "Keep your child's records together.",
+      icon: FolderKanban,
+      categoryOverline: "ENCRYPTED DOCUMENT REPOSITORY",
+      stageTitle: "Document Vault",
       stageSubtitle:
-        "Build custom branded parent prep sheets, intake forms, and discovery guides.",
-      includedLabel: "Included in your plan",
-      previewCardTitle: "Parent prep packet",
+        "Store, organize, assign, and collect e-signatures on IEP records and packets.",
+      inspectorSubtitle: "Encrypted IEP & evaluation record repository",
+      valueHeadline: "Keep every IEP, evaluation, and notice in one secure place.",
+      valueSubheadline: "Organized chronologically and ready for your next meeting.",
+      includedLabel: "Included with Tools Access",
+      previewCardTitle: "Indexed vault records",
       previewLines: [
         {
-          speaker: "Strength:",
-          text: "Creative problem solver who thrives with visual schedules and hands-on tasks.",
+          speaker: "IEP PDF:",
+          text: "2026 Annual IEP Draft — OCR-indexed with 6 goals and service matrix.",
         },
         {
-          speaker: "Concern:",
-          text: "Homework takes 2+ hours nightly due to multi-step decoding fatigue.",
+          speaker: "EVAL:",
+          text: "Private Neuropsychological Evaluation — subtest percentiles extracted.",
         },
         {
-          speaker: "Request:",
-          text: "Attach this written parent input statement to the official IEP record.",
+          speaker: "SIGNED:",
+          text: "Family Release & Intake Smart File Packet — completed and verified.",
         },
       ],
-      placardHeader: "AGENDA PRIORITY",
-      placardQuote: "What is your top priority for the team to address today?",
-      ctaLabel: "Open Worksheet Studio",
+      placardHeader: "Organized record",
+      placardQuote: "Every evaluation score and service log in one vault.",
+      ctaLabel: "Launch Document Vault",
       capabilities: [
-        "12 interactive templates",
-        "Custom practice branding",
-        "Fillable PDF export",
+        "OCR-indexed IEP storage",
+        "Interactive questionnaires",
+        "E-signature collection",
       ],
       howItWorksSteps: [
         {
-          title: "1. Choose an intake or meeting prep template",
+          title: "1. Upload IEPs, psychoeducational evaluations, and PWNs",
           detail:
-            "Select from Parent Concerns Agenda, Vision Statement, or Accommodation Checklist.",
+            "Documents are OCR-indexed and organized chronologically by school year.",
         },
         {
-          title: "2. Customize sections with AI prompt directives",
+          title: "2. Assign interactive Smart File questionnaires",
           detail:
-            "Add drag-and-drop question blocks tailored to the student's evaluation history.",
+            "Collect structured family intake answers and legally binding e-signatures.",
         },
         {
-          title: "3. Export a pixel-perfect printable PDF",
+          title: "3. Link files directly to comparison and complaint tools",
           detail:
-            "Share with the IEP team ahead of time so parent input is recorded verbatim.",
+            "Pull any vault document straight into IEP Comparator or State Complaint Builder.",
         },
       ],
-      taskCategory: "meeting",
+      taskCategory: "document",
       onOpen: () =>
         setLocation(
-          contactId
-            ? `/tools/worksheet-builder?contactId=${contactId}`
-            : "/tools/worksheet-builder"
+          contactId ? `/contacts/${contactId}?tab=files` : "/smart-files"
         ),
     },
 
-    // 6. Voyage — Meeting Recorder
+    // 7. Voyage — Meeting Recorder
     {
       id: "voyage-recorder",
       sku: "PG-010-REC · LIVE AUDIO & SCREEN",
       drawerTitle: "Voyage — Meeting Recorder",
-      drawerSubtitle: "Live audio & screen transcription",
+      drawerSubtitle: "Capture live audio & instant speaker transcription.",
       icon: Mic,
       categoryOverline: "MEETING CAPTURE",
       stageTitle: "Voyage — Meeting Recorder",
@@ -429,12 +557,12 @@ export function buildAllInstruments({
         ),
     },
 
-    // 7. Meeting Analyzer
+    // 8. Meeting Analyzer
     {
       id: "meeting-analyzer",
       sku: "PG-044 · POST-MEETING AI",
       drawerTitle: "Meeting Analyzer",
-      drawerSubtitle: "Search transcripts & takeaways",
+      drawerSubtitle: "Search transcripts, commitments & takeaways.",
       icon: Video,
       categoryOverline: "POST-MEETING SYNTHESIS",
       stageTitle: "Meeting Analyzer",
@@ -491,12 +619,12 @@ export function buildAllInstruments({
         ),
     },
 
-    // 8. Case Compass & Timeline
+    // 9. Case Compass & Timeline
     {
       id: "timeline-builder",
       sku: "PG-025 · CASE COMPASS",
       drawerTitle: "Case Compass & Timeline",
-      drawerSubtitle: "Visual chronology & deadlines",
+      drawerSubtitle: "Track evaluation & IEP statutory deadlines.",
       icon: Compass,
       categoryOverline: "CASE CHRONOLOGY & STRATEGY",
       stageTitle: "Case Compass & Timeline",
@@ -547,65 +675,6 @@ export function buildAllInstruments({
       onOpen: () =>
         setLocation(
           contactId ? `/case-compass?studentId=${contactId}` : "/case-compass"
-        ),
-    },
-
-    // 9. Secure Smart Files & Vault
-    {
-      id: "document-vault",
-      sku: "PG-033 · SMART FILES SUITE",
-      drawerTitle: "Secure Smart Files & Vault",
-      drawerSubtitle: "Encrypted IEP repository & packets",
-      icon: FolderKanban,
-      categoryOverline: "ENCRYPTED DOCUMENT REPOSITORY",
-      stageTitle: "Secure Smart Files & Vault",
-      stageSubtitle:
-        "Store, organize, assign, and collect e-signatures on IEP records and packets.",
-      includedLabel: "Included in your plan",
-      previewCardTitle: "Indexed vault records",
-      previewLines: [
-        {
-          speaker: "IEP PDF:",
-          text: "2026 Annual IEP Draft — OCR-indexed with 6 goals and service matrix.",
-        },
-        {
-          speaker: "EVAL:",
-          text: "Private Neuropsychological Evaluation — subtest percentiles extracted.",
-        },
-        {
-          speaker: "SIGNED:",
-          text: "Family Release & Intake Smart File Packet — completed and verified.",
-        },
-      ],
-      placardHeader: "ORGANIZED RECORD",
-      placardQuote: "Every evaluation score and service log in one vault.",
-      ctaLabel: "Open Smart Files Vault",
-      capabilities: [
-        "OCR-indexed IEP storage",
-        "Interactive questionnaires",
-        "E-signature collection",
-      ],
-      howItWorksSteps: [
-        {
-          title: "1. Upload IEPs, psychoeducational evaluations, and PWNs",
-          detail:
-            "Documents are OCR-indexed and organized chronologically by school year.",
-        },
-        {
-          title: "2. Assign interactive Smart File questionnaires",
-          detail:
-            "Collect structured family intake answers and legally binding e-signatures.",
-        },
-        {
-          title: "3. Link files directly to comparison and complaint tools",
-          detail:
-            "Pull any vault document straight into IEP Review or State Complaint Builder.",
-        },
-      ],
-      taskCategory: "document",
-      onOpen: () =>
-        setLocation(
-          contactId ? `/contacts/${contactId}?tab=files` : "/smart-files"
         ),
     },
 

@@ -130,6 +130,11 @@ export type RightsGeographicSupportScope =
   | "county_and_district_explicit"
   | "school_campus_explicit";
 
+export type RightsRecordOrigin =
+  | "live_api_import"
+  | "manually_assembled_reference"
+  | "seeded_example";
+
 /**
  * Automated Connector Registry Metadata for Rights & Accountability Sources
  */
@@ -139,6 +144,7 @@ export interface RightsConnectorRegistryEntry {
   agency: string;
   stateScope: string; // "50 States + DC" or specific state codes
   ingestionMethod: RightsIngestionMethod;
+  recordOrigin?: RightsRecordOrigin;
   explicitStatus: RightsAccountabilityExplicitStatus;
   supportedGeographicScopes: RightsGeographicSupportScope[];
   pdfExtractionPolicy: "not_applicable" | "validated_redacted_only" | "official_link_only";
@@ -286,6 +292,7 @@ export interface PublishedDisputeDecisionRecord {
   ferpaRedactionVerified: boolean;
 
   explicitStatus: RightsAccountabilityExplicitStatus;
+  recordOrigin?: RightsRecordOrigin;
   sourceCoverageAndCompleteness: string;
   lastSuccessfulImportAt: string;
 }
@@ -331,6 +338,7 @@ export interface DistrictMonitoringAndEnforcementRecord {
   correctiveActionStatus: "None Required" | "In Progress" | "Completed & Verified" | "Under OCR Monitoring";
 
   explicitStatus: RightsAccountabilityExplicitStatus;
+  recordOrigin?: RightsRecordOrigin;
   sourceCoverageAndCompleteness: string;
   lastSuccessfulImportAt: string;
 }
@@ -380,6 +388,7 @@ export interface DistrictSpedAccountabilityMetricsRecord {
   timelyInitialEvaluationsPct: number | null; // IDEA Indicator 11 (60-day timeline)
 
   explicitStatus: RightsAccountabilityExplicitStatus;
+  recordOrigin?: RightsRecordOrigin;
   sourceCoverageAndCompleteness: string;
   lastSuccessfulImportAt: string;
 }

@@ -3,6 +3,7 @@ import { getLocalDbClient } from "../_core/d1Client";
 import {
   CLOUDFLARE_STORAGE_EVALUATION,
   DEFAULT_SCORING_WEIGHTS,
+  DEMO_COUNTY_CALIBRATION_BY_FIPS,
   INITIAL_GEORGIA_AMENITIES,
   INITIAL_GEORGIA_COMMUNITIES,
   INITIAL_GEORGIA_SCHOOL_DISTRICTS,
@@ -11,17 +12,23 @@ import {
   type GeographicBoundaryCrosswalkRecord,
   type PillarMetrics,
   type PlaceCommunityRecord,
+  type PlaceSchoolDistrictBoundaryRecord,
   type PlaceSchoolDistrictRecord,
   type PlaceSchoolRecord,
+  type PlaceTherapyProviderRecord,
+  type PlacesBuildAndRuntimeInfo,
   type ScoringWeightsConfig,
   type SpecialEducationIntelligenceRecord,
   type SpecializedFacilitiesSnapshot,
 } from "../../shared/waypointPlaces";
 import {
   buildVerifiedCountyIntelligenceMap,
+  getWaypointPlacesBuildInfo,
   listBoundaryCrosswalkRecords,
   listImportedNcesDistricts,
   listImportedNcesSchools,
+  listImportedSchoolDistrictBoundaries,
+  listImportedTherapyProviders,
   listSpecialEdIntelligenceRecords,
 } from "../services/waypointPlacesDataEngine";
 import { getSpecializedFacilitiesSnapshot } from "../services/waypointPlacesSpecializedEngine";
@@ -238,8 +245,10 @@ export async function listWaypointPlacesCommunities(options?: {
     buildVerifiedCountyIntelligenceMap(),
   ]);
 
-  return rows.map((row) => {
+  const seenFips = new Set<string>();
+  const results: PlaceCommunityRecord[] = rows.map((row) => {
     const base = mapCommunityRow(row);
+    seenFips.add(base.fips);
     const intel = verifiedMap.get(base.fips);
     if (!intel) return base;
 
@@ -253,6 +262,7 @@ export async function listWaypointPlacesCommunities(options?: {
 
     return {
       ...base,
+      dataStatus: "verified_public_source",
       keyInsights: enrichedInsights,
       dataSourcesPending: intel.evidenceCompleteness.pendingSourceNames,
       verifiedPillars: intel.verifiedPillars,
@@ -260,6 +270,55 @@ export async function listWaypointPlacesCommunities(options?: {
       evidenceCompleteness: intel.evidenceCompleteness,
     };
   });
+
+  // Also include every other county with imported verified measurements in `waypoint_places_measurements`
+  for (const [fips, intel] of Array.from(verifiedMap.entries())) {
+    if (seenFips.has(fips)) continue;
+    seenFips.add(fips);
+    const acs = intel.acsDemographics;
+    const shortName = intel.entityName.replace(/,\s*Georgia$/i, "").trim();
+    const fullName = intel.entityName.includes(",")
+      ? intel.entityName
+      : `${shortName}, Georgia`;
+    const demoCal = DEMO_COUNTY_CALIBRATION_BY_FIPS[fips] || {
+      communityQuality: null,
+      academics: null,
+      specializedPrograms: null,
+      safetyWellBeing: null,
+      familyLifestyle: null,
+      affordability: null,
+      commute: null,
+    };
+
+    results.push({
+      id: `ga-${shortName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${fips}`,
+      fips,
+      name: fullName,
+      shortName,
+      stateCode: "GA",
+      region: "Georgia Statewide Census & NCES Coverage",
+      coordinates: [-83.5, 32.8],
+      zoomLevel: 9.6,
+      heroImageStyle: "tree_lined_avenue",
+      tagline: `Verified U.S. Census Bureau ACS (${acs.surveyPeriod}) & NCES CCD County Profile (FIPS ${fips})`,
+      keyInsights: [
+        `Geographic Boundary: County FIPS ${fips} (${fullName})`,
+        `Verified Population (${acs.surveyPeriod}): ${acs.populationEstimate.toLocaleString()} (±${acs.populationMoe.toLocaleString()})`,
+        `Verified ACS (${acs.surveyPeriod}): Income $${acs.medianHouseholdIncome.toLocaleString()} (±$${acs.medianHouseholdIncomeMoe.toLocaleString()}) · Home $${acs.medianHomeValue.toLocaleString()} (±$${acs.medianHomeValueMoe.toLocaleString()}) · Rent $${acs.medianGrossRent.toLocaleString()}/mo`,
+        `Verified Commute (${acs.surveyPeriod}): ${acs.meanCommuteMinutes} min (±${acs.meanCommuteMinutesMoe} min) · Evidence: ${intel.evidenceCompleteness.ratioText}`,
+      ],
+      dataStatus: "verified_public_source",
+      dataSourcesPending: intel.evidenceCompleteness.pendingSourceNames,
+      calibrationPillars: demoCal,
+      verifiedPillars: intel.verifiedPillars,
+      acsDemographics: intel.acsDemographics,
+      evidenceCompleteness: intel.evidenceCompleteness,
+      publishedToPublic: true,
+      updatedAt: acs.lastUpdated,
+    });
+  }
+
+  return results;
 }
 
 export async function upsertWaypointPlaceCommunity(input: {
@@ -408,6 +467,7 @@ export async function saveWaypointPlacesConfig(input: {
 
 export interface PublishedPlacesSnapshot {
   version: string;
+  buildInfo: PlacesBuildAndRuntimeInfo;
   generatedAt: string;
   publishedBy: string;
   isolatedFromCrmPii: true;
@@ -417,7 +477,9 @@ export interface PublishedPlacesSnapshot {
   weights: ScoringWeightsConfig;
   communities: PlaceCommunityRecord[];
   schoolDistricts: PlaceSchoolDistrictRecord[];
+  schoolDistrictBoundaries: PlaceSchoolDistrictBoundaryRecord[];
   schools: PlaceSchoolRecord[];
+  therapyProviders: PlaceTherapyProviderRecord[];
   specialEdIntelligence?: SpecialEducationIntelligenceRecord[];
   boundaryCrosswalks?: GeographicBoundaryCrosswalkRecord[];
   specializedFacilitiesSnapshot?: SpecializedFacilitiesSnapshot;
@@ -428,15 +490,25 @@ export interface PublishedPlacesSnapshot {
 export async function buildIsolatedPublicPlacesSnapshot(
   publishedBy = "Waypoint Places Studio"
 ): Promise<PublishedPlacesSnapshot> {
-  const [communities, config, importedDistricts, importedSchools, spedRecords, crosswalks] =
-    await Promise.all([
-      listWaypointPlacesCommunities({ onlyPublished: true }),
-      getWaypointPlacesConfig(),
-      listImportedNcesDistricts(),
-      listImportedNcesSchools(),
-      listSpecialEdIntelligenceRecords(),
-      listBoundaryCrosswalkRecords(),
-    ]);
+  const [
+    communities,
+    config,
+    importedDistricts,
+    importedDistrictBoundaries,
+    importedSchools,
+    importedTherapyProviders,
+    spedRecords,
+    crosswalks,
+  ] = await Promise.all([
+    listWaypointPlacesCommunities({ onlyPublished: true }),
+    getWaypointPlacesConfig(),
+    listImportedNcesDistricts(),
+    listImportedSchoolDistrictBoundaries("13"),
+    listImportedNcesSchools(),
+    listImportedTherapyProviders(),
+    listSpecialEdIntelligenceRecords(),
+    listBoundaryCrosswalkRecords(),
+  ]);
   const specializedFacilitiesSnapshot = getSpecializedFacilitiesSnapshot();
 
   const now = new Date().toISOString();
@@ -445,6 +517,7 @@ export async function buildIsolatedPublicPlacesSnapshot(
 
   return {
     version,
+    buildInfo: getWaypointPlacesBuildInfo(),
     generatedAt: now,
     publishedBy,
     isolatedFromCrmPii: true,
@@ -456,7 +529,9 @@ export async function buildIsolatedPublicPlacesSnapshot(
     schoolDistricts: importedDistricts.length
       ? importedDistricts
       : INITIAL_GEORGIA_SCHOOL_DISTRICTS,
+    schoolDistrictBoundaries: importedDistrictBoundaries,
     schools: importedSchools.length ? importedSchools : INITIAL_GEORGIA_SCHOOLS,
+    therapyProviders: importedTherapyProviders,
     specialEdIntelligence: spedRecords,
     boundaryCrosswalks: crosswalks,
     specializedFacilitiesSnapshot,

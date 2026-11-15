@@ -9,10 +9,16 @@ import {
   upsertWaypointPlaceCommunity,
 } from "../db/waypointPlaces";
 import {
+  getAutomatedSchedulerJobsState,
   getDataOperationsConsoleState,
+  getOrImportCountySubCountyTracts,
+  getOrImportSchoolDistrictBoundaries,
   listImportedNcesDistricts,
   listImportedNcesSchools,
+  listImportedTherapyProviders,
+  runCmsNppesTherapyProvidersImport,
   runNcesCcdDirectoryImport,
+  runScheduledWaypointPlacesRefresh,
   runUsCensusAcs5Import,
 } from "../services/waypointPlacesDataEngine";
 import {
@@ -43,6 +49,34 @@ export const waypointPlacesRouter = router({
   }),
 
   /**
+   * Sub-County Neighborhood Census Tract Polygons & School District Boundaries for a Selected County:
+   * Fetches and caches real Census Tract polygons (11-digit GEOID) + ACS 5-Year estimates/MOE
+   * and real TIGERweb Unified School District boundaries.
+   */
+  getCountyNeighborhoodTracts: publicProcedure
+    .input(
+      z.object({
+        countyFips5: z.string().regex(/^\d{5}$/).default("13067"),
+      })
+    )
+    .query(async ({ input }) => {
+      const stateFips2 = input.countyFips5.slice(0, 2);
+      const [tracts, schoolDistrictBoundaries, therapyProviders] = await Promise.all([
+        getOrImportCountySubCountyTracts(input.countyFips5, { allowLiveFetch: true }),
+        getOrImportSchoolDistrictBoundaries(stateFips2, { allowLiveFetch: true }),
+        listImportedTherapyProviders(input.countyFips5),
+      ]);
+      return {
+        countyFips5: input.countyFips5,
+        tracts,
+        schoolDistrictBoundaries: schoolDistrictBoundaries.filter(
+          (b) => b.countyFips5 === input.countyFips5
+        ),
+        therapyProviders,
+      };
+    }),
+
+  /**
    * Phase 2 Data Operations Console State (Milestone A & B):
    * Returns connected sources, import run history, records imported,
    * verification breakdown (Verified, Parent Reported, Unverified, Outdated, Unknown),
@@ -65,6 +99,7 @@ export const waypointPlacesRouter = router({
         stateFips2: z.string().min(2).max(2).default("13"),
         countyFips5: z.string().nullable().optional(),
         ncesLeaId7: z.string().nullable().optional(),
+        verifiedOnly: z.boolean().optional(),
       })
     )
     .query(async ({ input }) => {
@@ -72,6 +107,38 @@ export const waypointPlacesRouter = router({
         stateFips2: input.stateFips2,
         countyFips5: input.countyFips5 ?? null,
         ncesLeaId7: input.ncesLeaId7 ?? null,
+        verifiedOnly: input.verifiedOnly,
+      });
+    }),
+
+  /**
+   * Automated Refresh Scheduler Jobs & Execution State
+   */
+  getSchedulerJobsState: publicProcedure.query(async () => {
+    return await getAutomatedSchedulerJobsState();
+  }),
+
+  /**
+   * Trigger / Verify Automated Background Scheduler Tick (supports repeat-idempotency and simulated failure LKG preservation checks)
+   */
+  runScheduledRefresh: protectedProcedure
+    .input(
+      z.object({
+        sourceId: z
+          .enum(["us_census_acs5", "nces_ccd_directory", "cms_nppes_npi_providers", "all"])
+          .default("all"),
+        forceDue: z.boolean().default(true),
+        simulateFailure: z.boolean().default(false),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const actor = ctx.user?.name || ctx.user?.email || "Byron Honea";
+      return await runScheduledWaypointPlacesRefresh({
+        sourceId: input.sourceId,
+        forceDue: input.forceDue,
+        simulateFailure: input.simulateFailure,
+        allowLiveFetch: true,
+        triggeredBy: `Automated Scheduler (${actor})`,
       });
     }),
 
@@ -194,7 +261,11 @@ export const waypointPlacesRouter = router({
   runDataSourceImport: protectedProcedure
     .input(
       z.object({
-        sourceId: z.enum(["us_census_acs5", "nces_ccd_directory"]),
+        sourceId: z.enum([
+          "us_census_acs5",
+          "nces_ccd_directory",
+          "cms_nppes_npi_providers",
+        ]),
         stateFips2: z.string().regex(/^\d{2}$/).default("13"),
       })
     )
@@ -203,6 +274,13 @@ export const waypointPlacesRouter = router({
       if (input.sourceId === "us_census_acs5") {
         return await runUsCensusAcs5Import({
           stateFips2: input.stateFips2,
+          triggeredBy: `Manual Refresh (${actor})`,
+          allowLiveFetch: true,
+        });
+      }
+      if (input.sourceId === "cms_nppes_npi_providers") {
+        return await runCmsNppesTherapyProvidersImport({
+          stateCode: "GA",
           triggeredBy: `Manual Refresh (${actor})`,
           allowLiveFetch: true,
         });

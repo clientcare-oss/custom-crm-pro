@@ -19,6 +19,8 @@ import {
   Home,
   Layers,
   Map as MapIcon,
+  Maximize2,
+  Minimize2,
   Minus,
   Navigation,
   Plus,
@@ -50,8 +52,11 @@ import {
   type PillarMetrics,
   type PlaceAmenityMarker,
   type PlaceCommunityRecord,
+  type PlaceSchoolDistrictBoundaryRecord,
   type PlaceSchoolDistrictRecord,
   type PlaceSchoolRecord,
+  type PlaceSubCountyTractRecord,
+  type PlaceTherapyProviderRecord,
   type PlacesMapDisplayMode,
   type SatelliteImageryConfig,
   type SpecializedFacilityCategory,
@@ -108,19 +113,31 @@ export interface GeorgiaMapCanvasProps {
   onOpenSpecializedExplorer?: (
     initialCategory?: SpecializedFacilityCategory | "all"
   ) => void;
+  subCountyTracts?: PlaceSubCountyTractRecord[];
+  schoolDistrictBoundaries?: PlaceSchoolDistrictBoundaryRecord[];
+  therapyProviders?: PlaceTherapyProviderRecord[];
+  selectedTractGeoid?: string | null;
+  onSelectTract?: (tract: PlaceSubCountyTractRecord | null) => void;
+  focusMode?: boolean;
+  onToggleFocusMode?: () => void;
 }
 
 const LAYER_OPTIONS: Array<{ key: MapLayerKey; label: string; colorDot: string }> = [
-  { key: "school_districts", label: "School Districts", colorDot: "#7BA3DC" },
-  { key: "community_scores", label: "Community Hubs", colorDot: "#D4AF63" },
-  { key: "school_locations", label: "School Locations", colorDot: "#7DD3FC" },
+  { key: "neighborhoods", label: "Neighborhood Tracts", colorDot: "#C4B5FD" },
+  { key: "school_districts", label: "School Boundaries", colorDot: "#7BA3DC" },
+  { key: "school_locations", label: "Public Schools (NCES)", colorDot: "#7DD3FC" },
   {
     key: "specialized_residential",
     label: "Specialized & Residential",
     colorDot: "#F59E0B",
   },
-  { key: "neighborhoods", label: "Neighborhoods", colorDot: "#C4B5FD" },
-  { key: "parks_recreation", label: "Parks & Recreation", colorDot: "#6EE7B7" },
+  {
+    key: "therapy_providers",
+    label: "Therapy Providers (NPI)",
+    colorDot: "#34D399",
+  },
+  { key: "parks_recreation", label: "Parks & Water", colorDot: "#6EE7B7" },
+  { key: "community_scores", label: "County Hubs", colorDot: "#D4AF63" },
 ];
 
 // Major Georgia Interstate Highway Corridors for authentic geographic structure
@@ -398,6 +415,13 @@ export function GeorgiaMapCanvas({
   onToggleModelCalibration,
   specializedFacilities = [],
   onOpenSpecializedExplorer,
+  subCountyTracts = [],
+  schoolDistrictBoundaries = [],
+  therapyProviders = [],
+  selectedTractGeoid = null,
+  onSelectTract,
+  focusMode = false,
+  onToggleFocusMode,
 }: GeorgiaMapCanvasProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -491,12 +515,19 @@ export function GeorgiaMapCanvas({
   });
 
   // Progressive zoom-driven granularity ("state" | "county" | "block_group")
+  // In Verified Mode (`!showModelCalibration`), keep granularity at `county` when zooming in
+  // because sub-county Census Block Group ACS polygons are not yet imported.
   const effectiveGranularity: "state" | "county" | "block_group" = useMemo(() => {
-    if (granularityMode !== "auto") return granularityMode;
+    if (granularityMode !== "auto") {
+      if (granularityMode === "block_group" && !showModelCalibration) {
+        return "county";
+      }
+      return granularityMode;
+    }
     if (camera.zoom < 5.0) return "state";
-    if (camera.zoom >= 8.1) return "block_group";
+    if (showModelCalibration && camera.zoom >= 8.1) return "block_group";
     return "county";
-  }, [granularityMode, camera.zoom]);
+  }, [granularityMode, camera.zoom, showModelCalibration]);
 
   const handleSelectGranularity = (mode: ChoroplethGranularityMode) => {
     setInternalGranularity(mode);
@@ -686,9 +717,31 @@ export function GeorgiaMapCanvas({
     [allUsCountiesList, selectedCommunity.fips]
   );
 
-  // Sub-County Census Block Group (12-digit GEOID) Polygons Clipped to Selected County Boundary
+  // Sub-County Census Tract / Block Group Polygons Clipped to Selected County Boundary:
+  // Uses real imported U.S. Census Bureau ACS 5-Year Tract Polygons (`subCountyTracts`) when available.
+  // Synthetic 4x4 calibration rectangles are strictly disabled in Verified Mode (`!showModelCalibration`).
   const selectedCountyBlockGroups = useMemo(() => {
-    if (!selectedFeature) return [];
+    if (subCountyTracts && subCountyTracts.length > 0) {
+      return subCountyTracts.map((tract) => {
+        const score = resolvePillarMeasureValue(
+          tract.verifiedPillars,
+          choroplethMeasure,
+          appliedPriorities,
+          DEFAULT_SCORING_WEIGHTS
+        );
+        return {
+          geoid: tract.geoid11,
+          name: tract.name,
+          geometry: tract.geometry,
+          centroid: tract.centroid,
+          score,
+          tractRecord: tract,
+          isRealTract: true,
+        };
+      });
+    }
+
+    if (!selectedFeature || !showModelCalibration) return [];
     const [minLng, minLat, maxLng, maxLat] = computeFeatureBbox(
       selectedFeature.geometry
     );
@@ -715,11 +768,13 @@ export function GeorgiaMapCanvas({
       geoid: string;
       name: string;
       geometry: {
-        type: "Polygon";
-        coordinates: number[][][];
+        type: "Polygon" | "MultiPolygon";
+        coordinates: any;
       };
       centroid: [number, number];
       score: number | null;
+      tractRecord?: PlaceSubCountyTractRecord;
+      isRealTract?: boolean;
     }> = [];
 
     const clamp = (v: number) => Math.max(35, Math.min(99, Math.round(v)));
@@ -783,11 +838,13 @@ export function GeorgiaMapCanvas({
           },
           centroid: [(cLng0 + cLng1) / 2, (cLat0 + cLat1) / 2],
           score,
+          isRealTract: false,
         });
       }
     }
     return items;
   }, [
+    subCountyTracts,
     selectedFeature,
     selectedCommunity,
     choroplethMeasure,
@@ -1058,16 +1115,16 @@ export function GeorgiaMapCanvas({
   const pathGenerator = useMemo(() => geoPath(projection), [projection]);
 
   const allSchools = useMemo(() => {
-    const map = new Map(INITIAL_GEORGIA_SCHOOLS.map((s) => [s.id, s]));
-    for (const s of schools) map.set(s.id, s);
-    return Array.from(map.values());
+    if (schools && schools.length > 0) return schools;
+    return INITIAL_GEORGIA_SCHOOLS;
   }, [schools]);
 
   const allAmenities = useMemo(() => {
+    if (!showModelCalibration) return [];
     const map = new Map(INITIAL_GEORGIA_AMENITIES.map((a) => [a.id, a]));
     for (const a of amenities) map.set(a.id, a);
     return Array.from(map.values());
-  }, [amenities]);
+  }, [amenities, showModelCalibration]);
 
   // Search suggestions across communities, districts, schools, all 50 US states, and all ~3,143 US counties
   const searchMatches = useMemo(() => {
@@ -1616,6 +1673,77 @@ export function GeorgiaMapCanvas({
     isSatelliteOrHybrid &&
     camera.zoom > maxNativeTileZoom + 0.15;
 
+  const showSubCountyTractLayer =
+    selectedFeature &&
+    selectedCountyBlockGroups.length > 0 &&
+    (effectiveGranularity === "block_group" ||
+      activeLayers.neighborhoods ||
+      (subCountyTracts.length > 0 && camera.zoom >= 8.2));
+
+  // Compute visible High-Detail Public-Domain USGS National Map Street, Subdivision, Park & Water Base Tiles (z7..z16)
+  // Uses 100% U.S. Federal Public Domain USGS Topo MapServer (17 U.S.C. § 105 — zero API key required, commercial/production permitted, never renders "API KEY REQUIRED" watermarks).
+  const visibleStreetBaseTiles = useMemo(() => {
+    if (mapDisplayMode !== "waypoint_map" || camera.zoom < 7.2) return [];
+    const tileZ = Math.max(7, Math.min(16, Math.round(camera.zoom + 0.35)));
+    const n = Math.pow(2, tileZ);
+    const nw = projection.invert?.([0, 0]) || [-90, 38];
+    const se = projection.invert?.([VIEW_W, VIEW_H]) || [-75, 28];
+
+    const westLng = Math.max(-179.9, Math.min(179.9, Math.min(nw[0], se[0])));
+    const eastLng = Math.max(-179.9, Math.min(179.9, Math.max(nw[0], se[0])));
+    const northLat = Math.max(-85.0, Math.min(85.0, Math.max(nw[1], se[1])));
+    const southLat = Math.max(-85.0, Math.min(85.0, Math.min(nw[1], se[1])));
+
+    const lngToTileX = (lng: number) =>
+      Math.max(0, Math.min(n - 1, Math.floor(((lng + 180) / 360) * n)));
+    const latToTileY = (lat: number) => {
+      const rad = (lat * Math.PI) / 180;
+      const y =
+        ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * n;
+      return Math.max(0, Math.min(n - 1, Math.floor(y)));
+    };
+    const tileXToLng = (x: number) => (x / n) * 360 - 180;
+    const tileYToLat = (y: number) => {
+      const a = Math.PI - (2 * Math.PI * y) / n;
+      return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(a) - Math.exp(-a)));
+    };
+
+    const minX = lngToTileX(westLng);
+    const maxX = lngToTileX(eastLng);
+    const minY = latToTileY(northLat);
+    const maxY = latToTileY(southLat);
+
+    const tiles: Array<{
+      key: string;
+      url: string;
+      labelUrl: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }> = [];
+
+    for (let ty = minY; ty <= maxY; ty++) {
+      for (let tx = minX; tx <= maxX; tx++) {
+        if (tiles.length >= 96) break;
+        const p1 = projection([tileXToLng(tx), tileYToLat(ty)]);
+        const p2 = projection([tileXToLng(tx + 1), tileYToLat(ty + 1)]);
+        if (!p1 || !p2) continue;
+        const usgsUrl = `https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/${tileZ}/${ty}/${tx}`;
+        tiles.push({
+          key: `usgs-topo-${tileZ}-${tx}-${ty}`,
+          url: usgsUrl,
+          labelUrl: usgsUrl,
+          x: p1[0] - 0.6,
+          y: p1[1] - 0.6,
+          width: Math.max(1, p2[0] - p1[0] + 1.2),
+          height: Math.max(1, p2[1] - p1[1] + 1.2),
+        });
+      }
+    }
+    return tiles;
+  }, [mapDisplayMode, camera.center, camera.zoom, projection, VIEW_W, VIEW_H]);
+
   // Compute visible Web Mercator XYZ/ArcGIS satellite tiles aligned 1:1 with projection([lng, lat])
   const visibleSatelliteTiles = useMemo(() => {
     if (!satelliteConfig.configured || !isSatelliteOrHybrid) return [];
@@ -1697,42 +1825,153 @@ export function GeorgiaMapCanvas({
   ]);
 
   return (
-    <div
-      ref={wrapperRef}
-      className="relative flex-1 w-full h-full min-h-0 rounded-xl overflow-hidden border border-[#24355A] bg-[#000820] shadow-[0_14px_40px_rgba(0,0,0,0.9)] select-none"
-      data-testid="georgia-map-canvas"
-      data-map-mode={mapDisplayMode}
-      data-satellite-provider={satelliteConfig.providerId}
-      data-hybrid-shading-opacity={String(hybridShadingOpacityPct)}
-      data-choropleth-measure={choroplethMeasure}
-      data-choropleth-granularity={effectiveGranularity}
-      data-camera-zoom={camera.zoom.toFixed(2)}
-      data-camera-center={`${camera.center[0].toFixed(5)},${camera.center[1].toFixed(5)}`}
-      data-scroll-zoom-enabled="true"
-      data-scroll-zoom-around="pointer"
-      data-tile-native-zoom={String(activeNativeTileZoom)}
-      data-max-interactive-zoom={String(maxInteractiveZoom)}
-      data-max-native-zoom={String(maxNativeTileZoom)}
-      data-viewbox-size={`${VIEW_W}x${VIEW_H}`}
-    >
-      {/* Underlying MapLibre GL JS Canvas (handles PMTiles protocol, choropleth fill expressions, & separate licensed satellite raster tiles) */}
-      <div
-        ref={mapContainerRef}
-        className={`absolute inset-0 z-0 w-full h-full pointer-events-none ${
-          satelliteConfig.configured && isSatelliteOrHybrid
-            ? "opacity-100"
-            : "opacity-25"
-        }`}
-      />
+    <div className="flex flex-col gap-2 w-full shrink-0">
+      {/* ===================================================================== */}
+      {/* TOP CONTROL BAR (OFF THE MAP — Brighter Royal Navy & Gold Trim)       */}
+      {/* ===================================================================== */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl bg-gradient-to-r from-[#10294E] via-[#0D2242] to-[#10294E] border border-[#DFBE77]/65 px-3.5 py-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_18px_rgba(223,190,119,0.12),inset_0_1px_1px_rgba(255,244,212,0.18)] shrink-0">
+        {/* Left: Plain-English Search Box + 1-Click "Show on Map" Buttons */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative w-[250px] sm:w-[290px]">
+            <div className="flex items-center bg-[#091830] border border-[#C5A059]/65 focus-within:border-[#FFE394] rounded-xl px-3 py-2 transition-colors">
+              <Search className="h-4 w-4 text-[#FFE394] shrink-0 mr-2" />
+              <input
+                type="text"
+                data-testid="places-map-search-input"
+                value={searchQuery}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setTimeout(() => setSearchFocused(false), 180)}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search any County, City, or School..."
+                className="w-full bg-transparent text-xs font-medium text-[#FFF8E7] placeholder:text-[#D8C5A0] focus:outline-none"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange("")}
+                  className="text-[#EADBC0] hover:text-white ml-1 cursor-pointer"
+                  aria-label="Clear search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
 
-      {/* Ambient Radial Illumination Backdrop (#000820 canonical dark navy + subtle blue/violet glow) */}
+            {searchFocused && searchMatches.length > 0 && (
+              <div className="absolute left-0 right-0 mt-1.5 rounded-xl bg-[#0D2344] border border-[#DFBE77]/80 shadow-[0_12px_32px_rgba(0,0,0,0.95)] overflow-hidden divide-y divide-[#C5A059]/35 z-40">
+                {searchMatches.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    data-testid={`search-result-${item.fips}`}
+                    onMouseDown={() => {
+                      onSelectCommunityByFips(item.fips, item.label, item.coordinates);
+                      onSearchChange("");
+                      if (item.coordinates) {
+                        setCamera({
+                          center: item.coordinates,
+                          zoom: item.zoom ?? 7.2,
+                        });
+                      }
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 hover:bg-[#163460] transition-colors flex items-center justify-between gap-2 cursor-pointer"
+                  >
+                    <span className="text-xs font-semibold text-[#FFF8E7] truncate">
+                      {item.label}
+                    </span>
+                    <span className="text-[11px] text-[#EADBC0] shrink-0">
+                      {item.sublabel}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Plain-English Map Background Switcher */}
+        <div
+          data-testid="map-style-switcher"
+          className="inline-flex items-center rounded-xl bg-[#091830] border border-[#C5A059]/60 p-1"
+        >
+          {(
+            [
+              {
+                id: "waypoint_map",
+                label: "Street Map",
+                icon: MapIcon,
+              },
+              {
+                id: "satellite",
+                label: "Satellite Photo",
+                icon: Satellite,
+              },
+              {
+                id: "hybrid",
+                label: "Satellite + Labels",
+                icon: Layers,
+              },
+            ] as const
+          ).map((mode) => {
+            const Icon = mode.icon;
+            const active = mapDisplayMode === mode.id;
+            return (
+              <button
+                key={mode.id}
+                type="button"
+                data-testid={`map-mode-${mode.id}`}
+                onClick={() => handleSelectMapMode(mode.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  active
+                    ? "bg-gradient-to-r from-[#FCE6A6] via-[#E5C170] to-[#C59B43] text-[#07162B] font-bold border border-[#FFF4D4] shadow-[0_3px_10px_rgba(229,193,112,0.35)]"
+                    : "text-[#FFF4D4] hover:text-white hover:bg-[#122B52]"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span>{mode.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ===================================================================== */}
+      {/* MAP + RIGHT-SIDE SCROLL & COMPANION RAIL (Side-by-Side, Zero Overlap!)*/}
+      {/* ===================================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 w-full items-stretch shrink-0">
+        {/* LEFT (lg:col-span-8 xl:col-span-9): CLEAN, UNOBSTRUCTED MAP VIEWPORT */}
+        <div
+          ref={wrapperRef}
+          className="lg:col-span-8 xl:col-span-9 relative w-full h-[520px] sm:h-[580px] lg:h-[620px] rounded-xl overflow-hidden border-2 border-[#DFBE77]/75 bg-[#071732] shadow-[0_14px_40px_rgba(0,0,0,0.8),0_0_24px_rgba(223,190,119,0.16)] select-none shrink-0"
+          data-testid="georgia-map-canvas"
+          data-map-mode={mapDisplayMode}
+          data-satellite-provider={satelliteConfig.providerId}
+          data-hybrid-shading-opacity={String(hybridShadingOpacityPct)}
+          data-choropleth-measure={choroplethMeasure}
+          data-choropleth-granularity={effectiveGranularity}
+          data-camera-zoom={camera.zoom.toFixed(2)}
+          data-camera-center={`${camera.center[0].toFixed(5)},${camera.center[1].toFixed(5)}`}
+          data-scroll-zoom-enabled="true"
+          data-scroll-zoom-around="pointer"
+          data-tile-native-zoom={String(activeNativeTileZoom)}
+          data-max-interactive-zoom={String(maxInteractiveZoom)}
+          data-max-native-zoom={String(maxNativeTileZoom)}
+          data-viewbox-size={`${VIEW_W}x${VIEW_H}`}
+        >
+          {/* Underlying MapLibre GL JS Canvas kept strictly hidden (opacity-0) so it never renders a ghost background map behind the synchronized SVG projection */}
+          <div
+            ref={mapContainerRef}
+            className="absolute inset-0 z-0 w-full h-full pointer-events-none opacity-0"
+          />
+
+      {/* Ambient Radial Illumination Backdrop (Brighter Admiralty Sapphire Navy + Golden-Blue Glow) */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
         style={{
           background:
             satelliteConfig.configured && isSatelliteOrHybrid
-              ? "radial-gradient(ellipse at 50% 48%, rgba(5, 16, 40, 0.12) 0%, rgba(2, 8, 24, 0.32) 100%)"
-              : "radial-gradient(ellipse at 50% 48%, rgba(30, 64, 138, 0.30) 0%, rgba(7, 20, 50, 0.88) 58%, #000820 100%)",
+              ? "radial-gradient(ellipse at 50% 48%, rgba(12, 32, 68, 0.10) 0%, rgba(5, 16, 38, 0.25) 100%)"
+              : "radial-gradient(ellipse at 50% 48%, rgba(56, 108, 198, 0.38) 0%, rgba(18, 44, 92, 0.85) 58%, #071732 100%)",
         }}
       />
 
@@ -1772,6 +2011,32 @@ export function GeorgiaMapCanvas({
             </clipPath>
           )}
         </defs>
+
+        {/* 0A. High-Detail Public-Domain USGS National Map Street, Subdivision, Park & Water Base Tiles (z7.2..z16) */}
+        {mapDisplayMode === "waypoint_map" && visibleStreetBaseTiles.length > 0 && (
+          <g
+            data-testid="waypoint-street-base-tile-layer"
+            data-tile-provider="usgs_national_map_topo_public_domain"
+            aria-label="USGS National Map Streets, Subdivisions, Parks & Water (Public Domain)"
+            className="pointer-events-none"
+            opacity={camera.zoom >= 11.5 ? 0.68 : 0.48}
+            style={{
+              filter: "invert(0.90) hue-rotate(185deg) saturate(0.95) brightness(0.92) contrast(1.22)",
+            }}
+          >
+            {visibleStreetBaseTiles.map((tile) => (
+              <image
+                key={tile.key}
+                href={tile.url}
+                x={tile.x}
+                y={tile.y}
+                width={tile.width}
+                height={tile.height}
+                preserveAspectRatio="none"
+              />
+            ))}
+          </g>
+        )}
 
         {/* 0. Free Public-Domain Satellite / Hybrid Orthoimagery Tile Layer (USGS The National Map / USDA NAIP) */}
         {satelliteConfig.configured && isSatelliteOrHybrid && (
@@ -1916,13 +2181,20 @@ export function GeorgiaMapCanvas({
                       : hasCountyScore
                         ? hybridShadingOpacity
                         : +(hybridShadingOpacity * 0.85).toFixed(2);
-              // Taper county interior fill at neighborhood/campus zoom (z >= 13.5) so aerial buildings & playgrounds remain crisp
+              const isSelectedCounty = feat.properties.fips === selectedCommunity.fips;
+              // When real Sub-County Census Tract polygons are active for the selected county,
+              // let the individual neighborhood tracts provide the interior choropleth fill
+              // so streets, subdivisions, and tract variations remain crystal-clear!
               const fillOpacity =
-                baseFillOpacity <= 0
-                  ? 0
-                  : isSatelliteOrHybrid && camera.zoom >= 13.5
-                    ? +(baseFillOpacity * (camera.zoom >= 15.0 ? 0.35 : 0.55)).toFixed(2)
-                    : baseFillOpacity;
+                isSelectedCounty && showSubCountyTractLayer
+                  ? 0.04
+                  : baseFillOpacity <= 0
+                    ? 0
+                    : isSatelliteOrHybrid && camera.zoom >= 13.5
+                      ? +(baseFillOpacity * (camera.zoom >= 15.0 ? 0.35 : 0.55)).toFixed(2)
+                      : camera.zoom >= 11.5 && mapDisplayMode === "waypoint_map"
+                        ? +(baseFillOpacity * 0.62).toFixed(2)
+                        : baseFillOpacity;
 
               const stroke =
                 mapDisplayMode === "satellite"
@@ -1971,74 +2243,140 @@ export function GeorgiaMapCanvas({
           </g>
         )}
 
-        {/* 3. Census Block-Group (GEOID-12) Choropleth Layer (Progressive Loading at z >= 8.1 or Block Group Mode) */}
-        {effectiveGranularity === "block_group" &&
-          selectedFeature &&
-          selectedCountyBlockGroups.length > 0 && (
-            <g
-              aria-label="Census Block Groups Choropleth"
-              clipPath="url(#selectedCountyClipPath)"
-            >
-              {selectedCountyBlockGroups.map((bgFeat) => {
-                const d = pathGenerator(bgFeat.geometry as any) || "";
-                const bgScore: number | null = bgFeat.score ?? null;
-                const bgFill = getChoroplethFillColor(
-                  bgScore,
-                  showModelCalibration
-                );
-                const isSelectedBg = selectedBlockGroupGeoid === bgFeat.geoid;
+        {/* 3. Real Sub-County Census Tract (GEOID-11) Choropleth Layer */}
+        {showSubCountyTractLayer && (
+          <g
+            data-testid="subcounty-census-tracts-layer"
+            aria-label="Sub-County Census Tracts Choropleth"
+            clipPath="url(#selectedCountyClipPath)"
+          >
+            {selectedCountyBlockGroups.map((bgFeat) => {
+              const d = pathGenerator(bgFeat.geometry as any) || "";
+              const bgScore: number | null = bgFeat.score ?? null;
+              const bgFill = getChoroplethFillColor(
+                bgScore,
+                Boolean(bgFeat.isRealTract) || showModelCalibration
+              );
+              const activeSelectedGeoid =
+                selectedTractGeoid ?? selectedBlockGroupGeoid;
+              const isSelectedBg = activeSelectedGeoid === bgFeat.geoid;
 
-                return (
-                  <path
-                    key={bgFeat.geoid}
-                    d={d}
-                    data-geoid={bgFeat.geoid}
-                    data-block-group-name={bgFeat.name}
-                    data-score={bgScore !== null ? String(bgScore) : "no-data"}
-                    data-has-score={String(bgScore !== null)}
-                    fill={bgFill}
-                    fillOpacity={
-                      hybridShadingOpacity <= 0
-                        ? 0
-                        : mapDisplayMode === "waypoint_map"
-                          ? camera.zoom >= 14.0
-                            ? +(hybridShadingOpacity * 0.65).toFixed(2)
+              return (
+                <path
+                  key={bgFeat.geoid}
+                  d={d}
+                  data-geoid={bgFeat.geoid}
+                  data-block-group-name={bgFeat.name}
+                  data-is-real-tract={String(Boolean(bgFeat.isRealTract))}
+                  data-score={bgScore !== null ? String(bgScore) : "no-data"}
+                  data-has-score={String(bgScore !== null)}
+                  fill={bgFill}
+                  fillOpacity={
+                    hybridShadingOpacity <= 0
+                      ? 0
+                      : mapDisplayMode === "waypoint_map"
+                        ? camera.zoom >= 13.0
+                          ? +(hybridShadingOpacity * 0.52).toFixed(2)
+                          : +(hybridShadingOpacity * 0.72).toFixed(2)
+                        : bgScore !== null
+                          ? camera.zoom >= 13.5
+                            ? +(
+                                hybridShadingOpacity *
+                                (camera.zoom >= 15.0 ? 0.32 : 0.55)
+                              ).toFixed(2)
                             : hybridShadingOpacity
-                          : bgScore !== null
-                            ? camera.zoom >= 13.5
-                              ? +(hybridShadingOpacity * (camera.zoom >= 15.0 ? 0.32 : 0.55)).toFixed(2)
-                              : hybridShadingOpacity
-                            : +(hybridShadingOpacity * 0.15).toFixed(2)
+                          : +(hybridShadingOpacity * 0.15).toFixed(2)
+                  }
+                  stroke={isSelectedBg ? "#F3D68B" : "#93C5FD"}
+                  strokeWidth={isSelectedBg ? 2.4 : camera.zoom >= 11.5 ? 1.15 : 0.75}
+                  strokeOpacity={isSelectedBg ? 0.98 : 0.72}
+                  className="cursor-pointer transition-colors duration-150"
+                  onMouseEnter={() =>
+                    setHoveredPolygon({
+                      id: bgFeat.geoid,
+                      name: `${bgFeat.name} (GEOID ${bgFeat.geoid})`,
+                      region: selectedCommunity.name,
+                      score: bgScore,
+                      granularityLabel: bgFeat.isRealTract
+                        ? "Verified Census Tract (ACS 5-Yr)"
+                        : "Census Block Group (Demo)",
+                    })
+                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (dragRef.current.moved) return;
+                    setSelectedBlockGroupGeoid(bgFeat.geoid);
+                    if (bgFeat.tractRecord && onSelectTract) {
+                      onSelectTract(bgFeat.tractRecord);
                     }
-                    stroke={isSelectedBg ? "#F3D68B" : "#7BA3E0"}
-                    strokeWidth={isSelectedBg ? 2.0 : 0.9}
-                    strokeDasharray={isSelectedBg ? undefined : "2 1"}
-                    className="cursor-pointer transition-colors duration-150"
-                    onMouseEnter={() =>
-                      setHoveredPolygon({
-                        id: bgFeat.geoid,
-                        name: `${bgFeat.name} (${bgFeat.geoid})`,
-                        region: selectedCommunity.name,
-                        score: bgScore,
-                        granularityLabel: "Census Block Group",
-                      })
-                    }
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (dragRef.current.moved) return;
-                      setSelectedBlockGroupGeoid(bgFeat.geoid);
-                    }}
-                  >
-                    <title>
-                      {`${bgFeat.name} · GEOID ${bgFeat.geoid} · ${
-                        bgScore !== null
-                          ? `${activeMeasureMeta.shortLabel}: ${bgScore}/100 (Fictional Demo)`
-                          : "No Verified Data"
-                      }`}
-                    </title>
-                  </path>
-                );
-              })}
+                  }}
+                >
+                  <title>
+                    {`${bgFeat.name} · GEOID ${bgFeat.geoid} · ${
+                      bgScore !== null
+                        ? `${activeMeasureMeta.shortLabel}: ${bgScore}/100 (${
+                            bgFeat.isRealTract
+                              ? "Verified US Census ACS 5-Year"
+                              : "Fictional Demo"
+                          })`
+                        : "No Verified Data (Census Tracts never measure Special Ed quality)"
+                    }`}
+                  </title>
+                </path>
+              );
+            })}
+          </g>
+        )}
+
+        {/* 3B. Official TIGERweb School District (LEA) Boundary Polygons Overlay */}
+        {activeLayers.school_districts && schoolDistrictBoundaries.length > 0 && (
+          <g
+            data-testid="school-district-boundaries-layer"
+            aria-label="Official NCES School District Boundaries"
+            className="pointer-events-none"
+          >
+            {schoolDistrictBoundaries.map((lea) => {
+              const d = pathGenerator(lea.geometry as any) || "";
+              return (
+                <path
+                  key={`lea-bound-${lea.ncesLeaId7}`}
+                  d={d}
+                  data-lea-id={lea.ncesLeaId7}
+                  data-lea-name={lea.name}
+                  fill="none"
+                  stroke="#38BDF8"
+                  strokeWidth={camera.zoom >= 10.5 ? 2.1 : 1.4}
+                  strokeDasharray="6 3"
+                  opacity={0.88}
+                >
+                  <title>{`${lea.name} (NCES LEA ${lea.ncesLeaId7})`}</title>
+                </path>
+              );
+            })}
+          </g>
+        )}
+
+        {/* 3C. High-Detail Street, Subdivision, Park & Local Road Label Overlay (Renders ABOVE Choropleth Shading so street names stay crystal clear!) */}
+        {mapDisplayMode === "waypoint_map" &&
+          camera.zoom >= 8.0 &&
+          visibleStreetBaseTiles.length > 0 && (
+            <g
+              data-testid="waypoint-street-labels-tile-layer"
+              aria-label="Street, Subdivision, Park & Road Labels"
+              className="pointer-events-none"
+              opacity={0.96}
+            >
+              {visibleStreetBaseTiles.map((tile) => (
+                <image
+                  key={`lbl-${tile.key}`}
+                  href={tile.labelUrl}
+                  x={tile.x}
+                  y={tile.y}
+                  width={tile.width}
+                  height={tile.height}
+                  preserveAspectRatio="none"
+                />
+              ))}
             </g>
           )}
 
@@ -2137,29 +2475,9 @@ export function GeorgiaMapCanvas({
           </g>
         )}
 
-        {/* 8. State Watermarks & Regional City Reference Labels (Waypoint Map & Hybrid modes) */}
+        {/* 8. Regional City Reference Labels (Waypoint Map & Hybrid modes — Clean, No Giant Watermark!) */}
         {showVectorBoundariesAndLabels && (
           <g className="pointer-events-none select-none">
-            {effectiveGranularity !== "state" &&
-              (() => {
-                const gaCenter = projection([-83.35, 32.68]);
-                if (!gaCenter) return null;
-                return (
-                  <text
-                    x={gaCenter[0]}
-                    y={gaCenter[1]}
-                    textAnchor="middle"
-                    fill="#E2E8F0"
-                    opacity={0.38}
-                    fontSize={18}
-                    letterSpacing="0.32em"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                  >
-                    GEORGIA
-                  </text>
-                );
-              })()}
-
             {(camera.zoom <= 5.2 || effectiveGranularity === "state") &&
               Object.values(US_50_STATES_DIRECTORY).map((st) => {
                 const pt = projection(st.center);
@@ -2248,46 +2566,60 @@ export function GeorgiaMapCanvas({
           );
         })}
 
-        {/* 10. Interactive Layer Markers: School Locations (Optional secondary overlay) */}
+        {/* 10. Interactive Layer Markers: School Locations (NCES CCD 2024-2025: 2,329 Georgia Public Schools) */}
         {activeLayers.school_locations &&
-          allSchools.map((sch) => {
-            const pt = projection(sch.coordinates);
-            if (!pt) return null;
-            return (
-              <g
-                key={sch.id}
-                data-testid={`school-marker-${sch.id}`}
-                transform={`translate(${pt[0]}, ${pt[1]})`}
-                className="cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectCommunityByFips(sch.countyFips, sch.name, sch.coordinates);
-                  setCamera((prev) => ({
-                    center: sch.coordinates,
-                    zoom: prev.zoom >= 15.8 ? Math.min(20, prev.zoom + 1.5) : 16.0,
-                  }));
-                }}
-              >
-                <title>{`${sch.name} (${sch.level})`}</title>
-                <circle r={camera.zoom >= 13.5 ? 10.5 : 7.5} fill="#7DD3FC" opacity={0.28} />
-                <circle r={camera.zoom >= 13.5 ? 5.5 : 4.2} fill="#7DD3FC" stroke="#000820" strokeWidth={1.5} />
-                {camera.zoom >= 13.5 && (
-                  <text
-                    x={10}
-                    y={3.5}
-                    fill="#F3D68B"
-                    stroke="#020817"
-                    strokeWidth={2.8}
-                    paintOrder="stroke"
-                    fontSize={11}
-                    fontWeight={700}
-                  >
-                    {sch.name} ({sch.level})
-                  </text>
-                )}
-              </g>
-            );
-          })}
+          allSchools
+            .filter((sch) => {
+              if (sch.countyFips === selectedCommunity.fips) return true;
+              if (camera.zoom >= 9.2) return true;
+              return false;
+            })
+            .map((sch) => {
+              const pt = projection(sch.coordinates);
+              if (!pt) return null;
+              if (
+                pt[0] < -40 ||
+                pt[0] > VIEW_W + 40 ||
+                pt[1] < -40 ||
+                pt[1] > VIEW_H + 40
+              ) {
+                return null;
+              }
+              return (
+                <g
+                  key={sch.id}
+                  data-testid={`school-marker-${sch.id}`}
+                  transform={`translate(${pt[0]}, ${pt[1]})`}
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectCommunityByFips(sch.countyFips, sch.name, sch.coordinates);
+                    setCamera((prev) => ({
+                      center: sch.coordinates,
+                      zoom: prev.zoom >= 15.8 ? Math.min(20, prev.zoom + 1.5) : 16.0,
+                    }));
+                  }}
+                >
+                  <title>{`${sch.name} (${sch.level}${sch.schoolTypeText ? ` · ${sch.schoolTypeText}` : ""}) · Grades ${sch.gradeSpan || "N/A"}`}</title>
+                  <circle r={camera.zoom >= 13.5 ? 10.5 : 7.5} fill="#7DD3FC" opacity={0.28} />
+                  <circle r={camera.zoom >= 13.5 ? 5.5 : 4.2} fill="#7DD3FC" stroke="#000820" strokeWidth={1.5} />
+                  {camera.zoom >= 13.5 && (
+                    <text
+                      x={10}
+                      y={3.5}
+                      fill="#F3D68B"
+                      stroke="#020817"
+                      strokeWidth={2.8}
+                      paintOrder="stroke"
+                      fontSize={11}
+                      fontWeight={700}
+                    >
+                      {sch.name} ({sch.level})
+                    </text>
+                  )}
+                </g>
+              );
+            })}
 
         {/* 10B. Interactive Layer Markers: Specialized Education & Residential Settings (10 Distinct Categories) */}
         {activeLayers.specialized_residential &&
@@ -2347,6 +2679,61 @@ export function GeorgiaMapCanvas({
             );
           })}
 
+        {/* 10C. Interactive Layer Markers: Outpatient Therapy Providers (CMS NPPES NPI v2.1: Speech, OT, PT, ABA) */}
+        {activeLayers.therapy_providers &&
+          therapyProviders.map((prov) => {
+            const pt = projection(prov.coordinates);
+            if (!pt) return null;
+            return (
+              <g
+                key={prov.id}
+                data-testid={`therapy-provider-marker-${prov.npi10}`}
+                data-specialty={prov.specialtyCategory}
+                transform={`translate(${pt[0]}, ${pt[1]})`}
+                className="cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectCommunityByFips(
+                    prov.countyFips5,
+                    prov.providerName,
+                    prov.coordinates
+                  );
+                  setCamera((prev) => ({
+                    center: prov.coordinates,
+                    zoom: prev.zoom >= 15.6 ? Math.min(20, prev.zoom + 1.2) : 15.8,
+                  }));
+                }}
+              >
+                <title>{`${prov.providerName} · ${prov.specialtyCategory} (NPI ${prov.npi10}) · ${prov.streetAddress}, ${prov.city}, ${prov.stateCode}`}</title>
+                <circle
+                  r={camera.zoom >= 13.0 ? 10.0 : 7.0}
+                  fill="#34D399"
+                  opacity={0.28}
+                />
+                <circle
+                  r={camera.zoom >= 13.0 ? 5.2 : 4.0}
+                  fill="#34D399"
+                  stroke="#000820"
+                  strokeWidth={1.5}
+                />
+                {camera.zoom >= 12.6 && (
+                  <text
+                    x={9}
+                    y={3.5}
+                    fill="#A7F3D0"
+                    stroke="#020817"
+                    strokeWidth={2.6}
+                    paintOrder="stroke"
+                    fontSize={10}
+                    fontWeight={700}
+                  >
+                    {prov.providerName} ({prov.specialtyCategory.split(" ")[0]})
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
         {/* 11. Optional Reference Hubs (Disabled by default so polygon choropleth boundaries are never substituted by glowing markers) */}
         {activeLayers.community_scores &&
           communities.map((comm) => {
@@ -2375,755 +2762,518 @@ export function GeorgiaMapCanvas({
           })}
       </svg>
 
-      {/* Top-Left HUD Cluster: Contextual Slide-Out Triggers + Search Bar + Choropleth Controls */}
-      <div className="absolute top-2.5 left-2.5 right-[150px] sm:right-auto z-20 flex flex-col gap-1.5 pointer-events-none">
-        {/* Row 1: Find Your Fit Trigger + Search Input + Community Dossier Trigger */}
-        <div className="flex flex-wrap items-center gap-1.5 pointer-events-auto">
-          {onToggleLeftDrawer && (
-            <button
-              type="button"
-              data-testid="map-toggle-fit-drawer"
-              onClick={onToggleLeftDrawer}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border shadow-[0_8px_24px_rgba(0,0,0,0.85)] backdrop-blur-md transition-all cursor-pointer ${
-                leftDrawerOpen
-                  ? "bg-[#122B5C] text-[#F3D68B] border-[#D4AF63]/80"
-                  : "bg-[#040E26]/95 text-[#F4F6FB] border-[#304570] hover:border-[#D4AF63]/60"
-              }`}
-            >
-              <Sparkles className="h-3.5 w-3.5 text-[#D4AF63]" />
-              <span>Find Your Fit</span>
-              <span className="px-1 py-0.2 rounded bg-[#0A1A3B] text-[9.5px] text-[#93C5FD]">
-                {appliedPriorities.length}
-              </span>
-            </button>
-          )}
-
-          <div className="relative w-[195px] sm:w-[235px]">
-            <div className="flex items-center bg-[#040E26]/95 border border-[#304570] focus-within:border-[#D4AF63] rounded-lg px-2.5 py-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.85)] backdrop-blur-md transition-colors">
-              <Search className="h-3.5 w-3.5 text-[#94A3B8] shrink-0 mr-1.5" />
-              <input
-                type="text"
-                data-testid="places-map-search-input"
-                value={searchQuery}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setTimeout(() => setSearchFocused(false), 180)}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Search 50 states, counties, schools..."
-                className="w-full bg-transparent text-[11px] text-[#F4F6FB] placeholder:text-[#8496B0] focus:outline-none"
+        {/* Top-Left Long & Small Horizontal Map Color Key Over Map Box */}
+        <div
+          data-testid="choropleth-map-legend"
+          data-collapsed={String(legendCollapsed)}
+          className="absolute top-2.5 left-2.5 z-20 pointer-events-auto inline-flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-[#091830]/92 border border-[#DFBE77]/70 shadow-[0_6px_18px_rgba(0,0,0,0.75)] backdrop-blur-md"
+        >
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#FFE394] pr-0.5">
+            Key ({activeMeasureMeta.shortLabel}):
+          </span>
+          {CHOROPLETH_LEGEND_STOPS.map((stop) => (
+            <span key={stop.label} className="inline-flex items-center gap-1">
+              <span
+                className="h-2.5 w-3 rounded-[2px] border border-[#FFE394]/60 shrink-0"
+                style={{ backgroundColor: stop.color }}
               />
-              {searchQuery && (
+              <span className="text-[10.5px] font-semibold text-[#FFF8E7] whitespace-nowrap">
+                {stop.rangeText}
+              </span>
+            </span>
+          ))}
+        </div>
+
+        {/* Honest Unconfigured Satellite / Hybrid Notice (Only if satellite provider is unconfigured) */}
+        {isSatelliteUnavailable && (
+          <div
+            data-testid="satellite-unavailable-banner"
+            className="absolute top-3 left-3 right-3 sm:right-auto sm:max-w-[340px] z-20 rounded-xl bg-[#05142B]/96 border border-[#C5A059]/60 p-3.5 shadow-[0_12px_32px_rgba(0,0,0,0.9)] backdrop-blur-md space-y-2"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Satellite className="h-4 w-4 text-[#FFE394] shrink-0" />
+                <p className="text-xs font-bold text-[#FFF4D4]">
+                  {mapDisplayMode === "satellite"
+                    ? "Satellite Photo Unavailable"
+                    : "Satellite + Labels Layer Unavailable"}
+                </p>
+              </div>
+              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-[#020A17] border border-[#3A2C18] text-[#FAD77B]">
+                Not Configured
+              </span>
+            </div>
+            <p className="text-xs text-[#C6B697] leading-relaxed">
+              Licensed aerial/satellite imagery is not configured yet. County boundaries, schools, and community guides remain active.
+            </p>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => handleSelectMapMode("waypoint_map")}
+                className="text-xs text-[#FFE394] hover:underline cursor-pointer font-semibold"
+              >
+                Switch to Street Map
+              </button>
+              {onOpenStudioProviders && (
                 <button
                   type="button"
-                  onClick={() => onSearchChange("")}
-                  className="text-[#8496B0] hover:text-[#F4F6FB] ml-1 cursor-pointer"
-                  aria-label="Clear search"
+                  onClick={onOpenStudioProviders}
+                  className="px-2.5 py-1 rounded-lg bg-[#020A17] border border-[#3A2C18] text-xs font-semibold text-[#FFF4D4] hover:border-[#C5A059] flex items-center gap-1 cursor-pointer"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <Sliders className="h-3 w-3 text-[#DFBE77]" />
+                  <span>Data &amp; Map Settings</span>
                 </button>
               )}
             </div>
-
-            {searchFocused && searchMatches.length > 0 && (
-              <div className="absolute left-0 right-0 mt-1 rounded-lg bg-[#05112B]/98 border border-[#364E7A] shadow-2xl overflow-hidden divide-y divide-[#17284A] z-30">
-                {searchMatches.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    data-testid={`search-result-${item.fips}`}
-                    onMouseDown={() => {
-                      onSelectCommunityByFips(item.fips, item.label, item.coordinates);
-                      onSearchChange("");
-                      if (item.coordinates) {
-                        setCamera({
-                          center: item.coordinates,
-                          zoom: item.zoom ?? 7.2,
-                        });
-                      }
-                    }}
-                    className="w-full text-left px-3 py-2 hover:bg-[#0F234A] transition-colors flex items-center justify-between gap-2 cursor-pointer"
-                  >
-                    <span className="text-xs font-medium text-[#F4F6FB] truncate">
-                      {item.label}
-                    </span>
-                    <span className="text-[11px] text-[#94A3B8] shrink-0">
-                      {item.sublabel}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
+        )}
 
-          {onToggleRightDrawer && (
+        {/* Honest USGS Native Resolution Notice when Zoomed Extremely Close in Satellite Mode */}
+        {isOverZoomedBeyondNative && (
+          <div
+            data-testid="usgs-overzoom-notice"
+            className="absolute top-3 left-3 z-20 max-w-[360px] rounded-xl bg-[#05142B]/96 border border-[#C5A059] px-3.5 py-2.5 text-xs text-[#FFF4D4] shadow-[0_8px_24px_rgba(0,0,0,0.92)] backdrop-blur-md space-y-1"
+          >
+            <div className="font-bold text-[#FFE394]">
+              Maximum Public Satellite Detail Reached
+            </div>
+            <p className="text-[11px] text-[#C6B697] leading-snug">
+              You are zoomed in very close. Free USGS satellite photos are sharpest at neighborhood level; closer street-level satellite photos use optional Mapbox or Esri keys.
+            </p>
+          </div>
+        )}
+
+        {/* Compact Icon-Only Zoom & Reset Buttons on Right of Map */}
+        <div
+          data-testid="map-zoom-level-indicator"
+          className="absolute bottom-3 right-3 z-20 flex flex-col gap-1 rounded-xl p-1 border border-[#DFBE77]/75 bg-[#0D2344]/95 shadow-[0_8px_24px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,244,212,0.18)] backdrop-blur-md"
+        >
+          <button
+            type="button"
+            data-testid="map-zoom-in-btn"
+            onClick={handleZoomIn}
+            title="Zoom In"
+            aria-label="Zoom In"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#091830]/95 hover:bg-[#15325E] border border-[#C5A059]/60 hover:border-[#FFE394] text-[#FFE394] hover:text-white transition-all cursor-pointer"
+          >
+            <Plus className="h-4 w-4 stroke-[2.2]" />
+          </button>
+          <button
+            type="button"
+            data-testid="map-zoom-out-btn"
+            onClick={handleZoomOut}
+            title="Zoom Out"
+            aria-label="Zoom Out"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#091830]/95 hover:bg-[#15325E] border border-[#C5A059]/60 hover:border-[#FFE394] text-[#FFE394] hover:text-white transition-all cursor-pointer"
+          >
+            <Minus className="h-4 w-4 stroke-[2.2]" />
+          </button>
+          <button
+            type="button"
+            data-testid="map-reset-georgia-btn"
+            onClick={handleResetView}
+            title="Reset Georgia View"
+            aria-label="Reset Georgia View"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#091830]/95 hover:bg-[#15325E] border border-[#C5A059]/60 hover:border-[#FFE394] text-[#FFE394] hover:text-white transition-all cursor-pointer"
+          >
+            <Navigation className="h-3.5 w-3.5 stroke-[2.2]" />
+          </button>
+          <button
+            type="button"
+            onClick={handleNationwide50StatesView}
+            data-testid="zoom-50-states-btn"
+            title="View All 50 States"
+            aria-label="View All 50 States"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#091830]/95 hover:bg-[#15325E] border border-[#C5A059]/60 hover:border-[#FFE394] text-[#FFE394] hover:text-white transition-all cursor-pointer"
+          >
+            <Globe className="h-3.5 w-3.5 stroke-[2.2]" />
+          </button>
+          {onToggleFocusMode && (
             <button
               type="button"
-              data-testid="map-toggle-dossier-drawer"
-              onClick={onToggleRightDrawer}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border shadow-[0_8px_24px_rgba(0,0,0,0.85)] backdrop-blur-md transition-all cursor-pointer ${
-                rightDrawerOpen
-                  ? "bg-[#122B5C] text-[#F3D68B] border-[#D4AF63]/80"
-                  : "bg-[#040E26]/95 text-[#F4F6FB] border-[#304570] hover:border-[#D4AF63]/60"
-              }`}
+              onClick={onToggleFocusMode}
+              data-testid="places-focus-mode-btn"
+              title={focusMode ? "Exit Full Screen" : "Full Screen Map"}
+              aria-label={focusMode ? "Exit Full Screen" : "Full Screen Map"}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#091830]/95 hover:bg-[#15325E] border border-[#C5A059]/60 hover:border-[#FFE394] text-[#FFE394] hover:text-white transition-all cursor-pointer"
             >
-              <Building2 className="h-3.5 w-3.5 text-[#D4AF63]" />
-              <span className="max-w-[130px] truncate">{selectedCommunity.shortName}</span>
-              <span className="text-[9.5px] text-[#94A3B8]">Dossier</span>
+              {focusMode ? (
+                <Minimize2 className="h-3.5 w-3.5 stroke-[2.2]" />
+              ) : (
+                <Maximize2 className="h-3.5 w-3.5 stroke-[2.2]" />
+              )}
             </button>
           )}
         </div>
-
-        {/* Row 2: Choropleth Shading Measure Switcher */}
-        <div
-          data-testid="choropleth-measure-switcher"
-          className="pointer-events-auto inline-flex flex-wrap items-center gap-0.5 rounded-lg bg-[#040E26]/95 border border-[#2A3F6A] p-0.5 shadow-[0_8px_24px_rgba(0,0,0,0.85)] backdrop-blur-md w-fit"
-        >
-          <span className="px-1.5 text-[9.5px] uppercase tracking-wider text-[#94A3B8] font-semibold">
-            Shade By:
-          </span>
-          {CHOROPLETH_MEASURES.map((m) => {
-            const active = choroplethMeasure === m.key;
-            return (
-              <button
-                key={m.key}
-                type="button"
-                data-testid={`choropleth-measure-${m.key}`}
-                onClick={() => handleSelectMeasure(m.key)}
-                className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                  active
-                    ? "bg-[#312E81]/95 text-[#F3D68B] border border-[#7C6EE6]/80 shadow-xs"
-                    : "text-[#CBD5E1] hover:text-white hover:bg-[#0B1D40]"
-                }`}
-              >
-                {m.shortLabel}
-              </button>
-            );
-          })}
         </div>
 
-        {/* Row 3: 3-Mode Map Style Switcher + Progressive Granularity Tier Selector */}
-        <div className="flex flex-wrap items-center gap-1.5 pointer-events-none">
-          <div
-            data-testid="map-style-switcher"
-            className="pointer-events-auto inline-flex items-center rounded-lg bg-[#040E26]/95 border border-[#2A3F6A] p-0.5 shadow-[0_8px_24px_rgba(0,0,0,0.85)] backdrop-blur-md"
-          >
-            {(
-              [
-                {
-                  id: "waypoint_map",
-                  label: "Waypoint Map",
-                  icon: MapIcon,
-                },
-                {
-                  id: "satellite",
-                  label: "Satellite",
-                  icon: Satellite,
-                },
-                {
-                  id: "hybrid",
-                  label: "Hybrid",
-                  icon: Layers,
-                },
-              ] as const
-            ).map((mode) => {
-              const Icon = mode.icon;
-              const active = mapDisplayMode === mode.id;
-              const unavailableDot =
-                (mode.id === "satellite" || mode.id === "hybrid") &&
-                !satelliteConfig.configured;
-              return (
-                <button
-                  key={mode.id}
-                  type="button"
-                  data-testid={`map-mode-${mode.id}`}
-                  onClick={() => handleSelectMapMode(mode.id)}
-                  className={`px-1.5 py-0.5 rounded-md text-[9.5px] font-medium flex items-center gap-1 transition-all cursor-pointer ${
-                    active
-                      ? "bg-[#112A56] text-[#F3D68B] border border-[#D4AF63]/60 shadow-xs"
-                      : "text-[#CBD5E1] hover:text-white hover:bg-[#0B1D40]"
-                  }`}
+        {/* =================================================================== */}
+        {/* RIGHT (lg:col-span-4 xl:col-span-3): CLICKED AREA QUICK STATS CARD  */}
+        {/* Matches map height (lg:h-[620px]) so there is zero gap below map!   */}
+        {/* =================================================================== */}
+        <aside
+          data-testid="map-right-scroll-rail"
+          aria-label="Selected Area Quick Stats Beside Map"
+          className="lg:col-span-4 xl:col-span-3 lg:h-[620px] lg:max-h-[620px] rounded-xl bg-gradient-to-b from-[#122C54] to-[#0B1D39] border-2 border-[#DFBE77]/75 p-3.5 shadow-[0_12px_32px_rgba(0,0,0,0.75),0_0_20px_rgba(229,193,112,0.16),inset_0_1px_1px_rgba(255,244,212,0.22)] flex flex-col justify-between gap-2.5 overflow-hidden shrink-0"
+        >
+          {/* Top Header + Quick List Stats of Clicked Area */}
+          <div className="space-y-2.5 min-h-0 overflow-y-auto pr-0.5">
+            {/* Clicked County Title Header */}
+            <div className="flex items-start justify-between gap-2 pb-2 border-b border-[#C5A059]/45">
+              <div className="min-w-0">
+                <span className="text-[10px] uppercase tracking-wider text-[#FFE394] font-bold block">
+                  Clicked Area Quick Stats ({selectedCommunity.fips})
+                </span>
+                <h3
+                  className="text-lg font-bold text-[#FFF8E7] truncate"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                 >
-                  <Icon className="h-3 w-3 text-[#D4AF63]" />
-                  <span>{mode.label}</span>
-                  {unavailableDot && (
-                    <span
-                      title="Satellite imagery provider not configured yet"
-                      className="h-1.5 w-1.5 rounded-full bg-amber-400/80"
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Progressive Zoom / Granularity Tier Bar (State -> County -> Census Block Group) */}
-          <div
-            data-testid="choropleth-granularity-switcher"
-            className="pointer-events-auto inline-flex items-center gap-0.5 rounded-lg bg-[#040E26]/95 border border-[#233559] p-0.5 text-[9.5px] shadow-md"
-          >
-            <span className="px-1 text-[#8496B0] font-semibold">Level:</span>
-            {(
-              [
-                { id: "auto", label: `Auto (${effectiveGranularity.replace("_", " ")})` },
-                { id: "state", label: "50 States" },
-                { id: "county", label: "County" },
-                { id: "block_group", label: "Block Group" },
-              ] as const
-            ).map((g) => {
-              const isSelected = granularityMode === g.id;
-              return (
-                <button
-                  key={g.id}
-                  type="button"
-                  data-testid={`granularity-${g.id}`}
-                  onClick={() => handleSelectGranularity(g.id)}
-                  className={`px-1.5 py-0.5 rounded font-medium transition-colors cursor-pointer whitespace-nowrap ${
-                    isSelected
-                      ? "bg-[#162F63] text-[#F3D68B] border border-[#D4AF63]/50"
-                      : "text-[#94A3B8] hover:text-white"
-                  }`}
-                >
-                  {g.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Adjustable Choropleth Shading Opacity Control (Defaults: Waypoint Map 70%, Satellite 0%, Hybrid 30%) */}
-          <div
-            data-testid="hybrid-shading-opacity-control"
-            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-lg bg-[#040E26]/95 border border-[#2A3F6A] px-2 py-0.5 text-[9.5px] shadow-md backdrop-blur-md"
-          >
-            <span className="text-[#94A3B8] font-semibold whitespace-nowrap">
-              Shade Opacity:
-            </span>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={5}
-              value={hybridShadingOpacityPct}
-              data-testid="hybrid-shading-opacity-slider"
-              onChange={(e) => setHybridShadingOpacityPct(Number(e.target.value))}
-              className="w-16 h-1.5 accent-[#D4AF63] cursor-pointer"
-              aria-label="Adjust geographic score shading opacity"
-            />
-            <span
-              data-testid="hybrid-shading-opacity-value"
-              className="text-[#F3D68B] font-bold w-8 text-right"
-            >
-              {hybridShadingOpacityPct}%
-            </span>
-          </div>
-
-          {/* Live Zoom Level & Imagery Resolution Status Pill */}
-          <div
-            data-testid="map-zoom-level-indicator"
-            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-lg bg-[#040E26]/95 border border-[#2A3F6A] px-2 py-0.5 text-[9.5px] font-semibold text-[#F3D68B] shadow-md backdrop-blur-md"
-          >
-            <span>Zoom: z{camera.zoom.toFixed(1)} / z{maxInteractiveZoom}</span>
-            {isSatelliteOrHybrid && satelliteConfig.configured && (
-              <span className="text-[9px] text-[#93C5FD] border-l border-[#243B67] pl-1.5">
-                {isOverZoomedBeyondNative
-                  ? `Tile Cap: z${activeNativeTileZoom} (${Math.pow(2, camera.zoom - maxNativeTileZoom).toFixed(1)}×)`
-                  : `Native Tile: z${activeNativeTileZoom} (~1m)`}
+                  {selectedCommunity.name}
+                </h3>
+                <p className="text-[11px] text-[#EADBC0] truncate">
+                  {selectedCommunity.region}
+                </p>
+              </div>
+              <span
+                data-testid="rail-source-coverage-badge"
+                className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#091830] border border-[#FFE394]/70 text-[#FFE394] shrink-0"
+              >
+                {showModelCalibration ? "Demo (6/6)" : "2/6 Verified"}
               </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Honest Unconfigured Satellite / Hybrid Notice (Never renders a fake satellite map) */}
-      {isSatelliteUnavailable && (
-        <div
-          data-testid="satellite-unavailable-banner"
-          className="absolute top-28 left-3 right-3 sm:right-auto sm:max-w-[310px] z-20 rounded-xl bg-[#040E26]/96 border border-[#D4AF63]/55 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.9)] backdrop-blur-md space-y-2"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <Satellite className="h-3.5 w-3.5 text-[#F3D68B] shrink-0" />
-              <p className="text-xs font-semibold text-[#F3D68B]">
-                {mapDisplayMode === "satellite"
-                  ? "Satellite Imagery Unavailable"
-                  : "Hybrid Satellite Layer Unavailable"}
-              </p>
             </div>
-            <span className="text-[9.5px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#10254A] border border-[#2D4A82] text-[#93C5FD]">
-              Not Configured
-            </span>
-          </div>
-          <p className="text-[11px] text-[#CBD5E1] leading-relaxed">
-            {mapDisplayMode === "satellite"
-              ? "Licensed aerial/satellite imagery is not configured yet. Waypoint never displays simulated satellite imagery. Polygon score shading and selection remain active."
-              : "Licensed satellite imagery is not configured yet. Hybrid road corridors, 50-state/county boundaries, school locations, and choropleth score shading remain active."}
-          </p>
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => handleSelectMapMode("waypoint_map")}
-              className="text-[11px] text-[#94A3B8] hover:text-white underline cursor-pointer"
-            >
-              Return to Waypoint Map
-            </button>
-            {onOpenStudioProviders && (
-              <button
-                type="button"
-                onClick={onOpenStudioProviders}
-                className="px-2.5 py-1 rounded-md bg-[#102854] border border-[#D4AF63]/50 text-[11px] font-semibold text-[#F3D68B] hover:bg-[#17366E] flex items-center gap-1 cursor-pointer"
-              >
-                <Sliders className="h-3 w-3" />
-                <span>Provider Options</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* Compact & Collapsible Choropleth Map Legend (Bottom-Left) */}
-      <div
-        data-testid="choropleth-map-legend"
-        data-collapsed={String(legendCollapsed)}
-        className={`absolute bottom-2.5 left-2.5 z-20 pointer-events-auto rounded-xl bg-[#040E26]/95 border border-[#2A3F6A] shadow-[0_10px_28px_rgba(0,0,0,0.9)] backdrop-blur-md transition-all ${
-          legendCollapsed ? "w-auto px-2.5 py-1.5" : "w-[214px] p-2 space-y-1.5"
-        }`}
-      >
-        <button
-          type="button"
-          data-testid="toggle-map-legend-btn"
-          onClick={() => setLegendCollapsed((v) => !v)}
-          className="w-full flex items-center justify-between gap-2 text-left cursor-pointer"
-          title={legendCollapsed ? "Expand score legend" : "Collapse score legend"}
-        >
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#F3D68B] truncate">
-              {activeMeasureMeta.label}
-            </span>
-            {/* Inline micro gradient swatches visible in both collapsed and expanded states */}
-            <span className="inline-flex items-center gap-0.5 shrink-0">
-              {CHOROPLETH_LEGEND_STOPS.slice(0, 5).map((stop) => (
+            {/* Primary Score Highlights */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg bg-[#091830] border border-[#C5A059]/60 p-2.5">
+                <span className="text-[10px] text-[#EADBC0] block">
+                  Overall Score
+                </span>
                 <span
-                  key={stop.label}
-                  className="h-2 w-2 rounded-xs border border-[#3B5586]/60"
-                  style={{ backgroundColor: stop.color }}
-                />
-              ))}
-            </span>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="px-1 py-0.2 rounded bg-[#1E1B4B] border border-[#7C6EE6]/50 text-[8.5px] font-semibold text-[#C4B5FD]">
-              {hybridShadingOpacityPct}%
-            </span>
-            {legendCollapsed ? (
-              <ChevronUp className="h-3 w-3 text-[#94A3B8]" />
-            ) : (
-              <ChevronDown className="h-3 w-3 text-[#94A3B8]" />
-            )}
-          </div>
-        </button>
-
-        {!legendCollapsed && (
-          <>
-            <p className="text-[8.5px] text-[#94A3B8] border-b border-[#1A2D52] pb-1">
-              {showModelCalibration
-                ? `Calibration Demo · ${effectiveGranularity.replace("_", " ")} · 0–100`
-                : selectedPolygonActiveScore !== null
-                  ? `Verified Public Data (ACS/NCES) · 0–100`
-                  : "Demo Scores Off · Unimported Pillars Null"}
-            </p>
-
-            {/* Discrete Blue/Violet Score Gradient Stops + No Verified Data Stop */}
-            <div className="grid grid-cols-2 gap-x-1.5 gap-y-0.5">
-              {CHOROPLETH_LEGEND_STOPS.map((stop) => (
-                <div key={stop.label} className="flex items-center gap-1">
-                  <span
-                    className="h-2 w-2.5 rounded-xs border border-[#3B5586]/80 shrink-0"
-                    style={{ backgroundColor: stop.color }}
-                  />
-                  <span className="text-[9px] font-semibold text-[#E2E8F0]">
-                    {stop.rangeText}
-                  </span>
-                  <span className="text-[8.5px] text-[#94A3B8] truncate">
-                    {stop.isNoData ? "No Verified Data" : stop.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Selected Gold Boundary Legend Note + Live Hover / Selected Area Score Readout */}
-            <div className="pt-1 border-t border-[#1A2D52] flex items-center justify-between gap-1.5 text-[9.5px]">
-              <div className="truncate">
-                <span className="text-[#94A3B8] block text-[8.5px]">
-                  {hoveredPolygon
-                    ? hoveredPolygon.granularityLabel || "Inspecting Polygon"
-                    : "Selected Area (Gold Border)"}
-                </span>
-                <span className="font-semibold text-[#F3D68B] truncate block">
-                  {hoveredPolygon ? hoveredPolygon.name : selectedCommunity.name}
+                  data-testid="rail-waypoint-derived-score"
+                  className="text-lg font-bold text-[#FFE394] block"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  {communityQualityScore !== null ? `${communityQualityScore}/100` : "Pending"}
                 </span>
               </div>
-              <div className="shrink-0 text-right">
-                {(() => {
-                  const displayScore = hoveredPolygon
-                    ? hoveredPolygon.score
-                    : selectedPolygonActiveScore;
-                  if (displayScore === null) {
-                    return (
-                      <span className="px-1.5 py-0.5 rounded bg-[#091530] border border-[#24375E] text-[8.5px] text-[#94A3B8]">
-                        No Verified Data
-                      </span>
-                    );
-                  }
-                  return (
-                    <span className="px-1.5 py-0.5 rounded bg-[#231F54] border border-[#7C6EE6]/70 text-[10px] font-bold text-[#F3D68B]">
-                      {displayScore}/100
+              <div className="rounded-lg bg-[#091830] border border-[#C5A059]/60 p-2.5">
+                <span className="text-[10px] text-[#EADBC0] block">
+                  My Family Fit
+                </span>
+                <span
+                  className="text-lg font-bold text-[#FFF8E7] block"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  {familyFitScore !== null ? `${familyFitScore}/100` : "Pending"}
+                </span>
+              </div>
+            </div>
+
+            {/* Clean Quick Stats List for Clicked Area */}
+            <div className="rounded-xl bg-[#091830] border border-[#C5A059]/55 divide-y divide-[#C5A059]/30">
+              {selectedCommunity.acsDemographics ? (
+                <>
+                  <div className="flex items-center justify-between px-3 py-2 text-xs">
+                    <span className="text-[#EADBC0]">Population</span>
+                    <span className="font-bold text-[#FFF8E7]">
+                      {selectedCommunity.acsDemographics.populationEstimate.toLocaleString()}
                     </span>
-                  );
-                })()}
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2 text-xs">
+                    <span className="text-[#EADBC0]">Median Household Income</span>
+                    <span className="font-bold text-[#FFE394]">
+                      ${selectedCommunity.acsDemographics.medianHouseholdIncome.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2 text-xs">
+                    <span className="text-[#EADBC0]">Median Home Value</span>
+                    <span className="font-bold text-[#FFF8E7]">
+                      ${selectedCommunity.acsDemographics.medianHomeValue.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2 text-xs">
+                    <span className="text-[#EADBC0]">Median Monthly Rent</span>
+                    <span className="font-bold text-[#FFF8E7]">
+                      ${selectedCommunity.acsDemographics.medianGrossRent.toLocaleString()}/mo
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2 text-xs">
+                    <span className="text-[#EADBC0]">Average Commute</span>
+                    <span className="font-bold text-[#FFF8E7]">
+                      {selectedCommunity.acsDemographics.meanCommuteMinutes} min
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="px-3 py-2.5 text-xs text-[#EADBC0]">
+                  Click any county on the map to view quick census &amp; school stats.
+                </div>
+              )}
+              <div className="flex items-center justify-between px-3 py-2 text-xs">
+                <span className="text-[#EADBC0]">Public Schools in County</span>
+                <span className="font-bold text-[#FFE394]">
+                  {allSchools.filter((s) => s.countyFips === selectedCommunity.fips).length} schools
+                </span>
+              </div>
+              <div className="flex items-center justify-between px-3 py-2 text-xs">
+                <span className="text-[#EADBC0]">School Districts</span>
+                <span className="font-bold text-[#FFF8E7]">
+                  {schoolDistricts.filter((d) => d.countyFips === selectedCommunity.fips).length} districts
+                </span>
+              </div>
+              <div className="flex items-center justify-between px-3 py-2 text-xs">
+                <span className="text-[#EADBC0]">Specialized Programs</span>
+                <span className="font-bold text-[#FFF8E7]">
+                  {
+                    specializedFacilities.filter(
+                      (f) => f.physicalLocation.countyFips === selectedCommunity.fips
+                    ).length
+                  }{" "}
+                  in county
+                </span>
               </div>
             </div>
-          </>
-        )}
+          </div>
+
+          {/* Single Clean Button at Bottom to Jump Down to More Details */}
+          <button
+            type="button"
+            data-testid="scroll-jump-dossier-btn"
+            onClick={() =>
+              document
+                .getElementById("below-map-dossier-section")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+            className="w-full px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#FCE6A6] via-[#E5C170] to-[#C59B43] text-[#07162B] font-extrabold text-xs border border-[#FFF8E7] shadow-[0_4px_14px_rgba(229,193,112,0.4)] flex items-center justify-between hover:brightness-105 transition-all cursor-pointer shrink-0"
+          >
+            <span>More Details for {selectedCommunity.shortName} ↓</span>
+            <ChevronDown className="h-4 w-4 text-[#07162B] stroke-[2.5]" />
+          </button>
+        </aside>
       </div>
 
-      {/* Compact Expandable Bottom Location Bar (Replaces oversized bottom score panel) */}
+      {/* ===================================================================== */}
+      {/* BELOW-MAP OPTIONS & COLOR DECK (OFF THE MAP — Brighter Royal Navy & Gold)*/}
+      {/* ===================================================================== */}
       <div
+        id="below-map-color-deck"
         data-testid="expandable-score-breakdown"
         data-expanded={String(scoreBreakdownExpanded)}
-        className="hidden md:flex flex-col items-center absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none max-w-[calc(100%-290px)]"
+        className="rounded-xl bg-gradient-to-b from-[#112A4E] to-[#0B1C38] border border-[#DFBE77]/65 p-3.5 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_18px_rgba(223,190,119,0.12),inset_0_1px_1px_rgba(255,244,212,0.18)] space-y-3.5 shrink-0"
       >
-        {/* Expanded 6-Pillar Breakdown & Calibration Popover (Opens upward on demand) */}
-        {scoreBreakdownExpanded && (
-          <div className="pointer-events-auto mb-1.5 w-[min(620px,calc(100vw-280px))] rounded-xl bg-[#030B1E]/96 border border-[#2A3F6A] px-3 py-2.5 space-y-2 shadow-[0_14px_36px_rgba(0,0,0,0.95)] backdrop-blur-md">
-            <div className="grid grid-cols-3 lg:grid-cols-6 gap-1.5">
+        {/* Compact Square Clickable Category & Map Layer Buttons — No Numbers, Zero Runoff Words */}
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-[#FFE394]">
+              Map Categories &amp; Show On Map (Click Any Square Button):
+            </span>
+
+            {/* Compact Inline Color Darkness Slider Next to Title */}
+            <div
+              data-testid="hybrid-shading-opacity-control"
+              className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#091830] border border-[#C5A059]/60 text-[11px]"
+            >
+              <span className="text-[#FFE394] font-bold uppercase tracking-wider">
+                Color Darkness:
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={hybridShadingOpacityPct}
+                data-testid="hybrid-shading-opacity-slider"
+                onChange={(e) => setHybridShadingOpacityPct(Number(e.target.value))}
+                className="w-20 h-1.5 accent-[#FFE394] cursor-pointer"
+                aria-label="Adjust geographic score shading opacity"
+              />
+              <span
+                data-testid="hybrid-shading-opacity-value"
+                className="text-[#FFF8E7] font-bold w-8 text-right"
+              >
+                {hybridShadingOpacityPct}%
+              </span>
+            </div>
+          </div>
+
+          <div
+            data-testid="choropleth-measure-switcher"
+            className="flex flex-wrap items-center gap-2.5"
+          >
+            {(
+              [
+                {
+                  key: "communityQuality" as const,
+                  title: "Overall Score",
+                  icon: Building2,
+                },
+                {
+                  key: "academics" as const,
+                  title: "Public Schools",
+                  icon: GraduationCap,
+                },
+                {
+                  key: "safetyWellBeing" as const,
+                  title: "Safety & Crime",
+                  icon: Shield,
+                },
+                {
+                  key: "familyFit" as const,
+                  title: "My Family Fit",
+                  icon: Users,
+                },
+                {
+                  key: "affordability" as const,
+                  title: "Housing Cost",
+                  icon: Home,
+                },
+                {
+                  key: "commute" as const,
+                  title: "Commute Time",
+                  icon: Car,
+                },
+              ]
+            ).map((pillar) => {
+              const Icon = pillar.icon;
+              const isActiveMeasure = choroplethMeasure === pillar.key;
+              return (
+                <button
+                  key={pillar.key}
+                  type="button"
+                  data-testid={`choropleth-measure-${pillar.key}`}
+                  onClick={() => handleSelectMeasure(pillar.key)}
+                  className={`group relative w-[88px] h-[88px] sm:w-[94px] sm:h-[94px] aspect-square p-2 rounded-xl border-2 text-center flex flex-col items-center justify-between transition-all duration-150 cursor-pointer select-none active:scale-[0.96] shrink-0 ${
+                    isActiveMeasure
+                      ? "bg-gradient-to-b from-[#FCE8AD] via-[#E5C170] to-[#C2963E] border-[#22C55E] ring-1 ring-[#86EFAC]/70 text-[#07162B] shadow-[0_6px_18px_rgba(34,197,94,0.45),inset_0_1px_2px_rgba(255,236,160,0.9)] -translate-y-0.5"
+                      : "bg-gradient-to-b from-[#163462] via-[#10264A] to-[#0A1934] border-[#DFBE77]/80 hover:border-[#FFD700] hover:from-[#1D4178] hover:to-[#10274C] text-[#FFF8E7] shadow-[0_5px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,244,212,0.28)] hover:-translate-y-0.5"
+                  }`}
+                >
+                  {/* Top Centered Icon Badge */}
+                  <span
+                    className={`inline-flex items-center justify-center w-7 h-7 rounded-lg border shrink-0 transition-all ${
+                      isActiveMeasure
+                        ? "bg-gradient-to-b from-[#16A34A] to-[#15803D] border-[#86EFAC] text-white shadow-[0_2px_6px_rgba(22,163,74,0.5)]"
+                        : "bg-[#091830] border-[#DFBE77]/65 text-[#FFE394] group-hover:border-[#FFD700]"
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5 stroke-[2.2]" />
+                  </span>
+
+                  {/* Center Full Category Name (No Numbers, No Truncation) */}
+                  <span
+                    className={`text-[11px] font-extrabold leading-[1.15] px-0.5 ${
+                      isActiveMeasure ? "text-[#07162B]" : "text-[#FFF8E7] group-hover:text-white"
+                    }`}
+                  >
+                    {pillar.title}
+                  </span>
+
+                  {/* Bottom Mini Action Pill — Turns Green When Selected */}
+                  <span
+                    className={`w-full py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider transition-all ${
+                      isActiveMeasure
+                        ? "bg-gradient-to-r from-[#16A34A] via-[#15803D] to-[#166534] text-white border border-[#86EFAC] shadow-[0_2px_8px_rgba(22,163,74,0.55)]"
+                        : "bg-[#091830] border border-[#DFBE77]/55 text-[#FFE394] group-hover:bg-[#DFBE77] group-hover:text-[#07162B]"
+                    }`}
+                  >
+                    {isActiveMeasure ? "✓ Active" : "Select"}
+                  </span>
+                </button>
+              );
+            })}
+
+            {/* Show on Map Square Buttons (School Pins, Therapy & Doctors, Specialized Schools) */}
+            <div
+              data-testid="clean-map-view-pills"
+              className="contents"
+            >
               {(
                 [
                   {
-                    key: "communityQuality" as const,
-                    label: "Community Quality",
-                    value: showModelCalibration
-                      ? selectedCommunity.calibrationPillars.communityQuality
-                      : null,
-                    icon: Building2,
-                  },
-                  {
-                    key: "academics" as const,
-                    label: "School Performance",
-                    value: showModelCalibration
-                      ? selectedCommunity.calibrationPillars.academics
-                      : null,
+                    id: "public-schools-pins",
+                    testId: "quick-view-public-schools",
+                    title: "School Pins",
                     icon: GraduationCap,
+                    isActive: Boolean(activeLayers.school_locations),
+                    onClick: () => onToggleLayer("school_locations"),
                   },
                   {
-                    key: "safetyWellBeing" as const,
-                    label: "Safety & Well-Being",
-                    value: showModelCalibration
-                      ? selectedCommunity.calibrationPillars.safetyWellBeing
-                      : null,
-                    icon: Shield,
-                  },
-                  {
-                    key: "familyFit" as const,
-                    label: "Family Fit",
-                    value: showModelCalibration ? familyFitScore : null,
+                    id: "therapy-doctors",
+                    testId: "quick-view-therapy-providers",
+                    title: "Therapy & Doctors",
                     icon: Users,
+                    isActive: Boolean(activeLayers.therapy_providers),
+                    onClick: () => onToggleLayer("therapy_providers"),
                   },
                   {
-                    key: "affordability" as const,
-                    label: "Affordability",
-                    value: showModelCalibration
-                      ? selectedCommunity.calibrationPillars.affordability
-                      : null,
-                    icon: Home,
+                    id: "specialized-schools",
+                    testId: "quick-view-specialized-programs",
+                    title: "Specialized Schools",
+                    icon: Shield,
+                    isActive: Boolean(activeLayers.specialized_residential),
+                    onClick: () => onToggleLayer("specialized_residential"),
                   },
-                  {
-                    key: "commute" as const,
-                    label: "Connectivity",
-                    value: showModelCalibration
-                      ? selectedCommunity.calibrationPillars.commute
-                      : null,
-                    icon: Car,
-                  },
-                ]
-              ).map((pillar) => {
-                const Icon = pillar.icon;
-                const isActiveMeasure = choroplethMeasure === pillar.key;
+                ] as const
+              ).map((pinBtn) => {
+                const PinIcon = pinBtn.icon;
                 return (
                   <button
-                    key={pillar.key}
+                    key={pinBtn.id}
                     type="button"
-                    data-testid={`bottom-pillar-${pillar.key}`}
-                    onClick={() => handleSelectMeasure(pillar.key)}
-                    className={`p-1.5 rounded-lg border text-left transition-all cursor-pointer ${
-                      isActiveMeasure
-                        ? "bg-[#221F52] border-[#7C6EE6] text-[#F3D68B]"
-                        : "bg-[#071430] border-[#1D2F52] hover:border-[#36538A] text-[#CBD5E1]"
+                    data-testid={pinBtn.testId}
+                    onClick={pinBtn.onClick}
+                    className={`group relative w-[88px] h-[88px] sm:w-[94px] sm:h-[94px] aspect-square p-2 rounded-xl border-2 text-center flex flex-col items-center justify-between transition-all duration-150 cursor-pointer select-none active:scale-[0.96] shrink-0 ${
+                      pinBtn.isActive
+                        ? "bg-gradient-to-b from-[#FCE8AD] via-[#E5C170] to-[#C2963E] border-[#22C55E] ring-1 ring-[#86EFAC]/70 text-[#07162B] shadow-[0_6px_18px_rgba(34,197,94,0.45),inset_0_1px_2px_rgba(255,236,160,0.9)] -translate-y-0.5"
+                        : "bg-gradient-to-b from-[#163462] via-[#10264A] to-[#0A1934] border-[#DFBE77]/80 hover:border-[#FFD700] hover:from-[#1D4178] hover:to-[#10274C] text-[#FFF8E7] shadow-[0_5px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,244,212,0.28)] hover:-translate-y-0.5"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-1">
-                      <Icon className="h-3.5 w-3.5 text-[#D4AF63]" />
-                      <span className="text-xs font-bold text-[#F4F6FB]">
-                        {pillar.value !== null ? `${pillar.value}` : "No Data"}
-                      </span>
-                    </div>
-                    <p className="text-[9.5px] text-[#94A3B8] truncate mt-0.5">
-                      {pillar.label}
-                    </p>
+                    {/* Top Centered Icon Badge */}
+                    <span
+                      className={`inline-flex items-center justify-center w-7 h-7 rounded-lg border shrink-0 transition-all ${
+                        pinBtn.isActive
+                          ? "bg-gradient-to-b from-[#16A34A] to-[#15803D] border-[#86EFAC] text-white shadow-[0_2px_6px_rgba(22,163,74,0.5)]"
+                          : "bg-[#091830] border-[#DFBE77]/65 text-[#FFE394] group-hover:border-[#FFD700]"
+                      }`}
+                    >
+                      <PinIcon className="h-3.5 w-3.5 stroke-[2.2]" />
+                    </span>
+
+                    {/* Center Full Label (No Numbers, No Truncation) */}
+                    <span
+                      className={`text-[11px] font-extrabold leading-[1.15] px-0.5 ${
+                        pinBtn.isActive ? "text-[#07162B]" : "text-[#FFF8E7] group-hover:text-white"
+                      }`}
+                    >
+                      {pinBtn.title}
+                    </span>
+
+                    {/* Bottom Mini Action Pill — Turns Green When Selected */}
+                    <span
+                      className={`w-full py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider transition-all ${
+                        pinBtn.isActive
+                          ? "bg-gradient-to-r from-[#16A34A] via-[#15803D] to-[#166534] text-white border border-[#86EFAC] shadow-[0_2px_8px_rgba(22,163,74,0.55)]"
+                          : "bg-[#091830] border border-[#DFBE77]/55 text-[#FFE394] group-hover:bg-[#DFBE77] group-hover:text-[#07162B]"
+                      }`}
+                    >
+                      {pinBtn.isActive ? "✓ Active" : "Select"}
+                    </span>
                   </button>
                 );
               })}
             </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-[#1D2F52] text-[10px] text-[#94A3B8]">
-              <span>
-                Click any pillar to shade the nationwide choropleth map.{" "}
-                <span className="text-[#CBD5E1]">{pmtilesHeaderStatus}</span>
-              </span>
-              <div className="flex items-center gap-3">
-                {onToggleModelCalibration && (
-                  <label className="flex items-center gap-1.5 text-[#93C5FD] cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={showModelCalibration}
-                      onChange={(e) => onToggleModelCalibration(e.target.checked)}
-                      className="h-3 w-3 accent-[#D4AF63] cursor-pointer"
-                    />
-                    <span>Fictional Calibration Demo Scores</span>
-                  </label>
-                )}
-                {onOpenScoreDetails && (
-                  <button
-                    type="button"
-                    onClick={onOpenScoreDetails}
-                    className="text-[#F3D68B] hover:underline font-semibold cursor-pointer"
-                  >
-                    Methodology & Evidence →
-                  </button>
-                )}
-              </div>
-            </div>
           </div>
-        )}
 
-        {/* Single-Line Compact Location Pill Bar */}
-        <div className="pointer-events-auto inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#040E26]/95 border border-[#2A3F6A] shadow-[0_10px_28px_rgba(0,0,0,0.92)] backdrop-blur-md whitespace-nowrap">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#D4AF63] shrink-0" />
-            <span
-              className="text-[11.5px] font-bold text-[#F4F6FB] truncate max-w-[140px]"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              {selectedCommunity.name}
+          {/* Source Attribution at the Bottom of the Square Buttons Card */}
+          <div className="pt-1.5 border-t border-[#C5A059]/35 flex items-center justify-between text-[11px] text-[#EADBC0]">
+            <span data-testid="satellite-attribution-badge">
+              Source:{" "}
+              {satelliteConfig.configured && isSatelliteOrHybrid
+                ? "USDA/USGS Public-Domain Imagery · Official U.S. Census & NCES"
+                : "USGS National Map (Public Domain) · Official U.S. Census & NCES"}
             </span>
           </div>
-
-          {/* Distinct Metric 1: Community Quality */}
-          <div
-            data-testid="dock-community-quality"
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#091736] border border-[#20345E] text-[10px]"
-          >
-            <span className="text-[#94A3B8]">Quality:</span>
-            {showModelCalibration && communityQualityScore !== null ? (
-              <span className="font-bold text-[#F3D68B]">
-                {communityQualityScore}/100{" "}
-                <span className="text-[8.5px] uppercase text-[#C4B5FD] font-normal">
-                  Demo
-                </span>
-              </span>
-            ) : (
-              <span className="font-semibold text-[#94A3B8]">No Verified Data</span>
-            )}
-          </div>
-
-          {/* Distinct Metric 2: Family Fit */}
-          <div
-            data-testid="dock-family-fit"
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#091736] border border-[#20345E] text-[10px]"
-          >
-            <span className="text-[#94A3B8]">Fit:</span>
-            {showModelCalibration && familyFitScore !== null ? (
-              <span className="font-bold text-[#93C5FD]">
-                {familyFitScore}/100{" "}
-                <span className="text-[8.5px] uppercase text-[#C4B5FD] font-normal">
-                  Demo
-                </span>
-              </span>
-            ) : (
-              <span className="font-semibold text-[#94A3B8]">No Verified Data</span>
-            )}
-          </div>
-
-          {/* Distinct Metric 3: Evidence Completeness */}
-          <div
-            data-testid="dock-evidence-completeness"
-            className="hidden xl:flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#121036] border border-[#4C3F91]/70 text-[9.5px] text-[#C4B5FD]"
-            title="Demonstration calibration scores are never presented as verified findings"
-          >
-            <FlaskConical className="h-2.5 w-2.5 text-[#F3D68B] shrink-0" />
-            <span>
-              {selectedCommunity.evidenceCompleteness?.ratioText
-                ? selectedCommunity.evidenceCompleteness.ratioText.replace(" Sources", "")
-                : selectedCommunity.dataStatus === "verified_public_source"
-                  ? "6/6 Verified"
-                  : showModelCalibration
-                    ? "0/6 Verified · Demo"
-                    : "0/6 Verified"}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            data-testid="toggle-score-breakdown-btn"
-            onClick={() => setScoreBreakdownExpanded((v) => !v)}
-            className="px-2 py-0.5 rounded-full bg-[#10254D] hover:bg-[#173368] border border-[#345086] text-[10px] font-semibold text-[#F3D68B] flex items-center gap-1 cursor-pointer"
-          >
-            <span>{scoreBreakdownExpanded ? "Hide" : "Score Breakdown"}</span>
-            {scoreBreakdownExpanded ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronUp className="h-3 w-3" />
-            )}
-          </button>
         </div>
-      </div>
-
-      {/* Top-Right Collapsible Map Layers Card */}
-      <div className="absolute top-2.5 right-2.5 z-20 w-[142px] rounded-xl bg-[#040E26]/95 border border-[#2A3F6A] shadow-[0_10px_28px_rgba(0,0,0,0.85)] backdrop-blur-md overflow-hidden">
-        <button
-          type="button"
-          data-testid="map-layers-toggle-btn"
-          onClick={() => setLayersExpanded((v) => !v)}
-          className="w-full flex items-center justify-between px-2.5 py-1.5 text-[11px] font-semibold text-[#F4F6FB] border-b border-[#1D2F52] cursor-pointer"
-        >
-          <span className="flex items-center gap-1.5">
-            <Layers className="h-3.5 w-3.5 text-[#D4AF63]" />
-            Map Layers
-          </span>
-          {layersExpanded ? (
-            <ChevronUp className="h-3.5 w-3.5 text-[#94A3B8]" />
-          ) : (
-            <ChevronDown className="h-3.5 w-3.5 text-[#94A3B8]" />
-          )}
-        </button>
-
-        {layersExpanded && (
-          <div className="p-2.5 space-y-1.5">
-            {LAYER_OPTIONS.map((layer) => {
-              const checked = activeLayers[layer.key];
-              return (
-                <label
-                  key={layer.key}
-                  className="flex items-center gap-2 text-xs text-[#CBD5E1] hover:text-white cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => onToggleLayer(layer.key)}
-                    className="h-3.5 w-3.5 rounded border-[#475569] accent-[#D4AF63] cursor-pointer"
-                  />
-                  <span
-                    className="h-2 w-2 rounded-full shrink-0"
-                    style={{ backgroundColor: layer.colorDot }}
-                  />
-                  <span className="truncate">{layer.label}</span>
-                </label>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Mandatory Imagery & Geographic Boundary Attribution Badge (All Modes) */}
-      <div
-        data-testid="satellite-attribution-badge"
-        className="absolute top-12 right-2.5 z-20 px-2 py-1 rounded-md bg-[#040E26]/92 border border-[#D4AF63]/45 text-[9.5px] font-medium text-[#F3D68B] shadow-md backdrop-blur-md flex items-center gap-1.5"
-      >
-        <span
-          className={`h-1.5 w-1.5 rounded-full ${
-            satelliteConfig.configured && isSatelliteOrHybrid
-              ? "bg-emerald-400"
-              : "bg-[#93C5FD]"
-          }`}
-        />
-        <span>
-          {satelliteConfig.configured && isSatelliteOrHybrid
-            ? satelliteConfig.attributionText ||
-              "Imagery: USDA, USGS The National Map: Orthoimagery · Boundaries: U.S. Census TIGER/Line"
-            : "Boundaries: U.S. Census Bureau TIGER/Line · School Districts: NCES EDGE"}
-        </span>
-      </div>
-
-      {/* Live Zoom Level & Imagery Resolution Status Pill */}
-      <div
-        data-testid="map-zoom-level-indicator"
-        className="absolute bottom-[164px] right-3 z-20 px-2 py-1 rounded-md bg-[#040E26]/95 border border-[#2A3F6A] text-[9.5px] font-semibold text-[#F3D68B] shadow-lg text-right"
-      >
-        <div>z{camera.zoom.toFixed(1)} / z{maxInteractiveZoom}</div>
-        {isSatelliteOrHybrid && satelliteConfig.configured && (
-          <div className="text-[8.5px] text-[#94A3B8]">
-            {isOverZoomedBeyondNative
-              ? `Tile z${activeNativeTileZoom} (Over-zoom)`
-              : `Native Tile z${activeNativeTileZoom}`}
-          </div>
-        )}
-      </div>
-
-      {/* Honest USGS Native Resolution Ceiling Notice when Over-Zooming beyond z16 (z17–z20) */}
-      {isOverZoomedBeyondNative && (
-        <div
-          data-testid="usgs-overzoom-notice"
-          className="absolute top-[102px] left-2.5 z-20 max-w-[390px] rounded-lg bg-[#040E26]/96 border border-amber-400/75 px-3 py-2 text-[10px] text-[#F4F6FB] shadow-[0_8px_24px_rgba(0,0,0,0.92)] backdrop-blur-md space-y-0.5"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-bold text-amber-300">
-              USGS Native Tile Limit Reached (z{maxNativeTileZoom} · 1:9,028 Scale)
-            </span>
-            <span className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-400/50 text-[9px] font-semibold text-amber-200">
-              {Math.pow(2, camera.zoom - maxNativeTileZoom).toFixed(1)}× Digital Stretch
-            </span>
-          </div>
-          <p className="text-[9.5px] text-[#CBD5E1] leading-snug">
-            USGS National Map serves 1m NAIP tiles up to z16 (z17+ returns HTTP 404). Over-zooming at z{camera.zoom.toFixed(1)} stretches z16 tiles. Sub-meter building &amp; playground clarity at z17–z20 requires Esri World Imagery, MapTiler, or Mapbox.
-          </p>
-        </div>
-      )}
-
-      {/* Bottom-Right Zoom, 50-State Nationwide View & Georgia Recenter Controls */}
-      <div className="absolute bottom-3 right-3 z-20 flex flex-col rounded-lg overflow-hidden border border-[#2A3F6A] bg-[#040E26]/95 shadow-xl divide-y divide-[#1D2F52]">
-        <button
-          type="button"
-          data-testid="map-zoom-in-btn"
-          onClick={handleZoomIn}
-          title="Zoom in"
-          className="p-2 text-[#F4F6FB] hover:bg-[#102548] transition-colors cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          data-testid="map-zoom-out-btn"
-          onClick={handleZoomOut}
-          title="Zoom out"
-          className="p-2 text-[#F4F6FB] hover:bg-[#102548] transition-colors cursor-pointer"
-        >
-          <Minus className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={handleNationwide50StatesView}
-          title="View All 50 States"
-          data-testid="zoom-50-states-btn"
-          className="p-2 text-[#93C5FD] hover:bg-[#102548] transition-colors cursor-pointer"
-        >
-          <Globe className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          data-testid="map-reset-georgia-btn"
-          onClick={handleResetView}
-          title="Reset Georgia view"
-          className="p-2 text-[#D4AF63] hover:bg-[#102548] transition-colors cursor-pointer"
-        >
-          <Navigation className="h-3.5 w-3.5" />
-        </button>
       </div>
     </div>
   );

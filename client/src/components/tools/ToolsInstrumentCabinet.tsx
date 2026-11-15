@@ -1,25 +1,12 @@
 import React, { useState, useMemo } from "react";
-import {
-  Search,
-  ArrowRight,
-  CheckCircle2,
-  MoreHorizontal,
-  User,
-  ChevronDown,
-  Mic,
-  X,
-  Play,
-  GitCompare,
-  Plus,
-  Wrench,
-} from "lucide-react";
+import { Search, X, ChevronLeft, ChevronRight, HelpCircle, MoreHorizontal } from "lucide-react";
 import PageIdBadge from "@/components/PageIdBadge";
 import {
   buildAllInstruments,
   type InstrumentDefinition,
 } from "./toolsCatalogData";
 import { RequestToolModal } from "./RequestToolModal";
-import { VintageSpeakerGrilleBay } from "./VintageSpeakerGrilleBay";
+import { Tool3DAppIcon } from "./ToolsAppIllustrations";
 
 export type { InstrumentDefinition };
 
@@ -30,51 +17,25 @@ interface ToolsInstrumentCabinetProps {
   onOpenRecorderModal: () => void;
 }
 
-/**
- * 3D Cast-Brass Drawer Pull Handle rendered at the bottom center of each drawer
- */
-function BrassDrawerPull({ active }: { active: boolean }) {
-  return (
-    <div className="relative flex items-center justify-center mt-2.5 select-none pointer-events-none">
-      {/* Cast shadow underneath handle */}
-      <div className="absolute -bottom-1.5 w-16 h-2.5 rounded-full bg-black/80 blur-[3px]" />
-      {/* Outer brass mounting plate */}
-      <div
-        className={`relative w-[68px] h-[16px] rounded-[4px] flex items-center justify-between px-1.5 transition-all ${
-          active
-            ? "bg-gradient-to-b from-[#FCE6A6] via-[#C99E4A] to-[#6E4F19] border border-[#FFF3C8]/80 shadow-[0_4px_10px_rgba(0,0,0,0.85),0_0_12px_rgba(235,193,107,0.35)]"
-            : "bg-gradient-to-b from-[#D5B472] via-[#9E7836] to-[#523A12] border border-[#E6C98A]/50 shadow-[0_4px_8px_rgba(0,0,0,0.85)]"
-        }`}
-      >
-        {/* Left brass post */}
-        <div className="w-1.5 h-2.5 rounded-[1px] bg-gradient-to-b from-[#FFF0BE] to-[#6B4C1B] shadow-sm" />
-        {/* Recessed dark cavity under the bail bar */}
-        <div className="flex-1 mx-0.5 h-[8px] rounded-[2px] bg-[#0B0F1A]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.95)] flex items-center justify-center">
-          {/* Horizontal specular highlight bar */}
-          <div className="w-full h-[3px] rounded-full bg-gradient-to-r from-[#8F6B29] via-[#F9E29F] to-[#8F6B29]" />
-        </div>
-        {/* Right brass post */}
-        <div className="w-1.5 h-2.5 rounded-[1px] bg-gradient-to-b from-[#FFF0BE] to-[#6B4C1B] shadow-sm" />
-      </div>
-    </div>
-  );
-}
-
 export function ToolsInstrumentCabinet({
   contactId,
   setLocation,
   onOpenIepComparisonModal,
   onOpenRecorderModal,
 }: ToolsInstrumentCabinetProps) {
-  const [selectedId, setSelectedId] = useState<string>("first-mate");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [accessMenuOpen, setAccessMenuOpen] = useState<boolean>(false);
   const [categoryFilter, setCategoryFilter] = useState<
     "all" | "meeting" | "document" | "concern"
   >("all");
-  const [howItWorksOpen, setHowItWorksOpen] = useState<boolean>(false);
+  const [showAllTools, setShowAllTools] = useState<boolean>(false);
+  const [detailInstrumentId, setDetailInstrumentId] = useState<string | null>(
+    null
+  );
+  const [previewTab, setPreviewTab] = useState<
+    "Meeting" | "Notes" | "Next steps"
+  >("Meeting");
+  const [questionIndex, setQuestionIndex] = useState<number>(2);
   const [requestModalOpen, setRequestModalOpen] = useState<boolean>(false);
-  const drawerRefs = React.useRef<Record<string, HTMLButtonElement | null>>({});
 
   const allInstruments = useMemo(
     () =>
@@ -87,7 +48,7 @@ export function ToolsInstrumentCabinet({
     [contactId, setLocation, onOpenIepComparisonModal, onOpenRecorderModal]
   );
 
-  const visibleInstruments = useMemo(() => {
+  const filteredInstruments = useMemo(() => {
     let list = allInstruments;
     if (categoryFilter !== "all") {
       list = list.filter((i) => i.taskCategory === categoryFilter);
@@ -106,607 +67,399 @@ export function ToolsInstrumentCabinet({
     return matched.length > 0 ? matched : list;
   }, [allInstruments, categoryFilter, searchQuery]);
 
-  const activeInstrument = useMemo(() => {
-    return (
-      visibleInstruments.find((i) => i.id === selectedId) ||
-      visibleInstruments[0] ||
-      allInstruments[0]
-    );
-  }, [visibleInstruments, selectedId, allInstruments]);
-
-  const handleTaskShortcut = (category: "meeting" | "document" | "concern") => {
-    setCategoryFilter((prev) => (prev === category ? "all" : category));
-    const firstInCategory = allInstruments.find(
-      (i) => i.taskCategory === category
-    );
-    if (firstInCategory) {
-      setSelectedId(firstInCategory.id);
-      const el = drawerRefs.current[firstInCategory.id];
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
+  // Show the 6 core featured tools by default (matching the 3x2 reference layout),
+  // or all tools when searching, filtering by category, or toggling "Show all tools".
+  const displayedInstruments = useMemo(() => {
+    if (searchQuery.trim() || categoryFilter !== "all" || showAllTools) {
+      return filteredInstruments;
     }
+    return filteredInstruments.slice(0, 6);
+  }, [filteredInstruments, searchQuery, categoryFilter, showAllTools]);
+
+  const detailInstrument = useMemo(() => {
+    if (!detailInstrumentId) return null;
+    return allInstruments.find((i) => i.id === detailInstrumentId) || null;
+  }, [allInstruments, detailInstrumentId]);
+
+  const questionsList = useMemo(() => {
+    if (!detailInstrument) return [];
+    if (
+      detailInstrument.questionsCarousel &&
+      detailInstrument.questionsCarousel.length > 0
+    ) {
+      return detailInstrument.questionsCarousel;
+    }
+    return [
+      detailInstrument.placardQuote,
+      "What evaluation data or baseline supports this team recommendation?",
+      "How will progress toward this target be measured and reported?",
+      "Can we document this agreement in the Prior Written Notice?",
+    ];
+  }, [detailInstrument]);
+
+  const handleOpenDetails = (id: string) => {
+    setDetailInstrumentId(id);
+    setPreviewTab("Meeting");
+    setQuestionIndex(id === "first-mate" ? 2 : 0);
   };
 
   return (
     <div
-      className="min-h-[calc(100vh-2rem)] w-full text-[#FBF6EC] px-4 sm:px-8 lg:px-10 py-6 md:py-8 select-none"
+      className="relative min-h-[calc(100vh-2rem)] w-full text-white px-6 sm:px-10 lg:px-14 py-8 md:py-10 overflow-hidden select-none flex flex-col justify-between"
       style={{
         background:
-          "radial-gradient(ellipse at 55% 18%, #131F3E 0%, #091122 55%, #050914 100%)",
+          "radial-gradient(ellipse at 72% 18%, #152254 0%, #091230 42%, #05091B 78%, #030613 100%)",
       }}
     >
-      <div className="max-w-[1360px] mx-auto space-y-6">
+      {/* Subtle Cosmic Indigo Ambient Glows */}
+      <div
+        className="pointer-events-none absolute top-16 right-1/4 w-[480px] h-[360px] rounded-full opacity-35 blur-[95px]"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(99,102,241,0.55) 0%, rgba(30,58,138,0) 70%)",
+        }}
+      />
+
+      <div className="relative z-10 max-w-[1280px] w-full mx-auto">
         {/* ================================================================= */}
-        {/* TOP HEADER ROW                                                    */}
+        {/* 1. TOP HEADER ROW                                                 */}
         {/* ================================================================= */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-1">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-5">
           <div>
             <div className="flex items-center gap-3">
-              <h1
-                className="text-4xl md:text-[46px] font-bold text-[#FBF6EC] tracking-tight leading-none"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              >
-                Tools
-              </h1>
+              <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.28em] text-[#E2E8F0] font-medium">
+                WAYPOINT ADVOCATES
+              </span>
               <PageIdBadge id="PG-010" />
             </div>
-            <p
-              className="text-[15.5px] md:text-[17px] text-[#C8C2B4] mt-2 tracking-wide"
+
+            <h1
+              className="text-4xl sm:text-[54px] font-normal text-white tracking-tight leading-[1.06] mt-2.5"
               style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
             >
-              Choose the right instrument for your next step.
+              Your tools
+            </h1>
+            <p className="text-[17px] sm:text-[19.5px] text-[#B8C4D9] mt-2 font-normal">
+              Support for every school conversation.
             </p>
           </div>
 
-          {/* Search, Request Tool & My Access Controls */}
-          <div className="flex flex-wrap items-center gap-3 md:gap-4 self-start md:self-center">
-            <div className="relative w-56 sm:w-68">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8E98B0]" />
+          {/* Search Input Pill */}
+          <div className="w-full md:w-[330px] pb-1">
+            <div className="relative w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search tools..."
-                className="w-full h-10 pl-10 pr-8 rounded-lg bg-[#091224]/90 border border-[#283552] text-[14px] text-[#EAE4D7] placeholder:text-[#848FA8] focus:outline-none focus:border-[#7B86FF] shadow-[inset_0_2px_6px_rgba(0,0,0,0.75)] transition-colors"
+                placeholder="Search tools"
+                aria-label="Search tools"
+                className="w-full h-11 pl-11 pr-9 rounded-full bg-[#0B132B]/90 border border-[#2B3B60] text-[14.5px] text-white placeholder:text-[#94A3B8] focus:outline-none focus:border-[#93A3F8] shadow-[inset_0_2px_6px_rgba(0,0,0,0.6)] transition-colors"
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#848FA8] hover:text-white cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-white cursor-pointer"
                   title="Clear search"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                 </button>
               )}
             </div>
+          </div>
+        </div>
 
-            {/* Request a Tool Button */}
-            <button
-              type="button"
-              onClick={() => setRequestModalOpen(true)}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-gradient-to-b from-[#E5C887] via-[#C69F56] to-[#987230] text-[#0E1322] font-bold text-[13.5px] border border-[#FCE7B6]/75 shadow-[0_4px_14px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.6)] hover:brightness-110 transition-all cursor-pointer"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              <Plus className="h-4 w-4 stroke-[2.25]" />
-              <span>Request a tool</span>
-            </button>
-
-            <div className="h-6 w-px bg-[#283552] hidden sm:block" />
-
-            {/* My Access Dropdown */}
-            <div className="relative">
+        {/* ================================================================= */}
+        {/* 2. CATEGORY FILTER TABS                                           */}
+        {/* ================================================================= */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-6 border-b border-[#192648] pb-4 mt-7">
+          {(
+            [
+              { id: "all", label: "All apps" },
+              { id: "meeting", label: "Meetings" },
+              { id: "document", label: "Understand your IEP" },
+              { id: "concern", label: "Write & prepare" },
+            ] as const
+          ).map((tab) => {
+            const isActive = categoryFilter === tab.id;
+            return (
               <button
-                onClick={() => setAccessMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-[14px] text-[#E6E1D6] hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
+                key={tab.id}
+                type="button"
+                onClick={() => setCategoryFilter(tab.id)}
+                className={`px-5 py-1.5 rounded-full text-[14.5px] transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-gradient-to-b from-[#AEB8FF] to-[#8E9BEF] text-[#070D20] font-semibold shadow-[0_4px_16px_rgba(142,155,239,0.35)]"
+                    : "text-[#CBD5E1] hover:text-white font-normal"
+                }`}
               >
-                <User className="h-4 w-4 text-[#C5A059]" />
-                <span>My access</span>
-                <ChevronDown className="h-3.5 w-3.5 text-[#9AA4BC]" />
+                {tab.label}
               </button>
-
-              {accessMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#0B1528] border border-[#3A2C18] shadow-[0_18px_45px_rgba(0,0,0,0.95)] p-1.5 z-40 text-left">
-                  <div className="px-3 py-2 border-b border-[#1E2B45]">
-                    <p className="text-[11px] uppercase tracking-wider text-[#A69371] font-semibold">
-                      Plan Entitlements
-                    </p>
-                    <p className="text-xs text-[#FFF4D4] mt-0.5 font-medium">
-                      All {allInstruments.length} Waypoint Instruments Active
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setCategoryFilter("all");
-                      setAccessMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs mt-1 cursor-pointer transition-colors ${
-                      categoryFilter === "all"
-                        ? "bg-[#162442] text-[#FFE394] font-semibold"
-                        : "text-[#D0D7E8] hover:bg-white/[0.05]"
-                    }`}
-                  >
-                    <span>All Instruments ({allInstruments.length})</span>
-                    {categoryFilter === "all" && (
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAccessMenuOpen(false);
-                      onOpenIepComparisonModal();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs mt-0.5 text-[#D0D7E8] hover:bg-white/[0.05] cursor-pointer transition-colors"
-                  >
-                    <span>Quick IEP PDF Compare Modal</span>
-                    <GitCompare className="h-3.5 w-3.5 text-[#C5A059]" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAccessMenuOpen(false);
-                      onOpenRecorderModal();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs mt-0.5 text-[#D0D7E8] hover:bg-white/[0.05] cursor-pointer transition-colors"
-                  >
-                    <span>Quick Screen/Audio Capture</span>
-                    <Mic className="h-3.5 w-3.5 text-rose-400" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAccessMenuOpen(false);
-                      setRequestModalOpen(true);
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs mt-1 border-t border-[#1E2B45] pt-2 text-[#FFE394] hover:bg-white/[0.05] cursor-pointer transition-colors"
-                  >
-                    <span>Request a New Tool...</span>
-                    <Wrench className="h-3.5 w-3.5 text-[#C5A059]" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+            );
+          })}
         </div>
 
         {/* ================================================================= */}
-        {/* MAIN BRASS & NAVY INSTRUMENT CREDENZA / CABINET CONSOLE           */}
+        {/* 3. SECTION HEADING: "Made for your next step"                     */}
         {/* ================================================================= */}
-        <div className="relative rounded-[14px] bg-gradient-to-b from-[#202B42] via-[#10182B] to-[#0A101E] p-[10px] sm:p-[14px] border border-[#5B4827]/85 shadow-[0_32px_80px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.18)]">
-          {/* Top Antique Brass Inlay Trim Bar */}
-          <div className="absolute top-0 left-6 right-6 h-[2px] bg-gradient-to-r from-transparent via-[#D2AE68] to-transparent opacity-85" />
-          {/* Bottom Antique Brass Inlay Trim Bar */}
-          <div className="absolute bottom-0 left-6 right-6 h-[2px] bg-gradient-to-r from-transparent via-[#C59E54] to-transparent opacity-80" />
+        <div className="mt-7 mb-3">
+          <h2 className="text-[24px] sm:text-[28px] font-bold text-white tracking-tight leading-snug">
+            Made for your next step
+          </h2>
+          <p className="text-[15.5px] sm:text-[17px] text-[#A3B1C6] mt-0.5">
+            Practical support, whenever you need it.
+          </p>
+        </div>
 
-          {/* Inner Recessed Cabinet Housing */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 rounded-[10px] border-2 border-[#060A13] bg-[#080D1A] overflow-hidden shadow-[inset_0_6px_28px_rgba(0,0,0,0.95)]">
-            {/* ------------------------------------------------------------- */}
-            {/* LEFT COLUMN: SCROLLABLE STACK OF 15 DRAWERS + VINTAGE SPEAKER */}
-            {/* ------------------------------------------------------------- */}
-            <div className="lg:col-span-5 flex flex-col justify-between bg-[#090F1E] border-b-[6px] lg:border-b-0 lg:border-r-[8px] border-[#151E32] shadow-[4px_0_18px_rgba(0,0,0,0.85)]">
-              <div
-                className="flex flex-col p-2 sm:p-2.5 pb-1.5 gap-2 max-h-[395px] overflow-y-auto overscroll-contain pr-1.5 border-b-2 border-[#151E32]"
-                style={{
-                  scrollbarWidth: "thin",
-                  scrollbarColor: "#C5A059 #090F1E",
-                }}
-              >
-                {visibleInstruments.map((inst) => {
-                  const Icon = inst.icon;
-                  const isActive = inst.id === activeInstrument.id;
-
-                  return (
-                    <button
-                      key={inst.id}
-                      ref={(el) => {
-                        drawerRefs.current[inst.id] = el;
-                      }}
-                      type="button"
-                      onClick={() => setSelectedId(inst.id)}
-                      className={`group relative w-full shrink-0 text-left rounded-[7px] px-5 pt-4 pb-3.5 transition-all duration-200 cursor-pointer overflow-hidden flex flex-col justify-between min-h-[122px] ${
-                        isActive
-                          ? "border border-[#7E89FF]/60 shadow-[0_10px_28px_rgba(0,0,0,0.9),inset_0_1px_18px_rgba(130,140,255,0.28)]"
-                          : "bg-gradient-to-b from-[#151F35] via-[#0F1729] to-[#0B1120] border border-white/[0.07] hover:from-[#1B2742] hover:to-[#10192E] shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.06)]"
-                      }`}
-                      style={
-                        isActive
-                          ? {
-                              background:
-                                "radial-gradient(ellipse at 58% 0%, rgba(132, 139, 255, 0.48) 0%, rgba(62, 72, 166, 0.34) 45%, rgba(18, 27, 52, 0.96) 100%)",
-                            }
-                          : undefined
-                      }
-                    >
-                      {/* Active Left Vertical Gold Light Bar */}
-                      {isActive && (
-                        <div className="absolute left-0 top-0 bottom-0 w-[5px] bg-gradient-to-b from-[#FFF6D6] via-[#E8BE69] to-[#AA7C2C] shadow-[0_0_16px_3px_rgba(255,224,140,0.85)]" />
-                      )}
-
-                      {/* Active Top Overhead Slot Glow Line */}
-                      {isActive && (
-                        <div className="absolute top-0 left-2 right-2 h-[2px] bg-gradient-to-r from-[#FFE394] via-[#B8C0FF] to-transparent opacity-95" />
-                      )}
-
-                      {/* Drawer Icon + Title + Subtitle */}
-                      <div className="flex items-start gap-4 pl-1.5">
-                        <div
-                          className={`mt-1 shrink-0 transition-colors ${
-                            isActive
-                              ? "text-[#F8F6F0] drop-shadow-[0_0_10px_rgba(190,198,255,0.65)]"
-                              : "text-[#C5CEE2] group-hover:text-white"
-                          }`}
-                        >
-                          <Icon className="h-6 w-6 stroke-[1.75]" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3
-                            className={`text-[20px] sm:text-[22px] font-bold tracking-tight leading-snug transition-colors ${
-                              isActive
-                                ? "text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
-                                : "text-[#F4EFE4] group-hover:text-white"
-                            }`}
-                            style={{
-                              fontFamily: "'Playfair Display', Georgia, serif",
-                            }}
-                          >
-                            {inst.drawerTitle}
-                          </h3>
-                          <p
-                            className={`text-[13.5px] mt-0.5 truncate ${
-                              isActive
-                                ? "text-[#E1E6FA]"
-                                : "text-[#AAB4CA] group-hover:text-[#C8D0E4]"
-                            }`}
-                          >
-                            {inst.drawerSubtitle}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Centered 3D Brass Drawer Pull Handle */}
-                      <BrassDrawerPull active={isActive} />
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Lower Cabinet Bay: Vintage Admiralty Stereo Speaker Grille */}
-              <VintageSpeakerGrilleBay />
-            </div>
-
-            {/* ------------------------------------------------------------- */}
-            {/* RIGHT COLUMN: RECESSED ILLUMINATED INSTRUMENT DISPLAY STAGE   */}
-            {/* ------------------------------------------------------------- */}
+        {/* ================================================================= */}
+        {/* 4. TWO-COLUMN APP STORE GRID (3 ROWS × 2 COLUMNS)                 */}
+        {/* ================================================================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12">
+          {displayedInstruments.map((inst) => (
             <div
-              className="lg:col-span-7 relative flex flex-col justify-between p-6 sm:p-9 lg:p-10 min-h-[540px] overflow-hidden"
-              style={{
-                background:
-                  "radial-gradient(ellipse at 52% 0%, rgba(114, 120, 248, 0.30) 0%, rgba(46, 54, 122, 0.18) 44%, rgba(10, 15, 30, 0.98) 88%)",
-                boxShadow:
-                  "inset 0 18px 45px rgba(0,0,0,0.92), inset 14px 0 28px rgba(0,0,0,0.75), inset -10px 0 24px rgba(0,0,0,0.75)",
-              }}
+              key={inst.id}
+              onClick={() => inst.onOpen()}
+              className="group flex items-center justify-between gap-4 py-5 border-b border-[#182546] hover:bg-white/[0.015] rounded-lg px-1 transition-colors cursor-pointer"
             >
-              {/* Top Overhead Fluorescent / Neon Violet-Blue Light Tube */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[76%] flex flex-col items-center pointer-events-none">
-                <div className="w-full h-[4px] rounded-full bg-gradient-to-r from-transparent via-[#DCE2FF] to-transparent shadow-[0_0_25px_5px_rgba(142,150,255,0.9),0_8px_45px_14px_rgba(99,102,241,0.5)]" />
-              </div>
-
-              {/* TOP SECTION: Category Overline + Stage Title + Plan Badge */}
-              <div className="relative z-10 space-y-4 pt-1">
-                {/* Category Overline with Horizontal Rule */}
-                <div className="flex items-center gap-4">
-                  <span className="text-[11.5px] uppercase tracking-[0.24em] text-[#C2C9E2] font-medium shrink-0">
-                    {activeInstrument.categoryOverline}
+              {/* Left: 3D App Icon + Title + Description + Included */}
+              <div className="flex items-center gap-4 sm:gap-5 min-w-0">
+                <Tool3DAppIcon id={inst.id} size="lg" />
+                <div className="min-w-0">
+                  <h3 className="text-[20px] sm:text-[22px] font-bold text-white leading-snug tracking-tight">
+                    {inst.drawerTitle}
+                  </h3>
+                  <p className="text-[14.5px] sm:text-[15.5px] text-[#CBD5E1] mt-1 leading-snug line-clamp-2">
+                    {inst.drawerSubtitle}
+                  </p>
+                  <span className="block text-[13px] text-[#94A3B8] mt-2">
+                    Included
                   </span>
-                  <div className="h-px flex-1 bg-gradient-to-r from-[#4E5982]/80 via-[#384164]/50 to-transparent" />
-                </div>
-
-                {/* Stage Title + Subtitle & Included Badge */}
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                  <div>
-                    <h2
-                      className="text-3xl sm:text-[42px] font-bold text-[#FBF8F1] tracking-tight leading-none"
-                      style={{
-                        fontFamily: "'Playfair Display', Georgia, serif",
-                      }}
-                    >
-                      {activeInstrument.stageTitle}
-                    </h2>
-                    <p
-                      className="text-[16px] sm:text-[17.5px] text-[#DCE1F4] mt-2.5"
-                      style={{
-                        fontFamily: "'Playfair Display', Georgia, serif",
-                      }}
-                    >
-                      {activeInstrument.stageSubtitle}
-                    </p>
-                  </div>
-
-                  <div className="inline-flex items-center gap-2 text-[13.5px] text-[#D2D8EC] shrink-0 pt-1">
-                    <CheckCircle2 className="h-4 w-4 text-[#C6B697]" />
-                    <span>{activeInstrument.includedLabel}</span>
-                  </div>
                 </div>
               </div>
 
-              {/* MIDDLE SECTION: Two-Column Live Preview + Chamfered Question Placard */}
-              <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-5 my-6 items-stretch">
-                {/* Left Card: Live Meeting / Document Preview Box */}
-                <div className="md:col-span-7 rounded-xl bg-[#10172F]/90 border border-[#424C7A]/75 shadow-[0_16px_36px_rgba(0,0,0,0.75),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col overflow-hidden">
-                  {/* Card Header */}
-                  <div className="px-4 py-3 border-b border-[#2B345B] flex items-center justify-between bg-[#141D3B]/60">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#939BFF] shadow-[0_0_10px_#939BFF]" />
-                      <span className="text-[14px] font-medium text-[#F1F4FF]">
-                        {activeInstrument.previewCardTitle}
-                      </span>
-                    </div>
-                    <MoreHorizontal className="h-4 w-4 text-[#8D97B8]" />
-                  </div>
+              {/* Right: Stacked Launch (Gold Pill) + Details (Dark Pill with Gold Text) */}
+              <div className="flex flex-col items-center gap-2.5 shrink-0 pl-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    inst.onOpen();
+                  }}
+                  className="w-[104px] py-1.5 rounded-full bg-gradient-to-b from-[#EAD096] via-[#D5B068] to-[#B78E43] text-[#081021] font-bold text-[14px] text-center shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:brightness-105 active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  Launch
+                </button>
 
-                  {/* Card Dialogue / Preview Rows */}
-                  <div className="p-4 sm:p-5 space-y-3.5 flex-1 flex flex-col justify-center">
-                    {activeInstrument.previewLines.map((row, idx) => (
-                      <div
-                        key={idx}
-                        className="grid grid-cols-[68px_1fr] gap-2 text-[13.5px] leading-relaxed"
-                      >
-                        <span className="text-[#AEB7DA] font-medium">
-                          {row.speaker}
-                        </span>
-                        <span className="text-[#EEF1FC]">{row.text}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Right Card: Chamfered Lavender/Periwinkle Question Placard */}
-                <div className="md:col-span-5 flex">
-                  <div
-                    className="relative w-full rounded-[10px] p-5 sm:p-6 flex flex-col justify-between shadow-[0_16px_36px_rgba(0,0,0,0.75),inset_0_1px_2px_rgba(255,255,255,0.45)] border border-[#B9C0FF]/60"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #A3AAF2 0%, #868EE0 52%, #6E76CA 100%)",
-                      clipPath:
-                        "polygon(10px 0%, calc(100% - 10px) 0%, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 10px), 0% 10px)",
-                    }}
-                  >
-                    {/* Inner inset hairline border */}
-                    <div className="pointer-events-none absolute inset-[6px] border border-[#232854]/25 rounded-[6px]" />
-
-                    <div className="relative z-10">
-                      <span className="block text-[11px] uppercase tracking-[0.2em] text-[#1A1F42]/85 font-semibold">
-                        {activeInstrument.placardHeader}
-                      </span>
-                      <div className="h-px w-full bg-[#1E244D]/25 mt-3 mb-4" />
-                    </div>
-
-                    <div className="relative z-10 my-auto py-1">
-                      <p
-                        className="text-[22px] sm:text-[25px] italic leading-[1.28] text-[#121633] font-medium"
-                        style={{
-                          fontFamily: "'Playfair Display', Georgia, serif",
-                        }}
-                      >
-                        {activeInstrument.placardQuote}
-                      </p>
-                    </div>
-
-                    <div className="relative z-10 h-2" />
-                  </div>
-                </div>
-              </div>
-
-              {/* BOTTOM SECTION: Primary Cast-Brass CTA + "See how it works" + Capabilities Footer */}
-              <div className="relative z-10 space-y-5 pt-1">
-                <div className="flex flex-wrap items-center justify-center gap-6">
-                  {/* Brushed Brass Primary Action Button */}
-                  <button
-                    type="button"
-                    onClick={activeInstrument.onOpen}
-                    className="group relative inline-flex items-center justify-center gap-3.5 px-8 py-3.5 rounded-[9px] bg-gradient-to-b from-[#E5C887] via-[#C69F56] to-[#987230] text-[#0E1322] font-bold text-[17px] border border-[#FCE7B6]/75 shadow-[0_10px_26px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.7)] hover:brightness-110 active:scale-[0.99] transition-all cursor-pointer"
-                    style={{
-                      fontFamily: "'Playfair Display', Georgia, serif",
-                    }}
-                  >
-                    <span>{activeInstrument.ctaLabel}</span>
-                    <ArrowRight className="h-4 w-4 text-[#0E1322] transition-transform group-hover:translate-x-1" />
-                  </button>
-
-                  {activeInstrument.secondaryActionLabel &&
-                    activeInstrument.onSecondaryAction && (
-                      <>
-                        <div className="h-7 w-px bg-[#384168]" />
-                        <button
-                          type="button"
-                          onClick={activeInstrument.onSecondaryAction}
-                          className="text-[14.5px] text-[#FFE394] hover:text-white underline underline-offset-[5px] decoration-[#C5A059]/70 hover:decoration-white transition-colors cursor-pointer"
-                        >
-                          {activeInstrument.secondaryActionLabel}
-                        </button>
-                      </>
-                    )}
-
-                  <div className="h-7 w-px bg-[#384168]" />
-
-                  <button
-                    type="button"
-                    onClick={() => setHowItWorksOpen(true)}
-                    className="text-[15px] text-[#DCE1F4] hover:text-white underline underline-offset-[5px] decoration-[#6D77A3] hover:decoration-white transition-colors cursor-pointer"
-                  >
-                    See how it works
-                  </button>
-                </div>
-
-                {/* Bottom Capability Footer Line */}
-                <div className="pt-1">
-                  <div className="h-px w-full bg-gradient-to-r from-transparent via-[#3D4670] to-transparent mb-3.5" />
-                  <div
-                    className="flex flex-wrap items-center justify-center gap-3 text-[13.5px] sm:text-[14.5px] text-[#CFD5EA] tracking-wide"
-                    style={{
-                      fontFamily: "'Playfair Display', Georgia, serif",
-                    }}
-                  >
-                    <span>{activeInstrument.capabilities[0]}</span>
-                    <span className="text-[#7882AF]">·</span>
-                    <span>{activeInstrument.capabilities[1]}</span>
-                    <span className="text-[#7882AF]">·</span>
-                    <span>{activeInstrument.capabilities[2]}</span>
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDetails(inst.id);
+                  }}
+                  className="w-[104px] py-1.5 rounded-full bg-gradient-to-b from-[#131E3A] to-[#0B1328] border border-[#2B3B60] hover:border-[#DFBE77]/70 text-[#E5C687] hover:text-[#FFE394] font-medium text-[14px] text-center shadow-[0_3px_10px_rgba(0,0,0,0.45)] transition-all cursor-pointer"
+                >
+                  Details
+                </button>
               </div>
             </div>
-          </div>
+          ))}
         </div>
 
         {/* ================================================================= */}
-        {/* BOTTOM TASK-ROUTING BAR                                           */}
+        {/* 5. BOTTOM FOOTER TAGLINE + MORE TOOLS TOGGLE                      */}
         {/* ================================================================= */}
-        <div className="pt-2 pb-4 px-2 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-t border-[#1B253E]">
-          <div className="flex items-center gap-3">
-            <h3
-              className="text-xl sm:text-[23px] text-[#F5EFE2] tracking-tight"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              Need a tool for a specific task?
-            </h3>
-            {categoryFilter !== "all" && (
+        <div className="mt-5 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[14.5px] text-[#94A3B8]">
+          <p className="italic text-[#A3B1C6]">
+            Your tools. Your records. Ready for the next school conversation.
+          </p>
+
+          <div className="flex items-center gap-5 text-xs">
+            {categoryFilter === "all" && !searchQuery.trim() && (
               <button
                 type="button"
-                onClick={() => setCategoryFilter("all")}
-                className="text-xs px-2.5 py-1 rounded-full bg-[#162442] border border-[#C5A059]/50 text-[#FFE394] hover:bg-[#1E3158] cursor-pointer"
+                onClick={() => setShowAllTools((prev) => !prev)}
+                className="text-[#E5C687] hover:text-[#FFE394] font-medium transition-colors cursor-pointer"
               >
-                Showing {categoryFilter} tools · Reset ({allInstruments.length})
+                {showAllTools
+                  ? "Show featured 6 tools"
+                  : `All ${allInstruments.length} tools (Waypoint Places, Recorder & more) ›`}
               </button>
             )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-[15px] text-[#DCE1F0]">
-            <button
-              type="button"
-              onClick={() => handleTaskShortcut("meeting")}
-              className={`group inline-flex items-center gap-2 transition-colors cursor-pointer ${
-                categoryFilter === "meeting"
-                  ? "text-[#FFE394] font-semibold"
-                  : "hover:text-white"
-              }`}
-            >
-              <span>Prepare for a meeting</span>
-              <ArrowRight className="h-4 w-4 text-[#9AA4C4] group-hover:text-[#FFE394] group-hover:translate-x-0.5 transition-all" />
-            </button>
-
-            <div className="h-5 w-px bg-[#283552] hidden sm:block" />
-
-            <button
-              type="button"
-              onClick={() => handleTaskShortcut("document")}
-              className={`group inline-flex items-center gap-2 transition-colors cursor-pointer ${
-                categoryFilter === "document"
-                  ? "text-[#FFE394] font-semibold"
-                  : "hover:text-white"
-              }`}
-            >
-              <span>Review a document</span>
-              <ArrowRight className="h-4 w-4 text-[#9AA4C4] group-hover:text-[#FFE394] group-hover:translate-x-0.5 transition-all" />
-            </button>
-
-            <div className="h-5 w-px bg-[#283552] hidden sm:block" />
-
-            <button
-              type="button"
-              onClick={() => handleTaskShortcut("concern")}
-              className={`group inline-flex items-center gap-2 transition-colors cursor-pointer ${
-                categoryFilter === "concern"
-                  ? "text-[#FFE394] font-semibold"
-                  : "hover:text-white"
-              }`}
-            >
-              <span>Organize a concern</span>
-              <ArrowRight className="h-4 w-4 text-[#9AA4C4] group-hover:text-[#FFE394] group-hover:translate-x-0.5 transition-all" />
-            </button>
-
-            <div className="h-5 w-px bg-[#283552] hidden sm:block" />
-
             <button
               type="button"
               onClick={() => setRequestModalOpen(true)}
-              className="group inline-flex items-center gap-1.5 text-[#FFE394] hover:text-white font-medium transition-colors cursor-pointer"
+              className="text-[#94A3B8] hover:text-white transition-colors cursor-pointer"
             >
-              <Plus className="h-4 w-4" />
-              <span>Request a tool</span>
+              Request a tool ›
             </button>
           </div>
         </div>
       </div>
 
       {/* ================================================================= */}
-      {/* "SEE HOW IT WORKS" WALKTHROUGH MODAL                              */}
+      {/* TOOL DETAILS & INTERACTIVE PREVIEW MODAL (Opens on "Details")     */}
       {/* ================================================================= */}
-      {howItWorksOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#0B1428] border border-[#4E3D20] rounded-2xl w-full max-w-lg p-6 sm:p-7 space-y-6 shadow-[0_25px_70px_rgba(0,0,0,0.95)] text-[#FBF6EC]">
-            <div className="flex items-start justify-between border-b border-[#22304D] pb-4">
+      {detailInstrument && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
+          onClick={() => setDetailInstrumentId(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-[540px] rounded-[22px] bg-[#0A1328] border border-[#243660] p-6 sm:p-7 shadow-[0_28px_80px_rgba(0,0,0,0.92)] text-white"
+          >
+            <button
+              type="button"
+              onClick={() => setDetailInstrumentId(null)}
+              aria-label="Close details"
+              className="absolute top-5 right-5 text-[#94A3B8] hover:text-white p-1.5 rounded-lg cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-start gap-4 pr-8">
+              <Tool3DAppIcon id={detailInstrument.id} size="md" />
               <div>
-                <span className="text-[10.5px] uppercase tracking-[0.22em] text-[#C5A059] font-semibold">
-                  {activeInstrument.sku} · {activeInstrument.categoryOverline}
-                </span>
-                <h3
-                  className="text-2xl font-bold text-white mt-1"
+                <h2
+                  className="text-3xl font-normal text-white leading-none"
                   style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                 >
-                  How {activeInstrument.stageTitle} Works
-                </h3>
+                  {detailInstrument.stageTitle}
+                </h2>
+                <p className="text-[15px] text-[#CBD5E1] mt-2">
+                  {detailInstrument.inspectorSubtitle ||
+                    detailInstrument.stageSubtitle}
+                </p>
+                <span className="inline-block mt-2.5 px-3 py-1 rounded-md bg-[#162344] border border-[#2A3F6E] text-[12px] text-[#93C5FD] font-medium">
+                  Included with Tools Access
+                </span>
               </div>
-              <button
-                type="button"
-                onClick={() => setHowItWorksOpen(false)}
-                className="text-[#9AA4BC] hover:text-white p-1.5 rounded-lg bg-[#070D1B] border border-[#24324F] cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
             </div>
 
-            <div className="space-y-4">
-              {activeInstrument.howItWorksSteps.map((step, i) => (
-                <div
-                  key={i}
-                  className="p-4 rounded-xl bg-[#070E1D] border border-[#1F2C48] space-y-1"
+            {/* Interactive Preview Window */}
+            <div className="mt-5 rounded-2xl bg-[#070E20] border border-[#6C5CE7]/65 shadow-[0_0_32px_rgba(124,92,252,0.2)] overflow-hidden">
+              <div className="px-3.5 py-2.5 border-b border-[#192544] bg-[#0B1329] flex items-center justify-between gap-2">
+                <span
+                  className="text-[13.5px] text-white font-medium truncate"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                 >
-                  <h4 className="text-sm font-bold text-[#FFE394]">
-                    {step.title}
-                  </h4>
-                  <p className="text-xs text-[#C8D0E4] leading-relaxed">
-                    {step.detail}
-                  </p>
+                  {detailInstrument.stageTitle}
+                </span>
+                <div className="flex items-center gap-1 text-[11.5px]">
+                  {(["Meeting", "Notes", "Next steps"] as const).map(
+                    (subTab) => (
+                      <button
+                        key={subTab}
+                        type="button"
+                        onClick={() => setPreviewTab(subTab)}
+                        className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                          previewTab === subTab
+                            ? "bg-[#1D2B50] text-white font-medium"
+                            : "text-[#94A3B8] hover:text-white"
+                        }`}
+                      >
+                        {subTab}
+                      </button>
+                    )
+                  )}
                 </div>
-              ))}
+                <MoreHorizontal className="h-4 w-4 text-[#94A3B8]" />
+              </div>
+
+              <div className="p-4 grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-stretch">
+                <div className="sm:col-span-5 space-y-2 text-[11.5px]">
+                  <h4 className="text-[12px] font-medium text-[#CBD5E1]">
+                    {detailInstrument.previewCardTitle}
+                  </h4>
+                  {detailInstrument.previewLines.map((row, idx) => (
+                    <div key={idx} className="space-y-0.5">
+                      <span className="font-semibold text-white block">
+                        {row.speaker}
+                      </span>
+                      <p className="text-[#CBD5E1]">{row.text}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="sm:col-span-7 flex flex-col justify-between">
+                  <div
+                    className="rounded-xl p-4 border border-[#8B78FF]/60 min-h-[135px] flex flex-col justify-between"
+                    style={{
+                      background:
+                        "radial-gradient(ellipse at 80% 20%, rgba(167,139,250,0.42) 0%, rgba(91,63,217,0.38) 48%, rgba(30,27,75,0.92) 100%)",
+                    }}
+                  >
+                    <div className="flex items-center gap-1.5 text-[11.5px] text-[#E2E8F0]">
+                      <HelpCircle className="h-3.5 w-3.5 text-[#C4B5FD]" />
+                      <span>{detailInstrument.placardHeader}</span>
+                    </div>
+                    <p
+                      className="text-[19px] text-white font-normal leading-snug my-auto pt-2"
+                      style={{
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                      }}
+                    >
+                      {questionsList[questionIndex % questionsList.length]}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-4 pt-2.5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setQuestionIndex(
+                          (prev) =>
+                            (prev - 1 + questionsList.length) %
+                            questionsList.length
+                        )
+                      }
+                      className="w-6 h-6 rounded-full border border-[#293B66] flex items-center justify-center text-[#94A3B8] hover:text-white cursor-pointer"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="text-[11px] text-[#94A3B8]">
+                      {(questionIndex % questionsList.length) + 1} of{" "}
+                      {questionsList.length} questions
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setQuestionIndex(
+                          (prev) => (prev + 1) % questionsList.length
+                        )
+                      }
+                      className="w-6 h-6 rounded-full border border-[#293B66] flex items-center justify-center text-[#94A3B8] hover:text-white cursor-pointer"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#22304D]">
-              <button
-                type="button"
-                onClick={() => setHowItWorksOpen(false)}
-                className="px-4 py-2 rounded-lg text-xs text-[#C8D0E4] hover:text-white border border-[#283655] bg-[#070D1B] cursor-pointer"
-              >
-                Close
-              </button>
+            {/* Bottom CTAs */}
+            <div className="mt-5 space-y-2.5">
               <button
                 type="button"
                 onClick={() => {
-                  setHowItWorksOpen(false);
-                  activeInstrument.onOpen();
+                  const target = detailInstrument;
+                  setDetailInstrumentId(null);
+                  target.onOpen();
                 }}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold bg-gradient-to-b from-[#E5C887] via-[#C69F56] to-[#987230] text-[#0E1322] border border-[#FCE7B6]/70 cursor-pointer"
+                className="w-full py-3 rounded-full bg-gradient-to-r from-[#DFBE77] via-[#D4AE65] to-[#B78D40] text-[#081021] font-bold text-[15px] shadow-lg hover:brightness-105 cursor-pointer"
               >
-                <Play className="h-3 w-3 fill-current" />
-                <span>{activeInstrument.ctaLabel}</span>
+                {detailInstrument.ctaLabel.startsWith("Launch")
+                  ? detailInstrument.ctaLabel
+                  : `Launch ${detailInstrument.stageTitle}`}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ================================================================= */}
-      {/* REQUEST A NEW TOOL FORM MODAL                                     */}
-      {/* ================================================================= */}
+      {/* Request a Tool Modal */}
       <RequestToolModal
         open={requestModalOpen}
         onClose={() => setRequestModalOpen(false)}

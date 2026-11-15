@@ -314,6 +314,15 @@ export default {
           now: scheduledTime,
           workerId: `cf-cron-${scheduledTime.getTime()}`,
         });
+        const { runScheduledWaypointPlacesRefresh } = await import(
+          "./services/waypointPlacesDataEngine"
+        );
+        await runScheduledWaypointPlacesRefresh({
+          sourceId: "all",
+          forceDue: false,
+          allowLiveFetch: true,
+          triggeredBy: `Cloudflare Worker Cron (${event?.cron || "0 3 * * *"})`,
+        });
       } catch (err) {
         console.error("[Worker Scheduled Automations Error]", err);
       }

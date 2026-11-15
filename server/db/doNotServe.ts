@@ -226,6 +226,30 @@ export async function ensureDoNotServeTables(): Promise<void> {
   localTablesEnsured = true;
 }
 
+let busyTimeoutSet = false;
+async function executeLocalWithRetry(sql: string, args: any[] = []): Promise<any> {
+  const client = getLocalDbClient();
+  if (!busyTimeoutSet) {
+    busyTimeoutSet = true;
+    try {
+      await client.execute("PRAGMA busy_timeout = 5000");
+    } catch {
+      // ignore
+    }
+  }
+  for (let attempt = 0; attempt < 6; attempt++) {
+    try {
+      return await client.execute({ sql, args });
+    } catch (err: any) {
+      if (attempt < 5 && String(err?.code || err?.message || "").includes("SQLITE_BUSY")) {
+        await new Promise((r) => setTimeout(r, 80 * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 export async function _execDnsSelectInternal(sql: string, params: unknown[] = []): Promise<any[]> {
   await ensureDoNotServeTables();
   const cfDb = (globalThis as Record<string, any>).__CF_ENV_DB__;
@@ -240,7 +264,7 @@ export async function _execDnsSelectInternal(sql: string, params: unknown[] = []
     process.env.NODE_ENV === "test" ||
     Boolean(process.env.VITEST);
   if (useDirectLocal) {
-    const res = await getLocalDbClient().execute({ sql, args: params as any[] });
+    const res = await executeLocalWithRetry(sql, params as any[]);
     return res.rows ? [...res.rows] : [];
   }
   const rows = await queryCloudflareD1(sql, params as any[]);
@@ -267,7 +291,7 @@ export async function _execDnsRunInternal(
     process.env.NODE_ENV === "test" ||
     Boolean(process.env.VITEST);
   if (useDirectLocal) {
-    const res = await getLocalDbClient().execute({ sql, args: params as any[] });
+    const res = await executeLocalWithRetry(sql, params as any[]);
     return {
       insertId: Number(res.lastInsertRowid || 0),
       rowsAffected: Number(res.rowsAffected ?? 0),

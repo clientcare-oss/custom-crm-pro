@@ -1552,6 +1552,7 @@ function mapDecisionRow(r: Record<string, any>): PublishedDisputeDecisionRecord 
     publishMode: r.publish_mode as PublishedDisputeDecisionRecord["publishMode"],
     ferpaRedactionVerified: Number(r.ferpa_redaction_verified ?? 1) === 1,
     explicitStatus: r.explicit_status as RightsAccountabilityExplicitStatus,
+    recordOrigin: "seeded_example",
     sourceCoverageAndCompleteness: String(r.source_coverage_note),
     lastSuccessfulImportAt: String(r.last_successful_import_at),
   };
@@ -1597,6 +1598,7 @@ function mapMonitoringRow(r: Record<string, any>): DistrictMonitoringAndEnforcem
     correctiveActionStatus:
       r.corrective_action_status as DistrictMonitoringAndEnforcementRecord["correctiveActionStatus"],
     explicitStatus: r.explicit_status as RightsAccountabilityExplicitStatus,
+    recordOrigin: "seeded_example",
     sourceCoverageAndCompleteness: String(r.source_coverage_note),
     lastSuccessfulImportAt: String(r.last_successful_import_at),
   };
@@ -1613,11 +1615,13 @@ export async function getRightsAndAccountabilityBundleForLocation(params: {
   stateFips2: string;
   countyFips5?: string | null;
   ncesLeaId7?: string | null;
+  verifiedOnly?: boolean;
 }): Promise<LocationRightsAndAccountabilityBundle> {
   await ensureRightsAndAccountabilityTables();
   const stateFips2 = params.stateFips2.slice(0, 2) || "13";
   const countyFips5 = params.countyFips5 || null;
   const ncesLeaId7 = params.ncesLeaId7 || null;
+  const verifiedOnly = Boolean(params.verifiedOnly);
 
   const [stateRows, decRows, monRows, accRows] = await Promise.all([
     _execDnsSelectInternal(
@@ -1658,7 +1662,9 @@ export async function getRightsAndAccountabilityBundleForLocation(params: {
     }
   }
 
-  const allStateDecisions = decRows.map(mapDecisionRow);
+  const allStateDecisions = decRows.map(mapDecisionRow).filter((d) =>
+    verifiedOnly ? d.recordOrigin === "live_api_import" : true
+  );
 
   // District/County-explicit decisions (ONLY where source explicitly supports that geographic connection)
   const districtPublishedDecisions = allStateDecisions.filter((d) => {
@@ -1673,16 +1679,23 @@ export async function getRightsAndAccountabilityBundleForLocation(params: {
     (d) => d.geographicSupportScope === "state_only"
   );
 
-  const monitoringAndOcrRecords = monRows.map(mapMonitoringRow);
+  const monitoringAndOcrRecords = monRows
+    .map(mapMonitoringRow)
+    .filter((m) => (verifiedOnly ? m.recordOrigin === "live_api_import" : true));
   const accountabilityMetrics: DistrictSpedAccountabilityMetricsRecord[] = accRows
-    .map((r) => {
+    .map((r): DistrictSpedAccountabilityMetricsRecord | null => {
       try {
-        return JSON.parse(String(r.metrics_json)) as DistrictSpedAccountabilityMetricsRecord;
+        const parsed = JSON.parse(String(r.metrics_json)) as DistrictSpedAccountabilityMetricsRecord;
+        return {
+          ...parsed,
+          recordOrigin: parsed.recordOrigin || "seeded_example",
+        };
       } catch {
         return null;
       }
     })
-    .filter((x): x is DistrictSpedAccountabilityMetricsRecord => x !== null);
+    .filter((x): x is DistrictSpedAccountabilityMetricsRecord => x !== null)
+    .filter((a) => (verifiedOnly ? a.recordOrigin === "live_api_import" : true));
 
   const dueProcessStatus: RightsAccountabilityExplicitStatus =
     districtPublishedDecisions.length > 0
@@ -1789,6 +1802,7 @@ export async function getRightsAndAccountabilityConsoleState() {
       agency: "U.S. Dept. of Education OSEP / CADRE / CPIR / NDRN",
       stateScope: "All 50 States + DC (51 Jurisdictions)",
       ingestionMethod: "downloadable_csv_json",
+      recordOrigin: "manually_assembled_reference",
       explicitStatus: "Available",
       supportedGeographicScopes: ["state_only"],
       pdfExtractionPolicy: "not_applicable",
@@ -1801,9 +1815,9 @@ export async function getRightsAndAccountabilityConsoleState() {
       recordsImportedCount: stateProfiles.length,
       officialSourceUrl: "https://www.cadreworks.org/resources/state-dispute-resolution-contacts",
       sourceCoverageAndCompleteness:
-        "100% 50-State + DC coverage for Facilitated IEP status, State Complaint timelines, Due Process tribunal tiering, Mediation rules, PTI centers, P&A agencies, and Procedural Safeguards links.",
+        "100% 50-State + DC statutory reference coverage for Facilitated IEP status, State Complaint timelines, Due Process tribunal tiering, Mediation rules, PTI centers, P&A agencies, and Procedural Safeguards links.",
       automationNote:
-        "Fully automated structured directory sync; preserves last-known-good state profiles if upstream endpoint changes.",
+        "Embedded Statutory Reference Registry (Manually Assembled from CADRE/CPIR/OSEP — Not a Live External Scraper).",
     },
     {
       connectorId: "ga_osah_due_process_index",
@@ -1811,6 +1825,7 @@ export async function getRightsAndAccountabilityConsoleState() {
       agency: "Georgia Office of State Administrative Hearings (OSAH)",
       stateScope: "GA (State FIPS 13)",
       ingestionMethod: "published_decision_index",
+      recordOrigin: "seeded_example",
       explicitStatus: "Published records found",
       supportedGeographicScopes: ["county_and_district_explicit", "state_only"],
       pdfExtractionPolicy: "validated_redacted_only",
@@ -1825,16 +1840,17 @@ export async function getRightsAndAccountabilityConsoleState() {
       ).length,
       officialSourceUrl: "https://osah.ga.gov/decisions/",
       sourceCoverageAndCompleteness:
-        "Indexes published OSAH special education final decisions & expedited discipline orders. Associates with 7-digit NCES LEAID ONLY when the public docket explicitly names the school district. Scanned PDFs that fail automated structure/FERPA redaction checks are linked as official_link_only.",
+        "Seeded reference docket examples linking to https://osah.ga.gov/decisions/. Withheld when verifiedOnly=true until direct individual PDF document URLs are harvested.",
       automationNote:
-        "Zero manual review: unvalidated PDFs automatically downgrade to official_link_only without publishing AI summaries.",
+        "Embedded Seeded Reference Registry (Static TypeScript Dataset — Not a Live External Scraper).",
     },
     {
       connectorId: "ga_gadoe_dispute_resolution",
-      name: "GaDOE Formal State Complaints, Facilitated IEP & Mediation Connector",
+      name: "GaDOE Formal State Complaints, Facilitated IEP & Mediation Registry",
       agency: "Georgia Department of Education (GaDOE) — Division for Special Education",
       stateScope: "GA (State FIPS 13)",
       ingestionMethod: "structured_government_webpage",
+      recordOrigin: "seeded_example",
       explicitStatus: "Published records found",
       supportedGeographicScopes: ["state_only", "district_explicit"],
       pdfExtractionPolicy: "validated_redacted_only",
@@ -1850,16 +1866,17 @@ export async function getRightsAndAccountabilityConsoleState() {
       officialSourceUrl:
         "https://www.gadoe.org/Curriculum-Instruction-and-Assessment/Special-Education-Services/Pages/Dispute-Resolution.aspx",
       sourceCoverageAndCompleteness:
-        "Ingests GaDOE Facilitated IEP procedures, 60-day State Complaint rules, and published state complaint digests. Because GaDOE redacts LEA names in statewide complaint digests, digest records are strictly scoped as `state_only` (never guessed or assigned to a county).",
+        "Seeded state complaint digest reference examples scoped as `state_only`. Withheld when verifiedOnly=true.",
       automationNote:
-        "Automated HTML/table parser with FNV-1a checksum drift detection.",
+        "Embedded Seeded Reference Registry (Static TypeScript Dataset — Not a Live External Scraper).",
     },
     {
       connectorId: "ga_gadoe_idea_apr_monitoring",
-      name: "GaDOE IDEA Part B APR Determinations, Monitoring & SWD Accountability Connector",
+      name: "GaDOE IDEA Part B APR Determinations, Monitoring & SWD Accountability Registry",
       agency: "GaDOE Division for Special Education / GOSA / U.S. ED CRDC",
       stateScope: "GA (State FIPS 13 — 14 Metro & Regional LEAs)",
       ingestionMethod: "downloadable_csv_json",
+      recordOrigin: "seeded_example",
       explicitStatus: "Published records found",
       supportedGeographicScopes: ["county_and_district_explicit", "school_campus_explicit"],
       pdfExtractionPolicy: "not_applicable",
@@ -1875,16 +1892,17 @@ export async function getRightsAndAccountabilityConsoleState() {
       officialSourceUrl:
         "https://www.gadoe.org/Curriculum-Instruction-and-Assessment/Special-Education-Services/Pages/Annual-Performance-Report.aspx",
       sourceCoverageAndCompleteness:
-        "Covers LEA IDEA Part B Annual Determinations (Meets Requirements / Needs Assistance), cyclical monitoring corrective actions, SWD 4-year graduation (Indicator 1), SWD proficiency (Indicator 3B), LRE inclusion (Indicator 5A), disability discipline (Indicator 4A/4B), restraint/seclusion counts, and SPED teacher FTE.",
+        "Embedded reference dataset for 14 Georgia LEAs. Disclosed as seeded_example and withheld when verifiedOnly=true.",
       automationNote:
-        "Deterministic structured indicator ingestion keyed by 7-digit NCES LEAID.",
+        "Embedded Seeded Reference Registry (Static TypeScript Dataset — Not a Live External Scraper).",
     },
     {
       connectorId: "us_ed_ocr_enforcement",
-      name: "U.S. Dept. of Education Office for Civil Rights (OCR) Enforcement & CRDC Connector",
+      name: "U.S. Dept. of Education Office for Civil Rights (OCR) Enforcement Reference Registry",
       agency: "U.S. Department of Education — Office for Civil Rights (OCR)",
       stateScope: "All 50 States + DC (District & School Explicit)",
       ingestionMethod: "official_public_api",
+      recordOrigin: "seeded_example",
       explicitStatus: "Published records found",
       supportedGeographicScopes: ["county_and_district_explicit", "school_campus_explicit"],
       pdfExtractionPolicy: "official_link_only",
@@ -1899,16 +1917,17 @@ export async function getRightsAndAccountabilityConsoleState() {
       ).length,
       officialSourceUrl: "https://ocrcas.ed.gov/",
       sourceCoverageAndCompleteness:
-        "Tracks Section 504 and Title II ADA public school/district resolution agreements and open investigations where OCR explicitly identifies the LEA.",
+        "Seeded OCR reference entries linking to https://ocrcas.ed.gov/. Withheld when verifiedOnly=true.",
       automationNote:
-        "Automated OCR reading-room metadata sync; links directly to official OCR resolution letters.",
+        "Embedded Seeded Reference Registry (Static TypeScript Dataset — Not a Live External Scraper).",
     },
     {
       connectorId: "multi_state_hearing_indexes",
-      name: "Multi-State Machine-Readable Hearing Indexes (CA OAH, MA BSEA, TX TEA, NY SRO)",
+      name: "Multi-State Hearing Indexes Reference Registry (CA OAH, MA BSEA, TX TEA, NY SRO)",
       agency: "State Administrative Hearing Tribunals (CA, MA, TX, NY, FL, VA)",
       stateScope: "CA, MA, TX, NY, FL, VA (+ Unindexed States Marked Data Unavailable)",
       ingestionMethod: "published_decision_index",
+      recordOrigin: "seeded_example",
       explicitStatus: "Published records found",
       supportedGeographicScopes: ["state_only", "district_explicit"],
       pdfExtractionPolicy: "validated_redacted_only",
@@ -1921,9 +1940,9 @@ export async function getRightsAndAccountabilityConsoleState() {
       recordsImportedCount: decisions.filter((d) => d.stateFips2 !== "13").length,
       officialSourceUrl: "https://www.cadreworks.org/",
       sourceCoverageAndCompleteness:
-        "Ingests machine-readable state hearing indexes (e.g., MA BSEA, CA OAH, NY SRO). When a state portal gates decisions behind CAPTCHAs or unstructured scans requiring human intervention, the connector automatically marks that feed 'Data unavailable' rather than creating a manual review task.",
+        "Seeded multi-state tribunal examples. Withheld when verifiedOnly=true.",
       automationNote:
-        "Strict zero-manual-intervention policy enforced.",
+        "Embedded Seeded Reference Registry (Static TypeScript Dataset — Not a Live External Scraper).",
     },
   ];
 

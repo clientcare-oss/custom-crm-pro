@@ -96,7 +96,7 @@ async function persistSpecializedSnapshotToD1(
       );
     }
 
-    for (const fac of facilities.slice(0, 30)) {
+    for (const fac of facilities) {
       if (targetConnectorId && fac.connectorId !== targetConnectorId) continue;
       await _execDnsRunInternal(
         `INSERT INTO waypoint_places_specialized_facilities (
@@ -244,11 +244,15 @@ function normalizeFacilitySeed(
     licensingAgency: ensureText(seed.licensingAgency, "State Regulatory Agency"),
     licenseNumberOrEntityCode: ensureText(seed.licenseNumberOrEntityCode, "Unknown"),
     licenseScopeNote: SPECIALIZED_LICENSE_AUTHORIZATION_GUARDRAIL,
-    publishedInspectionOrEnforcementFindings: ensureText(
-      seed.publishedInspectionOrEnforcementFindings,
-      "Data unavailable — no machine-readable inspection findings published in indexed feed"
-    ),
-    inspectionStatus: seed.inspectionStatus ?? "Data unavailable",
+    publishedInspectionOrEnforcementFindings: seed.inspectionReportUrl
+      ? ensureText(
+          seed.publishedInspectionOrEnforcementFindings,
+          "Data unavailable — no machine-readable inspection findings published in indexed feed"
+        )
+      : "Data unavailable — no direct machine-readable inspection report URL verified in embedded reference registry",
+    inspectionStatus: seed.inspectionReportUrl
+      ? (seed.inspectionStatus ?? "Published Inspection Record Indexed")
+      : "Data unavailable",
     inspectionReportUrl: seed.inspectionReportUrl ?? null,
     inspectionLastVerifiedDate: seed.inspectionLastVerifiedDate ?? seed.reportingDate,
     admissionOrReferralProcess: ensureText(
@@ -273,6 +277,7 @@ function normalizeFacilitySeed(
     reportingDate: seed.reportingDate,
     lastUpdatedAt: nowIso,
     verificationStatus: seed.verificationStatus ?? "Verified Public Directory",
+    recordOrigin: "manually_assembled_reference",
   };
 
   return {
@@ -2246,6 +2251,7 @@ function buildConnectorsList(
       targetCategories: ["public_therapeutic_gnets"],
       refreshCadence: "weekly_automated",
       status: "healthy",
+      recordOrigin: "manually_assembled_reference",
       lastSyncAt: nowIso,
       nextScheduledSyncAt: nextWeekly,
       recordsIndexedCount: countByConnector("ga_gadoe_gnets_special_entities"),
@@ -2254,11 +2260,11 @@ function buildConnectorsList(
       unknownFieldsAutoMarkedCount: 0,
       manualTasksCreatedCount: 0,
       notes:
-        "Automatically indexes Georgia GNETS regional centers and LEA satellite networks distinctly from private day and residential treatment facilities.",
+        "Manually Assembled Reference Directory (Static Embedded Registry — Not a Live External Scraper). Covers Georgia GNETS regional centers and LEA satellite networks.",
     },
     {
       connectorId: "state_rtf_licensing_inspections",
-      name: "State Residential Treatment Facility (PRTF / RTC) Licensing & Inspection Datasets",
+      name: "State Residential Treatment Facility (PRTF / RTC) Licensing & Inspection Reference Registry",
       priorityOrder: 2,
       agencyOrDataset: "GA DCH Healthcare Facility Regulation (GAMap2Care) & GA DHS Office of Residential Child Care (ORCC)",
       sourceUrl: "https://dch.georgia.gov/divisionsoffices/healthcare-facility-regulation",
@@ -2266,6 +2272,7 @@ function buildConnectorsList(
       targetCategories: ["prtf", "therapeutic_residential"],
       refreshCadence: "daily_automated",
       status: "healthy",
+      recordOrigin: "manually_assembled_reference",
       lastSyncAt: nowIso,
       nextScheduledSyncAt: nextDaily,
       recordsIndexedCount: countByConnector("state_rtf_licensing_inspections"),
@@ -2274,18 +2281,19 @@ function buildConnectorsList(
       unknownFieldsAutoMarkedCount: totalAutoMarkedUnknowns,
       manualTasksCreatedCount: 0,
       notes:
-        "Cross-links state PRTF and CCI licensing records with published inspection portals; enforces mandatory licensing scope guardrail.",
+        "Manually Assembled Reference Directory (Static Embedded Registry — Not a Live External Scraper). Withholds inspection narratives unless a direct inspectionReportUrl is verified.",
     },
     {
       connectorId: "samhsa_treatment_directory",
-      name: "SAMHSA National Mental Health Treatment Facility Directory & N-SUMHSS Structured Data",
+      name: "SAMHSA Youth Residential & Partial Hospitalization Reference Directory",
       priorityOrder: 3,
-      agencyOrDataset: "U.S. Dept. of Health & Human Services — SAMHSA FindTreatment.gov API",
+      agencyOrDataset: "U.S. Dept. of Health & Human Services — SAMHSA FindTreatment.gov Reference",
       sourceUrl: "https://findtreatment.gov/",
       coverageScope: "All 50 States + DC Youth PRTFs, Partial Hospitalization (PHP), Day Treatment & Crisis Stabilization Units",
       targetCategories: ["prtf", "therapeutic_residential", "intensive_behavioral_crisis_day"],
       refreshCadence: "weekly_automated",
       status: "healthy",
+      recordOrigin: "manually_assembled_reference",
       lastSyncAt: nowIso,
       nextScheduledSyncAt: nextWeekly,
       recordsIndexedCount: countByConnector("samhsa_treatment_directory"),
@@ -2294,11 +2302,11 @@ function buildConnectorsList(
       unknownFieldsAutoMarkedCount: 0,
       manualTasksCreatedCount: 0,
       notes:
-        "Deduplicates SAMHSA youth residential and partial hospitalization records against state healthcare licensing databases using FNV-1a checksums.",
+        "Manually Assembled Reference Directory (Static Embedded Registry — Not a Live External Scraper).",
     },
     {
       connectorId: "state_behavioral_health_licensing",
-      name: "State Behavioral Health & Developmental Disability Licensing Databases",
+      name: "State Behavioral Health & Developmental Disability Licensing Reference Registry",
       priorityOrder: 4,
       agencyOrDataset: "GA DBHDD Provider Directory, State DD Waiver Registries & Crisis Stabilization Portals",
       sourceUrl: "https://dbhdd.georgia.gov/",
@@ -2310,6 +2318,7 @@ function buildConnectorsList(
       ],
       refreshCadence: "weekly_automated",
       status: "healthy",
+      recordOrigin: "manually_assembled_reference",
       lastSyncAt: nowIso,
       nextScheduledSyncAt: nextWeekly,
       recordsIndexedCount: countByConnector("state_behavioral_health_licensing"),
@@ -2318,11 +2327,11 @@ function buildConnectorsList(
       unknownFieldsAutoMarkedCount: 0,
       manualTasksCreatedCount: 0,
       notes:
-        "Indexes DBHDD Community Service Board youth CSUs and licensed developmental disability residential group homes.",
+        "Manually Assembled Reference Directory (Static Embedded Registry — Not a Live External Scraper).",
     },
     {
       connectorId: "sea_approved_nonpublic_sped",
-      name: "State Education Agency (SEA) Approved Nonpublic & Private Special Education Directories",
+      name: "State Education Agency (SEA) Approved Nonpublic & Private Special Education Reference Registry",
       priorityOrder: 5,
       agencyOrDataset: "GaDOE GSNS (SB10) Directory, CA CDE NPS, MA DESE 766, NYSED 853, MD MSDE Nonpublic, PA APS",
       sourceUrl:
@@ -2335,6 +2344,7 @@ function buildConnectorsList(
       ],
       refreshCadence: "weekly_automated",
       status: "healthy",
+      recordOrigin: "manually_assembled_reference",
       lastSyncAt: nowIso,
       nextScheduledSyncAt: nextWeekly,
       recordsIndexedCount: countByConnector("sea_approved_nonpublic_sped"),
@@ -2343,11 +2353,11 @@ function buildConnectorsList(
       unknownFieldsAutoMarkedCount: 0,
       manualTasksCreatedCount: 0,
       notes:
-        "Separates SEA-approved IEP contract nonpublic schools, private autism/DD schools, and specialized private day schools into distinct categories.",
+        "Manually Assembled Reference Directory (Static Embedded Registry — Not a Live External Scraper).",
     },
     {
       connectorId: "state_operated_schools_directory",
-      name: "State-Operated Specialized Residential & Day Schools Directory",
+      name: "State-Operated Specialized Residential & Day Schools Reference Registry",
       priorityOrder: 6,
       agencyOrDataset: "GaDOE Division of State Schools (AASD, GAB, GSD) & 50-State Schools for the Deaf and Blind",
       sourceUrl:
@@ -2356,6 +2366,7 @@ function buildConnectorsList(
       targetCategories: ["state_operated_specialized_school"],
       refreshCadence: "monthly_automated",
       status: "healthy",
+      recordOrigin: "manually_assembled_reference",
       lastSyncAt: nowIso,
       nextScheduledSyncAt: nextWeekly,
       recordsIndexedCount: countByConnector("state_operated_schools_directory"),
@@ -2364,11 +2375,11 @@ function buildConnectorsList(
       unknownFieldsAutoMarkedCount: 0,
       manualTasksCreatedCount: 0,
       notes:
-        "Covers Atlanta Area School for the Deaf, Georgia Academy for the Blind, Georgia School for the Deaf, and state-operated schools across all 50 states.",
+        "Manually Assembled Reference Directory (Static Embedded Registry — Not a Live External Scraper).",
     },
     {
       connectorId: "other_machine_readable_directories",
-      name: "NCES CCD Special Education Separate Schools & Alternative Instructional Environments",
+      name: "NCES CCD Special Education Separate Schools & Alternative Instructional Reference Registry",
       priorityOrder: 7,
       agencyOrDataset: "NCES Common Core of Data (CCD) Special Education School Type & IDEA Section 618 Environments",
       sourceUrl: "https://nces.ed.gov/ccd/schoolsearch/",
@@ -2376,6 +2387,7 @@ function buildConnectorsList(
       targetCategories: ["other_separate_alternative_env"],
       refreshCadence: "monthly_automated",
       status: "healthy",
+      recordOrigin: "manually_assembled_reference",
       lastSyncAt: nowIso,
       nextScheduledSyncAt: nextWeekly,
       recordsIndexedCount: countByConnector("other_machine_readable_directories"),
@@ -2384,7 +2396,7 @@ function buildConnectorsList(
       unknownFieldsAutoMarkedCount: 0,
       manualTasksCreatedCount: 0,
       notes:
-        "Indexes public separate diagnostic and specialized instructional centers reported in NCES CCD with stable 12-digit NCESSCH identifiers.",
+        "Manually Assembled Reference Directory (Static Embedded Registry — Not a Live External Scraper).",
     },
   ];
 }

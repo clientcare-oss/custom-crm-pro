@@ -250,6 +250,7 @@ export interface SpecializedFacilityRecord {
   reportingDate: string;
   lastUpdatedAt: string;
   verificationStatus: "Verified Public Directory" | "Unknown" | "Data unavailable";
+  recordOrigin?: "live_api_import" | "manually_assembled_reference" | "seeded_example";
   checksumHash: string;
 }
 
@@ -263,6 +264,7 @@ export interface SpecializedConnectorStatusRecord {
   targetCategories: SpecializedFacilityCategory[];
   refreshCadence: "daily_automated" | "weekly_automated" | "monthly_automated";
   status: "healthy" | "partial_structured_coverage";
+  recordOrigin?: "live_api_import" | "manually_assembled_reference" | "seeded_example";
   lastSyncAt: string;
   nextScheduledSyncAt: string;
   recordsIndexedCount: number;

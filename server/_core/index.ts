@@ -84,6 +84,9 @@ async function startServer() {
   server.listen(port, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${port}/ (and http://0.0.0.0:${port}/)`);
     if (process.env.VITEST !== "true") {
+      void import("../services/waypointPlacesDataEngine")
+        .then((m) => m.startWaypointPlacesBackgroundScheduler())
+        .catch((err) => console.warn("[Waypoint Places Scheduler] Startup warning:", err));
       const schedulerInterval = setInterval(async () => {
         try {
           const db = await import("../db");
