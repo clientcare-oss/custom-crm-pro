@@ -117,19 +117,40 @@ function Router() {
     );
   }
 
+  // Standalone Website / Wix Embed Mode for Waypoint Places (`?embed=1` or `/waypoint-places/embed`)
+  const normalizedPathname =
+    typeof window !== "undefined"
+      ? window.location.pathname.replace(/\/+$/, "") || "/"
+      : "/";
+  const isPlacesRoute =
+    normalizedPathname === "/waypoint-places" ||
+    normalizedPathname === "/waypoint-places/embed" ||
+    normalizedPathname === "/tools/waypoint-places" ||
+    normalizedPathname === "/places" ||
+    normalizedPathname === "/places-explorer";
+
+  if (
+    typeof window !== "undefined" &&
+    (normalizedPathname === "/waypoint-places/embed" ||
+      (isPlacesRoute &&
+        new URLSearchParams(window.location.search).get("embed") === "1"))
+  ) {
+    return <WaypointPlaces />;
+  }
+
   const { user, loading } = useAuth();
   const [location] = useLocation();
   const { isLocked, isStartScreenOpen } = useWorkspaceLock();
 
   const isPublicRoute =
-    window.location.pathname === "/" ||
-    window.location.pathname === "/waypoint-places" ||
-    window.location.pathname === "/portal" ||
-    window.location.pathname === "/client-portal" ||
-    window.location.pathname === "/portal/book" ||
-    window.location.pathname === "/book" ||
-    window.location.pathname === "/intake" ||
-    window.location.pathname === "/get-started" ||
+    normalizedPathname === "/" ||
+    isPlacesRoute ||
+    normalizedPathname === "/portal" ||
+    normalizedPathname === "/client-portal" ||
+    normalizedPathname === "/portal/book" ||
+    normalizedPathname === "/book" ||
+    normalizedPathname === "/intake" ||
+    normalizedPathname === "/get-started" ||
     window.location.pathname.startsWith("/form/") ||
     window.location.pathname.startsWith("/receipt/") ||
     window.location.pathname.startsWith("/portal/receipt/") ||
@@ -253,7 +274,10 @@ function Router() {
           <Route path="/tech-tasks">{() => <Redirect to="/tasks" />}</Route>
           <Route path="/tools" component={Tools} />
           <Route path="/tools/waypoint-places" component={WaypointPlaces} />
+          <Route path="/waypoint-places/embed" component={WaypointPlaces} />
           <Route path="/waypoint-places" component={WaypointPlaces} />
+          <Route path="/places-explorer" component={WaypointPlaces} />
+          <Route path="/places" component={WaypointPlaces} />
           <Route path="/tools/pwn-decoder/:reviewId" component={PwnDecoder} />
           <Route path="/tools/pwn-decoder" component={PwnDecoder} />
           <Route path="/pwn-decoder/:reviewId" component={PwnDecoder} />
@@ -347,7 +371,11 @@ function Router() {
       <Route path="/client-portal" component={ClientPortal} />
       <Route path="/project-workspace/:studentId" component={ClientPortal} />
       <Route path="/smart-files/response/:id" component={SmartFilePortalViewer} />
+      <Route path="/tools/waypoint-places" component={WaypointPlaces} />
+      <Route path="/waypoint-places/embed" component={WaypointPlaces} />
       <Route path="/waypoint-places" component={WaypointPlaces} />
+      <Route path="/places-explorer" component={WaypointPlaces} />
+      <Route path="/places" component={WaypointPlaces} />
       <Route path="/first-mate/popout" component={FirstMatePopout} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
@@ -358,7 +386,11 @@ function Router() {
 function GlobalOverlaysWhenUnlocked() {
   const [location] = useLocation();
   const { isLocked, isStartScreenOpen } = useWorkspaceLock();
-  if (isLocked || isStartScreenOpen || location === "/start") {
+  const isEmbedMode =
+    typeof window !== "undefined" &&
+    (window.location.pathname === "/waypoint-places/embed" ||
+      new URLSearchParams(window.location.search).get("embed") === "1");
+  if (isLocked || isStartScreenOpen || location === "/start" || isEmbedMode) {
     return null;
   }
   return (

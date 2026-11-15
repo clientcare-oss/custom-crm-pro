@@ -8,6 +8,7 @@ import {
   Building2,
   Car,
   Check,
+  Code2,
   Compass,
   FileBarChart2,
   FlaskConical,
@@ -65,6 +66,7 @@ import {
   SpecializedFacilitiesExplorerModal,
   SpecializedFacilitiesSummaryCard,
 } from "@/components/places/SpecializedFacilitiesPanel";
+import { WixEmbedModal } from "@/components/places/WixEmbedModal";
 
 /**
  * Custom 8-Point Gold Compass Rose SVG Emblem
@@ -328,6 +330,11 @@ export default function WaypointPlaces() {
     SpecializedFacilityCategory | "all"
   >("all");
   const [studioOpen, setStudioOpen] = useState(false);
+  const [wixEmbedOpen, setWixEmbedOpen] = useState(false);
+  const isEmbedMode =
+    typeof window !== "undefined" &&
+    (window.location.pathname === "/waypoint-places/embed" ||
+      new URLSearchParams(window.location.search).get("embed") === "1");
 
   const { data: specializedStateData, refetch: refetchSpecializedState } =
     trpc.waypointPlaces.getSpecializedFacilitiesState.useQuery();
@@ -354,9 +361,106 @@ export default function WaypointPlaces() {
     setSpecializedModalOpen(true);
   };
 
-  // Map Display Mode ("waypoint_map" | "satellite" | "hybrid")
+  // Map Display Mode ("waypoint_map" | "satellite" | "hybrid") — defaults to "hybrid" (Satellite + Labels)
   const [mapDisplayMode, setMapDisplayMode] =
-    useState<PlacesMapDisplayMode>("waypoint_map");
+    useState<PlacesMapDisplayMode>("hybrid");
+
+  // Sub-county Census Tracts, TIGERweb LEA Boundaries, and CMS NPPES NPI Therapy Providers for active county (All 50 States)
+  const { data: neighborhoodTractsData } =
+    trpc.waypointPlaces.getCountyNeighborhoodTracts.useQuery(
+      { countyFips5: selectedFips },
+      { enabled: Boolean(selectedFips) }
+    );
+
+  const subCountyTracts = useMemo(
+    () => neighborhoodTractsData?.tracts ?? [],
+    [neighborhoodTractsData?.tracts]
+  );
+
+  // Roll up live U.S. Census ACS 5-Year housing, income, commute, and pillar scores for ANY U.S. county from its Census Tracts
+  const countyCensusRollup = useMemo(() => {
+    const matchingTracts = subCountyTracts.filter((t) => t.countyFips5 === selectedFips);
+    if (matchingTracts.length === 0) return null;
+
+    let totalPop = 0;
+    let weightedIncome = 0;
+    let incPop = 0;
+    let weightedHome = 0;
+    let homePop = 0;
+    let weightedRent = 0;
+    let rentPop = 0;
+    let weightedCommute = 0;
+    let commutePop = 0;
+    let weightedAffordability = 0;
+    let affPop = 0;
+    let weightedCommuteScore = 0;
+    let comScorePop = 0;
+
+    for (const t of matchingTracts) {
+      const pop = Math.max(1, t.populationEstimate || 1);
+      totalPop += t.populationEstimate || 0;
+      if (t.medianHouseholdIncome && t.medianHouseholdIncome > 0) {
+        weightedIncome += t.medianHouseholdIncome * pop;
+        incPop += pop;
+      }
+      if (t.medianHomeValue && t.medianHomeValue > 0) {
+        weightedHome += t.medianHomeValue * pop;
+        homePop += pop;
+      }
+      if (t.medianGrossRent && t.medianGrossRent > 0) {
+        weightedRent += t.medianGrossRent * pop;
+        rentPop += pop;
+      }
+      if (t.meanCommuteMinutes && t.meanCommuteMinutes > 0) {
+        weightedCommute += t.meanCommuteMinutes * pop;
+        commutePop += pop;
+      }
+      if (t.verifiedPillars.affordability !== null) {
+        weightedAffordability += t.verifiedPillars.affordability * pop;
+        affPop += pop;
+      }
+      if (t.verifiedPillars.commute !== null) {
+        weightedCommuteScore += t.verifiedPillars.commute * pop;
+        comScorePop += pop;
+      }
+    }
+
+    const medianHouseholdIncome = incPop > 0 ? Math.round(weightedIncome / incPop) : null;
+    const medianHomeValue = homePop > 0 ? Math.round(weightedHome / homePop) : null;
+    const medianGrossRent = rentPop > 0 ? Math.round(weightedRent / rentPop) : null;
+    const meanCommuteMinutes =
+      commutePop > 0 ? Number((weightedCommute / commutePop).toFixed(1)) : null;
+    const affordabilityScore =
+      affPop > 0 ? Math.round(weightedAffordability / affPop) : null;
+    const commuteScore =
+      comScorePop > 0 ? Math.round(weightedCommuteScore / comScorePop) : null;
+
+    const rawPillars: PillarMetrics = {
+      communityQuality: null,
+      academics: null,
+      specializedPrograms: null,
+      safetyWellBeing: null,
+      familyLifestyle: null,
+      affordability: affordabilityScore,
+      commute: commuteScore,
+    };
+    const communityQuality = computeCommunityQualityScore(rawPillars, weights);
+
+    return {
+      tractCount: matchingTracts.length,
+      countyName: matchingTracts[0].countyName,
+      stateCode: matchingTracts[0].stateCode,
+      totalPopulation: totalPop,
+      medianHouseholdIncome,
+      medianHomeValue,
+      medianGrossRent,
+      meanCommuteMinutes,
+      verifiedPillars: {
+        ...rawPillars,
+        communityQuality,
+      },
+    };
+  }, [subCountyTracts, selectedFips, weights]);
 
   const selectedCommunity: PlaceCommunityRecord = useMemo(() => {
     const match = communities.find((c) => c.fips === selectedFips);
@@ -364,46 +468,82 @@ export default function WaypointPlaces() {
 
     const stateFips2 = String(selectedFips || "13117").slice(0, 2);
     const stateMeta = US_50_STATES_DIRECTORY[stateFips2];
-    const stateCode = stateMeta?.code || "GA";
+    const stateCode = countyCensusRollup?.stateCode || stateMeta?.code || "GA";
     const stateName = stateMeta?.name || "Georgia";
-    const fallbackName =
-      dynamicCountyOverride?.name || `${stateName} County, ${stateCode}`;
+    const rawCountyTitle =
+      dynamicCountyOverride?.name ||
+      (countyCensusRollup?.countyName
+        ? `${countyCensusRollup.countyName}, ${stateCode}`
+        : `${stateName} County, ${stateCode}`);
     const demoPillars = DEMO_COUNTY_CALIBRATION_BY_FIPS[selectedFips] || null;
+    const hasLiveRollup = Boolean(countyCensusRollup);
+
     return {
       id: `us-fips-${selectedFips}`,
       fips: selectedFips,
-      name: fallbackName,
-      shortName: fallbackName.replace(/,?\s*[A-Z]{2}$/i, ""),
+      name: rawCountyTitle,
+      shortName: rawCountyTitle.replace(/,?\s*[A-Z]{2}$/i, ""),
       stateCode,
-      region: `${stateName} County Boundary`,
+      region: `${stateName} · ${hasLiveRollup ? `${countyCensusRollup!.tractCount} Census Tracts` : "County Boundary"}`,
       coordinates:
         dynamicCountyOverride?.coordinates || stateMeta?.center || [-83.45, 32.85],
       zoomLevel: 9.2,
       heroImageStyle: "piedmont_ridge",
-      tagline: `Selectable ${stateName} county boundary (US Census TIGER · 50-State Coverage).`,
-      keyInsights: [
-        `Geographic Boundary: FIPS ${selectedFips} · ${stateName} (${stateCode})`,
-        "IEP Continuity: IDEA federal protections & Waypoint advocacy apply in all 50 states",
-        demoPillars
-          ? "Choropleth Calibration: Fictional demonstration values active for polygon shading"
-          : "Choropleth Status: No Verified Data (Unscored County Boundary)",
-        "Official Ratings: Pending Verified State DOE / NCES / US Census ACS Data",
-      ],
-      dataStatus: demoPillars ? "fictional_calibration" : "awaiting_verified_dataset",
-      dataSourcesPending: ["State DOE", "NCES CCD", "US Census ACS"],
-      calibrationPillars: demoPillars || {
-        communityQuality: null,
-        academics: null,
-        specializedPrograms: null,
-        safetyWellBeing: null,
-        familyLifestyle: null,
-        affordability: null,
-        commute: null,
-      },
+      tagline: hasLiveRollup
+        ? `Live U.S. Census ACS 5-Year housing, income & commute rollup across ${countyCensusRollup!.tractCount} neighborhood tracts in ${rawCountyTitle}.`
+        : `Selectable ${stateName} county boundary (US Census TIGER · 50-State Coverage).`,
+      keyInsights: hasLiveRollup
+        ? [
+            `Housing Costs (U.S. Census ACS): Median Home ${
+              countyCensusRollup!.medianHomeValue
+                ? `$${countyCensusRollup!.medianHomeValue.toLocaleString()}`
+                : "N/A"
+            } · Median Rent ${
+              countyCensusRollup!.medianGrossRent
+                ? `$${countyCensusRollup!.medianGrossRent.toLocaleString()}/mo`
+                : "N/A"
+            }`,
+            `Household Income & Commute: Median Income ${
+              countyCensusRollup!.medianHouseholdIncome
+                ? `$${countyCensusRollup!.medianHouseholdIncome.toLocaleString()}`
+                : "N/A"
+            } · Mean Commute ${
+              countyCensusRollup!.meanCommuteMinutes
+                ? `${countyCensusRollup!.meanCommuteMinutes} min`
+                : "N/A"
+            }`,
+            `County Coverage: Pop. ${countyCensusRollup!.totalPopulation.toLocaleString()} across ${countyCensusRollup!.tractCount} verified Census Tracts (FIPS ${selectedFips})`,
+            `IEP Continuity: IDEA federal protections & Waypoint advocacy apply in ${stateName} (${stateCode})`,
+          ]
+        : [
+            `Geographic Boundary: FIPS ${selectedFips} · ${stateName} (${stateCode})`,
+            "IEP Continuity: IDEA federal protections & Waypoint advocacy apply in all 50 states",
+            demoPillars
+              ? "Choropleth Calibration: Fictional demonstration values active for polygon shading"
+              : "Loading live U.S. Census ACS 5-Year housing, income & commute tracts...",
+            "Official Ratings: U.S. Census ACS 5-Year & TIGERweb Active",
+          ],
+      dataStatus: hasLiveRollup
+        ? "verified_public_source"
+        : demoPillars
+          ? "fictional_calibration"
+          : "awaiting_verified_dataset",
+      dataSourcesPending: hasLiveRollup ? ["State DOE", "FBI CDE"] : ["State DOE", "NCES CCD", "US Census ACS"],
+      verifiedPillars: countyCensusRollup?.verifiedPillars,
+      calibrationPillars: demoPillars ||
+        countyCensusRollup?.verifiedPillars || {
+          communityQuality: null,
+          academics: null,
+          specializedPrograms: null,
+          safetyWellBeing: null,
+          familyLifestyle: null,
+          affordability: null,
+          commute: null,
+        },
       publishedToPublic: true,
       updatedAt: new Date().toISOString(),
     };
-  }, [communities, selectedFips, dynamicCountyOverride]);
+  }, [communities, selectedFips, dynamicCountyOverride, countyCensusRollup]);
 
   const isVerifiedSource =
     selectedCommunity.dataStatus === "verified_public_source" ||
@@ -526,17 +666,24 @@ export default function WaypointPlaces() {
     }
   };
 
-  // Sub-county Census Tracts, TIGERweb LEA Boundaries, and CMS NPPES NPI Therapy Providers for active county
-  const { data: neighborhoodTractsData } =
-    trpc.waypointPlaces.getCountyNeighborhoodTracts.useQuery(
-      { countyFips5: selectedCommunity.fips },
-      { enabled: Boolean(selectedCommunity.fips) }
-    );
+  // Post selected county events to parent Wix Velo window when embedded on external websites
+  useEffect(() => {
+    if (typeof window === "undefined" || window.parent === window) return;
+    try {
+      window.parent.postMessage(
+        {
+          type: "WAYPOINT_PLACES_COUNTY_SELECTED",
+          fips: selectedCommunity.fips,
+          name: selectedCommunity.name,
+          stateCode: selectedCommunity.stateCode || "GA",
+        },
+        "*"
+      );
+    } catch {
+      // ignore cross-origin frame restrictions
+    }
+  }, [selectedCommunity.fips, selectedCommunity.name, selectedCommunity.stateCode]);
 
-  const subCountyTracts = useMemo(
-    () => neighborhoodTractsData?.tracts ?? [],
-    [neighborhoodTractsData?.tracts]
-  );
   const schoolDistrictBoundaries = useMemo(
     () =>
       neighborhoodTractsData?.schoolDistrictBoundaries ??
@@ -651,6 +798,17 @@ export default function WaypointPlaces() {
                 <p className="text-xs sm:text-sm text-[#EADBC0] font-medium mt-1 leading-snug">
                   Find a community where your child’s education and your family can thrive.
                 </p>
+                {!isEmbedMode && (
+                  <button
+                    type="button"
+                    data-testid="open-wix-embed-modal-btn"
+                    onClick={() => setWixEmbedOpen(true)}
+                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-[#FCE6A6] via-[#E5C170] to-[#C59B43] text-[#07162B] font-bold text-[11px] border border-[#FFF4D4] shadow-[0_3px_10px_rgba(229,193,112,0.35)] hover:brightness-105 transition-all cursor-pointer"
+                  >
+                    <Code2 className="h-3.5 w-3.5" />
+                    <span>Embed on My Site (Wix / Velo Copy)</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1154,12 +1312,61 @@ export default function WaypointPlaces() {
                   >
                     <div className="flex items-center justify-between gap-1">
                       <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#F3D68B]">
-                        Neighborhood Tracts ({subCountyTracts.length} Census Tracts)
+                        County Census Rollup &amp; Tracts ({subCountyTracts.length} Tracts)
                       </span>
                       <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-[#0D2149] border border-[#D4AF63]/40 text-[#F3D68B] font-semibold">
                         TIGER + ACS 5-Yr
                       </span>
                     </div>
+
+                    {/* County-Wide Rolled-Up U.S. Census Housing, Income & Commute Summary */}
+                    {countyCensusRollup && (
+                      <div
+                        data-testid="county-census-rollup-summary"
+                        className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 rounded bg-[#05142C] border border-[#D4AF63]/35 p-2 text-[10px]"
+                      >
+                        <div>
+                          <span className="text-[9px] text-[#94A3B8] block">
+                            County Median Income
+                          </span>
+                          <span className="font-bold text-[#FFF4D4] font-mono">
+                            {countyCensusRollup.medianHouseholdIncome
+                              ? `$${countyCensusRollup.medianHouseholdIncome.toLocaleString()}`
+                              : "N/A"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-[#94A3B8] block">
+                            County Median Home
+                          </span>
+                          <span className="font-bold text-[#FFF4D4] font-mono">
+                            {countyCensusRollup.medianHomeValue
+                              ? `$${countyCensusRollup.medianHomeValue.toLocaleString()}`
+                              : "N/A"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-[#94A3B8] block">
+                            County Median Rent
+                          </span>
+                          <span className="font-bold text-[#FFF4D4] font-mono">
+                            {countyCensusRollup.medianGrossRent
+                              ? `$${countyCensusRollup.medianGrossRent.toLocaleString()}/mo`
+                              : "N/A"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-[#94A3B8] block">
+                            County Mean Commute
+                          </span>
+                          <span className="font-bold text-[#FFF4D4] font-mono">
+                            {countyCensusRollup.meanCommuteMinutes
+                              ? `${countyCensusRollup.meanCommuteMinutes} min`
+                              : "N/A"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     {selectedTract ? (
                       <div
@@ -1493,19 +1700,41 @@ export default function WaypointPlaces() {
                 <Info className="h-3 w-3 text-[#FFE394]" />
                 <span>How Scores Work</span>
               </button>
-              <button
-                type="button"
-                data-testid="nav-places-studio-btn"
-                onClick={() => setStudioOpen(true)}
-                className="px-2.5 py-1 rounded-lg bg-[#091830] border border-[#C5A059]/45 text-[#EADBC0] hover:text-white hover:border-[#FFE394] flex items-center gap-1 cursor-pointer"
-                title="Staff Data & API Connections"
-              >
-                <Sliders className="h-3 w-3 text-[#FFE394]" />
-                <span>Data &amp; APIs</span>
-              </button>
+              {!isEmbedMode && (
+                <>
+                  <button
+                    type="button"
+                    data-testid="footer-wix-embed-btn"
+                    onClick={() => setWixEmbedOpen(true)}
+                    className="px-2.5 py-1 rounded-lg bg-[#091830] border border-[#DFBE77]/65 text-[#FFE394] hover:text-white hover:border-[#FFE394] flex items-center gap-1 cursor-pointer font-semibold"
+                    title="Copy Wix / Wix Velo Embed Code"
+                  >
+                    <Code2 className="h-3 w-3 text-[#FFE394]" />
+                    <span>Embed on My Site</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="nav-places-studio-btn"
+                    onClick={() => setStudioOpen(true)}
+                    className="px-2.5 py-1 rounded-lg bg-[#091830] border border-[#C5A059]/45 text-[#EADBC0] hover:text-white hover:border-[#FFE394] flex items-center gap-1 cursor-pointer"
+                    title="Staff Data & API Connections"
+                  >
+                    <Sliders className="h-3 w-3 text-[#FFE394]" />
+                    <span>Data &amp; APIs</span>
+                  </button>
+                </>
+              )}
             </div>
           </footer>
         </div>
+
+        {/* Wix / Website 1-Click Copy Embed Modal */}
+        <WixEmbedModal
+          open={wixEmbedOpen}
+          onClose={() => setWixEmbedOpen(false)}
+          selectedFips={selectedCommunity.fips}
+          selectedCountyName={selectedCommunity.name}
+        />
 
         {/* Modals & Internal Studio Drawer */}
         <PlacesCompareModal

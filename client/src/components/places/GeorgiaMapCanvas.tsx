@@ -434,7 +434,7 @@ export function GeorgiaMapCanvas({
   const [scoreBreakdownExpanded, setScoreBreakdownExpanded] = useState<boolean>(false);
 
   const [internalMapMode, setInternalMapMode] =
-    useState<PlacesMapDisplayMode>("waypoint_map");
+    useState<PlacesMapDisplayMode>("hybrid");
   const mapDisplayMode = externalMapMode ?? internalMapMode;
 
   const handleSelectMapMode = (mode: PlacesMapDisplayMode) => {
@@ -673,9 +673,16 @@ export function GeorgiaMapCanvas({
           f.properties.stateFips2 === activeStateFips2
       )
       .map((f: any) => {
+        const isCurrentSelected = f.properties.fips === selectedCommunity.fips;
+        const verifiedSource =
+          f.properties.verifiedPillars ||
+          (isCurrentSelected ? selectedCommunity.verifiedPillars || null : null);
+        const calibrationSource =
+          f.properties.pillars ||
+          (isCurrentSelected ? selectedCommunity.calibrationPillars || null : null);
         const sourcePillars = showModelCalibration
-          ? f.properties.pillars
-          : f.properties.verifiedPillars;
+          ? calibrationSource
+          : verifiedSource;
         const activeScore = sourcePillars
           ? resolvePillarMeasureValue(
               sourcePillars,
@@ -688,14 +695,14 @@ export function GeorgiaMapCanvas({
           ...f,
           properties: {
             ...f.properties,
-            isSelected: f.properties.fips === selectedCommunity.fips,
+            verifiedPillars: verifiedSource,
+            isSelected: isCurrentSelected,
             activeScore,
             hasScore: activeScore !== null,
             isVerifiedScore: !showModelCalibration && activeScore !== null,
           },
         };
       });
-
     return {
       type: "FeatureCollection" as const,
       features,
@@ -704,6 +711,8 @@ export function GeorgiaMapCanvas({
     allUsCountiesList,
     activeStateFips2,
     selectedCommunity.fips,
+    selectedCommunity.verifiedPillars,
+    selectedCommunity.calibrationPillars,
     choroplethMeasure,
     appliedPriorities,
     showModelCalibration,
@@ -1897,6 +1906,11 @@ export function GeorgiaMapCanvas({
           {(
             [
               {
+                id: "hybrid",
+                label: "Satellite + Labels",
+                icon: Layers,
+              },
+              {
                 id: "waypoint_map",
                 label: "Street Map",
                 icon: MapIcon,
@@ -1905,11 +1919,6 @@ export function GeorgiaMapCanvas({
                 id: "satellite",
                 label: "Satellite Photo",
                 icon: Satellite,
-              },
-              {
-                id: "hybrid",
-                label: "Satellite + Labels",
-                icon: Layers,
               },
             ] as const
           ).map((mode) => {

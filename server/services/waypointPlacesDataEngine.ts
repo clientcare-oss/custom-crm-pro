@@ -7,6 +7,7 @@ import {
   DEFAULT_SCORING_WEIGHTS,
   DOCUMENTED_INDICATOR_FORMULAS,
   SPED_NON_GUARANTEE_DISCLAIMER,
+  US_50_STATES_DIRECTORY,
   WAYPOINT_PLACES_BUILD_ID,
   computeCommunityQualityScore,
   computeNormalizedAffordabilityScore,
@@ -4094,12 +4095,15 @@ export async function getOrImportCountySubCountyTracts(
           if (popE <= 0) continue;
 
           const travel = travelMap.get(geoid11);
+          const resolvedStateCode =
+            US_50_STATES_DIRECTORY[cleanFips.slice(0, 2)]?.code ||
+            String(p.State || "GA");
           await upsertSubCountyTractRow({
             geoid11,
             name: String(p.NAME || `Census Tract ${geoid11.slice(5)}`),
             countyFips5: cleanFips,
             countyName: String(p.County || "County"),
-            stateCode: "GA",
+            stateCode: resolvedStateCode,
             geometry: {
               type: geom.type === "MultiPolygon" ? "MultiPolygon" : "Polygon",
               coordinates: geom.coordinates,

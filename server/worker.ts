@@ -32,9 +32,22 @@ export default {
 
     const url = new URL(request.url);
 
-    // 1. Handle tRPC API Requests
+    // 1. Handle tRPC API Requests (with CORS support for public Waypoint Places Wix Velo / Website embeds)
     if (url.pathname.startsWith("/api/trpc")) {
-      return fetchRequestHandler({
+      const isPublicPlacesRpc = url.pathname.includes("waypointPlaces.");
+      const corsHeaders: Record<string, string> = isPublicPlacesRpc
+        ? {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, trpc-accept, x-trpc-source",
+          }
+        : {};
+
+      if (isPublicPlacesRpc && request.method === "OPTIONS") {
+        return new Response(null, { status: 204, headers: corsHeaders });
+      }
+
+      const trpcRes = await fetchRequestHandler({
         endpoint: "/api/trpc",
         req: request,
         router: appRouter,
@@ -48,6 +61,17 @@ export default {
           }
           return { req: request as any, res: {} as any, user };
         },
+      });
+
+      if (!isPublicPlacesRpc) return trpcRes;
+      const mergedHeaders = new Headers(trpcRes.headers);
+      for (const [k, v] of Object.entries(corsHeaders)) {
+        mergedHeaders.set(k, v);
+      }
+      return new Response(trpcRes.body, {
+        status: trpcRes.status,
+        statusText: trpcRes.statusText,
+        headers: mergedHeaders,
       });
     }
 
