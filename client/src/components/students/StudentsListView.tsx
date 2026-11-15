@@ -7,7 +7,14 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
+  FileBox,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
   type StudentFolderData,
@@ -38,6 +45,8 @@ interface StudentsListViewProps {
   onAssignTag?: (studentId: number, tagName: string) => void;
   onRemoveTag?: (studentId: number, tagName: string) => void;
   onOpenManageCompanyTags?: () => void;
+  onBlacklistClient?: (student: StudentFolderData) => void;
+  onOpenRestriction?: (entryId: number) => void;
   className?: string;
 }
 
@@ -65,6 +74,8 @@ export function StudentsListView({
   onAssignTag,
   onRemoveTag,
   onOpenManageCompanyTags,
+  onBlacklistClient,
+  onOpenRestriction,
   className,
 }: StudentsListViewProps) {
   const [sortField, setSortField] = useState<SortField>("student");
@@ -630,8 +641,12 @@ export function StudentsListView({
                 </div>
 
                 {/* 5. Status Capsule Pill */}
-                <div className="flex items-center shrink-0">
-                  {isNeedsAttention ? (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {student.isRestricted ? (
+                    <span className="rounded-md px-2 py-0.5 text-xs font-medium bg-[#081530] border border-[#DFC07C]/45 text-[#DFC07C] whitespace-nowrap">
+                      Restricted
+                    </span>
+                  ) : isNeedsAttention ? (
                     <span className="rounded-full px-2.5 py-1 text-xs font-medium bg-[#38111A]/90 border border-[#7F1D1D] text-[#F87171] flex items-center gap-1.5 shadow-[0_0_10px_rgba(239,68,68,0.15)] whitespace-nowrap">
                       <span className="w-2 h-2 rounded-full bg-[#EF4444] shadow-[0_0_8px_#EF4444] shrink-0" />
                       <span className="truncate">Needs Attention</span>
@@ -691,18 +706,61 @@ export function StudentsListView({
                 </div>
 
                 {/* 10. Action Dots */}
-                <div className="flex justify-end shrink-0">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStudentClick(student.id);
-                    }}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-[#7B8EA7] hover:text-[#FFF] hover:bg-[#12243D] border border-[#1A3152]/80 transition-colors cursor-pointer"
-                    title="View Student Workspace"
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
+                <div className="flex justify-end shrink-0" onClick={(e) => e.stopPropagation()}>
+                  {student.isArchivedRecord || student.isRestricted ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[#7B8EA7] hover:text-[#FFF] hover:bg-[#12243D] border border-[#1A3152]/80 transition-colors cursor-pointer"
+                          title="Record actions"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="bg-[#051126] border border-[#1D3158] text-[#EEF3FA] rounded-lg p-1 min-w-[190px]"
+                      >
+                        <DropdownMenuItem
+                          onClick={() => onStudentClick(student.id)}
+                          className="text-xs py-2 cursor-pointer hover:bg-white/10 rounded-md"
+                        >
+                          Open Student Workspace
+                        </DropdownMenuItem>
+                        {student.isRestricted && student.restrictedEntryId && onOpenRestriction && (
+                          <DropdownMenuItem
+                            onClick={() => onOpenRestriction(student.restrictedEntryId!)}
+                            className="flex items-center gap-2 text-xs py-2 text-[#DFC07C] cursor-pointer hover:bg-white/10 rounded-md"
+                          >
+                            <FileBox className="w-3.5 h-3.5" />
+                            <span>View Do Not Serve restriction</span>
+                          </DropdownMenuItem>
+                        )}
+                        {student.isArchivedRecord && !student.isRestricted && onBlacklistClient && (
+                          <DropdownMenuItem
+                            onClick={() => onBlacklistClient(student)}
+                            className="flex items-center gap-2 text-xs py-2 text-[#DFC07C] cursor-pointer hover:bg-white/10 rounded-md"
+                          >
+                            <FileBox className="w-3.5 h-3.5" />
+                            <span>Blacklist client</span>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onStudentClick(student.id);
+                      }}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-[#7B8EA7] hover:text-[#FFF] hover:bg-[#12243D] border border-[#1A3152]/80 transition-colors cursor-pointer"
+                      title="View Student Workspace"
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             );

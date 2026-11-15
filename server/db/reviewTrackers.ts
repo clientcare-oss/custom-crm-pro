@@ -78,8 +78,27 @@ export async function resolveAccountContactId(contactId: number): Promise<{
 }> {
   const db = await getDb();
   try {
-    const [c] = await db.select().from(contacts).where(eq(contacts.id, contactId)).limit(1);
+    const [c] = await db
+      .select({
+        id: contacts.id,
+        parentContactId: contacts.parentContactId,
+        firstName: contacts.firstName,
+        lastName: contacts.lastName,
+        email: contacts.email,
+        phone: contacts.phone,
+      })
+      .from(contacts)
+      .where(eq(contacts.id, contactId))
+      .limit(1);
     if (!c) {
+      const { loadContactByIdSafe } = await import("../services/doNotServeSync");
+      const raw = await loadContactByIdSafe(contactId);
+      if (raw) {
+        const pId = raw.parentContactId ? Number(raw.parentContactId) : 0;
+        return pId > 0
+          ? { accountId: pId, isParent: false, contact: raw }
+          : { accountId: Number(raw.id || contactId), isParent: true, contact: raw };
+      }
       return { accountId: contactId, isParent: true, contact: null };
     }
     if (c.parentContactId) {
@@ -87,7 +106,12 @@ export async function resolveAccountContactId(contactId: number): Promise<{
     }
     return { accountId: c.id, isParent: true, contact: c };
   } catch {
-    return { accountId: contactId, isParent: true, contact: null };
+    const { loadContactByIdSafe } = await import("../services/doNotServeSync");
+    const raw = await loadContactByIdSafe(contactId).catch(() => null);
+    if (raw && raw.parentContactId) {
+      return { accountId: Number(raw.parentContactId), isParent: false, contact: raw };
+    }
+    return { accountId: contactId, isParent: true, contact: raw || null };
   }
 }
 

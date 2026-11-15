@@ -40,6 +40,8 @@ import {
   EmailTemplateSelectorDropdown,
   type SelectedEmailTemplatePayload,
 } from "@/components/email/EmailTemplateSelectorDropdown";
+import { DoNotServeChannelGuard } from "@/components/do-not-serve/DoNotServeChannelGuard";
+import { isDoNotServeReviewError } from "@/components/do-not-serve/doNotServeStyles";
 
 export interface ComposeEmailModalProps {
   open: boolean;
@@ -80,6 +82,8 @@ export function GmailComposeModal({
   const [attachments, setAttachments] = useState<
     Array<{ id: string; fileName: string; mimeType: string; sizeBytes: number; url?: string }>
   >([]);
+  const [dnsForceOpenKey, setDnsForceOpenKey] = useState(0);
+  const [dnsAcknowledged, setDnsAcknowledged] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -92,6 +96,8 @@ export function GmailComposeModal({
       setSelectedTemplateId(null);
       setPortalVisible(false);
       setAttachments([]);
+      setDnsForceOpenKey(0);
+      setDnsAcknowledged(false);
     }
   }, [open, defaultToEmail, defaultParentContactId, defaultStudentContactId, defaultSubject]);
 
@@ -128,8 +134,27 @@ export function GmailComposeModal({
       onSent?.();
       onClose();
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      if (isDoNotServeReviewError(err)) {
+        setDnsForceOpenKey((k) => k + 1);
+        toast.info("Review Do Not Serve alert before sending email.");
+        return;
+      }
+      toast.error(err.message);
+    },
   });
+
+  const primaryRecipientEmail = toEmail.split(",")[0]?.trim() || "";
+  const { data: composeDnsEval } = trpc.doNotServe.evaluateCandidate.useQuery(
+    {
+      contactId: parentContactId || studentContactId || undefined,
+      email: primaryRecipientEmail || undefined,
+      channel: "gmail_compose",
+      targetEntityType: "email_draft",
+      targetEntityId: String(parentContactId || primaryRecipientEmail || "compose"),
+    },
+    { enabled: open && Boolean(parentContactId || studentContactId || primaryRecipientEmail) }
+  );
 
   const selectedParentObj = useMemo(
     () => (contacts as any[]).find((c) => c.id === parentContactId),
@@ -195,6 +220,7 @@ export function GmailComposeModal({
       templateId: selectedTemplateId,
       portalVisible,
       attachments,
+      doNotServeAcknowledged: dnsAcknowledged || undefined,
     });
   };
 
@@ -202,10 +228,20 @@ export function GmailComposeModal({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-2xl bg-[#061830] border border-blue-800/80 text-white shadow-2xl rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg font-serif font-bold text-white">
-            <Mail className="w-5 h-5 text-[#F5B544]" />
-            <span>{replyThreadId ? "Reply in Gmail Conversation Thread" : "Compose Client Email (Gmail)"}</span>
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-2 flex-wrap pr-6">
+            <DialogTitle className="flex items-center gap-2 text-lg font-serif font-bold text-white">
+              <Mail className="w-5 h-5 text-[#F5B544]" />
+              <span>{replyThreadId ? "Reply in Gmail Conversation Thread" : "Compose Client Email (Gmail)"}</span>
+            </DialogTitle>
+            <DoNotServeChannelGuard
+              evaluation={composeDnsEval}
+              channel="gmail_compose"
+              targetEntityType="email_draft"
+              targetEntityId={String(parentContactId || primaryRecipientEmail || "compose")}
+              forceOpenKey={dnsForceOpenKey}
+              onResolved={() => setDnsAcknowledged(true)}
+            />
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-3.5 pt-1 text-xs">

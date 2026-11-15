@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import CopilotUtilityCapsule from "@/components/CopilotUtilityCapsule";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, FileBox, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
 import {
   getStoredEmployees,
   checkEmployeeModuleAccess,
@@ -252,6 +252,12 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
       groupLabel: "System / Company",
       items: [
         {
+          icon: FileBox,
+          label: "Archive",
+          path: "/archive",
+          keywords: ["archive", "archived records", "do not serve", "blacklist", "restricted", "restrictions", "pg-048"]
+        },
+        {
           icon: Settings,
           label: "Settings",
           path: "/settings",
@@ -439,6 +445,17 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       label: "Giving & Impact",
       path: "/giving",
       isActive: (loc) => loc === "/giving" || loc.startsWith("/giving") || loc === "/sponsors",
+    },
+    {
+      id: "archive",
+      icon: FileBox,
+      label: "Archive",
+      path: "/archive",
+      isActive: (loc) =>
+        loc === "/archive" ||
+        loc.startsWith("/archive/") ||
+        loc === "/do-not-serve" ||
+        loc.startsWith("/do-not-serve/"),
     },
     {
       id: "settings",
@@ -1732,10 +1749,14 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai") ||
         location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics") ||
         location === "/settings" || location.startsWith("/settings") ||
-        location === "/messages" || location.startsWith("/messages")
-      ) && "bg-[#000820]")}>
+        location === "/messages" || location.startsWith("/messages") ||
+        location === "/archive" || location.startsWith("/archive/") ||
+        location === "/do-not-serve" || location.startsWith("/do-not-serve/")
+      ) && "bg-[#000820]",
+      (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/")) && "h-svh max-h-svh min-h-0 overflow-hidden"
+      )}>
         {isMobile && (
-          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40 shrink-0">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
               <span className="tracking-tight text-foreground">{activeMenuItem?.label ?? "Menu"}</span>
@@ -1746,6 +1767,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           "flex-1 min-w-0 p-4 relative",
           (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects") && "p-0 bg-[#020712]",
           (location.startsWith("/students/") || location.startsWith("/contacts/") || location.startsWith("/project-workspace/")) && "p-0 overflow-hidden",
+          (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/")) && "p-0 bg-[#000820] flex flex-col min-h-0 h-full overflow-hidden",
           location === "/contacts" && "p-0 bg-[#07152B]",
           (location === "/giving" || location.startsWith("/giving")) && "p-0 bg-[#07162B]",
           (location === "/agreements" || location.startsWith("/agreements") || location === "/contracts" || location.startsWith("/smart-files")) && "p-0 bg-[#07162B]",
@@ -1761,7 +1783,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai")) && "p-0 bg-[#000820]",
           (location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics")) && "p-0 bg-[#000820]",
           (location === "/settings" || location.startsWith("/settings")) && "p-0 bg-[#000820]",
-          (location === "/messages" || location.startsWith("/messages")) && "p-0 bg-[#000820]"
+          (location === "/messages" || location.startsWith("/messages")) && "p-0 bg-[#000820]",
+          (location === "/archive" || location.startsWith("/archive/") || location === "/do-not-serve" || location.startsWith("/do-not-serve/")) && "p-0 bg-[#000820]"
         )}>
           {currentForbiddenModule ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-lg mx-auto text-center px-4 py-12">

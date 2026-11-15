@@ -374,41 +374,41 @@ export function LeadTunerConsole({
           </>
         )}
 
-        {/* ── OVERLAY A: LEFT CRT SCREEN LIVE READOUT (STRICTLY SCOPED INSIDE INNER GLASS: x 8.4%..29.6%) ── */}
+        {/* ── OVERLAY A: LEFT CRT SCREEN LIVE READOUT (STRICTLY SCOPED INSIDE INNER BLUE GLASS: x 8.8%..29.2%, y 14.5%..69.0%) ── */}
         {isClientOpen ? (
           /* SINGLE-CLIENT CRT VIEW ("NOW VIEWING" + Initials Circle + Parent + Student + Green Status Dot) */
           <div
             className="absolute flex flex-col items-center justify-between text-center pointer-events-none overflow-hidden px-2"
             style={{
-              left: "8.4%",
-              top: "15.2%",
-              width: "21.2%",
-              height: "64.2%",
+              left: "8.8%",
+              top: "14.5%",
+              width: "20.4%",
+              height: "54.5%",
             }}
           >
             {/* Top Header: —— NOW VIEWING —— */}
             <div className="w-full min-w-0 overflow-hidden flex items-center justify-center gap-1.5">
-              <span className="w-4 sm:w-6 h-[1px] bg-gradient-to-r from-transparent to-[#CBD5E1]/70 shrink-0" />
+              <span className="w-3.5 sm:w-5 h-[1px] bg-gradient-to-r from-transparent to-[#CBD5E1]/70 shrink-0" />
               <span
                 className="font-serif uppercase tracking-[0.18em] text-[#E2E8F0] whitespace-nowrap truncate"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(6.5px, 0.78vw, 10px)",
+                  fontSize: "clamp(6px, 0.72vw, 9.5px)",
                 }}
               >
                 NOW VIEWING
               </span>
-              <span className="w-4 sm:w-6 h-[1px] bg-gradient-to-l from-transparent to-[#CBD5E1]/70 shrink-0" />
+              <span className="w-3.5 sm:w-5 h-[1px] bg-gradient-to-l from-transparent to-[#CBD5E1]/70 shrink-0" />
             </div>
 
             {/* Circular Initials Ring (EV) */}
             <div
               className="rounded-full border-[1.5px] border-[#E2E8F0]/85 bg-[#0A1936]/80 shadow-[0_0_10px_rgba(148,163,184,0.35),inset_0_0_6px_rgba(255,255,255,0.18)] flex items-center justify-center font-serif font-bold text-white shrink-0"
               style={{
-                width: "clamp(20px, 2.7vw, 35px)",
-                height: "clamp(20px, 2.7vw, 35px)",
+                width: "clamp(18px, 2.3vw, 29px)",
+                height: "clamp(18px, 2.3vw, 29px)",
                 fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(8px, 1.05vw, 13.5px)",
+                fontSize: "clamp(7.5px, 0.92vw, 11.5px)",
               }}
             >
               {clientInitials}
@@ -424,8 +424,8 @@ export function LeadTunerConsole({
                   fontFamily: "'Playfair Display', Georgia, serif",
                   fontSize:
                     (openedClientName || "").length > 16
-                      ? "clamp(9.5px, 1.35vw, 17px)"
-                      : "clamp(11px, 1.7vw, 21px)",
+                      ? "clamp(9px, 1.25vw, 15.5px)"
+                      : "clamp(10px, 1.5vw, 18.5px)",
                   lineHeight: 1.08,
                 }}
               >
@@ -435,7 +435,7 @@ export function LeadTunerConsole({
                 className="mt-0.5 font-serif uppercase tracking-[0.22em] text-[#CBD5E1]/90"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(5.5px, 0.65vw, 8.5px)",
+                  fontSize: "clamp(5px, 0.6vw, 7.8px)",
                 }}
               >
                 PARENT
@@ -443,7 +443,7 @@ export function LeadTunerConsole({
             </div>
 
             {/* Horizontal Divider */}
-            <div className="w-[78%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/45 to-transparent shrink-0" />
+            <div className="w-[76%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/45 to-transparent shrink-0" />
 
             {/* Student Name + STUDENT Label */}
             <div className="w-full min-w-0 overflow-hidden px-1 flex flex-col items-center leading-none">
@@ -452,7 +452,7 @@ export function LeadTunerConsole({
                 className="w-full max-w-full truncate font-serif italic text-[#F1F5F9] drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)]"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(8.5px, 1.15vw, 14.5px)",
+                  fontSize: "clamp(8px, 1.05vw, 13.5px)",
                   lineHeight: 1.12,
                 }}
               >
@@ -462,7 +462,7 @@ export function LeadTunerConsole({
                 className="mt-0.5 font-serif uppercase tracking-[0.22em] text-[#CBD5E1]/85"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(5.5px, 0.62vw, 8px)",
+                  fontSize: "clamp(5px, 0.58vw, 7.5px)",
                 }}
               >
                 STUDENT
@@ -470,7 +470,7 @@ export function LeadTunerConsole({
             </div>
 
             {/* Horizontal Divider */}
-            <div className="w-[70%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent shrink-0" />
+            <div className="w-[68%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent shrink-0" />
 
             {/* Green Glowing Status Dot + Sub-Status Label */}
             <div className="w-full min-w-0 overflow-hidden px-1 flex items-center justify-center gap-1.5">
@@ -479,7 +479,7 @@ export function LeadTunerConsole({
                 className="max-w-full truncate font-serif italic text-[#F1F5F9] leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(8px, 1.0vw, 12.5px)",
+                  fontSize: "clamp(7.5px, 0.92vw, 11.5px)",
                 }}
               >
                 {openedClientStatusLabel || "Intake received"}
@@ -491,10 +491,10 @@ export function LeadTunerConsole({
           <div
             className="absolute flex flex-col items-center justify-between text-center pointer-events-none overflow-hidden px-2"
             style={{
-              left: "8.4%",
-              top: "38.2%",
-              width: "21.2%",
-              height: "39.0%",
+              left: "8.8%",
+              top: "36.5%",
+              width: "20.4%",
+              height: "33.0%",
             }}
           >
             {/* Active Stage Title */}

@@ -691,7 +691,10 @@ export default function WaypointStartScreen() {
                   Drag 6-dot handle to reorder
                 </span>
                 <span className="hidden sm:inline text-white/25">|</span>
-                <div className="flex items-center gap-1">
+                <div
+                  className="flex items-center gap-1"
+                  title="Never locks automatically while using Meeting Workspace"
+                >
                   <Clock className="w-3 h-3 text-[#E5A946]" />
                   <span>Idle Lock:</span>
                   {supportedIdleTimeouts.map((mins) => (

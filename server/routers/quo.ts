@@ -22,6 +22,13 @@ import {
   listEmployeeDevices,
   deleteEmployeeDevice,
 } from "../services/quo";
+import {
+  evaluateDoNotServeBatch,
+  evaluateDoNotServeCandidate,
+  resolvePracticeOrgOwnerId,
+  resolveServerEmployeeStamp,
+} from "../services/doNotServeService";
+import { syncContactWithDoNotServe } from "../services/doNotServeSync";
 
 export const quoRouter = router({
   // ─── 1. INTEGRATION SETTINGS ───────────────────────────────────────
@@ -355,7 +362,26 @@ export const quoRouter = router({
     }),
 
   previewExistingContacts: protectedProcedure.query(async ({ ctx }) => {
-    return await previewExistingQuoContacts(ctx.user.id);
+    const preview = await previewExistingQuoContacts(ctx.user.id);
+    if (!ctx.staffAccess?.isStaff || preview.length === 0) return preview;
+    const ownerId = resolvePracticeOrgOwnerId(ctx);
+    const evalMap = await evaluateDoNotServeBatch(
+      preview.map((item) => ({
+        key: item.quoContactId,
+        contactIds: [item.matchedWaypointContact?.id],
+        phones: item.phones,
+        emails: item.emails,
+        names: [item.fullName],
+        targetEntityType: "quo_import_preview",
+        targetEntityId: item.quoContactId,
+        staffUserId: ctx.user?.id,
+      })),
+      ownerId
+    );
+    return preview.map((item) => ({
+      ...item,
+      doNotServeEvaluation: evalMap[item.quoContactId] || null,
+    }));
   }),
 
   executeImportContacts: protectedProcedure
@@ -371,7 +397,49 @@ export const quoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await executeExistingQuoContactsImport(ctx.user.id, input.decisions);
+      const out = await executeExistingQuoContactsImport(ctx.user.id, input.decisions);
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+      const doNotServeFlaggedRows: Array<{
+        quoContactId: string;
+        contactId?: number;
+        name: string;
+        highestTier: "hard_match" | "possible_name_match";
+        matches: any[];
+      }> = [];
+
+      for (const row of out.results) {
+        if (row.status === "merged" && row.contactId) {
+          await syncContactWithDoNotServe({
+            contactId: row.contactId,
+            ownerId,
+            actor: resolveServerEmployeeStamp(ctx),
+          }).catch(() => undefined);
+        }
+        if ((row.status === "imported" || row.status === "merged") && row.contactId) {
+          const ev = await evaluateDoNotServeCandidate({
+            ownerId,
+            contactIds: [row.contactId],
+            names: [row.name],
+            targetEntityType: "contact",
+            targetEntityId: String(row.contactId),
+            staffUserId: ctx.user?.id,
+          }).catch(() => null);
+          if (ev?.hasActiveMatch && ev.highestTier) {
+            doNotServeFlaggedRows.push({
+              quoContactId: row.quoContactId,
+              contactId: row.contactId,
+              name: row.name,
+              highestTier: ev.highestTier,
+              matches: ev.matches,
+            });
+          }
+        }
+      }
+
+      return {
+        ...out,
+        doNotServeFlaggedRows,
+      };
     }),
 
   // ─── 4. SMS COMPOSER & THREADS ────────────────────────────────────
@@ -381,6 +449,7 @@ export const quoRouter = router({
         contactId: z.number(),
         body: z.string().min(1, "Message cannot be empty"),
         mediaUrls: z.array(z.string()).optional(),
+        doNotServeAcknowledged: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -401,6 +470,27 @@ export const quoRouter = router({
         });
       }
 
+      if (ctx.staffAccess?.isStaff) {
+        const ownerId = resolvePracticeOrgOwnerId(ctx);
+        const ev = await evaluateDoNotServeCandidate({
+          ownerId,
+          contactIds: [input.contactId],
+          phones: [contact.phone],
+          emails: [contact.email],
+          names: [`${contact.firstName || ""} ${contact.lastName || ""}`.trim()],
+          targetEntityType: "quo_sms_send",
+          targetEntityId: String(input.contactId),
+          staffUserId: ctx.user?.id,
+        });
+        if (ev.hasActiveMatch && ev.highestTier === "hard_match" && !input.doNotServeAcknowledged) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message:
+              "DO_NOT_SERVE_REVIEW_REQUIRED: This recipient matches a Do Not Serve restriction. Review before sending.",
+          });
+        }
+      }
+
       return await sendQuoMessage({
         ownerId: ctx.user.id,
         contactId: input.contactId,
@@ -414,12 +504,30 @@ export const quoRouter = router({
   listSms: protectedProcedure
     .input(z.object({ contactId: z.number() }))
     .query(async ({ ctx, input }) => {
-      return await getQuoMessagesForContact(ctx.user.id, input.contactId);
+      const messages = await getQuoMessagesForContact(ctx.user.id, input.contactId);
+      if (!ctx.staffAccess?.isStaff) return messages;
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+      const ev = await evaluateDoNotServeCandidate({
+        ownerId,
+        contactIds: [input.contactId],
+        targetEntityType: "quo_sms_thread",
+        targetEntityId: String(input.contactId),
+        staffUserId: ctx.user?.id,
+      }).catch(() => null);
+      if (Array.isArray(messages)) {
+        return messages.map((m: any) => ({ ...m, doNotServeEvaluation: ev }));
+      }
+      return messages;
     }),
 
   // ─── 5. SEND CALL TO MY PHONE (PUSH HANDOFF) ───────────────────────
   sendCallToPhone: protectedProcedure
-    .input(z.object({ contactId: z.number() }))
+    .input(
+      z.object({
+        contactId: z.number(),
+        doNotServeAcknowledged: z.boolean().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const database = await db.getDb();
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
@@ -439,6 +547,27 @@ export const quoRouter = router({
       }
 
       const clientName = `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || "Client";
+
+      if (ctx.staffAccess?.isStaff) {
+        const ownerId = resolvePracticeOrgOwnerId(ctx);
+        const ev = await evaluateDoNotServeCandidate({
+          ownerId,
+          contactIds: [input.contactId],
+          phones: [contact.phone],
+          emails: [contact.email],
+          names: [clientName],
+          targetEntityType: "quo_outbound_call",
+          targetEntityId: String(input.contactId),
+          staffUserId: ctx.user?.id,
+        });
+        if (ev.hasActiveMatch && ev.highestTier === "hard_match" && !input.doNotServeAcknowledged) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message:
+              "DO_NOT_SERVE_REVIEW_REQUIRED: This phone number matches a Do Not Serve restriction. Review before dialing.",
+          });
+        }
+      }
 
       return await sendCallToPhone({
         ownerId: ctx.user.id,
@@ -591,11 +720,28 @@ export const quoRouter = router({
         conditions.push(eq(callLogs.eventType, "message.received"));
       }
 
-      return await database
+      const rows = await database
         .select()
         .from(callLogs)
         .where(and(...conditions))
         .orderBy(desc(callLogs.createdAt))
         .limit(100);
+      if (!ctx.staffAccess?.isStaff || rows.length === 0) return rows;
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+      const evalMap = await evaluateDoNotServeBatch(
+        rows.map((r) => ({
+          key: String(r.id),
+          contactIds: [r.contactId, r.studentId],
+          phones: [r.fromNumber, r.toNumber, r.matchedPhone],
+          targetEntityType: "call_log",
+          targetEntityId: String(r.id),
+          staffUserId: ctx.user?.id,
+        })),
+        ownerId
+      );
+      return rows.map((r) => ({
+        ...r,
+        doNotServeEvaluation: evalMap[String(r.id)] || null,
+      }));
     }),
 });

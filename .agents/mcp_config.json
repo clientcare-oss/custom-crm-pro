@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "myco-waypoint": {
+      "command": "node",
+      "args": ["scripts/myco-mcp-server.mjs"],
+      "env": {
+        "MYCO_PROJECT": "custom-crm-pro"
+      }
+    }
+  }
+}
+

@@ -50,6 +50,11 @@ export * from "./db/federalLaw";
 export * from "./db/compass";
 export * from "./db/pipeline";
 export * from "./db/workspaceLock";
+export * from "./db/doNotServe";
+export * from "./db/doNotServeMutations";
+export * from "./db/doNotServeNotesAndResolutions";
+export * from "./db/myco";
+export * from "./db/waypointPlaces";
 
 import { ENV } from './_core/env';
 

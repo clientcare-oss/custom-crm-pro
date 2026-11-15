@@ -9,6 +9,14 @@ import {
   DEFAULT_IDLE_TIMEOUT_MINUTES,
 } from "./db/workspaceLock";
 import type { StaffAccessProfile } from "./_core/staffAccess";
+import {
+  AUTO_LOCK_EXEMPT_TAB_TTL_MS,
+  evaluateWorkspaceAutoLock,
+  hasActiveAutoLockExemptTab,
+  isAutoLockExemptPath,
+  removeAutoLockExemptTab,
+  upsertAutoLockExemptTab,
+} from "../shared/workspaceLockPolicy";
 
 function createStaffContext(
   overrides?: Partial<{
@@ -326,5 +334,94 @@ describe("Waypoint Start Screen & Privacy Lock (PG-000)", () => {
     await expect(
       caller.workspaceLock.updateIdleTimeout({ minutes: 99 as any })
     ).rejects.toThrow();
+  });
+
+  it("10. never auto-locks when using Meeting Workspace (PG-043) across all tabs and student routes", () => {
+    // Exempt routes: Meeting Workspace root, student routes, and tab query views
+    expect(isAutoLockExemptPath("/meeting-workspace")).toBe(true);
+    expect(isAutoLockExemptPath("/meeting-workspace/")).toBe(true);
+    expect(isAutoLockExemptPath("/meeting-workspace/120034")).toBe(true);
+    expect(isAutoLockExemptPath("/meeting-workspace?tab=assemble")).toBe(true);
+    expect(isAutoLockExemptPath("/meeting-workspace/120034?tab=blueprint")).toBe(true);
+    expect(isAutoLockExemptPath("/meeting-workspace/120034?tab=meeting-space")).toBe(true);
+
+    // Non-exempt CRM routes continue to enforce automatic idle lock
+    expect(isAutoLockExemptPath("/")).toBe(false);
+    expect(isAutoLockExemptPath("/students")).toBe(false);
+    expect(isAutoLockExemptPath("/students/120034")).toBe(false);
+    expect(isAutoLockExemptPath("/contacts")).toBe(false);
+    expect(isAutoLockExemptPath("/post-meeting-review/120034")).toBe(false);
+    expect(isAutoLockExemptPath("/settings")).toBe(false);
+
+    const startMs = 1_700_000_000_000;
+    const ninetyMinutesLaterMs = startMs + 90 * 60 * 1000;
+
+    // Even with a 2-minute idle timeout and 90 minutes of silence, Meeting Workspace never auto-locks
+    const inMeetingDecision = evaluateWorkspaceAutoLock({
+      isStaffAuthenticated: true,
+      isLocked: false,
+      idleLockInFlight: false,
+      pathname: "/meeting-workspace/120034",
+      nowMs: ninetyMinutesLaterMs,
+      lastActivityMs: startMs,
+      storedActivityMs: startMs,
+      idleTimeoutMinutes: 2,
+    });
+    expect(inMeetingDecision.shouldAutoLock).toBe(false);
+    expect(inMeetingDecision.refreshedActivityMs).toBe(ninetyMinutesLaterMs);
+    expect(inMeetingDecision.effectiveLastActivityMs).toBe(ninetyMinutesLaterMs);
+
+    // Multi-tab protection: a background /students tab also stays unlocked while a Meeting Workspace tab is open
+    const tabsJson = upsertAutoLockExemptTab(null, "tab_meeting_1", startMs);
+    expect(hasActiveAutoLockExemptTab(tabsJson, startMs + 45 * 60 * 1000)).toBe(true);
+
+    const secondaryTabDecision = evaluateWorkspaceAutoLock({
+      isStaffAuthenticated: true,
+      isLocked: false,
+      idleLockInFlight: false,
+      pathname: "/students",
+      hasOtherExemptTab: hasActiveAutoLockExemptTab(tabsJson, ninetyMinutesLaterMs),
+      nowMs: ninetyMinutesLaterMs,
+      lastActivityMs: startMs,
+      storedActivityMs: startMs,
+      idleTimeoutMinutes: 2,
+    });
+    expect(secondaryTabDecision.shouldAutoLock).toBe(false);
+
+    // Once Meeting Workspace is closed or exited, normal idle locking resumes after timeout
+    const afterCloseJson = removeAutoLockExemptTab(tabsJson, "tab_meeting_1", ninetyMinutesLaterMs);
+    expect(hasActiveAutoLockExemptTab(afterCloseJson, ninetyMinutesLaterMs)).toBe(false);
+
+    // Expired crash-leftover tab entries beyond TTL do not block idle lock forever
+    expect(
+      hasActiveAutoLockExemptTab(tabsJson, startMs + AUTO_LOCK_EXEMPT_TAB_TTL_MS + 1000)
+    ).toBe(false);
+
+    const normalIdleDecision = evaluateWorkspaceAutoLock({
+      isStaffAuthenticated: true,
+      isLocked: false,
+      idleLockInFlight: false,
+      pathname: "/students",
+      hasOtherExemptTab: false,
+      nowMs: ninetyMinutesLaterMs + 3 * 60 * 1000,
+      lastActivityMs: ninetyMinutesLaterMs,
+      storedActivityMs: ninetyMinutesLaterMs,
+      idleTimeoutMinutes: 2,
+    });
+    expect(normalIdleDecision.shouldAutoLock).toBe(true);
+  });
+
+  it("11. still allows explicit manual locking and PIN restoration from Meeting Workspace", async () => {
+    const caller = appRouter.createCaller(createStaffContext());
+    await caller.workspaceLock.setupPin({ pin: "4826", confirmPin: "4826" });
+
+    const manualLockRes = await caller.workspaceLock.lock({
+      previousPath: "/meeting-workspace/120034?tab=meeting-space",
+    });
+    expect(manualLockRes.isLocked).toBe(true);
+
+    const unlockRes = await caller.workspaceLock.unlockWithPin({ pin: "4826" });
+    expect(unlockRes.unlocked).toBe(true);
+    expect(unlockRes.redirectToPath).toBe("/meeting-workspace/120034?tab=meeting-space");
   });
 });

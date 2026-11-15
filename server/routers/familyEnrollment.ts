@@ -20,6 +20,7 @@ import {
   requestPaymentStructureRevision,
   cancelPaymentStructureRevision,
 } from "../services/familyEnrollmentService";
+import { assertAuthorizedServiceProceedOrOverride } from "../services/doNotServeService";
 
 
 export const familyEnrollmentRouter = router({
@@ -63,9 +64,19 @@ export const familyEnrollmentRouter = router({
         overrideReason: z.string().optional(),
         internalNotes: z.string().optional(),
         changeReason: z.string().optional(),
+        doNotServeOverrideReason: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await assertAuthorizedServiceProceedOrOverride({
+        ctx,
+        channel: "family_enrollment_approve",
+        targetEntityType: "contact",
+        targetEntityId: String(input.parentContactId),
+        contactIds: [input.parentContactId, input.studentContactId],
+        overrideReason: input.doNotServeOverrideReason,
+      });
+
       const approverName = ctx.user?.name || ctx.user?.email || "Lead Special Education Advocate";
       const approverId = ctx.user?.id || 1;
 

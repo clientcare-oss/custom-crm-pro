@@ -20,6 +20,12 @@ import {
   advanceOnboardingStep,
   activateClientFromLead,
 } from "../services/leadJourneyActions";
+import {
+  assertAuthorizedServiceProceedOrOverride,
+  evaluateDoNotServeBatch,
+  evaluateDoNotServeCandidate,
+  resolvePracticeOrgOwnerId,
+} from "../services/doNotServeService";
 
 const leadStatusEnum = z.enum([
   "New",
@@ -47,17 +53,66 @@ const inquiryStudentSchema = z.object({
 
 export const leadsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
-    return await db.getLeadsByOwner(ctx.user.id);
+    const rows = await db.getLeadsByOwner(ctx.user.id);
+    if (!ctx.staffAccess?.isStaff || !rows?.length) return rows;
+    const ownerId = resolvePracticeOrgOwnerId(ctx);
+    const evalMap = await evaluateDoNotServeBatch(
+      rows.map((r: any) => ({
+        key: String(r.id),
+        contactIds: [r.contactId],
+        phones: [r.parentPhone],
+        names: [r.parentName],
+        targetEntityType: "lead",
+        targetEntityId: String(r.id),
+        staffUserId: ctx.user?.id,
+      })),
+      ownerId
+    );
+    return rows.map((r: any) => ({
+      ...r,
+      doNotServeEvaluation: evalMap[String(r.id)] || null,
+    }));
   }),
 
   listHydrated: protectedProcedure.query(async ({ ctx }) => {
-    return await listHydratedLeads(ctx.user.id);
+    const rows = await listHydratedLeads(ctx.user.id);
+    if (!ctx.staffAccess?.isStaff || !rows?.length) return rows;
+    const ownerId = resolvePracticeOrgOwnerId(ctx);
+    const evalMap = await evaluateDoNotServeBatch(
+      rows.map((r: any) => ({
+        key: String(r.id),
+        contactIds: [r.contactId, r.parentContactId],
+        phones: [r.parentPhone, r.phone],
+        emails: [r.parentEmail, r.email],
+        names: [r.parentName],
+        targetEntityType: "lead",
+        targetEntityId: String(r.id),
+        staffUserId: ctx.user?.id,
+      })),
+      ownerId
+    );
+    return rows.map((r: any) => ({
+      ...r,
+      doNotServeEvaluation: evalMap[String(r.id)] || null,
+    }));
   }),
 
   get: adminProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      return await db.getLeadById(input.id, ctx.user.id);
+      const lead = await db.getLeadById(input.id, ctx.user.id);
+      if (!lead) return lead;
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+      const ev = await evaluateDoNotServeCandidate({
+        ownerId,
+        contactIds: [(lead as any).contactId],
+        phones: [(lead as any).parentPhone],
+        names: [(lead as any).parentName],
+        targetEntityType: "lead",
+        targetEntityId: String(input.id),
+        staffUserId: ctx.user?.id,
+      }).catch(() => null);
+      return { ...lead, doNotServeEvaluation: ev };
     }),
 
   getWorkspace: protectedProcedure
@@ -73,7 +128,19 @@ export const leadsRouter = router({
       if (!ws) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Lead workspace not found" });
       }
-      return ws;
+      if (!ctx.staffAccess?.isStaff) return ws;
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+      const ev = await evaluateDoNotServeCandidate({
+        ownerId,
+        contactIds: [(ws as any).contactId, (ws as any).parentContact?.id],
+        phones: [(ws as any).parentPhone, (ws as any).parentContact?.phone],
+        emails: [(ws as any).parentEmail, (ws as any).parentContact?.email],
+        names: [(ws as any).parentName],
+        targetEntityType: "lead",
+        targetEntityId: String(targetId),
+        staffUserId: ctx.user?.id,
+      }).catch(() => null);
+      return { ...ws, doNotServeEvaluation: ev };
     }),
 
   checkMatches: protectedProcedure
@@ -87,10 +154,26 @@ export const leadsRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      return await checkInquiryMatches({
+      const res = await checkInquiryMatches({
         ownerId: ctx.user.id,
         ...input,
       });
+      if (!ctx.staffAccess?.isStaff) return res;
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+      const fullName = `${input.parentFirstName || ""} ${input.parentLastName || ""}`.trim();
+      const doNotServeEvaluation = await evaluateDoNotServeCandidate({
+        ownerId,
+        phones: [input.parentPhone],
+        emails: [input.parentEmail],
+        names: [fullName],
+        targetEntityType: "inquiry_draft",
+        targetEntityId: input.parentEmail || input.parentPhone || fullName || "draft",
+        staffUserId: ctx.user?.id,
+      }).catch(() => null);
+      return {
+        ...res,
+        doNotServeEvaluation,
+      };
     }),
 
   createInquiry: protectedProcedure
@@ -117,11 +200,29 @@ export const leadsRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await createServiceInquiry({
+      const created = await createServiceInquiry({
         ownerId: ctx.user.id,
         actorName: ctx.user.name || ctx.user.email || "Waypoint Staff",
         ...input,
       });
+      if (!ctx.staffAccess?.isStaff) return created;
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+      const leadId = (created as any)?.leadId || (created as any)?.lead?.id;
+      const parentId = (created as any)?.parentContactId || input.existingContactId;
+      const doNotServeEvaluation = await evaluateDoNotServeCandidate({
+        ownerId,
+        contactIds: [parentId],
+        phones: [input.parent.phone],
+        emails: [input.parent.email],
+        names: [`${input.parent.firstName} ${input.parent.lastName || ""}`.trim()],
+        targetEntityType: "lead",
+        targetEntityId: String(leadId || parentId || "inquiry"),
+        staffUserId: ctx.user?.id,
+      }).catch(() => null);
+      return {
+        ...created,
+        doNotServeEvaluation,
+      };
     }),
 
   logCallToLead: protectedProcedure
@@ -184,9 +285,23 @@ export const leadsRouter = router({
         assignedAdvocateName: z.string().optional(),
         timeZone: z.string().optional(),
         notes: z.string().optional(),
+        doNotServeOverrideReason: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const lead = await db.getLeadById(input.leadId, ctx.user.id);
+      if (lead) {
+        await assertAuthorizedServiceProceedOrOverride({
+          ctx,
+          channel: "lead_discovery_booking",
+          targetEntityType: "lead",
+          targetEntityId: String(input.leadId),
+          contactIds: [(lead as any).contactId],
+          phones: [(lead as any).parentPhone],
+          names: [(lead as any).parentName],
+          overrideReason: input.doNotServeOverrideReason,
+        });
+      }
       return await scheduleLeadDiscovery({
         ownerId: ctx.user.id,
         leadId: input.leadId,
@@ -367,9 +482,23 @@ export const leadsRouter = router({
         paymentReference: z.string().optional(),
         recipient: z.string().optional(),
         messageContent: z.string().optional(),
+        doNotServeOverrideReason: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const lead = await db.getLeadById(input.leadId, ctx.user.id);
+      if (lead) {
+        await assertAuthorizedServiceProceedOrOverride({
+          ctx,
+          channel: `lead_onboarding_${input.action}`,
+          targetEntityType: "lead",
+          targetEntityId: String(input.leadId),
+          contactIds: [(lead as any).contactId],
+          phones: [(lead as any).parentPhone],
+          names: [(lead as any).parentName],
+          overrideReason: input.doNotServeOverrideReason,
+        });
+      }
       try {
         return await advanceOnboardingStep({
           ownerId: ctx.user.id,
@@ -385,8 +514,21 @@ export const leadsRouter = router({
     }),
 
   activateClient: protectedProcedure
-    .input(z.object({ leadId: z.number() }))
+    .input(z.object({ leadId: z.number(), doNotServeOverrideReason: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
+      const lead = await db.getLeadById(input.leadId, ctx.user.id);
+      if (lead) {
+        await assertAuthorizedServiceProceedOrOverride({
+          ctx,
+          channel: "lead_activate_client",
+          targetEntityType: "lead",
+          targetEntityId: String(input.leadId),
+          contactIds: [(lead as any).contactId],
+          phones: [(lead as any).parentPhone],
+          names: [(lead as any).parentName],
+          overrideReason: input.doNotServeOverrideReason,
+        });
+      }
       try {
         return await activateClientFromLead({
           ownerId: ctx.user.id,
@@ -458,13 +600,25 @@ export const leadsRouter = router({
         }
       }
 
-      return await db.createLead(
+      const created = await db.createLead(
         {
           ...input,
           contactId,
         },
         ctx.user.id
       );
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+      const leadId = (created as any)?.id || (created as any)?.insertId;
+      const doNotServeEvaluation = await evaluateDoNotServeCandidate({
+        ownerId,
+        contactIds: [contactId],
+        phones: [input.parentPhone],
+        names: [input.parentName],
+        targetEntityType: "lead",
+        targetEntityId: String(leadId || contactId || "lead"),
+        staffUserId: ctx.user?.id,
+      }).catch(() => null);
+      return { ...(created as any), doNotServeEvaluation };
     }),
 
   update: adminProcedure

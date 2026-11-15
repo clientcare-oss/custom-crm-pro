@@ -17,6 +17,10 @@ import {
   reassignAppointment,
   StaffStatus,
 } from "../services/staffAvailabilityService";
+import {
+  assertAuthorizedServiceProceedOrOverride,
+  checkAndHoldAutomatedSend,
+} from "../services/doNotServeService";
 
 export const appointmentsRouter = router({
 
@@ -138,19 +142,32 @@ export const appointmentsRouter = router({
           status: "Scheduled",
           parentPhone: resolvedParentPhone ?? input.parentName ? resolvedParentPhone : undefined,
         }, owner.id);
+        // Evaluate Do Not Serve for internal review & automated send holds (never exposed publicly)
+        const bookedAptId = (appointment as any)?.insertId || (appointment as any)?.id || new Date(input.startTime).getTime();
+        const dnsHold = await checkAndHoldAutomatedSend({
+          ownerId: owner.id,
+          channel: "public_booking",
+          targetEntityType: "appointment",
+          targetEntityId: String(bookedAptId),
+          contactIds: [input.clientId],
+          phones: [resolvedParentPhone],
+          names: [input.parentName],
+          description: `Public booking submitted for "${input.title}" — automated confirmation held pending Do Not Serve review.`,
+        }).catch(() => ({ hold: false, evaluation: null as any }));
+
         // Notify owner of new booking
         try {
+          const dnsPrefix = dnsHold.evaluation?.hasActiveMatch ? "[Do Not Serve Review Required] " : "";
           await notifyOwner({
-            title: "New Appointment Booking",
+            title: `${dnsPrefix}New Appointment Booking`,
             content: `${input.title} scheduled for ${new Date(input.startTime).toLocaleString()}`,
           });
         } catch (e) {
           console.error("[Notification] Failed to notify owner of booking:", e);
         }
-        if (input.clientId) {
+        if (input.clientId && !dnsHold.hold) {
           try {
             const { triggerAutomationFlow } = await import("../db/automations");
-            const bookedAptId = (appointment as any)?.insertId || (appointment as any)?.id || new Date(input.startTime).getTime();
             const aptKey = `apt_book_${bookedAptId}_${input.clientId}`;
             await triggerAutomationFlow("meeting_scheduled", input.clientId, false, {
               eventKey: aptKey,
@@ -202,9 +219,25 @@ export const appointmentsRouter = router({
           clientTimeZone: z.string().optional(),
           originalTimeZone: z.string().optional(),
           adminOverride: z.boolean().optional(),
+          doNotServeOverrideReason: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
+        await assertAuthorizedServiceProceedOrOverride({
+          ctx,
+          channel: "appointments_create",
+          targetEntityType: input.clientId
+            ? "contact"
+            : input.leadId
+            ? "lead"
+            : "appointment_draft",
+          targetEntityId: String(input.clientId || input.leadId || input.parentPhone || input.title),
+          contactIds: [input.clientId, input.parentContactId],
+          phones: [input.parentPhone],
+          names: [input.parentName],
+          overrideReason: input.doNotServeOverrideReason,
+        });
+
         // Enforce Operational Hard Block check unless adminOverride is provided
         if (!input.adminOverride) {
           try {

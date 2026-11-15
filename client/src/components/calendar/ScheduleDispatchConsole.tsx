@@ -57,6 +57,8 @@ import {
 } from "./scheduleDispatchRegistry";
 import type { ScheduleActionType } from "./MasterScheduleModal";
 import { broadcastPageId } from "@/lib/pageIdRegistry";
+import { DoNotServeChannelGuard } from "@/components/do-not-serve/DoNotServeChannelGuard";
+import { isDoNotServeReviewError } from "@/components/do-not-serve/doNotServeStyles";
 
 export interface ScheduleDispatchConsoleProps {
   initialDate?: Date;
@@ -544,13 +546,63 @@ export default function ScheduleDispatchConsole({
   };
 
   // MUTATIONS
+  const [dnsForceOpenKey, setDnsForceOpenKey] = useState(0);
+  const [dnsOverrideReason, setDnsOverrideReason] = useState("");
+
+  const activeSelectedContactId = useMemo(() => {
+    const raw =
+      activeMode === "MEETINGS"
+        ? mStudentId || mParentId
+        : activeMode === "CLIENT_SESSIONS"
+        ? csStudentId || csParentId
+        : activeMode === "HOLDS"
+        ? hStudentId || hParentId
+        : activeMode === "BLUEPRINT"
+        ? bpStudentId || bpParentId
+        : "";
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [
+    activeMode,
+    mStudentId,
+    mParentId,
+    csStudentId,
+    csParentId,
+    hStudentId,
+    hParentId,
+    bpStudentId,
+    bpParentId,
+  ]);
+
+  useEffect(() => {
+    setDnsForceOpenKey(0);
+    setDnsOverrideReason("");
+  }, [activeSelectedContactId]);
+
+  const { data: dispatchDnsEval } = trpc.doNotServe.evaluateCandidate.useQuery(
+    {
+      contactId: activeSelectedContactId || undefined,
+      channel: "schedule_dispatch",
+      targetEntityType: "contact",
+      targetEntityId: String(activeSelectedContactId || "dispatch"),
+    },
+    { enabled: Boolean(activeSelectedContactId) }
+  );
+
   const createAppointmentMutation = trpc.appointments.create.useMutation({
     onSuccess: () => {
       utils.appointments.invalidate();
       utils.proposedMeetings.invalidate();
       onSuccess();
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      if (isDoNotServeReviewError(err)) {
+        setDnsForceOpenKey((k) => k + 1);
+        toast.info("Review Do Not Serve restriction before scheduling.");
+        return;
+      }
+      toast.error(err.message);
+    },
   });
 
   const createProposedMeetingMutation = trpc.proposedMeetings.create.useMutation({
@@ -607,6 +659,7 @@ export default function ScheduleDispatchConsole({
         studentName,
         clientTimeZone: student?.timezone || "America/New_York",
         assignedAdvocateName: mAdvocate,
+        doNotServeOverrideReason: dnsOverrideReason || undefined,
       },
       {
         onSuccess: () => toast.success(`${meetingType} scheduled successfully!`),
@@ -649,6 +702,7 @@ export default function ScheduleDispatchConsole({
         studentName,
         clientTimeZone: student?.timezone || "America/New_York",
         assignedAdvocateName: csAdvocate,
+        doNotServeOverrideReason: dnsOverrideReason || undefined,
       },
       {
         onSuccess: () => toast.success(`${clientSessionType} session scheduled!`),
@@ -795,6 +849,7 @@ export default function ScheduleDispatchConsole({
         studentName,
         clientTimeZone: student?.timezone || "America/New_York",
         assignedAdvocateName: bpAdvocate,
+        doNotServeOverrideReason: dnsOverrideReason || undefined,
       },
       {
         onSuccess: () =>
@@ -993,6 +1048,18 @@ export default function ScheduleDispatchConsole({
 
           {/* Right: Glowing Brass Lantern and Close Button */}
           <div className="flex items-center gap-4 relative">
+            <DoNotServeChannelGuard
+              evaluation={dispatchDnsEval}
+              channel="schedule_dispatch"
+              targetEntityType="contact"
+              targetEntityId={String(activeSelectedContactId || "dispatch")}
+              requireServiceOverride={true}
+              forceOpenKey={dnsForceOpenKey}
+              onAuthorizedOverride={(reason) => {
+                setDnsOverrideReason(reason);
+                toast.success("Authorized override reason saved. Click Schedule again to confirm.");
+              }}
+            />
             <GlowingBrassLantern className="h-16 w-14 shrink-0" />
 
             <button

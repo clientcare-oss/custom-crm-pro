@@ -38,6 +38,8 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   
   // Tools & Workspaces
   "/tools":                           { id: "PG-010", name: "Tools Hub", category: "Tools" },
+  "/tools/waypoint-places":           { id: "PG-010-PLC", name: "Waypoint Places", category: "Tools", description: "Family relocation intelligence platform, Georgia MapLibre/PMTiles explorer, and Places Studio" },
+  "/waypoint-places":                 { id: "PG-010-PLC", name: "Waypoint Places Explorer", category: "Tools", description: "Independently deployable public Waypoint Places family relocation intelligence explorer" },
   "/tools/voyage-recorder":           { id: "PG-010-REC", name: "Voyage Meeting Recorder", category: "Tools" },
   "/tools/worksheet-builder":         { id: "PG-010-WS", name: "Worksheet Studio", category: "Tools" },
   "/tools/iep-comparator":            { id: "PG-010-IEP", name: "IEP Comparator", category: "Tools" },
@@ -55,6 +57,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/automations/ai":                  { id: "PG-013-AI", name: "Locked AI Prompt Vault", category: "Automation", description: "Secure executive library prompts and AI model configuration" },
   "/automations/prompts":             { id: "PG-013-AI", name: "Locked AI Prompt Vault", category: "Automation", description: "Secure executive library prompts and AI model configuration" },
   "/integrations":                    { id: "PG-014", name: "Integrations & API", category: "Settings" },
+  "/integrations/myco":               { id: "PG-014-MYC", name: "Myco Collective Memory & CRM Bridge", category: "Integrations", description: "Persistent AI coding agent MCP memory (.myco/spores.json) and live CRM webhook/spore sync" },
   "/integrations/quo":                { id: "PG-014-QUO", name: "Quo Integration Settings", category: "Integrations" },
   "/settings/integrations/quo":       { id: "PG-014-QUO", name: "Quo Integration Settings", category: "Integrations" },
   "/workflows":                       { id: "PG-015", name: "Workflow Pipelines", category: "Automation" },
@@ -119,6 +122,8 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/settings/receipts":               { id: "PG-024-REC", name: "Company Settings → Receipts", category: "Settings", description: "Administrative control center for Waypoint payment receipt experience" },
   "/settings/import":                 { id: "PG-024-IMP", name: "Settings → Client CRM Import", category: "Settings", description: "Import existing client rosters and case records from external CRMs or CSV spreadsheets" },
   "/receipt":                         { id: "PG-047", name: "Waypoint Payment Receipt", category: "Billing", description: "Official branded Waypoint payment confirmation terminal and receipt" },
+  "/archive":                         { id: "PG-048", name: "Archive", category: "CRM", description: "Staff-only archived records and Do Not Serve restriction register" },
+  "/do-not-serve":                    { id: "PG-048-DNS", name: "Archive → Do Not Serve", category: "CRM", description: "Internal staff-only restriction register, matching alerts, and audit trail" },
   "/page-id-showcase":                { id: "PG-026", name: "Page ID Showcase", category: "System" },
   "/archived/pg-030":                 { id: "PG-030-ARC", name: "Legacy Student Workspace", category: "Archived", description: "Preserved original PG-030 for feature parity and reference" },
   
@@ -703,6 +708,16 @@ export function resolvePageId(pathname: string, search = ""): PageIdInfo {
       return MEETING_WORKSPACE_TAB_IDS[tabParam];
     }
     return MEETING_WORKSPACE_TAB_IDS["assemble"];
+  }
+
+  // Check Archive local views (/archive?view=do-not-serve)
+  if (cleanPath === "/archive") {
+    const urlParams = new URLSearchParams(search || (typeof window !== "undefined" ? window.location.search : ""));
+    const viewParam = (urlParams.get("view") || urlParams.get("tab") || "").toLowerCase();
+    if (viewParam === "do-not-serve" || viewParam === "do_not_serve") {
+      return PAGE_IDS["/do-not-serve"];
+    }
+    return PAGE_IDS["/archive"];
   }
 
   // 1. Direct exact match

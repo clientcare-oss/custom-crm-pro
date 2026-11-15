@@ -12,6 +12,7 @@ import {
 } from "../db/supportOffers";
 import { recordCaseActivity } from "../services/caseActivityService";
 import { getContactById } from "../db/contacts";
+import { assertAuthorizedServiceProceedOrOverride } from "../services/doNotServeService";
 
 export const supportOffersRouter = router({
   /**
@@ -151,6 +152,7 @@ export const supportOffersRouter = router({
     .input(
       z.object({
         id: z.number(),
+        doNotServeOverrideReason: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -159,6 +161,15 @@ export const supportOffersRouter = router({
       if (!existing) {
         throw new Error("Offer not found");
       }
+
+      await assertAuthorizedServiceProceedOrOverride({
+        ctx,
+        channel: "support_offer_send",
+        targetEntityType: "contact",
+        targetEntityId: String(existing.parentContactId || existing.studentId),
+        contactIds: [existing.parentContactId, existing.studentId],
+        overrideReason: input.doNotServeOverrideReason,
+      });
 
       const updated = await sendOffer(input.id, actor);
 

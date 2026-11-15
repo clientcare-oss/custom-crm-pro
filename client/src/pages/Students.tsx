@@ -48,6 +48,14 @@ import {
   CollapsibleStudentsPipeline,
   type PipelineActiveFilterSummary,
 } from "@/components/students/CollapsibleStudentsPipeline";
+import {
+  BlacklistClientDrawer,
+  type BlacklistClientTarget,
+} from "@/components/do-not-serve/BlacklistClientDrawer";
+import { DoNotServeDetailDrawer } from "@/components/do-not-serve/DoNotServeDetailDrawer";
+import { DoNotServePostSaveUndoBanner } from "@/components/do-not-serve/DoNotServeChannelGuard";
+import { DoNotServeMatchModal } from "@/components/do-not-serve/DoNotServeAlertComponents";
+import type { DoNotServeMatchEvaluation } from "@shared/doNotServe";
 
 export default function Students() {
   const [, setLocation] = useLocation();
@@ -57,6 +65,24 @@ export default function Students() {
   const { data: rawContacts, isLoading, refetch } = trpc.contacts.list.useQuery();
   const { data: pipelineStages } = trpc.pipeline.stages.list.useQuery();
   const { data: pipelineCards } = trpc.pipeline.cards.list.useQuery();
+  const { data: restrictedContactMap } = trpc.doNotServe.getActiveContactFlags.useQuery();
+
+  const [blacklistTarget, setBlacklistTarget] = useState<BlacklistClientTarget | null>(null);
+  const [detailEntryId, setDetailEntryId] = useState<number | null>(null);
+  const [savedRestriction, setSavedRestriction] = useState<{ entryId: number; displayName: string } | null>(null);
+  const [newStudentMatchEval, setNewStudentMatchEval] = useState<{
+    evaluation: DoNotServeMatchEvaluation;
+    contactId: string;
+  } | null>(null);
+
+  const handleOpenBlacklistFromStudent = (s: StudentFolderData) => {
+    setBlacklistTarget({
+      contactId: s.id,
+      name: `${s.firstName} ${s.lastName}`.trim() || "Archived Client",
+      phone: s.phone || null,
+      email: s.email || null,
+    });
+  };
 
   const [studentStageOverrides, setStudentStageOverrides] = useState<Record<number, string>>({});
   const [studentEmployeeOverrides, setStudentEmployeeOverrides] = useState<Record<number, string>>({});
@@ -441,6 +467,12 @@ export default function Students() {
   const createMutation = trpc.contacts.create.useMutation({
     onSuccess: (data: any) => {
       toast.success("Student & parent file added to active cabinet!");
+      if (data?.doNotServeEvaluation?.hasActiveMatch) {
+        setNewStudentMatchEval({
+          evaluation: data.doNotServeEvaluation,
+          contactId: String(data.id || 0),
+        });
+      }
       if (data?.id && formData.markerType && formData.markerType !== "none") {
         handleMarkerChange(data.id, formData.markerType);
       }
@@ -677,6 +709,19 @@ export default function Students() {
         ? getDefaultNextRequiredAction(resolvedStage)
         : pCard?.primaryTask || c.primaryTask || getDefaultNextRequiredAction(resolvedStage);
 
+      const stageLower = (resolvedStage || "").toLowerCase();
+      const accountLower = (c.accountStatus || "").toLowerCase();
+      const lowerTags = resolvedTags.map((t) => t.toLowerCase());
+      const isArchivedRecord =
+        Boolean((c as any).archivedAt) ||
+        accountLower === "closed" ||
+        stageLower === "closed" ||
+        lowerTags.includes("archive") ||
+        lowerTags.includes("archived");
+      const flag =
+        restrictedContactMap?.[c.id] ||
+        (c.parentContactId ? restrictedContactMap?.[c.parentContactId] : undefined);
+
       return {
         id: c.id,
         firstName: c.firstName || "",
@@ -703,9 +748,15 @@ export default function Students() {
         bookmarked: resolvedStage === "IEP Active",
         markerType: studentMarkers[c.id],
         tags: resolvedTags,
+        archivedAt: (c as any).archivedAt ?? null,
+        phone: c.phone ?? null,
+        email: c.email ?? null,
+        isArchivedRecord,
+        isRestricted: Boolean(flag),
+        restrictedEntryId: flag?.entryId ?? null,
       };
     });
-  }, [allContacts, parentMap, studentMarkers, studentTagsMap, pipelineCardMap, studentStageOverrides, studentEmployeeOverrides]);
+  }, [allContacts, parentMap, studentMarkers, studentTagsMap, pipelineCardMap, studentStageOverrides, studentEmployeeOverrides, restrictedContactMap]);
 
   // ─── Categorization into Stages & Cabinet Compartments (Ordered/Filtered by Tags & Status) ───
   const { activeStudents, scholarshipStudents, renewalStudents, archivedStudents } = useMemo(() => {
@@ -1130,6 +1181,16 @@ export default function Students() {
           onFilterStateChange={setPipelineFilterSummary}
         />
 
+        {savedRestriction && (
+          <div className="w-full px-4 sm:px-6 md:px-10 lg:px-12 pt-3 bg-[#020712]">
+            <DoNotServePostSaveUndoBanner
+              savedEntry={savedRestriction}
+              onDismiss={() => setSavedRestriction(null)}
+              onOpenEntry={(id) => setDetailEntryId(id)}
+            />
+          </div>
+        )}
+
         {/* ─── 3. Content Area: Clean Full-Bleed Table List View OR Full-Bleed Physical Filing Credenza ─── */}
         {viewMode === "list" ? (
           <div className="w-full max-w-full min-w-0 flex-1 flex flex-col pt-3 pb-12">
@@ -1152,6 +1213,8 @@ export default function Students() {
                 onAssignTag={handleAssignTag}
                 onRemoveTag={handleRemoveTag}
                 onOpenManageCompanyTags={() => setManageTagsOpen(true)}
+                onBlacklistClient={handleOpenBlacklistFromStudent}
+                onOpenRestriction={(id) => setDetailEntryId(id)}
               />
             )}
           </div>
@@ -1275,6 +1338,8 @@ export default function Students() {
                       onStageChange={handleAssignStage}
                       onEmployeeChange={handleAssignEmployee}
                       availableStages={availableStageNames}
+                      onBlacklistClient={handleOpenBlacklistFromStudent}
+                      onOpenRestriction={(id) => setDetailEntryId(id)}
                       viewMode="cards"
                     />
                   </div>
@@ -1593,6 +1658,36 @@ export default function Students() {
           companyTags={companyTags}
           onSaveTag={handleSaveCompanyTag}
           onDeleteTag={handleDeleteCompanyTag}
+        />
+
+        <BlacklistClientDrawer
+          open={Boolean(blacklistTarget)}
+          onOpenChange={(open) => {
+            if (!open) setBlacklistTarget(null);
+          }}
+          target={blacklistTarget}
+          onSaved={(res) => setSavedRestriction(res)}
+          onOpenExistingEntry={(id) => setDetailEntryId(id)}
+        />
+
+        <DoNotServeDetailDrawer
+          entryId={detailEntryId}
+          open={Boolean(detailEntryId)}
+          onOpenChange={(open) => {
+            if (!open) setDetailEntryId(null);
+          }}
+        />
+
+        <DoNotServeMatchModal
+          open={Boolean(newStudentMatchEval)}
+          onOpenChange={(open) => {
+            if (!open) setNewStudentMatchEval(null);
+          }}
+          evaluation={newStudentMatchEval?.evaluation}
+          channel="student_create"
+          targetEntityType="contact"
+          targetEntityId={newStudentMatchEval?.contactId || "0"}
+          onViewRestriction={(id) => setDetailEntryId(id)}
         />
       </div>
     </ScopedErrorBoundary>

@@ -20,6 +20,11 @@ import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import MetalPlaqueButton from "@/components/ui/MetalPlaqueButton";
 import ContactsLedgerView from "@/components/contact/ledger/ContactsLedgerView";
 import ContactImportModal from "@/components/contact/ContactImportModal";
+import type { DoNotServeMatchEvaluation } from "@shared/doNotServe";
+import { DoNotServeChannelGuard } from "@/components/do-not-serve/DoNotServeChannelGuard";
+import { DoNotServeMatchModal } from "@/components/do-not-serve/DoNotServeAlertComponents";
+import { DoNotServeDetailDrawer } from "@/components/do-not-serve/DoNotServeDetailDrawer";
+import { hasUnresolvedMatch } from "@/components/do-not-serve/doNotServeStyles";
 
 export default function Contacts() {
   const { user } = useAuth();
@@ -47,6 +52,34 @@ export default function Contacts() {
   const { data: contacts, isLoading, refetch } = trpc.contacts.list.useQuery();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [postCreateDns, setPostCreateDns] = useState<{
+    evaluation: DoNotServeMatchEvaluation;
+    contactId: number;
+  } | null>(null);
+  const [dnsDetailEntryId, setDnsDetailEntryId] = useState<number | null>(null);
+
+  const formFullName = `${formData.firstName} ${formData.lastName}`.trim();
+  const shouldEvalDraft =
+    open &&
+    Boolean(
+      formData.email.trim().length > 4 ||
+        formData.phone.replace(/\D/g, "").length >= 10 ||
+        formFullName.split(/\s+/).filter(Boolean).length >= 2
+    );
+
+  const { data: draftDnsEval } = trpc.doNotServe.evaluateCandidate.useQuery(
+    {
+      contactId: editingId || undefined,
+      fullName: formFullName || undefined,
+      phone: formData.phone.trim() || undefined,
+      email: formData.email.trim() || undefined,
+      aliases: formData.secondParentName.trim() ? [formData.secondParentName.trim()] : undefined,
+      channel: "contact_form",
+      targetEntityType: editingId ? "contact" : "contact_draft",
+      targetEntityId: String(editingId || formData.phone || formData.email || formFullName || "draft"),
+    },
+    { enabled: shouldEvalDraft }
+  );
 
   const createMutation = trpc.contacts.create.useMutation({
     onSuccess: (data: any) => {
@@ -55,6 +88,12 @@ export default function Contacts() {
           ? "Contact & linked student file created!"
           : "Contact created successfully"
       );
+      if (hasUnresolvedMatch(data?.doNotServeEvaluation)) {
+        setPostCreateDns({
+          evaluation: data.doNotServeEvaluation,
+          contactId: Number(data?.id || 0),
+        });
+      }
       setSearchQuery("");
       utils.contacts.list.invalidate();
       utils.pipeline.cards.list.invalidate();
@@ -412,6 +451,21 @@ export default function Contacts() {
               )}
             </div>
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 min-h-0">
+                    {hasUnresolvedMatch(draftDnsEval) && (
+                      <div className="flex items-center justify-between gap-2 rounded-lg border border-[#1E3158] bg-[#040D24] px-3.5 py-2.5">
+                        <span className="text-xs text-[#C7D4EC]">
+                          Restricted record match detected on these contact details.
+                        </span>
+                        <DoNotServeChannelGuard
+                          evaluation={draftDnsEval}
+                          channel="contact_form"
+                          targetEntityType={editingId ? "contact" : "contact_draft"}
+                          targetEntityId={String(
+                            editingId || formData.phone || formData.email || formFullName || "draft"
+                          )}
+                        />
+                      </div>
+                    )}
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold">
@@ -626,6 +680,31 @@ export default function Contacts() {
             onOpenAddContact={handleOpenAddContact}
           />
         </div>
+
+        {postCreateDns && (
+          <DoNotServeMatchModal
+            open={Boolean(postCreateDns)}
+            onOpenChange={(next) => {
+              if (!next) setPostCreateDns(null);
+            }}
+            evaluation={postCreateDns.evaluation}
+            channel="contact_create"
+            targetEntityType="contact"
+            targetEntityId={String(postCreateDns.contactId)}
+            onViewRestriction={(entryId) => {
+              setPostCreateDns(null);
+              setDnsDetailEntryId(entryId);
+            }}
+          />
+        )}
+
+        <DoNotServeDetailDrawer
+          entryId={dnsDetailEntryId}
+          open={Boolean(dnsDetailEntryId)}
+          onOpenChange={(next) => {
+            if (!next) setDnsDetailEntryId(null);
+          }}
+        />
       </div>
     </ScopedErrorBoundary>
   );

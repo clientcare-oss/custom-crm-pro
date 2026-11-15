@@ -23,6 +23,8 @@ interface CabinetDrawerProps {
   onEmployeeChange?: (studentId: number, employeeName: string) => void;
   availableStages?: string[];
   viewMode?: "cards" | "list";
+  onBlacklistClient?: (student: StudentFolderData) => void;
+  onOpenRestriction?: (entryId: number) => void;
   children?: React.ReactNode;
   className?: string;
 }
@@ -51,6 +53,8 @@ export function CabinetDrawer({
   onEmployeeChange,
   availableStages,
   viewMode = "cards",
+  onBlacklistClient,
+  onOpenRestriction,
   children,
   className,
 }: CabinetDrawerProps) {
@@ -138,6 +142,8 @@ export function CabinetDrawer({
                 students={students}
                 onStudentClick={onStudentClick}
                 onParentClick={onParentClick}
+                onBlacklistClient={onBlacklistClient}
+                onOpenRestriction={onOpenRestriction}
               />
             </div>
           ) : (
@@ -167,6 +173,8 @@ export function CabinetDrawer({
                           onStageChange={onStageChange}
                           onEmployeeChange={onEmployeeChange}
                           availableStages={availableStages}
+                          onBlacklistClient={onBlacklistClient}
+                          onOpenRestriction={onOpenRestriction}
                         />
                       </div>
                     ))}

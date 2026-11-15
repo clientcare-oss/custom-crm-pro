@@ -89,7 +89,8 @@ export type AutomationRunStatus =
   | "failed"
   | "skipped"
   | "canceled"
-  | "held_paused";
+  | "held_paused"
+  | "held_restricted";
 
 export type AutomationJobStatus =
   | "queued"
@@ -99,7 +100,8 @@ export type AutomationJobStatus =
   | "skipped"
   | "canceled"
   | "held_paused"
-  | "held_overdue";
+  | "held_overdue"
+  | "held_restricted";
 
 export interface AutomationStepItem {
   id?: number;
@@ -145,6 +147,7 @@ export interface StepExecutionResultMeta {
     | "submitted_to_provider"
     | "delivered"
     | "provider_unconfigured"
+    | "suppressed_do_not_serve"
     | "completed"
     | "failed"
     | "skipped"
@@ -2184,11 +2187,25 @@ async function executeSingleAutomationStepAction(params: {
       );
     }
 
+    const { isMarketingEmailContext } = await import("../services/doNotServeMarketing");
+    const isMarketingStep = isMarketingEmailContext({
+      isMarketing: Boolean((config as Record<string, unknown>)?.isMarketing),
+      category: String((tpl as Record<string, unknown>)?.category || ""),
+      templateName: tpl.name,
+      automationName: auto.name,
+      triggerEvent,
+      subject: personalizedSubject,
+    });
+
     const deliveryResult = await sendEmailDetailed({
       to: recipientEmail,
       subject: personalizedSubject,
       html: personalizedBody,
       idempotencyKey: jobDedupKey,
+      isMarketing: isMarketingStep,
+      contactIds: [contactId, student?.id, parent?.id],
+      phone: parent?.phone || student?.phone || null,
+      channel: `automation:${auto.id}:email`,
     });
 
     if (deliveryResult.status === "failed") {
@@ -2309,7 +2326,9 @@ async function executeSingleAutomationStepAction(params: {
         ? `Submitted to Provider (Message ID: ${deliveryResult.messageId})`
         : effectiveDeliveryStatus === "delivered"
           ? `Delivered (Message ID: ${deliveryResult.messageId})`
-          : `Provider Unconfigured (No external email sent — configure Gmail in PG-014)`;
+          : effectiveDeliveryStatus === "suppressed_do_not_serve"
+            ? `Suppressed by Do Not Serve (Marketing email blocked)`
+            : `Provider Unconfigured (No external email sent — configure Gmail in PG-014)`;
 
     return {
       stepNumber: step.stepNumber,
@@ -2945,7 +2964,74 @@ async function executeAutomationsList(params: {
         continue;
       }
 
-      // Immediate Step Execution
+      // Immediate Step Execution (recheck Do Not Serve before outbound email/file sends)
+      if (step.type === "email" || step.type === "file") {
+        const { checkAndHoldAutomatedSend } = await import("../services/doNotServeService");
+        const dnsHold = await checkAndHoldAutomatedSend({
+          channel: `automation:${triggerEvent}:${step.type}`,
+          targetEntityType: "automation_run",
+          targetEntityId: String(assignedRunId),
+          contactIds: [contactId, student?.id, parent?.id],
+          phones: [student?.phone, parent?.phone],
+          emails: [student?.email, parent?.email],
+          names: [
+            student ? `${student.firstName || ""} ${student.lastName || ""}`.trim() : undefined,
+            parent ? `${parent.firstName || ""} ${parent.lastName || ""}`.trim() : undefined,
+          ],
+          description: `Held automated ${step.type} "${step.title}" in "${auto.name}" pending authorized Do Not Serve review.`,
+        });
+        if (dnsHold.hold) {
+          const jobId = nextJobId++;
+          const nowIso = now.toISOString();
+          const heldMsg = `⏸️ [Step ${step.stepNumber}] Held "${step.title}": recipient matches active Do Not Serve restriction — awaiting authorized review (Job #${jobId}).`;
+          const heldJob: AutomationJobRecord = {
+            id: jobId,
+            runId: assignedRunId,
+            automationId: auto.id,
+            automationName: auto.name,
+            contactId,
+            contactName: studentName,
+            triggerType: triggerEvent,
+            stepNumber: step.stepNumber,
+            stepIndex: Math.max(0, step.stepNumber - 1),
+            stepType: step.type,
+            stepTitle: step.title,
+            step: { ...step, config: { ...config } },
+            eventContext: eventContext ? { ...eventContext } : undefined,
+            status: "held_restricted",
+            scheduledFor: nowIso,
+            scheduledForFormatted: formatInBusinessTimeZone(now, timeZone),
+            dueDate: null,
+            appointmentId: eventContext?.appointmentId ?? null,
+            eventDate: eventContext?.eventDate ? new Date(eventContext.eventDate).toISOString() : null,
+            waitingOnStepNumber: null,
+            jobDedupKey,
+            retryCount: 0,
+            maxRetries: 3,
+            errorMessage: "Held: recipient matches active Do Not Serve restriction.",
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          };
+          inMemoryJobs.set(jobId, heldJob);
+          processedJobDedupKeys.add(jobDedupKey);
+          jobsCreated.push(heldJob);
+          await persistJobToDb(heldJob);
+          logs.push(heldMsg);
+          autoLogs.push(heldMsg);
+          stepResults.push({
+            stepNumber: step.stepNumber,
+            stepTitle: step.title,
+            stepType: step.type,
+            status: "held_restricted" as any,
+            detail: heldMsg,
+            jobId,
+          });
+          runStatus = "held_restricted";
+          prevStepQueued = true;
+          continue;
+        }
+      }
+
       try {
         const stepMeta = await executeSingleAutomationStepAction({
           auto,
@@ -2988,7 +3074,7 @@ async function executeAutomationsList(params: {
     }
 
     if (!dryRun) {
-      if (runStatus !== "failed") {
+      if (runStatus !== "failed" && runStatus !== "held_restricted") {
         if (queuedStepsCount > 0) {
           runStatus = "queued";
         } else if (executedStepsCount === 0 && steps.length > 0) {
@@ -3031,12 +3117,14 @@ async function executeAutomationsList(params: {
     ? "simulated"
     : runsCreated.some((r) => r.status === "failed")
       ? "failed"
-      : runsCreated.some((r) => r.status === "queued")
-        ? "queued"
-        : runsCreated.some((r) => r.status === "skipped") &&
-            runsCreated.every((r) => r.status === "skipped")
-          ? "skipped"
-          : "completed";
+      : runsCreated.some((r) => r.status === "held_restricted")
+        ? "held_restricted"
+        : runsCreated.some((r) => r.status === "queued")
+          ? "queued"
+          : runsCreated.some((r) => r.status === "skipped") &&
+              runsCreated.every((r) => r.status === "skipped")
+            ? "skipped"
+            : "completed";
 
   return {
     success: runsCreated.every((r) => r.status !== "failed"),
@@ -3205,6 +3293,35 @@ export async function processDueAutomationJobs(
         }
       }
 
+      // 3b. Recheck Do Not Serve immediately before sending queued outbound email/file actions
+      if (job.step.type === "email" || job.step.type === "file") {
+        const { checkAndHoldAutomatedSend } = await import("../services/doNotServeService");
+        const dnsHold = await checkAndHoldAutomatedSend({
+          channel: `queued_automation:${job.triggerType}:${job.step.type}`,
+          targetEntityType: "automation_job",
+          targetEntityId: String(job.id),
+          contactIds: [job.contactId, student?.id, parent?.id],
+          phones: [student?.phone, parent?.phone],
+          emails: [student?.email, parent?.email],
+          names: [
+            student ? `${student.firstName || ""} ${student.lastName || ""}`.trim() : undefined,
+            parent ? `${parent.firstName || ""} ${parent.lastName || ""}`.trim() : undefined,
+          ],
+          description: `Held queued ${job.step.type} job #${job.id} ("${job.stepTitle}") immediately prior to send due to active Do Not Serve match.`,
+        });
+        if (dnsHold.hold) {
+          job.status = "held_restricted";
+          job.errorMessage =
+            "Held before send: recipient matches an active Do Not Serve restriction — awaiting authorized review.";
+          job.updatedAt = nowIso;
+          heldCount++;
+          logs.push(`⏸️ Job #${job.id} held before send due to active Do Not Serve restriction.`);
+          await persistJobToDb(job);
+          await syncParentRunFromJobState(job.runId, nowIso);
+          continue;
+        }
+      }
+
       // 4. Execute the step action
       const stepDueDate = job.dueDate ? new Date(job.dueDate) : now;
       const resultMeta = await executeSingleAutomationStepAction({
@@ -3337,8 +3454,9 @@ async function syncParentRunFromJobState(
 
   const anyFailed = jobsForRun.some((j) => j.status === "failed");
   const anyProcessing = jobsForRun.some((j) => j.status === "processing");
+  const anyRestrictedHeld = jobsForRun.some((j) => j.status === "held_restricted");
   const anyHeld = jobsForRun.some(
-    (j) => j.status === "held_paused" || j.status === "held_overdue"
+    (j) => j.status === "held_paused" || j.status === "held_overdue" || j.status === "held_restricted"
   );
   const anyQueued = jobsForRun.some((j) => j.status === "queued");
   const allCanceled = jobsForRun.every((j) => j.status === "canceled");
@@ -3350,6 +3468,8 @@ async function syncParentRunFromJobState(
     run.logText += `\n❌ [Background Queue Worker @ ${nowIso}] Step #${failedJob?.stepNumber} failed: ${run.errorMessage}`;
   } else if (anyProcessing) {
     run.status = "running";
+  } else if (anyRestrictedHeld) {
+    run.status = "held_restricted";
   } else if (anyHeld) {
     run.status = "held_paused";
   } else if (anyQueued) {
@@ -3386,7 +3506,7 @@ export async function cancelAutomationRun(
   for (const job of Array.from(inMemoryJobs.values())) {
     if (
       job.runId === runId &&
-      (job.status === "queued" || job.status === "held_paused" || job.status === "held_overdue")
+      (job.status === "queued" || job.status === "held_paused" || job.status === "held_overdue" || job.status === "held_restricted")
     ) {
       job.status = "canceled";
       job.errorMessage = reason;

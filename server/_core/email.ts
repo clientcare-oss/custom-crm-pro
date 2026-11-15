@@ -6,6 +6,11 @@ export type EmailPayload = {
   html: string;
   text?: string;
   idempotencyKey?: string;
+  isMarketing?: boolean;
+  contactId?: number | null;
+  contactIds?: Array<number | null | undefined>;
+  phone?: string | null;
+  channel?: string;
 };
 
 export type EmailDeliveryStatus =
@@ -13,6 +18,7 @@ export type EmailDeliveryStatus =
   | "submitted_to_provider"
   | "delivered"
   | "provider_unconfigured"
+  | "suppressed_do_not_serve"
   | "failed";
 
 export interface EmailDeliveryResult {
@@ -24,6 +30,7 @@ export interface EmailDeliveryResult {
   missingConfig?: string[];
   error?: string;
   uncertainDelivery?: boolean;
+  suppressedByDoNotServe?: boolean;
 }
 
 type MockEmailTransport = (
@@ -133,6 +140,36 @@ export async function sendEmailDetailed(
       status: "failed",
       error: "Missing required email body content.",
     };
+  }
+
+  // Enforce Do Not Serve / Blacklist marketing email suppression across all outbound email transports
+  const { isMarketingEmailContext, checkMarketingEmailSuppression } = await import(
+    "../services/doNotServeMarketing"
+  );
+  if (
+    payload.isMarketing === true ||
+    isMarketingEmailContext({ isMarketing: payload.isMarketing, subject: payload.subject })
+  ) {
+    const dnsCheck = await checkMarketingEmailSuppression({
+      contactIds: [payload.contactId, ...(payload.contactIds || [])],
+      emails: [recipient],
+      phones: [payload.phone],
+      channel: payload.channel || "outbound_marketing_email",
+      targetEntityType: "email_send",
+      targetEntityId: payload.idempotencyKey || recipient,
+      subject: payload.subject,
+    });
+    if (dnsCheck.suppressed) {
+      return {
+        sent: false,
+        status: "suppressed_do_not_serve",
+        suppressedByDoNotServe: true,
+        provider: "Waypoint Do Not Serve Guard",
+        error:
+          dnsCheck.reason ||
+          "Recipient is listed under Do Not Serve / Blacklist — marketing emails are suppressed.",
+      };
+    }
   }
 
   if (_mockEmailTransportForTests) {

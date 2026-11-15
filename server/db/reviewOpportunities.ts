@@ -41,7 +41,27 @@ export interface ReviewOpportunityParams {
 export async function evaluateReviewEligibility(
   accountId: number
 ): Promise<ReviewEligibilityResult> {
-  const { tracker } = await getReviewTrackerByAccountId(accountId);
+  const { tracker, parentContact, students } = await getReviewTrackerByAccountId(accountId);
+
+  // 0. Do Not Serve / Blacklist marketing & review solicitation suppression
+  const { checkMarketingEmailSuppression } = await import("../services/doNotServeMarketing");
+  const dnsCheck = await checkMarketingEmailSuppression({
+    contactIds: [accountId, ...students.map((s) => s.id)],
+    emails: [parentContact?.email],
+    phones: [parentContact?.phone],
+    channel: "review_eligibility",
+    targetEntityType: "review_tracker",
+    targetEntityId: String(accountId),
+    recordAudit: false,
+  });
+  if (dnsCheck.suppressed) {
+    return {
+      isEligible: false,
+      reason: "Client is listed under Do Not Serve / Blacklist — marketing and review emails are suppressed.",
+      currentStatus: "suppressed",
+      tracker,
+    };
+  }
 
   if (!tracker) {
     return {
@@ -178,10 +198,52 @@ export async function createReviewOpportunity(params: ReviewOpportunityParams): 
 
   // 3. Smart Eligibility Check across parent account
   const eligibility = await evaluateReviewEligibility(params.accountId);
-  if (!eligibility.isEligible && existing) {
+  if (!eligibility.isEligible) {
+    const fallbackSuppressedTracker: ClientReviewTracker = existing || {
+      id: 0,
+      parentContactId: params.accountId,
+      studentContactId: params.studentId || null,
+      status: "suppressed",
+      triggerMilestone: params.triggerMilestone,
+      milestoneEventId: params.milestoneEventId || null,
+      opportunityCreatedAt: null,
+      assignedEmployee: params.assignedEmployee || "Byron Honea",
+      reminderDate: null,
+      requestedAt: null,
+      requestedBy: null,
+      requestChannel: "email",
+      clientConfirmedAt: null,
+      clientConfirmedBy: null,
+      followUpDueAt: null,
+      lastFollowUpSentAt: null,
+      followUpCount: 0,
+      googleReviewDetected: false,
+      googleReviewUrl: null,
+      googleReviewRating: null,
+      googleReviewAuthor: null,
+      googleReviewSnippet: null,
+      googleReviewDate: null,
+      verifiedAt: null,
+      verifiedBy: null,
+      verificationNotes: null,
+      suppressionReason: eligibility.reason || "Do Not Serve restriction",
+      suppressionNotes: null,
+      suppressedAt: now,
+      suppressedBy: "Waypoint Marketing Suppression Guard",
+      thankYouStatus: "not_prepared",
+      thankYouPreparedAt: null,
+      thankYouSubject: null,
+      thankYouBody: null,
+      thankYouSentAt: null,
+      thankYouSentBy: null,
+      internalNotes: null,
+      auditTrail: "[]",
+      createdAt: now,
+      updatedAt: now,
+    };
     return {
       success: false,
-      tracker: existing,
+      tracker: fallbackSuppressedTracker,
       suppressedOrIneligibleReason: eligibility.reason,
     };
   }

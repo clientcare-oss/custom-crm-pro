@@ -8,11 +8,17 @@ import {
   Pencil, Move, Check, Undo2, Mic, Compass, 
   FileSearch, GitCompare, Gavel, BookOpen, FileSignature, 
   DollarSign, PhoneCall, Layers, ArrowUpRight,
-  Copy, UsersRound, Landmark, Zap
+  Copy, UsersRound, Landmark, Zap, Archive, FileBox
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -28,6 +34,16 @@ import { IepProfileUpdateBubble } from "@/components/students/IepProfileUpdateBu
 import { StudentCurrentFocusPanel } from "@/components/students/StudentCurrentFocusPanel";
 import { ParentContactHistoryDrawer } from "@/components/contact/ParentContactHistoryDrawer";
 import { broadcastPageId } from "@/lib/pageIdRegistry";
+import {
+  BlacklistClientDrawer,
+  type BlacklistClientTarget,
+} from "@/components/do-not-serve/BlacklistClientDrawer";
+import { DoNotServeDetailDrawer } from "@/components/do-not-serve/DoNotServeDetailDrawer";
+import {
+  DoNotServeChannelGuard,
+  DoNotServePostSaveUndoBanner,
+} from "@/components/do-not-serve/DoNotServeChannelGuard";
+import { OffboardingModal } from "@/components/contact/workspace/dialogs/OffboardingModal";
 
 export default function StudentWorkspace() {
   const params = useParams<{ id: string }>();
@@ -231,6 +247,55 @@ export default function StudentWorkspace() {
   const hasPendingVerification = !!(parentProfile?.pendingEmail || parentProfile?.pendingPhone);
   const isContactConcernActive = parentProfile?.contactConcernStatus === "active";
   const hasRecentContactUpdate = (parentProfile?.changeHistoryCount ?? 0) > 0;
+
+  // Do Not Serve & Archive state
+  const [blacklistTarget, setBlacklistTarget] = useState<BlacklistClientTarget | null>(null);
+  const [detailEntryId, setDetailEntryId] = useState<number | null>(null);
+  const [savedRestriction, setSavedRestriction] = useState<{ entryId: number; displayName: string } | null>(null);
+  const [offboardingModalOpen, setOffboardingModalOpen] = useState(false);
+
+  const { data: restrictedContactMap } = trpc.doNotServe.getActiveContactFlags.useQuery();
+  const activeRestrictionFlag =
+    (effectiveStudentId ? restrictedContactMap?.[effectiveStudentId] : undefined) ||
+    (parentContactId ? restrictedContactMap?.[parentContactId] : undefined);
+  const isArchivedStudent = Boolean(
+    (student as any)?.archivedAt || (student?.accountStatus || "").toLowerCase() === "closed"
+  );
+
+  const { data: workspaceDoNotServeEval } = trpc.doNotServe.evaluateCandidate.useQuery(
+    {
+      contactId: effectiveStudentId,
+      fullName: student ? `${student.firstName} ${student.lastName}`.trim() : undefined,
+      phone: parent?.phone || student?.phone || undefined,
+      email: parent?.email || student?.email || undefined,
+      channel: "student_workspace",
+      targetEntityType: "contact",
+      targetEntityId: String(effectiveStudentId),
+    },
+    { enabled: Boolean(effectiveStudentId && student) }
+  );
+
+  const archiveStudentMutation = trpc.contacts.archive.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.contacts.detail.invalidate({ id: routeIdentifier }),
+        utils.contacts.list.invalidate(),
+      ]);
+      toast.success("Record archived.");
+    },
+    onError: (err) => toast.error(err.message || "Unable to archive record."),
+  });
+
+  const unarchiveStudentMutation = trpc.contacts.unarchive.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.contacts.detail.invalidate({ id: routeIdentifier }),
+        utils.contacts.list.invalidate(),
+      ]);
+      toast.success("Record unarchived. Any active Do Not Serve restriction remains unchanged.");
+    },
+    onError: (err) => toast.error(err.message || "Unable to unarchive record."),
+  });
 
   // Toggle action checkbox
   const toggleAction = (key: string) => {
@@ -484,7 +549,33 @@ export default function StudentWorkspace() {
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-2.5 shrink-0">
+            <div className="flex items-center gap-2.5 flex-wrap justify-end shrink-0">
+              <DoNotServeChannelGuard
+                evaluation={workspaceDoNotServeEval}
+                channel="student_workspace"
+                targetEntityType="contact"
+                targetEntityId={String(effectiveStudentId)}
+              />
+
+              {isArchivedStudent && !activeRestrictionFlag && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setBlacklistTarget({
+                      contactId: effectiveStudentId,
+                      name: fullName,
+                      phone: parent?.phone || student?.phone || null,
+                      email: parent?.email || student?.email || null,
+                    })
+                  }
+                  className="bg-[#051029]/90 hover:bg-[#0B1D42] border border-[#243964] hover:border-[#DFC07C]/60 text-[#EEF3FA] hover:text-[#DFC07C] text-xs font-medium rounded-lg h-8 px-3 gap-1.5 transition-all cursor-pointer"
+                >
+                  <FileBox className="h-3.5 w-3.5 text-[#DFC07C]" />
+                  <span>Blacklist client</span>
+                </Button>
+              )}
+
               <Button
                 variant="outline"
                 size="sm"
@@ -499,17 +590,94 @@ export default function StudentWorkspace() {
                 <span>Preview Parent Portal</span>
               </Button>
 
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setLocation(`/archived/students/${studentId}`)}
-                className="h-8 w-8 rounded-lg bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-200 hover:text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
-                title="More options & Legacy Workspace (PG-030-ARC)"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-200 hover:text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
+                    title="Record actions & Archive options"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="bg-[#040E24] border border-[#1E325C] text-[#EEF3FA] rounded-lg p-1 min-w-[215px]"
+                >
+                  {isArchivedStudent ? (
+                    <DropdownMenuItem
+                      onClick={() => unarchiveStudentMutation.mutate({ id: effectiveStudentId })}
+                      className="flex items-center gap-2 text-xs py-2 cursor-pointer hover:bg-white/10 rounded-md"
+                    >
+                      <Archive className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Unarchive record</span>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={() => archiveStudentMutation.mutate({ id: effectiveStudentId })}
+                      className="flex items-center gap-2 text-xs py-2 cursor-pointer hover:bg-white/10 rounded-md"
+                    >
+                      <Archive className="w-3.5 h-3.5 text-slate-300" />
+                      <span>Archive record</span>
+                    </DropdownMenuItem>
+                  )}
+
+                  {isArchivedStudent && !activeRestrictionFlag && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setBlacklistTarget({
+                          contactId: effectiveStudentId,
+                          name: fullName,
+                          phone: parent?.phone || student?.phone || null,
+                          email: parent?.email || student?.email || null,
+                        })
+                      }
+                      className="flex items-center gap-2 text-xs py-2 text-[#DFC07C] cursor-pointer hover:bg-white/10 rounded-md"
+                    >
+                      <FileBox className="w-3.5 h-3.5" />
+                      <span>Blacklist client</span>
+                    </DropdownMenuItem>
+                  )}
+
+                  {activeRestrictionFlag && (
+                    <DropdownMenuItem
+                      onClick={() => setDetailEntryId(activeRestrictionFlag.entryId)}
+                      className="flex items-center gap-2 text-xs py-2 text-[#DFC07C] cursor-pointer hover:bg-white/10 rounded-md"
+                    >
+                      <FileBox className="w-3.5 h-3.5" />
+                      <span>View Do Not Serve restriction</span>
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuItem
+                    onClick={() => setOffboardingModalOpen(true)}
+                    className="flex items-center gap-2 text-xs py-2 cursor-pointer hover:bg-white/10 rounded-md"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-sky-300" />
+                    <span>Client offboarding workflow…</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => setLocation(`/archived/students/${studentId}`)}
+                    className="flex items-center gap-2 text-xs py-2 text-[#8EA2C8] cursor-pointer hover:bg-white/10 rounded-md"
+                  >
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                    <span>Open Legacy Workspace</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
+          {savedRestriction && (
+            <div className="mt-2">
+              <DoNotServePostSaveUndoBanner
+                savedEntry={savedRestriction}
+                onDismiss={() => setSavedRestriction(null)}
+                onOpenEntry={(id) => setDetailEntryId(id)}
+              />
+            </div>
+          )}
         </div>
 
         {/* ─── Folio Area (Tabs + Leather Desk Pad) ─────────────────────────── */}
@@ -870,6 +1038,45 @@ export default function StudentWorkspace() {
           setLocation(`/students/${stId}`);
         }}
       />
+
+      <BlacklistClientDrawer
+        open={Boolean(blacklistTarget)}
+        onOpenChange={(open) => {
+          if (!open) setBlacklistTarget(null);
+        }}
+        target={blacklistTarget}
+        onSaved={(res) => setSavedRestriction(res)}
+        onOpenExistingEntry={(id) => setDetailEntryId(id)}
+        onOpenOffboarding={() => {
+          setBlacklistTarget(null);
+          setOffboardingModalOpen(true);
+        }}
+      />
+
+      <DoNotServeDetailDrawer
+        entryId={detailEntryId}
+        open={Boolean(detailEntryId)}
+        onOpenChange={(open) => {
+          if (!open) setDetailEntryId(null);
+        }}
+        onOpenOffboarding={() => {
+          setDetailEntryId(null);
+          setOffboardingModalOpen(true);
+        }}
+      />
+
+      {effectiveStudentId > 0 && student && (
+        <OffboardingModal
+          open={offboardingModalOpen}
+          onOpenChange={setOffboardingModalOpen}
+          contactId={effectiveStudentId}
+          contact={student}
+          onSuccess={() => {
+            utils.contacts.detail.invalidate({ id: routeIdentifier });
+            utils.contacts.list.invalidate();
+          }}
+        />
+      )}
     </div>
   );
 }

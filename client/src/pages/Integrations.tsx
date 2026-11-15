@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import VoiceInput from "@/components/VoiceInput";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { MycoIntegrationCard } from "@/components/integrations/MycoIntegrationCard";
 import { trpc } from "@/lib/trpc";
 
 function QuoIntegrationCard() {
@@ -815,6 +816,13 @@ export default function Integrations() {
           <h1 className="text-2xl font-bold">Integrations</h1>
           <p className="text-sm text-muted-foreground">Connect external apps and services to your CRM</p>
         </div>
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          AI Collective Memory & Agent Bridge
+        </p>
+        <MycoIntegrationCard />
       </div>
 
       <div>

@@ -9,6 +9,8 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { storagePut } from "./storage";
 import { getR2SignedDownloadUrl, getR2SignedUploadUrl } from "./_core/r2Client";
 import { handleQuoWebhookRequest } from "./quoWebhook";
+import { handleMycoWebhookRequest } from "./mycoWebhook";
+import { handleWaypointPlacesWorkerRequest } from "./waypointPlacesRoutes";
 
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
@@ -74,6 +76,17 @@ export default {
       cleanPath === "/api/quo/webhook"
     ) {
       return await handleQuoWebhookRequest(request);
+    }
+
+    // 2c. Handle Myco Webhook Ingestion
+    if (cleanPath === "/api/myco/webhook" || cleanPath === "/api/webhooks/myco") {
+      return await handleMycoWebhookRequest(request);
+    }
+
+    // 2d. Handle Waypoint Places Isolated Public Snapshot & PMTiles Byte-Range Endpoints
+    if (cleanPath.startsWith("/api/places/")) {
+      const placesRes = await handleWaypointPlacesWorkerRequest(request);
+      if (placesRes) return placesRes;
     }
 
     // 3. Handle AssemblyAI Temporary Token Endpoint for First Mate

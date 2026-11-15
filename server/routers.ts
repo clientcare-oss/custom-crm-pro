@@ -73,8 +73,14 @@ import { reviewTrackerRouter } from "./routers/reviewTracker";
 import { parentProfileRouter } from "./routers/parentProfile";
 import { federalLawRouter } from "./routers/federalLaw";
 import { workspaceLockRouter } from "./routers/workspaceLock";
+import { doNotServeRouter } from "./routers/doNotServe";
+import { mycoRouter } from "./routers/myco";
+import { waypointPlacesRouter } from "./routers/waypointPlaces";
 
 export const appRouter = router({
+  waypointPlaces: waypointPlacesRouter,
+  myco: mycoRouter,
+  doNotServe: doNotServeRouter,
   workspaceLock: workspaceLockRouter,
   parentProfile: parentProfileRouter,
   reviewTracker: reviewTrackerRouter,

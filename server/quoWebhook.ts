@@ -561,6 +561,20 @@ export async function processQuoWebhook(
       console.log(`[Quo Webhook] No phone match for ${fromNumber} / ${toNumber} — unassigned`);
     }
 
+    // Retain all incoming/outgoing call records; evaluate Do Not Serve for internal review
+    let doNotServeMatched = false;
+    try {
+      const { evaluateDoNotServeCandidate } = await import("./services/doNotServeService");
+      const dnsEval = await evaluateDoNotServeCandidate({
+        ownerId,
+        contactIds: [contactId, studentId],
+        phones: [fromNumber, toNumber],
+        targetEntityType: "call_webhook",
+        targetEntityId: quoCallId || `${fromNumber}->${toNumber}`,
+      });
+      doNotServeMatched = dnsEval.hasActiveMatch;
+    } catch {}
+
     await database.insert(callLogs).values({
       ownerId,
       contactId: contactId ?? undefined,
@@ -585,8 +599,8 @@ export async function processQuoWebhook(
       rawPayload: payload,
     });
 
-    console.log(`[Quo Webhook] Call log saved — type: ${eventType}, status: ${status}, missed: ${isMissed}`);
-    return { status: 200, data: { received: true, action: "created", status, eventType, isMissed } };
+    console.log(`[Quo Webhook] Call log saved — type: ${eventType}, status: ${status}, missed: ${isMissed}, dnsMatch: ${doNotServeMatched}`);
+    return { status: 200, data: { received: true, action: "created", status, eventType, isMissed, doNotServeMatched } };
   }
 
   // ─── MESSAGE EVENTS ────────────────────────────────────────────
@@ -627,6 +641,19 @@ export async function processQuoWebhook(
     const studentId = match?.jobTitle === "Student" ? match.id : null;
     const status = contactId ? "assigned" : "unassigned";
 
+    let doNotServeMatched = false;
+    try {
+      const { evaluateDoNotServeCandidate } = await import("./services/doNotServeService");
+      const dnsEval = await evaluateDoNotServeCandidate({
+        ownerId,
+        contactIds: [contactId, studentId],
+        phones: [fromNumber, toNumber],
+        targetEntityType: "sms_webhook",
+        targetEntityId: quoMsgId || `${fromNumber}->${toNumber}`,
+      });
+      doNotServeMatched = dnsEval.hasActiveMatch;
+    } catch {}
+
     await database.insert(callLogs).values({
       ownerId,
       contactId: contactId ?? undefined,
@@ -643,8 +670,8 @@ export async function processQuoWebhook(
       rawPayload: payload,
     });
 
-    console.log(`[Quo Webhook] SMS log saved — type: ${eventType}, status: ${status}, contact: ${contactId}`);
-    return { status: 200, data: { received: true, action: "created", eventType } };
+    console.log(`[Quo Webhook] SMS log saved — type: ${eventType}, status: ${status}, contact: ${contactId}, dnsMatch: ${doNotServeMatched}`);
+    return { status: 200, data: { received: true, action: "created", eventType, doNotServeMatched } };
   }
 
   // ─── CONTACT EVENTS (TWO-WAY QUO CONTACT SYNC) ─────────────────

@@ -30,8 +30,21 @@ export const resourcesRouter = router({
         const { resources: resourcesTable } = await import("../../drizzle/schema");
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        const result = await dbConn.insert(resourcesTable).values({ ...input, ownerId: ctx.user.id });
-        return { id: (result as any).insertId };
+        const insertedRows = await dbConn
+          .insert(resourcesTable)
+          .values({ ...input, ownerId: ctx.user.id })
+          .returning({ id: resourcesTable.id });
+        let createdId = Number(insertedRows?.[0]?.id || (insertedRows as any)?.insertId || 0);
+        if (!createdId) {
+          const latest = await dbConn
+            .select({ id: resourcesTable.id })
+            .from(resourcesTable)
+            .where(and(eq(resourcesTable.ownerId, ctx.user.id), eq(resourcesTable.name, input.name)))
+            .orderBy(desc(resourcesTable.id))
+            .limit(1);
+          createdId = Number(latest?.[0]?.id || 0);
+        }
+        return { id: createdId };
       }),
 
     update: adminProcedure
@@ -77,6 +90,25 @@ export const resourcesRouter = router({
         message: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Enforce Do Not Serve / Blacklist marketing & promotional outreach suppression first
+        const { resolvePracticeOrgOwnerId } = await import("../services/doNotServeService");
+        const { checkMarketingEmailSuppression } = await import("../services/doNotServeMarketing");
+        const dnsSuppression = await checkMarketingEmailSuppression({
+          ownerId: resolvePracticeOrgOwnerId(ctx),
+          contactIds: [input.contactId],
+          channel: "resource_recommendation_email",
+          targetEntityType: "resource_share",
+          targetEntityId: `${input.resourceId}:${input.contactId}`,
+          subject: "Resource Recommendation",
+        });
+        if (dnsSuppression.suppressed) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message:
+              "DO_NOT_SERVE_MARKETING_SUPPRESSED: Clients listed under Blacklisted or Do Not Serve cannot receive marketing or resource emails.",
+          });
+        }
+
         const { resources: resourcesTable } = await import("../../drizzle/schema");
         const { eq: req } = await import("drizzle-orm");
         const dbConn = await db.getDb();
@@ -89,6 +121,7 @@ export const resourcesRouter = router({
         // Get contact
         const contact = await db.getContactById(input.contactId, ctx.user.id);
         if (!contact) throw new TRPCError({ code: "NOT_FOUND" });
+
         const resourceBody = [
           `**${resource.name}**`,
           resource.specialty ? `Specialty: ${resource.specialty}` : null,

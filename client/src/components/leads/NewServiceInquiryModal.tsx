@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { DoNotServeChannelGuard } from "@/components/do-not-serve/DoNotServeChannelGuard";
+import { hasUnresolvedMatch } from "@/components/do-not-serve/doNotServeStyles";
 
 export interface InquiryStudentDraft {
   firstName: string;
@@ -107,6 +109,20 @@ export function NewServiceInquiryForm({
   );
 
   const potentialMatches = matchData?.matches || [];
+
+  const candidateFullName = `${parentFirstName} ${parentLastName}`.trim();
+  const { data: dnsEvaluation } = trpc.doNotServe.evaluateCandidate.useQuery(
+    {
+      fullName: candidateFullName || undefined,
+      phone: parentPhone.trim() || undefined,
+      email: parentEmail.trim() || undefined,
+      channel: "new_inquiry_form",
+      targetEntityType: "inquiry_draft",
+      targetEntityId:
+        parentPhone.trim() || parentEmail.trim() || candidateFullName || "inquiry",
+    },
+    { enabled: shouldCheckMatches }
+  );
 
   const createInquiryMutation = trpc.leads.createInquiry.useMutation({
     onSuccess: (res) => {
@@ -266,6 +282,23 @@ export function NewServiceInquiryForm({
       data-testid="new-service-inquiry-form"
       className={`space-y-5 text-slate-100 ${compact ? "" : "p-1"}`}
     >
+      {/* Shared Do Not Serve Match Guard */}
+      {hasUnresolvedMatch(dnsEvaluation) && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-[#1E3158] bg-[#040D24] px-3.5 py-2.5">
+          <span className="text-xs text-[#C7D4EC]">
+            Restricted record alert detected. Verify details before saving or scheduling.
+          </span>
+          <DoNotServeChannelGuard
+            evaluation={dnsEvaluation}
+            channel="new_inquiry_form"
+            targetEntityType="inquiry_draft"
+            targetEntityId={
+              parentPhone.trim() || parentEmail.trim() || candidateFullName || "inquiry"
+            }
+          />
+        </div>
+      )}
+
       {/* Existing Contact / Lead Match Warning Banner */}
       {potentialMatches.length > 0 && !bypassMatchCheck && (
         <div

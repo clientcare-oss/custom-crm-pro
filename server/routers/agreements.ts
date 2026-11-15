@@ -16,6 +16,7 @@ import { storagePut } from "../storage";
 import { recordCaseActivity } from "../services/caseActivityService";
 import { triggerAutomationFlow } from "../db/automations";
 import { generateAndArchiveSignedAgreementPdf } from "../services/agreementPdfService";
+import { assertAuthorizedServiceProceedOrOverride } from "../services/doNotServeService";
 
 /**
  * Standard Merge Field Dictionary Resolver
@@ -349,9 +350,18 @@ export const agreementsRouter = router({
         title: z.string().optional(),
         internalNotes: z.string().optional(),
         sendImmediately: z.boolean().default(false),
+        doNotServeOverrideReason: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await assertAuthorizedServiceProceedOrOverride({
+        ctx,
+        channel: "agreements",
+        targetEntityType: "contact",
+        targetEntityId: String(input.clientId),
+        contactIds: [input.clientId, input.studentContactId],
+        overrideReason: input.doNotServeOverrideReason,
+      });
       const db = await getDb();
 
       // Fetch template
@@ -602,7 +612,7 @@ export const agreementsRouter = router({
     }),
 
   send: adminProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.number(), doNotServeOverrideReason: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       let agreement: any = inMemoryAgreements.get(input.id);
       if (!agreement) {
@@ -620,6 +630,15 @@ export const agreementsRouter = router({
       }
 
       if (!agreement) throw new TRPCError({ code: "NOT_FOUND", message: "Agreement not found" });
+
+      await assertAuthorizedServiceProceedOrOverride({
+        ctx,
+        channel: "agreements_send",
+        targetEntityType: "contact",
+        targetEntityId: String(agreement.clientId),
+        contactIds: [agreement.clientId, agreement.studentContactId],
+        overrideReason: input.doNotServeOverrideReason,
+      });
 
       if (agreement.contentLocked || agreement.status === "Signed" || agreement.status === "Completed") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot resend an already executed agreement." });

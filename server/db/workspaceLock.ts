@@ -360,60 +360,67 @@ export function verifyWorkspacePinHash(pin: string, salt: string, expectedHash: 
 
 async function persistRecord(record: EmployeeWorkspaceLockRecord): Promise<void> {
   memoryStore.set(record.employeeKey, record);
-  await ensureWorkspaceLockTable();
-  const db = await getDb();
-  if (!db) return;
-  try {
-    const shortcutsJson = JSON.stringify(record.shortcutIds);
-    const isLockedInt = record.isLocked ? 1 : 0;
-    const requiresReauthInt = record.requiresReauth ? 1 : 0;
-    await db.run(sql`
-      INSERT INTO employee_workspace_lock (
-        employee_key,
-        user_id,
-        open_id,
-        shortcut_ids_json,
-        pin_salt,
-        pin_hash,
-        is_locked,
-        previous_path,
-        failed_attempts,
-        locked_until_ms,
-        requires_reauth,
-        idle_timeout_minutes,
-        updated_at_ms
-      ) VALUES (
-        ${record.employeeKey},
-        ${record.userId},
-        ${record.openId},
-        ${shortcutsJson},
-        ${record.pinSalt},
-        ${record.pinHash},
-        ${isLockedInt},
-        ${record.previousPath},
-        ${record.failedAttempts},
-        ${record.lockedUntilMs},
-        ${requiresReauthInt},
-        ${record.idleTimeoutMinutes},
-        ${record.updatedAtMs}
-      )
-      ON CONFLICT(employee_key) DO UPDATE SET
-        user_id = excluded.user_id,
-        open_id = excluded.open_id,
-        shortcut_ids_json = excluded.shortcut_ids_json,
-        pin_salt = excluded.pin_salt,
-        pin_hash = excluded.pin_hash,
-        is_locked = excluded.is_locked,
-        previous_path = excluded.previous_path,
-        failed_attempts = excluded.failed_attempts,
-        locked_until_ms = excluded.locked_until_ms,
-        requires_reauth = excluded.requires_reauth,
-        idle_timeout_minutes = excluded.idle_timeout_minutes,
-        updated_at_ms = excluded.updated_at_ms
-    `);
-  } catch (err) {
-    console.warn("[WorkspaceLock] Failed to persist record to DB:", err);
-  }
+  const persistPromise = (async () => {
+    await ensureWorkspaceLockTable();
+    const db = await getDb();
+    if (!db) return;
+    try {
+      const shortcutsJson = JSON.stringify(record.shortcutIds);
+      const isLockedInt = record.isLocked ? 1 : 0;
+      const requiresReauthInt = record.requiresReauth ? 1 : 0;
+      await db.run(sql`
+        INSERT INTO employee_workspace_lock (
+          employee_key,
+          user_id,
+          open_id,
+          shortcut_ids_json,
+          pin_salt,
+          pin_hash,
+          is_locked,
+          previous_path,
+          failed_attempts,
+          locked_until_ms,
+          requires_reauth,
+          idle_timeout_minutes,
+          updated_at_ms
+        ) VALUES (
+          ${record.employeeKey},
+          ${record.userId},
+          ${record.openId},
+          ${shortcutsJson},
+          ${record.pinSalt},
+          ${record.pinHash},
+          ${isLockedInt},
+          ${record.previousPath},
+          ${record.failedAttempts},
+          ${record.lockedUntilMs},
+          ${requiresReauthInt},
+          ${record.idleTimeoutMinutes},
+          ${record.updatedAtMs}
+        )
+        ON CONFLICT(employee_key) DO UPDATE SET
+          user_id = excluded.user_id,
+          open_id = excluded.open_id,
+          shortcut_ids_json = excluded.shortcut_ids_json,
+          pin_salt = excluded.pin_salt,
+          pin_hash = excluded.pin_hash,
+          is_locked = excluded.is_locked,
+          previous_path = excluded.previous_path,
+          failed_attempts = excluded.failed_attempts,
+          locked_until_ms = excluded.locked_until_ms,
+          requires_reauth = excluded.requires_reauth,
+          idle_timeout_minutes = excluded.idle_timeout_minutes,
+          updated_at_ms = excluded.updated_at_ms
+      `);
+    } catch (err) {
+      console.warn("[WorkspaceLock] Failed to persist record to DB:", err);
+    }
+  })();
+
+  await Promise.race([
+    persistPromise,
+    new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+  ]);
 }
 
 export async function getOrCreateEmployeeWorkspaceRecord(

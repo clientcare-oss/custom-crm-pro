@@ -37,6 +37,10 @@ import {
 import PageIdBadge from "@/components/PageIdBadge";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import type { DoNotServeMatchEvaluation } from "@shared/doNotServe";
+import { DoNotServeHeaderBadge, DoNotServeMatchModal } from "@/components/do-not-serve/DoNotServeAlertComponents";
+import { DoNotServeDetailDrawer } from "@/components/do-not-serve/DoNotServeDetailDrawer";
+import { hasUnresolvedMatch } from "@/components/do-not-serve/doNotServeStyles";
 
 export interface CallLogItem {
   id: number;
@@ -116,6 +120,9 @@ export function LiveCallLogsTable({
     setFilter(nextFilter);
     onFilterChange?.(nextFilter === "voicemail" ? "voicemails" : nextFilter);
   };
+
+  const [selectedDnsLog, setSelectedDnsLog] = useState<CallLogItem | null>(null);
+  const [dnsDetailEntryId, setDnsDetailEntryId] = useState<number | null>(null);
 
   const handleCopy = (text: string, key: string) => {
     try {
@@ -479,8 +486,14 @@ export function LiveCallLogsTable({
                   >
                     {/* Event & Status */}
                     <td className="py-3 px-3 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {getEventBadge(log)}
+                        {hasUnresolvedMatch((log as any).doNotServeEvaluation) && (
+                          <DoNotServeHeaderBadge
+                            evaluation={(log as any).doNotServeEvaluation}
+                            onClick={() => setSelectedDnsLog(log)}
+                          />
+                        )}
                         <span className="text-[10px] text-[#A69371] font-mono">#{log.id}</span>
                       </div>
                     </td>
@@ -1033,6 +1046,35 @@ export function LiveCallLogsTable({
           </DialogContent>
         </Dialog>
       )}
+
+      {selectedDnsLog && hasUnresolvedMatch((selectedDnsLog as any).doNotServeEvaluation) && (
+        <DoNotServeMatchModal
+          open={Boolean(selectedDnsLog)}
+          onOpenChange={(open) => {
+            if (!open) setSelectedDnsLog(null);
+          }}
+          evaluation={(selectedDnsLog as any).doNotServeEvaluation}
+          channel="call_log"
+          targetEntityType="call_log"
+          targetEntityId={String(selectedDnsLog.id)}
+          onViewRestriction={(entryId) => {
+            setSelectedDnsLog(null);
+            setDnsDetailEntryId(entryId);
+          }}
+          onResolved={() => {
+            setSelectedDnsLog(null);
+            onRefresh?.();
+          }}
+        />
+      )}
+
+      <DoNotServeDetailDrawer
+        entryId={dnsDetailEntryId}
+        open={Boolean(dnsDetailEntryId)}
+        onOpenChange={(open) => {
+          if (!open) setDnsDetailEntryId(null);
+        }}
+      />
     </div>
   );
 }

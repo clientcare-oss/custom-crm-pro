@@ -911,6 +911,63 @@ export function buildAllInstruments({
           contactId ? `/case-compass?studentId=${contactId}` : "/case-compass"
         ),
     },
+
+    // 16. Waypoint Places
+    {
+      id: "waypoint-places",
+      sku: "PG-010-PLC · RELOCATION INTELLIGENCE",
+      drawerTitle: "Waypoint Places",
+      drawerSubtitle: "Find a place where your family can thrive",
+      icon: Compass,
+      categoryOverline: "FAMILY RELOCATION INTELLIGENCE",
+      stageTitle: "Waypoint Places",
+      stageSubtitle:
+        "Explore Georgia communities, school districts, specialized programs, and personalized Family Fit Scores.",
+      includedLabel: "Included in your plan",
+      previewCardTitle: "Georgia Relocation Map",
+      previewLines: [
+        {
+          speaker: "Community:",
+          text: "Forsyth County, GA — North Metro corridor with structured IEP teams and greenways.",
+        },
+        {
+          speaker: "Priorities:",
+          text: "Weight Academics, Specialized Programs, Safety, Lifestyle, Affordability, and Commute.",
+        },
+        {
+          speaker: "Explorer:",
+          text: "Interactive MapLibre GL JS + Cloudflare R2 PMTiles boundary & school district layers.",
+        },
+      ],
+      placardHeader: "RELOCATION QUESTION",
+      placardQuote:
+        "Which school district and community best match our child's support needs?",
+      ctaLabel: "Open Waypoint Places",
+      capabilities: [
+        "District & county boundaries",
+        "Personalized Family Fit Score",
+        "Side-by-side area compare",
+      ],
+      howItWorksSteps: [
+        {
+          title: "1. Select your family's top priorities in Find Your Fit",
+          detail:
+            "Choose Academics, Specialized Programs, Safety, Lifestyle, Affordability, or Commute to dynamically weight your Family Fit Score.",
+        },
+        {
+          title: "2. Explore Georgia counties, school districts, and layers",
+          detail:
+            "Toggle School Districts, Community Scores, School Locations, Neighborhoods, and Parks on the interactive MapLibre canvas.",
+        },
+        {
+          title: "3. Compare communities or publish public snapshots in Places Studio",
+          detail:
+            "Compare two Georgia communities side by side, or open Places Studio to curate data and publish offline-resilient public snapshots to Cloudflare R2.",
+        },
+      ],
+      taskCategory: "concern",
+      onOpen: () => setLocation("/tools/waypoint-places"),
+    },
   ];
 }
 

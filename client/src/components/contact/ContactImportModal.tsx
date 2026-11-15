@@ -39,6 +39,11 @@ import {
   type RawImportFileResult,
 } from "@/lib/contactFileParser";
 import type { ContactItem } from "@/components/contact/ledger/ContactsLedgerView";
+import {
+  DoNotServeImportSummaryDialog,
+  type BulkFlaggedRowItem,
+} from "@/components/do-not-serve/DoNotServeAlertComponents";
+import { DoNotServeDetailDrawer } from "@/components/do-not-serve/DoNotServeDetailDrawer";
 
 interface ContactImportModalProps {
   open: boolean;
@@ -115,10 +120,18 @@ export default function ContactImportModal({
       reason?: string;
     }[];
   } | null>(null);
+  const [dnsFlaggedRows, setDnsFlaggedRows] = useState<BulkFlaggedRowItem[]>([]);
+  const [dnsSummaryOpen, setDnsSummaryOpen] = useState(false);
+  const [dnsDetailEntryId, setDnsDetailEntryId] = useState<number | null>(null);
 
   const importBatchMutation = trpc.contacts.importContactsBatch.useMutation({
     onSuccess: (res) => {
       setImportResults(res);
+      const flagged = ((res as any)?.doNotServeFlaggedRows || []) as BulkFlaggedRowItem[];
+      setDnsFlaggedRows(flagged);
+      if (flagged.length > 0) {
+        setDnsSummaryOpen(true);
+      }
       setStep(5);
       onImportComplete();
       toast.success(
@@ -969,6 +982,17 @@ export default function ContactImportModal({
           </div>
 
           <div className="flex items-center gap-2">
+            {step === 5 && dnsFlaggedRows.length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setDnsSummaryOpen(true)}
+                className="border-[#DFC07C]/45 bg-[#0B1938] text-[#DFC07C] hover:bg-[#10234D] text-xs"
+              >
+                Review Do Not Serve matches ({dnsFlaggedRows.length})
+              </Button>
+            )}
             <Button
               type="button"
               size="sm"
@@ -1027,6 +1051,21 @@ export default function ContactImportModal({
           </div>
         </div>
       </DialogContent>
+
+      <DoNotServeImportSummaryDialog
+        open={dnsSummaryOpen}
+        onOpenChange={setDnsSummaryOpen}
+        flaggedRows={dnsFlaggedRows}
+        onViewRestriction={(entryId) => setDnsDetailEntryId(entryId)}
+      />
+
+      <DoNotServeDetailDrawer
+        entryId={dnsDetailEntryId}
+        open={Boolean(dnsDetailEntryId)}
+        onOpenChange={(next) => {
+          if (!next) setDnsDetailEntryId(null);
+        }}
+      />
     </Dialog>
   );
 }

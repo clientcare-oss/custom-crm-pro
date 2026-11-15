@@ -30,6 +30,11 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import PageIdBadge from "@/components/PageIdBadge";
 import { ExpressStudentSetupCard } from "./ExpressStudentSetupCard";
+import {
+  DoNotServeImportSummaryDialog,
+  type BulkFlaggedRowItem,
+} from "@/components/do-not-serve/DoNotServeAlertComponents";
+import { DoNotServeDetailDrawer } from "@/components/do-not-serve/DoNotServeDetailDrawer";
 
 // CRM Source Profiles
 export interface CrmPreset {
@@ -421,12 +426,20 @@ export function ClientCrmImportTab() {
   // Direct import state
   const [isProcessing, setIsProcessing] = useState(false);
   const [importResult, setImportResult] = useState<any>(null);
+  const [dnsFlaggedRows, setDnsFlaggedRows] = useState<BulkFlaggedRowItem[]>([]);
+  const [dnsSummaryOpen, setDnsSummaryOpen] = useState(false);
+  const [dnsDetailEntryId, setDnsDetailEntryId] = useState<number | null>(null);
 
   // Bulk Import Mutation
   const bulkImportMutation = trpc.contacts.bulkImport.useMutation({
     onSuccess: (data) => {
       setIsProcessing(false);
       setImportResult(data);
+      const flagged = ((data as any)?.doNotServeFlaggedRows || []) as BulkFlaggedRowItem[];
+      setDnsFlaggedRows(flagged);
+      if (flagged.length > 0) {
+        setDnsSummaryOpen(true);
+      }
       utils.contacts.list.invalidate();
       utils.nationalCoverage.invalidate();
       toast.success(
@@ -1168,6 +1181,16 @@ export function ClientCrmImportTab() {
 
             {/* Action Buttons to View Results Across CRM */}
             <div className="pt-2 flex flex-wrap items-center gap-3">
+              {dnsFlaggedRows.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDnsSummaryOpen(true)}
+                  className="border border-[#DFC07C]/45 bg-[#0B1938] text-[#DFC07C] hover:bg-[#10234D] text-xs h-9 font-medium cursor-pointer"
+                >
+                  Review Do Not Serve matches ({dnsFlaggedRows.length})
+                </Button>
+              )}
               <a href="/contacts">
                 <Button className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs px-4 h-9 shadow-sm cursor-pointer hover:brightness-105">
                   <Users className="w-3.5 h-3.5 mr-1.5" />
@@ -1192,6 +1215,21 @@ export function ClientCrmImportTab() {
       )}
         </>
       )}
+
+      <DoNotServeImportSummaryDialog
+        open={dnsSummaryOpen}
+        onOpenChange={setDnsSummaryOpen}
+        flaggedRows={dnsFlaggedRows}
+        onViewRestriction={(entryId) => setDnsDetailEntryId(entryId)}
+      />
+
+      <DoNotServeDetailDrawer
+        entryId={dnsDetailEntryId}
+        open={Boolean(dnsDetailEntryId)}
+        onOpenChange={(next) => {
+          if (!next) setDnsDetailEntryId(null);
+        }}
+      />
     </div>
   );
 }

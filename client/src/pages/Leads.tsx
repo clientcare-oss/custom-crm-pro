@@ -19,6 +19,9 @@ import { LeadDiscoveryUnit } from "@/components/leads/LeadDiscoveryUnit";
 import { LeadDecisionUnit } from "@/components/leads/LeadDecisionUnit";
 import { LeadOnboardingUnit } from "@/components/leads/LeadOnboardingUnit";
 import { NewServiceInquiryModal } from "@/components/leads/NewServiceInquiryModal";
+import { FileBox } from "lucide-react";
+import { DoNotServeChannelGuard } from "@/components/do-not-serve/DoNotServeChannelGuard";
+import { DNS_THEME, hasUnresolvedMatch } from "@/components/do-not-serve/doNotServeStyles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -518,8 +521,8 @@ export default function Leads() {
             (l.scheduledAppointment
               ? "scheduled"
               : l.schedulingLinkSent
-              ? "awaiting_booking"
-              : "needs_scheduling");
+                ? "awaiting_booking"
+                : "needs_scheduling");
           if (
             newLeadsFilter === "needs_scheduling" &&
             aptState !== "needs_scheduling" &&
@@ -682,8 +685,8 @@ export default function Leads() {
           openedClientStudentName={
             workspace?.students?.length
               ? workspace.students
-                  .map((s: any) => `${s.firstName} ${s.lastName}`.trim())
-                  .join(", ")
+                .map((s: any) => `${s.firstName} ${s.lastName}`.trim())
+                .join(", ")
               : workspace?.lead?.childName || openedHydratedLead?.childName
           }
           openedClientStatusLabel={
@@ -703,8 +706,8 @@ export default function Leads() {
           {/* ─── 2. SINGLE FOCUSED STAGE WORKING AREA DIRECTLY BELOW RADIO ─── */}
           {effectiveLeadId ? (
             activeStageTab === "inquiry" ||
-            activeStageTab === "discovery" ||
-            activeStageTab === "decision" ? (
+              activeStageTab === "discovery" ||
+              activeStageTab === "decision" ? (
               /* ── PG-003-INQ / PG-003-DSC / PG-003-SES / PG-003-DEC · CLEAN ADMIRALTY WORKSPACE BELOW RADIO ── */
               <div
                 className="relative pt-1 pb-4 space-y-2"
@@ -739,6 +742,24 @@ export default function Leads() {
                         leadsQuery.refetch();
                       }}
                     />
+
+                    {hasUnresolvedMatch((workspace as any)?.doNotServeEvaluation) && (
+                      <div className="flex items-center justify-between gap-3 rounded-lg border border-[#1E3158] bg-[#040D24] px-4 py-2.5">
+                        <span className="text-xs text-[#C7D4EC]">
+                          Restricted record alert detected for this inquiry. Review before advancing services.
+                        </span>
+                        <DoNotServeChannelGuard
+                          evaluation={(workspace as any).doNotServeEvaluation}
+                          channel="lead_workspace"
+                          targetEntityType="lead"
+                          targetEntityId={String(workspace.lead.id)}
+                          onResolved={() => {
+                            workspaceQuery.refetch();
+                            leadsQuery.refetch();
+                          }}
+                        />
+                      </div>
+                    )}
 
                     {activeStageTab === "inquiry" ? (
                       <LeadInquiryUnit
@@ -869,11 +890,10 @@ export default function Leads() {
                               )
                             }
                             data-testid="toggle-contact-drawer-btn"
-                            className={`inline-flex items-center gap-2 h-10 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
-                              openDrawer === "contacts"
-                                ? "bg-[#0E2954] text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
-                                : "bg-[#050E22] text-slate-200 border-cyan-500/35 hover:bg-[#0A1B3D] hover:border-cyan-400/70 hover:text-white"
-                            }`}
+                            className={`inline-flex items-center gap-2 h-10 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${openDrawer === "contacts"
+                              ? "bg-[#0E2954] text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
+                              : "bg-[#050E22] text-slate-200 border-cyan-500/35 hover:bg-[#0A1B3D] hover:border-cyan-400/70 hover:text-white"
+                              }`}
                           >
                             <Users className="w-4 h-4 text-cyan-300" />
                             Family & Contacts
@@ -887,11 +907,10 @@ export default function Leads() {
                               )
                             }
                             data-testid="toggle-history-drawer-btn"
-                            className={`inline-flex items-center gap-2 h-10 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
-                              openDrawer === "history"
-                                ? "bg-[#0E2954] text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
-                                : "bg-[#050E22] text-slate-200 border-cyan-500/35 hover:bg-[#0A1B3D] hover:border-cyan-400/70 hover:text-white"
-                            }`}
+                            className={`inline-flex items-center gap-2 h-10 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${openDrawer === "history"
+                              ? "bg-[#0E2954] text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
+                              : "bg-[#050E22] text-slate-200 border-cyan-500/35 hover:bg-[#0A1B3D] hover:border-cyan-400/70 hover:text-white"
+                              }`}
                           >
                             <History className="w-4 h-4 text-cyan-300" />
                             History & Notes
@@ -942,11 +961,10 @@ export default function Leads() {
                           </span>
                           <span className="text-cyan-400">·</span>
                           <span
-                            className={`font-bold ${
-                              workspace.journey.isOverdue
-                                ? "text-rose-300"
-                                : "text-cyan-300"
-                            }`}
+                            className={`font-bold ${workspace.journey.isOverdue
+                              ? "text-rose-300"
+                              : "text-cyan-300"
+                              }`}
                           >
                             Next: {workspace.journey.nextActionLabel}
                           </span>
@@ -972,6 +990,24 @@ export default function Leads() {
                         leadsQuery.refetch();
                       }}
                     />
+
+                    {hasUnresolvedMatch((workspace as any)?.doNotServeEvaluation) && (
+                      <div className="flex items-center justify-between gap-3 rounded-lg border border-[#1E3158] bg-[#040D24] px-4 py-2.5">
+                        <span className="text-xs text-[#C7D4EC]">
+                          Restricted record alert detected for this inquiry. Review before advancing services.
+                        </span>
+                        <DoNotServeChannelGuard
+                          evaluation={(workspace as any).doNotServeEvaluation}
+                          channel="lead_workspace"
+                          targetEntityType="lead"
+                          targetEntityId={String(workspace.lead.id)}
+                          onResolved={() => {
+                            workspaceQuery.refetch();
+                            leadsQuery.refetch();
+                          }}
+                        />
+                      </div>
+                    )}
 
                     {activeStageTab === "onboarding" && (
                       <LeadOnboardingUnit
@@ -1287,26 +1323,26 @@ export default function Leads() {
                         selectedRadioStage === "inquiry"
                           ? lead.statusSummary || "Needs scheduling"
                           : selectedRadioStage === "discovery"
-                          ? lead.statusSummary || "Discovery in progress"
-                          : selectedRadioStage === "decision"
-                          ? lead.statusSummary || lead.decisionStatusLabel || "Considering"
-                          : lead.stage === "active"
-                          ? "Active client"
-                          : lead.statusSummary || "In onboarding";
+                            ? lead.statusSummary || "Discovery in progress"
+                            : selectedRadioStage === "decision"
+                              ? lead.statusSummary || lead.decisionStatusLabel || "Considering"
+                              : lead.stage === "active"
+                                ? "Active client"
+                                : lead.statusSummary || "In onboarding";
 
                       // Next Action Column Text (Unified dynamic next action across list, workspace & radio)
                       const nextActionText =
                         selectedRadioStage === "inquiry"
                           ? lead.nextActionLabel || "Schedule discovery"
                           : selectedRadioStage === "discovery"
-                          ? lead.nextActionLabel || "Resume discovery"
-                          : selectedRadioStage === "decision"
-                          ? lead.isClosed
-                            ? "Reopen"
-                            : lead.nextActionLabel || "Review offer"
-                          : lead.stage === "active"
-                          ? "Open workspace"
-                          : lead.nextActionLabel || "Continue setup";
+                            ? lead.nextActionLabel || "Resume discovery"
+                            : selectedRadioStage === "decision"
+                              ? lead.isClosed
+                                ? "Reopen"
+                                : lead.nextActionLabel || "Review offer"
+                              : lead.stage === "active"
+                                ? "Open workspace"
+                                : lead.nextActionLabel || "Continue setup";
 
                       return (
                         <div
@@ -1328,14 +1364,26 @@ export default function Leads() {
                               {initials}
                             </div>
                             <div className="min-w-0">
-                              <div
-                                className="text-base sm:text-[19px] font-serif font-bold text-white leading-tight truncate"
-                                style={{
-                                  fontFamily:
-                                    "'Playfair Display', Georgia, serif",
-                                }}
-                              >
-                                {lead.parentName}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <div
+                                  className="text-base sm:text-[19px] font-serif font-bold text-white leading-tight truncate"
+                                  style={{
+                                    fontFamily:
+                                      "'Playfair Display', Georgia, serif",
+                                  }}
+                                >
+                                  {lead.parentName}
+                                </div>
+                                {hasUnresolvedMatch((lead as any).doNotServeEvaluation) && (
+                                  <span className={DNS_THEME.quietGoldPill}>
+                                    <FileBox className="w-3 h-3" />
+                                    <span>
+                                      {(lead as any).doNotServeEvaluation.highestTier === "hard_match"
+                                        ? "Do Not Serve match"
+                                        : "Possible restricted match"}
+                                    </span>
+                                  </span>
+                                )}
                               </div>
                               <div
                                 className="text-xs sm:text-sm font-serif italic text-[#CBD5E1] mt-0.5 truncate"
@@ -1406,7 +1454,7 @@ export default function Leads() {
                             >
                               <span>
                                 {selectedRadioStage === "decision" &&
-                                lead.isClosed
+                                  lead.isClosed
                                   ? "Reopen"
                                   : "Open family"}
                               </span>

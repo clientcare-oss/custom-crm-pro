@@ -36,6 +36,9 @@ import {
   GmailComposeModal,
   GmailThreadViewerModal,
 } from "@/components/contact/GmailComposerAndThreadModals";
+import { FileBox } from "lucide-react";
+import { DoNotServeChannelGuard } from "@/components/do-not-serve/DoNotServeChannelGuard";
+import { DNS_THEME, hasUnresolvedMatch, isDoNotServeReviewError } from "@/components/do-not-serve/doNotServeStyles";
 
 export default function Messages() {
   const utils = trpc.useUtils();
@@ -61,6 +64,18 @@ export default function Messages() {
   // Direct Portal Chat State (Legacy Preserved)
   const [selectedRecipientId, setSelectedRecipientId] = useState<number | null>(null);
   const [messageText, setMessageText] = useState("");
+  const [portalDnsForceKey, setPortalDnsForceKey] = useState(0);
+  const [portalDnsAck, setPortalDnsAck] = useState(false);
+
+  const { data: portalChatDnsEval } = trpc.doNotServe.evaluateCandidate.useQuery(
+    {
+      contactId: selectedRecipientId || undefined,
+      channel: "portal_chat",
+      targetEntityType: "contact",
+      targetEntityId: String(selectedRecipientId || "portal"),
+    },
+    { enabled: activeMode === "portal_chat" && Boolean(selectedRecipientId) }
+  );
 
   // Queries
   const { data: gmailStatus, refetch: refetchGmailStatus } = trpc.messages.gmailStatus.useQuery();
@@ -106,7 +121,14 @@ export default function Messages() {
       utils.messages.list.invalidate();
       toast.success("Portal message sent");
     },
-    onError: () => toast.error("Failed to send portal message"),
+    onError: (err) => {
+      if (isDoNotServeReviewError(err)) {
+        setPortalDnsForceKey((k) => k + 1);
+        toast.info("Review Do Not Serve alert before sending portal message.");
+        return;
+      }
+      toast.error("Failed to send portal message");
+    },
   });
 
   const threads = gmailData?.threads || [];
@@ -368,6 +390,16 @@ export default function Messages() {
                           Needs Review
                         </Badge>
                       )}
+                      {hasUnresolvedMatch((th as any).doNotServeEvaluation) && (
+                        <span className={DNS_THEME.quietGoldPill}>
+                          <FileBox className="w-3 h-3" />
+                          <span>
+                            {(th as any).doNotServeEvaluation.highestTier === "hard_match"
+                              ? "Do Not Serve match"
+                              : "Possible restricted match"}
+                          </span>
+                        </span>
+                      )}
                       {th.hasAttachments && (
                         <span className="inline-flex items-center gap-1 text-[10px] text-sky-300">
                           <Paperclip className="w-3 h-3" />
@@ -422,6 +454,13 @@ export default function Messages() {
                           Needs Review ({activeThread.reviewReason.replace(/_/g, " ")})
                         </Badge>
                       )}
+                      <DoNotServeChannelGuard
+                        evaluation={(activeThread as any)?.doNotServeEvaluation}
+                        channel="gmail_thread"
+                        targetEntityType="gmail_thread"
+                        targetEntityId={activeThread.gmailThreadId}
+                        onResolved={() => refetchThreads()}
+                      />
                     </div>
                   </div>
 
@@ -556,6 +595,21 @@ export default function Messages() {
           <div className="md:col-span-2 flex flex-col">
             {selectedRecipientId ? (
               <>
+                {hasUnresolvedMatch(portalChatDnsEval) && (
+                  <div className="mb-3 flex items-center justify-between rounded-xl border border-[#1E3158] bg-[#040D24] px-3.5 py-2.5">
+                    <span className="text-xs text-[#C7D4EC]">
+                      Review restricted contact alert before sending portal messages.
+                    </span>
+                    <DoNotServeChannelGuard
+                      evaluation={portalChatDnsEval}
+                      channel="portal_chat"
+                      targetEntityType="contact"
+                      targetEntityId={String(selectedRecipientId)}
+                      forceOpenKey={portalDnsForceKey}
+                      onResolved={() => setPortalDnsAck(true)}
+                    />
+                  </div>
+                )}
                 <Card className="flex-1 p-4 mb-4 overflow-y-auto max-h-96 space-y-3 bg-[#061830] border-blue-900/60 text-white">
                   {directMessages && directMessages.length > 0 ? (
                     directMessages.map((msg: any) => (
@@ -588,6 +642,7 @@ export default function Messages() {
                       sendDirectMessage.mutate({
                         recipientId: selectedRecipientId,
                         content: messageText,
+                        doNotServeAcknowledged: portalDnsAck || undefined,
                       });
                     }}
                     className="gap-2 bg-[#F5B544] text-slate-950 font-bold"

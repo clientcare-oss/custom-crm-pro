@@ -47,6 +47,9 @@ import { SimulatedCallCard } from "@/components/callCenter/SimulatedCallCard";
 import { SimulatedCallState } from "@/components/callCenter/CallCenterTestPanel";
 import { LiveCallLogsTable } from "@/components/callCenter/LiveCallLogsTable";
 import SmsComposerDialog from "@/components/quo/SmsComposerDialog";
+import { DoNotServeChannelGuard } from "@/components/do-not-serve/DoNotServeChannelGuard";
+import { DNS_THEME, hasUnresolvedMatch } from "@/components/do-not-serve/doNotServeStyles";
+import { FileBox } from "lucide-react";
 
 export default function UnassignedCallLogs() {
   const [, setLocation] = useLocation();
@@ -81,6 +84,40 @@ export default function UnassignedCallLogs() {
 
   // Filter / View mode
   const [activeStatFilter, setActiveStatFilter] = useState<string>("all");
+
+  // Shared Do Not Serve evaluation for active Call Center session or dialed number
+  const activeEvalPhone =
+    targetPhone ||
+    call?.callerInfo?.phone ||
+    (simulatedCall as { callerPhone?: string; phone?: string } | null)?.callerPhone ||
+    (simulatedCall as { callerPhone?: string; phone?: string } | null)?.phone ||
+    "";
+  const activeEvalName =
+    targetName || call?.callerInfo?.name || simulatedCall?.callerName || "";
+
+  const { data: activeCallDnsEval } = trpc.doNotServe.evaluateCandidate.useQuery(
+    {
+      fullName: activeEvalName || undefined,
+      phone: activeEvalPhone || undefined,
+      email: call?.callerInfo?.email || undefined,
+      channel: "call_center_active",
+      targetEntityType: "call_session",
+      targetEntityId: activeEvalPhone || activeEvalName || "active",
+    },
+    { enabled: Boolean(activeEvalPhone || activeEvalName) }
+  );
+
+  // Also detect any freshly arrived inbound call/SMS log carrying a Do Not Serve match
+  const latestFlaggedInboundLog = useMemo(() => {
+    if (!Array.isArray(logs)) return null;
+    return (
+      (logs as any[]).find(
+        (l) =>
+          hasUnresolvedMatch(l?.doNotServeEvaluation) &&
+          l.doNotServeEvaluation.shouldShowPopup
+      ) || null
+    );
+  }, [logs]);
 
   // Create Lead Mutation for simulated test calls
   const createLeadMutation = trpc.leads.create.useMutation({
@@ -762,6 +799,16 @@ export default function UnassignedCallLogs() {
                                   Audio Ready
                                 </span>
                               )}
+                              {hasUnresolvedMatch(log.doNotServeEvaluation) && (
+                                <span className={DNS_THEME.quietGoldPill}>
+                                  <FileBox className="w-3 h-3" />
+                                  <span>
+                                    {log.doNotServeEvaluation.highestTier === "hard_match"
+                                      ? "Do Not Serve match"
+                                      : "Possible restricted match"}
+                                  </span>
+                                </span>
+                              )}
                             </div>
                             <div className="text-[11px] text-[#C6B697] truncate mt-0.5">
                               {formatShortTime(log.createdAt)}
@@ -1014,6 +1061,23 @@ export default function UnassignedCallLogs() {
                   Active Session
                 </span>
               )}
+              <DoNotServeChannelGuard
+                evaluation={
+                  hasUnresolvedMatch(activeCallDnsEval)
+                    ? activeCallDnsEval
+                    : latestFlaggedInboundLog?.doNotServeEvaluation
+                }
+                channel="call_center"
+                targetEntityType={
+                  hasUnresolvedMatch(activeCallDnsEval) ? "call_session" : "call_log"
+                }
+                targetEntityId={
+                  hasUnresolvedMatch(activeCallDnsEval)
+                    ? activeEvalPhone || activeEvalName || "active"
+                    : String(latestFlaggedInboundLog?.id || "inbound")
+                }
+                onResolved={() => refetchLogs()}
+              />
             </div>
             <p className="text-xs text-[#C6B697] mt-0.5">
               {showCallWorkspace

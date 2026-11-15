@@ -29,6 +29,12 @@ export interface StudentFolderData {
   upcomingMeetingDate?: string | null;
   markerType?: MarkerType;
   tags?: string[];
+  archivedAt?: string | Date | null;
+  phone?: string | null;
+  email?: string | null;
+  isArchivedRecord?: boolean;
+  isRestricted?: boolean;
+  restrictedEntryId?: number | null;
 }
 
 export interface StudentFileCardProps {
@@ -40,6 +46,8 @@ export interface StudentFileCardProps {
   onStageChange?: (studentId: number, newStage: string) => void;
   onEmployeeChange?: (studentId: number, employeeName: string) => void;
   availableStages?: string[];
+  onBlacklistClient?: (student: StudentFolderData) => void;
+  onOpenRestriction?: (entryId: number) => void;
 }
 
 export const STUDENT_FOLDER_BACKGROUNDS = [
@@ -106,6 +114,8 @@ export function StudentFileCard({
   onStageChange,
   onEmployeeChange,
   availableStages = DEFAULT_CARD_STAGES,
+  onBlacklistClient,
+  onOpenRestriction,
 }: StudentFileCardProps) {
   // Format student name: "Avery J.", "Ethan R.", etc.
   const rawFirst = (student.firstName || "Student").trim();
@@ -402,6 +412,34 @@ export function StudentFileCard({
           >
             {diagTag}
           </span>
+
+          {student.isRestricted ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (student.restrictedEntryId && onOpenRestriction) {
+                  onOpenRestriction(student.restrictedEntryId);
+                }
+              }}
+              className="ml-auto pointer-events-auto px-1.5 py-0.5 rounded text-[9.5px] font-medium bg-[#081530] text-[#DFC07C] border border-[#DFC07C]/45 hover:bg-[#0D1E42] transition-colors cursor-pointer shrink-0"
+              title="Restricted in Do Not Serve"
+            >
+              Restricted
+            </button>
+          ) : student.isArchivedRecord && onBlacklistClient ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onBlacklistClient(student);
+              }}
+              className="ml-auto pointer-events-auto px-1.5 py-0.5 rounded text-[9.5px] font-medium bg-[#142038]/90 text-[#E8EEF8] hover:text-[#DFC07C] border border-[#2C4068] hover:border-[#DFC07C]/50 transition-colors cursor-pointer shrink-0"
+              title="Add archived client to Do Not Serve"
+            >
+              Blacklist client
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

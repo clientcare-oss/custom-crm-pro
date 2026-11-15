@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Send, FileText, CheckCircle2, User, GraduationCap, Briefcase, Sparkles } from "lucide-react";
+import { DoNotServeChannelGuard } from "@/components/do-not-serve/DoNotServeChannelGuard";
+import { isDoNotServeReviewError } from "@/components/do-not-serve/doNotServeStyles";
 
 interface GenerateAgreementModalProps {
   isOpen: boolean;
@@ -37,6 +39,18 @@ export function GenerateAgreementModal({
   const [customTitle, setCustomTitle] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
   const [sendImmediately, setSendImmediately] = useState(false);
+  const [dnsForceOpenKey, setDnsForceOpenKey] = useState(0);
+
+  const targetContactId = selectedStudentId || selectedClientId || null;
+  const { data: agreementDnsEval } = trpc.doNotServe.evaluateCandidate.useQuery(
+    {
+      contactId: targetContactId || undefined,
+      channel: "agreements",
+      targetEntityType: "contact",
+      targetEntityId: String(targetContactId || "agreement"),
+    },
+    { enabled: isOpen && Boolean(targetContactId) }
+  );
 
   // Queries
   const { data: templates = [], isLoading: loadingTemplates } = trpc.agreements.listTemplates.useQuery(undefined, {
@@ -88,11 +102,16 @@ export function GenerateAgreementModal({
       onClose();
     },
     onError: (err) => {
+      if (isDoNotServeReviewError(err)) {
+        setDnsForceOpenKey((k) => k + 1);
+        toast.info("Review Do Not Serve restriction before generating agreement.");
+        return;
+      }
       toast.error(err.message || "Failed to generate agreement");
     },
   });
 
-  const handleGenerate = (sendNow: boolean) => {
+  const handleGenerate = (sendNow: boolean, overrideReason?: string) => {
     if (!selectedTemplateId) {
       toast.error("Please select an agreement template");
       return;
@@ -111,6 +130,7 @@ export function GenerateAgreementModal({
       title: customTitle.trim() || undefined,
       internalNotes: internalNotes.trim() || undefined,
       sendImmediately: sendNow,
+      doNotServeOverrideReason: overrideReason || undefined,
     });
   };
 
@@ -131,6 +151,15 @@ export function GenerateAgreementModal({
               </p>
             </div>
           </div>
+          <DoNotServeChannelGuard
+            evaluation={agreementDnsEval}
+            channel="agreements"
+            targetEntityType="contact"
+            targetEntityId={String(targetContactId || "agreement")}
+            requireServiceOverride={true}
+            forceOpenKey={dnsForceOpenKey}
+            onAuthorizedOverride={(reason) => handleGenerate(sendImmediately, reason)}
+          />
         </DialogHeader>
 
         <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">

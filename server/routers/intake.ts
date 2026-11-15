@@ -85,10 +85,35 @@ export const intakeRouter = router({
           studentCaseId = studentContact?.caseId || `WP-${new Date().getFullYear()}-${resolution.studentContactId}`;
         }
 
+        // Internal-only Do Not Serve evaluation (never exposed in public intake response)
+        let staffDnsNotice = "";
+        try {
+          const { evaluateDoNotServeCandidate } = await import("../services/doNotServeService");
+          const dnsEval = await evaluateDoNotServeCandidate({
+            ownerId: 1,
+            contactIds: [resolution.parentContactId, resolution.studentContactId],
+            phones: [input.parentPhone, input.secondParentPhone],
+            emails: [input.parentEmail, input.secondParentEmail],
+            names: [
+              `${input.parentFirstName} ${input.parentLastName}`.trim(),
+              input.secondParentName,
+              `${input.studentFirstName} ${input.studentLastName}`.trim(),
+            ],
+            targetEntityType: "lead",
+            targetEntityId: String(resolution.leadId || resolution.parentContactId || studentCaseId),
+          });
+          if (dnsEval.hasActiveMatch) {
+            staffDnsNotice =
+              dnsEval.highestTier === "hard_match"
+                ? "\n\n[Staff Alert: Do Not Serve match detected — review before proceeding]"
+                : "\n\n[Staff Alert: Possible restricted name match — verify contact details before proceeding]";
+          }
+        } catch {}
+
         // Notify the advocate
         await notifyOwner({
           title: `${resolution.isExistingFamily ? "Existing Family Inquiry" : "New Lead"}: ${input.parentFirstName} ${input.parentLastName}`,
-          content: `${resolution.isExistingFamily ? "An existing family submitted an inquiry" : "A new intake form was submitted"}.\n\nParent: ${input.parentFirstName} ${input.parentLastName} (${input.parentEmail})\nStudent: ${input.studentFirstName} ${input.studentLastName}\nCase ID: ${studentCaseId}\nDiagnosis: ${input.diagnosis || "Not specified"}\nSchool: ${input.schoolName || "Not specified"}\nChallenges: ${input.challenges || "Not specified"}${resolution.ambiguousMatch ? `\n\n⚠️ Notice: ${resolution.ambiguousMatch.reason}` : ""}`,
+          content: `${resolution.isExistingFamily ? "An existing family submitted an inquiry" : "A new intake form was submitted"}.\n\nParent: ${input.parentFirstName} ${input.parentLastName} (${input.parentEmail})\nStudent: ${input.studentFirstName} ${input.studentLastName}\nCase ID: ${studentCaseId}\nDiagnosis: ${input.diagnosis || "Not specified"}\nSchool: ${input.schoolName || "Not specified"}\nChallenges: ${input.challenges || "Not specified"}${resolution.ambiguousMatch ? `\n\n⚠️ Notice: ${resolution.ambiguousMatch.reason}` : ""}${staffDnsNotice}`,
         });
 
         return {

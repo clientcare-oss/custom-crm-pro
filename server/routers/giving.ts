@@ -136,10 +136,11 @@ export const givingRouter = router({
           search: z.string().optional(),
           type: z.string().optional(),
           status: z.string().optional(),
+          excludeMarketingSuppressed: z.boolean().optional().default(false),
         })
         .optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       let result = [...storedSupporters];
 
       if (input?.search) {
@@ -157,7 +158,36 @@ export const givingRouter = router({
         result = result.filter((s) => s.supporterType.toLowerCase().includes(input.type!.toLowerCase()));
       }
 
-      return result;
+      const { evaluateDoNotServeBatch, resolvePracticeOrgOwnerId } = await import(
+        "../services/doNotServeService"
+      );
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+      const evaluations = await evaluateDoNotServeBatch(
+        result.map((s) => ({
+          key: String(s.id),
+          emails: s.email ? [s.email] : [],
+          phones: s.phone ? [s.phone] : [],
+          names: s.name ? [s.name] : [],
+          targetEntityType: "supporter",
+          targetEntityId: String(s.id),
+        })),
+        ownerId
+      );
+
+      const enriched = result.map((s) => {
+        const ev = evaluations[String(s.id)];
+        const marketingSuppressed = Boolean(ev?.hasActiveMatch && ev?.highestTier === "hard_match");
+        return {
+          ...s,
+          marketingSuppressed,
+        };
+      });
+
+      if (input?.excludeMarketingSuppressed) {
+        return enriched.filter((s) => !s.marketingSuppressed);
+      }
+
+      return enriched;
     }),
 
   createSupporter: adminProcedure

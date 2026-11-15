@@ -277,8 +277,37 @@ export const leadFormsRouter = router({
         // Increment submission count
         await db.incrementLeadFormSubmissionCount(input.slug);
 
-        // Trigger lead_form_submitted automation
-        if (studentContactId) {
+        // Internal-only Do Not Serve evaluation (never exposed in public form response)
+        let staffDnsNotice = "";
+        let holdAutomatedLeadSend = false;
+        try {
+          const { checkAndHoldAutomatedSend } = await import("../services/doNotServeService");
+          const dnsHold = await checkAndHoldAutomatedSend({
+            ownerId: 1,
+            channel: "public_lead_form",
+            targetEntityType: "lead",
+            targetEntityId: String(leadId || parentContactId || caseId),
+            contactIds: [parentContactId, studentContactId],
+            phones: [input.parentPhone, input.secondParentPhone],
+            emails: [input.parentEmail, input.secondParentEmail],
+            names: [
+              `${input.parentFirstName} ${input.parentLastName}`.trim(),
+              input.secondParentName,
+              `${input.studentFirstName} ${input.studentLastName}`.trim(),
+            ],
+            description: `Public lead form "${form?.name || formName}" submitted — automated welcome/follow-up held pending Do Not Serve review.`,
+          });
+          holdAutomatedLeadSend = dnsHold.hold;
+          if (dnsHold.evaluation?.hasActiveMatch) {
+            staffDnsNotice =
+              dnsHold.evaluation.highestTier === "hard_match"
+                ? "\n\n[Staff Alert: Do Not Serve match detected — automated sends held pending review]"
+                : "\n\n[Staff Alert: Possible restricted name match — verify contact details before proceeding]";
+          }
+        } catch {}
+
+        // Trigger lead_form_submitted automation unless held by active Do Not Serve hard match
+        if (studentContactId && !holdAutomatedLeadSend) {
           try {
             const { triggerAutomationFlow } = await import("../db/automations");
             await triggerAutomationFlow("lead_form_submitted", studentContactId, false, {
@@ -288,10 +317,10 @@ export const leadFormsRouter = router({
             console.error("Failed to run lead form automation flow:", e);
           }
         }
-        
+
         // Get worksheet if assigned to this form
         let worksheetUrl: string | null = null;
-        if (form.worksheetId) {
+        if (form?.worksheetId) {
           const worksheet = await db.getDiscoveryWorksheet(ownerId);
           if (worksheet?.fileKey) {
             const { storageGet } = await import("../storage");
@@ -299,12 +328,16 @@ export const leadFormsRouter = router({
             worksheetUrl = presigned.url;
           }
         }
-        
+
         // Notify
-        await notifyOwner({
-          title: `New Lead via "${form.name}": ${input.parentFirstName} ${input.parentLastName}`,
-          content: `Form: ${form.name}\nParent: ${input.parentFirstName} ${input.parentLastName} (${input.parentEmail})\nStudent: ${input.studentFirstName} ${input.studentLastName}\nCase ID: ${caseId}`,
-        });
+        try {
+          await notifyOwner({
+            title: `New Lead via "${form?.name || formName}": ${input.parentFirstName} ${input.parentLastName}`,
+            content: `Form: ${form?.name || formName}\nParent: ${input.parentFirstName} ${input.parentLastName} (${input.parentEmail})\nStudent: ${input.studentFirstName} ${input.studentLastName}\nCase ID: ${caseId}${staffDnsNotice}`,
+          });
+        } catch {
+          // Graceful fallback when external notification webhook URL is not configured
+        }
         return { success: true, caseId, parentContactId, studentContactId, worksheetUrl };
       }),
     // Upload a confirmation page image (QR code, logo, etc.)

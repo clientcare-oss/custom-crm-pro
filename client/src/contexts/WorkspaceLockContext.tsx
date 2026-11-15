@@ -11,6 +11,14 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
+import {
+  evaluateWorkspaceAutoLock,
+  hasActiveAutoLockExemptTab,
+  isAutoLockExemptPath,
+  isPublicOrPortalWorkspacePath,
+  removeAutoLockExemptTab,
+  upsertAutoLockExemptTab,
+} from "@shared/workspaceLockPolicy";
 
 export interface StartScreenShortcutItem {
   id: string;
@@ -103,24 +111,12 @@ const DEFAULT_SHORTCUTS_FALLBACK: StartScreenShortcutItem[] = [
 const SESSION_ENTERED_KEY = "waypoint_crm_workspace_entered_v1";
 const LAST_ACTIVITY_STORAGE_KEY = "waypoint_crm_last_activity_ts_v1";
 const LAST_ACTIVE_PATH_STORAGE_KEY = "waypoint_crm_last_active_path_v1";
+const AUTO_LOCK_EXEMPT_TABS_STORAGE_KEY = "waypoint_crm_auto_lock_exempt_tabs_v1";
 
 const WorkspaceLockContext = createContext<WorkspaceLockContextValue | null>(null);
 
 function isPublicOrPortalPath(pathname: string): boolean {
-  return (
-    pathname === "/portal" ||
-    pathname === "/client-portal" ||
-    pathname === "/portal/book" ||
-    pathname === "/book" ||
-    pathname === "/intake" ||
-    pathname === "/get-started" ||
-    pathname.startsWith("/form/") ||
-    pathname.startsWith("/give") ||
-    pathname.startsWith("/receipt/") ||
-    pathname.startsWith("/portal/receipt/") ||
-    pathname.startsWith("/smart-files/response/") ||
-    pathname.startsWith("/first-mate/popout")
-  );
+  return isPublicOrPortalWorkspacePath(pathname);
 }
 
 export function WorkspaceLockProvider({ children }: { children: React.ReactNode }) {
@@ -526,6 +522,72 @@ export function WorkspaceLockProvider({ children }: { children: React.ReactNode 
   // ─── Automatic Idle Lock Engine ────────────────────────────────────────────
   const lastActivityRef = useRef<number>(Date.now());
   const idleLockInFlightRef = useRef<boolean>(false);
+  const isLockedRef = useRef<boolean>(isLocked);
+  isLockedRef.current = isLocked;
+  const tabIdRef = useRef<string>(
+    `tab_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+  );
+
+  const isCurrentRouteAutoLockExempt = useMemo(() => {
+    const winPath = typeof window !== "undefined" ? window.location.pathname : "";
+    return isAutoLockExemptPath(winPath) || isAutoLockExemptPath(location);
+  }, [location]);
+
+  // Register active Meeting Workspace tabs so neither this tab nor any background
+  // CRM tab auto-locks during a live IEP meeting, and reset idle timer cleanly on exit.
+  useEffect(() => {
+    if (
+      !isStaffAuthenticated ||
+      isLocked ||
+      !isCurrentRouteAutoLockExempt ||
+      typeof window === "undefined"
+    ) {
+      return;
+    }
+
+    const tabId = tabIdRef.current;
+    const markExemptPresence = () => {
+      const now = Date.now();
+      lastActivityRef.current = now;
+      try {
+        localStorage.setItem(LAST_ACTIVITY_STORAGE_KEY, String(now));
+        const raw = localStorage.getItem(AUTO_LOCK_EXEMPT_TABS_STORAGE_KEY);
+        localStorage.setItem(
+          AUTO_LOCK_EXEMPT_TABS_STORAGE_KEY,
+          upsertAutoLockExemptTab(raw, tabId, now)
+        );
+      } catch {
+        // ignore storage errors
+      }
+    };
+
+    const clearExemptPresence = () => {
+      const now = Date.now();
+      try {
+        const raw = localStorage.getItem(AUTO_LOCK_EXEMPT_TABS_STORAGE_KEY);
+        localStorage.setItem(
+          AUTO_LOCK_EXEMPT_TABS_STORAGE_KEY,
+          removeAutoLockExemptTab(raw, tabId, now)
+        );
+        if (!isLockedRef.current) {
+          lastActivityRef.current = now;
+          localStorage.setItem(LAST_ACTIVITY_STORAGE_KEY, String(now));
+        }
+      } catch {
+        // ignore storage errors
+      }
+    };
+
+    markExemptPresence();
+    window.addEventListener("pagehide", clearExemptPresence);
+    window.addEventListener("beforeunload", clearExemptPresence);
+
+    return () => {
+      window.removeEventListener("pagehide", clearExemptPresence);
+      window.removeEventListener("beforeunload", clearExemptPresence);
+      clearExemptPresence();
+    };
+  }, [isStaffAuthenticated, isLocked, isCurrentRouteAutoLockExempt]);
 
   const recordMeaningfulActivity = useCallback(() => {
     const now = Date.now();
@@ -540,24 +602,57 @@ export function WorkspaceLockProvider({ children }: { children: React.ReactNode 
   }, []);
 
   const checkIdleElapsedAndLockIfNeeded = useCallback(() => {
-    if (!isStaffAuthenticated || isLocked || idleLockInFlightRef.current) return;
-    if (typeof window !== "undefined" && isPublicOrPortalPath(window.location.pathname)) return;
+    const now = Date.now();
+    const currentPathname =
+      typeof window !== "undefined" ? window.location.pathname : location;
 
-    let latestActivity = lastActivityRef.current;
+    let storedActivityMs = 0;
+    let hasOtherExemptTab = false;
     try {
-      const stored = Number(localStorage.getItem(LAST_ACTIVITY_STORAGE_KEY) || "0");
-      if (stored > latestActivity) {
-        latestActivity = stored;
-        lastActivityRef.current = stored;
-      }
+      storedActivityMs = Number(localStorage.getItem(LAST_ACTIVITY_STORAGE_KEY) || "0");
+      hasOtherExemptTab = hasActiveAutoLockExemptTab(
+        localStorage.getItem(AUTO_LOCK_EXEMPT_TABS_STORAGE_KEY),
+        now
+      );
     } catch {
       // ignore
     }
 
-    const timeoutMs = (idleTimeoutMinutes || 5) * 60 * 1000;
-    const elapsed = Date.now() - latestActivity;
+    const decision = evaluateWorkspaceAutoLock({
+      isStaffAuthenticated,
+      isLocked,
+      idleLockInFlight: idleLockInFlightRef.current,
+      pathname: currentPathname,
+      hasOtherExemptTab: hasOtherExemptTab || isAutoLockExemptPath(location),
+      nowMs: now,
+      lastActivityMs: lastActivityRef.current,
+      storedActivityMs,
+      idleTimeoutMinutes,
+    });
 
-    if (elapsed >= timeoutMs) {
+    if (decision.refreshedActivityMs !== null) {
+      lastActivityRef.current = decision.refreshedActivityMs;
+      try {
+        localStorage.setItem(
+          LAST_ACTIVITY_STORAGE_KEY,
+          String(decision.refreshedActivityMs)
+        );
+        if (isAutoLockExemptPath(currentPathname) || isAutoLockExemptPath(location)) {
+          const raw = localStorage.getItem(AUTO_LOCK_EXEMPT_TABS_STORAGE_KEY);
+          localStorage.setItem(
+            AUTO_LOCK_EXEMPT_TABS_STORAGE_KEY,
+            upsertAutoLockExemptTab(raw, tabIdRef.current, decision.refreshedActivityMs)
+          );
+        }
+      } catch {
+        // ignore
+      }
+      return;
+    }
+
+    lastActivityRef.current = decision.effectiveLastActivityMs;
+
+    if (decision.shouldAutoLock) {
       // Conceal workspace immediately
       setIsStartScreenOpen(true);
       if (hasPinSet) {
@@ -583,6 +678,7 @@ export function WorkspaceLockProvider({ children }: { children: React.ReactNode 
   }, [
     isStaffAuthenticated,
     isLocked,
+    location,
     idleTimeoutMinutes,
     hasPinSet,
     lastKnownPath,

@@ -183,7 +183,24 @@ export const reviewTrackerRouter = router({
         followUpDays: z.number().default(14),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { resolvePracticeOrgOwnerId } = await import("../services/doNotServeService");
+      const { checkMarketingEmailSuppression } = await import("../services/doNotServeMarketing");
+      const dnsSuppression = await checkMarketingEmailSuppression({
+        ownerId: resolvePracticeOrgOwnerId(ctx),
+        contactIds: [input.accountId, input.studentId],
+        channel: `review_request_${input.requestChannel}`,
+        targetEntityType: "review_tracker",
+        targetEntityId: String(input.accountId),
+        subject: input.customSubject || "Google Review Request",
+      });
+      if (dnsSuppression.suppressed) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "DO_NOT_SERVE_MARKETING_SUPPRESSED: Clients listed under Blacklisted or Do Not Serve cannot receive marketing or review request emails.",
+        });
+      }
       return await db.recordReviewRequest(input);
     }),
 
@@ -199,7 +216,24 @@ export const reviewTrackerRouter = router({
         notes: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { resolvePracticeOrgOwnerId } = await import("../services/doNotServeService");
+      const { checkMarketingEmailSuppression } = await import("../services/doNotServeMarketing");
+      const dnsSuppression = await checkMarketingEmailSuppression({
+        ownerId: resolvePracticeOrgOwnerId(ctx),
+        contactIds: [input.accountId, input.studentId],
+        channel: "review_followup_email",
+        targetEntityType: "review_tracker",
+        targetEntityId: String(input.accountId),
+        subject: "Review Follow-Up Reminder",
+      });
+      if (dnsSuppression.suppressed) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "DO_NOT_SERVE_MARKETING_SUPPRESSED: Clients listed under Blacklisted or Do Not Serve cannot receive marketing or review follow-up emails.",
+        });
+      }
       return await db.recordReviewFollowUp(input);
     }),
 

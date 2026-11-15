@@ -7,6 +7,7 @@ import { ENV } from "../_core/env";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
+import { assertAuthorizedServiceProceedOrOverride } from "../services/doNotServeService";
 
 export const quickSetupRouter = router({
 
@@ -37,8 +38,20 @@ export const quickSetupRouter = router({
         zipCode: z.string().optional(),
         countyDistrict: z.string().optional(),
         challenges: z.string().optional(),
+        doNotServeOverrideReason: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        const doNotServeEvaluation = await assertAuthorizedServiceProceedOrOverride({
+          ctx,
+          channel: "quick_setup",
+          targetEntityType: "quick_setup",
+          targetEntityId: input.parentEmail.trim().toLowerCase(),
+          phones: [input.parentPhone, input.secondParentPhone],
+          emails: [input.parentEmail, input.secondParentEmail],
+          names: [`${input.parentFirstName} ${input.parentLastName}`.trim(), input.secondParentName],
+          overrideReason: input.doNotServeOverrideReason,
+        });
+
         const ownerId = ctx.user.id;
 
         // 1. Create parent contact
@@ -111,6 +124,7 @@ export const quickSetupRouter = router({
           caseId,
           parentContactId,
           studentContactId,
+          doNotServeEvaluation,
         };
       }),
   

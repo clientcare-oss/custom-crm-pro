@@ -35,6 +35,15 @@ import {
   extractContactEmails,
   formatPhone,
 } from "../services/quo";
+import {
+  assertAuthorizedServiceProceedOrOverride,
+  evaluateDoNotServeBatch,
+  evaluateDoNotServeCandidate,
+  resolvePracticeOrgOwnerId,
+  resolveServerEmployeeStamp,
+} from "../services/doNotServeService";
+import { syncContactWithDoNotServe } from "../services/doNotServeSync";
+import { _execDnsRunInternal } from "../db/doNotServe";
 
 const PARENT_EDITABLE_CONTACT_FIELDS = new Set<string>([
   "attorneyName",
@@ -284,12 +293,24 @@ export const contactsRouter = router({
           console.warn("[Contacts Create] Non-fatal Quo auto-sync warning:", err);
         }
 
+        const doNotServeEvaluation = await evaluateDoNotServeCandidate({
+          ownerId: resolvePracticeOrgOwnerId(ctx),
+          contactIds: [primaryId, resolvedParentId, createdStudentId].filter((x): x is number => Boolean(x && x > 0)),
+          phones: [contactFields.phone, contactFields.secondParentPhone, newParentPhone],
+          emails: [contactFields.email, contactFields.secondParentEmail, newParentEmail],
+          names: [`${firstName} ${lastName}`.trim(), newParentName, newStudentName],
+          targetEntityType: "contact",
+          targetEntityId: String(primaryId),
+          staffUserId: ctx.user?.id,
+        });
+
         return {
           ...primaryRes,
           id: primaryId,
           insertId: primaryId,
           parentContactId: resolvedParentId,
           createdStudentId,
+          doNotServeEvaluation,
         };
       }),
 
@@ -608,7 +629,42 @@ export const contactsRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         const ownerId = ctx.user?.id || 1;
-        return await db.bulkImportContacts(input, ownerId);
+        const importRes = await db.bulkImportContacts(input, ownerId);
+        const orgOwnerId = resolvePracticeOrgOwnerId(ctx);
+        const batchEval = await evaluateDoNotServeBatch(
+          input.clients.map((c, idx) => ({
+            key: String(idx + 1),
+            phones: [c.phone],
+            emails: [c.email],
+            names: [
+              `${c.firstName} ${c.lastName}`.trim(),
+              c.studentFirstName || c.studentLastName
+                ? `${c.studentFirstName || ""} ${c.studentLastName || ""}`.trim()
+                : undefined,
+            ],
+            targetEntityType: "bulk_import_row",
+            targetEntityId: `${Date.now()}_${idx + 1}`,
+          })),
+          orgOwnerId
+        );
+        const doNotServeFlaggedRows = input.clients
+          .map((c, idx) => {
+            const ev = batchEval[String(idx + 1)];
+            return {
+              rowNumber: idx + 1,
+              name: `${c.firstName} ${c.lastName}`.trim(),
+              phone: c.phone || "",
+              email: c.email || "",
+              highestTier: ev?.highestTier ?? undefined,
+              matches: ev?.matches ?? [],
+              evaluation: ev,
+            };
+          })
+          .filter((r) => r.evaluation?.hasActiveMatch);
+        return {
+          ...importRes,
+          doNotServeFlaggedRows,
+        };
       }),
 
     expressSetup: requireStaffModule("contacts", "edit")
@@ -631,7 +687,21 @@ export const contactsRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         const ownerId = ctx.user?.id || 1;
-        return await db.expressStudentSetup(input, ownerId);
+        const res = await db.expressStudentSetup(input, ownerId);
+        const doNotServeEvaluation = await evaluateDoNotServeCandidate({
+          ownerId: resolvePracticeOrgOwnerId(ctx),
+          contactIds: [(res as any)?.parentId, (res as any)?.studentId].filter((x): x is number => Boolean(x && x > 0)),
+          phones: [input.phone],
+          emails: [input.email],
+          names: [input.parentName, input.studentName],
+          targetEntityType: "contact",
+          targetEntityId: String((res as any)?.parentId || (res as any)?.studentId || "express"),
+          staffUserId: ctx.user?.id,
+        });
+        return {
+          ...res,
+          doNotServeEvaluation,
+        };
       }),
 
     update: protectedProcedure
@@ -836,6 +906,16 @@ export const contactsRouter = router({
 
         const res = await db.updateContact(id, ownerId, data);
 
+        if (ctx.staffAccess?.isStaff) {
+          try {
+            await syncContactWithDoNotServe({
+              contactId: id,
+              ownerId: resolvePracticeOrgOwnerId(ctx),
+              actor: resolveServerEmployeeStamp(ctx),
+            });
+          } catch {}
+        }
+
         // Two-Way Quo Contact Sync (Outbound field update if enabled)
         try {
           await onWaypointContactUpdated(ownerId, id, providedKeys);
@@ -982,6 +1062,13 @@ export const contactsRouter = router({
 
         // Save update
         await db.updateContact(id, ownerId, updateData);
+        try {
+          await syncContactWithDoNotServe({
+            contactId: id,
+            ownerId: resolvePracticeOrgOwnerId(ctx),
+            actor: resolveServerEmployeeStamp(ctx),
+          });
+        } catch {}
 
         // Audit Logging: Compare previous and new values, record in case activity timeline
         const fieldLabels: Record<string, string> = {
@@ -1343,6 +1430,14 @@ export const contactsRouter = router({
         await db.updateContact(input.studentContactId, ctx.user.id, {
           parentContactId: input.newParentContactId,
         });
+        try {
+          const stamp = resolveServerEmployeeStamp(ctx);
+          const orgOwnerId = resolvePracticeOrgOwnerId(ctx);
+          if (prevParentId) {
+            await syncContactWithDoNotServe({ contactId: prevParentId, ownerId: orgOwnerId, actor: stamp });
+          }
+          await syncContactWithDoNotServe({ contactId: input.newParentContactId, ownerId: orgOwnerId, actor: stamp });
+        } catch {}
 
         try {
           await recordCaseActivity({
@@ -1371,8 +1466,17 @@ export const contactsRouter = router({
         parentContactIds: z.array(z.number()).min(1),
         portalLink: z.string(),
         studentName: z.string(),
+        doNotServeOverrideReason: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        await assertAuthorizedServiceProceedOrOverride({
+          ctx,
+          channel: "portal_onboarding",
+          targetEntityType: "contact",
+          targetEntityId: String(input.parentContactIds[0]),
+          contactIds: input.parentContactIds,
+          overrideReason: input.doNotServeOverrideReason,
+        });
         const { sendEmail } = await import("../_core/email");
         
         // Fetch parent contact details
@@ -1423,35 +1527,39 @@ export const contactsRouter = router({
         };
       }),
 
-    // Archive a contact with a custom reason
-    archive: adminProcedure
+    // Archive a contact with a custom reason (separate from Do Not Serve status)
+    archive: requireStaffModule("contacts", "edit")
       .input(z.object({
         id: z.number(),
-        reason: z.string().min(1, "Archive reason is required"),
+        reason: z.string().optional().default("Archived by staff"),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { contacts: contactsTable } = await import("../../drizzle/schema");
-        const dbConn = await db.getDb();
-        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const now = new Date();
+        const archiveReason = input.reason?.trim() || "Archived by staff";
         await onWaypointContactDeletedOrArchived(ctx.user.id, input.id);
-        await dbConn
-          .update(contactsTable)
-          .set({ archivedAt: new Date(), archiveReason: input.reason })
-          .where(and(eq(contactsTable.id, input.id), eq(contactsTable.ownerId, ctx.user.id)));
+        await db.updateContact(input.id, ctx.user.id, {
+          archivedAt: now,
+          archiveReason,
+        });
+        await _execDnsRunInternal(
+          `UPDATE contacts SET archivedAt = ?, archiveReason = ? WHERE id = ?`,
+          [Math.floor(now.getTime() / 1000), archiveReason, input.id]
+        ).catch(() => {});
         return { success: true };
       }),
 
-    // Unarchive a contact
-    unarchive: adminProcedure
+    // Unarchive a contact (does NOT silently lift any Do Not Serve restriction)
+    unarchive: requireStaffModule("contacts", "edit")
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        const { contacts: contactsTable } = await import("../../drizzle/schema");
-        const dbConn = await db.getDb();
-        if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-        await dbConn
-          .update(contactsTable)
-          .set({ archivedAt: null, archiveReason: null })
-          .where(and(eq(contactsTable.id, input.id), eq(contactsTable.ownerId, ctx.user.id)));
+        await db.updateContact(input.id, ctx.user.id, {
+          archivedAt: null,
+          archiveReason: null,
+        });
+        await _execDnsRunInternal(
+          `UPDATE contacts SET archivedAt = NULL, archiveReason = NULL WHERE id = ?`,
+          [input.id]
+        ).catch(() => {});
         return { success: true };
       }),
 
@@ -1639,6 +1747,13 @@ export const contactsRouter = router({
               try {
                 await onWaypointContactUpdated(ownerId, existing.id);
               } catch {}
+              try {
+                await syncContactWithDoNotServe({
+                  contactId: existing.id,
+                  ownerId: resolvePracticeOrgOwnerId(ctx),
+                  actor: resolveServerEmployeeStamp(ctx),
+                });
+              } catch {}
 
               mergedCount++;
               results.push({
@@ -1721,6 +1836,33 @@ export const contactsRouter = router({
           }
         }
 
+        const orgOwnerId = resolvePracticeOrgOwnerId(ctx);
+        const batchEval = await evaluateDoNotServeBatch(
+          results
+            .filter((r) => r.status === "imported" || r.status === "merged")
+            .map((r) => ({
+              key: String(r.rowNumber),
+              contactIds: r.contactId ? [r.contactId] : [],
+              phones: [r.phone],
+              emails: [r.email],
+              names: [r.name],
+              targetEntityType: "contact",
+              targetEntityId: String(r.contactId || r.rowNumber),
+            })),
+          orgOwnerId
+        );
+        const doNotServeFlaggedRows = results
+          .filter((r) => batchEval[String(r.rowNumber)]?.hasActiveMatch)
+          .map((r) => {
+            const ev = batchEval[String(r.rowNumber)];
+            return {
+              ...r,
+              highestTier: ev?.highestTier ?? undefined,
+              matches: ev?.matches ?? [],
+              evaluation: ev,
+            };
+          });
+
         return {
           success: true,
           sourceFormat: input.sourceFormat,
@@ -1730,6 +1872,7 @@ export const contactsRouter = router({
           failedCount,
           totalProcessed: input.rows.length,
           results,
+          doNotServeFlaggedRows,
         };
       }),
   

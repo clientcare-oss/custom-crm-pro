@@ -83,6 +83,8 @@ import PostMeetingReview from "./pages/PostMeetingReview";
 import PwnDecoder from "./pages/PwnDecoder";
 import ReceiptView from "./pages/ReceiptView";
 import LegacyStudentWorkspace from "./pages/archived/LegacyStudentWorkspace";
+import DoNotServe from "./pages/DoNotServe";
+import WaypointPlaces from "./pages/WaypointPlaces";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
@@ -121,6 +123,7 @@ function Router() {
 
   const isPublicRoute =
     window.location.pathname === "/" ||
+    window.location.pathname === "/waypoint-places" ||
     window.location.pathname === "/portal" ||
     window.location.pathname === "/client-portal" ||
     window.location.pathname === "/portal/book" ||
@@ -222,6 +225,8 @@ function Router() {
           <Route path="/students/:id" component={StudentWorkspace} />
           <Route path="/project-workspace/:id" component={StudentWorkspace} />
           <Route path="/contacts" component={Contacts} />
+          <Route path="/archive" component={DoNotServe} />
+          <Route path="/do-not-serve" component={DoNotServe} />
           <Route path="/students" component={Students} />
           <Route path="/leads/forms" component={LeadForms} />
           <Route path="/lead-forms" component={LeadForms} />
@@ -247,6 +252,8 @@ function Router() {
           <Route path="/tasks" component={Tasks} />
           <Route path="/tech-tasks">{() => <Redirect to="/tasks" />}</Route>
           <Route path="/tools" component={Tools} />
+          <Route path="/tools/waypoint-places" component={WaypointPlaces} />
+          <Route path="/waypoint-places" component={WaypointPlaces} />
           <Route path="/tools/pwn-decoder/:reviewId" component={PwnDecoder} />
           <Route path="/tools/pwn-decoder" component={PwnDecoder} />
           <Route path="/pwn-decoder/:reviewId" component={PwnDecoder} />
@@ -340,6 +347,7 @@ function Router() {
       <Route path="/client-portal" component={ClientPortal} />
       <Route path="/project-workspace/:studentId" component={ClientPortal} />
       <Route path="/smart-files/response/:id" component={SmartFilePortalViewer} />
+      <Route path="/waypoint-places" component={WaypointPlaces} />
       <Route path="/first-mate/popout" component={FirstMatePopout} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

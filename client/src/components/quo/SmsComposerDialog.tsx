@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Send, MessageSquare, Phone, Clock, ArrowDownLeft, ArrowUpRight, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { DoNotServeChannelGuard } from "@/components/do-not-serve/DoNotServeChannelGuard";
+import { isDoNotServeReviewError } from "@/components/do-not-serve/doNotServeStyles";
 
 interface SmsComposerDialogProps {
   open: boolean;
@@ -31,6 +33,27 @@ export default function SmsComposerDialog({
   clientPhone,
 }: SmsComposerDialogProps) {
   const [message, setMessage] = useState("");
+  const [dnsForceOpenKey, setDnsForceOpenKey] = useState(0);
+  const [dnsAcknowledged, setDnsAcknowledged] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setDnsForceOpenKey(0);
+      setDnsAcknowledged(false);
+    }
+  }, [open, contactId, clientPhone]);
+
+  const { data: dnsEvaluation } = trpc.doNotServe.evaluateCandidate.useQuery(
+    {
+      contactId: contactId || undefined,
+      fullName: contactName || undefined,
+      phone: clientPhone || undefined,
+      channel: "quo_sms",
+      targetEntityType: "contact",
+      targetEntityId: String(contactId || clientPhone || "sms"),
+    },
+    { enabled: open && Boolean(contactId || clientPhone || contactName) }
+  );
 
   const { data: settings } = trpc.quo.getSettings.useQuery(undefined, { enabled: open });
   const { data: messages, refetch: refetchMessages, isLoading: messagesLoading } =
@@ -43,6 +66,11 @@ export default function SmsComposerDialog({
       refetchMessages();
     },
     onError: (err) => {
+      if (isDoNotServeReviewError(err)) {
+        setDnsForceOpenKey((k) => k + 1);
+        toast.info("Review Do Not Serve alert before sending SMS.");
+        return;
+      }
       toast.error(`Failed to send SMS: ${err.message}`);
     },
   });
@@ -56,6 +84,7 @@ export default function SmsComposerDialog({
     sendSmsMutation.mutate({
       contactId,
       body: message.trim(),
+      doNotServeAcknowledged: dnsAcknowledged || undefined,
     });
   };
 
@@ -80,9 +109,19 @@ export default function SmsComposerDialog({
                 </DialogDescription>
               </div>
             </div>
-            <Badge variant="outline" className="text-[10px] bg-cyan-950/40 text-cyan-300 border-cyan-800">
-              Quo SMS
-            </Badge>
+            <div className="flex items-center gap-2 flex-wrap">
+              <DoNotServeChannelGuard
+                evaluation={dnsEvaluation}
+                channel="quo_sms"
+                targetEntityType="contact"
+                targetEntityId={String(contactId || clientPhone || "sms")}
+                forceOpenKey={dnsForceOpenKey}
+                onResolved={() => setDnsAcknowledged(true)}
+              />
+              <Badge variant="outline" className="text-[10px] bg-cyan-950/40 text-cyan-300 border-cyan-800">
+                Quo SMS
+              </Badge>
+            </div>
           </div>
         </DialogHeader>
 

@@ -8,6 +8,34 @@ import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { brainDumpItems, brainDumpImages } from "../../drizzle/schema";
 import { formatPhone } from "../quoWebhook";
+import { evaluateDoNotServeBatch, resolvePracticeOrgOwnerId } from "../services/doNotServeService";
+
+async function attachDoNotServeToCallLogs<T extends Record<string, any>>(
+  rows: T[],
+  ctx: any
+): Promise<Array<T & { doNotServeEvaluation?: any }>> {
+  if (!ctx?.staffAccess?.isStaff || rows.length === 0) return rows;
+  try {
+    const ownerId = resolvePracticeOrgOwnerId(ctx);
+    const evalMap = await evaluateDoNotServeBatch(
+      rows.map((r) => ({
+        key: String(r.id),
+        contactIds: [r.contactId, r.studentId],
+        phones: [r.fromNumber, r.toNumber, r.matchedPhone],
+        targetEntityType: "call_log",
+        targetEntityId: String(r.id),
+        staffUserId: ctx.user?.id,
+      })),
+      ownerId
+    );
+    return rows.map((r) => ({
+      ...r,
+      doNotServeEvaluation: evalMap[String(r.id)] || null,
+    }));
+  } catch {
+    return rows;
+  }
+}
 
 function toStrictBool(val: unknown): boolean {
   return val === true || val === 1 || val === "1" || val === "true";
@@ -158,7 +186,7 @@ export const callLogsRouter = router({
         .from(callLogs)
         .where(whereClause)
         .orderBy(desc(callLogs.createdAt));
-      return rows.map(hydrateCallLogRow);
+      return await attachDoNotServeToCallLogs(rows.map(hydrateCallLogRow), ctx);
     }),
 
   // List ALL call logs (for the full call log view with filters)
@@ -193,26 +221,23 @@ export const callLogsRouter = router({
 
       const hydrated = rawRows.map(hydrateCallLogRow);
 
+      let filtered = hydrated;
       if (filter === "unassigned") {
-        return hydrated.filter((r) => r.status === "unassigned");
-      }
-      if (filter === "voicemails") {
-        return hydrated.filter((r) => r.isVoicemail);
-      }
-      if (filter === "missed") {
-        return hydrated.filter((r) => r.isMissed);
-      }
-      if (filter === "sms") {
-        return hydrated.filter(
+        filtered = hydrated.filter((r) => r.status === "unassigned");
+      } else if (filter === "voicemails") {
+        filtered = hydrated.filter((r) => r.isVoicemail);
+      } else if (filter === "missed") {
+        filtered = hydrated.filter((r) => r.isMissed);
+      } else if (filter === "sms") {
+        filtered = hydrated.filter(
           (r) => (r.eventType || "").startsWith("message.") || Boolean(r.smsBody)
         );
-      }
-      if (filter === "calls") {
-        return hydrated.filter(
+      } else if (filter === "calls") {
+        filtered = hydrated.filter(
           (r) => !(r.eventType || "").startsWith("message.") && !r.smsBody
         );
       }
-      return hydrated;
+      return await attachDoNotServeToCallLogs(filtered, ctx);
     }),
 
   // Update callback / follow-up status for a call log ("pending" | "completed" | "dismissed" | "none")
@@ -247,11 +272,12 @@ export const callLogsRouter = router({
     const whereClause = isAdmin
       ? eq(callLogs.status, "unassigned")
       : and(eq(callLogs.ownerId, ctx.user.id), eq(callLogs.status, "unassigned"));
-    return await database
+    const rows = await database
       .select()
       .from(callLogs)
       .where(whereClause)
       .orderBy(desc(callLogs.createdAt));
+    return await attachDoNotServeToCallLogs(rows, ctx);
   }),
 
   // Assign an unassigned call log to a student

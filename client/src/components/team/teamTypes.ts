@@ -34,6 +34,7 @@ import {
   ListChecks,
   UserCheck,
   HandHeart,
+  FileBox,
   LucideIcon,
 } from "lucide-react";
 
@@ -191,6 +192,7 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
       "calendar",
       "advocacy_pipeline",
       "students_cases",
+      "do_not_serve",
       "meeting_workspace",
       "post_meeting_review",
       "case_compass",
@@ -241,6 +243,7 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
       "call_center",
       "calendar",
       "leads",
+      "do_not_serve",
       "scheduler",
       "tasks",
       "knowledge_base",
@@ -349,6 +352,7 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
     defaultModules: [
       "crew_quarters",
       "calendar",
+      "do_not_serve",
       "invoices",
       "services",
       "bill_guardian",
@@ -444,6 +448,7 @@ export const CRM_MODULES: ModuleDefinition[] = [
   { id: "leads", label: "Lead Center & Pipeline", path: "/leads", group: "Pipelines", icon: TrendingUp },
   // Cases & Clients
   { id: "students_cases", label: "Students & Contacts", path: "/projects", group: "Cases & Clients", icon: Users },
+  { id: "do_not_serve", label: "Archive & Do Not Serve", path: "/archive", group: "Cases & Clients", icon: FileBox, isSensitive: true },
   // Manage Experiences
   { id: "portal_management", label: "Client Portal Management", path: "/portal-management", group: "Manage Experiences", icon: Shield },
   { id: "meeting_workspace", label: "Meeting Workspace (PG-043)", path: "/meeting-workspace", group: "Manage Experiences", icon: Zap },

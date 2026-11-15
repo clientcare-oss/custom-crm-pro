@@ -29,6 +29,11 @@ import {
   composeAndSendEmail,
   setEmailPortalVisibility,
 } from "../services/gmailCommunicationHub";
+import {
+  evaluateDoNotServeBatch,
+  evaluateDoNotServeCandidate,
+  resolvePracticeOrgOwnerId,
+} from "../services/doNotServeService";
 
 function assertManagementMailboxControl(ctx: any) {
   const sa = ctx.staffAccess;
@@ -115,11 +120,28 @@ export const messagesRouter = router({
       z.object({
         recipientId: z.number(),
         content: z.string().min(1),
+        doNotServeAcknowledged: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.staffAccess?.isStaff) {
         await assertClientContactOwnership(ctx, input.recipientId);
+      } else {
+        const ownerId = resolvePracticeOrgOwnerId(ctx);
+        const ev = await evaluateDoNotServeCandidate({
+          ownerId,
+          contactIds: [input.recipientId],
+          targetEntityType: "portal_message_thread",
+          targetEntityId: String(input.recipientId),
+          staffUserId: ctx.user?.id,
+        });
+        if (ev.hasActiveMatch && ev.highestTier === "hard_match" && !input.doNotServeAcknowledged) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message:
+              "DO_NOT_SERVE_REVIEW_REQUIRED: This recipient matches a Do Not Serve restriction. Review before sending.",
+          });
+        }
       }
       const message = await db.createMessage({
         senderId: ctx.user.id,
@@ -307,7 +329,28 @@ export const messagesRouter = router({
     )
     .query(async ({ ctx, input }) => {
       assertStaffEmailCommunicationAccess(ctx, "view");
-      return await listEmailsAndThreads(input);
+      const res = await listEmailsAndThreads(input);
+      if (!res.threads.length) return res;
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+      const evalMap = await evaluateDoNotServeBatch(
+        res.threads.map((t) => ({
+          key: t.gmailThreadId,
+          contactIds: [t.parentContactId, t.studentContactId],
+          emails: t.participants,
+          names: [t.parentName, ...t.messages.map((m) => m.fromName)].filter(Boolean),
+          targetEntityType: "gmail_thread",
+          targetEntityId: t.gmailThreadId,
+          staffUserId: ctx.user?.id,
+        })),
+        ownerId
+      );
+      return {
+        ...res,
+        threads: res.threads.map((t) => ({
+          ...t,
+          doNotServeEvaluation: evalMap[t.gmailThreadId] || null,
+        })),
+      };
     }),
 
   /**
@@ -317,7 +360,22 @@ export const messagesRouter = router({
     .input(z.object({ gmailThreadId: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
       assertStaffEmailCommunicationAccess(ctx, "view");
-      return await getEmailThreadById(input.gmailThreadId);
+      const thread = await getEmailThreadById(input.gmailThreadId);
+      if (!thread) return thread;
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+      const ev = await evaluateDoNotServeCandidate({
+        ownerId,
+        contactIds: [thread.parentContactId, thread.studentContactId],
+        emails: thread.participants,
+        names: [thread.parentName, ...thread.messages.map((m) => m.fromName)].filter(Boolean),
+        targetEntityType: "gmail_thread",
+        targetEntityId: thread.gmailThreadId,
+        staffUserId: ctx.user?.id,
+      }).catch(() => null);
+      return {
+        ...thread,
+        doNotServeEvaluation: ev,
+      };
     }),
 
   /**
@@ -380,6 +438,8 @@ export const messagesRouter = router({
         replyToMessageId: z.string().optional().nullable(),
         templateId: z.number().optional().nullable(),
         portalVisible: z.boolean().optional().default(false),
+        isMarketing: z.boolean().optional(),
+        doNotServeAcknowledged: z.boolean().optional(),
         attachments: z
           .array(
             z.object({
@@ -396,6 +456,79 @@ export const messagesRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       assertStaffEmailCommunicationAccess(ctx, "edit");
+      const ownerId = resolvePracticeOrgOwnerId(ctx);
+
+      let matchedTemplateCategory: string | null = null;
+      let matchedTemplateName: string | null = null;
+      if (input.templateId) {
+        const {
+          BUILTIN_ADVOCATE_TEMPLATES,
+          hydrateTemplateCategoriesFromDbIfNeeded,
+          mergeDbTemplatesWithOverlay,
+        } = await import("../services/emailTemplateCategories");
+        const { emailTemplates } = await import("../../drizzle/schema");
+        await hydrateTemplateCategoriesFromDbIfNeeded();
+        let dbTemplates: unknown[] = [];
+        try {
+          const dbConn = await db.getDb();
+          if (dbConn) {
+            dbTemplates = await dbConn.select().from(emailTemplates);
+          }
+        } catch {}
+        const allTemplates = mergeDbTemplatesWithOverlay(dbTemplates);
+        const found =
+          allTemplates.find((t) => t.id === input.templateId) ||
+          BUILTIN_ADVOCATE_TEMPLATES.find((t) => t.id === input.templateId);
+        if (found) {
+          matchedTemplateCategory = found.category;
+          matchedTemplateName = found.name;
+        }
+      }
+
+      const { isMarketingEmailContext, checkMarketingEmailSuppression } = await import(
+        "../services/doNotServeMarketing"
+      );
+      if (
+        isMarketingEmailContext({
+          isMarketing: input.isMarketing,
+          category: matchedTemplateCategory,
+          templateName: matchedTemplateName,
+          subject: input.subject,
+        })
+      ) {
+        const suppression = await checkMarketingEmailSuppression({
+          ownerId,
+          contactIds: [input.parentContactId, input.studentContactId],
+          emails: [...input.toEmails, ...(input.ccEmails || [])],
+          channel: "gmail_marketing_compose",
+          targetEntityType: "gmail_compose",
+          targetEntityId: input.gmailThreadId || input.toEmails.join(","),
+          subject: input.subject,
+        });
+        if (suppression.suppressed) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message:
+              "DO_NOT_SERVE_MARKETING_SUPPRESSED: Clients listed under Blacklisted or Do Not Serve cannot receive marketing emails.",
+          });
+        }
+      }
+
+      const ev = await evaluateDoNotServeCandidate({
+        ownerId,
+        contactIds: [input.parentContactId, input.studentContactId],
+        emails: [...input.toEmails, ...(input.ccEmails || [])],
+        targetEntityType: "gmail_compose",
+        targetEntityId: input.gmailThreadId || input.toEmails.join(","),
+        staffUserId: ctx.user?.id,
+      });
+      if (ev.hasActiveMatch && ev.highestTier === "hard_match" && !input.doNotServeAcknowledged) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message:
+            "DO_NOT_SERVE_REVIEW_REQUIRED: One or more recipients match a Do Not Serve restriction. Review before sending.",
+        });
+      }
       return await composeAndSendEmail({
         ...input,
         actorUserId: ctx.user.id,

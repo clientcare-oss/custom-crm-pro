@@ -22,6 +22,8 @@ import {
   RotateCcw,
   AlertTriangle,
   RefreshCw,
+  Archive,
+  FileBox,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
@@ -41,6 +43,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MetalCornerBolt } from "@/components/ui/MetalPlaqueButton";
+import {
+  BlacklistClientDrawer,
+  type BlacklistClientTarget,
+} from "@/components/do-not-serve/BlacklistClientDrawer";
+import { DoNotServeDetailDrawer } from "@/components/do-not-serve/DoNotServeDetailDrawer";
+import {
+  DoNotServeChannelGuard,
+  DoNotServePostSaveUndoBanner,
+} from "@/components/do-not-serve/DoNotServeChannelGuard";
 
 export interface ContactItem {
   id: number;
@@ -73,6 +84,8 @@ export interface ContactItem {
   quoSyncStatus?: string | null;
   quoLastSyncAt?: string | Date | null;
   quoSyncError?: string | null;
+  archivedAt?: string | Date | null;
+  archiveReason?: string | null;
 }
 
 const AREA_CODE_TIMEZONE_MAP: Record<string, string> = {
@@ -307,6 +320,28 @@ export default function ContactsLedgerView({
   const [spouseNameInput, setSpouseNameInput] = useState("");
   const [spousePhoneInput, setSpousePhoneInput] = useState("");
   const [selectedExistingSpouseId, setSelectedExistingSpouseId] = useState<string>("");
+  const [showArchivedOnly, setShowArchivedOnly] = useState(false);
+  const [blacklistTarget, setBlacklistTarget] = useState<BlacklistClientTarget | null>(null);
+  const [detailEntryId, setDetailEntryId] = useState<number | null>(null);
+  const [savedRestriction, setSavedRestriction] = useState<{ entryId: number; displayName: string } | null>(null);
+
+  const { data: restrictedContactMap } = trpc.doNotServe.getActiveContactFlags.useQuery();
+
+  const archiveContactMutation = trpc.contacts.archive.useMutation({
+    onSuccess: () => {
+      utils.contacts.list.invalidate();
+      toast.success("Contact moved to Archive.");
+    },
+    onError: (err) => toast.error(err.message || "Failed to archive contact"),
+  });
+
+  const unarchiveContactMutation = trpc.contacts.unarchive.useMutation({
+    onSuccess: () => {
+      utils.contacts.list.invalidate();
+      toast.success("Contact unarchived. Any active Do Not Serve restriction remains unchanged.");
+    },
+    onError: (err) => toast.error(err.message || "Failed to unarchive contact"),
+  });
 
   const quickAddStudentMutation = trpc.contacts.create.useMutation({
     onSuccess: () => {
@@ -433,11 +468,22 @@ export default function ContactsLedgerView({
     return true;
   };
 
+  const archivedAdultCount = useMemo(
+    () => contacts.filter((c) => !isStudentContact(c) && Boolean(c.archivedAt)).length,
+    [contacts]
+  );
+
   // Filtered contacts based on category, search, and letter
   const filteredContacts = useMemo(() => {
     return contacts.filter((c) => {
       // Students are NOT contacts — they are solely a linked project case or file
       if (isStudentContact(c)) return false;
+
+      if (showArchivedOnly) {
+        if (!c.archivedAt) return false;
+      } else if (c.archivedAt && !searchQuery.trim()) {
+        return false;
+      }
 
       if (!matchCategory(c, category)) return false;
 
@@ -474,7 +520,7 @@ export default function ContactsLedgerView({
 
       return true;
     });
-  }, [contacts, category, searchQuery, selectedLetter]);
+  }, [contacts, category, searchQuery, selectedLetter, showArchivedOnly]);
 
   // Group contacts alphabetically by last name initial
   const groupedContacts = useMemo(() => {
@@ -541,6 +587,21 @@ export default function ContactsLedgerView({
   // dossierContact: The primary contact person displayed at the top of the dossier.
   // Active contact is already guaranteed to be a contact (never a student).
   const dossierContact = activeContact;
+
+  const { data: dossierDoNotServeEval } = trpc.doNotServe.evaluateCandidate.useQuery(
+    {
+      contactId: dossierContact?.id,
+      fullName: dossierContact
+        ? `${dossierContact.firstName || ""} ${dossierContact.lastName || ""}`.trim()
+        : undefined,
+      phone: dossierContact?.phone || undefined,
+      email: dossierContact?.email || undefined,
+      channel: "contacts_ledger",
+      targetEntityType: "contact",
+      targetEntityId: String(dossierContact?.id || 0),
+    },
+    { enabled: Boolean(dossierContact?.id) }
+  );
 
   // dossierStudents: The linked student case(s) / files for this contact
   const dossierStudents = useMemo(() => {
@@ -795,19 +856,31 @@ export default function ContactsLedgerView({
           >
             {/* Top Category Filter Tabs Strip */}
             <div className="flex flex-col gap-1.5 pb-2.5 pt-0.5 border-b border-white/10 select-none">
-              {/* Total Contacts Count Indicator (Top Centered) */}
-              <div className="flex items-center justify-center gap-2">
-                <span className={cn("h-px w-8 sm:w-12", isLight ? "bg-[#C2AE88]/40" : "bg-[#D4AF37]/25")} />
+              {/* Total Contacts Count Indicator + Archive Toggle */}
+              <div className="flex items-center justify-between gap-2 px-0.5">
                 <span
                   className={cn(
-                    "text-[10px] sm:text-[11px] font-serif font-semibold tracking-wider uppercase",
+                    "text-[10px] sm:text-[11px] font-serif font-semibold tracking-wider uppercase truncate",
                     isLight ? "text-[#73634B]" : "text-[#E8D1A7]"
                   )}
                 >
                   {filteredContacts.length}{" "}
-                  {filteredContacts.length === 1 ? "Contact" : "Contacts"} in Directory
+                  {showArchivedOnly ? "Archived" : "Active"}
                 </span>
-                <span className={cn("h-px w-8 sm:w-12", isLight ? "bg-[#C2AE88]/40" : "bg-[#D4AF37]/25")} />
+                <button
+                  type="button"
+                  onClick={() => setShowArchivedOnly((v) => !v)}
+                  className={cn(
+                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border transition-colors cursor-pointer shrink-0",
+                    showArchivedOnly
+                      ? "bg-[#0B1E38] text-[#DFC07C] border-[#DFC07C]/50"
+                      : "bg-transparent text-[#8EA2C8] hover:text-white border-white/15"
+                  )}
+                  title="Toggle archived contacts"
+                >
+                  <Archive className="w-2.5 h-2.5" />
+                  <span>{showArchivedOnly ? "Back to Active" : `Archive (${archivedAdultCount})`}</span>
+                </button>
               </div>
 
               {/* 6 Category Filter Buttons: Balanced 3x2 Grid (No Horizontal Scrolling) */}
@@ -1177,6 +1250,32 @@ export default function ContactsLedgerView({
                             {activeBadge.label}
                           </span>
                         )}
+
+                        {dossierContact.archivedAt && (
+                          <span className="px-2 py-0.5 rounded-md text-[10.5px] font-medium bg-[#08152C] text-[#9FB0CF] border border-[#1E335A]">
+                            Archived
+                          </span>
+                        )}
+
+                        {restrictedContactMap?.[dossierContact.id] && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDetailEntryId(restrictedContactMap[dossierContact.id].entryId)
+                            }
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-medium bg-[#091734] text-[#DFC07C] border border-[#DFC07C]/45 hover:bg-[#10224A] cursor-pointer"
+                          >
+                            <FileBox className="w-3 h-3" />
+                            <span>Restricted</span>
+                          </button>
+                        )}
+
+                        <DoNotServeChannelGuard
+                          evaluation={dossierDoNotServeEval}
+                          channel="contacts_ledger"
+                          targetEntityType="contact"
+                          targetEntityId={String(dossierContact.id)}
+                        />
 
                         {dossierContact.quoSyncStatus === "removed_from_quo" && (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-serif font-semibold bg-slate-900/80 text-slate-300 border border-slate-600/60 shadow-xs">
@@ -1553,6 +1652,50 @@ export default function ContactsLedgerView({
                           <Edit2 className="h-3.5 w-3.5 text-[#93C5FD]" />
                           <span>Edit Contact</span>
                         </DropdownMenuItem>
+                        {dossierContact.archivedAt ? (
+                          <DropdownMenuItem
+                            onClick={() => unarchiveContactMutation.mutate({ id: dossierContact.id })}
+                            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-emerald-300 text-xs py-2 rounded-lg"
+                          >
+                            <Archive className="h-3.5 w-3.5" />
+                            <span>Unarchive Contact</span>
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onClick={() => archiveContactMutation.mutate({ id: dossierContact.id })}
+                            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-xs py-2 rounded-lg"
+                          >
+                            <Archive className="h-3.5 w-3.5 text-slate-300" />
+                            <span>Archive Contact</span>
+                          </DropdownMenuItem>
+                        )}
+                        {dossierContact.archivedAt && !restrictedContactMap?.[dossierContact.id] && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setBlacklistTarget({
+                                contactId: dossierContact.id,
+                                name: `${dossierContact.firstName || ""} ${dossierContact.lastName || ""}`.trim(),
+                                phone: dossierContact.phone || null,
+                                email: dossierContact.email || null,
+                              })
+                            }
+                            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-[#DFC07C] text-xs py-2 rounded-lg"
+                          >
+                            <FileBox className="h-3.5 w-3.5" />
+                            <span>Blacklist client</span>
+                          </DropdownMenuItem>
+                        )}
+                        {restrictedContactMap?.[dossierContact.id] && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setDetailEntryId(restrictedContactMap[dossierContact.id].entryId)
+                            }
+                            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 text-[#DFC07C] text-xs py-2 rounded-lg"
+                          >
+                            <FileBox className="h-3.5 w-3.5" />
+                            <span>View Do Not Serve restriction</span>
+                          </DropdownMenuItem>
+                        )}
                         {dossierContact.quoSyncStatus === "removed_from_quo" ? (
                           <DropdownMenuItem
                             onClick={() => restoreToQuoMutation.mutate({ contactId: dossierContact.id })}
@@ -1581,7 +1724,33 @@ export default function ContactsLedgerView({
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+
+                    {dossierContact.archivedAt && !restrictedContactMap?.[dossierContact.id] && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setBlacklistTarget({
+                            contactId: dossierContact.id,
+                            name: `${dossierContact.firstName || ""} ${dossierContact.lastName || ""}`.trim(),
+                            phone: dossierContact.phone || null,
+                            email: dossierContact.email || null,
+                          })
+                        }
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-serif font-medium bg-[#06122E] hover:bg-[#0B1E45] text-[#DFC07C] border border-[#243964] hover:border-[#DFC07C]/55 transition-all cursor-pointer"
+                      >
+                        <FileBox className="h-3.5 w-3.5" />
+                        <span>Blacklist client</span>
+                      </button>
+                    )}
                   </div>
+
+                  {savedRestriction && (
+                    <DoNotServePostSaveUndoBanner
+                      savedEntry={savedRestriction}
+                      onDismiss={() => setSavedRestriction(null)}
+                      onOpenEntry={(id) => setDetailEntryId(id)}
+                    />
+                  )}
 
                   {/* Forged Metal Chronometer & Calling Safety Plaque */}
                   <div
@@ -2161,6 +2330,24 @@ export default function ContactsLedgerView({
             })}
           </div>
         </div>
+
+        <BlacklistClientDrawer
+          open={Boolean(blacklistTarget)}
+          onOpenChange={(open) => {
+            if (!open) setBlacklistTarget(null);
+          }}
+          target={blacklistTarget}
+          onSaved={(res) => setSavedRestriction(res)}
+          onOpenExistingEntry={(id) => setDetailEntryId(id)}
+        />
+
+        <DoNotServeDetailDrawer
+          entryId={detailEntryId}
+          open={Boolean(detailEntryId)}
+          onOpenChange={(open) => {
+            if (!open) setDetailEntryId(null);
+          }}
+        />
       </div>
     );
   }
