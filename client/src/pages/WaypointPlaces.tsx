@@ -812,7 +812,7 @@ export default function WaypointPlaces() {
       <div
         data-testid="waypoint-places-workspace"
         data-focus-mode={String(focusMode)}
-        className={`${crmSidebar ? "h-full max-h-full" : "h-svh max-h-svh"} flex-1 min-h-0 w-full max-w-full overflow-y-auto bg-[#0C213E] text-[#FFF8E7] flex flex-col gap-3.5 p-3.5 select-none custom-scrollbar`}
+        className={`${crmSidebar ? "h-full max-h-full" : "h-svh max-h-svh"} flex-1 min-h-0 w-full max-w-full overflow-y-auto bg-[#0C213E] text-[#FFF8E7] flex flex-col gap-2.5 sm:gap-3.5 p-2 sm:p-3.5 select-none custom-scrollbar`}
         style={{
           background:
             "radial-gradient(ellipse at 50% 0%, #1E4478 0%, #10294C 48%, #091830 100%)",
@@ -846,7 +846,7 @@ export default function WaypointPlaces() {
         )}
 
         {(!isPublicSubpageView || activePublicToggles.showBannerHeader) && (
-        <header className="relative overflow-hidden rounded-2xl bg-[#000F26] border-2 border-[#DFBE77]/80 px-5 py-2.5 shadow-[0_14px_34px_rgba(0,0,0,0.78),0_0_26px_rgba(223,190,119,0.2),inset_0_1px_1px_rgba(255,244,212,0.32)] shrink-0">
+        <header className="relative overflow-hidden rounded-2xl bg-[#000F26] border-2 border-[#DFBE77]/80 px-3 sm:px-5 py-2.5 shadow-[0_14px_34px_rgba(0,0,0,0.78),0_0_26px_rgba(223,190,119,0.2),inset_0_1px_1px_rgba(255,244,212,0.32)] shrink-0">
           {/* Subtle Top Gold Filigree Shimmer Line */}
           <div
             className="pointer-events-none absolute inset-x-0 top-0 h-[2px] z-20"

@@ -1844,10 +1844,10 @@ export function GeorgiaMapCanvas({
       {/* ===================================================================== */}
       {/* TOP CONTROL BAR (OFF THE MAP — Brighter Royal Navy & Gold Trim)       */}
       {/* ===================================================================== */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl bg-gradient-to-r from-[#10294E] via-[#0D2242] to-[#10294E] border border-[#DFBE77]/65 px-3.5 py-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_18px_rgba(223,190,119,0.12),inset_0_1px_1px_rgba(255,244,212,0.18)] shrink-0">
-        {/* Left: Plain-English Search Box + 1-Click "Show on Map" Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="relative w-[250px] sm:w-[290px]">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-between gap-2 sm:gap-2.5 rounded-xl bg-gradient-to-r from-[#10294E] via-[#0D2242] to-[#10294E] border border-[#DFBE77]/65 px-2.5 sm:px-3.5 py-2 sm:py-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_18px_rgba(223,190,119,0.12),inset_0_1px_1px_rgba(255,244,212,0.18)] shrink-0">
+        {/* Left: Plain-English Search Box */}
+        <div className="flex items-center w-full sm:w-auto">
+          <div className="relative w-full sm:w-[290px]">
             <div className="flex items-center bg-[#091830] border border-[#C5A059]/65 focus-within:border-[#FFE394] rounded-xl px-3 py-2 transition-colors">
               <Search className="h-4 w-4 text-[#FFE394] shrink-0 mr-2" />
               <input
@@ -1904,26 +1904,29 @@ export function GeorgiaMapCanvas({
           </div>
         </div>
 
-        {/* Right: Plain-English Map Background Switcher */}
+        {/* Right: Single-Line Responsive Map Background Switcher (Never wraps onto 2 lines on mobile) */}
         <div
           data-testid="map-style-switcher"
-          className="inline-flex items-center rounded-xl bg-[#091830] border border-[#C5A059]/60 p-1"
+          className="grid grid-cols-3 sm:inline-flex items-center w-full sm:w-auto rounded-xl bg-[#091830] border border-[#C5A059]/60 p-1 gap-0.5"
         >
           {(
             [
               {
                 id: "hybrid",
                 label: "Satellite + Labels",
+                mobileLabel: "Sat + Labels",
                 icon: Layers,
               },
               {
                 id: "waypoint_map",
                 label: "Street Map",
+                mobileLabel: "Street Map",
                 icon: MapIcon,
               },
               {
                 id: "satellite",
                 label: "Satellite Photo",
+                mobileLabel: "Satellite",
                 icon: Satellite,
               },
             ] as const
@@ -1936,14 +1939,15 @@ export function GeorgiaMapCanvas({
                 type="button"
                 data-testid={`map-mode-${mode.id}`}
                 onClick={() => handleSelectMapMode(mode.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                className={`px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-all cursor-pointer ${
                   active
                     ? "bg-gradient-to-r from-[#FCE6A6] via-[#E5C170] to-[#C59B43] text-[#07162B] font-bold border border-[#FFF4D4] shadow-[0_3px_10px_rgba(229,193,112,0.35)]"
                     : "text-[#FFF4D4] hover:text-white hover:bg-[#122B52]"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
-                <span>{mode.label}</span>
+                <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
+                <span className="sm:hidden">{mode.mobileLabel}</span>
+                <span className="hidden sm:inline">{mode.label}</span>
               </button>
             );
           })}
@@ -1957,7 +1961,7 @@ export function GeorgiaMapCanvas({
         {/* LEFT (lg:col-span-8 xl:col-span-9 or full width): CLEAN, UNOBSTRUCTED MAP VIEWPORT */}
         <div
           ref={wrapperRef}
-          className={`${showQuickStatsCard ? "lg:col-span-8 xl:col-span-9" : "lg:col-span-12"} relative w-full h-[520px] sm:h-[580px] lg:h-[620px] rounded-xl overflow-hidden border-2 border-[#DFBE77]/75 bg-[#071732] shadow-[0_14px_40px_rgba(0,0,0,0.8),0_0_24px_rgba(223,190,119,0.16)] select-none shrink-0`}
+          className={`${showQuickStatsCard ? "lg:col-span-8 xl:col-span-9" : "lg:col-span-12"} relative w-full h-[400px] sm:h-[560px] lg:h-[620px] rounded-xl overflow-hidden border-2 border-[#DFBE77]/75 bg-[#071732] shadow-[0_14px_40px_rgba(0,0,0,0.8),0_0_24px_rgba(223,190,119,0.16)] select-none shrink-0`}
           data-testid="georgia-map-canvas"
           data-map-mode={mapDisplayMode}
           data-satellite-provider={satelliteConfig.providerId}
@@ -2777,22 +2781,27 @@ export function GeorgiaMapCanvas({
           })}
       </svg>
 
-        {/* Top-Left Long & Small Horizontal Map Color Key Over Map Box */}
+        {/* Top-Left Single-Line Horizontal Map Color Key Over Map Box (Never wraps into a tall block on mobile) */}
         <div
           data-testid="choropleth-map-legend"
           data-collapsed={String(legendCollapsed)}
-          className="absolute top-2.5 left-2.5 z-20 pointer-events-auto inline-flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-[#091830]/92 border border-[#DFBE77]/70 shadow-[0_6px_18px_rgba(0,0,0,0.75)] backdrop-blur-md"
+          className="absolute top-1.5 left-1.5 right-1.5 sm:right-auto sm:top-2.5 sm:left-2.5 z-20 pointer-events-auto flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#091830]/92 border border-[#DFBE77]/70 shadow-[0_6px_18px_rgba(0,0,0,0.75)] backdrop-blur-md overflow-x-auto whitespace-nowrap"
         >
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#FFE394] pr-0.5">
-            Key ({activeMeasureMeta.shortLabel}):
+          <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-[#FFE394] shrink-0">
+            Key<span className="hidden sm:inline"> ({activeMeasureMeta.shortLabel})</span>:
           </span>
           {CHOROPLETH_LEGEND_STOPS.map((stop) => (
-            <span key={stop.label} className="inline-flex items-center gap-1">
+            <span
+              key={stop.label}
+              className={`${
+                stop.rangeText === "Unscored" ? "hidden sm:inline-flex" : "inline-flex"
+              } items-center gap-1 shrink-0`}
+            >
               <span
-                className="h-2.5 w-3 rounded-[2px] border border-[#FFE394]/60 shrink-0"
+                className="h-2.5 w-2.5 sm:w-3 rounded-[2px] border border-[#FFE394]/60 shrink-0"
                 style={{ backgroundColor: stop.color }}
               />
-              <span className="text-[10.5px] font-semibold text-[#FFF8E7] whitespace-nowrap">
+              <span className="text-[9.5px] sm:text-[10.5px] font-semibold text-[#FFF8E7] whitespace-nowrap">
                 {stop.rangeText}
               </span>
             </span>
@@ -2802,9 +2811,9 @@ export function GeorgiaMapCanvas({
         {/* Bottom-Left Compact Horizontal Color Darkness Strip Over Map Box (Matches Key Style) */}
         <div
           data-testid="hybrid-shading-opacity-control"
-          className="absolute bottom-2.5 left-2.5 z-20 pointer-events-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#091830]/92 border border-[#DFBE77]/70 shadow-[0_6px_18px_rgba(0,0,0,0.75)] backdrop-blur-md text-[11px]"
+          className="absolute bottom-1.5 left-1.5 sm:bottom-2.5 sm:left-2.5 z-20 pointer-events-auto inline-flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#091830]/92 border border-[#DFBE77]/70 shadow-[0_6px_18px_rgba(0,0,0,0.75)] backdrop-blur-md text-[10px] sm:text-[11px]"
         >
-          <span className="text-[10px] text-[#FFE394] font-extrabold uppercase tracking-wider">
+          <span className="text-[9.5px] sm:text-[10px] text-[#FFE394] font-extrabold uppercase tracking-wider whitespace-nowrap">
             Color Darkness:
           </span>
           <input
@@ -2815,12 +2824,12 @@ export function GeorgiaMapCanvas({
             value={hybridShadingOpacityPct}
             data-testid="hybrid-shading-opacity-slider"
             onChange={(e) => setHybridShadingOpacityPct(Number(e.target.value))}
-            className="w-24 h-1.5 accent-[#FFE394] cursor-pointer"
+            className="w-16 sm:w-24 h-1.5 accent-[#FFE394] cursor-pointer"
             aria-label="Adjust geographic score shading opacity"
           />
           <span
             data-testid="hybrid-shading-opacity-value"
-            className="text-[10.5px] text-[#FFF8E7] font-bold w-8 text-right"
+            className="text-[10px] sm:text-[10.5px] text-[#FFF8E7] font-bold w-7 sm:w-8 text-right"
           >
             {hybridShadingOpacityPct}%
           </span>
