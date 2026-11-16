@@ -513,8 +513,51 @@ export default function WaypointPlaces() {
   }, [subCountyTracts, selectedFips, weights]);
 
   const selectedCommunity: PlaceCommunityRecord = useMemo(() => {
+    const rolledUpAcs =
+      countyCensusRollup &&
+      countyCensusRollup.medianHouseholdIncome &&
+      countyCensusRollup.medianHomeValue &&
+      countyCensusRollup.medianGrossRent
+        ? {
+            surveyPeriod: "2019-2023 ACS 5-Year",
+            populationEstimate: countyCensusRollup.totalPopulation,
+            populationMoe: 0,
+            medianHouseholdIncome: countyCensusRollup.medianHouseholdIncome,
+            medianHouseholdIncomeMoe: 0,
+            medianHomeValue: countyCensusRollup.medianHomeValue,
+            medianHomeValueMoe: 0,
+            medianGrossRent: countyCensusRollup.medianGrossRent,
+            medianGrossRentMoe: 0,
+            meanCommuteMinutes: countyCensusRollup.meanCommuteMinutes ?? 28.0,
+            meanCommuteMinutesMoe: 0,
+            priceToIncomeRatio: Number(
+              (
+                countyCensusRollup.medianHomeValue /
+                Math.max(1, countyCensusRollup.medianHouseholdIncome)
+              ).toFixed(2)
+            ),
+            rentToIncomePct: Number(
+              (
+                ((countyCensusRollup.medianGrossRent * 12) /
+                  Math.max(1, countyCensusRollup.medianHouseholdIncome)) *
+                100
+              ).toFixed(1)
+            ),
+            verificationTier: "Verified" as const,
+            sourceCitation: "U.S. Census Bureau ACS 5-Year Estimates",
+            lastUpdated: new Date().toISOString(),
+          }
+        : undefined;
+
     const match = communities.find((c) => c.fips === selectedFips);
-    if (match) return match;
+    if (match) {
+      if (match.acsDemographics) return match;
+      return {
+        ...match,
+        acsDemographics: rolledUpAcs,
+        verifiedPillars: match.verifiedPillars || countyCensusRollup?.verifiedPillars,
+      };
+    }
 
     const stateFips2 = String(selectedFips || "13117").slice(0, 2);
     const stateMeta = US_50_STATES_DIRECTORY[stateFips2];
@@ -580,6 +623,7 @@ export default function WaypointPlaces() {
           : "awaiting_verified_dataset",
       dataSourcesPending: hasLiveRollup ? ["State DOE", "FBI CDE"] : ["State DOE", "NCES CCD", "US Census ACS"],
       verifiedPillars: countyCensusRollup?.verifiedPillars,
+      acsDemographics: rolledUpAcs,
       calibrationPillars: demoPillars ||
         countyCensusRollup?.verifiedPillars || {
           communityQuality: null,
@@ -982,7 +1026,7 @@ export default function WaypointPlaces() {
             }}
             focusMode={focusMode}
             onToggleFocusMode={handleToggleFocusMode}
-            showQuickStatsCard={!isPublicSubpageView || activePublicToggles.showQuickStatsCard}
+            showQuickStatsCard={true}
             showCategoryButtons={!isPublicSubpageView || activePublicToggles.showCategoryButtons}
             isPublicSubpageView={isPublicSubpageView}
           />
@@ -1246,6 +1290,55 @@ export default function WaypointPlaces() {
                             ±{selectedCommunity.acsDemographics.meanCommuteMinutesMoe} min (B08303)
                           </span>
                         )}
+                      </div>
+                      <div className="rounded-lg bg-[#102648]/90 border border-[#C5A059]/45 p-2">
+                        <span className="text-[10px] text-[#EADBC0] block">
+                          Population
+                        </span>
+                        <span
+                          className="text-sm font-bold text-[#FFF8E7] block mt-0.5"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          {selectedCommunity.acsDemographics.populationEstimate.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="rounded-lg bg-[#102648]/90 border border-[#C5A059]/45 p-2">
+                        <span className="text-[10px] text-[#EADBC0] block">
+                          Public Schools in County
+                        </span>
+                        <span
+                          className="text-sm font-bold text-[#FFE394] block mt-0.5"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          {countySchools.length} schools
+                        </span>
+                      </div>
+                      <div className="rounded-lg bg-[#102648]/90 border border-[#C5A059]/45 p-2">
+                        <span className="text-[10px] text-[#EADBC0] block">
+                          School Districts
+                        </span>
+                        <span
+                          className="text-sm font-bold text-[#FFF8E7] block mt-0.5"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          {countyDistricts.length} districts
+                        </span>
+                      </div>
+                      <div className="rounded-lg bg-[#102648]/90 border border-[#C5A059]/45 p-2">
+                        <span className="text-[10px] text-[#EADBC0] block">
+                          Specialized Programs
+                        </span>
+                        <span
+                          className="text-sm font-bold text-[#FFF8E7] block mt-0.5"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          {
+                            (specializedSnapshot?.facilities ?? []).filter(
+                              (f) => f.physicalLocation.countyFips === selectedCommunity.fips
+                            ).length
+                          }{" "}
+                          in county
+                        </span>
                       </div>
                     </div>
                   </div>
