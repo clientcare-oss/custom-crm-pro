@@ -2793,6 +2793,33 @@ export function GeorgiaMapCanvas({
           ))}
         </div>
 
+        {/* Bottom-Left Compact Horizontal Color Darkness Strip Over Map Box (Matches Key Style) */}
+        <div
+          data-testid="hybrid-shading-opacity-control"
+          className="absolute bottom-2.5 left-2.5 z-20 pointer-events-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#091830]/92 border border-[#DFBE77]/70 shadow-[0_6px_18px_rgba(0,0,0,0.75)] backdrop-blur-md text-[11px]"
+        >
+          <span className="text-[10px] text-[#FFE394] font-extrabold uppercase tracking-wider">
+            Color Darkness:
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={hybridShadingOpacityPct}
+            data-testid="hybrid-shading-opacity-slider"
+            onChange={(e) => setHybridShadingOpacityPct(Number(e.target.value))}
+            className="w-24 h-1.5 accent-[#FFE394] cursor-pointer"
+            aria-label="Adjust geographic score shading opacity"
+          />
+          <span
+            data-testid="hybrid-shading-opacity-value"
+            className="text-[10.5px] text-[#FFF8E7] font-bold w-8 text-right"
+          >
+            {hybridShadingOpacityPct}%
+          </span>
+        </div>
+
         {/* Honest Unconfigured Satellite / Hybrid Notice (Only if satellite provider is unconfigured) */}
         {isSatelliteUnavailable && (
           <div
@@ -3076,33 +3103,6 @@ export function GeorgiaMapCanvas({
             <span className="text-xs font-extrabold uppercase tracking-wider text-[#FFE394]">
               Map Categories &amp; Show On Map (Click Any Square Button):
             </span>
-
-            {/* Compact Inline Color Darkness Slider Next to Title */}
-            <div
-              data-testid="hybrid-shading-opacity-control"
-              className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#091830] border border-[#C5A059]/60 text-[11px]"
-            >
-              <span className="text-[#FFE394] font-bold uppercase tracking-wider">
-                Color Darkness:
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={5}
-                value={hybridShadingOpacityPct}
-                data-testid="hybrid-shading-opacity-slider"
-                onChange={(e) => setHybridShadingOpacityPct(Number(e.target.value))}
-                className="w-20 h-1.5 accent-[#FFE394] cursor-pointer"
-                aria-label="Adjust geographic score shading opacity"
-              />
-              <span
-                data-testid="hybrid-shading-opacity-value"
-                className="text-[#FFF8E7] font-bold w-8 text-right"
-              >
-                {hybridShadingOpacityPct}%
-              </span>
-            </div>
           </div>
 
           <div
