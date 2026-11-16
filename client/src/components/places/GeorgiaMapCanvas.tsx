@@ -2808,10 +2808,10 @@ export function GeorgiaMapCanvas({
           ))}
         </div>
 
-        {/* Bottom-Left Compact Horizontal Color Darkness Strip Over Map Box (Matches Key Style) */}
+        {/* Bottom Compact Horizontal Color Darkness Strip Over Map Box (Sits cleanly beneath Zoom Tool on mobile) */}
         <div
           data-testid="hybrid-shading-opacity-control"
-          className="absolute bottom-1.5 left-1.5 sm:bottom-2.5 sm:left-2.5 z-20 pointer-events-auto inline-flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#091830]/92 border border-[#DFBE77]/70 shadow-[0_6px_18px_rgba(0,0,0,0.75)] backdrop-blur-md text-[10px] sm:text-[11px]"
+          className="absolute bottom-1.5 left-1.5 right-1.5 sm:right-auto sm:bottom-2.5 sm:left-2.5 z-20 pointer-events-auto flex sm:inline-flex items-center justify-between sm:justify-start gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#091830]/92 border border-[#DFBE77]/70 shadow-[0_6px_18px_rgba(0,0,0,0.75)] backdrop-blur-md text-[10px] sm:text-[11px]"
         >
           <span className="text-[9.5px] sm:text-[10px] text-[#FFE394] font-extrabold uppercase tracking-wider whitespace-nowrap">
             Color Darkness:
@@ -2824,12 +2824,12 @@ export function GeorgiaMapCanvas({
             value={hybridShadingOpacityPct}
             data-testid="hybrid-shading-opacity-slider"
             onChange={(e) => setHybridShadingOpacityPct(Number(e.target.value))}
-            className="w-16 sm:w-24 h-1.5 accent-[#FFE394] cursor-pointer"
+            className="flex-1 sm:flex-initial sm:w-24 h-1.5 accent-[#FFE394] cursor-pointer"
             aria-label="Adjust geographic score shading opacity"
           />
           <span
             data-testid="hybrid-shading-opacity-value"
-            className="text-[10px] sm:text-[10.5px] text-[#FFF8E7] font-bold w-7 sm:w-8 text-right"
+            className="text-[10px] sm:text-[10.5px] text-[#FFF8E7] font-bold w-8 text-right shrink-0"
           >
             {hybridShadingOpacityPct}%
           </span>
@@ -2894,10 +2894,10 @@ export function GeorgiaMapCanvas({
           </div>
         )}
 
-        {/* Compact Icon-Only Zoom & Reset Buttons on Right of Map */}
+        {/* Compact Icon-Only Zoom & Reset Buttons on Right of Map (Positioned above Color Darkness strip on mobile) */}
         <div
           data-testid="map-zoom-level-indicator"
-          className="absolute bottom-3 right-3 z-20 flex flex-col gap-1 rounded-xl p-1 border border-[#DFBE77]/75 bg-[#0D2344]/95 shadow-[0_8px_24px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,244,212,0.18)] backdrop-blur-md"
+          className="absolute bottom-11 right-1.5 sm:bottom-3 sm:right-3 z-20 flex flex-col gap-1 rounded-xl p-1 border border-[#DFBE77]/75 bg-[#0D2344]/95 shadow-[0_8px_24px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,244,212,0.18)] backdrop-blur-md"
         >
           <button
             type="button"
