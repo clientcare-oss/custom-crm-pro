@@ -1907,7 +1907,7 @@ export function GeorgiaMapCanvas({
         {/* Right: Single-Line Responsive Map Background Switcher (Never wraps onto 2 lines on mobile) */}
         <div
           data-testid="map-style-switcher"
-          className="grid grid-cols-3 sm:inline-flex items-center w-full sm:w-auto rounded-xl bg-[#091830] border border-[#C5A059]/60 p-1 gap-0.5"
+          className="flex items-center justify-between w-full sm:w-auto rounded-xl bg-[#091830] border border-[#C5A059]/60 p-1 gap-1"
         >
           {(
             [
@@ -1920,7 +1920,7 @@ export function GeorgiaMapCanvas({
               {
                 id: "waypoint_map",
                 label: "Street Map",
-                mobileLabel: "Street Map",
+                mobileLabel: "Street",
                 icon: MapIcon,
               },
               {
@@ -1939,7 +1939,7 @@ export function GeorgiaMapCanvas({
                 type="button"
                 data-testid={`map-mode-${mode.id}`}
                 onClick={() => handleSelectMapMode(mode.id)}
-                className={`px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-all cursor-pointer ${
+                className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-all cursor-pointer ${
                   active
                     ? "bg-gradient-to-r from-[#FCE6A6] via-[#E5C170] to-[#C59B43] text-[#07162B] font-bold border border-[#FFF4D4] shadow-[0_3px_10px_rgba(229,193,112,0.35)]"
                     : "text-[#FFF4D4] hover:text-white hover:bg-[#122B52]"
