@@ -1834,6 +1834,124 @@ export interface PlacesBuildAndRuntimeInfo {
   cloudflareCronRefreshStatus: string;
 }
 
+export interface PublicSubPageSectionToggles {
+  showBannerHeader: boolean;
+  showCategoryButtons: boolean;
+  showQuickStatsCard: boolean;
+  showFamilyPriorities: boolean;
+  showCountyDemographics: boolean;
+  showAreaScoresCard: boolean;
+  showPublicSchoolsList: boolean;
+  showCompareButton: boolean;
+  showNeighborhoodTracts: boolean;
+  showIepRightsCard: boolean;
+  showSpecializedFacilities: boolean;
+  showTherapyProvidersList: boolean;
+  showCrimeAndApiGuide: boolean;
+}
+
+export const DEFAULT_PUBLIC_SUBPAGE_TOGGLES: PublicSubPageSectionToggles = {
+  showBannerHeader: true,
+  showCategoryButtons: true,
+  showQuickStatsCard: true,
+  showFamilyPriorities: true,
+  showCountyDemographics: true,
+  showAreaScoresCard: true,
+  showPublicSchoolsList: true,
+  showCompareButton: true,
+  showNeighborhoodTracts: false,
+  showIepRightsCard: false,
+  showSpecializedFacilities: false,
+  showTherapyProvidersList: false,
+  showCrimeAndApiGuide: false,
+};
+
+export const PUBLIC_SUBPAGE_TOGGLE_METADATA: Array<{
+  key: keyof PublicSubPageSectionToggles;
+  label: string;
+  description: string;
+  recommendedForPublic: boolean;
+}> = [
+  {
+    key: "showBannerHeader",
+    label: "Top Flagship Banner & Moving Truck",
+    description: "Waypoint Places header, moving truck graphic, and 50-state IEP continuity card.",
+    recommendedForPublic: true,
+  },
+  {
+    key: "showCategoryButtons",
+    label: "Map Category & Layer Square Buttons",
+    description: "Square buttons below the map (Overall Score, Public Schools, Housing, Commute, etc.).",
+    recommendedForPublic: true,
+  },
+  {
+    key: "showQuickStatsCard",
+    label: "Right-Side County Quick Stats Card",
+    description: "Side panel beside the map with clicked county population, home price, rent, and school count.",
+    recommendedForPublic: true,
+  },
+  {
+    key: "showFamilyPriorities",
+    label: "My Family Priorities Checklist",
+    description: "Interactive checklist where families pick what matters most to calculate their Family Fit.",
+    recommendedForPublic: true,
+  },
+  {
+    key: "showCountyDemographics",
+    label: "County Housing, Income & Commute Card",
+    description: "Plain-English county median household income, home value, rent, and commute summary.",
+    recommendedForPublic: true,
+  },
+  {
+    key: "showAreaScoresCard",
+    label: "Overall Score & Family Fit Score Card",
+    description: "County score summary card inside the Selected Area Guide.",
+    recommendedForPublic: true,
+  },
+  {
+    key: "showPublicSchoolsList",
+    label: "Local Public Schools List",
+    description: "List of public schools in the selected county with grade span and student-teacher ratio.",
+    recommendedForPublic: true,
+  },
+  {
+    key: "showCompareButton",
+    label: "Compare Counties Button",
+    description: "Allows website visitors to compare the selected county side-by-side with another county.",
+    recommendedForPublic: true,
+  },
+  {
+    key: "showNeighborhoodTracts",
+    label: "Sub-County Neighborhood Census Tracts",
+    description: "Detailed Census Tract GEOID breakdown and tract-level ACS table.",
+    recommendedForPublic: false,
+  },
+  {
+    key: "showIepRightsCard",
+    label: "State IEP Rights & Legal Accountability Card",
+    description: "State dispute timelines, OCR enforcement, and IDEA Part B monitoring console.",
+    recommendedForPublic: false,
+  },
+  {
+    key: "showSpecializedFacilities",
+    label: "Specialized & Residential Schools Directory",
+    description: "10-category private autism/DD day schools, PRTF, and residential facilities explorer.",
+    recommendedForPublic: false,
+  },
+  {
+    key: "showTherapyProvidersList",
+    label: "Local Therapy & Medical Providers (NPI)",
+    description: "Speech, OT, PT, ABA, and developmental provider directory cards.",
+    recommendedForPublic: false,
+  },
+  {
+    key: "showCrimeAndApiGuide",
+    label: "Internal Crime, Internet & API Keys Guide",
+    description: "Internal staff technical note about FBI CDE, FCC Broadband, and map tile keys.",
+    recommendedForPublic: false,
+  },
+];
+
 export * from "./waypointPlacesRights";
 export * from "./waypointPlacesSpecialized";
 

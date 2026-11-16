@@ -5,6 +5,7 @@ import {
   getWaypointPlacesConfig,
   listWaypointPlacesCommunities,
   publishWaypointPlacesSnapshot,
+  savePublicSubpageToggles,
   saveWaypointPlacesConfig,
   upsertWaypointPlaceCommunity,
 } from "../db/waypointPlaces";
@@ -47,6 +48,31 @@ export const waypointPlacesRouter = router({
   getPublicExplorerData: publicProcedure.query(async () => {
     return await buildIsolatedPublicPlacesSnapshot("Places Explorer Live");
   }),
+
+  /**
+   * Save Public Website Sub-Page Section Toggles (Controls what sections render on the public Wix embed)
+   */
+  savePublicSubpageToggles: publicProcedure
+    .input(
+      z.object({
+        showBannerHeader: z.boolean().optional(),
+        showCategoryButtons: z.boolean().optional(),
+        showQuickStatsCard: z.boolean().optional(),
+        showFamilyPriorities: z.boolean().optional(),
+        showCountyDemographics: z.boolean().optional(),
+        showAreaScoresCard: z.boolean().optional(),
+        showPublicSchoolsList: z.boolean().optional(),
+        showCompareButton: z.boolean().optional(),
+        showNeighborhoodTracts: z.boolean().optional(),
+        showIepRightsCard: z.boolean().optional(),
+        showSpecializedFacilities: z.boolean().optional(),
+        showTherapyProvidersList: z.boolean().optional(),
+        showCrimeAndApiGuide: z.boolean().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return await savePublicSubpageToggles(input);
+    }),
 
   /**
    * Sub-County Neighborhood Census Tract Polygons & School District Boundaries for a Selected County:

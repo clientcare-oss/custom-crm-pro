@@ -124,6 +124,7 @@ function Router() {
       : "/";
   const isPlacesRoute =
     normalizedPathname === "/waypoint-places" ||
+    normalizedPathname === "/waypoint-places/public" ||
     normalizedPathname === "/waypoint-places/embed" ||
     normalizedPathname === "/tools/waypoint-places" ||
     normalizedPathname === "/places" ||
@@ -131,7 +132,8 @@ function Router() {
 
   if (
     typeof window !== "undefined" &&
-    (normalizedPathname === "/waypoint-places/embed" ||
+    (normalizedPathname === "/waypoint-places/public" ||
+      normalizedPathname === "/waypoint-places/embed" ||
       (isPlacesRoute &&
         new URLSearchParams(window.location.search).get("embed") === "1"))
   ) {
@@ -274,6 +276,7 @@ function Router() {
           <Route path="/tech-tasks">{() => <Redirect to="/tasks" />}</Route>
           <Route path="/tools" component={Tools} />
           <Route path="/tools/waypoint-places" component={WaypointPlaces} />
+          <Route path="/waypoint-places/public" component={WaypointPlaces} />
           <Route path="/waypoint-places/embed" component={WaypointPlaces} />
           <Route path="/waypoint-places" component={WaypointPlaces} />
           <Route path="/places-explorer" component={WaypointPlaces} />
@@ -372,6 +375,7 @@ function Router() {
       <Route path="/project-workspace/:studentId" component={ClientPortal} />
       <Route path="/smart-files/response/:id" component={SmartFilePortalViewer} />
       <Route path="/tools/waypoint-places" component={WaypointPlaces} />
+      <Route path="/waypoint-places/public" component={WaypointPlaces} />
       <Route path="/waypoint-places/embed" component={WaypointPlaces} />
       <Route path="/waypoint-places" component={WaypointPlaces} />
       <Route path="/places-explorer" component={WaypointPlaces} />
@@ -388,7 +392,8 @@ function GlobalOverlaysWhenUnlocked() {
   const { isLocked, isStartScreenOpen } = useWorkspaceLock();
   const isEmbedMode =
     typeof window !== "undefined" &&
-    (window.location.pathname === "/waypoint-places/embed" ||
+    (window.location.pathname === "/waypoint-places/public" ||
+      window.location.pathname === "/waypoint-places/embed" ||
       new URLSearchParams(window.location.search).get("embed") === "1");
   if (isLocked || isStartScreenOpen || location === "/start" || isEmbedMode) {
     return null;

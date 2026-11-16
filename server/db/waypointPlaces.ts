@@ -2,6 +2,7 @@ import { _execDnsRunInternal, _execDnsSelectInternal } from "./doNotServe";
 import { getLocalDbClient } from "../_core/d1Client";
 import {
   CLOUDFLARE_STORAGE_EVALUATION,
+  DEFAULT_PUBLIC_SUBPAGE_TOGGLES,
   DEFAULT_SCORING_WEIGHTS,
   DEMO_COUNTY_CALIBRATION_BY_FIPS,
   INITIAL_GEORGIA_AMENITIES,
@@ -17,6 +18,7 @@ import {
   type PlaceSchoolRecord,
   type PlaceTherapyProviderRecord,
   type PlacesBuildAndRuntimeInfo,
+  type PublicSubPageSectionToggles,
   type ScoringWeightsConfig,
   type SpecialEducationIntelligenceRecord,
   type SpecializedFacilitiesSnapshot,
@@ -81,6 +83,11 @@ const PLACES_DDL_STATEMENTS = [
     r2_object_key TEXT NOT NULL,
     snapshot_json TEXT NOT NULL,
     created_at TEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS waypoint_places_public_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    toggles_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL
   )`,
 ];
 
@@ -396,6 +403,7 @@ export async function upsertWaypointPlaceCommunity(input: {
 
 export interface WaypointPlacesStudioConfig {
   weights: ScoringWeightsConfig;
+  publicSubpageToggles: PublicSubPageSectionToggles;
   pmtilesArchiveUrl: string;
   r2PublicPrefix: string;
   showModelCalibrationDefault: boolean;
@@ -403,12 +411,50 @@ export interface WaypointPlacesStudioConfig {
   updatedAt: string;
 }
 
+export async function getPublicSubpageToggles(): Promise<PublicSubPageSectionToggles> {
+  await ensureWaypointPlacesTables();
+  try {
+    const rows = await _execDnsSelectInternal(
+      `SELECT toggles_json FROM waypoint_places_public_settings WHERE id = 1 LIMIT 1`,
+      []
+    );
+    if (rows[0]?.toggles_json) {
+      const parsed = JSON.parse(String(rows[0].toggles_json));
+      return { ...DEFAULT_PUBLIC_SUBPAGE_TOGGLES, ...parsed };
+    }
+  } catch {
+    // fallback to defaults
+  }
+  return { ...DEFAULT_PUBLIC_SUBPAGE_TOGGLES };
+}
+
+export async function savePublicSubpageToggles(
+  partial: Partial<PublicSubPageSectionToggles>
+): Promise<PublicSubPageSectionToggles> {
+  const current = await getPublicSubpageToggles();
+  const next: PublicSubPageSectionToggles = {
+    ...current,
+    ...partial,
+  };
+  const now = new Date().toISOString();
+  await _execDnsRunInternal(
+    `INSERT INTO waypoint_places_public_settings (id, toggles_json, updated_at)
+     VALUES (1, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET toggles_json = excluded.toggles_json, updated_at = excluded.updated_at`,
+    [JSON.stringify(next), now]
+  );
+  return next;
+}
+
 export async function getWaypointPlacesConfig(): Promise<WaypointPlacesStudioConfig> {
   await ensureWaypointPlacesTables();
-  const rows = await _execDnsSelectInternal(
-    `SELECT * FROM waypoint_places_config WHERE id = 1 LIMIT 1`,
-    []
-  );
+  const [rows, publicSubpageToggles] = await Promise.all([
+    _execDnsSelectInternal(
+      `SELECT * FROM waypoint_places_config WHERE id = 1 LIMIT 1`,
+      []
+    ),
+    getPublicSubpageToggles(),
+  ]);
   const row = rows[0] || {};
   let weights = DEFAULT_SCORING_WEIGHTS;
   try {
@@ -422,6 +468,7 @@ export async function getWaypointPlacesConfig(): Promise<WaypointPlacesStudioCon
 
   return {
     weights,
+    publicSubpageToggles,
     pmtilesArchiveUrl: String(
       row.pmtiles_archive_url || "/api/places/tiles/georgia-overview.pmtiles"
     ),
@@ -475,6 +522,7 @@ export interface PublishedPlacesSnapshot {
   r2ObjectKey: string;
   pmtilesArchiveUrl: string;
   weights: ScoringWeightsConfig;
+  publicSubpageToggles: PublicSubPageSectionToggles;
   communities: PlaceCommunityRecord[];
   schoolDistricts: PlaceSchoolDistrictRecord[];
   schoolDistrictBoundaries: PlaceSchoolDistrictBoundaryRecord[];
@@ -525,6 +573,7 @@ export async function buildIsolatedPublicPlacesSnapshot(
     r2ObjectKey,
     pmtilesArchiveUrl: config.pmtilesArchiveUrl,
     weights: config.weights,
+    publicSubpageToggles: config.publicSubpageToggles,
     communities,
     schoolDistricts: importedDistricts.length
       ? importedDistricts

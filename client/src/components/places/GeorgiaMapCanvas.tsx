@@ -120,6 +120,9 @@ export interface GeorgiaMapCanvasProps {
   onSelectTract?: (tract: PlaceSubCountyTractRecord | null) => void;
   focusMode?: boolean;
   onToggleFocusMode?: () => void;
+  showQuickStatsCard?: boolean;
+  showCategoryButtons?: boolean;
+  isPublicSubpageView?: boolean;
 }
 
 const LAYER_OPTIONS: Array<{ key: MapLayerKey; label: string; colorDot: string }> = [
@@ -422,6 +425,9 @@ export function GeorgiaMapCanvas({
   onSelectTract,
   focusMode = false,
   onToggleFocusMode,
+  showQuickStatsCard = true,
+  showCategoryButtons = true,
+  isPublicSubpageView = false,
 }: GeorgiaMapCanvasProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -1948,10 +1954,10 @@ export function GeorgiaMapCanvas({
       {/* MAP + RIGHT-SIDE SCROLL & COMPANION RAIL (Side-by-Side, Zero Overlap!)*/}
       {/* ===================================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 w-full items-stretch shrink-0">
-        {/* LEFT (lg:col-span-8 xl:col-span-9): CLEAN, UNOBSTRUCTED MAP VIEWPORT */}
+        {/* LEFT (lg:col-span-8 xl:col-span-9 or full width): CLEAN, UNOBSTRUCTED MAP VIEWPORT */}
         <div
           ref={wrapperRef}
-          className="lg:col-span-8 xl:col-span-9 relative w-full h-[520px] sm:h-[580px] lg:h-[620px] rounded-xl overflow-hidden border-2 border-[#DFBE77]/75 bg-[#071732] shadow-[0_14px_40px_rgba(0,0,0,0.8),0_0_24px_rgba(223,190,119,0.16)] select-none shrink-0"
+          className={`${showQuickStatsCard ? "lg:col-span-8 xl:col-span-9" : "lg:col-span-12"} relative w-full h-[520px] sm:h-[580px] lg:h-[620px] rounded-xl overflow-hidden border-2 border-[#DFBE77]/75 bg-[#071732] shadow-[0_14px_40px_rgba(0,0,0,0.8),0_0_24px_rgba(223,190,119,0.16)] select-none shrink-0`}
           data-testid="georgia-map-canvas"
           data-map-mode={mapDisplayMode}
           data-satellite-provider={satelliteConfig.providerId}
@@ -2947,6 +2953,7 @@ export function GeorgiaMapCanvas({
         {/* RIGHT (lg:col-span-4 xl:col-span-3): CLICKED AREA QUICK STATS CARD  */}
         {/* Matches map height (lg:h-[620px]) so there is zero gap below map!   */}
         {/* =================================================================== */}
+        {showQuickStatsCard && (
         <aside
           data-testid="map-right-scroll-rail"
           aria-label="Selected Area Quick Stats Beside Map"
@@ -2958,7 +2965,7 @@ export function GeorgiaMapCanvas({
             <div className="flex items-start justify-between gap-2 pb-2 border-b border-[#C5A059]/45">
               <div className="min-w-0">
                 <span className="text-[10px] uppercase tracking-wider text-[#FFE394] font-bold block">
-                  Clicked Area Quick Stats ({selectedCommunity.fips})
+                  Clicked Area Quick Stats {!isPublicSubpageView ? `(${selectedCommunity.fips})` : ""}
                 </span>
                 <h3
                   className="text-lg font-bold text-[#FFF8E7] truncate"
@@ -2970,12 +2977,14 @@ export function GeorgiaMapCanvas({
                   {selectedCommunity.region}
                 </p>
               </div>
-              <span
-                data-testid="rail-source-coverage-badge"
-                className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#091830] border border-[#FFE394]/70 text-[#FFE394] shrink-0"
-              >
-                {showModelCalibration ? "Demo (6/6)" : "2/6 Verified"}
-              </span>
+              {!isPublicSubpageView && (
+                <span
+                  data-testid="rail-source-coverage-badge"
+                  className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#091830] border border-[#FFE394]/70 text-[#FFE394] shrink-0"
+                >
+                  {showModelCalibration ? "Demo (6/6)" : "2/6 Verified"}
+                </span>
+              )}
             </div>
 
             {/* Primary Score Highlights */}
@@ -3086,11 +3095,13 @@ export function GeorgiaMapCanvas({
             <ChevronDown className="h-4 w-4 text-[#07162B] stroke-[2.5]" />
           </button>
         </aside>
+        )}
       </div>
 
       {/* ===================================================================== */}
       {/* BELOW-MAP OPTIONS & COLOR DECK (OFF THE MAP — Brighter Royal Navy & Gold)*/}
       {/* ===================================================================== */}
+      {showCategoryButtons && (
       <div
         id="below-map-color-deck"
         data-testid="expandable-score-breakdown"
@@ -3284,6 +3295,7 @@ export function GeorgiaMapCanvas({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

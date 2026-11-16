@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import {
   CENSUS_TRACT_SPED_GUARDRAIL_DISCLAIMER,
+  DEFAULT_PUBLIC_SUBPAGE_TOGGLES,
   DEFAULT_SATELLITE_IMAGERY_CONFIG,
   DEFAULT_SCORING_WEIGHTS,
   DEMO_COUNTY_CALIBRATION_BY_FIPS,
@@ -49,6 +50,7 @@ import {
   type PlacesCategoryTab,
   type PlacesMapDisplayMode,
   type PlaceSubCountyTractRecord,
+  type PublicSubPageSectionToggles,
   type SpecializedFacilityCategory,
   type SpecializedFacilityRecord,
 } from "../../../shared/waypointPlaces";
@@ -333,8 +335,56 @@ export default function WaypointPlaces() {
   const [wixEmbedOpen, setWixEmbedOpen] = useState(false);
   const isEmbedMode =
     typeof window !== "undefined" &&
-    (window.location.pathname === "/waypoint-places/embed" ||
+    (window.location.pathname === "/waypoint-places/public" ||
+      window.location.pathname === "/waypoint-places/embed" ||
       new URLSearchParams(window.location.search).get("embed") === "1");
+  const [publicPreviewMode, setPublicPreviewMode] = useState(false);
+  const isPublicSubpageView = isEmbedMode || publicPreviewMode;
+
+  const [localPublicToggles, setLocalPublicToggles] =
+    useState<Partial<PublicSubPageSectionToggles>>({});
+
+  const activePublicToggles: PublicSubPageSectionToggles = useMemo(
+    () => ({
+      ...DEFAULT_PUBLIC_SUBPAGE_TOGGLES,
+      ...(snapshot?.publicSubpageToggles || {}),
+      ...localPublicToggles,
+    }),
+    [snapshot?.publicSubpageToggles, localPublicToggles]
+  );
+
+  const savePublicTogglesMutation =
+    trpc.waypointPlaces.savePublicSubpageToggles.useMutation();
+
+  const handleUpdatePublicToggles = (
+    partial: Partial<PublicSubPageSectionToggles>
+  ) => {
+    const nextMerged: PublicSubPageSectionToggles = {
+      ...activePublicToggles,
+      ...partial,
+    };
+    setLocalPublicToggles((prev) => ({ ...prev, ...partial }));
+    savePublicTogglesMutation.mutate(nextMerged);
+
+    // Also sync directly to the live Cloudflare Worker when toggling from localhost CRM
+    // so the public Wix website updates immediately without needing a manual redeploy!
+    if (
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1")
+    ) {
+      fetch(
+        "https://custom-crm-pro.clientcare-fa6.workers.dev/api/trpc/waypointPlaces.savePublicSubpageToggles?batch=1",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ "0": { json: nextMerged } }),
+        }
+      ).catch(() => {
+        // ignore if offline
+      });
+    }
+  };
 
   const { data: specializedStateData, refetch: refetchSpecializedState } =
     trpc.waypointPlaces.getSpecializedFacilitiesState.useQuery();
@@ -771,6 +821,31 @@ export default function WaypointPlaces() {
         {/* ================================================================= */}
         {/* 1. FLAGSHIP CENTERPIECE MASTHEAD (Larger Title + Moving Truck)    */}
         {/* ================================================================= */}
+        {!isEmbedMode && publicPreviewMode && !activePublicToggles.showBannerHeader && (
+          <div className="flex items-center justify-between rounded-xl bg-[#091830] border border-[#22C55E] px-4 py-2 text-xs">
+            <span className="text-[#4ADE80] font-bold">
+              Public Website Sub-Page Preview Active (Top Banner is toggled OFF for public)
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setWixEmbedOpen(true)}
+                className="px-3 py-1 rounded-lg bg-[#10284E] border border-[#DFBE77] text-[#FFE394] font-bold cursor-pointer"
+              >
+                Toggle Public Sections
+              </button>
+              <button
+                type="button"
+                onClick={() => setPublicPreviewMode(false)}
+                className="px-3 py-1 rounded-lg bg-[#22C55E] text-[#041022] font-bold cursor-pointer"
+              >
+                Exit Public Preview
+              </button>
+            </div>
+          </div>
+        )}
+
+        {(!isPublicSubpageView || activePublicToggles.showBannerHeader) && (
         <header className="relative overflow-hidden rounded-2xl bg-[#000F26] border-2 border-[#DFBE77]/80 px-5 py-2.5 shadow-[0_14px_34px_rgba(0,0,0,0.78),0_0_26px_rgba(223,190,119,0.2),inset_0_1px_1px_rgba(255,244,212,0.32)] shrink-0">
           {/* Subtle Top Gold Filigree Shimmer Line */}
           <div
@@ -799,15 +874,31 @@ export default function WaypointPlaces() {
                   Find a community where your child’s education and your family can thrive.
                 </p>
                 {!isEmbedMode && (
-                  <button
-                    type="button"
-                    data-testid="open-wix-embed-modal-btn"
-                    onClick={() => setWixEmbedOpen(true)}
-                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-[#FCE6A6] via-[#E5C170] to-[#C59B43] text-[#07162B] font-bold text-[11px] border border-[#FFF4D4] shadow-[0_3px_10px_rgba(229,193,112,0.35)] hover:brightness-105 transition-all cursor-pointer"
-                  >
-                    <Code2 className="h-3.5 w-3.5" />
-                    <span>Embed on My Site (Wix / Velo Copy)</span>
-                  </button>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      data-testid="open-wix-embed-modal-btn"
+                      onClick={() => setWixEmbedOpen(true)}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#FCE6A6] via-[#E5C170] to-[#C59B43] text-[#07162B] font-bold text-[11px] border border-[#FFF4D4] shadow-[0_3px_10px_rgba(229,193,112,0.35)] hover:brightness-105 transition-all cursor-pointer"
+                    >
+                      <Code2 className="h-3.5 w-3.5" />
+                      <span>Public Sub-Page &amp; Wix Embed</span>
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="toggle-public-subpage-preview-btn"
+                      onClick={() => setPublicPreviewMode((v) => !v)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold text-[11px] border transition-all cursor-pointer ${
+                        publicPreviewMode
+                          ? "bg-[#22C55E] text-[#041022] border-[#86EFAC]"
+                          : "bg-[#091830] text-[#FFE394] border-[#C5A059]/70 hover:border-[#FFE394]"
+                      }`}
+                    >
+                      <span>
+                        {publicPreviewMode ? "✓ Public Sub-Page View" : "Preview Public Sub-Page"}
+                      </span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -840,6 +931,7 @@ export default function WaypointPlaces() {
             )}
           </div>
         </header>
+        )}
 
         {/* ================================================================= */}
         {/* 2. CLEAN MAP WORKSPACE + BELOW-MAP SCROLLABLE ADMIRALTY GUIDE     */}
@@ -890,12 +982,15 @@ export default function WaypointPlaces() {
             }}
             focusMode={focusMode}
             onToggleFocusMode={handleToggleFocusMode}
+            showQuickStatsCard={!isPublicSubpageView || activePublicToggles.showQuickStatsCard}
+            showCategoryButtons={!isPublicSubpageView || activePublicToggles.showCategoryButtons}
+            isPublicSubpageView={isPublicSubpageView}
           />
 
           {/* BELOW-MAP 2-COLUMN DASHBOARD (Scroll Down — Brighter Royal Navy & Gold Cards) */}
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start shrink-0">
             {/* LEFT COLUMN (xl:col-span-4): MY FAMILY PRIORITIES & COUNTY BROWSER */}
-            {leftPanelOpen && (
+            {leftPanelOpen && (!isPublicSubpageView || activePublicToggles.showFamilyPriorities) && (
               <aside
                 id="below-map-priorities-section"
                 data-testid="find-your-fit-drawer"
@@ -1002,7 +1097,9 @@ export default function WaypointPlaces() {
                 data-testid="community-dossier-drawer"
                 aria-label="Community Dossier Slide-Out Panel"
                 className={`${
-                  leftPanelOpen ? "xl:col-span-8" : "xl:col-span-12"
+                  leftPanelOpen && (!isPublicSubpageView || activePublicToggles.showFamilyPriorities)
+                    ? "xl:col-span-8"
+                    : "xl:col-span-12"
                 } rounded-xl border border-[#DFBE77]/65 bg-gradient-to-b from-[#112A4E] to-[#0B1C38] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_18px_rgba(223,190,119,0.12),inset_0_1px_1px_rgba(255,244,212,0.18)] flex flex-col justify-between gap-4 shrink-0`}
               >
                 <div className="space-y-3">
@@ -1056,7 +1153,8 @@ export default function WaypointPlaces() {
                 />
 
                 {/* Plain-English Community Snapshot (Income, Home Price, Rent, Commute) */}
-                {selectedCommunity.acsDemographics && (
+                {(!isPublicSubpageView || activePublicToggles.showCountyDemographics) &&
+                  selectedCommunity.acsDemographics && (
                   <div
                     data-testid="dossier-verified-acs-card"
                     className="rounded-xl bg-[#091830]/95 border border-[#C5A059]/55 p-3 space-y-2.5"
@@ -1086,11 +1184,13 @@ export default function WaypointPlaces() {
                           {selectedCommunity.acsDemographics.medianHouseholdIncome.toLocaleString()}
                           /yr
                         </span>
-                        <span className="text-[9.5px] text-[#D8C5A0] block">
-                          ±$
-                          {selectedCommunity.acsDemographics.medianHouseholdIncomeMoe.toLocaleString()}{" "}
-                          (B19049_001E)
-                        </span>
+                        {!isPublicSubpageView && (
+                          <span className="text-[9.5px] text-[#D8C5A0] block">
+                            ±$
+                            {selectedCommunity.acsDemographics.medianHouseholdIncomeMoe.toLocaleString()}{" "}
+                            (B19049_001E)
+                          </span>
+                        )}
                       </div>
                       <div className="rounded-lg bg-[#102648]/90 border border-[#C5A059]/45 p-2">
                         <span className="text-[10px] text-[#EADBC0] block">
@@ -1103,11 +1203,13 @@ export default function WaypointPlaces() {
                           $
                           {selectedCommunity.acsDemographics.medianHomeValue.toLocaleString()}
                         </span>
-                        <span className="text-[9.5px] text-[#D8C5A0] block">
-                          ±$
-                          {selectedCommunity.acsDemographics.medianHomeValueMoe.toLocaleString()}{" "}
-                          (B25077_001E)
-                        </span>
+                        {!isPublicSubpageView && (
+                          <span className="text-[9.5px] text-[#D8C5A0] block">
+                            ±$
+                            {selectedCommunity.acsDemographics.medianHomeValueMoe.toLocaleString()}{" "}
+                            (B25077_001E)
+                          </span>
+                        )}
                       </div>
                       <div className="rounded-lg bg-[#102648]/90 border border-[#C5A059]/45 p-2">
                         <span className="text-[10px] text-[#EADBC0] block">
@@ -1121,11 +1223,13 @@ export default function WaypointPlaces() {
                           {selectedCommunity.acsDemographics.medianGrossRent.toLocaleString()}
                           /mo
                         </span>
-                        <span className="text-[9.5px] text-[#D8C5A0] block">
-                          ±$
-                          {selectedCommunity.acsDemographics.medianGrossRentMoe.toLocaleString()}{" "}
-                          (B25058_001E)
-                        </span>
+                        {!isPublicSubpageView && (
+                          <span className="text-[9.5px] text-[#D8C5A0] block">
+                            ±$
+                            {selectedCommunity.acsDemographics.medianGrossRentMoe.toLocaleString()}{" "}
+                            (B25058_001E)
+                          </span>
+                        )}
                       </div>
                       <div className="rounded-lg bg-[#102648]/90 border border-[#C5A059]/45 p-2">
                         <span className="text-[10px] text-[#EADBC0] block">
@@ -1137,39 +1241,44 @@ export default function WaypointPlaces() {
                         >
                           {selectedCommunity.acsDemographics.meanCommuteMinutes} min
                         </span>
-                        <span className="text-[9.5px] text-[#D8C5A0] block">
-                          ±{selectedCommunity.acsDemographics.meanCommuteMinutesMoe} min (B08303)
-                        </span>
+                        {!isPublicSubpageView && (
+                          <span className="text-[9.5px] text-[#D8C5A0] block">
+                            ±{selectedCommunity.acsDemographics.meanCommuteMinutesMoe} min (B08303)
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* Community Quality & Family Fit Summary Card */}
+                {(!isPublicSubpageView || activePublicToggles.showAreaScoresCard) && (
                 <div className="rounded-xl bg-[#091830] border border-[#C5A059]/55 p-3 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span
                       className="text-xs font-bold text-[#FFF8E7]"
                       style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                     >
-                      Waypoint-Derived Area Scores &amp; Source Coverage
+                      {isPublicSubpageView ? "County Scores" : "Waypoint-Derived Area Scores & Source Coverage"}
                     </span>
-                    <label className="flex items-center gap-1.5 text-[11px] text-[#EADBC0] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        data-testid="dossier-demo-scores-toggle"
-                        checked={showModelCalibration}
-                        onChange={(e) => setShowModelCalibration(e.target.checked)}
-                        className="h-3.5 w-3.5 accent-[#DFBE77] cursor-pointer"
-                      />
-                      <span>Preview All 6 Scores (Demo)</span>
-                    </label>
+                    {!isPublicSubpageView && (
+                      <label className="flex items-center gap-1.5 text-[11px] text-[#EADBC0] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          data-testid="dossier-demo-scores-toggle"
+                          checked={showModelCalibration}
+                          onChange={(e) => setShowModelCalibration(e.target.checked)}
+                          className="h-3.5 w-3.5 accent-[#DFBE77] cursor-pointer"
+                        />
+                        <span>Preview All 6 Scores (Demo)</span>
+                      </label>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="rounded-lg bg-[#102648] border border-[#C5A059]/50 p-2">
                       <span className="text-[10px] text-[#EADBC0] block">
-                        Waypoint-Derived Overall Score
+                        Overall Score
                       </span>
                       <span
                         className="text-lg font-bold text-[#FFE394]"
@@ -1180,7 +1289,7 @@ export default function WaypointPlaces() {
                     </div>
                     <div className="rounded-lg bg-[#102648] border border-[#C5A059]/50 p-2">
                       <span className="text-[10px] text-[#EADBC0] block">
-                        Waypoint-Derived Family Fit
+                        My Family Fit
                       </span>
                       <span
                         className="text-lg font-bold text-[#FFF8E7]"
@@ -1191,23 +1300,27 @@ export default function WaypointPlaces() {
                     </div>
                   </div>
 
-                  <div
-                    data-testid="dossier-evidence-completeness"
-                    className="flex items-center justify-between text-[11px] text-[#EADBC0] pt-1 border-t border-[#C5A059]/40"
-                  >
-                    <span>Verified Pillar Coverage:</span>
-                    <span className="font-bold text-[#FFE394]">
-                      {showModelCalibration
-                        ? "Demo Calibration (6/6 Synthetic Pillars)"
-                        : selectedCommunity.evidenceCompleteness?.ratioText ||
-                          (isVerifiedSource
-                            ? "2/6 Verified Pillars (ACS Affordability & Commute)"
-                            : "0/6 Verified Pillars")}
-                    </span>
-                  </div>
+                  {!isPublicSubpageView && (
+                    <div
+                      data-testid="dossier-evidence-completeness"
+                      className="flex items-center justify-between text-[11px] text-[#EADBC0] pt-1 border-t border-[#C5A059]/40"
+                    >
+                      <span>Verified Pillar Coverage:</span>
+                      <span className="font-bold text-[#FFE394]">
+                        {showModelCalibration
+                          ? "Demo Calibration (6/6 Synthetic Pillars)"
+                          : selectedCommunity.evidenceCompleteness?.ratioText ||
+                            (isVerifiedSource
+                              ? "2/6 Verified Pillars (ACS Affordability & Commute)"
+                              : "0/6 Verified Pillars")}
+                      </span>
+                    </div>
+                  )}
                 </div>
+                )}
 
                 {/* NEW: Crime, Internet Availability & Map API Keys Guide (Answers User Question Directly in UI) */}
+                {(!isPublicSubpageView || activePublicToggles.showCrimeAndApiGuide) && (
                 <div
                   data-testid="dossier-crime-internet-api-card"
                   className="rounded-xl bg-[#020A17]/90 border border-[#C5A059]/45 p-3 space-y-2"
@@ -1259,9 +1372,10 @@ export default function WaypointPlaces() {
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Special Education Intelligence Summary (5-Tier Verification + Non-Guarantee Guardrail) */}
-                {countySpedRecords.length > 0 && (
+                {!isPublicSubpageView && countySpedRecords.length > 0 && (
                   <div
                     data-testid="dossier-sped-intelligence-card"
                     className="rounded-lg bg-[#020A1E] border border-[#2A3F6A] p-2.5 space-y-1.5"
@@ -1287,25 +1401,30 @@ export default function WaypointPlaces() {
                 )}
 
                 {/* Nationwide Special Education Rights & Accountability Section */}
-                <DossierRightsAccountabilityCard
-                  stateFips2={String(selectedCommunity.fips || "13117").slice(0, 2)}
-                  countyFips5={selectedCommunity.fips}
-                  communityName={selectedCommunity.shortName}
-                  onOpenFullModal={() => setRightsModalOpen(true)}
-                />
+                {(!isPublicSubpageView || activePublicToggles.showIepRightsCard) && (
+                  <DossierRightsAccountabilityCard
+                    stateFips2={String(selectedCommunity.fips || "13117").slice(0, 2)}
+                    countyFips5={selectedCommunity.fips}
+                    communityName={selectedCommunity.shortName}
+                    onOpenFullModal={() => setRightsModalOpen(true)}
+                  />
+                )}
 
                 {/* Nationwide Specialized Programs & Residential Settings (10 Categories, 50 States) */}
-                <SpecializedFacilitiesSummaryCard
-                  selectedCountyFips={selectedCommunity.fips}
-                  selectedCountyName={selectedCommunity.shortName}
-                  selectedStateCode={selectedCommunity.stateCode || "GA"}
-                  snapshot={specializedSnapshot}
-                  onOpenExplorerModal={handleOpenSpecializedModal}
-                  onSelectFacilityOnMap={handleSelectFacilityOnMap}
-                />
+                {(!isPublicSubpageView || activePublicToggles.showSpecializedFacilities) && (
+                  <SpecializedFacilitiesSummaryCard
+                    selectedCountyFips={selectedCommunity.fips}
+                    selectedCountyName={selectedCommunity.shortName}
+                    selectedStateCode={selectedCommunity.stateCode || "GA"}
+                    snapshot={specializedSnapshot}
+                    onOpenExplorerModal={handleOpenSpecializedModal}
+                    onSelectFacilityOnMap={handleSelectFacilityOnMap}
+                  />
+                )}
 
                 {/* Neighborhood Census Tract Explorer & Selected Tract Card (TIGER/ACS 5-Year) */}
-                {subCountyTracts.length > 0 && (
+                {(!isPublicSubpageView || activePublicToggles.showNeighborhoodTracts) &&
+                  subCountyTracts.length > 0 && (
                   <div
                     data-testid="dossier-neighborhood-tracts-card"
                     className="rounded-lg bg-[#020A1E] border border-[#D4AF63]/50 p-2.5 space-y-2"
@@ -1525,27 +1644,28 @@ export default function WaypointPlaces() {
                 )}
 
                 {/* Nearby Public Schools (NCES CCD · Sorted by Distance from Selected Area) */}
-                {countySchools.length > 0 && (
+                {(!isPublicSubpageView || activePublicToggles.showPublicSchoolsList) &&
+                  countySchools.length > 0 && (
                   <div
                     data-testid="dossier-nearby-schools-card"
                     className="rounded-lg bg-[#020A1E] border border-[#24355A] p-2.5 space-y-1.5"
                   >
                     <div className="flex items-center justify-between gap-1">
                       <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#F3D68B]">
-                        Nearby Public Schools (NCES CCD)
+                        Public Schools in {selectedCommunity.shortName}
                       </span>
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 font-semibold">
-                        {countySchools.length} Campuses
+                        {countySchools.length} Schools
                       </span>
                     </div>
-                    <div className="space-y-1 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
+                    <div className="space-y-1 max-h-44 overflow-y-auto pr-1 custom-scrollbar">
                       {[...countySchools]
                         .map((sch) => ({
                           ...sch,
                           distanceMiles: computeDistanceMiles(sch.coordinates),
                         }))
                         .sort((a, b) => a.distanceMiles - b.distanceMiles)
-                        .slice(0, 6)
+                        .slice(0, isPublicSubpageView ? 12 : 6)
                         .map((sch) => (
                           <div
                             key={sch.id}
@@ -1556,7 +1676,7 @@ export default function WaypointPlaces() {
                                 {sch.name}
                               </p>
                               <p className="text-[9px] text-[#94A3B8] truncate">
-                                {sch.level} ({sch.gradeSpan}) · NCES {sch.ncesSchoolId || sch.id}
+                                {sch.level} ({sch.gradeSpan})
                                 {sch.enrollment ? ` · ${sch.enrollment} students` : ""}
                               </p>
                             </div>
@@ -1570,6 +1690,7 @@ export default function WaypointPlaces() {
                 )}
 
                 {/* Outpatient Therapy Providers (CMS NPPES NPI Registry v2.1 — Limited 10-City / 6-Specialty Sample) */}
+                {(!isPublicSubpageView || activePublicToggles.showTherapyProvidersList) && (
                 <div
                   data-testid="dossier-therapy-providers-status"
                   className="rounded-lg bg-[#020A1E] border border-teal-500/40 p-2.5 space-y-1.5"
@@ -1652,8 +1773,10 @@ export default function WaypointPlaces() {
                     </p>
                   )}
                 </div>
+                )}
 
-                {/* Factual Geographic & Data Status Insights */}
+                {/* Factual Geographic & Data Status Insights (Staff / Full CRM View Only) */}
+                {!isPublicSubpageView && (
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-[#F3D68B] flex items-center gap-1">
                     <MapPin className="h-3 w-3 text-[#D4AF63]" />
@@ -1671,17 +1794,20 @@ export default function WaypointPlaces() {
                     ))}
                   </ul>
                 </div>
+                )}
               </div>
 
                 {/* Compare CTA */}
-                <button
-                  type="button"
-                  data-testid="dossier-compare-btn"
-                  onClick={() => setCompareOpen(true)}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs border border-[#FFE394]/60 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 transition-all cursor-pointer"
-                >
-                  Compare {selectedCommunity.shortName} with Another County
-                </button>
+                {(!isPublicSubpageView || activePublicToggles.showCompareButton) && (
+                  <button
+                    type="button"
+                    data-testid="dossier-compare-btn"
+                    onClick={() => setCompareOpen(true)}
+                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs border border-[#FFE394]/60 shadow-[0_3px_10px_rgba(0,0,0,0.8)] hover:brightness-105 transition-all cursor-pointer"
+                  >
+                    Compare {selectedCommunity.shortName} with Another County
+                  </button>
+                )}
               </aside>
             )}
           </div>
@@ -1690,16 +1816,18 @@ export default function WaypointPlaces() {
           <footer className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#C5A059]/30 text-[11px] text-[#EADBC0]">
             <span>Waypoint Places · 50-State Special Education &amp; Relocation Intelligence</span>
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                data-testid="nav-score-details-btn"
-                onClick={() => setScoreDetailsOpen(true)}
-                className="px-2.5 py-1 rounded-lg bg-[#091830] border border-[#C5A059]/45 text-[#EADBC0] hover:text-white hover:border-[#FFE394] flex items-center gap-1 cursor-pointer"
-                title="How community scores and data sources work"
-              >
-                <Info className="h-3 w-3 text-[#FFE394]" />
-                <span>How Scores Work</span>
-              </button>
+              {!isPublicSubpageView && (
+                <button
+                  type="button"
+                  data-testid="nav-score-details-btn"
+                  onClick={() => setScoreDetailsOpen(true)}
+                  className="px-2.5 py-1 rounded-lg bg-[#091830] border border-[#C5A059]/45 text-[#EADBC0] hover:text-white hover:border-[#FFE394] flex items-center gap-1 cursor-pointer"
+                  title="How community scores and data sources work"
+                >
+                  <Info className="h-3 w-3 text-[#FFE394]" />
+                  <span>How Scores Work</span>
+                </button>
+              )}
               {!isEmbedMode && (
                 <>
                   <button
@@ -1707,10 +1835,10 @@ export default function WaypointPlaces() {
                     data-testid="footer-wix-embed-btn"
                     onClick={() => setWixEmbedOpen(true)}
                     className="px-2.5 py-1 rounded-lg bg-[#091830] border border-[#DFBE77]/65 text-[#FFE394] hover:text-white hover:border-[#FFE394] flex items-center gap-1 cursor-pointer font-semibold"
-                    title="Copy Wix / Wix Velo Embed Code"
+                    title="Toggle Public Sections & Copy Wix Embed Code"
                   >
                     <Code2 className="h-3 w-3 text-[#FFE394]" />
-                    <span>Embed on My Site</span>
+                    <span>Public Sub-Page &amp; Wix Embed</span>
                   </button>
                   <button
                     type="button"
@@ -1728,12 +1856,16 @@ export default function WaypointPlaces() {
           </footer>
         </div>
 
-        {/* Wix / Website 1-Click Copy Embed Modal */}
+        {/* Wix / Website Public Sub-Page Controls & 1-Click Copy Embed Modal */}
         <WixEmbedModal
           open={wixEmbedOpen}
           onClose={() => setWixEmbedOpen(false)}
           selectedFips={selectedCommunity.fips}
           selectedCountyName={selectedCommunity.name}
+          toggles={activePublicToggles}
+          onUpdateToggles={handleUpdatePublicToggles}
+          isPublicPreviewActive={publicPreviewMode}
+          onTogglePublicPreview={setPublicPreviewMode}
         />
 
         {/* Modals & Internal Studio Drawer */}
