@@ -3118,8 +3118,8 @@ export function GeorgiaMapCanvas({
         className="rounded-xl bg-gradient-to-b from-[#112A4E] to-[#0B1C38] border border-[#DFBE77]/65 p-3.5 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_18px_rgba(223,190,119,0.12),inset_0_1px_1px_rgba(255,244,212,0.18)] space-y-3.5 shrink-0"
       >
         {/* Compact Square Clickable Category & Map Layer Buttons — No Numbers, Zero Runoff Words */}
-        <div className="space-y-2.5">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="space-y-3 sm:space-y-2.5">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-center sm:text-left">
             <span className="text-xs font-extrabold uppercase tracking-wider text-[#FFE394]">
               Map Categories &amp; Show On Map (Click Any Square Button):
             </span>
@@ -3127,7 +3127,7 @@ export function GeorgiaMapCanvas({
 
           <div
             data-testid="choropleth-measure-switcher"
-            className="flex flex-wrap items-center gap-2.5"
+            className="grid grid-cols-2 place-items-center w-fit mx-auto sm:w-full sm:mx-0 sm:flex sm:flex-wrap sm:items-center sm:justify-start gap-3 sm:gap-2.5"
           >
             {(
               [
@@ -3171,7 +3171,7 @@ export function GeorgiaMapCanvas({
                   type="button"
                   data-testid={`choropleth-measure-${pillar.key}`}
                   onClick={() => handleSelectMeasure(pillar.key)}
-                  className={`group relative w-[88px] h-[88px] sm:w-[94px] sm:h-[94px] aspect-square p-2 rounded-xl border-2 text-center flex flex-col items-center justify-between transition-all duration-150 cursor-pointer select-none active:scale-[0.96] shrink-0 ${
+                  className={`group relative w-[114px] h-[104px] sm:w-[94px] sm:h-[94px] p-2 rounded-xl border-2 text-center flex flex-col items-center justify-between transition-all duration-150 cursor-pointer select-none active:scale-[0.96] shrink-0 ${
                     isActiveMeasure
                       ? "bg-gradient-to-b from-[#FCE8AD] via-[#E5C170] to-[#C2963E] border-[#22C55E] ring-1 ring-[#86EFAC]/70 text-[#07162B] shadow-[0_6px_18px_rgba(34,197,94,0.45),inset_0_1px_2px_rgba(255,236,160,0.9)] -translate-y-0.5"
                       : "bg-gradient-to-b from-[#163462] via-[#10264A] to-[#0A1934] border-[#DFBE77]/80 hover:border-[#FFD700] hover:from-[#1D4178] hover:to-[#10274C] text-[#FFF8E7] shadow-[0_5px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,244,212,0.28)] hover:-translate-y-0.5"
@@ -3251,7 +3251,9 @@ export function GeorgiaMapCanvas({
                     type="button"
                     data-testid={pinBtn.testId}
                     onClick={pinBtn.onClick}
-                    className={`group relative w-[88px] h-[88px] sm:w-[94px] sm:h-[94px] aspect-square p-2 rounded-xl border-2 text-center flex flex-col items-center justify-between transition-all duration-150 cursor-pointer select-none active:scale-[0.96] shrink-0 ${
+                    className={`group relative w-[114px] h-[104px] sm:w-[94px] sm:h-[94px] p-2 rounded-xl border-2 text-center flex flex-col items-center justify-between transition-all duration-150 cursor-pointer select-none active:scale-[0.96] shrink-0 ${
+                      pinBtn.id === "specialized-schools" ? "col-span-2 sm:col-span-1" : ""
+                    } ${
                       pinBtn.isActive
                         ? "bg-gradient-to-b from-[#FCE8AD] via-[#E5C170] to-[#C2963E] border-[#22C55E] ring-1 ring-[#86EFAC]/70 text-[#07162B] shadow-[0_6px_18px_rgba(34,197,94,0.45),inset_0_1px_2px_rgba(255,236,160,0.9)] -translate-y-0.5"
                         : "bg-gradient-to-b from-[#163462] via-[#10264A] to-[#0A1934] border-[#DFBE77]/80 hover:border-[#FFD700] hover:from-[#1D4178] hover:to-[#10274C] text-[#FFF8E7] shadow-[0_5px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,244,212,0.28)] hover:-translate-y-0.5"
