@@ -2781,27 +2781,25 @@ export function GeorgiaMapCanvas({
           })}
       </svg>
 
-        {/* Top-Left Single-Line Horizontal Map Color Key Over Map Box (Never wraps into a tall block on mobile) */}
+        {/* Top Map Color Key Over Map Box (Compact 2-line smaller text on mobile so all stops fit cleanly) */}
         <div
           data-testid="choropleth-map-legend"
           data-collapsed={String(legendCollapsed)}
-          className="absolute top-1.5 left-1.5 right-1.5 sm:right-auto sm:top-2.5 sm:left-2.5 z-20 pointer-events-auto flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#091830]/92 border border-[#DFBE77]/70 shadow-[0_6px_18px_rgba(0,0,0,0.75)] backdrop-blur-md overflow-x-auto whitespace-nowrap"
+          className="absolute top-1.5 left-1.5 right-1.5 sm:right-auto sm:top-2.5 sm:left-2.5 z-20 pointer-events-auto flex flex-wrap items-center justify-center sm:justify-start gap-x-2 gap-y-0.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#091830]/92 border border-[#DFBE77]/70 shadow-[0_6px_18px_rgba(0,0,0,0.75)] backdrop-blur-md leading-tight"
         >
-          <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-[#FFE394] shrink-0">
-            Key<span className="hidden sm:inline"> ({activeMeasureMeta.shortLabel})</span>:
+          <span className="text-[8.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-[#FFE394] shrink-0">
+            Key ({activeMeasureMeta.shortLabel}):
           </span>
           {CHOROPLETH_LEGEND_STOPS.map((stop) => (
             <span
               key={stop.label}
-              className={`${
-                stop.rangeText === "Unscored" ? "hidden sm:inline-flex" : "inline-flex"
-              } items-center gap-1 shrink-0`}
+              className="inline-flex items-center gap-1 shrink-0"
             >
               <span
-                className="h-2.5 w-2.5 sm:w-3 rounded-[2px] border border-[#FFE394]/60 shrink-0"
+                className="h-2 w-2 sm:h-2.5 sm:w-3 rounded-[2px] border border-[#FFE394]/60 shrink-0"
                 style={{ backgroundColor: stop.color }}
               />
-              <span className="text-[9.5px] sm:text-[10.5px] font-semibold text-[#FFF8E7] whitespace-nowrap">
+              <span className="text-[8.5px] sm:text-[10.5px] font-semibold text-[#FFF8E7] whitespace-nowrap">
                 {stop.rangeText}
               </span>
             </span>
