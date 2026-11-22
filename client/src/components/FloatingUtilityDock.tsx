@@ -338,24 +338,12 @@ export default function FloatingUtilityDock() {
     });
   };
 
-  const isCrewMessagesFullConsole =
-    activePage.id === "PG-038-MSG" ||
-    location === "/crew-messages" ||
-    (typeof window !== "undefined" &&
-      window.location.search.includes("tab=messages"));
-
   return (
     <>
       {/* ── UNIFIED HORIZONTAL FLOATING DOCK ── */}
-      {/* Moves to top-center-right on PG-038-MSG so it never overlaps the bottom-right "+ Create task | Link record" brass buttons */}
       <aside
         aria-label="Waypoint Utilities Dock"
-        className={cn(
-          "fixed z-50 flex items-center select-none transition-all duration-300",
-          isCrewMessagesFullConsole
-            ? "top-4 right-[310px]"
-            : "bottom-3 right-3"
-        )}
+        className="fixed bottom-3 right-3 z-50 flex items-center select-none transition-all duration-300"
       >
         {!isExpanded ? (
           /* Single Collapsed Bubble in Lower Right Corner with Expand Icon (Ultra-Transparent Glass) */

@@ -355,87 +355,28 @@ export default function CrewMessagesWorkspace({
     <div className="relative flex-1 w-full h-full min-h-0 bg-[#050914] flex items-center justify-center overflow-hidden select-none antialiased">
       {/* ── OUTER 2560x1440 SHARPENED SWITCHBOARD CHASSIS & CAST-BRASS BEZEL FRAME ── */}
       <div className="relative w-full h-full overflow-hidden rounded-xl shadow-[0_25px_80px_rgba(0,0,0,0.95)]">
-        {/* Background Hardware Chassis (Provides the 3D Brushed-Steel Outer Frame, 3D Cast-Brass Double Bezels, and Top-Right 3D Rotary Phone Cradle) */}
+        {/* Background Hardware Chassis (Provides the 3D Brushed-Steel Outer Frame, 3D Cast-Brass Double Bezels, Top "✦ Waypoint | Messages" Title, and Top-Right 3D Rotary Phone Cradle) */}
         <img
           src="/images/crew-messages/console-full-bg.jpg"
           alt="Waypoint Messages Switchboard Console"
           className="w-full h-full object-fill select-none pointer-events-none block"
         />
 
-        {/* ── TOP HEADER BAR: RAZOR-SHARP VECTOR "✦ Waypoint | Messages" OVERLAY ── */}
-        <div
-          style={{
-            left: "1.4%",
-            top: "1.2%",
-            width: "71.5%",
-            height: "7.8%",
-            background:
-              "linear-gradient(180deg, #27324D 0%, #1B243A 55%, #151D30 100%)",
-          }}
-          className="absolute z-20 flex items-center px-3 gap-3 rounded-tl-lg"
-        >
-          {/* Brushed steel horizontal grain */}
-          <div
-            className="absolute inset-0 pointer-events-none opacity-25"
+        {onGoBack && (
+          <button
+            type="button"
+            onClick={onGoBack}
             style={{
-              backgroundImage:
-                "repeating-linear-gradient(180deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 1px, transparent 1px, transparent 3px)",
+              left: "66%",
+              top: "2.8%",
             }}
-          />
-
-          <div className="relative z-10 flex items-center gap-2.5 shrink-0">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              className="shrink-0 drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]"
-            >
-              <defs>
-                <linearGradient
-                  id="sharpStarGrad"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
-                >
-                  <stop offset="0%" stopColor="#FFF5CC" />
-                  <stop offset="50%" stopColor="#DEB96E" />
-                  <stop offset="100%" stopColor="#8F6B28" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M12 1 L14.5 9.5 L23 12 L14.5 14.5 L12 23 L9.5 14.5 L1 12 L9.5 9.5 Z"
-                fill="url(#sharpStarGrad)"
-              />
-            </svg>
-            <span
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              className="text-xl sm:text-[25px] font-bold tracking-tight bg-gradient-to-b from-[#FFF3C4] via-[#E2BF75] to-[#A7823B] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]"
-            >
-              Waypoint
-            </span>
-          </div>
-
-          <div className="relative z-10 h-6 w-[1.5px] bg-[#C5A059]/75 mx-1 shrink-0" />
-
-          <span className="relative z-10 text-base sm:text-[19px] font-normal text-[#E2E8F0] tracking-wide shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-            Messages
-          </span>
-
-          <div className="relative z-10 flex-1 h-[1.5px] bg-gradient-to-r from-[#C5A059]/80 via-[#C5A059]/55 to-[#C5A059]/20 ml-3" />
-
-          {onGoBack && (
-            <button
-              type="button"
-              onClick={onGoBack}
-              className="relative z-10 h-7 px-2.5 rounded-lg bg-[#0A1326]/90 hover:bg-[#142547] border border-[#C5A059]/75 hover:border-[#FFE394] text-[11px] font-semibold text-[#FFE394] hover:text-white inline-flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0"
-              title="Return to Crew Quarters Overview"
-            >
-              <ArrowLeft className="w-3 h-3 text-[#C5A059]" />
-              <span>Go Back</span>
-            </button>
-          )}
-        </div>
+            className="absolute z-20 h-7 px-2.5 rounded-lg bg-[#0A1326]/90 hover:bg-[#142547] border border-[#C5A059]/75 hover:border-[#FFE394] text-[11px] font-semibold text-[#FFE394] hover:text-white inline-flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0"
+            title="Return to Crew Quarters Overview"
+          >
+            <ArrowLeft className="w-3 h-3 text-[#C5A059]" />
+            <span>Go Back</span>
+          </button>
+        )}
 
         {/* ── TOP-RIGHT ROTARY TELEPHONE CRADLE: RAZOR-SHARP "● Team available" PILL OVERLAY ── */}
         <button
