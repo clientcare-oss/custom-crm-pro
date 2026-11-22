@@ -69,6 +69,7 @@ export function resolveLogicalStageGroup(
   category?: string,
   explicitLogicalGroup?: LogicalStageGroup
 ): LogicalStageGroup {
+  if (explicitLogicalGroup) return explicitLogicalGroup;
   const lower = (stageName || "").trim().toLowerCase();
 
   if (
@@ -79,7 +80,6 @@ export function resolveLogicalStageGroup(
   ) {
     return "attention_past_due";
   }
-  if (explicitLogicalGroup) return explicitLogicalGroup;
 
   if (
     lower.includes("follow-up") ||

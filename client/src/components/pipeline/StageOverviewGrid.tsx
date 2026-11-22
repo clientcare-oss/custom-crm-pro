@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, GripVertical, Plus } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  GripVertical,
+  Plus,
+  Check,
+  X,
+} from "lucide-react";
 import {
   LOGICAL_STAGE_GROUPS,
   resolveLogicalStageGroup,
@@ -9,6 +16,7 @@ import {
 import type {
   PipelineStageItem,
   PipelineCardItem,
+  LogicalStageGroup,
 } from "./types";
 
 interface StageOverviewGridProps {
@@ -18,8 +26,16 @@ interface StageOverviewGridProps {
   onSelectStage: (stageName: string | null) => void;
   onDropCardOnStage?: (cardId: number, targetStageName: string) => void;
   isCustomizingOrder?: boolean;
+  onToggleCustomizingOrder?: () => void;
   onReorderStages?: (draggedStageId: number, targetStageId: number) => void;
-  onInsertStageAtOrder?: (insertOrder: number) => void;
+  onInsertStageAtOrder?: (
+    insertOrder: number,
+    inlineStageData?: Partial<PipelineStageItem>
+  ) => void;
+  onAssignStageGroup?: (
+    stageId: number,
+    logicalGroup: LogicalStageGroup
+  ) => void;
 }
 
 interface StageJewelPalette {
@@ -169,8 +185,10 @@ export function StageOverviewGrid({
   onSelectStage,
   onDropCardOnStage,
   isCustomizingOrder = false,
+  onToggleCustomizingOrder,
   onReorderStages,
   onInsertStageAtOrder,
+  onAssignStageGroup,
 }: StageOverviewGridProps) {
   const railRef = useRef<HTMLDivElement | null>(null);
   const stageRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -178,12 +196,37 @@ export function StageOverviewGrid({
   const [dragOverStageName, setDragOverStageName] = useState<string | null>(null);
   const [draggedStageId, setDraggedStageId] = useState<number | null>(null);
   const [hoveredAddSlotAfterIdx, setHoveredAddSlotAfterIdx] = useState<number | null>(null);
+  const [inlineDraftAfterIdx, setInlineDraftAfterIdx] = useState<{
+    afterIdx: number;
+    insertOrder: number;
+    groupKey: string;
+    accentColor: string;
+  } | null>(null);
+  const [inlineDraftName, setInlineDraftName] = useState("");
+  const inlineInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedGroupBubbleKey, setSelectedGroupBubbleKey] =
+    useState<LogicalStageGroup | null>(null);
   const [dropGapSlot, setDropGapSlot] = useState<{
     targetStageId: number;
     side: "before" | "after";
   } | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+
+  // Reset selected group bubble and inline draft when exiting customize mode
+  useEffect(() => {
+    if (!isCustomizingOrder) {
+      setSelectedGroupBubbleKey(null);
+      setInlineDraftAfterIdx(null);
+      setInlineDraftName("");
+    }
+  }, [isCustomizingOrder]);
+
+  useEffect(() => {
+    if (inlineDraftAfterIdx) {
+      setTimeout(() => inlineInputRef.current?.focus(), 40);
+    }
+  }, [inlineDraftAfterIdx]);
 
   // Click-and-drag horizontal rail scrolling state
   const isPointerDownRef = useRef(false);
@@ -416,9 +459,42 @@ export function StageOverviewGrid({
           scrollbarColor: "#233554 #050E1D",
         }}
       >
-        {/* 1. Left-Most "All" Summary Segment (Sovereign Brass Jewel Fill) */}
+        {/* 1. Left-Most "All" Summary Segment (Sovereign Brass Jewel Fill) + Customize Pill Directly Above It */}
         <div className="shrink-0 w-[116px] sm:w-[124px] flex flex-col justify-end">
-          <div className="h-8 mb-1" />
+          <div className="h-8 mb-1 flex items-center justify-center">
+            {onToggleCustomizingOrder && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleCustomizingOrder();
+                }}
+                className={cn(
+                  "h-6 w-full px-2.5 rounded-lg text-[11px] font-semibold inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer border",
+                  isCustomizingOrder
+                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border-[#FFE394] shadow-[0_0_12px_rgba(197,160,89,0.5)]"
+                    : "bg-[#0C1D3A] text-[#E2E8F0] border-[#2C446E] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 hover:bg-[#132E57]"
+                )}
+                title={
+                  isCustomizingOrder
+                    ? "Click when finished customizing stages"
+                    : "Click to show 6-dot grab handles and drag stages to reorder"
+                }
+              >
+                {isCustomizingOrder ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-[#07162B] stroke-[2.5]" />
+                    <span>Done</span>
+                  </>
+                ) : (
+                  <>
+                    <GripVertical className="h-3.5 w-3.5 text-[#F2CD80]" />
+                    <span>Customize</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
           <button
             ref={(el) => {
               stageRefs.current["__all__"] = el;
@@ -461,42 +537,93 @@ export function StageOverviewGrid({
 
         {/* 2. Connected Contiguous Stage Groups with Spanning Bracket Headers Above */}
         {stageGroupRuns.map((run, runIdx) => {
+          const isUngroupedRun = run.groupKey === "ungrouped";
           const groupMeta = run.groupMeta;
           const bracketColor = groupMeta?.accentColor || "#C5A059";
           const groupTitle =
             run.groupKey === "opportunities"
               ? "LEAD OPPORTUNITIES"
               : (groupMeta?.shortLabel || run.groupKey).toUpperCase();
+          const isGroupBubbleSelected =
+            isCustomizingOrder && selectedGroupBubbleKey === run.groupKey;
+          const activeEditingGroupMeta = selectedGroupBubbleKey
+            ? LOGICAL_STAGE_GROUPS.find((g) => g.key === selectedGroupBubbleKey)
+            : null;
+          const activeEditingGroupColor =
+            activeEditingGroupMeta?.accentColor || "#FFE394";
 
           return (
             <div
               key={`${run.groupKey}-${runIdx}`}
               className="shrink-0 flex flex-col justify-end"
             >
-              {/* Spanning Bracket Line + Centered Flat-Bottom Pill Label */}
+              {/* Spanning Bracket Line + Centered Flat-Bottom Group Bubble (Only shown for grouped runs) */}
               <div className="relative h-8 mb-1 w-full flex items-center justify-center px-3">
-                {/* Left-to-Right Spanning Bracket Shape (┌─────── LABEL ───────┐) */}
-                <div
-                  className="absolute inset-x-2.5 top-[13px] bottom-0 border-t-[1.5px] border-l-[1.5px] border-r-[1.5px] rounded-t-[3px] pointer-events-none"
-                  style={{
-                    borderColor: bracketColor,
-                    opacity: 0.78,
-                  }}
-                />
+                {!isUngroupedRun && (
+                  <>
+                    {/* Left-to-Right Spanning Bracket Shape (┌─────── LABEL ───────┐) */}
+                    <div
+                      className="absolute inset-x-2.5 top-[13px] bottom-0 border-t-[1.5px] border-l-[1.5px] border-r-[1.5px] rounded-t-[3px] pointer-events-none transition-all duration-300"
+                      style={{
+                        borderColor: bracketColor,
+                        opacity: isGroupBubbleSelected ? 1 : 0.78,
+                      }}
+                    />
 
-                {/* Centered Flat Pill Box (No downward point, clean left/right horizontal alignment) */}
-                <div
-                  className={cn(
-                    "relative z-10 inline-flex items-center justify-center px-3.5 py-0.5 rounded-full border text-[10px] font-serif font-bold tracking-[0.14em] uppercase shadow-[0_2px_8px_rgba(0,0,0,0.85)] whitespace-nowrap",
-                    groupMeta?.badgeClass ||
-                      "bg-[#0A192F] border-[#C5A059] text-[#FFE394]"
-                  )}
-                  style={{
-                    borderColor: bracketColor,
-                  }}
-                >
-                  <span>{groupTitle}</span>
-                </div>
+                    {/* Centered Interactive Group Bubble (Click in Customize mode to choose which cards are contained in this group) */}
+                    <button
+                      type="button"
+                      disabled={!isCustomizingOrder}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isCustomizingOrder) return;
+                        setSelectedGroupBubbleKey((prev) =>
+                          prev === (run.groupKey as LogicalStageGroup)
+                            ? null
+                            : (run.groupKey as LogicalStageGroup)
+                        );
+                      }}
+                      title={
+                        isCustomizingOrder
+                          ? isGroupBubbleSelected
+                            ? `Editing "${groupTitle}" — click any stage card below to add or remove it from this group bracket`
+                            : `Click "${groupTitle}" bubble to choose which stage cards belong inside this group bracket`
+                          : groupTitle
+                      }
+                      className={cn(
+                        "relative z-10 inline-flex items-center justify-center gap-1.5 px-3.5 py-0.5 rounded-full border text-[10px] font-serif font-bold tracking-[0.14em] uppercase shadow-[0_2px_8px_rgba(0,0,0,0.85)] whitespace-nowrap transition-all",
+                        groupMeta?.badgeClass ||
+                          "bg-[#0A192F] border-[#C5A059] text-[#FFE394]",
+                        isCustomizingOrder
+                          ? "cursor-pointer hover:brightness-125 hover:scale-105"
+                          : "cursor-default",
+                        isGroupBubbleSelected &&
+                          "ring-2 ring-[#FFE394] scale-105 shadow-[0_0_16px_rgba(255,227,148,0.65)]"
+                      )}
+                      style={{
+                        borderColor: isGroupBubbleSelected
+                          ? "#FFE394"
+                          : bracketColor,
+                      }}
+                    >
+                      <span>{groupTitle}</span>
+                      {isCustomizingOrder && (
+                        <span
+                          className={cn(
+                            "text-[9px] font-sans font-bold px-1.5 py-0.2 rounded-full transition-colors",
+                            isGroupBubbleSelected
+                              ? "bg-[#FFE394] text-[#07162B]"
+                              : "bg-black/35 text-white/85"
+                          )}
+                        >
+                          {isGroupBubbleSelected
+                            ? "Select Cards ▾"
+                            : run.items.length}
+                        </span>
+                      )}
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Cards Row Inside This Bracket Group */}
@@ -511,6 +638,14 @@ export function StageOverviewGrid({
                     stage.name.toLowerCase();
                   const isDragOver = dragOverStageName === stage.name;
                   const isBeingDragged = draggedStageId === stage.id;
+                  const stageLogicalGroup = resolveLogicalStageGroup(
+                    stage.name,
+                    stage.category,
+                    stage.logicalGroup
+                  );
+                  const isInSelectedGroup =
+                    Boolean(selectedGroupBubbleKey) &&
+                    stageLogicalGroup === selectedGroupBubbleKey;
 
                   const jewel = resolveStageJewelPalette(stage.name, idx);
                   const topBarColor = stage.accentColor || jewel.topBar;
@@ -581,8 +716,21 @@ export function StageOverviewGrid({
                           onDragStart={(e) => handleStageDragStart(e, stage.id)}
                           onDragEnd={handleStageDragEnd}
                           onClick={() => {
-                            if (didDragRailRef.current || isCustomizingOrder)
+                            if (didDragRailRef.current) return;
+                            if (isCustomizingOrder) {
+                              if (
+                                selectedGroupBubbleKey &&
+                                onAssignStageGroup
+                              ) {
+                                // Toggle whether this stage card is contained inside the selected group bracket
+                                const nextGroup: LogicalStageGroup =
+                                  isInSelectedGroup
+                                    ? "ungrouped"
+                                    : selectedGroupBubbleKey;
+                                onAssignStageGroup(stage.id, nextGroup);
+                              }
                               return;
+                            }
                             onSelectStage(isSelected ? null : stage.name);
                           }}
                           onDragOver={(e) =>
@@ -596,7 +744,11 @@ export function StageOverviewGrid({
                           }
                           title={
                             isCustomizingOrder
-                              ? `Drag 6-dots handle to reorder "${stage.name}"`
+                              ? selectedGroupBubbleKey
+                                ? isInSelectedGroup
+                                  ? `Click to remove "${stage.name}" from this group bracket`
+                                  : `Click to include "${stage.name}" inside the selected group bracket`
+                                : `Click a group bubble above to edit which cards are in that group, or drag 6-dots handle to reorder "${stage.name}"`
                               : `${stage.name} (${count} ${count === 1 ? "case" : "cases"})`
                           }
                           style={{
@@ -606,17 +758,27 @@ export function StageOverviewGrid({
                                 : jewel.bg,
                             borderColor: isDragOver
                               ? "#34D399"
-                              : isSelected
-                                ? "#F2CD80"
-                                : isCustomizingOrder
-                                  ? "#FFE394"
-                                  : jewel.border,
+                              : selectedGroupBubbleKey
+                                ? isInSelectedGroup
+                                  ? activeEditingGroupColor
+                                  : "#334155"
+                                : isSelected
+                                  ? "#F2CD80"
+                                  : isCustomizingOrder
+                                    ? "#FFE394"
+                                    : jewel.border,
                           }}
                           className={cn(
                             "w-full h-[76px] rounded-lg px-2.5 pt-2 pb-1.5 text-center transition-all border flex flex-col items-center justify-between relative overflow-hidden group hover:brightness-115",
                             isCustomizingOrder
-                              ? "cursor-grab active:cursor-grabbing ring-1 ring-[#FFE394]/60 border-dashed"
+                              ? selectedGroupBubbleKey
+                                ? "cursor-pointer"
+                                : "cursor-grab active:cursor-grabbing ring-1 ring-[#FFE394]/60 border-dashed"
                               : "cursor-pointer",
+                            selectedGroupBubbleKey &&
+                              (isInSelectedGroup
+                                ? "ring-2 ring-[#FFE394] shadow-[0_0_16px_rgba(255,227,148,0.45)]"
+                                : "opacity-60 hover:opacity-100 border-dashed"),
                             isBeingDragged && "opacity-45 scale-95",
                             isDragOver && "ring-2 ring-emerald-400 scale-[1.03]",
                             isSelected
@@ -633,28 +795,51 @@ export function StageOverviewGrid({
                           {/* Top-Left 6-Dots Grab Handle when Customize Order Mode is Active */}
                           {isCustomizingOrder && (
                             <div
-                              className="absolute top-1.5 left-1.5 z-10 p-0.5 rounded bg-[#020A17]/75 border border-[#FFE394]/60 text-[#FFE394] shadow-sm flex items-center justify-center"
+                              className="absolute top-1.5 left-1.5 z-10 p-0.5 rounded bg-[#020A17]/80 border border-[#FFE394]/60 text-[#FFE394] shadow-sm flex items-center justify-center"
                               title="Grab and drag to reorder stage"
                             >
                               <GripVertical className="h-3.5 w-3.5" />
                             </div>
                           )}
 
-                          {/* Top-Right Overdue Indicator + Progression Chevron (Absolute so number stays dead-center) */}
-                          <div className="absolute top-2 right-2 flex items-center gap-1 pointer-events-none">
-                            {overdueCount > 0 && (
-                              <span
-                                className="w-2 h-2 rounded-full bg-rose-400 shrink-0 shadow-[0_0_6px_rgba(251,113,133,0.8)]"
-                                title={`${overdueCount} case(s) need attention`}
+                          {/* Top-Right Group Membership Badge when a Group Bubble is clicked in Customize mode */}
+                          {isCustomizingOrder && selectedGroupBubbleKey ? (
+                            <div
+                              className={cn(
+                                "absolute top-1.5 right-1.5 z-10 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider flex items-center gap-0.5 border shadow-sm transition-colors",
+                                isInSelectedGroup
+                                  ? "bg-[#FFE394] border-white text-[#07162B]"
+                                  : "bg-[#051024]/90 border-[#475569] text-[#CBD5E1] group-hover:border-[#FFE394] group-hover:text-[#FFE394]"
+                              )}
+                            >
+                              {isInSelectedGroup ? (
+                                <>
+                                  <Check className="h-2.5 w-2.5 stroke-[3.2]" />
+                                  <span>In Group</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Plus className="h-2.5 w-2.5 stroke-[2.8]" />
+                                  <span>Add</span>
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="absolute top-2 right-2 flex items-center gap-1 pointer-events-none">
+                              {overdueCount > 0 && (
+                                <span
+                                  className="w-2 h-2 rounded-full bg-rose-400 shrink-0 shadow-[0_0_6px_rgba(251,113,133,0.8)]"
+                                  title={`${overdueCount} case(s) need attention`}
+                                />
+                              )}
+                              <ChevronRight
+                                style={{
+                                  color: isSelected ? "#FFE394" : jewel.text,
+                                }}
+                                className="h-3.5 w-3.5 opacity-75 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5"
                               />
-                            )}
-                            <ChevronRight
-                              style={{
-                                color: isSelected ? "#FFE394" : jewel.text,
-                              }}
-                              className="h-3.5 w-3.5 opacity-75 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5"
-                            />
-                          </div>
+                            </div>
+                          )}
 
                           {/* Center-by-Center Prominent Count */}
                           <div className="flex-1 w-full flex items-center justify-center">
@@ -721,6 +906,95 @@ export function StageOverviewGrid({
 
                       {/* Hoverable "+ Add Card Here" Seam Between Stage Cards & At Very End (NEVER before All or before first card) */}
                       {isCustomizingOrder && draggedStageId === null && (
+                        inlineDraftAfterIdx?.afterIdx === idx ? (
+                          /* Inline New Stage Card Editor directly on the rail (No popup box!) */
+                          <div className="shrink-0 w-[142px] sm:w-[152px] mx-1 flex flex-col justify-end z-30">
+                            <div
+                              style={{
+                                background: jewel.selectedBg,
+                                borderColor: "#FFE394",
+                              }}
+                              className="w-full h-[76px] rounded-lg px-2 py-1.5 border-2 border-dashed flex flex-col items-center justify-between relative overflow-hidden shadow-[0_4px_20px_rgba(255,227,148,0.4)]"
+                            >
+                              <div
+                                className="absolute top-0 left-0 right-0 h-[3.5px]"
+                                style={{ backgroundColor: topBarColor }}
+                              />
+                              <input
+                                ref={inlineInputRef}
+                                type="text"
+                                value={inlineDraftName}
+                                onChange={(e) =>
+                                  setInlineDraftName(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    const trimmed = inlineDraftName.trim();
+                                    if (trimmed && onInsertStageAtOrder) {
+                                      onInsertStageAtOrder(idx + 2, {
+                                        name: trimmed,
+                                        accentColor: topBarColor,
+                                        logicalGroup: run.groupKey as any,
+                                        pipelineGroup:
+                                          run.groupKey === "opportunities" ||
+                                          run.groupKey === "follow_up"
+                                            ? "opportunity"
+                                            : "active_project",
+                                        category: "active",
+                                      });
+                                    }
+                                    setInlineDraftAfterIdx(null);
+                                    setInlineDraftName("");
+                                  } else if (e.key === "Escape") {
+                                    setInlineDraftAfterIdx(null);
+                                    setInlineDraftName("");
+                                  }
+                                }}
+                                placeholder="Stage name..."
+                                className="w-full mt-1 px-1.5 py-1 rounded bg-[#020A17]/85 border border-[#FFE394]/60 text-[11px] font-semibold text-[#FFF4D4] placeholder:text-[#94A3B8] text-center focus:outline-hidden"
+                              />
+                              <div className="flex items-center justify-center gap-1.5 w-full">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const trimmed = inlineDraftName.trim();
+                                    if (trimmed && onInsertStageAtOrder) {
+                                      onInsertStageAtOrder(idx + 2, {
+                                        name: trimmed,
+                                        accentColor: topBarColor,
+                                        logicalGroup: run.groupKey as any,
+                                        pipelineGroup:
+                                          run.groupKey === "opportunities" ||
+                                          run.groupKey === "follow_up"
+                                            ? "opportunity"
+                                            : "active_project",
+                                        category: "active",
+                                      });
+                                    }
+                                    setInlineDraftAfterIdx(null);
+                                    setInlineDraftName("");
+                                  }}
+                                  className="px-2 py-0.5 rounded bg-emerald-500 text-[#04130D] text-[9px] font-bold uppercase tracking-wider hover:brightness-110 cursor-pointer"
+                                >
+                                  Add
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setInlineDraftAfterIdx(null);
+                                    setInlineDraftName("");
+                                  }}
+                                  className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-600 text-[9px] font-bold uppercase tracking-wider hover:text-white cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
                         <div
                           onMouseEnter={() => setHoveredAddSlotAfterIdx(idx)}
                           onMouseLeave={() =>
@@ -744,9 +1018,13 @@ export function StageOverviewGrid({
                             onClick={(e) => {
                               e.stopPropagation();
                               setHoveredAddSlotAfterIdx(null);
-                              if (onInsertStageAtOrder) {
-                                onInsertStageAtOrder(idx + 2);
-                              }
+                              setInlineDraftName("");
+                              setInlineDraftAfterIdx({
+                                afterIdx: idx,
+                                insertOrder: idx + 2,
+                                groupKey: run.groupKey,
+                                accentColor: topBarColor,
+                              });
                             }}
                             title="Add Card Here"
                             style={{
@@ -800,6 +1078,7 @@ export function StageOverviewGrid({
                             </div>
                           </button>
                         </div>
+                        )
                       )}
                     </React.Fragment>
                   );

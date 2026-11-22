@@ -86,36 +86,6 @@ export function AdvocacyPipelineHeader({
           </>
         )}
 
-        {onCustomizePipeline && (
-          <button
-            type="button"
-            onClick={onCustomizePipeline}
-            className={cn(
-              "h-7 px-2.5 rounded-lg text-[11px] font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border",
-              isCustomizingPipeline
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border-[#FFE394]"
-                : "bg-[#0C1D3A] text-[#E2E8F0] border-[#2C446E] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 hover:bg-[#132E57]"
-            )}
-            title={
-              isCustomizingPipeline
-                ? "Click when finished dragging stages to reorder"
-                : "Click to show 6-dot grab handles and drag stages to reorder"
-            }
-          >
-            {isCustomizingPipeline ? (
-              <>
-                <Check className="h-3.5 w-3.5 text-[#07162B] stroke-[2.5]" />
-                <span>Done Reordering</span>
-              </>
-            ) : (
-              <>
-                <GripVertical className="h-3.5 w-3.5 text-[#F2CD80]" />
-                <span>Customize</span>
-              </>
-            )}
-          </button>
-        )}
-
         {onViewModeChange && (
           <div className="flex items-center bg-[#0C1D3A] border border-[#2C446E] rounded-lg p-0.5">
             <button

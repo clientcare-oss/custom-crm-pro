@@ -175,6 +175,17 @@ export function CollapsibleStudentsPipeline({
   const [pendingInsertStageOrder, setPendingInsertStageOrder] = useState<number | null>(null);
   const [showNewViewModal, setShowNewViewModal] = useState(false);
 
+  const [stageGroupOverrides, setStageGroupOverrides] = useState<
+    Record<string, LogicalStageGroup>
+  >(() => {
+    try {
+      const saved = localStorage.getItem("waypoint_pipeline_stage_groups");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   useEffect(() => {
     if (serverStages && serverStages.length > 0) {
       const normalized = serverStages
@@ -183,6 +194,8 @@ export function CollapsibleStudentsPipeline({
             String(ss.name || "").trim().toLowerCase() === "closed"
               ? "Archived"
               : ss.name;
+          const overrideGroup =
+            stageGroupOverrides[displayName.toLowerCase()];
           return {
             id: ss.id,
             name: displayName,
@@ -195,7 +208,7 @@ export function CollapsibleStudentsPipeline({
             logicalGroup: resolveLogicalStageGroup(
               displayName,
               ss.category,
-              ss.logicalGroup
+              overrideGroup || ss.logicalGroup
             ),
             isArchived: Boolean(ss.isArchived),
             isDefault: Boolean(ss.isDefault),
@@ -252,6 +265,7 @@ export function CollapsibleStudentsPipeline({
           (s) => s.name.toLowerCase() === req.name.toLowerCase()
         );
         if (!exists) {
+          const overrideGroup = stageGroupOverrides[req.name.toLowerCase()];
           normalized.push({
             id: req.id,
             name: req.name,
@@ -261,7 +275,7 @@ export function CollapsibleStudentsPipeline({
             iconName: req.iconName,
             category: "escalation",
             pipelineGroup: "active_project",
-            logicalGroup: "attention_past_due",
+            logicalGroup: overrideGroup || "attention_past_due",
             isArchived: false,
             isDefault: true,
           });
@@ -269,7 +283,7 @@ export function CollapsibleStudentsPipeline({
       });
       setStagesState(normalized);
     }
-  }, [serverStages]);
+  }, [serverStages, stageGroupOverrides]);
 
   useEffect(() => {
     if (serverCards && Array.isArray(serverCards)) {
@@ -655,6 +669,28 @@ export function CollapsibleStudentsPipeline({
     toast.success("Pipeline stages saved");
   };
 
+  const handleAssignStageGroup = (
+    stageId: number,
+    logicalGroup: LogicalStageGroup
+  ) => {
+    setStagesState((prev) =>
+      prev.map((s) => {
+        if (s.id !== stageId) return s;
+        setStageGroupOverrides((ov) => {
+          const next = { ...ov, [s.name.toLowerCase()]: logicalGroup };
+          try {
+            localStorage.setItem(
+              "waypoint_pipeline_stage_groups",
+              JSON.stringify(next)
+            );
+          } catch {}
+          return next;
+        });
+        return { ...s, logicalGroup };
+      })
+    );
+  };
+
   const handleAddCustomStage = (stageData: Partial<PipelineStageItem>) => {
     if (!stageData.name) return;
     const targetOrder = pendingInsertStageOrder ?? stagesState.length + 1;
@@ -857,35 +893,6 @@ export function CollapsibleStudentsPipeline({
 
                 <div className="h-4 w-px bg-[#2C446E]" />
 
-                {/* Customize Order Toggle Button */}
-                <button
-                  type="button"
-                  onClick={() => setIsCustomizingOrder((prev) => !prev)}
-                  className={cn(
-                    "h-7 px-2.5 rounded-lg text-[11px] font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border",
-                    isCustomizingOrder
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border-[#FFE394]"
-                      : "bg-[#0C1D3A] text-[#E2E8F0] border-[#2C446E] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 hover:bg-[#132E57]"
-                  )}
-                  title={
-                    isCustomizingOrder
-                      ? "Click when finished dragging stages to reorder"
-                      : "Click to show 6-dot grab handles and drag stages to reorder"
-                  }
-                >
-                  {isCustomizingOrder ? (
-                    <>
-                      <Check className="h-3.5 w-3.5 text-[#07162B] stroke-[2.5]" />
-                      <span>Done Reordering</span>
-                    </>
-                  ) : (
-                    <>
-                      <GripVertical className="h-3.5 w-3.5 text-[#F2CD80]" />
-                      <span>Customize</span>
-                    </>
-                  )}
-                </button>
-
                 {/* Compact List / Board Icon Toggle */}
                 <div className="flex items-center bg-[#0C1D3A] border border-[#2C446E] rounded-lg p-0.5">
                   <button
@@ -1005,8 +1012,62 @@ export function CollapsibleStudentsPipeline({
                 onSelectStage={setSelectedStageFilter}
                 onDropCardOnStage={handleMoveCard}
                 isCustomizingOrder={isCustomizingOrder}
+                onToggleCustomizingOrder={() =>
+                  setIsCustomizingOrder((prev) => !prev)
+                }
                 onReorderStages={handleReorderStages}
-                onInsertStageAtOrder={(insertOrder) => {
+                onAssignStageGroup={handleAssignStageGroup}
+                onInsertStageAtOrder={(insertOrder, inlineStageData) => {
+                  if (inlineStageData?.name) {
+                    const newStage: PipelineStageItem = {
+                      id: Date.now(),
+                      name: inlineStageData.name,
+                      slug: inlineStageData.name
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-"),
+                      order: insertOrder,
+                      accentColor: inlineStageData.accentColor || "#60A5FA",
+                      iconName: inlineStageData.iconName || "Compass",
+                      category: inlineStageData.category || "active",
+                      pipelineGroup:
+                        inlineStageData.pipelineGroup || "active_project",
+                      logicalGroup: resolveLogicalStageGroup(
+                        inlineStageData.name,
+                        inlineStageData.category,
+                        inlineStageData.logicalGroup
+                      ),
+                      isArchived: false,
+                      isDefault: false,
+                    };
+                    setStagesState((prev) => {
+                      const sorted = [...prev].sort(
+                        (a, b) => a.order - b.order
+                      );
+                      const insertIdx = Math.max(
+                        0,
+                        Math.min(sorted.length, insertOrder - 1)
+                      );
+                      sorted.splice(insertIdx, 0, newStage);
+                      const reordered = sorted.map((s, i) => ({
+                        ...s,
+                        order: i + 1,
+                      }));
+                      reorderStagesMutation.mutate(
+                        reordered.map((s) => ({ id: s.id, order: s.order }))
+                      );
+                      return reordered;
+                    });
+                    upsertStageMutation.mutate({
+                      name: newStage.name,
+                      accentColor: newStage.accentColor,
+                      category: newStage.category,
+                      pipelineGroup: newStage.pipelineGroup,
+                      iconName: newStage.iconName,
+                      order: newStage.order,
+                    });
+                    toast.success(`Added "${newStage.name}" card to pipeline`);
+                    return;
+                  }
                   setPendingInsertStageOrder(insertOrder);
                   setShowAddStageModal(true);
                 }}
