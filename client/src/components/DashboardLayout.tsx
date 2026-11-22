@@ -1777,7 +1777,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         location === "/settings" || location.startsWith("/settings") ||
         location === "/messages" || location.startsWith("/messages") ||
         location === "/archive" || location.startsWith("/archive/") ||
-        location === "/do-not-serve" || location.startsWith("/do-not-serve/")
+        location === "/do-not-serve" || location.startsWith("/do-not-serve/") ||
+        location === "/bill-guardian" || location.startsWith("/bill-guardian")
       ) && "bg-[#000820]",
       (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/")) && "h-svh max-h-svh min-h-0 overflow-hidden"
       )}>
@@ -1811,7 +1812,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics")) && "p-0 bg-[#000820]",
           (location === "/settings" || location.startsWith("/settings")) && "p-0 bg-[#000820]",
           (location === "/messages" || location.startsWith("/messages")) && "p-0 bg-[#000820]",
-          (location === "/archive" || location.startsWith("/archive/") || location === "/do-not-serve" || location.startsWith("/do-not-serve/")) && "p-0 bg-[#000820]"
+          (location === "/archive" || location.startsWith("/archive/") || location === "/do-not-serve" || location.startsWith("/do-not-serve/")) && "p-0 bg-[#000820]",
+          (location === "/bill-guardian" || location.startsWith("/bill-guardian")) && "p-0 bg-[#07162B]"
         )}>
           {currentForbiddenModule ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-lg mx-auto text-center px-4 py-12">
