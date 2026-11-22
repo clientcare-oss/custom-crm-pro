@@ -280,7 +280,7 @@ export function NewServiceInquiryForm({
     <form
       onSubmit={(e) => handleSubmit(e)}
       data-testid="new-service-inquiry-form"
-      className={`space-y-5 text-slate-100 ${compact ? "" : "p-1"}`}
+      className={`space-y-3 text-slate-100 ${compact ? "" : "p-0.5"}`}
     >
       {/* Shared Do Not Serve Match Guard */}
       {hasUnresolvedMatch(dnsEvaluation) && (
@@ -387,50 +387,50 @@ export function NewServiceInquiryForm({
       )}
 
       {/* 1. Parent or Guardian Contact Information */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[#D8B979]">
             Parent / Guardian Information
           </h4>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
           <div>
-            <label className="text-[11px] text-slate-300 mb-1 block">
+            <label className="text-[11px] text-slate-300 mb-0.5 block">
               First Name *
             </label>
             <Input
               value={parentFirstName}
               onChange={(e) => setParentFirstName(e.target.value)}
               placeholder="e.g. Sarah"
-              className="h-9 bg-[#040D26] border-[#162952] text-white text-xs"
+              className="h-8 bg-[#040D26] border-[#162952] text-white text-xs"
               required
             />
           </div>
           <div>
-            <label className="text-[11px] text-slate-300 mb-1 block">
+            <label className="text-[11px] text-slate-300 mb-0.5 block">
               Last Name *
             </label>
             <Input
               value={parentLastName}
               onChange={(e) => setParentLastName(e.target.value)}
               placeholder="e.g. Sheep"
-              className="h-9 bg-[#040D26] border-[#162952] text-white text-xs"
+              className="h-8 bg-[#040D26] border-[#162952] text-white text-xs"
               required
             />
           </div>
           <div>
-            <label className="text-[11px] text-slate-300 mb-1 block">
+            <label className="text-[11px] text-slate-300 mb-0.5 block">
               Phone Number
             </label>
             <Input
               value={parentPhone}
               onChange={(e) => setParentPhone(e.target.value)}
               placeholder="(404) 555-0192"
-              className="h-9 bg-[#040D26] border-[#162952] text-white text-xs"
+              className="h-8 bg-[#040D26] border-[#162952] text-white text-xs"
             />
           </div>
           <div>
-            <label className="text-[11px] text-slate-300 mb-1 block">
+            <label className="text-[11px] text-slate-300 mb-0.5 block">
               Email Address
             </label>
             <Input
@@ -438,15 +438,15 @@ export function NewServiceInquiryForm({
               value={parentEmail}
               onChange={(e) => setParentEmail(e.target.value)}
               placeholder="parent@example.com"
-              className="h-9 bg-[#040D26] border-[#162952] text-white text-xs"
+              className="h-8 bg-[#040D26] border-[#162952] text-white text-xs"
             />
           </div>
         </div>
 
         {/* Preferred Contact Method & Availability */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
-            <label className="text-[11px] text-slate-300 mb-1 block">
+            <label className="text-[11px] text-slate-300 mb-0.5 block">
               Preferred Contact Method
             </label>
             <div className="flex items-center gap-1.5">
@@ -455,7 +455,7 @@ export function NewServiceInquiryForm({
                   key={method}
                   type="button"
                   onClick={() => setPreferredContactMethod(method)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                  className={`h-8 px-2.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                     preferredContactMethod === method
                       ? "bg-[#102347] border-[#D4AF37]/60 text-[#FFE394]"
                       : "bg-[#040D26] border-[#162952] text-slate-300 hover:border-slate-600"
@@ -467,23 +467,23 @@ export function NewServiceInquiryForm({
             </div>
           </div>
           <div>
-            <label className="text-[11px] text-slate-300 mb-1 block">
+            <label className="text-[11px] text-slate-300 mb-0.5 block">
               Availability / Best Time to Reach
             </label>
             <Input
               value={availability}
               onChange={(e) => setAvailability(e.target.value)}
               placeholder="e.g. Weekday mornings before 11am"
-              className="h-9 bg-[#040D26] border-[#162952] text-white text-xs"
+              className="h-8 bg-[#040D26] border-[#162952] text-white text-xs"
             />
           </div>
         </div>
       </div>
 
       {/* 2. Student Information (Supports Multiple Students) */}
-      <div className="space-y-3 pt-2 border-t border-[#162952]">
+      <div className="space-y-2 pt-2 border-t border-[#162952]">
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[#D8B979]">
             Student Information ({students.length})
           </h4>
           <button
@@ -497,11 +497,11 @@ export function NewServiceInquiryForm({
           </button>
         </div>
 
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {students.map((stu, idx) => (
             <div
               key={idx}
-              className="rounded-xl border border-[#162952] bg-[#040D26]/90 p-3 space-y-2.5"
+              className="rounded-xl border border-[#162952] bg-[#040D26]/90 p-2.5 space-y-1.5"
             >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-medium text-slate-300">
@@ -518,30 +518,30 @@ export function NewServiceInquiryForm({
                   </button>
                 )}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                 <Input
                   value={stu.firstName}
                   onChange={(e) => handleStudentChange(idx, "firstName", e.target.value)}
                   placeholder="Student First Name *"
-                  className="h-8.5 bg-[#02091A] border-[#162952] text-white text-xs"
+                  className="h-8 bg-[#02091A] border-[#162952] text-white text-xs"
                   required={idx === 0}
                 />
                 <Input
                   value={stu.lastName}
                   onChange={(e) => handleStudentChange(idx, "lastName", e.target.value)}
                   placeholder={parentLastName ? `Last (${parentLastName})` : "Last Name"}
-                  className="h-8.5 bg-[#02091A] border-[#162952] text-white text-xs"
+                  className="h-8 bg-[#02091A] border-[#162952] text-white text-xs"
                 />
                 <Input
                   value={stu.gradeLevel}
                   onChange={(e) => handleStudentChange(idx, "gradeLevel", e.target.value)}
                   placeholder="Grade (e.g. Grade 5)"
-                  className="h-8.5 bg-[#02091A] border-[#162952] text-white text-xs"
+                  className="h-8 bg-[#02091A] border-[#162952] text-white text-xs"
                 />
                 <select
                   value={stu.iepOr504}
                   onChange={(e) => handleStudentChange(idx, "iepOr504", e.target.value)}
-                  className="h-8.5 rounded-md bg-[#02091A] border border-[#162952] px-2.5 text-xs text-white"
+                  className="h-8 rounded-md bg-[#02091A] border border-[#162952] px-2.5 text-xs text-white"
                 >
                   <option value="IEP">IEP</option>
                   <option value="504 Plan">504 Plan</option>
@@ -555,42 +555,42 @@ export function NewServiceInquiryForm({
       </div>
 
       {/* 3. Concerns & Desired Outcome */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#162952]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-[#162952]">
         <div>
-          <label className="text-[11px] font-medium text-slate-300 mb-1 block">
+          <label className="text-[11px] font-medium text-slate-300 mb-0.5 block">
             Main Concerns *
           </label>
           <Textarea
             value={concerns}
             onChange={(e) => setConcerns(e.target.value)}
             placeholder="What is happening at school right now? What prompted the family to reach out?"
-            rows={3}
-            className="bg-[#040D26] border-[#162952] text-white text-xs resize-none"
+            rows={2}
+            className="bg-[#040D26] border-[#162952] text-white text-xs resize-none min-h-[52px]"
             required
           />
         </div>
         <div>
-          <label className="text-[11px] font-medium text-slate-300 mb-1 block">
+          <label className="text-[11px] font-medium text-slate-300 mb-0.5 block">
             Desired Outcome
           </label>
           <Textarea
             value={desiredOutcome}
             onChange={(e) => setDesiredOutcome(e.target.value)}
             placeholder="What is the family hoping changes or gets resolved?"
-            rows={3}
-            className="bg-[#040D26] border-[#162952] text-white text-xs resize-none"
+            rows={2}
+            className="bg-[#040D26] border-[#162952] text-white text-xs resize-none min-h-[52px]"
           />
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-2.5 pt-2">
+      <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#162952]/70">
         {onCancel && (
           <Button
             type="button"
             variant="outline"
             onClick={onCancel}
-            className="border-[#1E3358] bg-[#040D26] text-slate-300 hover:text-white cursor-pointer"
+            className="h-8 text-xs border-[#1E3358] bg-[#040D26] text-slate-300 hover:text-white cursor-pointer"
           >
             Cancel
           </Button>
@@ -599,7 +599,7 @@ export function NewServiceInquiryForm({
           type="submit"
           data-testid="save-inquiry-btn"
           disabled={createInquiryMutation.isPending}
-          className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-semibold hover:brightness-110 cursor-pointer"
+          className="h-8 text-xs bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#000820] font-semibold hover:brightness-110 cursor-pointer"
         >
           {createInquiryMutation.isPending ? (
             <>
@@ -626,34 +626,36 @@ export function NewServiceInquiryModal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="relative w-full max-w-2xl rounded-2xl border border-[#1E3358] bg-[#000820] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.85)] my-8">
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#162952]">
-          <div>
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-[#D8B979]">
-              New Service Inquiry
-            </span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4">
+      <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl border border-[#C5A059]/45 bg-[#000820] shadow-[0_24px_64px_rgba(0,0,0,0.9)] overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#162952] shrink-0 bg-[#020A1E]">
+          <div className="flex items-baseline gap-2.5 flex-wrap">
             <h2
-              className="text-xl font-serif text-white mt-0.5"
+              className="text-lg sm:text-xl font-serif font-bold text-white"
               style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
             >
               Create Family Service Inquiry
             </h2>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-[#D8B979]">
+              · New Service Inquiry
+            </span>
           </div>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded-lg border border-[#1E3358] bg-[#040D26]"
+            className="text-xs text-slate-300 hover:text-white px-2.5 py-1 rounded-lg border border-[#1E3358] bg-[#040D26] hover:border-[#C5A059]/60 transition-colors cursor-pointer"
           >
             Close
           </button>
         </div>
-        <NewServiceInquiryForm
-          onCancel={() => onOpenChange(false)}
-          onSuccess={(res) => {
-            onSuccess?.(res);
-          }}
-        />
+        <div className="px-5 py-3.5 overflow-y-auto flex-1">
+          <NewServiceInquiryForm
+            onCancel={() => onOpenChange(false)}
+            onSuccess={(res) => {
+              onSuccess?.(res);
+            }}
+          />
+        </div>
       </div>
     </div>
   );

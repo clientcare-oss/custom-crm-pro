@@ -46,6 +46,8 @@ import {
   Send,
   RotateCcw,
   Sparkles,
+  FileText,
+  Settings,
 } from "lucide-react";
 
 type DiscoverySubFilter = "all" | "today" | "upcoming" | "needs_followup";
@@ -1047,9 +1049,9 @@ export default function Leads() {
               className="min-h-[420px] pt-2 px-1 sm:px-2 space-y-4"
               data-testid={`stage-working-area-${selectedRadioStage}`}
             >
-              {/* Row 1: Stage Title | Count on Left + Gold-Rimmed Search Pill on Right */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-baseline gap-3">
+              {/* Row 1: Stage Title | Count on Left + Middle Action Pills (Lead Forms & Follow-Up Automations) + Gold-Rimmed Search Pill on Right */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div className="flex items-baseline gap-3 shrink-0">
                   <h2
                     className="text-2xl sm:text-[30px] font-serif font-bold text-white leading-none"
                     style={{
@@ -1059,16 +1061,41 @@ export default function Leads() {
                   >
                     {activeStageMeta.label}
                   </h2>
-                  <span className="text-[#C5A059]/60 text-lg font-light">|</span>
-                  <span
-                    className="text-base sm:text-lg font-serif italic text-[#E2E8F0]"
+                </div>
+
+                {/* Middle Buttons: Lead Forms & Follow-Up Automations (Square-ish Side-by-Side Tiles with Top-Left Settings Gear + Actual Icon) */}
+                <div className="flex items-center justify-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setLocation("/leads/forms")}
+                    data-testid="middle-lead-forms-btn"
+                    className="group relative inline-flex flex-col items-center justify-center gap-1 rounded-xl bg-[#040B1C]/90 border border-[#C5A059]/65 hover:border-[#FFE394] hover:bg-[#0B1A38] px-4 py-2 min-w-[136px] h-[54px] text-xs sm:text-[13px] font-serif font-semibold text-[#FFF4D4] hover:text-[#FFE394] shadow-[inset_0_2px_6px_rgba(0,0,0,0.85),0_2px_10px_rgba(0,0,0,0.55)] transition-all cursor-pointer whitespace-nowrap"
                     style={{
                       fontFamily: "'Playfair Display', Georgia, serif",
                     }}
                   >
-                    {currentStageLeads.length}{" "}
-                    {currentStageLeads.length === 1 ? "family" : "families"}
-                  </span>
+                    {/* Small Settings Icon in Top-Left Corner */}
+                    <Settings className="w-3 h-3 text-[#C5A059]/80 group-hover:text-[#FFE394] absolute top-1.5 left-1.5 transition-colors" />
+                    {/* Actual Button Icon */}
+                    <FileText className="w-4 h-4 text-[#DFBE77] group-hover:text-[#FFE394] shrink-0 transition-colors" />
+                    <span className="leading-none">Lead Forms</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLocation("/automations")}
+                    data-testid="middle-followup-automations-btn"
+                    className="group relative inline-flex flex-col items-center justify-center gap-1 rounded-xl bg-[#040B1C]/90 border border-[#C5A059]/65 hover:border-[#FFE394] hover:bg-[#0B1A38] px-4 py-2 min-w-[156px] h-[54px] text-xs sm:text-[13px] font-serif font-semibold text-[#FFF4D4] hover:text-[#FFE394] shadow-[inset_0_2px_6px_rgba(0,0,0,0.85),0_2px_10px_rgba(0,0,0,0.55)] transition-all cursor-pointer whitespace-nowrap"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                    }}
+                  >
+                    {/* Small Settings Icon in Top-Left Corner */}
+                    <Settings className="w-3 h-3 text-[#C5A059]/80 group-hover:text-[#FFE394] absolute top-1.5 left-1.5 transition-colors" />
+                    {/* Actual Button Icon */}
+                    <Sparkles className="w-4 h-4 text-[#DFBE77] group-hover:text-[#FFE394] shrink-0 transition-colors" />
+                    <span className="leading-none">Follow-Up Automations</span>
+                  </button>
                 </div>
 
                 {/* Gold-Rimmed Pill Search Input */}
