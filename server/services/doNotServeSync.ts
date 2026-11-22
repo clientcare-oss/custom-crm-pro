@@ -301,7 +301,7 @@ export async function mergeContactsPreservingDoNotServe(params: {
   await _execDnsRunInternal(`UPDATE leads SET contactId = ? WHERE contactId = ?`, [
     params.targetContactId,
     params.sourceContactId,
-  ]).catch(() => {});
+  ]).catch(() => { });
 
   // Repoint any Do Not Serve entries referencing sourceContactId -> targetContactId (without losing original reason/stamps/notes)
   const sourceEntries = await _execDnsSelectInternal(

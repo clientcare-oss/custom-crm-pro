@@ -106,7 +106,7 @@ export function verifyQuoSignature(
         let sanitizedBody = rawBodyStr;
         try {
           sanitizedBody = JSON.stringify(JSON.parse(rawBodyStr));
-        } catch {}
+        } catch { }
 
         const signedCandidates = [
           `${timestamp}.${sanitizedBody}`,
@@ -118,7 +118,7 @@ export function verifyQuoSignature(
         try {
           const b64 = Buffer.from(secret, "base64");
           if (b64.length > 0) secretKeys.push(b64);
-        } catch {}
+        } catch { }
         secretKeys.push(Buffer.from(secret, "utf8"));
 
         for (const secKey of secretKeys) {
@@ -171,7 +171,7 @@ export async function resolveQuoWebhookSecret(): Promise<string | null> {
         .where(isNotNull(users.quoWebhookSecret))
         .limit(1);
       if (u?.quoWebhookSecret) return u.quoWebhookSecret;
-    } catch {}
+    } catch { }
   }
 
   return process.env.QUO_WEBHOOK_SECRET || null;
@@ -224,7 +224,7 @@ export async function resolveOwnerId(): Promise<number> {
         .from(users)
         .limit(1);
       if (firstUser) return firstUser.id;
-    } catch {}
+    } catch { }
   }
   return 1;
 }
@@ -263,7 +263,7 @@ export async function processQuoWebhook(
     let testCheck: any = null;
     try {
       testCheck = JSON.parse(rawBody.toString("utf8"));
-    } catch {}
+    } catch { }
     if (testCheck?.type === "test" || testCheck?.type === "ping" || testCheck?.eventType === "test") {
       console.info("[Quo Webhook] Test event allowed through without signature header");
       return { status: 200, data: { received: true, action: "test_acknowledged" } };
@@ -431,10 +431,10 @@ export async function processQuoWebhook(
             const speaker = isEmployee
               ? "Advocate (Waypoint)"
               : d?.identifier
-              ? `Caller (${formatPhone(d.identifier)})`
-              : d?.speaker
-              ? `Speaker ${d.speaker}`
-              : "Speaker";
+                ? `Caller (${formatPhone(d.identifier)})`
+                : d?.speaker
+                  ? `Speaker ${d.speaker}`
+                  : "Speaker";
             const content = d?.content || d?.text || "";
             return `${time ? time + " " : ""}${speaker}: ${content}`;
           })
@@ -573,7 +573,7 @@ export async function processQuoWebhook(
         targetEntityId: quoCallId || `${fromNumber}->${toNumber}`,
       });
       doNotServeMatched = dnsEval.hasActiveMatch;
-    } catch {}
+    } catch { }
 
     await database.insert(callLogs).values({
       ownerId,
@@ -652,7 +652,7 @@ export async function processQuoWebhook(
         targetEntityId: quoMsgId || `${fromNumber}->${toNumber}`,
       });
       doNotServeMatched = dnsEval.hasActiveMatch;
-    } catch {}
+    } catch { }
 
     await database.insert(callLogs).values({
       ownerId,

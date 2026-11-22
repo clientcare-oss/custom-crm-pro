@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import CopilotUtilityCapsule from "@/components/CopilotUtilityCapsule";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, FileBox, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, FileBox, Archive, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
 import {
   getStoredEmployees,
   checkEmployeeModuleAccess,
@@ -252,7 +252,7 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
       groupLabel: "System / Company",
       items: [
         {
-          icon: FileBox,
+          icon: Archive,
           label: "Archive",
           path: "/archive",
           keywords: ["archive", "archived records", "do not serve", "blacklist", "restricted", "restrictions", "pg-048"]
@@ -448,7 +448,7 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
     },
     {
       id: "archive",
-      icon: FileBox,
+      icon: Archive,
       label: "Archive",
       path: "/archive",
       isActive: (loc) =>

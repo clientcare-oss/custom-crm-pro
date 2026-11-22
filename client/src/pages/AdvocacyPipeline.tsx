@@ -130,33 +130,106 @@ export default function AdvocacyPipeline() {
   const [selectedCaseForDrawer, setSelectedCaseForDrawer] =
     useState<PipelineCardItem | null>(null);
 
-  // Modals
+  // Modals & Inline Customize Order Mode
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  const [isCustomizingOrder, setIsCustomizingOrder] = useState(false);
   const [showAddStageModal, setShowAddStageModal] = useState(false);
+  const [pendingInsertStageOrder, setPendingInsertStageOrder] = useState<number | null>(null);
   const [showNewViewModal, setShowNewViewModal] = useState(false);
 
   // Sync stages from server without overwriting existing custom stages
   useEffect(() => {
     if (serverStages && serverStages.length > 0) {
       const normalized = serverStages
-        .map((ss: any, idx: number) => ({
-          id: ss.id,
-          name: ss.name,
-          slug: ss.slug || ss.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-          order: ss.order ?? idx + 1,
-          accentColor: ss.accentColor || "#60A5FA",
-          iconName: ss.iconName || "Compass",
-          category: ss.category || "active",
-          pipelineGroup: (ss.pipelineGroup || "active_project") as PipelineGroupType,
-          logicalGroup: resolveLogicalStageGroup(
-            ss.name,
-            ss.category,
-            ss.logicalGroup
-          ),
-          isArchived: Boolean(ss.isArchived),
-          isDefault: Boolean(ss.isDefault),
-        }))
+        .map((ss: any, idx: number) => {
+          const displayName =
+            String(ss.name || "").trim().toLowerCase() === "closed"
+              ? "Archived"
+              : ss.name;
+          return {
+            id: ss.id,
+            name: displayName,
+            slug: ss.slug || displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            order: ss.order ?? idx + 1,
+            accentColor: ss.accentColor || "#60A5FA",
+            iconName: ss.iconName || "Compass",
+            category: ss.category || "active",
+            pipelineGroup: (ss.pipelineGroup || "active_project") as PipelineGroupType,
+            logicalGroup: resolveLogicalStageGroup(
+              displayName,
+              ss.category,
+              ss.logicalGroup
+            ),
+            isArchived: Boolean(ss.isArchived),
+            isDefault: Boolean(ss.isDefault),
+          };
+        })
         .sort((a, b) => a.order - b.order);
+
+      const requiredTrailingStages: {
+        id: number;
+        name: string;
+        slug: string;
+        accentColor: string;
+        iconName: string;
+      }[] = [
+        {
+          id: 9017,
+          name: "Needs Attention",
+          slug: "needs-attention",
+          accentColor: "#F87171",
+          iconName: "AlertCircle",
+        },
+        {
+          id: 9018,
+          name: "30 Days Past Due",
+          slug: "30-days-past-due",
+          accentColor: "#FB923C",
+          iconName: "Clock",
+        },
+        {
+          id: 9019,
+          name: "60 Days Past Due",
+          slug: "60-days-past-due",
+          accentColor: "#F87171",
+          iconName: "AlertCircle",
+        },
+        {
+          id: 9020,
+          name: "90 Days Past Due",
+          slug: "90-days-past-due",
+          accentColor: "#E11D48",
+          iconName: "AlertCircle",
+        },
+        {
+          id: 9021,
+          name: "Blacklisted",
+          slug: "blacklisted",
+          accentColor: "#991B1B",
+          iconName: "Shield",
+        },
+      ];
+
+      requiredTrailingStages.forEach((req) => {
+        const exists = normalized.some(
+          (s) => s.name.toLowerCase() === req.name.toLowerCase()
+        );
+        if (!exists) {
+          normalized.push({
+            id: req.id,
+            name: req.name,
+            slug: req.slug,
+            order: normalized.length + 1,
+            accentColor: req.accentColor,
+            iconName: req.iconName,
+            category: "escalation",
+            pipelineGroup: "active_project",
+            logicalGroup: "attention_past_due",
+            isArchived: false,
+            isDefault: true,
+          });
+        }
+      });
       setStagesState(normalized);
     }
   }, [serverStages]);
@@ -349,9 +422,21 @@ export default function AdvocacyPipeline() {
 
   const displayedCards = useMemo(() => {
     if (!selectedStageFilter) return filteredCards;
-    return filteredCards.filter(
-      (c) => c.pipelineStage.toLowerCase() === selectedStageFilter.toLowerCase()
-    );
+    const target = selectedStageFilter.toLowerCase();
+    return filteredCards.filter((c) => {
+      const st = c.pipelineStage.toLowerCase();
+      if (target === "needs attention") {
+        return (
+          st === "needs attention" ||
+          Boolean(c.needsAttention) ||
+          resolveCaseActionStatus(c).isOverdue
+        );
+      }
+      if (target === "archived" || target === "closed") {
+        return st === "archived" || st === "closed";
+      }
+      return st === target;
+    });
   }, [filteredCards, selectedStageFilter]);
 
   const displayedStages = useMemo(() => {
@@ -499,11 +584,12 @@ export default function AdvocacyPipeline() {
 
   const handleAddCustomStage = (stageData: Partial<PipelineStageItem>) => {
     if (!stageData.name) return;
+    const targetOrder = pendingInsertStageOrder ?? stagesState.length + 1;
     const newStage: PipelineStageItem = {
       id: Date.now(),
       name: stageData.name,
       slug: stageData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-      order: stagesState.length + 1,
+      order: targetOrder,
       accentColor: stageData.accentColor || "#60A5FA",
       iconName: stageData.iconName || "Compass",
       category: stageData.category || "active",
@@ -517,7 +603,17 @@ export default function AdvocacyPipeline() {
       isDefault: false,
     };
 
-    setStagesState((prev) => [...prev, newStage]);
+    setStagesState((prev) => {
+      const sorted = [...prev].sort((a, b) => a.order - b.order);
+      const insertIdx = Math.max(0, Math.min(sorted.length, targetOrder - 1));
+      sorted.splice(insertIdx, 0, newStage);
+      const reordered = sorted.map((s, i) => ({ ...s, order: i + 1 }));
+      reorderStagesMutation.mutate(
+        reordered.map((s) => ({ id: s.id, order: s.order }))
+      );
+      return reordered;
+    });
+    setPendingInsertStageOrder(null);
     upsertStageMutation.mutate({
       name: newStage.name,
       accentColor: newStage.accentColor,
@@ -576,7 +672,7 @@ export default function AdvocacyPipeline() {
       <div className="space-y-2.5 p-3 sm:px-5 sm:py-3.5 min-h-screen text-slate-100 relative bg-[#000820] w-full max-w-full overflow-x-hidden">
         {/* Compact Page Title Bar */}
         <AdvocacyPipelineHeader
-          onAddStage={() => setShowAddStageModal(true)}
+          onViewArchive={() => setLocation("/archive")}
         />
 
         {/* LEVEL 1: Saved Views + LEVEL 2: Compact Toolbar */}
@@ -626,7 +722,9 @@ export default function AdvocacyPipeline() {
           onSelectAdvocate={(advocate) =>
             setFilters((prev) => ({ ...prev, advocate }))
           }
-          onCustomizePipeline={() => setShowCustomizeModal(true)}
+          onCustomizePipeline={() => setIsCustomizingOrder((prev) => !prev)}
+          isCustomizingPipeline={isCustomizingOrder}
+          onViewArchive={() => setLocation("/archive")}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         />
@@ -638,6 +736,12 @@ export default function AdvocacyPipeline() {
           selectedStageName={selectedStageFilter}
           onSelectStage={setSelectedStageFilter}
           onDropCardOnStage={handleMoveCard}
+          isCustomizingOrder={isCustomizingOrder}
+          onReorderStages={handleReorderStages}
+          onInsertStageAtOrder={(insertOrder) => {
+            setPendingInsertStageOrder(insertOrder);
+            setShowAddStageModal(true);
+          }}
         />
 
         {/* Focused Case Workspace Directly Beneath the Pipeline */}

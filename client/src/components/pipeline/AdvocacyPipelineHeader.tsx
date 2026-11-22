@@ -1,13 +1,18 @@
 import React from "react";
-import { Plus } from "lucide-react";
+import { Archive } from "lucide-react";
 import PageIdBadge from "@/components/PageIdBadge";
+import { cn } from "@/lib/utils";
 
 interface AdvocacyPipelineHeaderProps {
-  onAddStage: () => void;
+  onAddStage?: () => void;
+  onViewArchive?: () => void;
+  isArchiveActive?: boolean;
 }
 
 export function AdvocacyPipelineHeader({
   onAddStage,
+  onViewArchive,
+  isArchiveActive = false,
 }: AdvocacyPipelineHeaderProps) {
   return (
     <div className="flex items-center justify-between gap-3 pb-1">
@@ -20,11 +25,22 @@ export function AdvocacyPipelineHeader({
 
       <button
         type="button"
-        onClick={onAddStage}
-        className="h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-[#0A192F] hover:bg-[#102B4E] text-[#FFE394] border border-[#233554] hover:border-[#C5A059]/60 inline-flex items-center gap-1 transition-colors cursor-pointer"
+        onClick={onViewArchive || onAddStage}
+        className={cn(
+          "h-7 px-2.5 rounded-lg text-[11px] font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer border",
+          isArchiveActive
+            ? "bg-[#C5A059] text-[#07162B] border-[#FFE394] shadow-xs"
+            : "bg-[#0A192F] hover:bg-[#102B4E] text-[#FFE394] border-[#233554] hover:border-[#C5A059]/60"
+        )}
+        title="View Archived Cases"
       >
-        <Plus className="h-3.5 w-3.5 text-[#C5A059]" />
-        <span>New Stage</span>
+        <Archive
+          className={cn(
+            "h-3.5 w-3.5",
+            isArchiveActive ? "text-[#07162B]" : "text-[#C5A059]"
+          )}
+        />
+        <span>View Archive</span>
       </button>
     </div>
   );

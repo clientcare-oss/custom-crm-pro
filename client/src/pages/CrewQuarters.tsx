@@ -374,79 +374,151 @@ export default function CrewQuarters() {
               </div>
             </div>
 
-            {/* Row 1: Team & Daily Operations */}
-            <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full relative z-10 overflow-x-auto pt-0.5">
-              <div className="flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0">
-                <span className="hidden xl:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest text-[#C5A059] bg-[#020A17] border border-[#3A2C18] shrink-0 mr-1 select-none font-mono">
-                  Team Ops
-                </span>
-                {[
-                  { id: "overview", label: "Overview", icon: LayoutDashboard },
-                  { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
-                  { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
-                  { id: "schedule", label: "Team Schedule", icon: Calendar },
-                  { id: "resources", label: "Resources", icon: BookOpen },
-                ].map((tab) => {
-                  const isActive = currentTab === tab.id;
-                  const Icon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabChange(tab.id)}
-                      className={`flex-1 min-w-0 h-7 sm:h-8 px-2 sm:px-2.5 py-0.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer whitespace-nowrap ${
+            {/* Row 1: Team & Daily Operations (Tactile Illuminated Command Buttons) */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 w-full relative z-10 pt-0.5">
+              {[
+                {
+                  id: "overview",
+                  label: "Overview",
+                  icon: LayoutDashboard,
+                  iconBox: "from-amber-400/25 to-yellow-500/15 border-amber-400/60 text-amber-300",
+                },
+                {
+                  id: "messages",
+                  label: "Crew Messages",
+                  icon: MessageSquare,
+                  badge: crewUnreadTotal,
+                  iconBox: "from-sky-400/25 to-cyan-500/15 border-sky-400/60 text-sky-300",
+                },
+                {
+                  id: "tasks",
+                  label: "My Tasks",
+                  icon: CheckSquare,
+                  badge: openTasks.length,
+                  iconBox: "from-emerald-400/25 to-green-500/15 border-emerald-400/60 text-emerald-300",
+                },
+                {
+                  id: "schedule",
+                  label: "Team Schedule",
+                  icon: Calendar,
+                  iconBox: "from-violet-400/25 to-purple-500/15 border-violet-400/60 text-violet-300",
+                },
+                {
+                  id: "resources",
+                  label: "Resources",
+                  icon: BookOpen,
+                  iconBox: "from-rose-400/25 to-pink-500/15 border-rose-400/60 text-rose-300",
+                },
+              ].map((tab) => {
+                const isActive = currentTab === tab.id;
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`group relative h-9 px-2.5 py-1 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-[0.97] ${
+                      isActive
+                        ? "bg-gradient-to-b from-[#FCE8AD] via-[#E5C170] to-[#C2963E] text-[#07162B] border-2 border-[#22C55E] ring-1 ring-[#86EFAC]/70 shadow-[0_6px_16px_rgba(34,197,94,0.4),inset_0_1px_2px_rgba(255,255,255,0.85)] -translate-y-0.5"
+                        : "bg-gradient-to-b from-[#112A50] via-[#0B1C38] to-[#071328] text-[#FFF4D4] border border-[#C5A059]/50 hover:border-[#FFE394] hover:from-[#173768] hover:to-[#0C2040] shadow-[0_4px_10px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,244,212,0.18)] hover:-translate-y-0.5"
+                    }`}
+                  >
+                    <span
+                      className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 ${
                         isActive
-                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
-                          : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
+                          ? "bg-gradient-to-b from-[#16A34A] to-[#15803D] border-[#86EFAC] text-white shadow-sm"
+                          : `bg-gradient-to-b ${tab.iconBox}`
                       }`}
                     >
-                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
-                      <span className="truncate">{tab.label}</span>
-                      {Boolean(tab.badge && tab.badge > 0) && (
-                        <span className={`ml-0.5 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight shrink-0 ${
-                          isActive ? "bg-[#07162B] text-[#FFE394]" : "bg-[#C5A059] text-[#07162B]"
-                        }`}>
-                          {tab.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                      <Icon className="w-3.5 h-3.5 shrink-0" />
+                    </span>
+                    <span>{tab.label}</span>
+                    {Boolean(tab.badge && tab.badge > 0) && (
+                      <span
+                        className={`ml-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none shrink-0 ${
+                          isActive
+                            ? "bg-[#07162B] text-[#FFE394]"
+                            : "bg-gradient-to-r from-[#22C55E] to-[#16A34A] text-white shadow-sm"
+                        }`}
+                      >
+                        {tab.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Row 2: Employee Self-Service & Personal Management */}
-            <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1 border-t border-[#3A2C18]/60 relative z-10 overflow-x-auto">
-              <div className="flex items-center gap-1 sm:gap-1.5 w-full">
-                <span className="hidden xl:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest text-[#FFE394] bg-[#020A17] border border-[#3A2C18] shrink-0 mr-1 select-none font-mono">
-                  Employee Hub
-                </span>
-                {[
-                  { id: "notes", label: "My Notes", icon: Lightbulb },
-                  { id: "availability", label: "My Availability", icon: Clock },
-                  { id: "time-off", label: "Time Off & PTO", icon: Palmtree },
-                  { id: "timesheet", label: "My Timesheet", icon: Timer },
-                  { id: "profile", label: "Profile & Credentials", icon: Award },
-                  { id: "payroll", label: "Payroll & Direct Deposit", icon: CreditCard },
-                  { id: "equipment", label: "Equipment & Tech", icon: Laptop },
-                ].map((tab) => {
-                  const isActive = currentTab === tab.id;
-                  const Icon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabChange(tab.id)}
-                      className={`flex-1 min-w-0 h-7 sm:h-8 px-2 sm:px-2.5 py-0.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer whitespace-nowrap ${
+            {/* Row 2: Employee Self-Service & Personal Management (Zero Truncation, Tactile Tiles) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 w-full pt-1.5 border-t border-[#3A2C18]/70 relative z-10">
+              {[
+                {
+                  id: "notes",
+                  label: "My Notes",
+                  icon: Lightbulb,
+                  iconBox: "from-yellow-400/25 to-amber-500/15 border-yellow-400/60 text-yellow-300",
+                },
+                {
+                  id: "availability",
+                  label: "Availability",
+                  icon: Clock,
+                  iconBox: "from-teal-400/25 to-emerald-500/15 border-teal-400/60 text-teal-300",
+                },
+                {
+                  id: "time-off",
+                  label: "Time Off & PTO",
+                  icon: Palmtree,
+                  iconBox: "from-lime-400/25 to-green-500/15 border-lime-400/60 text-lime-300",
+                },
+                {
+                  id: "timesheet",
+                  label: "Timesheet",
+                  icon: Timer,
+                  iconBox: "from-orange-400/25 to-amber-500/15 border-orange-400/60 text-orange-300",
+                },
+                {
+                  id: "profile",
+                  label: "Credentials",
+                  icon: Award,
+                  iconBox: "from-fuchsia-400/25 to-purple-500/15 border-fuchsia-400/60 text-fuchsia-300",
+                },
+                {
+                  id: "payroll",
+                  label: "Payroll",
+                  icon: CreditCard,
+                  iconBox: "from-emerald-400/25 to-teal-500/15 border-emerald-400/60 text-emerald-300",
+                },
+                {
+                  id: "equipment",
+                  label: "Tech & Gear",
+                  icon: Laptop,
+                  iconBox: "from-blue-400/25 to-indigo-500/15 border-blue-400/60 text-blue-300",
+                },
+              ].map((tab) => {
+                const isActive = currentTab === tab.id;
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`group relative h-9 px-2.5 py-1 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-[0.97] ${
+                      isActive
+                        ? "bg-gradient-to-b from-[#FCE8AD] via-[#E5C170] to-[#C2963E] text-[#07162B] border-2 border-[#22C55E] ring-1 ring-[#86EFAC]/70 shadow-[0_6px_16px_rgba(34,197,94,0.4),inset_0_1px_2px_rgba(255,255,255,0.85)] -translate-y-0.5"
+                        : "bg-gradient-to-b from-[#0E2344] via-[#091830] to-[#050E20] text-[#EADBC0] hover:text-[#FFF8E7] border border-[#C5A059]/45 hover:border-[#FFE394] hover:from-[#15325E] hover:to-[#0A1C38] shadow-[0_3px_8px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,244,212,0.14)] hover:-translate-y-0.5"
+                    }`}
+                  >
+                    <span
+                      className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 ${
                         isActive
-                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
-                          : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
+                          ? "bg-gradient-to-b from-[#16A34A] to-[#15803D] border-[#86EFAC] text-white shadow-sm"
+                          : `bg-gradient-to-b ${tab.iconBox}`
                       }`}
                     >
-                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
-                      <span className="truncate">{tab.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+                      <Icon className="w-3 h-3 shrink-0" />
+                    </span>
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -728,100 +800,187 @@ export default function CrewQuarters() {
           </div>
         </div>
 
-      {/* ── Internal Tab Navigation Bar: Double Bar (Team Operations + Employee Self-Service) ── */}
-      <div className="w-full flex flex-col p-1.5 sm:p-2 bg-[#05142B]/95 border border-[#3A2C18] rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] gap-1.5 mb-6 relative overflow-hidden">
+      {/* ── Internal Tab Navigation Bar: Double Bar (Tactile Illuminated Command Deck) ── */}
+      <div className="w-full flex flex-col p-2.5 sm:p-3 bg-gradient-to-b from-[#081C3A] via-[#05142B] to-[#030C1C] border-2 border-[#C5A059]/65 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.85),0_0_20px_rgba(197,160,89,0.14),inset_0_1px_1px_rgba(255,244,212,0.2)] gap-2.5 mb-6 relative overflow-hidden">
         {/* Top subtle golden accent shimmer line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#C5A059]/60 to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFE394] to-transparent pointer-events-none" />
 
-        {/* Row 1: Team & Daily Operations */}
-        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full relative z-10 overflow-x-auto pb-0.5">
-          <div className="flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0">
-            <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-[#C5A059] bg-[#020A17] border border-[#3A2C18] shrink-0 mr-1 select-none font-mono">
-              Team Ops
-            </span>
-            {[
-              { id: "overview", label: "Overview", icon: LayoutDashboard },
-              { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
-              { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
-              { id: "schedule", label: "Team Schedule", icon: Calendar },
-              { id: "resources", label: "Resources", icon: BookOpen },
-            ].map((tab) => {
-              const isActive = currentTab === tab.id;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`flex-1 min-w-0 h-8 sm:h-9 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap ${
-                    isActive
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
-                      : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
-                  }`}
-                >
-                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
-                  <span className="truncate">{tab.label}</span>
-                  {Boolean(tab.badge && tab.badge > 0) && (
-                    <span
-                      className={`ml-0.5 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight shrink-0 ${
-                        isActive
-                          ? "bg-[#07162B] text-[#FFE394] border border-[#3A2C18]"
-                          : "bg-[#020A17] text-[#FFE394] border border-[#3A2C18]"
+        {/* Row 1: Team & Daily Operations (5 Primary Command Tiles) */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 w-full relative z-10">
+          {[
+            {
+              id: "overview",
+              label: "Overview",
+              subtitle: "Command Deck",
+              icon: LayoutDashboard,
+              iconBox: "from-amber-400/25 to-yellow-500/15 border-amber-400/65 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.25)]",
+            },
+            {
+              id: "messages",
+              label: "Crew Messages",
+              subtitle: "Live Team Chat",
+              icon: MessageSquare,
+              badge: crewUnreadTotal,
+              iconBox: "from-sky-400/25 to-cyan-500/15 border-sky-400/65 text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.25)]",
+            },
+            {
+              id: "tasks",
+              label: "My Tasks",
+              subtitle: "Action Queue",
+              icon: CheckSquare,
+              badge: openTasks.length,
+              iconBox: "from-emerald-400/25 to-green-500/15 border-emerald-400/65 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.25)]",
+            },
+            {
+              id: "schedule",
+              label: "Team Schedule",
+              subtitle: "Shifts & Coverage",
+              icon: Calendar,
+              iconBox: "from-violet-400/25 to-purple-500/15 border-violet-400/65 text-violet-300 shadow-[0_0_12px_rgba(167,139,250,0.25)]",
+            },
+            {
+              id: "resources",
+              label: "Resources",
+              subtitle: "Playbooks &SOPs",
+              icon: BookOpen,
+              iconBox: "from-rose-400/25 to-pink-500/15 border-rose-400/65 text-rose-300 shadow-[0_0_12px_rgba(251,113,133,0.25)]",
+            },
+          ].map((tab) => {
+            const isActive = currentTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`group relative px-3 py-2 rounded-xl text-left flex items-center justify-between gap-2.5 transition-all duration-200 cursor-pointer select-none active:scale-[0.97] ${
+                  isActive
+                    ? "bg-gradient-to-b from-[#FCE8AD] via-[#E5C170] to-[#C2963E] text-[#07162B] border-2 border-[#22C55E] ring-1 ring-[#86EFAC]/70 shadow-[0_8px_20px_rgba(34,197,94,0.45),inset_0_1px_2px_rgba(255,255,255,0.9)] -translate-y-0.5"
+                    : "bg-gradient-to-b from-[#132E58] via-[#0C2040] to-[#07142B] text-[#FFF4D4] border border-[#C5A059]/55 hover:border-[#FFE394] hover:from-[#1A3D72] hover:to-[#0E264C] shadow-[0_5px_14px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,244,212,0.22)] hover:-translate-y-0.5"
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span
+                    className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3 ${
+                      isActive
+                        ? "bg-gradient-to-b from-[#16A34A] to-[#15803D] border-[#86EFAC] text-white shadow-[0_2px_8px_rgba(22,163,74,0.6)]"
+                        : `bg-gradient-to-b ${tab.iconBox}`
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                  </span>
+                  <div className="min-w-0">
+                    <div
+                      className={`text-xs sm:text-[13px] font-extrabold leading-tight truncate ${
+                        isActive ? "text-[#07162B]" : "text-[#FFF8E7] group-hover:text-white"
                       }`}
                     >
-                      {tab.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                      {tab.label}
+                    </div>
+                    <div
+                      className={`text-[10px] font-medium leading-tight truncate ${
+                        isActive ? "text-[#07162B]/80 font-bold" : "text-[#C6B697]"
+                      }`}
+                    >
+                      {tab.subtitle}
+                    </div>
+                  </div>
+                </div>
 
-          {currentTab === "overview" && (
-            <Button
-              size="sm"
-              onClick={() => handleTabChange("messages")}
-              className="hidden lg:flex items-center gap-1.5 border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs font-semibold rounded-xl px-3 py-1.5 h-8 cursor-pointer shadow-sm transition-all shrink-0 ml-1"
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-[#C5A059] shrink-0" />
-              <span>Messages</span>
-              <ArrowRight className="w-3 h-3 shrink-0" />
-            </Button>
-          )}
+                {Boolean(tab.badge && tab.badge > 0) ? (
+                  <span
+                    className={`text-[10px] font-black px-2 py-0.5 rounded-full leading-tight shrink-0 ${
+                      isActive
+                        ? "bg-[#07162B] text-[#FFE394]"
+                        : "bg-gradient-to-r from-[#22C55E] to-[#16A34A] text-white border border-[#86EFAC] shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                ) : (
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 transition-all ${
+                      isActive
+                        ? "bg-[#16A34A] ring-2 ring-[#86EFAC] shadow-[0_0_8px_#22C55E]"
+                        : "bg-[#C5A059]/35 group-hover:bg-[#FFE394]"
+                    }`}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Row 2: Employee Self-Service & Personal Management */}
-        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1.5 border-t border-[#3A2C18]/60 relative z-10 overflow-x-auto">
-          <div className="flex items-center gap-1 sm:gap-1.5 w-full">
-            <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-[#FFE394] bg-[#020A17] border border-[#3A2C18] shrink-0 mr-1 select-none font-mono">
-              Employee Hub
-            </span>
-            {[
-              { id: "notes", label: "My Notes", icon: Lightbulb },
-              { id: "availability", label: "My Availability", icon: Clock },
-              { id: "time-off", label: "Time Off & PTO", icon: Palmtree },
-              { id: "timesheet", label: "My Timesheet", icon: Timer },
-              { id: "profile", label: "Profile & Credentials", icon: Award },
-              { id: "payroll", label: "Payroll & Direct Deposit", icon: CreditCard },
-              { id: "equipment", label: "Equipment & Tech", icon: Laptop },
-            ].map((tab) => {
-              const isActive = currentTab === tab.id;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`flex-1 min-w-0 h-8 sm:h-9 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap ${
+        {/* Row 2: Employee Self-Service & Personal Management (7 Tactile Pill Buttons — Zero Truncation!) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 w-full pt-2 border-t border-[#C5A059]/35 relative z-10">
+          {[
+            {
+              id: "notes",
+              label: "My Notes",
+              icon: Lightbulb,
+              iconBox: "from-yellow-400/25 to-amber-500/15 border-yellow-400/60 text-yellow-300",
+            },
+            {
+              id: "availability",
+              label: "Availability",
+              icon: Clock,
+              iconBox: "from-teal-400/25 to-emerald-500/15 border-teal-400/60 text-teal-300",
+            },
+            {
+              id: "time-off",
+              label: "Time Off & PTO",
+              icon: Palmtree,
+              iconBox: "from-lime-400/25 to-green-500/15 border-lime-400/60 text-lime-300",
+            },
+            {
+              id: "timesheet",
+              label: "Timesheet",
+              icon: Timer,
+              iconBox: "from-orange-400/25 to-amber-500/15 border-orange-400/60 text-orange-300",
+            },
+            {
+              id: "profile",
+              label: "Credentials",
+              icon: Award,
+              iconBox: "from-fuchsia-400/25 to-purple-500/15 border-fuchsia-400/60 text-fuchsia-300",
+            },
+            {
+              id: "payroll",
+              label: "Payroll",
+              icon: CreditCard,
+              iconBox: "from-emerald-400/25 to-teal-500/15 border-emerald-400/60 text-emerald-300",
+            },
+            {
+              id: "equipment",
+              label: "Tech & Gear",
+              icon: Laptop,
+              iconBox: "from-blue-400/25 to-indigo-500/15 border-blue-400/60 text-blue-300",
+            },
+          ].map((tab) => {
+            const isActive = currentTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`group relative h-10 px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer whitespace-nowrap select-none active:scale-[0.97] ${
+                  isActive
+                    ? "bg-gradient-to-b from-[#FCE8AD] via-[#E5C170] to-[#C2963E] text-[#07162B] border-2 border-[#22C55E] ring-1 ring-[#86EFAC]/70 shadow-[0_6px_16px_rgba(34,197,94,0.4),inset_0_1px_2px_rgba(255,255,255,0.85)] -translate-y-0.5"
+                    : "bg-gradient-to-b from-[#0F2547] via-[#0A1932] to-[#061022] text-[#EADBC0] hover:text-[#FFF8E7] border border-[#C5A059]/45 hover:border-[#FFE394] hover:from-[#163462] hover:to-[#0C2040] shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,244,212,0.16)] hover:-translate-y-0.5"
+                }`}
+              >
+                <span
+                  className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 ${
                     isActive
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
-                      : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
+                      ? "bg-gradient-to-b from-[#16A34A] to-[#15803D] border-[#86EFAC] text-white shadow-sm"
+                      : `bg-gradient-to-b ${tab.iconBox}`
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
-                  <span className="truncate">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                </span>
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -1151,34 +1151,12 @@ export default function Students() {
           </div>
         </div>
 
-        {/* ─── Stage Filter Pill Bar: All Students, Active, Scholarship, Renewal, Archived, + Custom Stage ─── */}
-        <div className="w-full px-4 sm:px-6 md:px-10 lg:px-12 pt-3 pb-2 bg-[#020712] border-b border-[#8A6731]/25">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
-            {stageTabs.map((tab) => (
-              <WaypointPillTab
-                key={tab.id}
-                label={tab.label}
-                count={tab.count}
-                active={listCategory === tab.id}
-                onClick={() => handleStageTabClick(tab.id)}
-              />
-            ))}
-
-            {/* "+" Button for adding a new custom stage (ordered/populated by tags) */}
-            <AddCustomStagePopover
-              companyTags={companyTags}
-              customStages={customStages}
-              onAddStage={handleAddCustomStage}
-              onDeleteStage={handleDeleteCustomStage}
-            />
-          </div>
-        </div>
-
-        {/* ─── Collapsible Pipeline Deck (Directly Below Quick View Items) ─── */}
+        {/* ─── Collapsible Pipeline Deck ─── */}
         <CollapsibleStudentsPipeline
           isOpen={pipelineOpen}
           onToggleOpen={handleTogglePipelineOpen}
           onFilterStateChange={setPipelineFilterSummary}
+          onViewArchive={() => setLocation("/archive")}
         />
 
         {savedRestriction && (

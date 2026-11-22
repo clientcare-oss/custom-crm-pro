@@ -620,11 +620,10 @@ export default function WaypointStartScreen() {
               setIsEditing((prev) => !prev);
               setIsAddModalOpen(false);
             }}
-            className={`pointer-events-auto group relative inline-flex items-center gap-2.5 rounded-full px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-normal tracking-wide transition-all duration-200 cursor-pointer ${
-              isEditing
-                ? "bg-[#131F49]/95 text-[#FFE394] border border-[#F5B544] shadow-[0_0_22px_rgba(245,181,68,0.45)]"
-                : "bg-[#081029]/85 text-white/95 hover:text-white border border-[#DFA348]/75 hover:border-[#F5B544] shadow-[0_4px_20px_rgba(0,0,0,0.65)]"
-            }`}
+            className={`pointer-events-auto group relative inline-flex items-center gap-2.5 rounded-full px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-normal tracking-wide transition-all duration-200 cursor-pointer ${isEditing
+              ? "bg-[#131F49]/95 text-[#FFE394] border border-[#F5B544] shadow-[0_0_22px_rgba(245,181,68,0.45)]"
+              : "bg-[#081029]/85 text-white/95 hover:text-white border border-[#DFA348]/75 hover:border-[#F5B544] shadow-[0_4px_20px_rgba(0,0,0,0.65)]"
+              }`}
           >
             {/* Top & Bottom Gold Rim Specular Flare */}
             <span className="pointer-events-none absolute -top-[1px] left-4 right-8 h-[1.5px] bg-gradient-to-r from-transparent via-[#FFE394] to-transparent opacity-95 shadow-[0_0_8px_#FFE394]" />
@@ -702,11 +701,10 @@ export default function WaypointStartScreen() {
                       key={mins}
                       type="button"
                       onClick={() => updateIdleTimeout(mins)}
-                      className={`px-1.5 py-0.5 rounded text-[10.5px] font-medium transition-colors cursor-pointer ${
-                        idleTimeoutMinutes === mins
-                          ? "bg-[#E5A946] text-[#000820] font-semibold"
-                          : "bg-white/5 text-white/75 hover:bg-white/10"
-                      }`}
+                      className={`px-1.5 py-0.5 rounded text-[10.5px] font-medium transition-colors cursor-pointer ${idleTimeoutMinutes === mins
+                        ? "bg-[#E5A946] text-[#000820] font-semibold"
+                        : "bg-white/5 text-white/75 hover:bg-white/10"
+                        }`}
                     >
                       {mins}m
                     </button>
@@ -788,13 +786,11 @@ export default function WaypointStartScreen() {
                         handleShortcutClick(item);
                       }
                     }}
-                    className={`group relative h-[98px] sm:h-[110px] rounded-2xl transition-all duration-200 flex flex-col items-center justify-center px-6 select-none ${
-                      isEditing
-                        ? "border border-[#F5B544]/85 bg-gradient-to-b from-[#131D46]/90 via-[#0A122E]/92 to-[#060B1E]/95 shadow-[0_8px_28px_rgba(0,0,0,0.75),0_0_15px_rgba(229,169,70,0.18)]"
-                        : "cursor-pointer border border-[#D89E43]/65 hover:border-[#F7CA6D] bg-gradient-to-b from-[#111A3D]/85 via-[#09102A]/90 to-[#060B1E]/95 hover:from-[#16224F]/90 hover:to-[#08102B]/95 shadow-[0_8px_28px_rgba(0,0,0,0.7)] hover:shadow-[0_10px_32px_rgba(0,0,0,0.85),0_0_20px_rgba(229,169,70,0.22)]"
-                    } ${isBeingDragged ? "opacity-50 scale-[0.98]" : ""} ${
-                      isDragTarget ? "ring-2 ring-[#FFE394] scale-[1.02]" : ""
-                    } backdrop-blur-md`}
+                    className={`group relative h-[98px] sm:h-[110px] rounded-2xl transition-all duration-200 flex flex-col items-center justify-center px-6 select-none ${isEditing
+                      ? "border border-[#F5B544]/85 bg-gradient-to-b from-[#131D46]/90 via-[#0A122E]/92 to-[#060B1E]/95 shadow-[0_8px_28px_rgba(0,0,0,0.75),0_0_15px_rgba(229,169,70,0.18)]"
+                      : "cursor-pointer border border-[#D89E43]/65 hover:border-[#F7CA6D] bg-gradient-to-b from-[#111A3D]/85 via-[#09102A]/90 to-[#060B1E]/95 hover:from-[#16224F]/90 hover:to-[#08102B]/95 shadow-[0_8px_28px_rgba(0,0,0,0.7)] hover:shadow-[0_10px_32px_rgba(0,0,0,0.85),0_0_20px_rgba(229,169,70,0.22)]"
+                      } ${isBeingDragged ? "opacity-50 scale-[0.98]" : ""} ${isDragTarget ? "ring-2 ring-[#FFE394] scale-[1.02]" : ""
+                      } backdrop-blur-md`}
                   >
                     {/* Top & Bottom Gold Specular Rim Highlights */}
                     <span className="pointer-events-none absolute -top-[1px] left-10 right-10 h-[1.5px] bg-gradient-to-r from-transparent via-[#FFE394]/80 to-transparent" />
@@ -926,11 +922,10 @@ export default function WaypointStartScreen() {
                     setPinError(null);
                   }}
                   title={`Unlock and open ${item.label}`}
-                  className={`h-[118px] rounded-2xl border transition-all flex flex-col items-center justify-center px-5 backdrop-blur-md cursor-pointer ${
-                    pendingDestinationPath === item.path
-                      ? "border-[#F7CA6D]/80 bg-[#101A3E]/80 opacity-85 scale-[1.02]"
-                      : "border-[#D89E43]/30 bg-[#0A112B]/65 opacity-55 blur-[1.5px] hover:opacity-80 hover:blur-0"
-                  }`}
+                  className={`h-[118px] rounded-2xl border transition-all flex flex-col items-center justify-center px-5 backdrop-blur-md cursor-pointer ${pendingDestinationPath === item.path
+                    ? "border-[#F7CA6D]/80 bg-[#101A3E]/80 opacity-85 scale-[1.02]"
+                    : "border-[#D89E43]/30 bg-[#0A112B]/65 opacity-55 blur-[1.5px] hover:opacity-80 hover:blur-0"
+                    }`}
                 >
                   <div className="mb-2">{renderShortcutIcon(item.iconKey, "w-7 h-7")}</div>
                   <span className="text-[15px] text-white/90">{item.label}</span>
@@ -952,22 +947,22 @@ export default function WaypointStartScreen() {
                 {pinMode === "setup_step1"
                   ? "Create Workspace PIN"
                   : pinMode === "setup_step2"
-                  ? "Confirm Your PIN"
-                  : pinMode === "reauth"
-                  ? "Account Verification"
-                  : "Workspace Locked"}
+                    ? "Confirm Your PIN"
+                    : pinMode === "reauth"
+                      ? "Account Verification"
+                      : "Workspace Locked"}
               </h2>
 
               <p className="mt-1 text-xs sm:text-[14px] font-light text-[#C4CEEE]/90">
                 {pinMode === "setup_step1"
                   ? "Choose a 4-digit privacy PIN for quick workspace lock & unlock"
                   : pinMode === "setup_step2"
-                  ? "Re-enter your 4-digit PIN to confirm"
-                  : pinMode === "reauth"
-                  ? "Confirm your account email to reset your 4-digit Workspace PIN"
-                  : pendingShortcut
-                  ? `Enter your 4-digit PIN to open ${pendingShortcut.label}`
-                  : "Enter your 4-digit PIN to return to work"}
+                    ? "Re-enter your 4-digit PIN to confirm"
+                    : pinMode === "reauth"
+                      ? "Confirm your account email to reset your 4-digit Workspace PIN"
+                      : pendingShortcut
+                        ? `Enter your 4-digit PIN to open ${pendingShortcut.label}`
+                        : "Enter your 4-digit PIN to return to work"}
               </p>
 
               {pinMode === "reauth" ? (
@@ -1064,11 +1059,10 @@ export default function WaypointStartScreen() {
                         <div
                           key={slot}
                           data-testid={`pin-box-${slot}`}
-                          className={`w-11 h-10 rounded-lg border transition-all duration-150 flex items-center justify-center ${
-                            isFilled
-                              ? "border-[#F7CA6D] bg-[#101B42]/95 shadow-[0_0_12px_rgba(247,202,109,0.45)]"
-                              : "border-[#D89E43]/75 bg-[#070E26]/85"
-                          }`}
+                          className={`w-11 h-10 rounded-lg border transition-all duration-150 flex items-center justify-center ${isFilled
+                            ? "border-[#F7CA6D] bg-[#101B42]/95 shadow-[0_0_12px_rgba(247,202,109,0.45)]"
+                            : "border-[#D89E43]/75 bg-[#070E26]/85"
+                            }`}
                         >
                           {isFilled && (
                             <span className="w-2.5 h-2.5 rounded-full bg-[#FFE394] shadow-[0_0_8px_#FFE394]" />
@@ -1181,11 +1175,10 @@ export default function WaypointStartScreen() {
                     setPinError(null);
                   }}
                   title={`Unlock and open ${item.label}`}
-                  className={`h-[118px] rounded-2xl border transition-all flex flex-col items-center justify-center px-5 backdrop-blur-md cursor-pointer ${
-                    pendingDestinationPath === item.path
-                      ? "border-[#F7CA6D]/80 bg-[#101A3E]/80 opacity-85 scale-[1.02]"
-                      : "border-[#D89E43]/30 bg-[#0A112B]/65 opacity-55 blur-[1.5px] hover:opacity-80 hover:blur-0"
-                  }`}
+                  className={`h-[118px] rounded-2xl border transition-all flex flex-col items-center justify-center px-5 backdrop-blur-md cursor-pointer ${pendingDestinationPath === item.path
+                    ? "border-[#F7CA6D]/80 bg-[#101A3E]/80 opacity-85 scale-[1.02]"
+                    : "border-[#D89E43]/30 bg-[#0A112B]/65 opacity-55 blur-[1.5px] hover:opacity-80 hover:blur-0"
+                    }`}
                 >
                   <div className="mb-2">{renderShortcutIcon(item.iconKey, "w-7 h-7")}</div>
                   <span className="text-[15px] text-white/90">{item.label}</span>

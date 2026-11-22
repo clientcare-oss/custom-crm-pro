@@ -48,11 +48,19 @@ export const LOGICAL_STAGE_GROUPS: {
   },
   {
     key: "renewal_closed",
-    label: "Renewal / Closed",
-    shortLabel: "Renewal / Closed",
+    label: "Renewal / Archived",
+    shortLabel: "Renewal / Archived",
     badgeClass: "bg-[#0D3B2E] border-[#2E8B6D] text-[#B8F5D8]",
     barColor: "#34D399",
     accentColor: "#34D399",
+  },
+  {
+    key: "attention_past_due",
+    label: "Attention & Past Due",
+    shortLabel: "Attention & Past Due",
+    badgeClass: "bg-[#4A1219] border-[#E11D48] text-[#FFE4E6]",
+    barColor: "#F87171",
+    accentColor: "#F87171",
   },
 ];
 
@@ -61,8 +69,17 @@ export function resolveLogicalStageGroup(
   category?: string,
   explicitLogicalGroup?: LogicalStageGroup
 ): LogicalStageGroup {
-  if (explicitLogicalGroup) return explicitLogicalGroup;
   const lower = (stageName || "").trim().toLowerCase();
+
+  if (
+    lower.includes("needs attention") ||
+    lower.includes("past due") ||
+    lower.includes("blacklist") ||
+    lower.includes("do not serve")
+  ) {
+    return "attention_past_due";
+  }
+  if (explicitLogicalGroup) return explicitLogicalGroup;
 
   if (
     lower.includes("follow-up") ||
@@ -92,6 +109,8 @@ export function resolveLogicalStageGroup(
     lower.includes("monitoring") ||
     lower.includes("renewal") ||
     lower === "closed" ||
+    lower === "archived" ||
+    lower.includes("archiv") ||
     category === "completed"
   ) {
     return "renewal_closed";
@@ -109,7 +128,7 @@ export function resolveCaseActionStatus(card: PipelineCardItem): {
   const stageLower = (card.pipelineStage || "").toLowerCase();
   const taskLower = `${card.primaryTask || ""} ${card.secondaryTask || ""}`.toLowerCase();
 
-  if (stageLower === "closed" || card.accountStatus === "Closed") {
+  if (stageLower === "closed" || stageLower === "archived" || card.accountStatus === "Closed") {
     if (card.billingStatus === "Payment Failed" || card.needsAttention) {
       return {
         status: "overdue",
@@ -401,8 +420,8 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
   },
   {
     id: 16,
-    name: "Closed",
-    slug: "closed",
+    name: "Archived",
+    slug: "archived",
     order: 16,
     accentColor: "#64748B",
     iconName: "CheckCircle2",
@@ -412,12 +431,78 @@ export const DEFAULT_PIPELINE_STAGES_CLIENT: PipelineStageItem[] = [
     isArchived: false,
     isDefault: true,
   },
+  // 6. Attention & Past Due Group (Crimson / Past Due / Blacklisted)
+  {
+    id: 17,
+    name: "Needs Attention",
+    slug: "needs-attention",
+    order: 17,
+    accentColor: "#F87171",
+    iconName: "AlertCircle",
+    category: "escalation",
+    pipelineGroup: "active_project",
+    logicalGroup: "attention_past_due",
+    isArchived: false,
+    isDefault: true,
+  },
+  {
+    id: 18,
+    name: "30 Days Past Due",
+    slug: "30-days-past-due",
+    order: 18,
+    accentColor: "#FB923C",
+    iconName: "Clock",
+    category: "escalation",
+    pipelineGroup: "active_project",
+    logicalGroup: "attention_past_due",
+    isArchived: false,
+    isDefault: true,
+  },
+  {
+    id: 19,
+    name: "60 Days Past Due",
+    slug: "60-days-past-due",
+    order: 19,
+    accentColor: "#F87171",
+    iconName: "AlertCircle",
+    category: "escalation",
+    pipelineGroup: "active_project",
+    logicalGroup: "attention_past_due",
+    isArchived: false,
+    isDefault: true,
+  },
+  {
+    id: 20,
+    name: "90 Days Past Due",
+    slug: "90-days-past-due",
+    order: 20,
+    accentColor: "#E11D48",
+    iconName: "AlertCircle",
+    category: "escalation",
+    pipelineGroup: "active_project",
+    logicalGroup: "attention_past_due",
+    isArchived: false,
+    isDefault: true,
+  },
+  {
+    id: 21,
+    name: "Blacklisted",
+    slug: "blacklisted",
+    order: 21,
+    accentColor: "#991B1B",
+    iconName: "Shield",
+    category: "escalation",
+    pipelineGroup: "active_project",
+    logicalGroup: "attention_past_due",
+    isArchived: false,
+    isDefault: true,
+  },
 ];
 
 // ── 13 Default Saved Views (Matching HoneyBook & Waypoint Tiers) ─────────────
 export const DEFAULT_SAVED_VIEWS_CLIENT: SavedViewItem[] = [
-  { id: 1, name: "Main View", slug: "all-clients", filtersJson: "{}", isPinned: true, isDefault: true, isPrivate: false, order: 1 },
-  { id: 2, name: "My Work", slug: "my-work", filtersJson: JSON.stringify({ isMyWork: true }), isPinned: true, isDefault: true, isPrivate: false, order: 2 },
+  { id: 1, name: "Pipeline", slug: "all-clients", filtersJson: "{}", isPinned: true, isDefault: true, isPrivate: false, order: 1 },
+  { id: 2, name: "My Caseload", slug: "my-work", filtersJson: JSON.stringify({ isMyWork: true }), isPinned: true, isDefault: true, isPrivate: false, order: 2 },
   { id: 3, name: "Leads", slug: "leads", filtersJson: JSON.stringify({ pipelineGroup: "opportunity" }), isPinned: true, isDefault: true, isPrivate: false, order: 3 },
   { id: 4, name: "Active Projects", slug: "active-projects", filtersJson: JSON.stringify({ pipelineGroup: "active_project" }), isPinned: true, isDefault: true, isPrivate: false, order: 4 },
   { id: 5, name: "Scholarship", slug: "scholarship", filtersJson: JSON.stringify({ planTier: "Scholarship" }), isPinned: true, isDefault: true, isPrivate: false, order: 5 },
@@ -839,7 +924,7 @@ export const INITIAL_DEMO_CARDS: PipelineCardItem[] = [
     planType: "Resolved",
     planTier: "Anchor",
     servicePlanLabel: "Anchor ($105)",
-    pipelineStage: "Closed",
+    pipelineStage: "Archived",
     pipelineGroup: "active_project",
     logicalGroup: "renewal_closed",
     isOpportunity: false,

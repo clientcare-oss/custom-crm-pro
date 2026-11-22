@@ -13,7 +13,8 @@ export type LogicalStageGroup =
   | "follow_up"
   | "onboarding"
   | "active_advocacy"
-  | "renewal_closed";
+  | "renewal_closed"
+  | "attention_past_due";
 
 export type CaseActionStatus =
   | "overdue"

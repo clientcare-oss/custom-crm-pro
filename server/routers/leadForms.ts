@@ -11,366 +11,366 @@ import { resolveOrCreateFamilyIdentity } from "../services/familyIdentityService
 
 export const leadFormsRouter = router({
 
-    // List all forms for the workspace (admin only)
-    list: adminProcedure.query(async () => {
-      return await db.getLeadForms();
-    }),
+  // List all forms for the workspace (admin only)
+  list: adminProcedure.query(async () => {
+    return await db.getLeadForms();
+  }),
 
-    // Get or auto-create the built-in public intake form record (admin only)
-    getPublicIntakeForm: adminProcedure.query(async ({ ctx }) => {
-      const slug = "public-intake";
-      let form = await db.getLeadFormBySlug(slug);
-      if (!form) {
-        // Auto-create the record so it can be edited
-        const result = await db.createLeadForm({
-          ownerId: ctx.user.id,
-          name: "Public Intake Form",
-          slug,
-          description: "Default public intake form for families",
-          schedulingEnabled: false,
-          schedulingType: "builtin",
-          isActive: true,
-        });
-        const id = db.getInsertId(result);
-        form = await db.getLeadFormBySlug(slug);
-      }
-      return form;
-    }),
+  // Get or auto-create the built-in public intake form record (admin only)
+  getPublicIntakeForm: adminProcedure.query(async ({ ctx }) => {
+    const slug = "public-intake";
+    let form = await db.getLeadFormBySlug(slug);
+    if (!form) {
+      // Auto-create the record so it can be edited
+      const result = await db.createLeadForm({
+        ownerId: ctx.user.id,
+        name: "Public Intake Form",
+        slug,
+        description: "Default public intake form for families",
+        schedulingEnabled: false,
+        schedulingType: "builtin",
+        isActive: true,
+      });
+      const id = db.getInsertId(result);
+      form = await db.getLeadFormBySlug(slug);
+    }
+    return form;
+  }),
 
-    // Get a single form by slug (public — for rendering the form)
-    getBySlug: publicProcedure
-      .input(z.object({ slug: z.string(), preview: z.boolean().optional() }))
-      .query(async ({ input }) => {
-        let form = await db.getLeadFormBySlug(input.slug);
-        if (!form && (input.slug === "public-intake" || input.slug === "intake" || input.slug === "public-intake-form")) {
-          const owner = await db.getUserByOpenId(ENV.ownerOpenId);
-          const defaultOwnerId = owner?.id ?? 1;
-          try {
-            await db.createLeadForm({
-              ownerId: defaultOwnerId,
-              name: "Public Intake Form",
-              slug: input.slug,
-              description: "Default public intake form for families",
-              schedulingEnabled: false,
-              schedulingType: "builtin",
-              isActive: true,
-            });
-            form = await db.getLeadFormBySlug(input.slug);
-          } catch {
-            form = await db.getLeadFormBySlug(input.slug);
-          }
-          if (!form) {
-            return {
-              id: 0,
-              ownerId: defaultOwnerId,
-              name: "Public Intake Form",
-              slug: input.slug,
-              description: "Default public intake form for families",
-              schedulingEnabled: false,
-              schedulingType: "builtin" as const,
-              schedulingUrl: null,
-              schedulingLabel: "Schedule Your Consultation",
-              sessionTypeId: null,
-              fields: null,
-              customLabels: null,
-              isActive: true,
-              confirmationHeadline: "Thank You!",
-              confirmationBody: "Your information has been received. Byron Honea or a Waypoint team member will review your details and reach out shortly.",
-              saveOurNumberMessage: "Save our number in your contacts so you don't miss our call!",
-              confirmationImageUrl: null,
-              confirmationHeadlineAlign: "center" as const,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-          }
-        }
-        if (!form) throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
-        const isPublicIntake = input.slug === "public-intake" || input.slug === "intake" || input.slug === "public-intake-form";
-        const isActive = Boolean(form.isActive) || isPublicIntake || Boolean(input.preview);
-        if (!isActive) throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
-        return {
-          ...form,
-          isActive: true,
-        };
-      }),
-
-    // Create a new form
-    create: adminProcedure
-      .input(z.object({
-        name: z.string().min(1),
-        description: z.string().optional(),
-        schedulingEnabled: z.boolean().default(false),
-        schedulingType: z.enum(["builtin", "external"]).default("builtin"),
-        schedulingUrl: z.string().optional(),
-        schedulingLabel: z.string().optional(),
-        isActive: z.boolean().default(true),
-        fields: z.array(z.string()).optional(),
-        customLabels: z.string().nullable().optional(),
-        sessionTypeId: z.number().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        // Auto-generate slug from name
-        const baseSlug = input.name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "")
-          .slice(0, 80);
-        // Ensure uniqueness by appending timestamp if needed
-        const existing = await db.getLeadFormBySlug(baseSlug);
-        const slug = existing ? `${baseSlug}-${Date.now()}` : baseSlug;
-        const result = await db.createLeadForm({
-          ownerId: ctx.user.id,
-          name: input.name,
-          slug,
-          description: input.description,
-          schedulingEnabled: input.schedulingEnabled,
-          schedulingType: input.schedulingType,
-          schedulingUrl: input.schedulingUrl,
-          schedulingLabel: input.schedulingLabel,
-          isActive: input.isActive,
-          fields: input.fields ? JSON.stringify(input.fields) : undefined,
-          customLabels: input.customLabels ?? undefined,
-          sessionTypeId: input.sessionTypeId,
-        });
-        const id = db.getInsertId(result);
-        return { id, slug };
-      }),
-
-    // Update an existing form
-    update: adminProcedure
-      .input(z.object({
-        id: z.number(),
-        name: z.string().min(1).optional(),
-        description: z.string().optional(),
-        schedulingEnabled: z.boolean().optional(),
-        schedulingType: z.enum(["builtin", "external"]).optional(),
-        schedulingUrl: z.string().optional(),
-        schedulingLabel: z.string().optional(),
-        isActive: z.boolean().optional(),
-        fields: z.array(z.string()).optional(),
-        customLabels: z.string().nullable().optional(),
-        sessionTypeId: z.number().nullable().optional(),
-        confirmationHeadline: z.string().max(200).optional(),
-        confirmationBody: z.string().optional(),
-        saveOurNumberMessage: z.string().optional(),
-        confirmationImageKey: z.string().optional().nullable(),
-        confirmationImageUrl: z.string().optional().nullable(),
-        confirmationHeadlineAlign: z.enum(["left", "center"]).optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const { id, fields, customLabels, sessionTypeId, ...rest } = input;
-        const normalizedCustomLabels = customLabels !== undefined
-          ? (!customLabels || customLabels === "{}" ? null : customLabels)
-          : undefined;
-        await db.updateLeadForm(id, ctx.user.id, {
-          ...rest,
-          ...(fields !== undefined ? { fields: JSON.stringify(fields) } : {}),
-          ...(normalizedCustomLabels !== undefined ? { customLabels: normalizedCustomLabels } : {}),
-          ...(sessionTypeId !== undefined ? { sessionTypeId } : {}),
-        });
-        return { success: true };
-      }),
-    // Delete a form
-    delete: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        await db.deleteLeadForm(input.id, ctx.user.id);
-        return { success: true };
-      }),
-
-    // Submit a custom form (public)
-    submit: publicProcedure
-      .input(z.object({
-        slug: z.string(),
-        parentFirstName: z.string().min(1),
-        parentLastName: z.string().min(1),
-        parentEmail: z.string().email(),
-        parentPhone: z.string().min(1),
-        timezone: z.string().optional(),
-        bestTimeToCall: z.string().optional(),
-        howHeardAboutUs: z.string().optional(),
-        referredBy: z.string().optional(),
-        secondParentName: z.string().optional(),
-        secondParentPhone: z.string().optional(),
-        secondParentEmail: z.string().optional(),
-        studentFirstName: z.string().min(1),
-        studentLastName: z.string().min(1),
-        dateOfBirth: z.string().optional(),
-        diagnosis: z.string().optional(),
-        schoolName: z.string().optional(),
-        gradeLevel: z.string().optional(),
-        city: z.string().optional(),
-        state: z.string().optional(),
-        zipCode: z.string().optional(),
-        countyDistrict: z.string().optional(),
-        challenges: z.string().optional(),
-        referralCode: z.string().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        // Get form and owner
-        let form = await db.getLeadFormBySlug(input.slug);
-        let ownerId: number;
-        if (!form && (input.slug === "public-intake" || input.slug === "intake" || input.slug === "public-intake-form")) {
-          const owner = await db.getUserByOpenId(ENV.ownerOpenId);
-          ownerId = owner?.id ?? 1;
-        } else if (!form || !form.isActive) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
-        } else {
-          ownerId = form.ownerId;
-        }
-        // Resolve or create unified family identity
-        const formName = form?.name || "Public Intake Form";
-        const identity = await resolveOrCreateFamilyIdentity({
-          parent: {
-            firstName: input.parentFirstName,
-            lastName: input.parentLastName,
-            email: input.parentEmail,
-            phone: input.parentPhone,
-            city: input.city,
-            state: input.state,
-            zipCode: input.zipCode,
-            bestTimeToCall: input.bestTimeToCall,
-            timezone: input.timezone,
-            howHeardAboutUs: input.howHeardAboutUs,
-            referredBy: input.referredBy,
-            secondParentName: input.secondParentName,
-            secondParentPhone: input.secondParentPhone,
-            secondParentEmail: input.secondParentEmail,
-          },
-          student: {
-            firstName: input.studentFirstName,
-            lastName: input.studentLastName,
-            dateOfBirth: input.dateOfBirth,
-            diagnosis: input.diagnosis,
-            schoolName: input.schoolName,
-            gradeLevel: input.gradeLevel,
-            challenges: input.challenges,
-            city: input.city,
-            state: input.state,
-            zipCode: input.zipCode,
-            countyDistrict: input.countyDistrict,
-          },
-          leadSource: input.referralCode ? `${formName} (Ref: ${input.referralCode})` : formName,
-          referralCode: input.referralCode,
-          ownerId,
-        });
-
-        const parentContactId = identity.parentContactId;
-        const studentContactId = identity.studentContactId;
-        const leadId = identity.leadId;
-        const caseId = identity.caseId;
-
-        // Record referral relationship if referral code or referredBy was provided
-        if (input.referralCode || input.referredBy) {
-          try {
-            await db.createReferralRecord({
-              referralCode: input.referralCode,
-              referredLeadId: leadId,
-              referredClientId: parentContactId,
-              notes: `Lead form submission via "${formName}". ${input.referredBy ? `Referred By: ${input.referredBy}` : ''}`,
-            });
-          } catch (refErr) {
-            console.error("Failed to attach referral to lead:", refErr);
-          }
-        }
-
-        // Increment submission count
-        await db.incrementLeadFormSubmissionCount(input.slug);
-
-        // Internal-only Do Not Serve evaluation (never exposed in public form response)
-        let staffDnsNotice = "";
-        let holdAutomatedLeadSend = false;
+  // Get a single form by slug (public — for rendering the form)
+  getBySlug: publicProcedure
+    .input(z.object({ slug: z.string(), preview: z.boolean().optional() }))
+    .query(async ({ input }) => {
+      let form = await db.getLeadFormBySlug(input.slug);
+      if (!form && (input.slug === "public-intake" || input.slug === "intake" || input.slug === "public-intake-form")) {
+        const owner = await db.getUserByOpenId(ENV.ownerOpenId);
+        const defaultOwnerId = owner?.id ?? 1;
         try {
-          const { checkAndHoldAutomatedSend } = await import("../services/doNotServeService");
-          const dnsHold = await checkAndHoldAutomatedSend({
-            ownerId: 1,
-            channel: "public_lead_form",
-            targetEntityType: "lead",
-            targetEntityId: String(leadId || parentContactId || caseId),
-            contactIds: [parentContactId, studentContactId],
-            phones: [input.parentPhone, input.secondParentPhone],
-            emails: [input.parentEmail, input.secondParentEmail],
-            names: [
-              `${input.parentFirstName} ${input.parentLastName}`.trim(),
-              input.secondParentName,
-              `${input.studentFirstName} ${input.studentLastName}`.trim(),
-            ],
-            description: `Public lead form "${form?.name || formName}" submitted — automated welcome/follow-up held pending Do Not Serve review.`,
+          await db.createLeadForm({
+            ownerId: defaultOwnerId,
+            name: "Public Intake Form",
+            slug: input.slug,
+            description: "Default public intake form for families",
+            schedulingEnabled: false,
+            schedulingType: "builtin",
+            isActive: true,
           });
-          holdAutomatedLeadSend = dnsHold.hold;
-          if (dnsHold.evaluation?.hasActiveMatch) {
-            staffDnsNotice =
-              dnsHold.evaluation.highestTier === "hard_match"
-                ? "\n\n[Staff Alert: Do Not Serve match detected — automated sends held pending review]"
-                : "\n\n[Staff Alert: Possible restricted name match — verify contact details before proceeding]";
-          }
-        } catch {}
-
-        // Trigger lead_form_submitted automation unless held by active Do Not Serve hard match
-        if (studentContactId && !holdAutomatedLeadSend) {
-          try {
-            const { triggerAutomationFlow } = await import("../db/automations");
-            await triggerAutomationFlow("lead_form_submitted", studentContactId, false, {
-              eventKey: `lead_form_submit:${leadId || caseId || studentContactId}:${input.slug}`,
-            });
-          } catch (e) {
-            console.error("Failed to run lead form automation flow:", e);
-          }
-        }
-
-        // Get worksheet if assigned to this form
-        let worksheetUrl: string | null = null;
-        if (form?.worksheetId) {
-          const worksheet = await db.getDiscoveryWorksheet(ownerId);
-          if (worksheet?.fileKey) {
-            const { storageGet } = await import("../storage");
-            const presigned = await storageGet(worksheet.fileKey);
-            worksheetUrl = presigned.url;
-          }
-        }
-
-        // Notify
-        try {
-          await notifyOwner({
-            title: `New Lead via "${form?.name || formName}": ${input.parentFirstName} ${input.parentLastName}`,
-            content: `Form: ${form?.name || formName}\nParent: ${input.parentFirstName} ${input.parentLastName} (${input.parentEmail})\nStudent: ${input.studentFirstName} ${input.studentLastName}\nCase ID: ${caseId}${staffDnsNotice}`,
-          });
+          form = await db.getLeadFormBySlug(input.slug);
         } catch {
-          // Graceful fallback when external notification webhook URL is not configured
+          form = await db.getLeadFormBySlug(input.slug);
         }
-        return { success: true, caseId, parentContactId, studentContactId, worksheetUrl };
-      }),
-    // Upload a confirmation page image (QR code, logo, etc.)
-    uploadConfirmationImage: adminProcedure
-      .input(z.object({
-        formId: z.number(),
-        fileName: z.string().min(1),
-        fileData: z.string().min(1), // base64
-        mimeType: z.string().default("image/png"),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const fileBuffer = Buffer.from(input.fileData, "base64");
-        const ext = input.fileName.split(".").pop() ?? "png";
-        const fileKey = `lead-forms/${ctx.user.id}/confirmation-${input.formId}-${Date.now()}.${ext}`;
-        const { key, url } = await storagePut(fileKey, fileBuffer, input.mimeType);
-        await db.updateLeadForm(input.formId, ctx.user.id, {
-          confirmationImageKey: key,
-          confirmationImageUrl: url,
-        });
-        return { success: true, key, url };
-      }),
+        if (!form) {
+          return {
+            id: 0,
+            ownerId: defaultOwnerId,
+            name: "Public Intake Form",
+            slug: input.slug,
+            description: "Default public intake form for families",
+            schedulingEnabled: false,
+            schedulingType: "builtin" as const,
+            schedulingUrl: null,
+            schedulingLabel: "Schedule Your Consultation",
+            sessionTypeId: null,
+            fields: null,
+            customLabels: null,
+            isActive: true,
+            confirmationHeadline: "Thank You!",
+            confirmationBody: "Your information has been received. Byron Honea or a Waypoint team member will review your details and reach out shortly.",
+            saveOurNumberMessage: "Save our number in your contacts so you don't miss our call!",
+            confirmationImageUrl: null,
+            confirmationHeadlineAlign: "center" as const,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+        }
+      }
+      if (!form) throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
+      const isPublicIntake = input.slug === "public-intake" || input.slug === "intake" || input.slug === "public-intake-form";
+      const isActive = Boolean(form.isActive) || isPublicIntake || Boolean(input.preview);
+      if (!isActive) throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
+      return {
+        ...form,
+        isActive: true,
+      };
+    }),
 
-    // Assign a worksheet to a lead form
-    assignWorksheet: adminProcedure
-      .input(z.object({
-        formId: z.number(),
-        worksheetId: z.number().nullable(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        await db.updateLeadForm(input.formId, ctx.user.id, {
-          worksheetId: input.worksheetId,
+  // Create a new form
+  create: adminProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      description: z.string().optional(),
+      schedulingEnabled: z.boolean().default(false),
+      schedulingType: z.enum(["builtin", "external"]).default("builtin"),
+      schedulingUrl: z.string().optional(),
+      schedulingLabel: z.string().optional(),
+      isActive: z.boolean().default(true),
+      fields: z.array(z.string()).optional(),
+      customLabels: z.string().nullable().optional(),
+      sessionTypeId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Auto-generate slug from name
+      const baseSlug = input.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 80);
+      // Ensure uniqueness by appending timestamp if needed
+      const existing = await db.getLeadFormBySlug(baseSlug);
+      const slug = existing ? `${baseSlug}-${Date.now()}` : baseSlug;
+      const result = await db.createLeadForm({
+        ownerId: ctx.user.id,
+        name: input.name,
+        slug,
+        description: input.description,
+        schedulingEnabled: input.schedulingEnabled,
+        schedulingType: input.schedulingType,
+        schedulingUrl: input.schedulingUrl,
+        schedulingLabel: input.schedulingLabel,
+        isActive: input.isActive,
+        fields: input.fields ? JSON.stringify(input.fields) : undefined,
+        customLabels: input.customLabels ?? undefined,
+        sessionTypeId: input.sessionTypeId,
+      });
+      const id = db.getInsertId(result);
+      return { id, slug };
+    }),
+
+  // Update an existing form
+  update: adminProcedure
+    .input(z.object({
+      id: z.number(),
+      name: z.string().min(1).optional(),
+      description: z.string().optional(),
+      schedulingEnabled: z.boolean().optional(),
+      schedulingType: z.enum(["builtin", "external"]).optional(),
+      schedulingUrl: z.string().optional(),
+      schedulingLabel: z.string().optional(),
+      isActive: z.boolean().optional(),
+      fields: z.array(z.string()).optional(),
+      customLabels: z.string().nullable().optional(),
+      sessionTypeId: z.number().nullable().optional(),
+      confirmationHeadline: z.string().max(200).optional(),
+      confirmationBody: z.string().optional(),
+      saveOurNumberMessage: z.string().optional(),
+      confirmationImageKey: z.string().optional().nullable(),
+      confirmationImageUrl: z.string().optional().nullable(),
+      confirmationHeadlineAlign: z.enum(["left", "center"]).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, fields, customLabels, sessionTypeId, ...rest } = input;
+      const normalizedCustomLabels = customLabels !== undefined
+        ? (!customLabels || customLabels === "{}" ? null : customLabels)
+        : undefined;
+      await db.updateLeadForm(id, ctx.user.id, {
+        ...rest,
+        ...(fields !== undefined ? { fields: JSON.stringify(fields) } : {}),
+        ...(normalizedCustomLabels !== undefined ? { customLabels: normalizedCustomLabels } : {}),
+        ...(sessionTypeId !== undefined ? { sessionTypeId } : {}),
+      });
+      return { success: true };
+    }),
+  // Delete a form
+  delete: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await db.deleteLeadForm(input.id, ctx.user.id);
+      return { success: true };
+    }),
+
+  // Submit a custom form (public)
+  submit: publicProcedure
+    .input(z.object({
+      slug: z.string(),
+      parentFirstName: z.string().min(1),
+      parentLastName: z.string().min(1),
+      parentEmail: z.string().email(),
+      parentPhone: z.string().min(1),
+      timezone: z.string().optional(),
+      bestTimeToCall: z.string().optional(),
+      howHeardAboutUs: z.string().optional(),
+      referredBy: z.string().optional(),
+      secondParentName: z.string().optional(),
+      secondParentPhone: z.string().optional(),
+      secondParentEmail: z.string().optional(),
+      studentFirstName: z.string().min(1),
+      studentLastName: z.string().min(1),
+      dateOfBirth: z.string().optional(),
+      diagnosis: z.string().optional(),
+      schoolName: z.string().optional(),
+      gradeLevel: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      zipCode: z.string().optional(),
+      countyDistrict: z.string().optional(),
+      challenges: z.string().optional(),
+      referralCode: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      // Get form and owner
+      let form = await db.getLeadFormBySlug(input.slug);
+      let ownerId: number;
+      if (!form && (input.slug === "public-intake" || input.slug === "intake" || input.slug === "public-intake-form")) {
+        const owner = await db.getUserByOpenId(ENV.ownerOpenId);
+        ownerId = owner?.id ?? 1;
+      } else if (!form || !form.isActive) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Form not found" });
+      } else {
+        ownerId = form.ownerId;
+      }
+      // Resolve or create unified family identity
+      const formName = form?.name || "Public Intake Form";
+      const identity = await resolveOrCreateFamilyIdentity({
+        parent: {
+          firstName: input.parentFirstName,
+          lastName: input.parentLastName,
+          email: input.parentEmail,
+          phone: input.parentPhone,
+          city: input.city,
+          state: input.state,
+          zipCode: input.zipCode,
+          bestTimeToCall: input.bestTimeToCall,
+          timezone: input.timezone,
+          howHeardAboutUs: input.howHeardAboutUs,
+          referredBy: input.referredBy,
+          secondParentName: input.secondParentName,
+          secondParentPhone: input.secondParentPhone,
+          secondParentEmail: input.secondParentEmail,
+        },
+        student: {
+          firstName: input.studentFirstName,
+          lastName: input.studentLastName,
+          dateOfBirth: input.dateOfBirth,
+          diagnosis: input.diagnosis,
+          schoolName: input.schoolName,
+          gradeLevel: input.gradeLevel,
+          challenges: input.challenges,
+          city: input.city,
+          state: input.state,
+          zipCode: input.zipCode,
+          countyDistrict: input.countyDistrict,
+        },
+        leadSource: input.referralCode ? `${formName} (Ref: ${input.referralCode})` : formName,
+        referralCode: input.referralCode,
+        ownerId,
+      });
+
+      const parentContactId = identity.parentContactId;
+      const studentContactId = identity.studentContactId;
+      const leadId = identity.leadId;
+      const caseId = identity.caseId;
+
+      // Record referral relationship if referral code or referredBy was provided
+      if (input.referralCode || input.referredBy) {
+        try {
+          await db.createReferralRecord({
+            referralCode: input.referralCode,
+            referredLeadId: leadId,
+            referredClientId: parentContactId,
+            notes: `Lead form submission via "${formName}". ${input.referredBy ? `Referred By: ${input.referredBy}` : ''}`,
+          });
+        } catch (refErr) {
+          console.error("Failed to attach referral to lead:", refErr);
+        }
+      }
+
+      // Increment submission count
+      await db.incrementLeadFormSubmissionCount(input.slug);
+
+      // Internal-only Do Not Serve evaluation (never exposed in public form response)
+      let staffDnsNotice = "";
+      let holdAutomatedLeadSend = false;
+      try {
+        const { checkAndHoldAutomatedSend } = await import("../services/doNotServeService");
+        const dnsHold = await checkAndHoldAutomatedSend({
+          ownerId: 1,
+          channel: "public_lead_form",
+          targetEntityType: "lead",
+          targetEntityId: String(leadId || parentContactId || caseId),
+          contactIds: [parentContactId, studentContactId],
+          phones: [input.parentPhone, input.secondParentPhone],
+          emails: [input.parentEmail, input.secondParentEmail],
+          names: [
+            `${input.parentFirstName} ${input.parentLastName}`.trim(),
+            input.secondParentName,
+            `${input.studentFirstName} ${input.studentLastName}`.trim(),
+          ],
+          description: `Public lead form "${form?.name || formName}" submitted — automated welcome/follow-up held pending Do Not Serve review.`,
         });
-        return { success: true };
-      }),
-  
+        holdAutomatedLeadSend = dnsHold.hold;
+        if (dnsHold.evaluation?.hasActiveMatch) {
+          staffDnsNotice =
+            dnsHold.evaluation.highestTier === "hard_match"
+              ? "\n\n[Staff Alert: Do Not Serve match detected — automated sends held pending review]"
+              : "\n\n[Staff Alert: Possible restricted name match — verify contact details before proceeding]";
+        }
+      } catch { }
+
+      // Trigger lead_form_submitted automation unless held by active Do Not Serve hard match
+      if (studentContactId && !holdAutomatedLeadSend) {
+        try {
+          const { triggerAutomationFlow } = await import("../db/automations");
+          await triggerAutomationFlow("lead_form_submitted", studentContactId, false, {
+            eventKey: `lead_form_submit:${leadId || caseId || studentContactId}:${input.slug}`,
+          });
+        } catch (e) {
+          console.error("Failed to run lead form automation flow:", e);
+        }
+      }
+
+      // Get worksheet if assigned to this form
+      let worksheetUrl: string | null = null;
+      if (form?.worksheetId) {
+        const worksheet = await db.getDiscoveryWorksheet(ownerId);
+        if (worksheet?.fileKey) {
+          const { storageGet } = await import("../storage");
+          const presigned = await storageGet(worksheet.fileKey);
+          worksheetUrl = presigned.url;
+        }
+      }
+
+      // Notify
+      try {
+        await notifyOwner({
+          title: `New Lead via "${form?.name || formName}": ${input.parentFirstName} ${input.parentLastName}`,
+          content: `Form: ${form?.name || formName}\nParent: ${input.parentFirstName} ${input.parentLastName} (${input.parentEmail})\nStudent: ${input.studentFirstName} ${input.studentLastName}\nCase ID: ${caseId}${staffDnsNotice}`,
+        });
+      } catch {
+        // Graceful fallback when external notification webhook URL is not configured
+      }
+      return { success: true, caseId, parentContactId, studentContactId, worksheetUrl };
+    }),
+  // Upload a confirmation page image (QR code, logo, etc.)
+  uploadConfirmationImage: adminProcedure
+    .input(z.object({
+      formId: z.number(),
+      fileName: z.string().min(1),
+      fileData: z.string().min(1), // base64
+      mimeType: z.string().default("image/png"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const fileBuffer = Buffer.from(input.fileData, "base64");
+      const ext = input.fileName.split(".").pop() ?? "png";
+      const fileKey = `lead-forms/${ctx.user.id}/confirmation-${input.formId}-${Date.now()}.${ext}`;
+      const { key, url } = await storagePut(fileKey, fileBuffer, input.mimeType);
+      await db.updateLeadForm(input.formId, ctx.user.id, {
+        confirmationImageKey: key,
+        confirmationImageUrl: url,
+      });
+      return { success: true, key, url };
+    }),
+
+  // Assign a worksheet to a lead form
+  assignWorksheet: adminProcedure
+    .input(z.object({
+      formId: z.number(),
+      worksheetId: z.number().nullable(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await db.updateLeadForm(input.formId, ctx.user.id, {
+        worksheetId: input.worksheetId,
+      });
+      return { success: true };
+    }),
+
 });

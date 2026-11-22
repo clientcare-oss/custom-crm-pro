@@ -300,7 +300,7 @@ export const agreementsRouter = router({
               .where(and(eq(agreements.id, input.id), eq(agreements.ownerId, ctx.user.id)))
               .limit(1);
             agreement = a;
-          } catch (e) {}
+          } catch (e) { }
         }
       }
 
@@ -327,7 +327,7 @@ export const agreementsRouter = router({
             if (t) template = t;
           }
         }
-      } catch (e) {}
+      } catch (e) { }
 
       return {
         agreement,
@@ -376,7 +376,7 @@ export const agreementsRouter = router({
             .where(eq(agreementTemplates.id, input.templateId))
             .limit(1);
           template = t || null;
-        } catch (e) {}
+        } catch (e) { }
       }
       if (!template) throw new TRPCError({ code: "NOT_FOUND", message: "Agreement template not found" });
 
@@ -386,7 +386,7 @@ export const agreementsRouter = router({
         try {
           const [c] = await db.select().from(contacts).where(eq(contacts.id, input.clientId)).limit(1);
           client = c || null;
-        } catch (e) {}
+        } catch (e) { }
       }
       if (!client) {
         client = {
@@ -404,7 +404,7 @@ export const agreementsRouter = router({
         try {
           const [s] = await db.select().from(contacts).where(eq(contacts.id, input.studentContactId)).limit(1);
           student = s || null;
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Fetch service if provided
@@ -412,7 +412,7 @@ export const agreementsRouter = router({
       if (input.serviceId) {
         try {
           service = await getServiceById(input.serviceId);
-        } catch (e) {}
+        } catch (e) { }
       }
       let plan: any = null;
 
@@ -422,7 +422,7 @@ export const agreementsRouter = router({
         try {
           const [ou] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
           ownerUser = ou || null;
-        } catch (e) {}
+        } catch (e) { }
       }
       if (!ownerUser) {
         ownerUser = { id: ctx.user.id, name: ctx.user.name || "Advocacy Services", email: ctx.user.email };
@@ -538,7 +538,7 @@ export const agreementsRouter = router({
             ownerName: ctx.user.name || "Staff Advocate",
             categoryColor: "blue",
           });
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Trigger automation event
@@ -547,7 +547,7 @@ export const agreementsRouter = router({
         if (input.sendImmediately) {
           await triggerAutomationFlow("agreement_sent", client.id);
         }
-      } catch (err) {}
+      } catch (err) { }
 
       return { success: true, id: agreementId };
     }),
@@ -573,7 +573,7 @@ export const agreementsRouter = router({
               .where(and(eq(agreements.id, input.id), eq(agreements.ownerId, ctx.user.id)))
               .limit(1);
             agreement = a;
-          } catch (e) {}
+          } catch (e) { }
         }
       }
 
@@ -606,7 +606,7 @@ export const agreementsRouter = router({
             })
             .where(eq(agreements.id, input.id));
         }
-      } catch (e) {}
+      } catch (e) { }
 
       return { success: true };
     }),
@@ -625,7 +625,7 @@ export const agreementsRouter = router({
               .where(and(eq(agreements.id, input.id), eq(agreements.ownerId, ctx.user.id)))
               .limit(1);
             agreement = a;
-          } catch (e) {}
+          } catch (e) { }
         }
       }
 
@@ -662,7 +662,7 @@ export const agreementsRouter = router({
             })
             .where(eq(agreements.id, input.id));
         }
-      } catch (e) {}
+      } catch (e) { }
 
       // Record Activity
       if (agreement.studentContactId) {
@@ -675,13 +675,13 @@ export const agreementsRouter = router({
             ownerName: ctx.user.name || "Staff Advocate",
             categoryColor: "purple",
           });
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Automation trigger
       try {
         await triggerAutomationFlow("agreement_sent", agreement.clientId);
-      } catch (e) {}
+      } catch (e) { }
 
       return { success: true };
     }),
@@ -700,7 +700,7 @@ export const agreementsRouter = router({
               .where(and(eq(agreements.id, input.id), eq(agreements.ownerId, ctx.user.id)))
               .limit(1);
             agreement = a;
-          } catch (e) {}
+          } catch (e) { }
         }
       }
 
@@ -726,7 +726,7 @@ export const agreementsRouter = router({
             })
             .where(eq(agreements.id, input.id));
         }
-      } catch (e) {}
+      } catch (e) { }
 
       if (agreement.studentContactId) {
         try {
@@ -738,12 +738,12 @@ export const agreementsRouter = router({
             ownerName: ctx.user.name || "Staff Advocate",
             categoryColor: "yellow",
           });
-        } catch (e) {}
+        } catch (e) { }
       }
 
       try {
         await triggerAutomationFlow("agreement_voided", agreement.clientId);
-      } catch (e) {}
+      } catch (e) { }
 
       return { success: true };
     }),
@@ -780,7 +780,7 @@ export const agreementsRouter = router({
         .where(eq(contacts.portalUserId, ctx.user.id))
         .limit(1);
       if (linkedContact) clientContactId = linkedContact.id;
-    } catch (e) {}
+    } catch (e) { }
 
     const list = await db
       .select({
@@ -811,7 +811,7 @@ export const agreementsRouter = router({
           try {
             const [a] = await db.select().from(agreements).where(eq(agreements.id, input.id)).limit(1);
             agreement = a;
-          } catch (e) {}
+          } catch (e) { }
         }
       }
 
@@ -824,7 +824,7 @@ export const agreementsRouter = router({
           const [c] = await db.select().from(contacts).where(eq(contacts.portalUserId, ctx.user.id)).limit(1);
           linkedContact = c;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       const isOwnerAdmin = ctx.user.role === "admin" && agreement.ownerId === ctx.user.id;
       const isClient = agreement.clientId === ctx.user.id || (linkedContact && agreement.clientId === linkedContact.id);
@@ -853,7 +853,7 @@ export const agreementsRouter = router({
               })
               .where(eq(agreements.id, agreement.id));
           }
-        } catch (e) {}
+        } catch (e) { }
 
         if (agreement.studentContactId) {
           try {
@@ -865,12 +865,12 @@ export const agreementsRouter = router({
               ownerName: "Client",
               categoryColor: "blue",
             });
-          } catch (e) {}
+          } catch (e) { }
         }
 
         try {
           await triggerAutomationFlow("agreement_viewed", agreement.clientId);
-        } catch (e) {}
+        } catch (e) { }
       }
 
       let template: any = inMemoryTemplates.get(agreement.templateId) || null;
@@ -886,7 +886,7 @@ export const agreementsRouter = router({
           const dbSigners = await db.select().from(agreementSigners).where(eq(agreementSigners.agreementId, agreement.id));
           if (dbSigners && dbSigners.length > 0) signers = dbSigners;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       return {
         agreement,
@@ -923,7 +923,7 @@ export const agreementsRouter = router({
           try {
             const [a] = await db.select().from(agreements).where(eq(agreements.id, input.id)).limit(1);
             agreement = a;
-          } catch (e) {}
+          } catch (e) { }
         }
       }
 
@@ -936,7 +936,7 @@ export const agreementsRouter = router({
           const [c] = await db.select().from(contacts).where(eq(contacts.portalUserId, ctx.user.id)).limit(1);
           linkedContact = c;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       const isOwnerAdmin = ctx.user.role === "admin" && agreement.ownerId === ctx.user.id;
       const isClient = agreement.clientId === ctx.user.id || (linkedContact && agreement.clientId === linkedContact.id);
@@ -973,7 +973,7 @@ export const agreementsRouter = router({
             const [t] = await db.select().from(agreementTemplates).where(eq(agreementTemplates.id, agreement.templateId)).limit(1);
             template = t || null;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (template?.initialsRequired && (!input.initialsData || Object.keys(input.initialsData).length === 0)) {
@@ -995,7 +995,7 @@ export const agreementsRouter = router({
       try {
         const putRes = await storagePut(sigKey, sigBuffer, "image/png");
         sigUrl = putRes.url;
-      } catch (e) {}
+      } catch (e) { }
 
       // 2. Update signers in memory & db
       let signersList = inMemorySigners.get(agreement.id) || [];
@@ -1018,15 +1018,15 @@ export const agreementsRouter = router({
         signersList = signersList.map((s) =>
           s.role === "client"
             ? {
-                ...s,
-                status: "signed",
-                name: input.signerName,
-                signedAt: now,
-                signatureUrl: sigUrl,
-                signatureKey: sigKey,
-                ipAddress,
-                userAgent,
-              }
+              ...s,
+              status: "signed",
+              name: input.signerName,
+              signedAt: now,
+              signatureUrl: sigUrl,
+              signatureKey: sigKey,
+              ipAddress,
+              userAgent,
+            }
             : s
         );
       }
@@ -1102,7 +1102,7 @@ export const agreementsRouter = router({
             })
             .where(eq(agreements.id, agreement.id));
         }
-      } catch (e) {}
+      } catch (e) { }
 
       // Update family enrollment offer if linked to this agreement
       try {
@@ -1136,7 +1136,7 @@ export const agreementsRouter = router({
               },
             ],
           });
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Fire Automations
@@ -1154,7 +1154,7 @@ export const agreementsRouter = router({
         await triggerAutomationFlow("all_signatures_collected", targetContact, false, {
           eventKey: `agreement_all_sig:${agreement.id}`,
         });
-      } catch (e) {}
+      } catch (e) { }
 
       return {
         success: true,
