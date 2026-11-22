@@ -15,10 +15,10 @@ export function Tool3DAppIcon({
 }) {
   const dims =
     size === "lg"
-      ? "w-[96px] h-[96px] sm:w-[106px] sm:h-[106px]"
+      ? "w-[50px] h-[50px] sm:w-[54px] sm:h-[54px]"
       : size === "sm"
       ? "w-7 h-7"
-      : "w-[86px] h-[86px] sm:w-[96px] sm:h-[96px]";
+      : "w-[44px] h-[44px] sm:w-[48px] sm:h-[48px]";
 
   // 1. First Mate — Glossy Violet/Purple Square with Two 3D Speech Bubbles & "?"
   if (id === "first-mate") {

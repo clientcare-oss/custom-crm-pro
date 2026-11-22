@@ -220,6 +220,7 @@ export default function Settings() {
               onPhoneUpdated={handlePhoneUpdated}
               onOpenReceipts={() => handleSectionChange("receipts")}
               onOpenPortal={() => handleSectionChange("portal")}
+              onSelectSection={handleSectionChange}
             />
           </div>
         )}

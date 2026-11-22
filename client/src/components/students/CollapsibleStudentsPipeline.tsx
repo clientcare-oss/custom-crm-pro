@@ -23,6 +23,7 @@ import { StageOverviewGrid } from "@/components/pipeline/StageOverviewGrid";
 import { KanbanBoard } from "@/components/pipeline/KanbanBoard";
 import { PipelineCaseDrawer } from "@/components/pipeline/PipelineCaseDrawer";
 import { CustomizePipelineModal } from "@/components/pipeline/CustomizePipelineModal";
+import { PipelineGroupModificationsModal } from "@/components/pipeline/PipelineGroupModificationsModal";
 import { NewViewModal } from "@/components/pipeline/NewViewModal";
 import { AddStageModal } from "@/components/pipeline/AddStageModal";
 import {
@@ -30,6 +31,8 @@ import {
   DEFAULT_SAVED_VIEWS_CLIENT,
   INITIAL_DEMO_CARDS,
   ADVOCATE_ROSTER,
+  loadPipelineGroups,
+  savePipelineGroups,
   resolveLogicalStageGroup,
   resolveCaseActionStatus,
 } from "@/components/pipeline/pipelineDefaults";
@@ -40,6 +43,7 @@ import type {
   PipelineFilters,
   PipelineGroupType,
   LogicalStageGroup,
+  PipelineGroupDefinition,
   PipelineSortField,
   PipelineSortDirection,
 } from "@/components/pipeline/types";
@@ -170,6 +174,13 @@ export function CollapsibleStudentsPipeline({
 
   // Modals & Inline Customize Order Mode
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  const [showGroupModificationsModal, setShowGroupModificationsModal] =
+    useState(false);
+  const [focusedGroupForModal, setFocusedGroupForModal] =
+    useState<LogicalStageGroup | null>(null);
+  const [pipelineGroups, setPipelineGroups] = useState<
+    PipelineGroupDefinition[]
+  >(() => loadPipelineGroups());
   const [isCustomizingOrder, setIsCustomizingOrder] = useState(false);
   const [showAddStageModal, setShowAddStageModal] = useState(false);
   const [pendingInsertStageOrder, setPendingInsertStageOrder] = useState<number | null>(null);
@@ -691,6 +702,103 @@ export function CollapsibleStudentsPipeline({
     );
   };
 
+  const handleSaveGroupModifications = ({
+    groups: updatedGroups,
+    stageGroupAssignments,
+    newStagesToCreate,
+    reorderStagesByGroupOrder,
+  }: {
+    groups: PipelineGroupDefinition[];
+    stageGroupAssignments: Record<number, LogicalStageGroup>;
+    newStagesToCreate?: {
+      name: string;
+      accentColor: string;
+      logicalGroup: LogicalStageGroup;
+    }[];
+    reorderStagesByGroupOrder?: boolean;
+  }) => {
+    setPipelineGroups(updatedGroups);
+    savePipelineGroups(updatedGroups);
+
+    setStagesState((prev) => {
+      const nextOverrides = { ...stageGroupOverrides };
+      let updatedList = prev.map((stage) => {
+        const assignedGroup = stageGroupAssignments[stage.id];
+        if (!assignedGroup) return stage;
+        nextOverrides[stage.name.toLowerCase()] = assignedGroup;
+        return {
+          ...stage,
+          logicalGroup: assignedGroup,
+        };
+      });
+
+      if (newStagesToCreate && newStagesToCreate.length > 0) {
+        newStagesToCreate.forEach((ns, idx) => {
+          const createdStage: PipelineStageItem = {
+            id: Date.now() + idx,
+            name: ns.name,
+            slug: ns.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            order: updatedList.length + 1,
+            accentColor: ns.accentColor || "#C5A059",
+            iconName: "Compass",
+            category: "active",
+            pipelineGroup: "active_project",
+            logicalGroup: ns.logicalGroup,
+            isArchived: false,
+            isDefault: false,
+          };
+          nextOverrides[createdStage.name.toLowerCase()] = ns.logicalGroup;
+          updatedList.push(createdStage);
+          upsertStageMutation.mutate({
+            name: createdStage.name,
+            accentColor: createdStage.accentColor,
+            category: createdStage.category,
+            pipelineGroup: createdStage.pipelineGroup,
+            iconName: createdStage.iconName,
+            order: createdStage.order,
+          });
+        });
+      }
+
+      if (reorderStagesByGroupOrder) {
+        const groupRank = new Map<string, number>();
+        updatedGroups.forEach((g, i) => groupRank.set(g.key, i + 1));
+        groupRank.set("ungrouped", 999);
+
+        updatedList = [...updatedList]
+          .sort((a, b) => {
+            const ga =
+              groupRank.get(
+                resolveLogicalStageGroup(a.name, a.category, a.logicalGroup)
+              ) ?? 998;
+            const gb =
+              groupRank.get(
+                resolveLogicalStageGroup(b.name, b.category, b.logicalGroup)
+              ) ?? 998;
+            if (ga !== gb) return ga - gb;
+            return a.order - b.order;
+          })
+          .map((s, idx) => ({ ...s, order: idx + 1 }));
+
+        reorderStagesMutation.mutate(
+          updatedList.map((s) => ({ id: s.id, order: s.order }))
+        );
+      }
+
+      setStageGroupOverrides(nextOverrides);
+      try {
+        localStorage.setItem(
+          "waypoint_pipeline_stage_groups",
+          JSON.stringify(nextOverrides)
+        );
+      } catch {}
+
+      return updatedList;
+    });
+
+    toast.success("Pipeline group modifications saved");
+  };
+
   const handleAddCustomStage = (stageData: Partial<PipelineStageItem>) => {
     if (!stageData.name) return;
     const targetOrder = pendingInsertStageOrder ?? stagesState.length + 1;
@@ -1008,6 +1116,7 @@ export function CollapsibleStudentsPipeline({
               <StageOverviewGrid
                 stages={stagesState}
                 cards={filteredCards}
+                groups={pipelineGroups}
                 selectedStageName={selectedStageFilter}
                 onSelectStage={setSelectedStageFilter}
                 onDropCardOnStage={handleMoveCard}
@@ -1015,6 +1124,10 @@ export function CollapsibleStudentsPipeline({
                 onToggleCustomizingOrder={() =>
                   setIsCustomizingOrder((prev) => !prev)
                 }
+                onOpenGroupModifications={(focusedGroupKey) => {
+                  setFocusedGroupForModal(focusedGroupKey ?? null);
+                  setShowGroupModificationsModal(true);
+                }}
                 onReorderStages={handleReorderStages}
                 onAssignStageGroup={handleAssignStageGroup}
                 onInsertStageAtOrder={(insertOrder, inlineStageData) => {
@@ -1121,7 +1234,21 @@ export function CollapsibleStudentsPipeline({
         open={showCustomizeModal}
         onOpenChange={setShowCustomizeModal}
         stages={stagesState}
+        groups={pipelineGroups}
         onSaveStages={handleSaveStages}
+        onOpenGroupModifications={() => {
+          setFocusedGroupForModal(null);
+          setShowGroupModificationsModal(true);
+        }}
+      />
+
+      <PipelineGroupModificationsModal
+        open={showGroupModificationsModal}
+        onOpenChange={setShowGroupModificationsModal}
+        groups={pipelineGroups}
+        stages={stagesState}
+        initialFocusedGroupKey={focusedGroupForModal}
+        onSaveGroupModifications={handleSaveGroupModifications}
       />
 
       <NewViewModal

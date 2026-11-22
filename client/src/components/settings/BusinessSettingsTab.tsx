@@ -27,6 +27,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import VoiceInput from "@/components/VoiceInput";
 import PageIdBadge from "@/components/PageIdBadge";
+import { FirstTimeCrmSetupGuideModal } from "./FirstTimeCrmSetupGuideModal";
+import type { SettingsSectionKey } from "./SettingsCommandBoxes";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -34,12 +36,14 @@ export interface BusinessSettingsTabProps {
   onPhoneUpdated?: (phone: string) => void;
   onOpenReceipts?: () => void;
   onOpenPortal?: () => void;
+  onSelectSection?: (section: SettingsSectionKey) => void;
 }
 
 export function BusinessSettingsTab({
   onPhoneUpdated,
   onOpenReceipts,
   onOpenPortal,
+  onSelectSection,
 }: BusinessSettingsTabProps) {
   const utils = trpc.useUtils();
 
@@ -69,6 +73,7 @@ export function BusinessSettingsTab({
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [showFirstTimeSetupModal, setShowFirstTimeSetupModal] = useState(false);
 
   // Sync initial query state
   useEffect(() => {
@@ -202,7 +207,32 @@ export function BusinessSettingsTab({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start md:self-center shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 self-start md:self-center shrink-0">
+            {/* First-Time CRM Setup & Launch Guide Button (Brushed Brass Hardware Plaque Style) */}
+            <button
+              type="button"
+              data-testid="first-time-crm-setup-btn"
+              onClick={() => setShowFirstTimeSetupModal(true)}
+              className="group relative inline-flex items-center gap-2 rounded-xl px-4 h-10 text-xs font-serif font-extrabold text-[#1A1003] shadow-[0_6px_16px_rgba(0,0,0,0.85),inset_0_1.5px_0_rgba(255,250,230,0.88),inset_0_-1.5px_1px_rgba(68,42,7,0.85)] border border-[#3A2406] hover:brightness-105 active:translate-y-[1px] transition-all cursor-pointer"
+              style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                backgroundImage: [
+                  "linear-gradient(180deg, #FFF7DC 0%, #F5DB9A 6%, rgba(255,255,255,0) 14%, rgba(0,0,0,0) 84%, #6D4B14 94%, #2F1D04 100%)",
+                  "repeating-linear-gradient(0deg, rgba(255,248,220,0.09) 0px, rgba(255,248,220,0.09) 1px, rgba(84,54,12,0.07) 1px, rgba(84,54,12,0.07) 2px)",
+                  "linear-gradient(90deg, #B58534 0%, #CFA24F 14%, #ECC97A 34%, #F9DFA0 50%, #EBC776 66%, #CE9F4B 86%, #B0802F 100%)",
+                ].join(", "),
+              }}
+              title="Open the step-by-step First-Time CRM Setup & Launch Checklist"
+            >
+              <Sparkles className="h-4 w-4 text-[#1A1003] shrink-0" />
+              <span
+                className="tracking-wide uppercase"
+                style={{ textShadow: "0 1px 0 rgba(255,246,210,0.8)" }}
+              >
+                First-Time CRM Setup Guide
+              </span>
+            </button>
+
             <Button
               onClick={handleSave}
               disabled={updateMutation.isPending || !hasChanges}
@@ -230,6 +260,33 @@ export function BusinessSettingsTab({
               )}
             </Button>
           </div>
+        </div>
+
+        {/* Helpful First-Time Getting Your CRM Going Callout Strip */}
+        <div
+          data-testid="first-time-setup-callout-banner"
+          className="mt-4 p-3.5 rounded-xl bg-gradient-to-r from-[#081D3E] via-[#0B254E] to-[#071834] border border-[#C5A059]/55 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        >
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#020A17] border border-[#C5A059]/60 flex items-center justify-center text-[#FFE394] shrink-0">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs sm:text-sm font-serif font-bold text-[#FFF4D4]">
+                Setting everything up for the first time? Let’s get your CRM going!
+              </div>
+              <p className="text-[11px] sm:text-xs text-[#C6B697]">
+                Not sure what to configure first? Open the <strong className="text-[#FFE394]">First-Time CRM Setup Guide</strong> for a plain-English, 6-step checklist covering your Business Profile, Lead Intake Forms, Calendar Session Types, Services & Agreements, Parent Portal, and Client Import.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowFirstTimeSetupModal(true)}
+            className="h-8.5 px-3.5 rounded-lg bg-[#020A17] hover:bg-[#05142B] border border-[#FFE394]/60 text-xs font-bold text-[#FFE394] hover:text-white inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <span>Start 6-Step Setup Checklist →</span>
+          </button>
         </div>
 
         {/* Live Quick Status Bar */}
@@ -750,6 +807,19 @@ export function BusinessSettingsTab({
           </div>
         </div>
       )}
+
+      {/* ── FIRST-TIME CRM SETUP & PRACTICE LAUNCH GUIDE MODAL ─────────────── */}
+      <FirstTimeCrmSetupGuideModal
+        open={showFirstTimeSetupModal}
+        onOpenChange={setShowFirstTimeSetupModal}
+        hasPracticePhone={Boolean(phone)}
+        hasPracticeAddress={Boolean(assembledAddress)}
+        onSelectSettingsSection={(sec) => {
+          if (sec === "receipts") onOpenReceipts?.();
+          else if (sec === "portal") onOpenPortal?.();
+          else onSelectSection?.(sec);
+        }}
+      />
     </div>
   );
 }

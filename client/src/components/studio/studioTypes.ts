@@ -230,10 +230,12 @@ export const STUDIO_COLOR_LIST: StudioColorPaletteEntry[] = [
 ];
 
 export const STROKE_THICKNESS_OPTIONS = [
-  { value: 2, label: "Fine (2px)" },
-  { value: 4, label: "Medium (4px)" },
-  { value: 8, label: "Bold (8px)" },
-  { value: 14, label: "Broad (14px)" },
+  { value: 2, label: "2 px" },
+  { value: 3, label: "3 px" },
+  { value: 4, label: "4 px" },
+  { value: 6, label: "6 px" },
+  { value: 8, label: "8 px" },
+  { value: 12, label: "12 px" },
 ];
 
 export function broadcastStudioSync(payload: {

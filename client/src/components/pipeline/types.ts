@@ -15,7 +15,19 @@ export type LogicalStageGroup =
   | "active_advocacy"
   | "renewal_closed"
   | "attention_past_due"
-  | "ungrouped";
+  | "ungrouped"
+  | (string & {});
+
+export interface PipelineGroupDefinition {
+  key: LogicalStageGroup;
+  label: string;
+  shortLabel: string;
+  badgeClass: string;
+  barColor: string;
+  accentColor: string;
+  order?: number;
+  isCustom?: boolean;
+}
 
 export type CaseActionStatus =
   | "overdue"

@@ -3,24 +3,103 @@ import type {
   PipelineCardItem,
   SavedViewItem,
   LogicalStageGroup,
+  PipelineGroupDefinition,
   CaseActionStatus,
 } from "./types";
 
-export const LOGICAL_STAGE_GROUPS: {
-  key: LogicalStageGroup;
-  label: string;
-  shortLabel: string;
-  badgeClass: string;
-  barColor: string;
+export interface GroupColorThemePreset {
+  id: string;
+  name: string;
   accentColor: string;
-}[] = [
+  barColor: string;
+  badgeClass: string;
+}
+
+export const PIPELINE_GROUP_COLOR_THEMES: GroupColorThemePreset[] = [
+  {
+    id: "violet",
+    name: "Imperial Amethyst",
+    accentColor: "#A78BFA",
+    barColor: "#A78BFA",
+    badgeClass: "bg-[#28194D] border-[#7D56C9] text-[#E5D4FF]",
+  },
+  {
+    id: "blue",
+    name: "Admiralty Cobalt",
+    accentColor: "#60A5FA",
+    barColor: "#60A5FA",
+    badgeClass: "bg-[#102B52] border-[#3E79C9] text-[#C7E0FF]",
+  },
+  {
+    id: "cyan",
+    name: "SeaGlass Cyan",
+    accentColor: "#38BDF8",
+    barColor: "#38BDF8",
+    badgeClass: "bg-[#0B3948] border-[#2B8CA3] text-[#B6F0FA]",
+  },
+  {
+    id: "gold",
+    name: "Sovereign Brass",
+    accentColor: "#C5A059",
+    barColor: "#C5A059",
+    badgeClass: "bg-[#3B2A0C] border-[#C5A059] text-[#FFE394]",
+  },
+  {
+    id: "emerald",
+    name: "Emerald Forest",
+    accentColor: "#34D399",
+    barColor: "#34D399",
+    badgeClass: "bg-[#0D3B2E] border-[#2E8B6D] text-[#B8F5D8]",
+  },
+  {
+    id: "crimson",
+    name: "Crimson Garnet",
+    accentColor: "#F87171",
+    barColor: "#F87171",
+    badgeClass: "bg-[#4A1219] border-[#E11D48] text-[#FFE4E6]",
+  },
+  {
+    id: "copper",
+    name: "Burnished Copper",
+    accentColor: "#FB923C",
+    barColor: "#FB923C",
+    badgeClass: "bg-[#4A220B] border-[#C26D2E] text-[#FFE0BA]",
+  },
+  {
+    id: "plum",
+    name: "Burgundy Plum",
+    accentColor: "#E879F9",
+    barColor: "#E879F9",
+    badgeClass: "bg-[#451439] border-[#A34187] text-[#FAD1E8]",
+  },
+  {
+    id: "slate",
+    name: "Aged Parchment",
+    accentColor: "#D4B895",
+    barColor: "#D4B895",
+    badgeClass: "bg-[#2C2219] border-[#8F7556] text-[#EADBC6]",
+  },
+];
+
+export function resolveGroupThemeByAccent(accentColor: string): GroupColorThemePreset {
+  const lower = (accentColor || "").toLowerCase();
+  return (
+    PIPELINE_GROUP_COLOR_THEMES.find(
+      (t) => t.accentColor.toLowerCase() === lower
+    ) || PIPELINE_GROUP_COLOR_THEMES[3]
+  );
+}
+
+export const LOGICAL_STAGE_GROUPS: PipelineGroupDefinition[] = [
   {
     key: "opportunities",
-    label: "Opportunities",
-    shortLabel: "Opportunities",
+    label: "Lead Opportunities",
+    shortLabel: "Lead Opportunities",
     badgeClass: "bg-[#28194D] border-[#7D56C9] text-[#E5D4FF]",
     barColor: "#A78BFA",
     accentColor: "#A78BFA",
+    order: 1,
+    isCustom: false,
   },
   {
     key: "follow_up",
@@ -29,6 +108,8 @@ export const LOGICAL_STAGE_GROUPS: {
     badgeClass: "bg-[#102B52] border-[#3E79C9] text-[#C7E0FF]",
     barColor: "#60A5FA",
     accentColor: "#60A5FA",
+    order: 2,
+    isCustom: false,
   },
   {
     key: "onboarding",
@@ -37,6 +118,8 @@ export const LOGICAL_STAGE_GROUPS: {
     badgeClass: "bg-[#0B3948] border-[#2B8CA3] text-[#B6F0FA]",
     barColor: "#38BDF8",
     accentColor: "#38BDF8",
+    order: 3,
+    isCustom: false,
   },
   {
     key: "active_advocacy",
@@ -45,6 +128,8 @@ export const LOGICAL_STAGE_GROUPS: {
     badgeClass: "bg-[#3B2A0C] border-[#C5A059] text-[#FFE394]",
     barColor: "#C5A059",
     accentColor: "#C5A059",
+    order: 4,
+    isCustom: false,
   },
   {
     key: "renewal_closed",
@@ -53,6 +138,8 @@ export const LOGICAL_STAGE_GROUPS: {
     badgeClass: "bg-[#0D3B2E] border-[#2E8B6D] text-[#B8F5D8]",
     barColor: "#34D399",
     accentColor: "#34D399",
+    order: 5,
+    isCustom: false,
   },
   {
     key: "attention_past_due",
@@ -61,8 +148,37 @@ export const LOGICAL_STAGE_GROUPS: {
     badgeClass: "bg-[#4A1219] border-[#E11D48] text-[#FFE4E6]",
     barColor: "#F87171",
     accentColor: "#F87171",
+    order: 6,
+    isCustom: false,
   },
 ];
+
+export const PIPELINE_GROUPS_STORAGE_KEY = "waypoint_pipeline_group_definitions";
+
+export function loadPipelineGroups(): PipelineGroupDefinition[] {
+  if (typeof window === "undefined") return LOGICAL_STAGE_GROUPS;
+  try {
+    const raw = localStorage.getItem(PIPELINE_GROUPS_STORAGE_KEY);
+    if (!raw) return LOGICAL_STAGE_GROUPS;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return LOGICAL_STAGE_GROUPS;
+}
+
+export function savePipelineGroups(groups: PipelineGroupDefinition[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(PIPELINE_GROUPS_STORAGE_KEY, JSON.stringify(groups));
+    window.dispatchEvent(new CustomEvent("waypoint-pipeline-groups-updated"));
+  } catch {
+    // ignore storage errors
+  }
+}
 
 export function resolveLogicalStageGroup(
   stageName: string,

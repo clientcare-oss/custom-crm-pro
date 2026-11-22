@@ -8,9 +8,15 @@ import {
   Check,
   X,
   Pencil,
+  Trash2,
+  Settings,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   LOGICAL_STAGE_GROUPS,
+  PIPELINE_GROUP_COLOR_THEMES,
+  loadPipelineGroups,
+  savePipelineGroups,
   resolveLogicalStageGroup,
   resolveCaseActionStatus,
 } from "./pipelineDefaults";
@@ -18,16 +24,19 @@ import type {
   PipelineStageItem,
   PipelineCardItem,
   LogicalStageGroup,
+  PipelineGroupDefinition,
 } from "./types";
 
 interface StageOverviewGridProps {
   stages: PipelineStageItem[];
   cards: PipelineCardItem[];
+  groups?: PipelineGroupDefinition[];
   selectedStageName: string | null;
   onSelectStage: (stageName: string | null) => void;
   onDropCardOnStage?: (cardId: number, targetStageName: string) => void;
   isCustomizingOrder?: boolean;
   onToggleCustomizingOrder?: () => void;
+  onOpenGroupModifications?: (focusedGroupKey?: LogicalStageGroup | null) => void;
   onReorderStages?: (draggedStageId: number, targetStageId: number) => void;
   onInsertStageAtOrder?: (
     insertOrder: number,
@@ -182,17 +191,33 @@ function resolveStageJewelPalette(stageName: string, idx: number): StageJewelPal
 export function StageOverviewGrid({
   stages,
   cards,
+  groups,
   selectedStageName,
   onSelectStage,
   onDropCardOnStage,
   isCustomizingOrder = false,
   onToggleCustomizingOrder,
+  onOpenGroupModifications,
   onReorderStages,
   onInsertStageAtOrder,
   onAssignStageGroup,
 }: StageOverviewGridProps) {
   const railRef = useRef<HTMLDivElement | null>(null);
   const stageRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  const [localGroups, setLocalGroups] = useState<PipelineGroupDefinition[]>(() =>
+    loadPipelineGroups()
+  );
+
+  useEffect(() => {
+    const syncGroups = () => setLocalGroups(loadPipelineGroups());
+    window.addEventListener("waypoint-pipeline-groups-updated", syncGroups);
+    return () =>
+      window.removeEventListener("waypoint-pipeline-groups-updated", syncGroups);
+  }, []);
+
+  const effectiveGroups =
+    groups && groups.length > 0 ? groups : localGroups || LOGICAL_STAGE_GROUPS;
 
   const [dragOverStageName, setDragOverStageName] = useState<string | null>(null);
   const [draggedStageId, setDraggedStageId] = useState<number | null>(null);
@@ -207,6 +232,16 @@ export function StageOverviewGrid({
   const inlineInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedGroupBubbleKey, setSelectedGroupBubbleKey] =
     useState<LogicalStageGroup | null>(null);
+  const [inlineRenameGroupKey, setInlineRenameGroupKey] =
+    useState<string | null>(null);
+  const [inlineRenameText, setInlineRenameText] = useState("");
+  const [inlineDeleteGroupKey, setInlineDeleteGroupKey] =
+    useState<string | null>(null);
+  const [inlineNewGroupRunIdx, setInlineNewGroupRunIdx] =
+    useState<number | null>(null);
+  const [inlineNewGroupText, setInlineNewGroupText] = useState("");
+  const inlineGroupRenameInputRef = useRef<HTMLInputElement | null>(null);
+  const inlineNewGroupInputRef = useRef<HTMLInputElement | null>(null);
   const [dropGapSlot, setDropGapSlot] = useState<{
     targetStageId: number;
     side: "before" | "after";
@@ -218,10 +253,121 @@ export function StageOverviewGrid({
   useEffect(() => {
     if (!isCustomizingOrder) {
       setSelectedGroupBubbleKey(null);
+      setInlineRenameGroupKey(null);
+      setInlineRenameText("");
+      setInlineDeleteGroupKey(null);
+      setInlineNewGroupRunIdx(null);
+      setInlineNewGroupText("");
       setInlineDraftAfterIdx(null);
       setInlineDraftName("");
     }
   }, [isCustomizingOrder]);
+
+  useEffect(() => {
+    if (inlineRenameGroupKey) {
+      setTimeout(() => inlineGroupRenameInputRef.current?.focus(), 30);
+    }
+  }, [inlineRenameGroupKey]);
+
+  useEffect(() => {
+    if (inlineNewGroupRunIdx !== null) {
+      setTimeout(() => inlineNewGroupInputRef.current?.focus(), 30);
+    }
+  }, [inlineNewGroupRunIdx]);
+
+  const handleSaveInlineGroupRename = (groupKey: string) => {
+    const trimmed = inlineRenameText.trim();
+    if (!trimmed) {
+      setInlineRenameGroupKey(null);
+      return;
+    }
+    const currentGroups = [...effectiveGroups];
+    const existingIdx = currentGroups.findIndex((g) => g.key === groupKey);
+    if (existingIdx >= 0) {
+      currentGroups[existingIdx] = {
+        ...currentGroups[existingIdx],
+        label: trimmed,
+        shortLabel: trimmed,
+      };
+    } else {
+      const theme = PIPELINE_GROUP_COLOR_THEMES[3];
+      currentGroups.push({
+        key: groupKey as LogicalStageGroup,
+        label: trimmed,
+        shortLabel: trimmed,
+        badgeClass: theme.badgeClass,
+        barColor: theme.barColor,
+        accentColor: theme.accentColor,
+        order: currentGroups.length + 1,
+        isCustom: true,
+      });
+    }
+    setLocalGroups(currentGroups);
+    savePipelineGroups(currentGroups);
+    setInlineRenameGroupKey(null);
+    setInlineRenameText("");
+    toast.success(`Renamed group to "${trimmed}"`);
+  };
+
+  const handleConfirmInlineGroupDelete = (
+    groupKey: string,
+    runItems: { stage: PipelineStageItem; globalIdx: number }[]
+  ) => {
+    if (onAssignStageGroup) {
+      runItems.forEach(({ stage }) => {
+        onAssignStageGroup(stage.id, "ungrouped");
+      });
+    }
+    const updatedGroups = effectiveGroups.filter(
+      (g) => !(g.isCustom && g.key === groupKey)
+    );
+    setLocalGroups(updatedGroups);
+    savePipelineGroups(updatedGroups);
+    if (selectedGroupBubbleKey === groupKey) {
+      setSelectedGroupBubbleKey(null);
+    }
+    setInlineDeleteGroupKey(null);
+    toast.success("Group removed — cards are now ungrouped");
+  };
+
+  const handleCreateInlineNewGroup = (
+    runItems: { stage: PipelineStageItem; globalIdx: number }[]
+  ) => {
+    const trimmed = inlineNewGroupText.trim();
+    if (!trimmed) {
+      setInlineNewGroupRunIdx(null);
+      return;
+    }
+    const newKey = `custom_${trimmed
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")}_${Date.now().toString().slice(-4)}` as LogicalStageGroup;
+    const theme =
+      PIPELINE_GROUP_COLOR_THEMES[
+        effectiveGroups.length % PIPELINE_GROUP_COLOR_THEMES.length
+      ];
+    const newGroupDef: PipelineGroupDefinition = {
+      key: newKey,
+      label: trimmed,
+      shortLabel: trimmed,
+      badgeClass: theme.badgeClass,
+      barColor: theme.barColor,
+      accentColor: theme.accentColor,
+      order: effectiveGroups.length + 1,
+      isCustom: true,
+    };
+    const nextGroups = [...effectiveGroups, newGroupDef];
+    setLocalGroups(nextGroups);
+    savePipelineGroups(nextGroups);
+    if (onAssignStageGroup) {
+      runItems.forEach(({ stage }) => {
+        onAssignStageGroup(stage.id, newKey);
+      });
+    }
+    setInlineNewGroupRunIdx(null);
+    setInlineNewGroupText("");
+    setSelectedGroupBubbleKey(newKey);
+    toast.success(`Created group "${trimmed}" — click any cards to include or remove them`);
+  };
 
   useEffect(() => {
     if (inlineDraftAfterIdx) {
@@ -243,7 +389,7 @@ export function StageOverviewGrid({
   const stageGroupRuns = React.useMemo(() => {
     const runs: {
       groupKey: string;
-      groupMeta: (typeof LOGICAL_STAGE_GROUPS)[number] | undefined;
+      groupMeta: PipelineGroupDefinition | undefined;
       items: { stage: PipelineStageItem; globalIdx: number }[];
     }[] = [];
 
@@ -253,7 +399,7 @@ export function StageOverviewGrid({
         stage.category,
         stage.logicalGroup
       );
-      const groupMeta = LOGICAL_STAGE_GROUPS.find((g) => g.key === logicalGroup);
+      const groupMeta = effectiveGroups.find((g) => g.key === logicalGroup);
       const lastRun = runs[runs.length - 1];
       if (lastRun && lastRun.groupKey === logicalGroup) {
         lastRun.items.push({ stage, globalIdx });
@@ -267,7 +413,7 @@ export function StageOverviewGrid({
     });
 
     return runs;
-  }, [activeStages]);
+  }, [activeStages, effectiveGroups]);
 
   // Compute accurate counts & overdue counts per stage from filtered cards
   const countByStage = new Map<string, number>();
@@ -541,14 +687,17 @@ export function StageOverviewGrid({
           const isUngroupedRun = run.groupKey === "ungrouped";
           const groupMeta = run.groupMeta;
           const bracketColor = groupMeta?.accentColor || "#C5A059";
-          const groupTitle =
-            run.groupKey === "opportunities"
+          const groupTitle = (
+            groupMeta?.label ||
+            groupMeta?.shortLabel ||
+            (run.groupKey === "opportunities"
               ? "LEAD OPPORTUNITIES"
-              : (groupMeta?.shortLabel || run.groupKey).toUpperCase();
+              : run.groupKey)
+          ).toUpperCase();
           const isGroupBubbleSelected =
             isCustomizingOrder && selectedGroupBubbleKey === run.groupKey;
           const activeEditingGroupMeta = selectedGroupBubbleKey
-            ? LOGICAL_STAGE_GROUPS.find((g) => g.key === selectedGroupBubbleKey)
+            ? effectiveGroups.find((g) => g.key === selectedGroupBubbleKey)
             : null;
           const activeEditingGroupColor =
             activeEditingGroupMeta?.accentColor || "#FFE394";
@@ -558,9 +707,9 @@ export function StageOverviewGrid({
               key={`${run.groupKey}-${runIdx}`}
               className="shrink-0 flex flex-col justify-end"
             >
-              {/* Spanning Bracket Line + Centered Flat-Bottom Group Bubble (Only shown for grouped runs) */}
+              {/* Spanning Bracket Line + Centered Flat-Bottom Group Bubble */}
               <div className="relative h-8 mb-1 w-full flex items-center justify-center px-3">
-                {!isUngroupedRun && (
+                {!isUngroupedRun ? (
                   <>
                     {/* Left-to-Right Spanning Bracket Shape (┌─────── LABEL ───────┐) */}
                     <div
@@ -571,33 +720,12 @@ export function StageOverviewGrid({
                       }}
                     />
 
-                    {/* Centered Interactive Group Bubble (Click in Customize mode to choose which cards are contained in this group) */}
-                    <button
-                      type="button"
-                      disabled={!isCustomizingOrder}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isCustomizingOrder) return;
-                        setSelectedGroupBubbleKey((prev) =>
-                          prev === (run.groupKey as LogicalStageGroup)
-                            ? null
-                            : (run.groupKey as LogicalStageGroup)
-                        );
-                      }}
-                      title={
-                        isCustomizingOrder
-                          ? isGroupBubbleSelected
-                            ? `Editing "${groupTitle}" — click any stage card below to add or remove it from this group bracket`
-                            : `Click "${groupTitle}" bubble to choose which stage cards belong inside this group bracket`
-                          : groupTitle
-                      }
+                    {/* Centered Interactive Group Bubble with Inline Pencil (Edit Name), Gear (Choose Cards), and Trash Can (Offer Delete) */}
+                    <div
                       className={cn(
-                        "relative z-10 inline-flex items-center justify-center gap-1.5 px-3.5 py-0.5 rounded-full border text-[10px] font-serif font-bold tracking-[0.14em] uppercase shadow-[0_2px_8px_rgba(0,0,0,0.85)] whitespace-nowrap transition-all",
+                        "relative z-10 inline-flex items-center justify-center gap-1.5 px-3 py-0.5 rounded-full border text-[10px] font-serif font-bold tracking-[0.14em] uppercase shadow-[0_2px_8px_rgba(0,0,0,0.85)] whitespace-nowrap transition-all",
                         groupMeta?.badgeClass ||
                           "bg-[#0A192F] border-[#C5A059] text-[#FFE394]",
-                        isCustomizingOrder
-                          ? "cursor-pointer hover:brightness-125 hover:scale-105"
-                          : "cursor-default",
                         isGroupBubbleSelected &&
                           "ring-2 ring-[#FFE394] scale-105 shadow-[0_0_16px_rgba(255,227,148,0.65)]"
                       )}
@@ -607,22 +735,220 @@ export function StageOverviewGrid({
                           : bracketColor,
                       }}
                     >
-                      <span>{groupTitle}</span>
-                      {isCustomizingOrder && (
-                        <span
-                          className={cn(
-                            "inline-flex items-center justify-center rounded-full transition-colors",
-                            isGroupBubbleSelected
-                              ? "bg-[#FFE394] text-[#07162B] px-1.5 py-0.5 text-[9px] font-sans font-bold gap-1"
-                              : "bg-black/35 text-white/90 p-1 hover:bg-[#FFE394]/25 hover:text-[#FFE394]"
-                          )}
+                      {isCustomizingOrder &&
+                      inlineRenameGroupKey === run.groupKey ? (
+                        /* ── Inline Pencil Rename Input Inside Bubble (No Popup) ── */
+                        <div
+                          className="inline-flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <Pencil className="h-2.5 w-2.5 shrink-0" />
-                          {isGroupBubbleSelected && <span>Editing</span>}
-                        </span>
+                          <input
+                            ref={inlineGroupRenameInputRef}
+                            type="text"
+                            value={inlineRenameText}
+                            onChange={(e) =>
+                              setInlineRenameText(e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleSaveInlineGroupRename(run.groupKey);
+                              } else if (e.key === "Escape") {
+                                setInlineRenameGroupKey(null);
+                                setInlineRenameText("");
+                              }
+                            }}
+                            placeholder="Group name..."
+                            className="w-28 sm:w-36 px-1.5 py-0.2 rounded bg-[#020A17]/90 border border-[#FFE394] text-[10px] font-serif font-bold text-[#FFF4D4] tracking-wider uppercase focus:outline-hidden"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSaveInlineGroupRename(run.groupKey)
+                            }
+                            title="Save group name"
+                            className="p-0.5 rounded-full bg-emerald-500 text-[#04130D] hover:brightness-110 cursor-pointer"
+                          >
+                            <Check className="h-2.5 w-2.5 stroke-[3]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInlineRenameGroupKey(null);
+                              setInlineRenameText("");
+                            }}
+                            title="Cancel rename"
+                            className="p-0.5 rounded-full bg-black/50 text-white/80 hover:text-white cursor-pointer"
+                          >
+                            <X className="h-2.5 w-2.5 stroke-[2.5]" />
+                          </button>
+                        </div>
+                      ) : isCustomizingOrder &&
+                        inlineDeleteGroupKey === run.groupKey ? (
+                        /* ── Inline Trash Can Delete Confirmation Inside Bubble (No Popup) ── */
+                        <div
+                          className="inline-flex items-center gap-1.5 font-sans tracking-normal"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span className="text-[10px] font-bold text-rose-200">
+                            Delete "{groupTitle}"?
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleConfirmInlineGroupDelete(
+                                run.groupKey,
+                                run.items
+                              )
+                            }
+                            className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[9px] font-bold uppercase hover:bg-rose-400 cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setInlineDeleteGroupKey(null)}
+                            className="px-1.5 py-0.2 rounded-full bg-black/50 text-white/85 text-[9px] font-bold uppercase hover:text-white cursor-pointer"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        /* ── Standard Group Bubble Label + Pencil, Gear, Trash Can Icons ── */
+                        <>
+                          <span>{groupTitle}</span>
+                          {isCustomizingOrder && (
+                            <span className="inline-flex items-center gap-1 ml-1 pl-1 border-l border-white/20">
+                              {/* 1. PENCIL ICON: Edit Group Name Inline */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setInlineDeleteGroupKey(null);
+                                  setInlineRenameGroupKey(run.groupKey);
+                                  setInlineRenameText(
+                                    groupMeta?.label ||
+                                      groupMeta?.shortLabel ||
+                                      groupTitle
+                                  );
+                                }}
+                                title={`Edit "${groupTitle}" name`}
+                                className="inline-flex items-center justify-center rounded-full p-1 bg-black/35 text-white/90 hover:bg-[#FFE394] hover:text-[#07162B] transition-colors cursor-pointer"
+                              >
+                                <Pencil className="h-2.5 w-2.5 shrink-0" />
+                              </button>
+
+                              {/* 2. GEAR ICON: Choose Cards in This Group */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setInlineRenameGroupKey(null);
+                                  setInlineDeleteGroupKey(null);
+                                  setSelectedGroupBubbleKey((prev) =>
+                                    prev === (run.groupKey as LogicalStageGroup)
+                                      ? null
+                                      : (run.groupKey as LogicalStageGroup)
+                                  );
+                                }}
+                                title={
+                                  isGroupBubbleSelected
+                                    ? `Done choosing cards for "${groupTitle}"`
+                                    : `Choose which stage cards belong in "${groupTitle}"`
+                                }
+                                className={cn(
+                                  "inline-flex items-center justify-center rounded-full transition-colors cursor-pointer",
+                                  isGroupBubbleSelected
+                                    ? "bg-[#FFE394] text-[#07162B] px-1.5 py-0.5 text-[9px] font-sans font-bold gap-0.5"
+                                    : "bg-black/35 text-white/90 p-1 hover:bg-[#FFE394] hover:text-[#07162B]"
+                                )}
+                              >
+                                <Settings className="h-2.5 w-2.5 shrink-0" />
+                                {isGroupBubbleSelected && <span>Cards</span>}
+                              </button>
+
+                              {/* 3. TRASH CAN ICON: Offer Inline Delete */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setInlineRenameGroupKey(null);
+                                  setInlineDeleteGroupKey(run.groupKey);
+                                }}
+                                title={`Delete "${groupTitle}" group`}
+                                className="inline-flex items-center justify-center rounded-full p-1 bg-black/35 text-rose-300 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="h-2.5 w-2.5 shrink-0" />
+                              </button>
+                            </span>
+                          )}
+                        </>
                       )}
-                    </button>
+                    </div>
                   </>
+                ) : (
+                  /* Ungrouped Cards in Customize Mode: Offer Inline "+ New Group" Bubble Above Ungrouped Cards */
+                  isCustomizingOrder && (
+                    <div className="relative z-10 inline-flex items-center justify-center">
+                      {inlineNewGroupRunIdx === runIdx ? (
+                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-[#FFE394] bg-[#0A192F] shadow-md">
+                          <input
+                            ref={inlineNewGroupInputRef}
+                            type="text"
+                            value={inlineNewGroupText}
+                            onChange={(e) =>
+                              setInlineNewGroupText(e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleCreateInlineNewGroup(run.items);
+                              } else if (e.key === "Escape") {
+                                setInlineNewGroupRunIdx(null);
+                                setInlineNewGroupText("");
+                              }
+                            }}
+                            placeholder="New group name..."
+                            className="w-28 px-1.5 py-0.2 rounded bg-[#020A17] border border-[#FFE394]/60 text-[10px] font-serif font-bold text-[#FFF4D4] uppercase focus:outline-hidden"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleCreateInlineNewGroup(run.items)
+                            }
+                            className="p-0.5 rounded-full bg-emerald-500 text-[#04130D] cursor-pointer"
+                            title="Create group"
+                          >
+                            <Check className="h-2.5 w-2.5 stroke-[3]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInlineNewGroupRunIdx(null);
+                              setInlineNewGroupText("");
+                            }}
+                            className="p-0.5 rounded-full bg-black/50 text-white/80 cursor-pointer"
+                            title="Cancel"
+                          >
+                            <X className="h-2.5 w-2.5 stroke-[2.5]" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInlineNewGroupRunIdx(runIdx);
+                            setInlineNewGroupText("");
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-dashed border-[#C5A059]/70 bg-[#0A192F]/90 text-[#FFE394] hover:border-[#FFE394] text-[10px] font-serif font-bold uppercase tracking-wider cursor-pointer"
+                          title="Create a new group bracket for these ungrouped cards"
+                        >
+                          <Plus className="h-2.5 w-2.5 stroke-[2.8]" />
+                          <span>New Group</span>
+                        </button>
+                      )}
+                    </div>
+                  )
                 )}
               </div>
 
@@ -776,9 +1102,9 @@ export function StageOverviewGrid({
                                 : "cursor-grab active:cursor-grabbing ring-1 ring-[#FFE394]/60 border-dashed"
                               : "cursor-pointer",
                             selectedGroupBubbleKey &&
-                              (isInSelectedGroup
-                                ? "ring-2 ring-[#FFE394] shadow-[0_0_16px_rgba(255,227,148,0.45)]"
-                                : "opacity-60 hover:opacity-100 border-dashed"),
+                            (isInSelectedGroup
+                              ? "ring-2 ring-[#FFE394] shadow-[0_0_16px_rgba(255,227,148,0.45)]"
+                              : "opacity-60 hover:opacity-100 border-dashed"),
                             isBeingDragged && "opacity-45 scale-95",
                             isDragOver && "ring-2 ring-emerald-400 scale-[1.03]",
                             isSelected
@@ -938,7 +1264,7 @@ export function StageOverviewGrid({
                                         logicalGroup: run.groupKey as any,
                                         pipelineGroup:
                                           run.groupKey === "opportunities" ||
-                                          run.groupKey === "follow_up"
+                                            run.groupKey === "follow_up"
                                             ? "opportunity"
                                             : "active_project",
                                         category: "active",
@@ -967,7 +1293,7 @@ export function StageOverviewGrid({
                                         logicalGroup: run.groupKey as any,
                                         pipelineGroup:
                                           run.groupKey === "opportunities" ||
-                                          run.groupKey === "follow_up"
+                                            run.groupKey === "follow_up"
                                             ? "opportunity"
                                             : "active_project",
                                         category: "active",
@@ -995,89 +1321,89 @@ export function StageOverviewGrid({
                             </div>
                           </div>
                         ) : (
-                        <div
-                          onMouseEnter={() => setHoveredAddSlotAfterIdx(idx)}
-                          onMouseLeave={() =>
-                            setHoveredAddSlotAfterIdx((prev) =>
-                              prev === idx ? null : prev
-                            )
-                          }
-                          style={{
-                            transition:
-                              "width 460ms cubic-bezier(0.22, 1, 0.36, 1), margin 460ms cubic-bezier(0.22, 1, 0.36, 1)",
-                          }}
-                          className={cn(
-                            "shrink-0 relative flex flex-col justify-end select-none z-20 will-change-[width,margin]",
-                            isAddSlotHoveredAfterThis
-                              ? "w-[88px] sm:w-[96px] mx-1"
-                              : "w-[14px] -mx-[5px]"
-                          )}
-                        >
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setHoveredAddSlotAfterIdx(null);
-                              setInlineDraftName("");
-                              setInlineDraftAfterIdx({
-                                afterIdx: idx,
-                                insertOrder: idx + 2,
-                                groupKey: run.groupKey,
-                                accentColor: topBarColor,
-                              });
-                            }}
-                            title="Add Card Here"
+                          <div
+                            onMouseEnter={() => setHoveredAddSlotAfterIdx(idx)}
+                            onMouseLeave={() =>
+                              setHoveredAddSlotAfterIdx((prev) =>
+                                prev === idx ? null : prev
+                              )
+                            }
                             style={{
                               transition:
-                                "background-color 380ms cubic-bezier(0.22, 1, 0.36, 1), border-color 380ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 380ms cubic-bezier(0.22, 1, 0.36, 1)",
+                                "width 460ms cubic-bezier(0.22, 1, 0.36, 1), margin 460ms cubic-bezier(0.22, 1, 0.36, 1)",
                             }}
                             className={cn(
-                              "w-full h-[76px] rounded-lg relative overflow-hidden flex items-center justify-center cursor-pointer",
+                              "shrink-0 relative flex flex-col justify-end select-none z-20 will-change-[width,margin]",
                               isAddSlotHoveredAfterThis
-                                ? "border-2 border-dashed border-[#FFE394]/90 bg-[#0A1E3C]/95 hover:bg-[#102B4E] shadow-[0_4px_20px_rgba(255,227,148,0.3)]"
-                                : "border border-transparent bg-transparent"
+                                ? "w-[88px] sm:w-[96px] mx-1"
+                                : "w-[14px] -mx-[5px]"
                             )}
                           >
-                            {/* Collapsed Pill Hint (fades out gently on hover) */}
-                            <div
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setHoveredAddSlotAfterIdx(null);
+                                setInlineDraftName("");
+                                setInlineDraftAfterIdx({
+                                  afterIdx: idx,
+                                  insertOrder: idx + 2,
+                                  groupKey: run.groupKey,
+                                  accentColor: topBarColor,
+                                });
+                              }}
+                              title="Add Card Here"
                               style={{
                                 transition:
-                                  "opacity 320ms cubic-bezier(0.22, 1, 0.36, 1), transform 360ms cubic-bezier(0.22, 1, 0.36, 1)",
+                                  "background-color 380ms cubic-bezier(0.22, 1, 0.36, 1), border-color 380ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 380ms cubic-bezier(0.22, 1, 0.36, 1)",
                               }}
                               className={cn(
-                                "absolute inset-0 flex items-center justify-center pointer-events-none",
+                                "w-full h-[76px] rounded-lg relative overflow-hidden flex items-center justify-center cursor-pointer",
                                 isAddSlotHoveredAfterThis
-                                  ? "opacity-0 scale-75"
-                                  : "opacity-75 scale-100"
+                                  ? "border-2 border-dashed border-[#FFE394]/90 bg-[#0A1E3C]/95 hover:bg-[#102B4E] shadow-[0_4px_20px_rgba(255,227,148,0.3)]"
+                                  : "border border-transparent bg-transparent"
                               )}
                             >
-                              <div className="w-4 h-7 rounded-full bg-[#07162B]/90 border border-[#C5A059]/60 text-[#FFE394] flex items-center justify-center shadow-sm">
-                                <Plus className="h-2.5 w-2.5 stroke-[2.8]" />
+                              {/* Collapsed Pill Hint (fades out gently on hover) */}
+                              <div
+                                style={{
+                                  transition:
+                                    "opacity 320ms cubic-bezier(0.22, 1, 0.36, 1), transform 360ms cubic-bezier(0.22, 1, 0.36, 1)",
+                                }}
+                                className={cn(
+                                  "absolute inset-0 flex items-center justify-center pointer-events-none",
+                                  isAddSlotHoveredAfterThis
+                                    ? "opacity-0 scale-75"
+                                    : "opacity-75 scale-100"
+                                )}
+                              >
+                                <div className="w-4 h-7 rounded-full bg-[#07162B]/90 border border-[#C5A059]/60 text-[#FFE394] flex items-center justify-center shadow-sm">
+                                  <Plus className="h-2.5 w-2.5 stroke-[2.8]" />
+                                </div>
                               </div>
-                            </div>
 
-                            {/* Expanded "+ Add Card Here" Content (fades and glides in gently without layout wrapping) */}
-                            <div
-                              style={{
-                                transition:
-                                  "opacity 360ms cubic-bezier(0.22, 1, 0.36, 1) 40ms, transform 420ms cubic-bezier(0.22, 1, 0.36, 1)",
-                              }}
-                              className={cn(
-                                "w-[84px] shrink-0 flex flex-col items-center justify-center gap-1.5 px-1 pointer-events-none",
-                                isAddSlotHoveredAfterThis
-                                  ? "opacity-100 scale-100 translate-y-0"
-                                  : "opacity-0 scale-90 translate-y-0.5"
-                              )}
-                            >
-                              <div className="w-6 h-6 rounded-full bg-gradient-to-b from-[#F2CD80] to-[#C5A059] text-[#07162B] flex items-center justify-center shadow-[0_2px_10px_rgba(242,205,128,0.55)]">
-                                <Plus className="h-3.5 w-3.5 stroke-[3]" />
+                              {/* Expanded "+ Add Card Here" Content (fades and glides in gently without layout wrapping) */}
+                              <div
+                                style={{
+                                  transition:
+                                    "opacity 360ms cubic-bezier(0.22, 1, 0.36, 1) 40ms, transform 420ms cubic-bezier(0.22, 1, 0.36, 1)",
+                                }}
+                                className={cn(
+                                  "w-[84px] shrink-0 flex flex-col items-center justify-center gap-1.5 px-1 pointer-events-none",
+                                  isAddSlotHoveredAfterThis
+                                    ? "opacity-100 scale-100 translate-y-0"
+                                    : "opacity-0 scale-90 translate-y-0.5"
+                                )}
+                              >
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-b from-[#F2CD80] to-[#C5A059] text-[#07162B] flex items-center justify-center shadow-[0_2px_10px_rgba(242,205,128,0.55)]">
+                                  <Plus className="h-3.5 w-3.5 stroke-[3]" />
+                                </div>
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-[#FFF4D4] leading-tight text-center whitespace-nowrap">
+                                  Add Card Here
+                                </span>
                               </div>
-                              <span className="text-[9px] font-bold uppercase tracking-wider text-[#FFF4D4] leading-tight text-center whitespace-nowrap">
-                                Add Card Here
-                              </span>
-                            </div>
-                          </button>
-                        </div>
+                            </button>
+                          </div>
                         )
                       )}
                     </React.Fragment>

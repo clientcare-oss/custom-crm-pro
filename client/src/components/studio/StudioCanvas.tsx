@@ -46,6 +46,10 @@ interface StudioCanvasProps {
   canEdit: boolean;
   isPresentationMode?: boolean;
   hidePrivateTaskMeta?: boolean;
+  hideInternalZoomBar?: boolean;
+  controlledZoom?: number;
+  onControlledZoomChange?: (zoom: number) => void;
+  fitViewCounter?: number;
   remotePointerPos?: { x: number; y: number } | null;
   onSelectObject: (id: string | null) => void;
   onToolChange: (tool: StudioToolId) => void;
@@ -83,6 +87,10 @@ export function StudioCanvas({
   canEdit,
   isPresentationMode = false,
   hidePrivateTaskMeta = false,
+  hideInternalZoomBar = false,
+  controlledZoom,
+  onControlledZoomChange,
+  fitViewCounter,
   remotePointerPos = null,
   onSelectObject,
   onToolChange,
@@ -100,10 +108,28 @@ export function StudioCanvas({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Viewport Zoom & Pan state (bounded within container — never causes horizontal page scrolling)
-  const [zoom, setZoom] = useState<number>(1);
+  const [internalZoom, setInternalZoom] = useState<number>(1);
+  const zoom = controlledZoom ?? internalZoom;
+  const setZoom = useCallback(
+    (updater: number | ((prev: number) => number)) => {
+      const next =
+        typeof updater === "function" ? updater(zoom) : updater;
+      setInternalZoom(next);
+      onControlledZoomChange?.(next);
+    },
+    [zoom, onControlledZoomChange]
+  );
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+
+  useEffect(() => {
+    if (fitViewCounter && fitViewCounter > 0) {
+      setInternalZoom(1);
+      onControlledZoomChange?.(1);
+      setPan({ x: 0, y: 0 });
+    }
+  }, [fitViewCounter]);
 
   // Freehand Drawing State
   const isDrawingRef = useRef(false);
@@ -634,12 +660,20 @@ export function StudioCanvas({
       onPointerUp={handleCanvasPointerUp}
       style={{
         touchAction: "none",
-        backgroundColor: surface === "neon" ? "#01081F" : "#F8FAFC",
+        backgroundColor: surface === "neon" ? "#000820" : "#F8FAFC",
         backgroundImage:
           surface === "neon"
-            ? "radial-gradient(ellipse at 50% 35%, rgba(30, 58, 138, 0.24) 0%, rgba(1, 8, 31, 0.96) 70%), radial-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px)"
+            ? [
+                "radial-gradient(ellipse at 50% 0%, rgba(124, 92, 252, 0.16) 0%, transparent 52%)",
+                "radial-gradient(ellipse at 26% 96%, rgba(139, 92, 246, 0.22) 0%, transparent 45%)",
+                "radial-gradient(ellipse at 50% 35%, rgba(30, 58, 138, 0.2) 0%, rgba(0, 8, 32, 0.96) 72%)",
+                "radial-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px)",
+              ].join(", ")
             : "radial-gradient(rgba(100, 116, 139, 0.22) 1px, transparent 1px)",
-        backgroundSize: "100% 100%, 28px 28px",
+        backgroundSize:
+          surface === "neon"
+            ? "100% 100%, 100% 100%, 100% 100%, 28px 28px"
+            : "28px 28px",
       }}
       className={`relative flex-1 w-full h-full overflow-hidden select-none ${
         activeTool === "pen" || activeTool === "highlighter"
@@ -651,16 +685,21 @@ export function StudioCanvas({
           : "cursor-default"
       }`}
     >
-      {/* Subtle Top & Corner Ambient Illumination on Neon Surface */}
+      {/* Frameless Edge-to-Edge Soft Interior Ambient Shines on Neon Surface (No Visible Glass Cover Edges) */}
       {surface === "neon" && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle at 18% 15%, rgba(34, 211, 238, 0.07) 0%, transparent 45%), radial-gradient(circle at 82% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 45%)",
-          }}
-        />
+          className="pointer-events-none absolute inset-0 z-1"
+        >
+          {/* Soft Interior Ambient Blooms (Seamless Edge-to-Edge with Zero Border / Rim Lines) */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(circle at 18% 16%, rgba(34, 211, 238, 0.08) 0%, transparent 45%), radial-gradient(circle at 78% 22%, rgba(167, 139, 250, 0.09) 0%, transparent 48%), radial-gradient(circle at 30% 88%, rgba(139, 92, 246, 0.13) 0%, transparent 45%)",
+            }}
+          />
+        </div>
       )}
 
       {/* 1. Freehand HTML5 Canvas Layer */}
@@ -689,14 +728,21 @@ export function StudioCanvas({
                 <marker
                   key={c.key}
                   id={`studio-arrow-${surface}-${c.key}`}
-                  viewBox="0 0 10 10"
-                  refX="8"
-                  refY="5"
-                  markerWidth="6"
-                  markerHeight="6"
+                  viewBox="0 0 12 12"
+                  refX="9"
+                  refY="6"
+                  markerWidth="6.5"
+                  markerHeight="6.5"
                   orient="auto-start-reverse"
                 >
-                  <path d="M 0 1 L 10 5 L 0 9 z" fill={fill} />
+                  <path
+                    d="M 2 2 L 10 6 L 2 10"
+                    fill="none"
+                    stroke={fill}
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </marker>
               );
             })}
@@ -710,6 +756,14 @@ export function StudioCanvas({
             const isSel = selectedObjectId === conn.id;
             const x2 = conn.endX ?? conn.x + 120;
             const y2 = conn.endY ?? conn.y;
+            const dy = y2 - conn.y;
+            const dx = x2 - conn.x;
+            const isCurved = Math.abs(dy) > 18;
+            const ctrlX = conn.x + dx * 0.35;
+            const ctrlY = conn.y + dy * 0.1;
+            const pathD = isCurved
+              ? `M ${conn.x} ${conn.y} Q ${ctrlX} ${ctrlY} ${x2} ${y2}`
+              : `M ${conn.x} ${conn.y} L ${x2} ${y2}`;
 
             return (
               <g
@@ -724,21 +778,18 @@ export function StudioCanvas({
                   onSelectObject(conn.id);
                 }}
               >
-                <line
-                  x1={conn.x}
-                  y1={conn.y}
-                  x2={x2}
-                  y2={y2}
+                <path
+                  d={pathD}
+                  fill="none"
                   stroke="transparent"
                   strokeWidth={16}
                 />
-                <line
-                  x1={conn.x}
-                  y1={conn.y}
-                  x2={x2}
-                  y2={y2}
+                <path
+                  d={pathD}
+                  fill="none"
                   stroke={strokeColor}
                   strokeWidth={conn.strokeWidth || 3}
+                  strokeLinecap="round"
                   markerEnd={`url(#studio-arrow-${surface}-${conn.colorKey})`}
                   style={{
                     filter:
@@ -825,9 +876,11 @@ export function StudioCanvas({
                     origH: obj.height,
                   };
                 }}
-                className={`absolute z-20 transition-shadow ${
+                className={`absolute z-20 transition-all ${
                   isSelected
-                    ? "ring-2 ring-[#FFE394] shadow-[0_0_24px_rgba(255,227,148,0.35)]"
+                    ? obj.type === "note" && surface === "neon"
+                      ? "rounded-2xl ring-2 ring-[#DDD6FE] shadow-[0_0_0_2px_rgba(167,139,250,0.85),0_0_26px_4px_rgba(139,92,246,0.58),inset_0_0_12px_rgba(255,255,255,0.45)]"
+                      : "ring-2 ring-[#FFE394] shadow-[0_0_24px_rgba(255,227,148,0.35)]"
                     : ""
                 }`}
               >
@@ -942,58 +995,42 @@ export function StudioCanvas({
                 {obj.type === "note" && (
                   <div
                     style={{
-                      backgroundColor:
+                      background:
                         surface === "neon"
-                          ? palette.neonNoteBg
+                          ? obj.colorKey === "violet"
+                            ? "linear-gradient(180deg, #CBB9FF 0%, #B7A1FA 100%)"
+                            : obj.colorKey === "cyan"
+                            ? "linear-gradient(180deg, #A5F3FC 0%, #67E8F9 100%)"
+                            : obj.colorKey === "pink"
+                            ? "linear-gradient(180deg, #FBCFE8 0%, #F472B6 100%)"
+                            : obj.colorKey === "gold"
+                            ? "linear-gradient(180deg, #FDE68A 0%, #F59E0B 100%)"
+                            : obj.colorKey === "green"
+                            ? "linear-gradient(180deg, #A7F3D0 0%, #34D399 100%)"
+                            : "linear-gradient(180deg, #F1F5F9 0%, #CBD5E1 100%)"
                           : palette.whiteboardNoteBg,
                       borderColor:
                         surface === "neon"
-                          ? palette.neonNoteBorder
+                          ? "rgba(255, 255, 255, 0.35)"
                           : palette.whiteboardNoteBorder,
-                      color:
-                        surface === "neon"
-                          ? palette.neonText
-                          : palette.whiteboardText,
+                      color: "#1B1538",
+                      transform:
+                        obj.id === "obj-note-training-outline"
+                          ? "rotate(-2.5deg)"
+                          : undefined,
                       boxShadow:
                         surface === "neon"
-                          ? `0 12px 28px rgba(0,0,0,0.65), 0 0 18px ${palette.neonGlow.replace(
+                          ? `0 14px 32px rgba(0,0,0,0.7), 0 0 22px ${palette.neonGlow.replace(
                               "0.65",
-                              "0.16"
+                              "0.22"
                             )}`
                           : "0 8px 20px rgba(15, 23, 42, 0.12)",
                     }}
-                    className="w-full h-full min-h-[140px] rounded-2xl border-[1.5px] p-3 flex flex-col justify-between gap-2 backdrop-blur-md"
+                    className="w-full h-full min-h-[135px] rounded-xl border p-3 flex flex-col justify-between gap-1.5"
                   >
-                    {/* Note Top Bar: Drag Handle + Task Badge (Hidden in Audience Mode) */}
+                    {/* Note Top Bar: Task Badge or Drag Handle */}
                     <div className="flex items-center justify-between gap-1.5">
-                      <div
-                        draggable={canEdit && !isPresentationMode}
-                        onDragStart={(e) => {
-                          e.stopPropagation();
-                          const payload = {
-                            type: (obj.linkedTaskId ? "task" : "note") as
-                              | "task"
-                              | "note",
-                            objectId: obj.id,
-                            taskId: obj.linkedTaskId,
-                            title: obj.title || obj.text || "Studio Note",
-                          };
-                          e.dataTransfer.setData(
-                            "application/x-waypoint-studio",
-                            JSON.stringify(payload)
-                          );
-                          onStartDragItem?.(payload);
-                        }}
-                        onDragEnd={() => onEndDragItem?.()}
-                        title="Drag onto a teammate or My Focus above to assign"
-                        className="inline-flex items-center gap-1 text-[10px] font-mono opacity-75 hover:opacity-100 cursor-grab active:cursor-grabbing"
-                      >
-                        <GripHorizontal className="w-3.5 h-3.5" />
-                        <span>{obj.linkedTaskId ? "Drag Task" : "Note"}</span>
-                      </div>
-
-                      {/* Task Badge & Private Metadata (Hidden in Presentation / Audience View) */}
-                      {obj.linkedTaskId && !hidePrivateTaskMeta && (
+                      {obj.linkedTaskId && !hidePrivateTaskMeta ? (
                         <button
                           type="button"
                           data-testid={`note-task-badge-${obj.id}`}
@@ -1001,23 +1038,83 @@ export function StudioCanvas({
                             e.stopPropagation();
                             onOpenTaskDrawer(obj.linkedTaskId!, obj.id);
                           }}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-300/60 text-cyan-200 text-[10px] font-mono font-bold hover:bg-cyan-500/35 cursor-pointer"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#2A2050]/15 border border-[#2A2050]/30 text-[#1E163B] text-[11px] font-sans font-semibold hover:bg-[#2A2050]/25 cursor-pointer"
                         >
-                          <CheckSquare className="w-2.5 h-2.5" />
+                          <CheckSquare className="w-3 h-3 text-[#2A2050]" />
                           <span>Task</span>
                           {linkedTask?.status === "complete" && (
-                            <span className="text-emerald-300">✓</span>
+                            <span className="text-emerald-800 font-bold">✓</span>
                           )}
                         </button>
+                      ) : (
+                        <div
+                          draggable={canEdit && !isPresentationMode}
+                          onDragStart={(e) => {
+                            e.stopPropagation();
+                            const payload = {
+                              type: (obj.linkedTaskId ? "task" : "note") as
+                                | "task"
+                                | "note",
+                              objectId: obj.id,
+                              taskId: obj.linkedTaskId,
+                              title: obj.title || obj.text || "Studio Note",
+                            };
+                            e.dataTransfer.setData(
+                              "application/x-studio-item",
+                              JSON.stringify({
+                                objectId: obj.id,
+                                type: "note",
+                                linkedTaskId: obj.linkedTaskId ?? null,
+                                title: obj.title || obj.text || "Studio Note",
+                              })
+                            );
+                            e.dataTransfer.setData(
+                              "application/x-waypoint-studio",
+                              JSON.stringify(payload)
+                            );
+                            onStartDragItem?.(payload);
+                          }}
+                          onDragEnd={() => onEndDragItem?.()}
+                          title="Drag onto Team in the top bar to assign"
+                          className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1E163B]/70 hover:text-[#1E163B] cursor-grab active:cursor-grabbing"
+                        >
+                          <GripHorizontal className="w-3.5 h-3.5" />
+                          <span>Note</span>
+                        </div>
+                      )}
+
+                      {obj.linkedTaskId && canEdit && !isPresentationMode && (
+                        <div
+                          draggable
+                          onDragStart={(e) => {
+                            e.stopPropagation();
+                            e.dataTransfer.setData(
+                              "text/studio-task-id",
+                              String(obj.linkedTaskId)
+                            );
+                            e.dataTransfer.setData(
+                              "application/x-studio-item",
+                              JSON.stringify({
+                                objectId: obj.id,
+                                type: "task",
+                                linkedTaskId: obj.linkedTaskId,
+                                title: obj.title || obj.text || "Studio Task",
+                              })
+                            );
+                          }}
+                          title="Drag onto Team button to assign"
+                          className="opacity-50 hover:opacity-100 cursor-grab active:cursor-grabbing text-[#1E163B]"
+                        >
+                          <GripHorizontal className="w-3.5 h-3.5" />
+                        </div>
                       )}
                     </div>
 
-                    {/* Note Editable Title & Body */}
-                    <div className="flex-1 flex flex-col gap-1">
+                    {/* Note Editable Title & Body (Handwritten Script Style) */}
+                    <div className="flex-1 flex flex-col justify-center gap-1">
                       {canEdit && !isPresentationMode ? (
                         <>
-                          <input
-                            type="text"
+                          <textarea
                             data-testid={`note-title-input-${obj.id}`}
                             value={obj.title || ""}
                             onChange={(e) =>
@@ -1025,72 +1122,71 @@ export function StudioCanvas({
                                 title: e.target.value,
                               })
                             }
-                            placeholder="Note heading..."
-                            className="w-full bg-transparent font-serif font-bold text-sm focus:outline-none border-b border-transparent focus:border-current/30 pb-0.5"
+                            placeholder="Write note..."
+                            rows={2}
+                            className="w-full bg-transparent font-medium text-[18px] leading-[1.2] text-[#1B1438] placeholder:text-[#1B1438]/50 resize-none focus:outline-none"
                             style={{
-                              fontFamily: "'Playfair Display', Georgia, serif",
+                              fontFamily:
+                                "'Caveat', 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive",
                             }}
                           />
-                          {(!obj.linkedTaskId || !hidePrivateTaskMeta) && (
-                            <textarea
-                              data-testid={`note-body-input-${obj.id}`}
-                              value={obj.text || ""}
-                              onChange={(e) =>
-                                handleUpdateSingleObject(obj.id, {
-                                  text: e.target.value,
-                                })
-                              }
-                              placeholder="Write note or action item..."
-                              rows={3}
-                              className="w-full flex-1 bg-transparent text-xs leading-relaxed resize-none focus:outline-none opacity-90"
-                            />
-                          )}
+                          {(!obj.linkedTaskId || !hidePrivateTaskMeta) &&
+                            Boolean(obj.text) && (
+                              <textarea
+                                data-testid={`note-body-input-${obj.id}`}
+                                value={obj.text || ""}
+                                onChange={(e) =>
+                                  handleUpdateSingleObject(obj.id, {
+                                    text: e.target.value,
+                                  })
+                                }
+                                placeholder="Additional details..."
+                                rows={2}
+                                className="w-full bg-transparent text-xs leading-snug text-[#1B1438]/85 resize-none focus:outline-none"
+                              />
+                            )}
                         </>
                       ) : (
                         <>
                           <div
-                            className="font-serif font-bold text-sm leading-snug"
+                            className="font-medium text-[18px] leading-[1.2] text-[#1B1438]"
                             style={{
-                              fontFamily: "'Playfair Display', Georgia, serif",
+                              fontFamily:
+                                "'Caveat', 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive",
                             }}
                           >
                             {obj.title}
                           </div>
-                          {(!obj.linkedTaskId || !hidePrivateTaskMeta) && obj.text && (
-                            <div className="text-xs leading-relaxed opacity-90 whitespace-pre-wrap">
-                              {obj.text}
-                            </div>
-                          )}
+                          {(!obj.linkedTaskId || !hidePrivateTaskMeta) &&
+                            obj.text && (
+                              <div className="text-xs leading-snug text-[#1B1438]/85 whitespace-pre-wrap">
+                                {obj.text}
+                              </div>
+                            )}
                         </>
                       )}
+                      {/* Handwritten Underline Accent */}
+                      <div className="w-4/5 h-[2px] rounded-full bg-[#241B4B]/70 mt-0.5" />
                     </div>
 
-                    {/* Footer: Assignee / Status Pill (Excluded from Audience / Presentation View) */}
-                    {obj.linkedTaskId && !hidePrivateTaskMeta && (
-                      <div className="pt-1.5 border-t border-current/15 flex items-center justify-between gap-1 text-[10px]">
-                        <span className="font-medium truncate">
-                          {linkedTask?.assigneeName
-                            ? `Assigned: ${linkedTask.assigneeName}`
-                            : "Unassigned"}
-                        </span>
-                        <span className="font-mono uppercase px-1.5 py-0.2 rounded bg-black/25">
-                          {linkedTask?.status === "complete"
-                            ? "Complete"
-                            : linkedTask?.status === "in_progress"
-                            ? "In Progress"
-                            : "Open"}
-                        </span>
-                      </div>
-                    )}
+                    {/* Footer: Assignee Pill if Assigned (Hidden in Presentation / Audience View) */}
+                    {obj.linkedTaskId &&
+                      !hidePrivateTaskMeta &&
+                      linkedTask?.assigneeName && (
+                        <div className="pt-1 border-t border-[#1B1438]/15 flex items-center justify-between gap-1 text-[10px] text-[#1B1438]/85">
+                          <span className="font-semibold truncate">
+                            {linkedTask.assigneeName}
+                          </span>
+                        </div>
+                      )}
                   </div>
                 )}
 
-                {/* RENDER 2: TYPED TEXT */}
+                {/* RENDER 2: TYPED / HANDWRITTEN TEXT & BULLET LISTS */}
                 {obj.type === "text" && (
-                  <div className="w-full h-full flex items-center">
+                  <div className="w-full h-full flex items-start">
                     {canEdit && !isPresentationMode ? (
-                      <input
-                        type="text"
+                      <textarea
                         data-testid={`canvas-text-input-${obj.id}`}
                         value={obj.text || ""}
                         onChange={(e) =>
@@ -1098,19 +1194,22 @@ export function StudioCanvas({
                             text: e.target.value,
                           })
                         }
+                        rows={Math.max(1, (obj.text || "").split("\n").length)}
                         style={{
                           color:
                             surface === "neon"
                               ? palette.neonInk
                               : palette.whiteboardInk,
-                          fontSize: `${obj.fontSize || 22}px`,
+                          fontSize: `${obj.fontSize || 24}px`,
+                          lineHeight: 1.35,
                           textShadow:
                             surface === "neon"
-                              ? `0 0 12px ${palette.neonGlow}`
+                              ? `0 0 14px ${palette.neonGlow}`
                               : "none",
-                          fontFamily: "'Playfair Display', Georgia, serif",
+                          fontFamily:
+                            "'Caveat', 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive",
                         }}
-                        className="w-full bg-transparent font-serif font-bold focus:outline-none px-1.5 py-0.5"
+                        className="w-full h-full bg-transparent font-medium resize-none focus:outline-none px-1.5 py-0.5 overflow-hidden"
                       />
                     ) : (
                       <div
@@ -1119,14 +1218,16 @@ export function StudioCanvas({
                             surface === "neon"
                               ? palette.neonInk
                               : palette.whiteboardInk,
-                          fontSize: `${obj.fontSize || 22}px`,
+                          fontSize: `${obj.fontSize || 24}px`,
+                          lineHeight: 1.35,
                           textShadow:
                             surface === "neon"
-                              ? `0 0 12px ${palette.neonGlow}`
+                              ? `0 0 14px ${palette.neonGlow}`
                               : "none",
-                          fontFamily: "'Playfair Display', Georgia, serif",
+                          fontFamily:
+                            "'Caveat', 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive",
                         }}
-                        className="font-serif font-bold px-1.5 py-0.5"
+                        className="font-medium px-1.5 py-0.5 whitespace-pre-wrap"
                       >
                         {obj.text}
                       </div>
@@ -1134,7 +1235,7 @@ export function StudioCanvas({
                   </div>
                 )}
 
-                {/* RENDER 3: SHAPES (RECTANGLE / CIRCLE / DIAMOND) */}
+                {/* RENDER 3: SHAPES (RECTANGLE / OVAL-CIRCLE / DIAMOND) */}
                 {(obj.type === "rect" ||
                   obj.type === "circle" ||
                   obj.type === "diamond") && (
@@ -1146,36 +1247,61 @@ export function StudioCanvas({
                           : palette.whiteboardInk,
                       backgroundColor:
                         surface === "neon"
-                          ? "rgba(6, 18, 50, 0.72)"
+                          ? "rgba(8, 13, 38, 0.45)"
                           : "rgba(255, 255, 255, 0.88)",
                       color:
                         surface === "neon"
-                          ? palette.neonText
-                          : palette.whiteboardText,
+                          ? palette.neonInk
+                          : palette.whiteboardInk,
                       boxShadow:
                         surface === "neon"
-                          ? `0 0 16px ${palette.neonGlow.replace("0.65", "0.28")}`
+                          ? `0 0 20px ${palette.neonGlow.replace(
+                              "0.65",
+                              "0.35"
+                            )}, inset 0 0 16px ${palette.neonGlow.replace(
+                              "0.65",
+                              "0.15"
+                            )}`
                           : "0 4px 12px rgba(15,23,42,0.08)",
                       borderRadius:
-                        obj.type === "circle" ? "9999px" : "16px",
+                        obj.type === "circle" ? "9999px" : "18px",
                     }}
-                    className="w-full h-full min-h-[100px] border-2 p-3 flex flex-col items-center justify-center text-center"
+                    className="w-full h-full min-h-[88px] border-[3px] p-3 flex flex-col items-center justify-center text-center"
                   >
                     {canEdit && !isPresentationMode ? (
                       <input
                         type="text"
-                        value={obj.title || ""}
+                        value={obj.title || obj.text || ""}
                         onChange={(e) =>
                           handleUpdateSingleObject(obj.id, {
                             title: e.target.value,
+                            text: e.target.value,
                           })
                         }
                         placeholder="Shape label..."
-                        className="w-full bg-transparent text-center font-serif font-bold text-xs sm:text-sm focus:outline-none"
+                        style={{
+                          fontFamily:
+                            "'Caveat', 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive",
+                          textShadow:
+                            surface === "neon"
+                              ? `0 0 14px ${palette.neonGlow}`
+                              : "none",
+                        }}
+                        className="w-full bg-transparent text-center font-medium text-3xl sm:text-4xl focus:outline-none"
                       />
                     ) : (
-                      <span className="font-serif font-bold text-xs sm:text-sm">
-                        {obj.title}
+                      <span
+                        style={{
+                          fontFamily:
+                            "'Caveat', 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive",
+                          textShadow:
+                            surface === "neon"
+                              ? `0 0 14px ${palette.neonGlow}`
+                              : "none",
+                        }}
+                        className="font-medium text-3xl sm:text-4xl"
+                      >
+                        {obj.title || obj.text}
                       </span>
                     )}
                   </div>
@@ -1206,95 +1332,8 @@ export function StudioCanvas({
           })}
       </div>
 
-      {/* 3. Polished Empty State Overlay when Page is Empty */}
-      {isBoardEmpty && canEdit && (
-        <div
-          data-testid="studio-empty-state"
-          onPointerDown={(e) => e.stopPropagation()}
-          className="absolute inset-0 z-25 flex items-center justify-center pointer-events-none p-4"
-        >
-          <div className="pointer-events-auto max-w-xl w-full rounded-2xl border border-[#1E3264] bg-[#030B24]/92 backdrop-blur-md p-6 text-center space-y-4 shadow-[0_20px_60px_rgba(0,0,0,0.85)]">
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#DFBE77]">
-                The Studio · Collaborative Canvas
-              </span>
-              <h3
-                className="text-xl font-serif font-bold text-white"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              >
-                Ready for ideas, tasks, and live teaching
-              </h3>
-              <p className="text-xs text-slate-300">
-                Choose how you would like to begin on this page:
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              <button
-                type="button"
-                data-testid="empty-start-writing-btn"
-                onClick={() => onToolChange("pen")}
-                className="p-3.5 rounded-xl border border-cyan-400/40 bg-[#061438] hover:bg-[#0A1F52] hover:border-cyan-300 text-left space-y-1.5 transition-all cursor-pointer group"
-              >
-                <PenTool className="w-4 h-4 text-cyan-300 group-hover:scale-110 transition-transform" />
-                <div className="text-xs font-bold text-white">Start writing</div>
-                <div className="text-[10px] text-slate-300">
-                  Draw with smooth neon or marker ink
-                </div>
-              </button>
-
-              <button
-                type="button"
-                data-testid="empty-add-note-btn"
-                onClick={() => {
-                  const now = new Date().toISOString();
-                  const note: StudioCanvasObject = {
-                    id: `note-${Date.now()}`,
-                    type: "note",
-                    x: 180,
-                    y: 140,
-                    width: 240,
-                    height: 155,
-                    title: "Key IEP Action Item",
-                    text: "Select this note and click 'Make task' to sync with CRM Tasks.",
-                    colorKey: "cyan",
-                    audienceVisible: true,
-                    createdAt: now,
-                    updatedAt: now,
-                  };
-                  onCommitObjects([note]);
-                  onSelectObject(note.id);
-                }}
-                className="p-3.5 rounded-xl border border-violet-400/40 bg-[#061438] hover:bg-[#0A1F52] hover:border-violet-300 text-left space-y-1.5 transition-all cursor-pointer group"
-              >
-                <StickyNote className="w-4 h-4 text-violet-300 group-hover:scale-110 transition-transform" />
-                <div className="text-xs font-bold text-white">Add a note</div>
-                <div className="text-[10px] text-slate-300">
-                  Capture thoughts or convert to a task
-                </div>
-              </button>
-
-              <button
-                type="button"
-                data-testid="empty-add-teaching-page-btn"
-                onClick={() => onAddTeachingPage?.()}
-                className="p-3.5 rounded-xl border border-[#C5A059]/50 bg-[#061438] hover:bg-[#0A1F52] hover:border-[#FFE394] text-left space-y-1.5 transition-all cursor-pointer group"
-              >
-                <FilePlus2 className="w-4 h-4 text-[#FFE394] group-hover:scale-110 transition-transform" />
-                <div className="text-xs font-bold text-white">
-                  Add your first teaching page
-                </div>
-                <div className="text-[10px] text-slate-300">
-                  Build multi-page lesson slides
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 4. Viewport Zoom & Fit-to-Board Controls (Bottom-Right Corner) */}
-      {!isPresentationMode && (
+      {!isPresentationMode && !hideInternalZoomBar && (
         <div
           onPointerDown={(e) => e.stopPropagation()}
           className="absolute bottom-3 right-3 z-30 flex items-center gap-1 rounded-xl border border-[#1E3264] bg-[#030B22]/95 px-2 py-1 shadow-xl text-xs text-slate-200"

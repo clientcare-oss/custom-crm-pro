@@ -17,6 +17,8 @@ import {
   Redo2,
   Plus,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Check,
   AlertTriangle,
   RefreshCw,
@@ -33,6 +35,11 @@ import {
   FolderKanban,
   Sun,
   Moon,
+  Users,
+  Shapes,
+  MoreHorizontal,
+  SlidersHorizontal,
+  ExternalLink,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -45,6 +52,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { ScopedErrorBoundary } from "@/components/ScopedErrorBoundary";
 import {
+  STUDIO_COLORS,
   STUDIO_COLOR_LIST,
   STROKE_THICKNESS_OPTIONS,
   broadcastStudioSync,
@@ -83,15 +91,18 @@ const AVATAR_COLORS = [
   "#38BDF8",
 ];
 
+const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
 export default function Studio() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const utils = trpc.useUtils();
+  const workspaceRootRef = useRef<HTMLDivElement | null>(null);
 
   // ── Board & Workspace State ───────────────────────────────────────────────
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
   const [showArchivedBoards, setShowArchivedBoards] = useState(false);
-  const [boardTitle, setBoardTitle] = useState("IEP Strategy & Live Teaching Studio");
+  const [boardTitle, setBoardTitle] = useState("IEP Strategy & Live Teaching");
   const [surface, setSurface] = useState<StudioSurfaceMode>("neon");
   const [pages, setPages] = useState<StudioPage[]>([]);
   const [activePageId, setActivePageId] = useState<string>("page-1");
@@ -109,14 +120,24 @@ export default function Studio() {
   });
   const [myRole, setMyRole] = useState<StudioRole>("owner");
 
-  // ── Active Tool & Drawing State ───────────────────────────────────────────
-  const [activeTool, setActiveTool] = useState<StudioToolId>("select");
+  // ── Active Tool, Drawing & Viewport State ─────────────────────────────────
+  const [activeTool, setActiveTool] = useState<StudioToolId>("pen");
   const [activeColor, setActiveColor] = useState<StudioColorKey>("cyan");
-  const [strokeThickness, setStrokeThickness] = useState<number>(4);
+  const [strokeThickness, setStrokeThickness] = useState<number>(3);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [inspectedTaskId, setInspectedTaskId] = useState<number | null>(null);
   const [isPresenting, setIsPresenting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [canvasZoom, setCanvasZoom] = useState<number>(1);
+  const [fitViewCounter, setFitViewCounter] = useState<number>(0);
+
+  // ── Popovers & Floating Drawers ───────────────────────────────────────────
+  const [teamPopoverOpen, setTeamPopoverOpen] = useState(false);
+  const [pagesDrawerOpen, setPagesDrawerOpen] = useState(false);
+  const [shapesMenuOpen, setShapesMenuOpen] = useState(false);
+  const [lastShapeTool, setLastShapeTool] = useState<
+    "rect" | "circle" | "diamond" | "connector"
+  >("circle");
 
   // ── Undo / Redo Stacks ────────────────────────────────────────────────────
   const [undoStack, setUndoStack] = useState<PageHistoryEntry[]>([]);
@@ -130,7 +151,9 @@ export default function Studio() {
 
   // ── Modals & Confirmations ────────────────────────────────────────────────
   const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [nameModalMode, setNameModalMode] = useState<"create" | "rename" | null>(null);
+  const [nameModalMode, setNameModalMode] = useState<"create" | "rename" | null>(
+    null
+  );
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [pendingNoteDropAssign, setPendingNoteDropAssign] = useState<{
     noteId: string;
@@ -140,7 +163,6 @@ export default function Studio() {
     isMyFocus: boolean;
   } | null>(null);
   const [dragHoverTarget, setDragHoverTarget] = useState<string | null>(null);
-  const [showMyFocusPopover, setShowMyFocusPopover] = useState(false);
 
   // ── tRPC Queries ──────────────────────────────────────────────────────────
   const boardsQuery = trpc.studio.listBoards.useQuery({
@@ -170,7 +192,11 @@ export default function Studio() {
     }
     hydratedBoardIdRef.current = data.id;
     setSelectedBoardId(data.id);
-    setBoardTitle(data.title);
+    setBoardTitle(
+      data.title === "IEP Strategy & Live Teaching Board"
+        ? "IEP Strategy & Live Teaching"
+        : data.title
+    );
     setSurface((data.defaultSurface as StudioSurfaceMode) || "neon");
     setPages((data.pages as StudioPage[]) || []);
     setActivePageId(data.activePageId || data.pages?.[0]?.id || "page-1");
@@ -182,7 +208,7 @@ export default function Studio() {
     setSaveErrorMessage(null);
   }, [boardDetailQuery.data]);
 
-  // Sync browser fullscreen state
+  // Sync browser fullscreen state (Fullscreen expands this exact same interface)
   useEffect(() => {
     const onFs = () => setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", onFs);
@@ -192,12 +218,13 @@ export default function Studio() {
   const toggleBrowserFullscreen = async () => {
     try {
       if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
+        const targetEl = workspaceRootRef.current || document.documentElement;
+        await targetEl.requestFullscreen();
       } else {
         await document.exitFullscreen();
       }
     } catch {
-      toast.info("Fullscreen mode toggled.");
+      setIsFullscreen((prev) => !prev);
     }
   };
 
@@ -215,7 +242,9 @@ export default function Studio() {
     onError: (err) => {
       setSaveStatus("error");
       setSaveErrorMessage(err.message || "Could not save board changes.");
-      toast.error(`Save failed: ${err.message}. Your work is preserved locally.`);
+      toast.error(
+        `Save failed: ${err.message}. Your work is preserved locally.`
+      );
     },
   });
 
@@ -293,7 +322,6 @@ export default function Studio() {
 
   const convertNoteToTaskMut = trpc.studio.convertNoteToTask.useMutation({
     onSuccess: (res, vars) => {
-      // Attach linkedTaskId to the sticky note on the canvas without duplicating
       setPages((prevPages) => {
         const next = prevPages.map((p) => ({
           ...p,
@@ -326,7 +354,6 @@ export default function Studio() {
   const updateStudioTaskMut = trpc.studio.updateStudioTask.useMutation({
     onSuccess: (_res, vars) => {
       utils.studio.getBoardTasks.invalidate();
-      // Sync sticky note title/focus on canvas if linked
       setPages((prev) =>
         prev.map((p) => ({
           ...p,
@@ -559,6 +586,22 @@ export default function Studio() {
     toast.success(`Added ${newPage.title}`);
   }, [myRole, pages, activePageId, accessSettings, queueAutosave]);
 
+  const handleStepPage = useCallback(
+    (delta: number) => {
+      if (pages.length === 0) return;
+      const nextIdx = Math.max(
+        0,
+        Math.min(pages.length - 1, activePageIndex + delta)
+      );
+      const target = pages[nextIdx];
+      if (target && target.id !== activePageId) {
+        setActivePageId(target.id);
+        queueAutosave({ activePageId: target.id });
+      }
+    },
+    [pages, activePageIndex, activePageId, queueAutosave]
+  );
+
   const handleClearCurrentPage = useCallback(() => {
     if (myRole === "viewer" || !activePage) return;
     const cleared: StudioPage = {
@@ -594,7 +637,6 @@ export default function Studio() {
     [inspectedTaskId, taskMap]
   );
 
-  // Collect task-linked objects and count non-task items for Cards view banner explanation
   const {
     taskLinkedObjects,
     ordinaryNotesCount,
@@ -645,7 +687,7 @@ export default function Studio() {
       : teamRoster[0]?.id ?? 1;
   }, [user?.id, teamRoster]);
 
-  // ── Assignment Actions (Drag-and-Drop + Click-to-Assign) ──────────────────
+  // ── Assignment Actions (Moved into Team Popover & Drag-to-Team) ───────────
   const handleConvertNoteToTask = useCallback(
     (
       obj: StudioCanvasObject,
@@ -706,7 +748,6 @@ export default function Studio() {
     [currentBoardId, myRole, teamRoster, updateStudioTaskMut]
   );
 
-  // Handle dropping a canvas note or task card onto a Teammate avatar or My Focus
   const handleDropOnAssignmentTarget = (
     e: React.DragEvent,
     target: {
@@ -751,7 +792,6 @@ export default function Studio() {
             target.isMyFocus ? true : undefined
           );
         } else {
-          // Ordinary note dropped onto Teammate or My Focus -> Offer inline "Create and assign task" confirmation
           setPendingNoteDropAssign({
             noteId: parsed.objectId,
             noteTitle: parsed.title || "Sticky Note",
@@ -801,6 +841,9 @@ export default function Studio() {
           setIsPresenting(false);
         } else {
           setSelectedObjectId(null);
+          setShapesMenuOpen(false);
+          setTeamPopoverOpen(false);
+          setPagesDrawerOpen(false);
           setActiveTool("select");
         }
       } else if (
@@ -851,42 +894,52 @@ export default function Studio() {
     );
   };
 
+  const isShapeToolActive =
+    activeTool === "rect" ||
+    activeTool === "circle" ||
+    activeTool === "diamond" ||
+    activeTool === "connector";
+
+  const activeColorPalette =
+    STUDIO_COLORS[activeColor] || STUDIO_COLORS.cyan;
+
+  const totalPagesCount = Math.max(1, pages.length);
+
   return (
     <ScopedErrorBoundary moduleName="The Studio (PG-049)">
       <div
+        ref={workspaceRootRef}
         data-testid="studio-workspace-root"
-        className="h-[calc(100vh-3.5rem)] w-full bg-[#000820] text-white flex flex-col overflow-hidden select-none"
+        className="h-[calc(100dvh-3.5rem)] md:h-dvh flex-1 w-full bg-[#030617] text-white flex flex-col overflow-hidden select-none"
       >
-        {/* ── 1. TOP WORKSPACE BAR ── */}
-        <header className="h-13 px-3 sm:px-4 bg-[#020A24]/95 border-b border-[#182954] flex items-center justify-between gap-2 shrink-0 z-20">
-          {/* Left: Studio Badge + Board Switcher Dropdown + Honest Save Status + New Board */}
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#07143A] border border-cyan-400/30">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-[11px] font-bold tracking-wider uppercase text-cyan-200">
+        {/* ── 1. SINGLE COMPACT HEADER BAR (Matches Reference Layout at 100% Zoom) ── */}
+        <header className="h-12 px-3 sm:px-4 bg-[#070B20]/95 border-b border-white/10 flex items-center justify-between gap-2 shrink-0 z-30">
+          {/* Left: ✨ THE STUDIO | Board Switcher Pill | ✓ Saved */}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-2 shrink-0">
+              <Sparkles className="w-4 h-4 text-[#A78BFA] drop-shadow-[0_0_8px_rgba(167,139,250,0.8)]" />
+              <span className="text-xs font-extrabold tracking-[0.14em] uppercase text-white">
                 THE STUDIO
-              </span>
-              <span className="text-[10px] font-mono text-[#FFE394] ml-0.5">
-                PG-049
               </span>
             </div>
 
-            {/* Board Switching Dropdown */}
+            <div className="h-5 w-px bg-white/12 shrink-0" />
+
+            {/* Board Switching Dropdown Pill */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
                   data-testid="studio-board-switcher-btn"
-                  className="h-8.5 px-3 rounded-xl bg-[#051235] hover:bg-[#091D52] border border-[#243B74] text-xs sm:text-sm font-serif font-bold text-white inline-flex items-center gap-2 max-w-[220px] sm:max-w-[280px] cursor-pointer"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  className="h-8 px-3 rounded-lg bg-[#0D1330] hover:bg-[#141C42] border border-white/15 text-xs font-semibold text-white inline-flex items-center gap-2 max-w-[240px] sm:max-w-[300px] transition-colors cursor-pointer"
                 >
                   <span className="truncate">{boardTitle}</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
-                className="w-72 bg-[#040D28] border border-[#243B74] text-slate-100 text-xs"
+                className="w-72 bg-[#080D26] border border-white/15 text-slate-100 text-xs z-50"
               >
                 <div className="px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
                   <span>Studio Boards</span>
@@ -931,7 +984,7 @@ export default function Studio() {
                   </DropdownMenuItem>
                 ))}
 
-                <DropdownMenuSeparator className="bg-[#182954]" />
+                <DropdownMenuSeparator className="bg-white/10" />
                 <DropdownMenuItem
                   data-testid="board-menu-new-btn"
                   onClick={() => setNameModalMode("create")}
@@ -983,7 +1036,7 @@ export default function Studio() {
                           : "Archive Board"}
                       </span>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-[#182954]" />
+                    <DropdownMenuSeparator className="bg-white/10" />
                     <DropdownMenuItem
                       data-testid="board-menu-delete-btn"
                       onClick={() => setConfirmDeleteOpen(true)}
@@ -997,43 +1050,31 @@ export default function Studio() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Quick + New Board Button */}
-            <button
-              type="button"
-              data-testid="studio-new-board-top-btn"
-              onClick={() => setNameModalMode("create")}
-              title="Create a new Studio board"
-              className="h-8 px-2.5 rounded-xl bg-[#051235] hover:bg-[#091D52] border border-[#243B74] text-xs font-semibold text-cyan-200 hover:text-white inline-flex items-center gap-1 cursor-pointer shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">New Board</span>
-            </button>
-
             {/* Honest Save-State Indicator */}
             <div
               data-testid="studio-save-status-badge"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#040D28] border border-[#182954] text-[11px]"
+              className="flex items-center gap-1 text-xs text-slate-300 shrink-0"
             >
               {saveStatus === "saved" && (
                 <>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span className="text-emerald-300 font-medium">Saved</span>
+                  <Check className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-slate-300">Saved</span>
                 </>
               )}
               {saveStatus === "saving" && (
                 <>
                   <RefreshCw className="w-3 h-3 text-cyan-400 animate-spin" />
-                  <span className="text-cyan-300 font-medium">Saving…</span>
+                  <span className="text-cyan-300">Saving…</span>
                 </>
               )}
               {saveStatus === "unsaved" && (
                 <button
                   type="button"
                   onClick={() => flushSaveNow()}
-                  className="flex items-center gap-1.5 text-[#FFE394] hover:underline cursor-pointer"
+                  className="flex items-center gap-1 text-[#FFE394] hover:underline cursor-pointer"
                 >
-                  <span className="w-2 h-2 rounded-full bg-[#FFE394]" />
-                  <span>Unsaved changes</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFE394]" />
+                  <span>Unsaved</span>
                 </button>
               )}
               {saveStatus === "error" && (
@@ -1051,83 +1092,299 @@ export default function Studio() {
             </div>
           </div>
 
-          {/* Center: Surface Selector (Whiteboard | Neon [default] | Cards) */}
-          <div
-            data-testid="studio-surface-selector"
-            className="flex items-center p-1 rounded-xl bg-[#040D26] border border-[#1E3264] shrink-0"
-          >
-            {(
-              [
-                { id: "whiteboard", label: "Whiteboard", icon: Sun },
-                { id: "neon", label: "Neon", icon: Moon },
-                { id: "cards", label: "Cards", icon: FolderKanban },
-              ] as const
-            ).map((s) => {
-              const Icon = s.icon;
-              const isSelected = surface === s.id;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  data-testid={`studio-surface-tab-${s.id}`}
-                  onClick={() => {
-                    setSurface(s.id);
-                    queueAutosave({ surface: s.id });
-                  }}
-                  className={`h-7 px-2.5 sm:px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer ${
-                    isSelected
-                      ? s.id === "neon"
-                        ? "bg-gradient-to-r from-cyan-500/25 to-violet-500/25 border border-cyan-400/60 text-white shadow-[0_0_12px_rgba(34,211,238,0.25)]"
-                        : s.id === "whiteboard"
-                        ? "bg-white text-slate-950 font-bold shadow"
-                        : "bg-[#0C2154] border border-[#FFE394]/60 text-[#FFE394]"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{s.label}</span>
-                  {s.id === "cards" && tasks.length > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono">
-                      {tasks.length}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          {/* Center: Surface Selector (Whiteboard | Neon | Cards) */}
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:block h-5 w-px bg-white/12" />
+            <div
+              data-testid="studio-surface-selector"
+              className="flex items-center p-0.5 rounded-xl bg-[#0D1330] border border-white/12 shrink-0"
+            >
+              {(
+                [
+                  { id: "whiteboard", label: "Whiteboard", icon: Sun },
+                  { id: "neon", label: "Neon", icon: Moon },
+                  { id: "cards", label: "Cards", icon: FolderKanban },
+                ] as const
+              ).map((s) => {
+                const Icon = s.icon;
+                const isSelected = surface === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    data-testid={`studio-surface-tab-${s.id}`}
+                    onClick={() => {
+                      setSurface(s.id);
+                      queueAutosave({ surface: s.id });
+                    }}
+                    className={`h-7 px-3 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer ${
+                      isSelected
+                        ? s.id === "neon"
+                          ? "bg-gradient-to-b from-[#6C47E5] to-[#502CC4] border border-[#967BFF]/60 text-white font-semibold shadow-[0_0_14px_rgba(124,92,252,0.5)]"
+                          : s.id === "whiteboard"
+                          ? "bg-white text-slate-950 font-bold shadow"
+                          : "bg-gradient-to-b from-[#6C47E5] to-[#502CC4] border border-[#967BFF]/60 text-white font-semibold"
+                        : "text-slate-300 hover:text-white"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{s.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="hidden lg:block h-5 w-px bg-white/12" />
           </div>
 
-          {/* Right: Go Full Screen | Share/Access | Present */}
+          {/* Right: Team (with Assignment Dropdown & Drop Target) | Share | Fullscreen | Present */}
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              data-testid="studio-workspace-fullscreen-btn"
-              onClick={toggleBrowserFullscreen}
-              title={isFullscreen ? "Exit Full Screen" : "Go Full Screen"}
-              className="h-8 px-2.5 rounded-xl bg-[#051235] hover:bg-[#091D52] border border-[#243B74] text-xs font-medium text-slate-200 hover:text-white inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              {isFullscreen ? (
-                <>
-                  <Minimize2 className="w-3.5 h-3.5 text-cyan-300" />
-                  <span className="hidden xl:inline">Exit Full Screen</span>
-                </>
-              ) : (
-                <>
-                  <Maximize2 className="w-3.5 h-3.5 text-cyan-300" />
-                  <span className="hidden xl:inline">Go Full Screen</span>
-                </>
-              )}
-            </button>
+            {/* 👥 Team Button & Assignment Popover (Replaces second assignment sub-bar) */}
+            <div className="relative">
+              <button
+                type="button"
+                data-testid="studio-team-assignment-btn"
+                onClick={() => setTeamPopoverOpen((v) => !v)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragHoverTarget("team-btn");
+                  if (!teamPopoverOpen) setTeamPopoverOpen(true);
+                }}
+                onDragLeave={() => setDragHoverTarget(null)}
+                className={`h-8 px-3 rounded-lg border text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer ${
+                  teamPopoverOpen || dragHoverTarget === "team-btn"
+                    ? "bg-[#1A2352] border-[#8B6DFF] text-white shadow-[0_0_14px_rgba(139,109,255,0.4)]"
+                    : "bg-[#0D1330] hover:bg-[#141C42] border-white/15 text-slate-200 hover:text-white"
+                }`}
+              >
+                <Users className="w-3.5 h-3.5 text-slate-300" />
+                <span>Team</span>
+                {myFocusTasks.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-[#6C47E5]/40 border border-[#967BFF]/50 text-[10px] font-mono text-white">
+                    {myFocusTasks.length}
+                  </span>
+                )}
+              </button>
 
+              {teamPopoverOpen && (
+                <div
+                  data-testid="studio-team-assignment-popover"
+                  className="absolute right-0 top-10 z-50 w-80 p-3.5 rounded-2xl bg-[#090E28]/98 border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.9)] space-y-3"
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                    <div>
+                      <div className="text-xs font-bold text-white">
+                        Team & Task Assignment
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        Select a note/task on the board or drag it onto a teammate below
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setTeamPopoverOpen(false)}
+                      className="text-[11px] text-slate-400 hover:text-white cursor-pointer"
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                  {/* My Focus Target */}
+                  <div className="space-y-1.5">
+                    <button
+                      type="button"
+                      data-testid="assign-target-my-focus"
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragHoverTarget("my-focus");
+                      }}
+                      onDragLeave={() => setDragHoverTarget(null)}
+                      onDrop={(e) =>
+                        handleDropOnAssignmentTarget(e, {
+                          assigneeId: currentUserNumericId,
+                          assigneeName: user?.name || "My Focus",
+                          isMyFocus: true,
+                        })
+                      }
+                      onClick={() => {
+                        const selObj = activePage.objects.find(
+                          (o) => o.id === selectedObjectId
+                        );
+                        if (selObj) {
+                          if (selObj.linkedTaskId) {
+                            handleAssignTaskToMember(
+                              selObj.linkedTaskId,
+                              currentUserNumericId,
+                              user?.name || "My Focus",
+                              true
+                            );
+                          } else if (selObj.type === "note") {
+                            setPendingNoteDropAssign({
+                              noteId: selObj.id,
+                              noteTitle:
+                                selObj.title || selObj.text || "Sticky Note",
+                              assigneeId: currentUserNumericId,
+                              assigneeName: user?.name || "My Focus",
+                              isMyFocus: true,
+                            });
+                          }
+                        } else {
+                          toast.info(
+                            "Select a sticky note or task on the board first to assign it to My Focus."
+                          );
+                        }
+                      }}
+                      className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                        dragHoverTarget === "my-focus"
+                          ? "bg-[#FFE394]/25 border-[#FFE394] text-white"
+                          : "bg-[#16130B] border-[#C5A059]/50 text-[#FFE394] hover:border-[#FFE394]"
+                      }`}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <Target className="w-3.5 h-3.5 text-[#FFE394]" />
+                        <span>Assign to My Focus</span>
+                      </span>
+                      <span className="px-1.5 py-0.2 rounded-full bg-[#FFE394]/20 text-[#FFE394] text-[10px] font-mono">
+                        {myFocusTasks.length} pinned
+                      </span>
+                    </button>
+
+                    {myFocusTasks.length > 0 && (
+                      <div className="space-y-1 max-h-28 overflow-y-auto pl-1">
+                        {myFocusTasks.map((t) => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => {
+                              setInspectedTaskId(t.id);
+                              setTeamPopoverOpen(false);
+                            }}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-[#05091C] hover:bg-[#0D1638] border border-white/10 text-left flex items-center justify-between gap-2 cursor-pointer"
+                          >
+                            <span className="text-[11px] text-white truncate">
+                              {t.title}
+                            </span>
+                            <span className="text-[10px] font-mono text-cyan-300 shrink-0">
+                              #{t.id}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Team Roster Members */}
+                  <div className="space-y-1.5">
+                    <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+                      Team Members
+                    </div>
+                    <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto">
+                      {teamRoster.map((member, mIdx) => {
+                        const targetKey = `member-${member.id}`;
+                        const isHover = dragHoverTarget === targetKey;
+                        const badgeColor =
+                          AVATAR_COLORS[mIdx % AVATAR_COLORS.length];
+                        return (
+                          <button
+                            key={member.id}
+                            type="button"
+                            data-testid={`assign-target-member-${member.id}`}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setDragHoverTarget(targetKey);
+                            }}
+                            onDragLeave={() => setDragHoverTarget(null)}
+                            onDrop={(e) =>
+                              handleDropOnAssignmentTarget(e, {
+                                assigneeId: member.id,
+                                assigneeName: member.name,
+                                isMyFocus: false,
+                              })
+                            }
+                            onClick={() => {
+                              const selObj = activePage.objects.find(
+                                (o) => o.id === selectedObjectId
+                              );
+                              if (!selObj) {
+                                toast.info(
+                                  `Select a sticky note or task on the board first to assign it to ${member.name}.`
+                                );
+                                return;
+                              }
+                              if (selObj.linkedTaskId) {
+                                handleAssignTaskToMember(
+                                  selObj.linkedTaskId,
+                                  member.id,
+                                  member.name,
+                                  false
+                                );
+                              } else if (selObj.type === "note") {
+                                setPendingNoteDropAssign({
+                                  noteId: selObj.id,
+                                  noteTitle:
+                                    selObj.title ||
+                                    selObj.text ||
+                                    "Sticky Note",
+                                  assigneeId: member.id,
+                                  assigneeName: member.name,
+                                  isMyFocus: false,
+                                });
+                              }
+                            }}
+                            className={`w-full px-2.5 py-1.5 rounded-xl border text-xs font-medium flex items-center justify-between transition-all cursor-pointer ${
+                              isHover
+                                ? "bg-cyan-500/25 border-cyan-300 text-white"
+                                : "bg-[#0D1330] border-white/10 text-slate-200 hover:border-cyan-400/50 hover:text-white"
+                            }`}
+                          >
+                            <span className="inline-flex items-center gap-2 min-w-0">
+                              <span
+                                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-950 shrink-0"
+                                style={{ backgroundColor: badgeColor }}
+                              >
+                                {member.initials}
+                              </span>
+                              <span className="truncate">{member.name}</span>
+                            </span>
+                            <span className="text-[10px] text-slate-400 shrink-0">
+                              Assign
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 🔗 Share Button */}
             <button
               type="button"
               data-testid="studio-share-access-btn"
               onClick={() => setShareModalOpen(true)}
-              className="h-8 px-3 rounded-xl bg-[#051235] hover:bg-[#091D52] border border-[#243B74] text-xs font-semibold text-slate-200 hover:text-white inline-flex items-center gap-1.5 cursor-pointer"
+              className="h-8 px-3 rounded-lg bg-[#0D1330] hover:bg-[#141C42] border border-white/15 text-xs font-medium text-slate-200 hover:text-white inline-flex items-center gap-1.5 cursor-pointer"
             >
-              <Share2 className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden sm:inline">Share</span>
+              <Share2 className="w-3.5 h-3.5 text-slate-300" />
+              <span>Share</span>
             </button>
 
+            {/* ⤢ Fullscreen Icon Button (Expands this same interface) */}
+            <button
+              type="button"
+              data-testid="studio-workspace-fullscreen-btn"
+              onClick={toggleBrowserFullscreen}
+              title={isFullscreen ? "Exit Full Screen" : "Full Screen"}
+              aria-label={isFullscreen ? "Exit Full Screen" : "Full Screen"}
+              className="w-8 h-8 rounded-lg bg-[#0D1330] hover:bg-[#141C42] border border-white/15 text-slate-200 hover:text-white inline-flex items-center justify-center cursor-pointer"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-3.5 h-3.5" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
+            </button>
+
+            {/* ▶ Present Gold Button */}
             <button
               type="button"
               data-testid="studio-present-btn"
@@ -1138,19 +1395,19 @@ export default function Studio() {
                 flushSaveNow();
                 setIsPresenting(true);
               }}
-              className="h-8 px-3.5 rounded-xl bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] text-xs font-extrabold border border-[#FFE394]/60 shadow-[0_3px_12px_rgba(0,0,0,0.7)] hover:brightness-110 inline-flex items-center gap-1.5 cursor-pointer"
+              className="h-8 px-3.5 rounded-lg bg-gradient-to-b from-[#E5C168] via-[#CFA84E] to-[#B08832] text-[#090D1E] text-xs font-bold border border-[#FFE394]/60 shadow-[0_2px_10px_rgba(0,0,0,0.65)] hover:brightness-110 inline-flex items-center gap-1.5 cursor-pointer"
             >
-              <Play className="w-3.5 h-3.5 fill-current" />
+              <Play className="w-3 h-3 fill-current" />
               <span>Present</span>
             </button>
           </div>
         </header>
 
-        {/* Save Error Banner (if a save failed, visibly alert without discarding local edits) */}
+        {/* Save Error Banner (only if a save error occurs) */}
         {saveStatus === "error" && (
           <div
             data-testid="studio-save-error-banner"
-            className="px-4 py-1.5 bg-rose-950/90 border-b border-rose-500/50 flex items-center justify-between text-xs text-rose-100 shrink-0"
+            className="px-4 py-1.5 bg-rose-950/90 border-b border-rose-500/50 flex items-center justify-between text-xs text-rose-100 shrink-0 z-30"
           >
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
@@ -1173,7 +1430,7 @@ export default function Studio() {
         {confirmDeleteOpen && currentBoardId && (
           <div
             data-testid="studio-confirm-delete-board-bar"
-            className="px-4 py-2 bg-[#160B24] border-b border-rose-500/50 flex items-center justify-between text-xs shrink-0"
+            className="px-4 py-2 bg-[#160B24] border-b border-rose-500/50 flex items-center justify-between text-xs shrink-0 z-30"
           >
             <span className="text-slate-200">
               Permanently delete board{" "}
@@ -1184,9 +1441,7 @@ export default function Studio() {
               <button
                 type="button"
                 data-testid="confirm-delete-board-yes"
-                onClick={() =>
-                  deleteBoardMut.mutate({ id: currentBoardId })
-                }
+                onClick={() => deleteBoardMut.mutate({ id: currentBoardId })}
                 className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer"
               >
                 Delete Board
@@ -1194,7 +1449,7 @@ export default function Studio() {
               <button
                 type="button"
                 onClick={() => setConfirmDeleteOpen(false)}
-                className="px-3 py-1 rounded-lg bg-[#040D28] border border-[#1E3264] text-slate-300 hover:text-white cursor-pointer"
+                className="px-3 py-1 rounded-lg bg-[#040D28] border border-white/15 text-slate-300 hover:text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -1202,228 +1457,11 @@ export default function Studio() {
           </div>
         )}
 
-        {/* ── 2. SUB-BAR: COMPACT TEAM ASSIGNMENT BAR & PAGE SWITCHER (Editing Mode) ── */}
-        <div className="min-h-11 px-3 sm:px-4 py-1.5 bg-[#02081D] border-b border-[#14234A] flex flex-wrap items-center justify-between gap-2 shrink-0 z-10">
-          {/* Left: Compact Assignment Area (Teammate Avatars + My Focus Drop Target) */}
-          <div
-            data-testid="studio-assignment-area"
-            className="flex items-center gap-1.5 overflow-x-auto max-w-full"
-          >
-            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 mr-1 shrink-0">
-              Assign (Drag or Click):
-            </span>
-
-            {/* "My Focus" Drop Target */}
-            <div className="relative">
-              <button
-                type="button"
-                data-testid="assign-target-my-focus"
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragHoverTarget("my-focus");
-                }}
-                onDragLeave={() => setDragHoverTarget(null)}
-                onDrop={(e) =>
-                  handleDropOnAssignmentTarget(e, {
-                    assigneeId: currentUserNumericId,
-                    assigneeName: user?.name || "My Focus",
-                    isMyFocus: true,
-                  })
-                }
-                onClick={() => {
-                  const selObj = activePage.objects.find(
-                    (o) => o.id === selectedObjectId
-                  );
-                  if (selObj) {
-                    if (selObj.linkedTaskId) {
-                      handleAssignTaskToMember(
-                        selObj.linkedTaskId,
-                        currentUserNumericId,
-                        user?.name || "My Focus",
-                        true
-                      );
-                    } else if (selObj.type === "note") {
-                      setPendingNoteDropAssign({
-                        noteId: selObj.id,
-                        noteTitle: selObj.title || selObj.text || "Sticky Note",
-                        assigneeId: currentUserNumericId,
-                        assigneeName: user?.name || "My Focus",
-                        isMyFocus: true,
-                      });
-                    }
-                  } else {
-                    setShowMyFocusPopover((v) => !v);
-                  }
-                }}
-                className={`h-7.5 px-2.5 rounded-full border text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
-                  dragHoverTarget === "my-focus"
-                    ? "bg-[#FFE394]/30 border-[#FFE394] text-white scale-105 shadow-[0_0_16px_rgba(255,227,148,0.45)]"
-                    : "bg-[#1A160B] border-[#C5A059]/60 text-[#FFE394] hover:border-[#FFE394]"
-                }`}
-              >
-                <Target className="w-3.5 h-3.5 text-[#FFE394]" />
-                <span>My Focus</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-[#FFE394]/20 text-[#FFE394] text-[10px] font-mono">
-                  {myFocusTasks.length}
-                </span>
-              </button>
-
-              {/* Personal My Focus List Popover */}
-              {showMyFocusPopover && (
-                <div
-                  data-testid="my-focus-popover"
-                  className="absolute left-0 top-9 z-40 w-72 p-3 rounded-2xl bg-[#040D28] border border-[#C5A059]/60 shadow-2xl space-y-2"
-                >
-                  <div className="flex items-center justify-between text-xs font-bold text-[#FFE394] pb-1.5 border-b border-[#182954]">
-                    <span>My Focus Personal List ({myFocusTasks.length})</span>
-                    <button
-                      type="button"
-                      onClick={() => setShowMyFocusPopover(false)}
-                      className="text-slate-400 hover:text-white text-[11px] cursor-pointer"
-                    >
-                      Close
-                    </button>
-                  </div>
-                  {myFocusTasks.length === 0 ? (
-                    <p className="text-[11px] text-slate-400">
-                      Drag any task or sticky note onto My Focus to pin it here.
-                    </p>
-                  ) : (
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                      {myFocusTasks.map((t) => (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => {
-                            setInspectedTaskId(t.id);
-                            setShowMyFocusPopover(false);
-                          }}
-                          className="w-full p-2 rounded-lg bg-[#02081A] hover:bg-[#07163B] border border-[#182954] text-left flex items-center justify-between gap-2 cursor-pointer"
-                        >
-                          <span className="text-xs text-white truncate">
-                            {t.title}
-                          </span>
-                          <span className="text-[10px] font-mono text-cyan-300 shrink-0">
-                            #{t.id}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Teammate Avatars with Names */}
-            {teamRoster.map((member, mIdx) => {
-              const targetKey = `member-${member.id}`;
-              const isHover = dragHoverTarget === targetKey;
-              const badgeColor = AVATAR_COLORS[mIdx % AVATAR_COLORS.length];
-              return (
-                <button
-                  key={member.id}
-                  type="button"
-                  data-testid={`assign-target-member-${member.id}`}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragHoverTarget(targetKey);
-                  }}
-                  onDragLeave={() => setDragHoverTarget(null)}
-                  onDrop={(e) =>
-                    handleDropOnAssignmentTarget(e, {
-                      assigneeId: member.id,
-                      assigneeName: member.name,
-                      isMyFocus: false,
-                    })
-                  }
-                  onClick={() => {
-                    const selObj = activePage.objects.find(
-                      (o) => o.id === selectedObjectId
-                    );
-                    if (!selObj) {
-                      toast.info(
-                        `Select or drag a note/task onto ${member.name} to assign it.`
-                      );
-                      return;
-                    }
-                    if (selObj.linkedTaskId) {
-                      handleAssignTaskToMember(
-                        selObj.linkedTaskId,
-                        member.id,
-                        member.name,
-                        false
-                      );
-                    } else if (selObj.type === "note") {
-                      setPendingNoteDropAssign({
-                        noteId: selObj.id,
-                        noteTitle: selObj.title || selObj.text || "Sticky Note",
-                        assigneeId: member.id,
-                        assigneeName: member.name,
-                        isMyFocus: false,
-                      });
-                    }
-                  }}
-                  className={`h-7.5 pl-1.5 pr-2.5 rounded-full border text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
-                    isHover
-                      ? "bg-cyan-500/30 border-cyan-300 text-white scale-105 shadow-[0_0_14px_rgba(34,211,238,0.45)]"
-                      : "bg-[#04102E] border-[#1E3264] text-slate-200 hover:border-cyan-400/50 hover:text-white"
-                  }`}
-                >
-                  <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-950 shrink-0"
-                    style={{ backgroundColor: badgeColor }}
-                  >
-                    {member.initials}
-                  </span>
-                  <span className="truncate max-w-[110px]">{member.name}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Right: Multi-Page Teaching Tabs (Page 1, Page 2, + Add Page) */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Layers className="w-3.5 h-3.5 text-cyan-400" />
-            {pages.map((p, idx) => {
-              const isCurrent = p.id === activePage.id;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  data-testid={`workspace-page-tab-${idx + 1}`}
-                  onClick={() => {
-                    setActivePageId(p.id);
-                    queueAutosave({ activePageId: p.id });
-                  }}
-                  className={`h-7 px-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                    isCurrent
-                      ? "bg-cyan-500/20 border border-cyan-400/60 text-cyan-200 font-bold"
-                      : "bg-[#040D26] border border-[#182954] text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {p.title}
-                </button>
-              );
-            })}
-            {myRole !== "viewer" && (
-              <button
-                type="button"
-                data-testid="workspace-add-page-btn"
-                onClick={handleAddPage}
-                className="h-7 px-2.5 rounded-lg bg-[#051235] hover:bg-[#0A1F56] border border-[#243B74] text-xs font-semibold text-cyan-300 inline-flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Add Page</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Inline "Create and assign task" confirmation bar when an ordinary note is dropped onto a Teammate or My Focus */}
+        {/* Inline "Create and assign task" confirmation bar when an ordinary note is assigned */}
         {pendingNoteDropAssign && (
           <div
             data-testid="inline-create-assign-task-prompt"
-            className="px-4 py-2 bg-[#071A3E] border-b border-cyan-400/50 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0 z-20"
+            className="px-4 py-2 bg-[#0B1739] border-b border-cyan-400/50 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0 z-30"
           >
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-cyan-300" />
@@ -1466,7 +1504,7 @@ export default function Studio() {
               <button
                 type="button"
                 onClick={() => setPendingNoteDropAssign(null)}
-                className="px-2.5 py-1 rounded-lg bg-[#030B22] border border-[#1E3264] text-slate-300 hover:text-white cursor-pointer"
+                className="px-2.5 py-1 rounded-lg bg-[#030B22] border border-white/15 text-slate-300 hover:text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -1474,130 +1512,8 @@ export default function Studio() {
           </div>
         )}
 
-        {/* ── 3. MAIN WORKSPACE AREA (Left Tool Rail + Dominating Canvas / Cards + Collapsible Right Task Drawer) ── */}
+        {/* ── 2. OPEN CANVAS WORKSPACE + FLOATING RIGHT PAGES TAB + FLOATING BOTTOM TOOLBAR ── */}
         <div className="relative flex-1 flex min-h-0 overflow-hidden">
-          {/* Left Vertical Canvas Tool Rail (Shown on Neon & Whiteboard surfaces) */}
-          {surface !== "cards" && myRole !== "viewer" && (
-            <aside
-              data-testid="studio-canvas-tool-rail"
-              className="w-14 bg-[#020922] border-r border-[#182954] py-2.5 px-1.5 flex flex-col items-center justify-between gap-2 z-20 overflow-y-auto shrink-0"
-            >
-              {/* Primary Tools */}
-              <div className="flex flex-col items-center gap-1 w-full">
-                {(
-                  [
-                    { id: "select", label: "Select & Move (V)", icon: MousePointer },
-                    { id: "pen", label: "Pen (P)", icon: PenTool },
-                    { id: "highlighter", label: "Highlighter (H)", icon: Highlighter },
-                    { id: "eraser", label: "Eraser (E)", icon: Eraser },
-                    { id: "text", label: "Typed Text (T)", icon: Type },
-                    { id: "note", label: "Sticky Note (N)", icon: StickyNote },
-                    { id: "rect", label: "Rectangle Shape", icon: Square },
-                    { id: "circle", label: "Circle Shape", icon: Circle },
-                    { id: "diamond", label: "Diamond Shape", icon: Diamond },
-                    { id: "connector", label: "Connector / Arrow", icon: ArrowUpRight },
-                    { id: "pointer", label: "Laser Pointer", icon: Sparkles },
-                  ] as const
-                ).map((tool) => {
-                  const Icon = tool.icon;
-                  const isActive = activeTool === tool.id;
-                  return (
-                    <button
-                      key={tool.id}
-                      type="button"
-                      data-testid={`studio-tool-${tool.id}`}
-                      onClick={() => setActiveTool(tool.id)}
-                      title={tool.label}
-                      aria-label={tool.label}
-                      className={`w-10 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                        isActive
-                          ? "bg-gradient-to-b from-cyan-400/25 to-violet-500/25 border border-cyan-300 text-white shadow-[0_0_12px_rgba(34,211,238,0.35)]"
-                          : "text-slate-400 hover:text-white hover:bg-white/5"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* 6 Color Swatches & Stroke Thickness & Undo/Redo */}
-              <div className="flex flex-col items-center gap-1.5 pt-2 border-t border-[#182954] w-full">
-                {STUDIO_COLOR_LIST.map((c) => {
-                  const isSelected = activeColor === c.key;
-                  return (
-                    <button
-                      key={c.key}
-                      type="button"
-                      data-testid={`studio-color-${c.key}`}
-                      onClick={() => setActiveColor(c.key)}
-                      title={c.label}
-                      aria-label={`Color ${c.label}`}
-                      className={`w-5 h-5 rounded-full transition-all cursor-pointer ${
-                        isSelected
-                          ? "scale-125 ring-2 ring-white"
-                          : "opacity-80 hover:opacity-100"
-                      }`}
-                      style={{
-                        backgroundColor: c.swatchHex,
-                        boxShadow: isSelected
-                          ? `0 0 10px ${c.neonGlow}`
-                          : undefined,
-                      }}
-                    />
-                  );
-                })}
-
-                {/* Thickness cycle button */}
-                <button
-                  type="button"
-                  data-testid="studio-thickness-btn"
-                  onClick={() => {
-                    const idx = STROKE_THICKNESS_OPTIONS.findIndex(
-                      (o) => o.value === strokeThickness
-                    );
-                    const next =
-                      STROKE_THICKNESS_OPTIONS[
-                        (idx + 1) % STROKE_THICKNESS_OPTIONS.length
-                      ];
-                    setStrokeThickness(next.value);
-                  }}
-                  title={`Stroke thickness: ${strokeThickness}px`}
-                  className="mt-1 w-10 h-6 rounded-lg bg-[#051235] border border-[#243B74] text-[10px] font-mono text-cyan-200 hover:border-cyan-400 cursor-pointer"
-                >
-                  {strokeThickness}px
-                </button>
-
-                {/* Undo / Redo */}
-                <div className="flex flex-col items-center gap-1 mt-1">
-                  <button
-                    type="button"
-                    data-testid="studio-undo-btn"
-                    disabled={undoStack.length === 0}
-                    onClick={handleUndo}
-                    title="Undo (Ctrl+Z)"
-                    aria-label="Undo"
-                    className="w-9 h-8 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-30 flex items-center justify-center cursor-pointer"
-                  >
-                    <Undo2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="studio-redo-btn"
-                    disabled={redoStack.length === 0}
-                    onClick={handleRedo}
-                    title="Redo (Ctrl+Y)"
-                    aria-label="Redo"
-                    className="w-9 h-8 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-30 flex items-center justify-center cursor-pointer"
-                  >
-                    <Redo2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </aside>
-          )}
-
-          {/* Center Dominating Surface: Neon / Whiteboard Canvas OR Cards View */}
           <div className="relative flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
             {surface === "cards" ? (
               <StudioCardsSurface
@@ -1680,55 +1596,595 @@ export default function Studio() {
                 }}
               />
             ) : (
-              <StudioCanvas
-                surface={surface}
-                activeTool={activeTool}
-                activeColor={activeColor}
-                strokeThickness={strokeThickness}
-                strokes={activePage.strokes}
-                objects={activePage.objects}
-                tasksById={taskMap}
-                teamRoster={teamRoster}
-                selectedObjectId={selectedObjectId}
-                canEdit={myRole !== "viewer"}
-                isPresentationMode={false}
-                hidePrivateTaskMeta={false}
-                onSelectObject={(id) => {
-                  setSelectedObjectId(id);
-                  if (id) {
-                    const obj = activePage.objects.find((o) => o.id === id);
-                    if (obj?.linkedTaskId) {
-                      setInspectedTaskId(obj.linkedTaskId);
+              <>
+                <StudioCanvas
+                  surface={surface}
+                  activeTool={activeTool}
+                  activeColor={activeColor}
+                  strokeThickness={strokeThickness}
+                  strokes={activePage.strokes}
+                  objects={activePage.objects}
+                  tasksById={taskMap}
+                  teamRoster={teamRoster}
+                  selectedObjectId={selectedObjectId}
+                  canEdit={myRole !== "viewer"}
+                  isPresentationMode={false}
+                  hidePrivateTaskMeta={false}
+                  hideInternalZoomBar={true}
+                  controlledZoom={canvasZoom}
+                  onControlledZoomChange={setCanvasZoom}
+                  fitViewCounter={fitViewCounter}
+                  onSelectObject={(id) => {
+                    setSelectedObjectId(id);
+                    if (id) {
+                      const obj = activePage.objects.find((o) => o.id === id);
+                      if (obj?.linkedTaskId) {
+                        setInspectedTaskId(obj.linkedTaskId);
+                      }
                     }
-                  }
-                }}
-                onToolChange={(tool) => setActiveTool(tool)}
-                onCommitStrokes={handleCommitStrokes}
-                onCommitObjects={handleCommitObjects}
-                onConvertNoteToTask={(obj) => handleConvertNoteToTask(obj)}
-                onOpenTaskDrawer={(taskId) => setInspectedTaskId(taskId)}
-                onAssignTaskOrNote={(obj, assigneeId, assigneeName, isMyFocus) => {
-                  if (obj.linkedTaskId) {
-                    handleAssignTaskToMember(
-                      obj.linkedTaskId,
-                      assigneeId,
-                      assigneeName,
-                      isMyFocus
-                    );
-                  } else {
-                    handleConvertNoteToTask(obj, {
-                      assigneeId,
-                      assigneeName,
-                      isMyFocus,
-                    });
-                  }
-                }}
-                onAddTeachingPage={handleAddPage}
-              />
+                  }}
+                  onToolChange={(tool) => setActiveTool(tool)}
+                  onCommitStrokes={handleCommitStrokes}
+                  onCommitObjects={handleCommitObjects}
+                  onConvertNoteToTask={(obj) => handleConvertNoteToTask(obj)}
+                  onOpenTaskDrawer={(taskId) => setInspectedTaskId(taskId)}
+                  onAssignTaskOrNote={(
+                    obj,
+                    assigneeId,
+                    assigneeName,
+                    isMyFocus
+                  ) => {
+                    if (obj.linkedTaskId) {
+                      handleAssignTaskToMember(
+                        obj.linkedTaskId,
+                        assigneeId,
+                        assigneeName,
+                        isMyFocus
+                      );
+                    } else {
+                      handleConvertNoteToTask(obj, {
+                        assigneeId,
+                        assigneeName,
+                        isMyFocus,
+                      });
+                    }
+                  }}
+                  onAddTeachingPage={handleAddPage}
+                />
+
+                {/* ── RIGHT-EDGE FLOATING VERTICAL "Pages" PILL & POPOVER ── */}
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 z-30 flex items-center">
+                  {pagesDrawerOpen && (
+                    <div
+                      data-testid="studio-pages-floating-drawer"
+                      className="mr-2 w-60 p-3 rounded-2xl bg-[#090E26]/95 backdrop-blur-xl border border-white/15 shadow-[0_16px_48px_rgba(0,0,0,0.88)] space-y-2"
+                    >
+                      <div className="flex items-center justify-between text-xs font-bold text-white pb-1.5 border-b border-white/10">
+                        <span>Board Pages ({pages.length})</span>
+                        {myRole !== "viewer" && (
+                          <button
+                            type="button"
+                            onClick={handleAddPage}
+                            className="text-cyan-300 hover:text-white inline-flex items-center gap-1 text-[11px] cursor-pointer"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>Add</span>
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-1 max-h-60 overflow-y-auto">
+                        {pages.map((p, idx) => {
+                          const isCurrent = p.id === activePage.id;
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              data-testid={`workspace-page-tab-${idx + 1}`}
+                              onClick={() => {
+                                setActivePageId(p.id);
+                                queueAutosave({ activePageId: p.id });
+                              }}
+                              className={`w-full px-2.5 py-2 rounded-xl text-left text-xs font-medium flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                                isCurrent
+                                  ? "bg-[#5B35D5]/35 border border-[#8B6DFF] text-white font-semibold"
+                                  : "bg-[#0D1330]/80 border border-white/10 text-slate-300 hover:text-white"
+                              }`}
+                            >
+                              <span className="truncate">
+                                {idx + 1}. {p.title}
+                              </span>
+                              {isCurrent && (
+                                <Check className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    data-testid="studio-vertical-pages-btn"
+                    onClick={() => setPagesDrawerOpen((v) => !v)}
+                    className="py-3 px-2 rounded-xl bg-[#0B102B]/92 hover:bg-[#141C42] border border-white/15 text-slate-200 hover:text-white shadow-[0_8px_24px_rgba(0,0,0,0.75)] flex flex-col items-center gap-2 cursor-pointer"
+                    title="Toggle Pages Drawer"
+                  >
+                    <Layers className="w-3.5 h-3.5 text-slate-300" />
+                    <span
+                      style={{ writingMode: "vertical-rl" }}
+                      className="text-[11px] font-medium tracking-wider"
+                    >
+                      Pages
+                    </span>
+                    <ChevronLeft
+                      className={`w-3 h-3 text-slate-400 transition-transform ${
+                        pagesDrawerOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* ── BOTTOM-LEFT FLOATING PAGE STEPPER (< 1 / 4 > + Page) & CHANGES SAVED ── */}
+                <div className="absolute left-4 bottom-3 z-30 flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 px-2 rounded-lg bg-[#0B102B]/92 border border-white/15 shadow-lg inline-flex items-center gap-2 text-xs text-slate-200">
+                      <button
+                        type="button"
+                        disabled={activePageIndex <= 0}
+                        onClick={() => handleStepPage(-1)}
+                        aria-label="Previous Page"
+                        className="p-0.5 text-slate-300 hover:text-white disabled:opacity-35 cursor-pointer"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="font-medium text-white min-w-[34px] text-center">
+                        {activePageIndex + 1} / {totalPagesCount}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={activePageIndex >= totalPagesCount - 1}
+                        onClick={() => handleStepPage(1)}
+                        aria-label="Next Page"
+                        className="p-0.5 text-slate-300 hover:text-white disabled:opacity-35 cursor-pointer"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {myRole !== "viewer" && (
+                      <button
+                        type="button"
+                        data-testid="workspace-add-page-btn"
+                        onClick={handleAddPage}
+                        className="h-8 px-3 rounded-lg bg-[#0B102B]/92 hover:bg-[#141C42] border border-white/15 shadow-lg text-xs font-medium text-slate-200 hover:text-white inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Page</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1 text-[11px] italic text-slate-400/90 pl-0.5">
+                    <Check className="w-3 h-3 text-slate-400 not-italic" />
+                    <span>
+                      {saveStatus === "saving"
+                        ? "Saving changes…"
+                        : saveStatus === "unsaved"
+                        ? "Unsaved changes"
+                        : "Changes saved"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* ── CENTER FLOATING BOTTOM TOOLBAR WITH LABELED TOOLS & COLOR CONTROLS ── */}
+                {myRole !== "viewer" && (
+                  <div
+                    data-testid="studio-canvas-tool-rail"
+                    className="absolute left-1/2 -translate-x-1/2 bottom-3.5 z-30 flex flex-col items-start"
+                  >
+                    {/* Floating Pen / Highlighter Stroke Preview Pill (Shown Above Pen/Highlighter) */}
+                    {(activeTool === "pen" || activeTool === "highlighter") && (
+                      <div className="relative mb-2.5 ml-9 px-3.5 py-1.5 rounded-xl bg-[#0A0F28]/96 backdrop-blur-xl border border-[#7C5CFC]/45 shadow-[0_8px_28px_rgba(0,0,0,0.85)] flex items-center gap-3 text-xs text-white">
+                        <span className="font-semibold">
+                          {activeTool === "highlighter" ? "Highlighter" : "Pen"}
+                        </span>
+                        {/* Live Wavy Neon Stroke SVG Preview */}
+                        <svg
+                          width="54"
+                          height="16"
+                          viewBox="0 0 54 16"
+                          className="overflow-visible"
+                        >
+                          <path
+                            d="M 2 10 Q 15 2, 27 8 T 52 7"
+                            fill="none"
+                            stroke={
+                              surface === "neon"
+                                ? activeColorPalette.neonInk
+                                : activeColorPalette.whiteboardInk
+                            }
+                            strokeWidth={Math.min(8, strokeThickness)}
+                            strokeLinecap="round"
+                            style={{
+                              filter: `drop-shadow(0 0 6px ${activeColorPalette.neonGlow})`,
+                            }}
+                          />
+                        </svg>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 text-xs font-medium text-slate-200 hover:text-white cursor-pointer"
+                            >
+                              <span>{strokeThickness} px</span>
+                              <ChevronDown className="w-3 h-3 text-slate-400" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="center"
+                            side="top"
+                            className="bg-[#090E26] border border-white/15 text-slate-100 text-xs min-w-[100px]"
+                          >
+                            {STROKE_THICKNESS_OPTIONS.map((opt) => (
+                              <DropdownMenuItem
+                                key={opt.value}
+                                onClick={() => setStrokeThickness(opt.value)}
+                                className="flex items-center justify-between gap-2 cursor-pointer"
+                              >
+                                <span>{opt.label}</span>
+                                {strokeThickness === opt.value && (
+                                  <Check className="w-3.5 h-3.5 text-cyan-400" />
+                                )}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {/* Downward Pointer Triangle */}
+                        <div className="absolute -bottom-1.5 left-9 w-3 h-3 rotate-45 bg-[#0A0F28] border-r border-b border-[#7C5CFC]/45" />
+                      </div>
+                    )}
+
+                    {/* Floating Shapes Picker Popover (When Shapes button is clicked) */}
+                    {shapesMenuOpen && (
+                      <div className="mb-2 self-center px-3 py-2 rounded-xl bg-[#0A0F28]/96 backdrop-blur-xl border border-[#7C5CFC]/45 shadow-2xl flex items-center gap-1.5">
+                        {(
+                          [
+                            { id: "circle", label: "Oval", icon: Circle },
+                            { id: "rect", label: "Box", icon: Square },
+                            { id: "diamond", label: "Diamond", icon: Diamond },
+                            {
+                              id: "connector",
+                              label: "Arrow",
+                              icon: ArrowUpRight,
+                            },
+                          ] as const
+                        ).map((shp) => {
+                          const SIcon = shp.icon;
+                          const isCurrentShape = activeTool === shp.id;
+                          return (
+                            <button
+                              key={shp.id}
+                              type="button"
+                              data-testid={`studio-tool-${shp.id}`}
+                              onClick={() => {
+                                setLastShapeTool(shp.id);
+                                setActiveTool(shp.id);
+                                setShapesMenuOpen(false);
+                              }}
+                              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer ${
+                                isCurrentShape
+                                  ? "bg-[#6C47E5] text-white font-semibold"
+                                  : "text-slate-300 hover:text-white hover:bg-white/10"
+                              }`}
+                            >
+                              <SIcon className="w-3.5 h-3.5" />
+                              <span>{shp.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Main Floating Bottom Toolbar Dock */}
+                    <div className="px-3 py-1.5 rounded-2xl bg-[#090D24]/95 backdrop-blur-xl border border-[#7C5CFC]/50 shadow-[0_14px_44px_rgba(0,0,0,0.88),0_0_24px_rgba(124,92,252,0.24)] flex items-center gap-1 sm:gap-1.5">
+                      {/* 8 Labeled Tools */}
+                      {(
+                        [
+                          {
+                            id: "select",
+                            label: "Select",
+                            icon: MousePointer,
+                          },
+                          { id: "pen", label: "Pen", icon: PenTool },
+                          {
+                            id: "highlighter",
+                            label: "Highlighter",
+                            icon: Highlighter,
+                          },
+                          { id: "eraser", label: "Eraser", icon: Eraser },
+                          { id: "text", label: "Text", icon: Type },
+                          { id: "note", label: "Note", icon: StickyNote },
+                        ] as const
+                      ).map((tool) => {
+                        const Icon = tool.icon;
+                        const isActive = activeTool === tool.id;
+                        return (
+                          <button
+                            key={tool.id}
+                            type="button"
+                            data-testid={`studio-tool-${tool.id}`}
+                            onClick={() => {
+                              setShapesMenuOpen(false);
+                              setActiveTool(tool.id);
+                            }}
+                            className={`px-2.5 py-1.5 rounded-xl flex flex-col items-center justify-center gap-1 min-w-[46px] transition-all cursor-pointer ${
+                              isActive
+                                ? "bg-gradient-to-b from-[#7C5CFC] to-[#5632CC] text-white font-semibold shadow-[0_0_16px_rgba(124,92,252,0.65)]"
+                                : "text-slate-300 hover:text-white hover:bg-white/5"
+                            }`}
+                          >
+                            <Icon className="w-4 h-4" />
+                            <span className="text-[10px] leading-none">
+                              {tool.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+
+                      {/* Labeled Shapes Tool Button */}
+                      <button
+                        type="button"
+                        data-testid="studio-tool-shapes"
+                        onClick={() => {
+                          if (!isShapeToolActive) {
+                            setActiveTool(lastShapeTool);
+                          }
+                          setShapesMenuOpen((v) => !v);
+                        }}
+                        className={`px-2.5 py-1.5 rounded-xl flex flex-col items-center justify-center gap-1 min-w-[46px] transition-all cursor-pointer ${
+                          isShapeToolActive
+                            ? "bg-gradient-to-b from-[#7C5CFC] to-[#5632CC] text-white font-semibold shadow-[0_0_16px_rgba(124,92,252,0.65)]"
+                            : "text-slate-300 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        <Shapes className="w-4 h-4" />
+                        <span className="text-[10px] leading-none">Shapes</span>
+                      </button>
+
+                      {/* Labeled Pointer Tool Button */}
+                      <button
+                        type="button"
+                        data-testid="studio-tool-pointer"
+                        onClick={() => {
+                          setShapesMenuOpen(false);
+                          setActiveTool("pointer");
+                        }}
+                        className={`px-2.5 py-1.5 rounded-xl flex flex-col items-center justify-center gap-1 min-w-[46px] transition-all cursor-pointer ${
+                          activeTool === "pointer"
+                            ? "bg-gradient-to-b from-[#7C5CFC] to-[#5632CC] text-white font-semibold shadow-[0_0_16px_rgba(124,92,252,0.65)]"
+                            : "text-slate-300 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span className="text-[10px] leading-none">
+                          Pointer
+                        </span>
+                      </button>
+
+                      <div className="h-7 w-px bg-white/12 mx-1" />
+
+                      {/* 6 Color Swatch Circles */}
+                      <div className="flex items-center gap-2 px-1">
+                        {STUDIO_COLOR_LIST.map((c) => {
+                          const isSelected = activeColor === c.key;
+                          return (
+                            <button
+                              key={c.key}
+                              type="button"
+                              data-testid={`studio-color-${c.key}`}
+                              onClick={() => setActiveColor(c.key)}
+                              title={c.label}
+                              aria-label={`Color ${c.label}`}
+                              className={`w-5 h-5 rounded-full transition-all cursor-pointer ${
+                                isSelected
+                                  ? "scale-110 ring-2 ring-cyan-300 ring-offset-2 ring-offset-[#090D24]"
+                                  : "opacity-85 hover:opacity-100 hover:scale-105"
+                              }`}
+                              style={{
+                                backgroundColor: c.swatchHex,
+                                boxShadow: isSelected
+                                  ? `0 0 12px ${c.neonGlow}`
+                                  : undefined,
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+
+                      <div className="h-7 w-px bg-white/12 mx-1" />
+
+                      {/* Stroke Thickness Selector Dropdown (≡ 3 px ⌄) */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            data-testid="studio-thickness-btn"
+                            className="h-8 px-2.5 rounded-xl hover:bg-white/5 text-xs font-medium text-slate-200 hover:text-white inline-flex items-center gap-1.5 cursor-pointer"
+                            title={`Stroke thickness: ${strokeThickness} px`}
+                          >
+                            <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{strokeThickness} px</span>
+                            <ChevronDown className="w-3 h-3 text-slate-400" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="center"
+                          side="top"
+                          className="bg-[#090E26] border border-white/15 text-slate-100 text-xs min-w-[100px]"
+                        >
+                          {STROKE_THICKNESS_OPTIONS.map((opt) => (
+                            <DropdownMenuItem
+                              key={opt.value}
+                              onClick={() => setStrokeThickness(opt.value)}
+                              className="flex items-center justify-between gap-2 cursor-pointer"
+                            >
+                              <span>{opt.label}</span>
+                              {strokeThickness === opt.value && (
+                                <Check className="w-3.5 h-3.5 text-cyan-400" />
+                              )}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      <div className="h-7 w-px bg-white/12 mx-1" />
+
+                      {/* Labeled Undo & Redo Buttons */}
+                      <button
+                        type="button"
+                        data-testid="studio-undo-btn"
+                        disabled={undoStack.length === 0}
+                        onClick={handleUndo}
+                        title="Undo (Ctrl+Z)"
+                        className="px-2 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 disabled:opacity-35 flex flex-col items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Undo2 className="w-4 h-4" />
+                        <span className="text-[10px] leading-none">Undo</span>
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="studio-redo-btn"
+                        disabled={redoStack.length === 0}
+                        onClick={handleRedo}
+                        title="Redo (Ctrl+Y)"
+                        className="px-2 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 disabled:opacity-35 flex flex-col items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Redo2 className="w-4 h-4" />
+                        <span className="text-[10px] leading-none">Redo</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── BOTTOM-RIGHT FLOATING VIEWPORT CONTROLS (100% ⌄ | Fit | ••• More) ── */}
+                <div className="absolute right-4 bottom-3.5 z-30 flex items-center gap-2">
+                  {/* Zoom Percentage Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        data-testid="studio-zoom-dropdown-btn"
+                        className="h-8 px-2.5 rounded-lg bg-[#0B102B]/92 hover:bg-[#141C42] border border-white/15 shadow-lg text-xs font-medium text-slate-200 hover:text-white inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>{Math.round(canvasZoom * 100)}%</span>
+                        <ChevronDown className="w-3 h-3 text-slate-400" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      side="top"
+                      className="bg-[#090E26] border border-white/15 text-slate-100 text-xs min-w-[100px]"
+                    >
+                      {ZOOM_PRESETS.map((z) => (
+                        <DropdownMenuItem
+                          key={z}
+                          onClick={() => setCanvasZoom(z)}
+                          className="flex items-center justify-between gap-2 cursor-pointer"
+                        >
+                          <span>{Math.round(z * 100)}%</span>
+                          {Math.round(canvasZoom * 100) ===
+                            Math.round(z * 100) && (
+                            <Check className="w-3.5 h-3.5 text-cyan-400" />
+                          )}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Fit Button */}
+                  <button
+                    type="button"
+                    data-testid="studio-fit-to-board-btn"
+                    onClick={() => setFitViewCounter((c) => c + 1)}
+                    className="h-8 px-2.5 rounded-lg bg-[#0B102B]/92 hover:bg-[#141C42] border border-white/15 shadow-lg text-xs font-medium text-slate-200 hover:text-white inline-flex items-center gap-1.5 cursor-pointer"
+                    title="Fit board to 100%"
+                  >
+                    <Maximize2 className="w-3 h-3 text-slate-300" />
+                    <span>Fit</span>
+                  </button>
+
+                  {/* ••• More Menu */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        data-testid="studio-more-menu-btn"
+                        className="h-8 px-2.5 rounded-lg bg-[#0B102B]/92 hover:bg-[#141C42] border border-white/15 shadow-lg text-xs font-medium text-slate-200 hover:text-white inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <MoreHorizontal className="w-3.5 h-3.5 text-slate-300" />
+                        <span>More</span>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      side="top"
+                      className="w-52 bg-[#090E26] border border-white/15 text-slate-100 text-xs"
+                    >
+                      <DropdownMenuItem
+                        onClick={() => setNameModalMode("create")}
+                        className="cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-2 text-cyan-300" />
+                        <span>New Board…</span>
+                      </DropdownMenuItem>
+                      {myRole !== "viewer" && (
+                        <DropdownMenuItem
+                          onClick={() => setNameModalMode("rename")}
+                          className="cursor-pointer"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 mr-2" />
+                          <span>Rename Board…</span>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        onClick={() =>
+                          currentBoardId &&
+                          duplicateBoardMut.mutate({ id: currentBoardId })
+                        }
+                        className="cursor-pointer"
+                      >
+                        <Copy className="w-3.5 h-3.5 mr-2" />
+                        <span>Duplicate Board</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={handleOpenAudienceWindow}
+                        className="cursor-pointer"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 mr-2 text-cyan-300" />
+                        <span>Open Audience Window</span>
+                      </DropdownMenuItem>
+                      {myRole !== "viewer" && (
+                        <>
+                          <DropdownMenuSeparator className="bg-white/10" />
+                          <DropdownMenuItem
+                            onClick={handleClearCurrentPage}
+                            className="text-rose-300 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-2" />
+                            <span>Clear Current Page</span>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </>
             )}
           </div>
 
-          {/* Right Collapsible Task Inspector Drawer (Opens only when a task is selected) */}
+          {/* Right Collapsible Task Inspector Drawer (Opens when a task badge is clicked) */}
           <StudioTaskDrawer
             task={inspectedTask}
             isOpen={Boolean(inspectedTask) && !isPresenting}
@@ -1759,7 +2215,7 @@ export default function Studio() {
           />
         </div>
 
-        {/* ── 4. FULL-SCREEN TEACHING / PRESENTATION MODE OVERLAY ── */}
+        {/* ── 3. FULL-SCREEN TEACHING / PRESENTATION MODE OVERLAY ── */}
         {isPresenting && (
           <StudioPresentationOverlay
             boardTitle={boardTitle}
@@ -1809,6 +2265,7 @@ export default function Studio() {
               canEdit={myRole !== "viewer"}
               isPresentationMode={true}
               hidePrivateTaskMeta={true}
+              hideInternalZoomBar={true}
               onSelectObject={(id) => setSelectedObjectId(id)}
               onToolChange={(t) => setActiveTool(t)}
               onCommitStrokes={handleCommitStrokes}
@@ -1832,7 +2289,7 @@ export default function Studio() {
           </StudioPresentationOverlay>
         )}
 
-        {/* ── 5. SHARE / ACCESS & BOARD NAME MODALS ── */}
+        {/* ── 4. SHARE / ACCESS & BOARD NAME MODALS ── */}
         <StudioShareAccessModal
           open={shareModalOpen}
           onOpenChange={setShareModalOpen}

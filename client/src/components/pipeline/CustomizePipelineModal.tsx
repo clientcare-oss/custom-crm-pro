@@ -18,16 +18,28 @@ import {
   Check,
   Sparkles,
   Briefcase,
+  Layers,
 } from "lucide-react";
 import { toast } from "sonner";
-import { LOGICAL_STAGE_GROUPS, resolveLogicalStageGroup } from "./pipelineDefaults";
-import type { PipelineStageItem, PipelineGroupType, LogicalStageGroup } from "./types";
+import {
+  LOGICAL_STAGE_GROUPS,
+  loadPipelineGroups,
+  resolveLogicalStageGroup,
+} from "./pipelineDefaults";
+import type {
+  PipelineStageItem,
+  PipelineGroupType,
+  LogicalStageGroup,
+  PipelineGroupDefinition,
+} from "./types";
 
 interface CustomizePipelineModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   stages: PipelineStageItem[];
+  groups?: PipelineGroupDefinition[];
   onSaveStages: (updatedStages: PipelineStageItem[]) => void;
+  onOpenGroupModifications?: () => void;
 }
 
 const COLOR_OPTIONS = [
@@ -54,8 +66,11 @@ export function CustomizePipelineModal({
   open,
   onOpenChange,
   stages,
+  groups,
   onSaveStages,
+  onOpenGroupModifications,
 }: CustomizePipelineModalProps) {
+  const activeGroups = groups && groups.length > 0 ? groups : loadPipelineGroups();
   const [stageList, setStageList] = useState<PipelineStageItem[]>(stages);
   const [newStageName, setNewStageName] = useState("");
   const [newStageColor, setNewStageColor] = useState("#38BDF8");
@@ -162,10 +177,26 @@ export function CustomizePipelineModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl bg-[#05142B]/95 border-[#3A2C18] text-[#FFF4D4] shadow-[0_16px_48px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
-            <Settings2 className="h-5 w-5 text-[#C5A059]" />
-            Customize Advocacy Pipeline Stages
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-2 flex-wrap pr-6">
+            <DialogTitle className="text-lg font-serif font-bold text-[#FFF4D4] flex items-center gap-2">
+              <Settings2 className="h-5 w-5 text-[#C5A059]" />
+              Customize Advocacy Pipeline Stages
+            </DialogTitle>
+            {onOpenGroupModifications && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false);
+                  onOpenGroupModifications();
+                }}
+                className="h-8 px-3 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394] shadow-[0_2px_10px_rgba(197,160,89,0.4)] hover:brightness-110 text-xs cursor-pointer"
+              >
+                <Layers className="h-3.5 w-3.5 mr-1.5" />
+                Group Modifications
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="space-y-5 py-2 max-h-[70vh] overflow-y-auto pr-1">
@@ -206,11 +237,12 @@ export function CustomizePipelineModal({
                       }
                       className="h-7 rounded-lg bg-[#000814] border border-[#3A2C18] text-[#C6B697] text-[11px] px-2 focus:outline-hidden focus:border-[#C5A059]"
                     >
-                      {LOGICAL_STAGE_GROUPS.map((grp) => (
+                      {activeGroups.map((grp) => (
                         <option key={grp.key} value={grp.key}>
                           {grp.label}
                         </option>
                       ))}
+                      <option value="ungrouped">Ungrouped</option>
                     </select>
                   </div>
 

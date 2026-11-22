@@ -67,13 +67,13 @@ export function ToolsInstrumentCabinet({
     return matched.length > 0 ? matched : list;
   }, [allInstruments, categoryFilter, searchQuery]);
 
-  // Show the 6 core featured tools by default (matching the 3x2 reference layout),
-  // or all tools when searching, filtering by category, or toggling "Show all tools".
+  // Show all tools in a compact 3-column Apple App Store directory grid by default,
+  // or filter by category / search query.
   const displayedInstruments = useMemo(() => {
     if (searchQuery.trim() || categoryFilter !== "all" || showAllTools) {
       return filteredInstruments;
     }
-    return filteredInstruments.slice(0, 6);
+    return filteredInstruments.slice(0, 9);
   }, [filteredInstruments, searchQuery, categoryFilter, showAllTools]);
 
   const detailInstrument = useMemo(() => {
@@ -203,50 +203,50 @@ export function ToolsInstrumentCabinet({
         {/* ================================================================= */}
         {/* 3. SECTION HEADING: "Made for your next step"                     */}
         {/* ================================================================= */}
-        <div className="mt-7 mb-3">
-          <h2 className="text-[24px] sm:text-[28px] font-bold text-white tracking-tight leading-snug">
+        <div className="mt-5 mb-2">
+          <h2 className="text-[18px] sm:text-[20px] font-bold text-white tracking-tight leading-snug">
             Made for your next step
           </h2>
-          <p className="text-[15.5px] sm:text-[17px] text-[#A3B1C6] mt-0.5">
+          <p className="text-[12.5px] sm:text-[13.5px] text-[#A3B1C6] mt-0.5">
             Practical support, whenever you need it.
           </p>
         </div>
 
         {/* ================================================================= */}
-        {/* 4. TWO-COLUMN APP STORE GRID (3 ROWS × 2 COLUMNS)                 */}
+        {/* 4. COMPACT APPLE APP STORE GRID (3 COLUMNS, HALF-SIZE APP ROWS)   */}
         {/* ================================================================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-7 gap-y-0">
           {displayedInstruments.map((inst) => (
             <div
               key={inst.id}
               onClick={() => inst.onOpen()}
-              className="group flex items-center justify-between gap-4 py-5 border-b border-[#182546] hover:bg-white/[0.015] rounded-lg px-1 transition-colors cursor-pointer"
+              className="group flex items-center justify-between gap-3 py-2.5 border-b border-[#182546]/90 hover:bg-white/[0.025] rounded-lg px-2 transition-colors cursor-pointer"
             >
-              {/* Left: 3D App Icon + Title + Description + Included */}
-              <div className="flex items-center gap-4 sm:gap-5 min-w-0">
+              {/* Left: Compact 52px 3D App Icon + Title + Subtitle + Included */}
+              <div className="flex items-center gap-3 min-w-0">
                 <Tool3DAppIcon id={inst.id} size="lg" />
                 <div className="min-w-0">
-                  <h3 className="text-[20px] sm:text-[22px] font-bold text-white leading-snug tracking-tight">
+                  <h3 className="text-[14px] sm:text-[15px] font-semibold text-white leading-tight tracking-tight truncate">
                     {inst.drawerTitle}
                   </h3>
-                  <p className="text-[14.5px] sm:text-[15.5px] text-[#CBD5E1] mt-1 leading-snug line-clamp-2">
+                  <p className="text-[12px] text-[#B8C4D9] mt-0.5 leading-snug line-clamp-1">
                     {inst.drawerSubtitle}
                   </p>
-                  <span className="block text-[13px] text-[#94A3B8] mt-2">
+                  <span className="block text-[10.5px] text-[#7E8FA8] mt-0.5">
                     Included
                   </span>
                 </div>
               </div>
 
-              {/* Right: Stacked Launch (Gold Pill) + Details (Dark Pill with Gold Text) */}
-              <div className="flex flex-col items-center gap-2.5 shrink-0 pl-2">
+              {/* Right: Compact Apple App Store Pill Buttons (Launch + Details) */}
+              <div className="flex flex-col items-center gap-1 shrink-0 pl-1">
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     inst.onOpen();
                   }}
-                  className="w-[104px] py-1.5 rounded-full bg-gradient-to-b from-[#EAD096] via-[#D5B068] to-[#B78E43] text-[#081021] font-bold text-[14px] text-center shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:brightness-105 active:scale-[0.98] transition-all cursor-pointer"
+                  className="w-[72px] h-[25px] rounded-full bg-gradient-to-b from-[#EAD096] via-[#D5B068] to-[#B78E43] text-[#081021] font-bold text-[11.5px] leading-none flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.45)] hover:brightness-105 active:scale-[0.97] transition-all cursor-pointer"
                 >
                   Launch
                 </button>
@@ -257,7 +257,7 @@ export function ToolsInstrumentCabinet({
                     e.stopPropagation();
                     handleOpenDetails(inst.id);
                   }}
-                  className="w-[104px] py-1.5 rounded-full bg-gradient-to-b from-[#131E3A] to-[#0B1328] border border-[#2B3B60] hover:border-[#DFBE77]/70 text-[#E5C687] hover:text-[#FFE394] font-medium text-[14px] text-center shadow-[0_3px_10px_rgba(0,0,0,0.45)] transition-all cursor-pointer"
+                  className="w-[72px] h-[23px] rounded-full bg-gradient-to-b from-[#131E3A] to-[#0B1328] border border-[#2B3B60] hover:border-[#DFBE77]/70 text-[#E5C687] hover:text-[#FFE394] font-medium text-[11px] leading-none flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.4)] transition-all cursor-pointer"
                 >
                   Details
                 </button>

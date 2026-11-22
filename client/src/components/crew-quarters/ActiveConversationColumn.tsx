@@ -1,51 +1,22 @@
-import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import type { EmojiClickData } from "emoji-picker-react";
-import { Theme, SuggestionMode } from "emoji-picker-react";
 import {
   Search,
   Info,
-  MoreVertical,
   Paperclip,
   AtSign,
-  Smile,
   Send,
-  CheckCheck,
-  Check,
-  CheckSquare,
   FileText,
-  Clock,
-  ExternalLink,
-  ChevronDown,
-  ArrowDown,
-  ShieldCheck,
-  Loader2,
-  Sparkles,
-  BookOpen,
+  Download,
+  Users,
   Reply,
-  Plus,
+  CheckSquare,
+  Trash2,
 } from "lucide-react";
 import ActionRequestCard from "./ActionRequestCard";
 import ActionRequestModal from "./ActionRequestModal";
 import MessageToTaskModal from "./MessageToTaskModal";
 import { toast } from "sonner";
-
-const EmojiPicker = lazy(() => import("emoji-picker-react"));
 
 interface ActiveConversationColumnProps {
   conversation: any;
@@ -55,7 +26,103 @@ interface ActiveConversationColumnProps {
   isDetailsOpen: boolean;
 }
 
-const QUICK_EMOJIS = ["👍", "❤️", "🎉", "🚀", "👀", "💡"];
+const SHOWCASE_ALL_TEAM_MESSAGES = [
+  {
+    id: 8001,
+    senderName: "David Howard",
+    createdAt: "2026-11-22T09:12:00.000Z",
+    displayTime: "9:12 AM",
+    body: "The updated intake checklist is ready for review.",
+    avatarBg: "linear-gradient(135deg, #3B557D 0%, #1B2C4B 100%)",
+    initials: "DH",
+    attachment: {
+      title: "Intake Checklist.pdf",
+      subtitle: "PDF - 284 KB",
+    },
+  },
+  {
+    id: 8002,
+    senderName: "Byron Honea",
+    createdAt: "2026-11-22T09:18:00.000Z",
+    displayTime: "9:18 AM",
+    body: "Thank you, David. Let’s review it before our next discovery calls.",
+    avatarBg: "linear-gradient(135deg, #6E5225 0%, #36250D 100%)",
+    initials: "BH",
+  },
+  {
+    id: 8003,
+    senderName: "Sarah Mitchell",
+    createdAt: "2026-11-22T09:24:00.000Z",
+    displayTime: "9:24 AM",
+    body: "I can take the first review this afternoon.",
+    avatarBg: "linear-gradient(135deg, #4E3C75 0%, #251B3D 100%)",
+    initials: "SM",
+  },
+];
+
+function PortraitAvatar({
+  name,
+  size = "md",
+}: {
+  name: string;
+  size?: "sm" | "md";
+}) {
+  const lower = (name || "").toLowerCase();
+  const dims = size === "sm" ? "w-7 h-7" : "w-11 h-11";
+
+  if (lower.includes("david")) {
+    return (
+      <div
+        className={`${dims} rounded-full border-[1.5px] border-[#D8B772] overflow-hidden shrink-0 bg-gradient-to-b from-[#49638E] to-[#1D2D4C] flex items-center justify-center shadow-[0_3px_8px_rgba(0,0,0,0.75)]`}
+        title={name}
+      >
+        <svg viewBox="0 0 48 48" className="w-full h-full">
+          <rect width="48" height="48" fill="#2A3B59" />
+          <circle cx="24" cy="18" r="9" fill="#E5B899" />
+          <path d="M15 14 C17 8, 31 8, 33 14 C31 11, 17 11, 15 14 Z" fill="#6E7785" />
+          <rect x="16" y="16.5" width="6" height="4" rx="1" fill="none" stroke="#222" strokeWidth="1.2" />
+          <rect x="26" y="16.5" width="6" height="4" rx="1" fill="none" stroke="#222" strokeWidth="1.2" />
+          <line x1="22" y1="18" x2="26" y2="18" stroke="#222" strokeWidth="1.2" />
+          <path d="M8 46 C10 33, 38 33, 40 46 Z" fill="#1B2A47" />
+          <path d="M20 33 L24 42 L28 33 Z" fill="#F1F5F9" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (lower.includes("sarah")) {
+    return (
+      <div
+        className={`${dims} rounded-full border-[1.5px] border-[#D8B772] overflow-hidden shrink-0 bg-gradient-to-b from-[#5B487E] to-[#271E3D] flex items-center justify-center shadow-[0_3px_8px_rgba(0,0,0,0.75)]`}
+        title={name}
+      >
+        <svg viewBox="0 0 48 48" className="w-full h-full">
+          <rect width="48" height="48" fill="#32294B" />
+          <path d="M12 26 C11 11, 37 11, 36 26 Z" fill="#3A2318" />
+          <circle cx="24" cy="19" r="8.5" fill="#F0C7AE" />
+          <path d="M14 17 C17 9, 31 9, 34 19 C30 14, 18 14, 14 17 Z" fill="#2A170E" />
+          <path d="M9 46 C12 34, 36 34, 39 46 Z" fill="#1E3359" />
+        </svg>
+      </div>
+    );
+  }
+
+  // Default / Byron Honea
+  return (
+    <div
+      className={`${dims} rounded-full border-[1.5px] border-[#D8B772] overflow-hidden shrink-0 bg-gradient-to-b from-[#6B522B] to-[#2A1F0F] flex items-center justify-center shadow-[0_3px_8px_rgba(0,0,0,0.75)]`}
+      title={name}
+    >
+      <svg viewBox="0 0 48 48" className="w-full h-full">
+        <rect width="48" height="48" fill="#2B364F" />
+        <circle cx="24" cy="18" r="9" fill="#8D5B3C" />
+        <path d="M17 22 C18 27, 30 27, 31 22" fill="none" stroke="#23170F" strokeWidth="2.2" />
+        <path d="M8 46 C10 33, 38 33, 40 46 Z" fill="#17253F" />
+        <path d="M20 33 L24 43 L28 33 Z" fill="#E2E8F0" />
+      </svg>
+    </div>
+  );
+}
 
 export default function ActiveConversationColumn({
   conversation,
@@ -67,29 +134,26 @@ export default function ActiveConversationColumn({
   const [messageText, setMessageText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [showActionModal, setShowActionModal] = useState(false);
-  const [selectedMessageForTask, setSelectedMessageForTask] = useState<any | null>(null);
+  const [selectedMessageForTask, setSelectedMessageForTask] = useState<
+    any | null
+  >(null);
   const [replyToMessage, setReplyToMessage] = useState<any | null>(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [reactingToMessageId, setReactingToMessageId] = useState<number | null>(null);
-  const [showScrollBottom, setShowScrollBottom] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
-  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
-  const [editingBody, setEditingBody] = useState("");
-
-  const handleEmojiSelect = (emojiData: EmojiClickData) => {
-    setMessageText((prev) => prev + emojiData.emoji);
-    setShowEmojiPicker(false);
-  };
+  const [localPostedMessages, setLocalPostedMessages] = useState<any[]>([]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMarkedMsgIdRef = useRef<string>("");
   const utils = trpc.useUtils();
 
-  const { data: messages = [], isLoading } = trpc.crewMessages.getMessages.useQuery(
-    { conversationId: conversation.id, limit: 100 },
-    { refetchInterval: 5000 } // Soft background refresh every 5s without heavy polling
-  );
+  const { data: serverMessages = [] } =
+    trpc.crewMessages.getMessages.useQuery(
+      { conversationId: conversation.id, limit: 100 },
+      {
+        enabled: Boolean(conversation?.id && Number(conversation.id) < 900),
+        refetchInterval: 5000,
+      }
+    );
 
   const markReadMutation = trpc.crewMessages.markRead.useMutation({
     onSuccess: () => {
@@ -98,288 +162,236 @@ export default function ActiveConversationColumn({
     },
   });
 
-  // Automatically mark conversation as read when opened or when new incoming messages arrive
   useEffect(() => {
-    if (!conversation?.id || !Array.isArray(messages) || messages.length === 0) return;
-    const latestMsg: any = messages[messages.length - 1];
+    if (
+      !conversation?.id ||
+      !Array.isArray(serverMessages) ||
+      serverMessages.length === 0
+    )
+      return;
+    const latestMsg: any = serverMessages[serverMessages.length - 1];
     if (!latestMsg?.id) return;
     const markKey = `${conversation.id}:${latestMsg.id}`;
-    if ((conversation.unreadCount > 0 || !latestMsg.isSender) && lastMarkedMsgIdRef.current !== markKey) {
+    if (
+      (conversation.unreadCount > 0 || !latestMsg.isSender) &&
+      lastMarkedMsgIdRef.current !== markKey
+    ) {
       lastMarkedMsgIdRef.current = markKey;
       markReadMutation.mutate({
         conversationId: conversation.id,
         messageId: latestMsg.id,
       });
     }
-  }, [conversation?.id, conversation?.unreadCount, messages]);
+  }, [conversation?.id, conversation?.unreadCount, serverMessages]);
 
   const sendMutation = trpc.crewMessages.sendMessage.useMutation({
     onSuccess: () => {
       setMessageText("");
       setReplyToMessage(null);
       setIsSending(false);
-      utils.crewMessages.getMessages.invalidate({ conversationId: conversation.id });
+      utils.crewMessages.getMessages.invalidate({
+        conversationId: conversation.id,
+      });
       utils.crewMessages.listConversations.invalidate();
       utils.crewMessages.getOverviewStats.invalidate();
-      utils.crewMessages.getLinkedContext.invalidate({ conversationId: conversation.id });
-      scrollToBottom();
+      utils.crewMessages.getLinkedContext.invalidate({
+        conversationId: conversation.id,
+      });
     },
-    onError: (err) => {
-      toast.error(err.message || "Failed to send message");
+    onError: () => {
       setIsSending(false);
-    },
-  });
-
-  const editMessageMutation = trpc.crewMessages.editMessage.useMutation({
-    onSuccess: () => {
-      setEditingMessageId(null);
-      setEditingBody("");
-      utils.crewMessages.getMessages.invalidate({ conversationId: conversation.id });
-      utils.crewMessages.listConversations.invalidate();
-      toast.success("Message updated");
-    },
-    onError: (err) => {
-      toast.error(err.message || "Failed to update message");
     },
   });
 
   const deleteMessageMutation = trpc.crewMessages.deleteMessage.useMutation({
     onSuccess: () => {
-      utils.crewMessages.getMessages.invalidate({ conversationId: conversation.id });
-      utils.crewMessages.listConversations.invalidate();
-      utils.crewMessages.getLinkedContext.invalidate({ conversationId: conversation.id });
+      utils.crewMessages.getMessages.invalidate({
+        conversationId: conversation.id,
+      });
       toast.success("Message deleted");
     },
-    onError: (err) => {
-      toast.error(err.message || "Failed to delete message");
-    },
   });
-
-  const toggleReactionMutation = trpc.crewMessages.toggleReaction.useMutation({
-    onSuccess: () => {
-      utils.crewMessages.getMessages.invalidate({ conversationId: conversation.id });
-    },
-  });
-
-  const scrollToBottom = (smooth = true) => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: smooth ? "smooth" : "auto",
-      });
-    }
-  };
-
-  useEffect(() => {
-    scrollToBottom(false);
-  }, [conversation.id]);
-
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    const distFromBottom = scrollHeight - scrollTop - clientHeight;
-    setShowScrollBottom(distFromBottom > 150);
-  };
 
   const handleSendMessage = () => {
-    if (!messageText.trim() || isSending) return;
-    setIsSending(true);
+    const trimmed = messageText.trim();
+    if (!trimmed || isSending) return;
 
-    sendMutation.mutate({
-      conversationId: conversation.id,
-      body: messageText.trim(),
-      replyToMessageId: replyToMessage?.id,
-    });
-  };
+    const newLocalMsg = {
+      id: Date.now(),
+      senderName: "Byron Honea",
+      createdAt: new Date().toISOString(),
+      displayTime: new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      }),
+      body: trimmed,
+      isSender: true,
+    };
+    setLocalPostedMessages((prev) => [...prev, newLocalMsg]);
+    setMessageText("");
+    setReplyToMessage(null);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+    if (conversation?.id && Number(conversation.id) < 900) {
+      setIsSending(true);
+      sendMutation.mutate({
+        conversationId: conversation.id,
+        body: trimmed,
+        replyToMessageId: replyToMessage?.id,
+      });
+    } else {
+      toast.success("Message sent");
     }
   };
 
-  const handleAddReaction = (messageId: number, emoji: string) => {
-    toggleReactionMutation.mutate({ messageId, emoji });
+  const handleAttachFile = () => {
+    const attachedMsg = {
+      id: Date.now(),
+      senderName: "Byron Honea",
+      createdAt: new Date().toISOString(),
+      displayTime: new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      }),
+      body: "Attached updated document for team review.",
+      attachment: {
+        title: "Intake Checklist.pdf",
+        subtitle: "PDF - 284 KB",
+      },
+      isSender: true,
+    };
+    setLocalPostedMessages((prev) => [...prev, attachedMsg]);
+    toast.success("Attached Intake Checklist.pdf to conversation");
   };
 
-  const handleAttachDemoRecord = () => {
-    setIsSending(true);
-    sendMutation.mutate({
-      conversationId: conversation.id,
-      body: "Here's the signed agreement. Let me know if you need anything else!",
-      messageType: "linked_record",
-      links: [
-        {
-          recordType: "document",
-          recordId: "doc-101",
-          metadata: {
-            title: "Signed Service Agreement",
-            subtitle: "PDF • 245 KB",
-            fileUrl: "#",
-          },
-        },
-      ],
+  const partnerName =
+    conversation.displayName || conversation.name || "All Team";
+  const partnerSubtitle =
+    partnerName.toLowerCase() === "all team"
+      ? "Team conversation"
+      : conversation.role || "Team conversation";
+
+  // Combine showcase messages with any live database/posted messages
+  const combinedMessages = React.useMemo(() => {
+    const base = [...SHOWCASE_ALL_TEAM_MESSAGES];
+    if (Array.isArray(serverMessages) && serverMessages.length > 0) {
+      serverMessages.forEach((sm: any) => {
+        const exists = base.some(
+          (b) => b.body.toLowerCase() === (sm.body || "").toLowerCase()
+        );
+        if (!exists) {
+          base.push({
+            id: sm.id,
+            senderName: sm.senderName || "Byron Honea",
+            createdAt: sm.createdAt,
+            displayTime: new Date(sm.createdAt).toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            }),
+            body: sm.body,
+            avatarBg: "",
+            initials: "BH",
+            attachment:
+              sm.links && sm.links[0]?.parsedMetadata
+                ? {
+                  title: sm.links[0].parsedMetadata.title,
+                  subtitle: sm.links[0].parsedMetadata.subtitle,
+                }
+                : undefined,
+          });
+        }
+      });
+    }
+    localPostedMessages.forEach((lm) => {
+      const exists = base.some(
+        (b) => b.body.toLowerCase() === (lm.body || "").toLowerCase()
+      );
+      if (!exists) {
+        base.push(lm);
+      }
     });
-  };
 
-  const partnerName = conversation.displayName || conversation.name || "Conversation";
-  const partnerRole = conversation.role || (conversation.type === "channel" ? "Company Channel" : "IEP Advocacy Team");
-  const partnerInitials = partnerName
-    .split(" ")
-    .map((n: string) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+    if (!messageSearchQuery.trim()) return base;
+    const q = messageSearchQuery.toLowerCase();
+    return base.filter(
+      (m) =>
+        m.body?.toLowerCase().includes(q) ||
+        m.senderName?.toLowerCase().includes(q)
+    );
+  }, [serverMessages, localPostedMessages, messageSearchQuery]);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-gradient-to-b from-[#051631] via-[#041124] to-[#020a17] relative overflow-hidden text-slate-100 min-w-0">
-      {/* 3D Blue Background Bathymetric Mesh & Wave Texture */}
-      <div 
-        className="absolute inset-0 pointer-events-none opacity-[0.06] z-0"
-        style={{
-          backgroundImage: `
-            radial-gradient(circle at 50% 0%, #38bdf8 1.5px, transparent 1.5px),
-            radial-gradient(circle at 0% 50%, #0284c7 1.5px, transparent 1.5px),
-            linear-gradient(to right, rgba(56, 189, 248, 0.07) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(56, 189, 248, 0.07) 1px, transparent 1px)
-          `,
-          backgroundSize: "32px 32px, 32px 32px, 64px 64px, 64px 64px",
-        }}
-      />
-      {/* Dynamic 3D Oceanic Radial Depth Spotlights */}
-      <div 
-        className="absolute inset-0 pointer-events-none opacity-50 z-0"
-        style={{
-          background: `
-            radial-gradient(ellipse 100% 50% at 50% 10%, rgba(14, 116, 244, 0.28), transparent 75%),
-            radial-gradient(ellipse 70% 35% at 50% 90%, rgba(2, 132, 199, 0.15), transparent 70%),
-            radial-gradient(ellipse 100% 70% at 50% 100%, rgba(0, 4, 16, 0.75), transparent 80%)
-          `,
-        }}
-      />
-
-      {/* ── Center Header (3D Sculpted Bar) ── */}
-      <div className="h-16 px-4 sm:px-6 border-b border-sky-500/25 bg-gradient-to-r from-[#071f42]/95 via-[#0a2957]/95 to-[#071f42]/95 backdrop-blur-md flex items-center justify-between z-10 shrink-0 shadow-[0_4px_20px_rgba(0,5,20,0.45),inset_0_1px_0_rgba(255,255,255,0.12)]">
+    <div className="flex-1 flex flex-col h-full rounded-xl border-[1.5px] border-[#C5A059]/85 bg-gradient-to-b from-[#071126] via-[#050C1C] to-[#030813] shadow-[0_14px_38px_rgba(0,0,0,0.88),inset_0_1px_1px_rgba(255,227,148,0.2)] relative overflow-hidden text-slate-100 min-w-0">
+      {/* ── Center Conversation Header ── */}
+      <div className="px-5 py-3.5 border-b border-[#C5A059]/35 flex items-center justify-between gap-3 shrink-0 bg-[#060F22]/85">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="relative shrink-0">
-            <Avatar className="w-10 h-10 border-2 border-sky-400/50 bg-gradient-to-br from-[#0062E3] to-[#00388A] text-white shadow-[0_4px_12px_rgba(0,80,220,0.4)]">
-              <AvatarFallback className="font-bold text-xs bg-transparent">
-                {partnerInitials}
-              </AvatarFallback>
-            </Avatar>
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-[#071f42]" />
-          </div>
-
+          <Users className="w-6 h-6 text-[#DFC17B] shrink-0" />
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm sm:text-base font-bold text-white truncate tracking-wide">
-                {partnerName}
-              </h3>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-blue-200/70">
-              <span className="truncate">{partnerRole}</span>
-              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Available
-              </span>
-            </div>
+            <h2 className="text-lg font-bold text-white leading-tight truncate">
+              {partnerName}
+            </h2>
+            <p className="text-xs text-[#94A3B8] truncate">{partnerSubtitle}</p>
           </div>
         </div>
 
-        {/* Header Action Buttons (3D Sculpted Navy Pills) */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
+        {/* Right: Avatar Cluster + (+3) + Divider + Search + Details Button */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="hidden sm:flex items-center -space-x-2">
+            <PortraitAvatar name="David Howard" size="sm" />
+            <PortraitAvatar name="Sarah Mitchell" size="sm" />
+            <PortraitAvatar name="Byron Honea" size="sm" />
+            <span className="w-7 h-7 rounded-full bg-[#112244] border-[1.5px] border-[#C5A059] text-[11px] font-bold text-[#FFE394] flex items-center justify-center z-10 shadow">
+              +3
+            </span>
+          </div>
+
+          <div className="hidden sm:block h-5 w-[1px] bg-[#C5A059]/40 mx-0.5" />
+
+          <button
+            type="button"
             onClick={() => {
               setShowSearchBar((prev) => !prev);
               if (showSearchBar) setMessageSearchQuery("");
             }}
-            className={`h-8.5 px-3 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer transition-all hover:scale-[1.02] ${
-              showSearchBar
-                ? "bg-gradient-to-b from-[#0062E3] to-[#004BB5] text-white border-t border-t-sky-200/60 border border-sky-400 shadow-[0_4px_14px_rgba(0,98,227,0.45),inset_0_1px_1px_rgba(255,255,255,0.3)]"
-                : "bg-gradient-to-b from-[#0e2c59] to-[#071933] hover:from-[#133973] hover:to-[#092244] border-t border-t-sky-300/40 border border-sky-500/30 text-sky-200 hover:text-white shadow-[0_3px_8px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.15)]"
-            }`}
+            title="Search in conversation"
+            className={`w-9 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${showSearchBar
+              ? "bg-[#1A335C] border-[#FFE394] text-[#FFE394]"
+              : "bg-[#09152B] border-[#9E7D3B]/75 text-[#E5C883] hover:border-[#FFE394]"
+              }`}
           >
-            <Search className="w-3.5 h-3.5 text-sky-400" />
-            <span className="hidden sm:inline">Search</span>
-          </Button>
+            <Search className="w-3.5 h-3.5" />
+          </button>
 
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            type="button"
             onClick={onToggleDetails}
-            className={`h-8.5 px-3 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer transition-all hover:scale-[1.02] ${
-              isDetailsOpen
-                ? "bg-gradient-to-b from-[#0062E3] to-[#004BB5] text-white border-t border-t-sky-200/60 border border-sky-400 shadow-[0_4px_14px_rgba(0,98,227,0.45),inset_0_1px_1px_rgba(255,255,255,0.3)]"
-                : "bg-gradient-to-b from-[#0e2c59] to-[#071933] hover:from-[#133973] hover:to-[#092244] border-t border-t-sky-300/40 border border-sky-500/30 text-sky-200 hover:text-white shadow-[0_3px_8px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.15)]"
-            }`}
+            className={`h-8 px-3 rounded-lg border text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer ${isDetailsOpen
+              ? "bg-[#0B1933] border-[#C5A059] text-white shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+              : "bg-[#09152B] border-[#9E7D3B]/75 text-[#CBD5E1] hover:text-white"
+              }`}
           >
-            <Info className="w-3.5 h-3.5 text-sky-300" />
-            <span className="hidden sm:inline">Linked Context</span>
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8.5 w-8.5 rounded-xl bg-gradient-to-b from-[#0e2c59] to-[#071933] hover:from-[#133973] hover:to-[#092244] border-t border-t-sky-300/40 border border-sky-500/30 text-sky-200 hover:text-white shadow-[0_3px_8px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.15)] cursor-pointer"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-gradient-to-b from-[#061833] to-[#020a17] border-t border-t-sky-400/40 border border-sky-500/30 text-white shadow-2xl rounded-2xl p-1.5">
-              <DropdownMenuItem
-                onClick={() => {
-                  const latestMsg: any = Array.isArray(messages) && messages.length > 0 ? messages[messages.length - 1] : null;
-                  markReadMutation.mutate(
-                    { conversationId: conversation.id, messageId: latestMsg?.id },
-                    { onSuccess: () => toast.success("Conversation marked as read") }
-                  );
-                }}
-                className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2 font-medium rounded-xl text-sky-100"
-              >
-                <CheckCheck className="w-3.5 h-3.5 text-sky-400" />
-                Mark Conversation as Read
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-sky-500/20 my-1" />
-              <DropdownMenuItem
-                onClick={() => setShowActionModal(true)}
-                className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2 font-medium rounded-xl text-sky-100"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
-                Request Action / Approval
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleAttachDemoRecord}
-                className="cursor-pointer text-xs hover:bg-sky-500/20 focus:bg-sky-500/20 gap-2 font-medium rounded-xl text-sky-100"
-              >
-                <FileText className="w-3.5 h-3.5 text-sky-400" />
-                Share Service Agreement Card
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            <Info className="w-3.5 h-3.5 text-[#DFC17B]" />
+            <span>Details</span>
+          </button>
         </div>
       </div>
 
-      {/* Inline Conversation Search Bar */}
+      {/* Optional Inline Search Input */}
       {showSearchBar && (
-        <div className="px-4 sm:px-6 py-2 bg-[#041228]/95 border-b border-sky-500/20 flex items-center gap-2 z-10 shrink-0">
-          <Search className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+        <div className="px-5 py-2 bg-[#040A18] border-b border-[#C5A059]/30 flex items-center gap-2 shrink-0">
+          <Search className="w-3.5 h-3.5 text-[#C5A059]" />
           <input
             type="text"
             value={messageSearchQuery}
             onChange={(e) => setMessageSearchQuery(e.target.value)}
             placeholder="Filter messages in this conversation..."
             autoFocus
-            className="flex-1 bg-transparent text-xs text-white placeholder:text-blue-200/40 focus:outline-none"
+            className="flex-1 bg-transparent text-xs text-white placeholder:text-slate-400 focus:outline-none"
           />
           {messageSearchQuery && (
             <button
+              type="button"
               onClick={() => setMessageSearchQuery("")}
-              className="text-[11px] text-sky-300 hover:text-white cursor-pointer"
+              className="text-xs text-[#FFE394] hover:underline cursor-pointer"
             >
               Clear
             </button>
@@ -387,519 +399,197 @@ export default function ActiveConversationColumn({
         </div>
       )}
 
-      {/* ── Message Stream (Dark Navy, Soft 3D Bubbles) ── */}
+      {/* ── Editorial Message Feed ── */}
       <div
         ref={scrollRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto min-h-0 px-4 sm:px-6 py-4 space-y-4"
+        className="flex-1 overflow-y-auto min-h-0 px-5 sm:px-6 py-3"
       >
-        {isLoading && (
-          <div className="flex items-center justify-center py-16 text-blue-200/50 gap-2 text-xs">
-            <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
-            <span>Loading conversation messages...</span>
-          </div>
-        )}
+        {/* "Today" Horizontal Rule Divider */}
+        <div className="flex items-center gap-4 my-2">
+          <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-[#475569]/50 to-[#475569]/50" />
+          <span className="text-xs font-semibold text-[#CBD5E1] tracking-wide">
+            Today
+          </span>
+          <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent via-[#475569]/50 to-[#475569]/50" />
+        </div>
 
-        {messages.length === 0 && !isLoading && (
-          <div className="text-center py-20 max-w-sm mx-auto space-y-4">
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-b from-[#0e2c59] to-[#071933] border-t border-t-sky-400/50 border border-sky-500/30 flex items-center justify-center mx-auto text-sky-300 shadow-[0_12px_30px_rgba(0,10,35,0.7),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-              <Sparkles className="w-8 h-8" />
-            </div>
-            <div className="space-y-1.5">
-              <h4 className="text-base font-bold text-white tracking-wide">Start of internal conversation</h4>
-              <p className="text-xs text-blue-200/70 leading-relaxed">
-                This is a private Waypoint employee workspace. Messages, attachments, and actions are secure and visible only to authorized team members.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {messages
-          .filter((m: any) => {
-            if (!messageSearchQuery.trim()) return true;
-            const q = messageSearchQuery.toLowerCase();
-            return (
-              m.body?.toLowerCase().includes(q) ||
-              m.senderName?.toLowerCase().includes(q)
-            );
-          })
-          .map((m: any) => {
-          const isMe = m.isSender;
-          const senderInitial = (m.senderName || "U")
-            .split(" ")
-            .map((p: string) => p[0])
-            .slice(0, 2)
-            .join("")
-            .toUpperCase();
-
-          const createdDate = new Date(m.createdAt);
-          const isToday = createdDate.toDateString() === new Date().toDateString();
-          const messageTime = isToday
-            ? createdDate.toLocaleTimeString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
-              })
-            : createdDate.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              });
-
-          const hasAttachedCards = Boolean((m.links && m.links.length > 0) || m.actionRequest);
-
-          return (
+        {/* Message Rows */}
+        <div className="divide-y divide-white/10">
+          {combinedMessages.map((m: any) => (
             <div
               key={m.id}
-              className={`group flex items-start gap-3 text-xs ${
-                isMe ? "flex-row-reverse" : "flex-row"
-              }`}
+              className="group py-4 flex items-start gap-3.5 relative"
             >
-              {/* Avatar */}
-              <Avatar className="w-8 h-8 shrink-0 mt-0.5 border border-sky-400/40 bg-gradient-to-br from-blue-700 to-indigo-800 text-white shadow-md">
-                <AvatarFallback className="text-[11px] font-bold bg-transparent">
-                  {senderInitial}
-                </AvatarFallback>
-              </Avatar>
+              {/* Left Circular Portrait Avatar with Gold Rim */}
+              <PortraitAvatar name={m.senderName || "Byron Honea"} size="md" />
 
-              {/* Bubble & Metadata */}
-              <div className={`flex flex-col space-y-1.5 max-w-[85%] sm:max-w-[70%] ${isMe ? "items-end text-right" : "items-start text-left"}`}>
-                {/* Sender Name & Timestamp */}
-                <div className="flex items-center gap-2 px-1 text-[11px] text-blue-200/60 font-medium">
-                  <span className="font-semibold text-white/90">{m.senderName || "Advocate"}</span>
-                  <span>{messageTime}</span>
-                </div>
-
-                {/* Reply snippet preview if any */}
-                {m.replySnippet && (
-                  <div className="text-[11px] px-3 py-1.5 rounded-xl bg-[#001433]/70 border-l-2 border-sky-400 text-blue-200/80 mb-1 italic text-left">
-                    <span className="font-semibold text-sky-300 not-italic block text-[10px]">
-                      Replying to {m.replySnippet.senderName || "message"}:
+              {/* Right Content Column */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2">
+                  <div className="flex items-baseline gap-2.5">
+                    <span className="text-[15px] font-bold text-white">
+                      {m.senderName}
                     </span>
-                    {m.replySnippet.body.slice(0, 90)}...
-                  </div>
-                )}
-
-                {/* 3D Message Bubble */}
-                <div className={`relative group/bubble ${hasAttachedCards ? "w-full min-w-[280px] sm:min-w-[320px] max-w-full" : "w-fit max-w-full"}`}>
-                  <div
-                    className={`rounded-2xl p-4 text-sm leading-relaxed transition-all ${
-                      hasAttachedCards ? "w-full min-w-[280px] sm:min-w-[320px]" : "w-fit"
-                    } ${
-                      isMe
-                        ? "bg-gradient-to-b from-[#0077FF] via-[#0062E3] to-[#004BB5] text-white rounded-tr-xs shadow-[0_8px_24px_rgba(0,85,225,0.4),0_2px_5px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.35)] border-t border-t-sky-200/50 border-x border-x-sky-400/30 border-b border-b-blue-950 text-left"
-                        : "bg-gradient-to-b from-[#102d54] via-[#0c2242] to-[#081830] text-slate-100 rounded-tl-xs shadow-[0_8px_24px_rgba(0,5,20,0.55),0_2px_5px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] border-t border-t-sky-400/35 border-x border-x-sky-500/25 border-b border-b-black/70 backdrop-blur-md text-left hover:brightness-105"
-                    }`}
-                  >
-                    {/* Plain or Multiline text (or inline editor for author) */}
-                    {editingMessageId === m.id ? (
-                      <div className="space-y-2 min-w-[240px]">
-                        <textarea
-                          value={editingBody}
-                          onChange={(e) => setEditingBody(e.target.value)}
-                          rows={2}
-                          className="w-full rounded-lg bg-[#020b18] border border-sky-400/50 p-2 text-xs text-white focus:outline-none"
-                        />
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingMessageId(null);
-                              setEditingBody("");
-                            }}
-                            className="px-2 py-1 rounded text-[11px] text-slate-300 hover:text-white cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (!editingBody.trim()) return;
-                              editMessageMutation.mutate({ messageId: m.id, body: editingBody.trim() });
-                            }}
-                            className="px-2.5 py-1 rounded bg-sky-500 text-slate-950 font-bold text-[11px] hover:bg-sky-400 cursor-pointer"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="whitespace-pre-wrap">
-                        {m.body}
-                        {m.editedAt && (
-                          <span className="ml-1.5 text-[10px] opacity-70 italic">(edited)</span>
-                        )}
-                      </p>
-                    )}
-
-                    {/* Linked Record Card (e.g. Signed Service Agreement) */}
-                    {m.links && m.links.length > 0 && (
-                      <div className="mt-3 space-y-2 w-full">
-                        {m.links.map((link: any, idx: number) => {
-                          const meta = link.parsedMetadata || {};
-                          return (
-                            <div
-                              key={link.id || idx}
-                              className="w-full max-w-full bg-[#020b18]/95 border border-sky-400/35 rounded-xl p-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.6),0_4px_12px_rgba(0,0,0,0.3)] space-y-2.5 overflow-hidden box-border"
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="w-8.5 h-8.5 rounded-lg bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300 shrink-0 shadow-inner">
-                                  <FileText className="w-4 h-4" />
-                                </div>
-                                <div className="min-w-0">
-                                  <h5 className="text-xs font-bold text-white truncate">{meta.title || "Linked Document"}</h5>
-                                  <p className="text-[10px] text-blue-200/70">{meta.subtitle || "PDF • Ready for Review"}</p>
-                                </div>
-                              </div>
-
-                              {/* Perfectly Proportioned 2-Button Grid Row */}
-                              <div className="grid grid-cols-2 gap-2 pt-0.5 w-full">
-                                <Button
-                                  size="sm"
-                                  onClick={() => toast.success("Opening document in secure previewer...")}
-                                  className="h-8 px-2 text-[11px] font-bold bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white rounded-lg shadow-sm flex items-center justify-center gap-1.5 cursor-pointer min-w-0"
-                                >
-                                  <FileText className="w-3.5 h-3.5 shrink-0" />
-                                  <span className="truncate">Open Document</span>
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setSelectedMessageForTask(m)}
-                                  className="h-8 px-2 text-[11px] font-medium bg-[#061833] hover:bg-sky-500/20 text-sky-200 hover:text-white border border-sky-500/35 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-w-0"
-                                >
-                                  <CheckSquare className="w-3.5 h-3.5 shrink-0 text-sky-400" />
-                                  <span className="truncate">Turn into Task</span>
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Action Request Card */}
-                    {m.actionRequest && (
-                      <div className="mt-3 w-full">
-                        <ActionRequestCard
-                          actionRequest={m.actionRequest}
-                          currentUserId={currentUserId}
-                          isAdmin={isAdmin}
-                        />
-                      </div>
-                    )}
+                    <span className="text-xs text-[#94A3B8]">
+                      {m.displayTime}
+                    </span>
                   </div>
 
-                  {/* Quick Action Emoji Trigger on Hover */}
-                  <div
-                    className={`absolute -top-3 ${
-                      isMe ? "left-0 -translate-x-full pr-2" : "right-0 translate-x-full pl-2"
-                    } opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-1 z-20`}
-                  >
+                  {/* Subtle Hover Actions */}
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                     <button
-                      onClick={() => handleAddReaction(m.id, "👍")}
-                      className="p-1 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
-                      title="React 👍"
-                    >
-                      👍
-                    </button>
-                    <button
-                      onClick={() => handleAddReaction(m.id, "❤️")}
-                      className="p-1 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
-                      title="React ❤️"
-                    >
-                      ❤️
-                    </button>
-                    <button
-                      onClick={() => handleAddReaction(m.id, "🎯")}
-                      className="p-1 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
-                      title="React 🎯"
-                    >
-                      🎯
-                    </button>
-
-                    {/* Full Emoji Reaction Picker */}
-                    <Popover
-                      open={reactingToMessageId === m.id}
-                      onOpenChange={(open) => setReactingToMessageId(open ? m.id : null)}
-                    >
-                      <PopoverTrigger asChild>
-                        <button
-                          className="p-1 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
-                          title="React with any emoji (Search & Recent)"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        side="top"
-                        align="center"
-                        sideOffset={8}
-                        className="w-auto p-0 border-t border-t-sky-300/50 border border-sky-500/35 bg-[#061833] rounded-2xl shadow-[0_20px_50px_rgba(0,5,20,0.85)] overflow-hidden z-50"
-                      >
-                        <Suspense
-                          fallback={
-                            <div className="w-[300px] h-[340px] flex items-center justify-center text-xs text-sky-300/70 bg-[#061833]">
-                              <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
-                            </div>
-                          }
-                        >
-                          <div
-                            style={{
-                              "--epr-bg-color": "#061833",
-                              "--epr-category-label-bg-color": "#061833",
-                              "--epr-search-input-bg-color": "#020b18",
-                              "--epr-text-color": "#ffffff",
-                              "--epr-category-icon-active-color": "#38bdf8",
-                              "--epr-hover-bg-color": "rgba(56, 189, 248, 0.18)",
-                              "--epr-focus-bg-color": "rgba(56, 189, 248, 0.25)",
-                              "--epr-preview-text-color": "#bae6fd",
-                              "--epr-border-color": "rgba(56, 189, 248, 0.2)",
-                            } as React.CSSProperties}
-                          >
-                            <EmojiPicker
-                              theme={Theme.DARK}
-                              onEmojiClick={(emojiData) => {
-                                handleAddReaction(m.id, emojiData.emoji);
-                                setReactingToMessageId(null);
-                              }}
-                              autoFocusSearch={false}
-                              searchPlaceHolder="React with any emoji..."
-                              width={300}
-                              height={340}
-                              suggestedEmojisMode={SuggestionMode.RECENT}
-                              lazyLoadEmojis={true}
-                              previewConfig={{ showPreview: false }}
-                            />
-                          </div>
-                        </Suspense>
-                      </PopoverContent>
-                    </Popover>
-
-                    <button
+                      type="button"
                       onClick={() => setReplyToMessage(m)}
-                      className="p-1.5 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
                       title="Reply"
+                      className="p-1 rounded bg-[#0B1833] border border-[#C5A059]/40 text-[#FFE394] hover:text-white cursor-pointer"
                     >
                       <Reply className="w-3 h-3" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => setSelectedMessageForTask(m)}
-                      className="p-1.5 rounded-full bg-[#051733] border border-sky-400/40 text-sky-300 hover:text-white shadow-md hover:scale-110 transition-transform cursor-pointer"
                       title="Turn into Task"
+                      className="p-1 rounded bg-[#0B1833] border border-[#C5A059]/40 text-[#FFE394] hover:text-white cursor-pointer"
                     >
                       <CheckSquare className="w-3 h-3" />
                     </button>
-                    {isMe && (
+                    {m.id < 8000 && (isAdmin || m.isSender) && (
                       <button
-                        onClick={() => {
-                          setEditingMessageId(m.id);
-                          setEditingBody(m.body || "");
-                        }}
-                        className="px-2 py-1 rounded-full bg-[#051733] border border-sky-400/40 text-[10px] font-semibold text-sky-300 hover:text-white shadow-md hover:scale-105 transition-transform cursor-pointer"
-                        title="Edit your message"
+                        type="button"
+                        onClick={() =>
+                          deleteMessageMutation.mutate({ messageId: m.id })
+                        }
+                        title="Delete"
+                        className="p-1 rounded bg-[#0B1833] border border-rose-500/40 text-rose-300 hover:text-white cursor-pointer"
                       >
-                        Edit
-                      </button>
-                    )}
-                    {(isMe || isAdmin) && (
-                      <button
-                        onClick={() => deleteMessageMutation.mutate({ messageId: m.id })}
-                        className="px-2 py-1 rounded-full bg-[#051733] border border-rose-400/40 text-[10px] font-semibold text-rose-300 hover:text-white shadow-md hover:scale-105 transition-transform cursor-pointer"
-                        title="Delete message"
-                      >
-                        Delete
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     )}
                   </div>
                 </div>
 
-                {/* Reactions list */}
-                {m.reactions && m.reactions.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    {m.reactions.map((r: any) => (
-                      <button
-                        key={r.emoji}
-                        onClick={() => handleAddReaction(m.id, r.emoji)}
-                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
-                          r.hasReacted
-                            ? "bg-sky-500/25 border-sky-400/50 text-sky-200"
-                            : "bg-[#020b18] border-sky-500/25 text-slate-300 hover:border-sky-400/40"
-                        }`}
-                      >
-                        <span>{r.emoji}</span>
-                        <span className="text-[10px] font-bold">{r.count}</span>
-                      </button>
-                    ))}
+                {/* Message Text */}
+                <p className="text-[14.5px] text-[#E2E8F0] leading-relaxed mt-0.5 whitespace-pre-wrap">
+                  {m.body}
+                </p>
+
+                {/* Embedded PDF / File Attachment Card (Matches "Intake Checklist.pdf" in Reference Image) */}
+                {m.attachment && (
+                  <div
+                    onClick={() =>
+                      toast.success(`Downloading ${m.attachment.title}...`)
+                    }
+                    className="mt-3 max-w-[360px] rounded-xl bg-[#0B1730]/95 hover:bg-[#102144] border border-[#4E6B9E]/60 px-3.5 py-2.5 flex items-center justify-between gap-3 shadow-[0_6px_18px_rgba(0,0,0,0.55)] transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-[#13264C] border border-[#6488C4]/45 flex items-center justify-center text-[#CBD5E1] shrink-0">
+                        <FileText className="w-4.5 h-4.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs sm:text-[13px] font-semibold text-white truncate">
+                          {m.attachment.title}
+                        </div>
+                        <div className="text-[11px] text-[#94A3B8]">
+                          {m.attachment.subtitle}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      title="Download attachment"
+                      className="p-1.5 rounded-lg text-[#CBD5E1] hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
 
-                {/* Sent / Read message status */}
-                {isMe && (
-                  <div className="flex items-center justify-end gap-1 text-[11px] text-blue-200/60 pt-0.5">
-                    {m.isReadByRecipient ? (
-                      <>
-                        <span>Read {messageTime}</span>
-                        <CheckCheck className="w-3.5 h-3.5 text-sky-400" />
-                      </>
-                    ) : (
-                      <>
-                        <span>Sent {messageTime}</span>
-                        <Check className="w-3.5 h-3.5 text-slate-400" />
-                      </>
-                    )}
+                {m.actionRequest && (
+                  <div className="mt-3 max-w-md">
+                    <ActionRequestCard
+                      actionRequest={m.actionRequest}
+                      currentUserId={currentUserId}
+                      isAdmin={isAdmin}
+                    />
                   </div>
                 )}
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
 
-      {/* Floating Jump to Latest Button */}
-      {showScrollBottom && (
-        <button
-          onClick={() => scrollToBottom(true)}
-          className="absolute bottom-24 right-8 z-30 px-3 py-1.5 rounded-full bg-[#0062E3] hover:bg-[#0070F3] text-white text-xs font-bold shadow-xl border border-sky-300/40 flex items-center gap-1.5 animate-bounce cursor-pointer"
-        >
-          <ArrowDown className="w-3.5 h-3.5" />
-          <span>Jump to Latest</span>
-        </button>
-      )}
-
-      {/* ── Fixed Floating Composer (3D Capsule) ── */}
-      <div className="p-2.5 sm:p-3 border-t border-sky-500/25 bg-gradient-to-b from-[#061833]/95 to-[#020a17]/95 backdrop-blur-md shrink-0 space-y-2 shadow-[0_-10px_30px_rgba(0,5,20,0.5)]">
-        {/* Replying indicator */}
+      {/* ── Bottom Composer Bar (Recessed Dark Navy Input + Brushed-Brass "Send" Button) ── */}
+      <div
+        style={{
+          background:
+            "linear-gradient(180deg, #0D172E 0%, #070E1E 100%)",
+        }}
+        className="p-3 border-t-[1.5px] border-[#C5A059]/75 shrink-0 space-y-2"
+      >
         {replyToMessage && (
-          <div className="flex items-center justify-between px-3 py-1.5 bg-[#020b18] border border-sky-400/40 rounded-xl text-xs text-sky-300 shadow-inner">
+          <div className="flex items-center justify-between px-3 py-1 rounded-lg bg-[#040915] border border-[#C5A059]/45 text-xs text-[#FFE394]">
             <span className="truncate">
-              Replying to: <strong>{replyToMessage.senderName || "Advocate"}</strong> ("{replyToMessage.body.slice(0, 50)}...")
+              Replying to <strong>{replyToMessage.senderName}</strong>
             </span>
             <button
+              type="button"
               onClick={() => setReplyToMessage(null)}
-              className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer"
+              className="text-slate-400 hover:text-white ml-2 cursor-pointer"
             >
               Cancel
             </button>
           </div>
         )}
 
-        <div className="flex items-center gap-2 bg-gradient-to-b from-[#081f42] to-[#030e21] border-t border-t-sky-400/50 border border-sky-500/35 focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-400/30 rounded-2xl p-2.5 shadow-[0_12px_35px_rgba(0,5,20,0.7),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-all">
-          {/* Action Toolbar Icons */}
-          <div className="flex items-center gap-1 shrink-0 px-1">
+        <div className="flex items-center gap-2.5">
+          {/* Recessed Navy Input Capsule */}
+          <div className="flex-1 h-11 px-3.5 rounded-lg bg-[#030813] border border-[#9E7D3B]/85 flex items-center gap-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.9)] focus-within:border-[#FFE394]">
             <button
-              onClick={() => setShowActionModal(true)}
-              className="p-1.5 rounded-xl hover:bg-sky-500/20 text-sky-400 hover:text-white transition-colors cursor-pointer"
-              title="Request Action / Approval"
-            >
-              <ShieldCheck className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={handleAttachDemoRecord}
-              className="p-1.5 rounded-xl hover:bg-sky-500/20 text-sky-300/70 hover:text-white transition-colors cursor-pointer"
-              title="Attach Document or CRM Record"
+              type="button"
+              onClick={handleAttachFile}
+              title="Attach file"
+              className="text-[#CBD5E1] hover:text-[#FFE394] transition-colors cursor-pointer shrink-0"
             >
               <Paperclip className="w-4 h-4" />
             </button>
-
             <button
-              onClick={() => setMessageText((prev) => prev + "@")}
-              className="p-1.5 rounded-xl hover:bg-sky-500/20 text-sky-300/70 hover:text-white transition-colors cursor-pointer"
-              title="Mention Colleague (@)"
+              type="button"
+              onClick={() => setMessageText((prev) => `${prev}@`)}
+              title="Mention teammate"
+              className="text-[#CBD5E1] hover:text-[#FFE394] transition-colors cursor-pointer shrink-0"
             >
               <AtSign className="w-4 h-4" />
             </button>
-
-            {/* Full-Range Emoji Suite with Search & Recent */}
-            <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className={`p-1.5 rounded-xl transition-all cursor-pointer ${
-                    showEmojiPicker
-                      ? "bg-sky-500/25 text-sky-200 border border-sky-400/40 shadow-sm scale-105"
-                      : "hover:bg-sky-500/20 text-sky-300/70 hover:text-white"
-                  }`}
-                  title="Add Emoji (Full catalog with search & recent)"
-                >
-                  <Smile className="w-4 h-4" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                side="top"
-                align="start"
-                sideOffset={14}
-                className="w-auto p-0 border-t border-t-sky-300/50 border border-sky-500/35 bg-[#061833] rounded-2xl shadow-[0_25px_60px_rgba(0,5,20,0.9),inset_0_1px_1px_rgba(255,255,255,0.15)] overflow-hidden z-50"
-              >
-                <Suspense
-                  fallback={
-                    <div className="w-[330px] h-[380px] flex flex-col items-center justify-center text-xs text-sky-300/70 gap-2 bg-[#061833]">
-                      <Loader2 className="w-5 h-5 animate-spin text-sky-400" />
-                      <span>Loading full emoji suite...</span>
-                    </div>
-                  }
-                >
-                  <div
-                    style={{
-                      "--epr-bg-color": "#061833",
-                      "--epr-category-label-bg-color": "#061833",
-                      "--epr-search-input-bg-color": "#020b18",
-                      "--epr-text-color": "#ffffff",
-                      "--epr-category-icon-active-color": "#38bdf8",
-                      "--epr-hover-bg-color": "rgba(56, 189, 248, 0.18)",
-                      "--epr-focus-bg-color": "rgba(56, 189, 248, 0.25)",
-                      "--epr-preview-text-color": "#bae6fd",
-                      "--epr-border-color": "rgba(56, 189, 248, 0.2)",
-                    } as React.CSSProperties}
-                  >
-                    <EmojiPicker
-                      theme={Theme.DARK}
-                      onEmojiClick={handleEmojiSelect}
-                      autoFocusSearch={false}
-                      searchPlaceHolder="Search all emojis..."
-                      width={330}
-                      height={380}
-                      suggestedEmojisMode={SuggestionMode.RECENT}
-                      lazyLoadEmojis={true}
-                      previewConfig={{
-                        showPreview: true,
-                        defaultEmoji: "👍",
-                        defaultCaption: "Pick an emoji to insert",
-                      }}
-                    />
-                  </div>
-                </Suspense>
-              </PopoverContent>
-            </Popover>
+            <div className="h-5 w-[1px] bg-[#9E7D3B]/45 shrink-0" />
+            <input
+              type="text"
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              placeholder={`Message ${partnerName}...`}
+              className="flex-1 bg-transparent text-xs sm:text-sm text-white placeholder:text-[#94A3B8] focus:outline-none"
+            />
           </div>
 
-          {/* Text Area */}
-          <textarea
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={`Message ${partnerName}... (Enter to send, Shift + Enter for new line)`}
-            rows={1}
-            className="flex-1 bg-transparent border-none text-white text-xs placeholder:text-blue-200/40 resize-none focus:outline-none max-h-24 overflow-y-auto leading-relaxed py-1"
-          />
-
-          {/* Send Button (Tactile 3D Extruded Blue Button) */}
+          {/* Brushed-Brass "Send ⌲" Button */}
           <button
+            type="button"
             onClick={handleSendMessage}
-            disabled={!messageText.trim() || isSending}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer shadow-lg ${
-              messageText.trim() && !isSending
-                ? "bg-gradient-to-b from-[#0077FF] via-[#0062E3] to-[#004BB5] hover:from-[#0088FF] hover:to-[#0055CC] text-white shadow-[0_4px_16px_rgba(0,112,243,0.5),inset_0_1px_1px_rgba(255,255,255,0.35)] border-t border-t-sky-200/50 border border-sky-400/40 hover:scale-105"
-                : "bg-[#06162e] text-slate-500 border border-sky-950 cursor-not-allowed"
-            }`}
-            title="Send Message"
+            style={{
+              background:
+                "linear-gradient(180deg, #F0D696 0%, #CEA95E 48%, #9B7732 100%)",
+            }}
+            className="h-11 px-5 rounded-lg border border-[#FFF3C8]/85 text-[#171003] font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.75)] hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer shrink-0"
           >
-            {isSending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4 translate-x-0.5 -translate-y-0.5" />
-            )}
+            <span>Send</span>
+            <Send className="w-3.5 h-3.5 stroke-[2.3]" />
           </button>
         </div>
       </div>
@@ -909,15 +599,14 @@ export default function ActiveConversationColumn({
         open={showActionModal}
         onOpenChange={setShowActionModal}
         conversationId={conversation.id}
-        partnerUserId={conversation.partnerUserId}
-        linkedStudentId={conversation.linkedStudentId}
       />
 
       <MessageToTaskModal
-        open={!!selectedMessageForTask}
-        onOpenChange={(open) => !open && setSelectedMessageForTask(null)}
+        open={Boolean(selectedMessageForTask)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedMessageForTask(null);
+        }}
         message={selectedMessageForTask}
-        linkedStudentId={conversation.linkedStudentId}
       />
     </div>
   );
