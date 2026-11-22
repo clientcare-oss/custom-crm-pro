@@ -673,6 +673,14 @@ export default function AdvocacyPipeline() {
         {/* Compact Page Title Bar */}
         <AdvocacyPipelineHeader
           onViewArchive={() => setLocation("/archive")}
+          selectedAdvocate={filters.advocate}
+          onSelectAdvocate={(advocate) =>
+            setFilters((prev) => ({ ...prev, advocate }))
+          }
+          onCustomizePipeline={() => setIsCustomizingOrder((prev) => !prev)}
+          isCustomizingPipeline={isCustomizingOrder}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
 
         {/* LEVEL 1: Saved Views + LEVEL 2: Compact Toolbar */}

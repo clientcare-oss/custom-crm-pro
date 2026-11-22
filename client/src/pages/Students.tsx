@@ -1021,7 +1021,7 @@ export default function Students() {
       <div className="min-h-full w-full max-w-full min-w-0 overflow-x-hidden bg-[#020712] text-[#F0DFC5] flex flex-col">
         {/* ─── Top Full-Bleed Maritime Header Banner (Touches Left and Right Screen Edges With No Buffer) ─── */}
         <div
-          className="w-full relative border-b border-[#8A6731]/60 shadow-[0_12px_36px_rgba(0,0,0,0.95)] overflow-hidden bg-[#030914] bg-no-repeat bg-cover bg-bottom min-h-[240px] sm:min-h-[265px] lg:min-h-[295px] flex flex-col justify-between"
+          className="w-full relative border-b border-[#8A6731]/60 overflow-hidden bg-[#030914] bg-no-repeat bg-cover bg-bottom min-h-[240px] sm:min-h-[265px] lg:min-h-[295px] flex flex-col justify-between"
           style={{ backgroundImage: "url('/decor/students-header-bg.png')" }}
         >
           {/* Row 1: Header Navigation Controls (Pushed left to give room for wide search box without touching leaves) */}

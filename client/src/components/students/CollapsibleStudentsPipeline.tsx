@@ -12,6 +12,10 @@ import {
   X,
   Layers,
   Archive,
+  GripVertical,
+  Check,
+  List,
+  LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SavedViewsBar } from "@/components/pipeline/SavedViewsBar";
@@ -25,6 +29,7 @@ import {
   DEFAULT_PIPELINE_STAGES_CLIENT,
   DEFAULT_SAVED_VIEWS_CLIENT,
   INITIAL_DEMO_CARDS,
+  ADVOCATE_ROSTER,
   resolveLogicalStageGroup,
   resolveCaseActionStatus,
 } from "@/components/pipeline/pipelineDefaults";
@@ -753,15 +758,15 @@ export function CollapsibleStudentsPipeline({
   }, [stagesState, filteredCards]);
 
   return (
-    <div className="w-full bg-[#000820] border-b border-[#8A6731]/35 transition-all select-none">
-      <div className="w-full px-4 sm:px-6 md:px-10 lg:px-12 py-2">
+    <div className="w-full relative z-10 bg-[#051024] border-b border-[#8A6731]/35 transition-all select-none">
+      <div className="w-full px-4 sm:px-6 md:px-10 lg:px-12 py-2.5">
         {!isOpen ? (
           /* ── Closed State: ONLY the "Open Pipeline ⌄" pill is visible ── */
           <div className="flex items-center">
             <button
               type="button"
               onClick={onToggleOpen}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold bg-[#071326] text-[#94A3B8] border border-[#1E2E48] hover:border-[#C5A059]/50 hover:text-[#FFF4D4] transition-all cursor-pointer focus:outline-hidden"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold bg-[#0C1D3A] text-[#E2E8F0] border border-[#2C446E] hover:border-[#C5A059]/70 hover:text-[#FFF4D4] transition-all cursor-pointer focus:outline-hidden"
               title="Open Pipeline"
             >
               <span>Open Pipeline</span>
@@ -782,20 +787,20 @@ export function CollapsibleStudentsPipeline({
                   <span className="text-lg sm:text-xl font-serif font-bold text-[#FFF4D4] group-hover:text-[#FFE394] tracking-tight transition-colors">
                     Pipeline
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#102B4E] text-[#FFE394] border border-[#C5A059]/60 shadow-xs transition-all">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#132E57] text-[#FFE394] border border-[#C5A059]/70 transition-all">
                     <span>Close Pipeline</span>
-                    <ChevronUp className="h-3.5 w-3.5 text-[#C5A059]" />
+                    <ChevronUp className="h-3.5 w-3.5 text-[#FFE394]" />
                   </span>
                 </button>
               </div>
 
-              {/* Right Side Actions: View Archive */}
-              <div className="flex items-center gap-2">
+              {/* Right Side Actions: Employee Avatars + Customize + List/Board Toggle + View Archive */}
+              <div className="flex items-center gap-2 flex-wrap">
                 {hasActivePipelineFilter && (
                   <button
                     type="button"
                     onClick={clearAllPipelineFilters}
-                    className="h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-[#C5A059]/15 hover:bg-[#C5A059]/25 text-[#FFE394] border border-[#C5A059]/45 inline-flex items-center gap-1 transition-colors cursor-pointer"
+                    className="h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-[#C5A059]/20 hover:bg-[#C5A059]/30 text-[#FFE394] border border-[#C5A059]/60 inline-flex items-center gap-1 transition-colors cursor-pointer"
                   >
                     <X className="h-3 w-3" />
                     <span>
@@ -804,6 +809,112 @@ export function CollapsibleStudentsPipeline({
                     </span>
                   </button>
                 )}
+
+                {/* Employee Avatar Filter */}
+                <div className="flex items-center -space-x-1">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFilters((prev) => ({ ...prev, advocate: undefined }))
+                    }
+                    className={cn(
+                      "w-6 h-6 rounded-full text-[9px] font-bold flex items-center justify-center border transition-all cursor-pointer",
+                      !filters.advocate
+                        ? "bg-[#153563] text-[#FFE394] border-[#F2CD80] z-10"
+                        : "bg-[#0C1D3A] text-[#CBD5E1] border-[#2C446E] hover:text-[#FFF4D4]"
+                    )}
+                    title="All Employees"
+                  >
+                    All
+                  </button>
+                  {ADVOCATE_ROSTER.slice(0, 4).map((adv) => {
+                    const isSelected =
+                      filters.advocate?.toLowerCase() ===
+                      adv.name.toLowerCase();
+                    return (
+                      <button
+                        key={adv.name}
+                        type="button"
+                        onClick={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            advocate: isSelected ? undefined : adv.name,
+                          }))
+                        }
+                        title={`Filter by ${adv.name}`}
+                        className={cn(
+                          "w-6 h-6 rounded-full text-[9px] font-bold flex items-center justify-center border transition-all cursor-pointer",
+                          isSelected
+                            ? "bg-[#C5A059] text-[#07162B] border-[#FFE394] z-10 scale-105"
+                            : "bg-[#0C1D3A] text-[#CBD5E1] border-[#2C446E] hover:border-[#94A3B8] hover:text-[#FFF4D4]"
+                        )}
+                      >
+                        {adv.initials}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="h-4 w-px bg-[#2C446E]" />
+
+                {/* Customize Order Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsCustomizingOrder((prev) => !prev)}
+                  className={cn(
+                    "h-7 px-2.5 rounded-lg text-[11px] font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border",
+                    isCustomizingOrder
+                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border-[#FFE394]"
+                      : "bg-[#0C1D3A] text-[#E2E8F0] border-[#2C446E] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 hover:bg-[#132E57]"
+                  )}
+                  title={
+                    isCustomizingOrder
+                      ? "Click when finished dragging stages to reorder"
+                      : "Click to show 6-dot grab handles and drag stages to reorder"
+                  }
+                >
+                  {isCustomizingOrder ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-[#07162B] stroke-[2.5]" />
+                      <span>Done Reordering</span>
+                    </>
+                  ) : (
+                    <>
+                      <GripVertical className="h-3.5 w-3.5 text-[#F2CD80]" />
+                      <span>Customize</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Compact List / Board Icon Toggle */}
+                <div className="flex items-center bg-[#0C1D3A] border border-[#2C446E] rounded-lg p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setPipelineDisplayMode("list")}
+                    className={cn(
+                      "h-6 w-6 rounded-md flex items-center justify-center transition-colors cursor-pointer",
+                      pipelineDisplayMode === "list"
+                        ? "bg-[#17396B] text-[#FFE394]"
+                        : "text-[#94A3B8] hover:text-[#FFF4D4]"
+                    )}
+                    title="Stage Case Table View"
+                  >
+                    <List className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPipelineDisplayMode("board")}
+                    className={cn(
+                      "h-6 w-6 rounded-md flex items-center justify-center transition-colors cursor-pointer",
+                      pipelineDisplayMode === "board"
+                        ? "bg-[#17396B] text-[#FFE394]"
+                        : "text-[#94A3B8] hover:text-[#FFF4D4]"
+                    )}
+                    title="Stage Columns View"
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                  </button>
+                </div>
 
                 <button
                   type="button"
@@ -814,10 +925,10 @@ export function CollapsibleStudentsPipeline({
                       setLocation("/archive");
                     }
                   }}
-                  className="h-7 px-2.5 rounded-lg text-[11px] font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer border bg-[#0A192F] hover:bg-[#102B4E] text-[#FFE394] border-[#233554] hover:border-[#C5A059]/60"
+                  className="h-7 px-2.5 rounded-lg text-[11px] font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer border bg-[#0C1D3A] hover:bg-[#132E57] text-[#FFE394] border-[#2C446E] hover:border-[#C5A059]/70"
                   title="Open Archive"
                 >
-                  <Archive className="h-3.5 w-3.5 text-[#C5A059]" />
+                  <Archive className="h-3.5 w-3.5 text-[#F2CD80]" />
                   <span>View Archive</span>
                 </button>
               </div>
