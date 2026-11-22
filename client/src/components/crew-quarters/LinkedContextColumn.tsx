@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  FileText,
   Plus,
   Link2,
   Check,
@@ -19,7 +18,7 @@ function BrassRivet() {
   return (
     <span
       aria-hidden="true"
-      className="w-2.5 h-2.5 rounded-full shrink-0 inline-block bg-[radial-gradient(circle_at_35%_35%,#FFF5CC_0%,#D4AF61_50%,#6B4E1B_90%,#2A1D06_100%)] border border-[#FFE5A3]/55 shadow-[0_1px_3px_rgba(0,0,0,0.9)]"
+      className="w-2.5 h-2.5 rounded-full shrink-0 inline-block bg-[radial-gradient(circle_at_35%_35%,#FFF5CC_0%,#D4AF61_50%,#6B4E1B_90%,#2A1D06_100%)] border border-[#FFE5A3]/60 shadow-[0_1px_3px_rgba(0,0,0,0.9)]"
     />
   );
 }
@@ -38,83 +37,41 @@ export default function LinkedContextColumn({
     : "Sarah Mitchell · Today";
 
   return (
-    <aside className="w-[265px] sm:w-[280px] xl:w-[295px] shrink-0 rounded-xl border-[1.5px] border-[#C5A059]/85 bg-gradient-to-b from-[#0A1428] via-[#060D1D] to-[#040814] shadow-[0_14px_34px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,227,148,0.2)] flex flex-col justify-between h-full overflow-hidden relative text-[#FFF4D4]">
-      <div className="flex-1 overflow-y-auto p-3.5 space-y-5 min-h-0">
+    <aside className="w-full h-full rounded-xl border-[1.5px] border-[#C9A65E] bg-gradient-to-b from-[#091326] via-[#050C1B] to-[#030712] shadow-[0_14px_34px_rgba(0,0,0,0.88),inset_0_1px_1px_rgba(255,227,148,0.25)] flex flex-col justify-between overflow-hidden relative text-[#FFF4D4]">
+      <div className="flex-1 overflow-y-auto p-3.5 space-y-4 min-h-0">
         {/* ── Header Plaque with Left & Right Brass Rivets ── */}
         <div className="flex items-center justify-between pb-2.5 border-b border-[#C5A059]/35">
           <BrassRivet />
-          <span className="text-[11px] font-bold tracking-[0.16em] uppercase text-[#DFC17B]">
+          <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-[#E2C583]">
             CONVERSATION DETAILS
           </span>
           <BrassRivet />
         </div>
 
-        {/* ── 1. SHARED FILES + 3D LAYERED METAL FILE POCKET RACK ── */}
-        <div className="space-y-2.5">
+        {/* ── 1. SHARED FILES + PHOTOREALISTIC 3D LAYERED METAL FILE POCKET RACK ── */}
+        <div className="space-y-2">
           <h4 className="text-sm font-bold text-white tracking-wide">
             Shared files
           </h4>
 
-          {/* 3D Brushed-Metal & Brass Layered Wall File Holder */}
-          <div
-            style={{
-              background:
-                "linear-gradient(180deg, #1B2336 0%, #101624 100%)",
-            }}
-            className="rounded-xl p-2 border border-[#7C8BA6]/35 shadow-[inset_0_4px_12px_rgba(0,0,0,0.9),0_6px_16px_rgba(0,0,0,0.65)] space-y-0"
+          <button
+            type="button"
+            onClick={() =>
+              toast.success("Opening Intake Checklist.pdf preview...")
+            }
+            title="Open Intake Checklist.pdf"
+            className="w-full rounded-xl overflow-hidden border border-[#8E733E]/50 shadow-[0_8px_20px_rgba(0,0,0,0.75)] hover:brightness-110 transition-all cursor-pointer block"
           >
-            {/* Top Pocket Slot Containing the "Intake Checklist.pdf" Folder Tab Card */}
-            <div className="relative pt-1 px-1">
-              <div
-                onClick={() =>
-                  toast.success("Opening Intake Checklist.pdf preview...")
-                }
-                style={{
-                  background:
-                    "linear-gradient(180deg, #16294D 0%, #0C1830 100%)",
-                  clipPath:
-                    "polygon(0 0, calc(100% - 18px) 0, 100% 16px, 100% 100%, 0 100%)",
-                }}
-                className="w-full h-12 px-3.5 rounded-t-lg border-t-[1.5px] border-x-[1.5px] border-[#D5B56E] flex items-center gap-2.5 shadow-[0_-2px_10px_rgba(0,0,0,0.7)] hover:brightness-115 transition-all cursor-pointer"
-              >
-                <FileText className="w-4 h-4 text-[#A5CEFF] shrink-0" />
-                <span className="text-xs font-semibold text-white truncate">
-                  Intake Checklist.pdf
-                </span>
-              </div>
-            </div>
-
-            {/* Pocket Slot 1 Metallic Front Plate */}
-            <div
-              style={{
-                background:
-                  "linear-gradient(180deg, #2B3346 0%, #171D2B 55%, #0E121C 100%)",
-              }}
-              className="h-7 w-full border-t-[1.5px] border-x border-[#C5A059]/85 shadow-[0_-3px_8px_rgba(0,0,0,0.75),inset_0_1px_1px_rgba(255,255,255,0.2)]"
+            <img
+              src="/images/crew-messages/shared-files-rack.png"
+              alt="Shared files rack — Intake Checklist.pdf"
+              className="w-full h-auto object-cover block select-none pointer-events-none"
             />
-
-            {/* Pocket Slot 2 Metallic Front Plate */}
-            <div
-              style={{
-                background:
-                  "linear-gradient(180deg, #272F42 0%, #151B28 55%, #0C1018 100%)",
-              }}
-              className="h-7 w-full border-t-[1.5px] border-x border-[#C5A059]/85 shadow-[0_-3px_8px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.18)]"
-            />
-
-            {/* Pocket Slot 3 Metallic Bottom Lip */}
-            <div
-              style={{
-                background:
-                  "linear-gradient(180deg, #232A3C 0%, #111622 65%, #090C14 100%)",
-              }}
-              className="h-6 w-full rounded-b-lg border-[1.5px] border-[#C5A059]/90 shadow-[0_-3px_8px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.16)]"
-            />
-          </div>
+          </button>
         </div>
 
         {/* ── 2. NEXT ACTION SECTION ── */}
-        <div className="space-y-2.5 pt-1">
+        <div className="space-y-2 pt-0.5">
           <h4 className="text-sm font-bold text-white tracking-wide">
             Next action
           </h4>
@@ -131,7 +88,7 @@ export default function LinkedContextColumn({
                 return next;
               });
             }}
-            className="rounded-xl bg-[#08142C] hover:bg-[#0C1D3E] border border-[#C5A059]/75 p-3.5 flex items-start gap-3 shadow-[0_6px_18px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.08)] transition-all cursor-pointer"
+            className="rounded-xl bg-[#07132B] hover:bg-[#0C1D3E] border border-[#A88644]/85 p-3 flex items-start gap-3 shadow-[0_6px_18px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.08)] transition-all cursor-pointer"
           >
             <button
               type="button"
@@ -165,43 +122,35 @@ export default function LinkedContextColumn({
       <div
         style={{
           background:
-            "linear-gradient(180deg, #1C263B 0%, #111829 50%, #0C111E 100%)",
+            "linear-gradient(180deg, #212B42 0%, #151C2D 50%, #0E1320 100%)",
         }}
-        className="p-2.5 border-t-[1.5px] border-[#C5A059]/75 shrink-0"
+        className="px-3 py-2.5 border-t-[1.5px] border-[#C5A059]/80 shrink-0"
       >
         <div
           style={{
             background:
-              "linear-gradient(180deg, #F0D696 0%, #CEA95E 48%, #9B7732 100%)",
+              "linear-gradient(180deg, #F2D99B 0%, #CEA85D 48%, #98732F 100%)",
           }}
-          className="grid grid-cols-2 h-10 rounded-lg border border-[#FFF3C8]/85 shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.75)] overflow-hidden text-[#171003] font-bold text-xs"
+          className="grid grid-cols-2 h-9 rounded-lg border border-[#FFF4CE]/85 shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.78)] overflow-hidden text-[#171003] font-bold text-xs"
         >
           {/* Left Half: + Create task */}
           <button
             type="button"
             onClick={onAddTask}
-            className="h-full px-2.5 flex items-center justify-between border-r border-[#6E521F]/65 hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer"
+            className="h-full px-2 flex items-center justify-center gap-1.5 border-r border-[#6E521F]/70 hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer min-w-0"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#5E4414] shrink-0" />
-            <span className="inline-flex items-center gap-1 truncate">
-              <Plus className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
-              <span className="truncate">Create task</span>
-            </span>
-            <span className="w-1" />
+            <Plus className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
+            <span className="truncate">Create task</span>
           </button>
 
           {/* Right Half: 🔗 Link record */}
           <button
             type="button"
             onClick={onAttachDocument}
-            className="h-full px-2.5 flex items-center justify-between hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer"
+            className="h-full px-2 flex items-center justify-center gap-1.5 hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer min-w-0"
           >
-            <span className="w-1" />
-            <span className="inline-flex items-center gap-1 truncate">
-              <Link2 className="w-3.5 h-3.5 stroke-[2.3] shrink-0" />
-              <span className="truncate">Link record</span>
-            </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#5E4414] shrink-0" />
+            <Link2 className="w-3.5 h-3.5 stroke-[2.3] shrink-0" />
+            <span className="truncate">Link record</span>
           </button>
         </div>
       </div>

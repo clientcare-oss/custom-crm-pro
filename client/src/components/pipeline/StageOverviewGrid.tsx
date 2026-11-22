@@ -1336,7 +1336,7 @@ export function StageOverviewGrid({
                               "shrink-0 relative flex flex-col justify-end select-none z-20 will-change-[width,margin]",
                               isAddSlotHoveredAfterThis
                                 ? "w-[88px] sm:w-[96px] mx-1"
-                                : "w-[14px] -mx-[5px]"
+                                : "w-[42px] mx-0.5"
                             )}
                           >
                             <button
@@ -1364,7 +1364,7 @@ export function StageOverviewGrid({
                                   : "border border-transparent bg-transparent"
                               )}
                             >
-                              {/* Collapsed Pill Hint (fades out gently on hover) */}
+                              {/* Default Bigger Square "+" Box Between Cards (fades out gently on hover) */}
                               <div
                                 style={{
                                   transition:
@@ -1374,11 +1374,11 @@ export function StageOverviewGrid({
                                   "absolute inset-0 flex items-center justify-center pointer-events-none",
                                   isAddSlotHoveredAfterThis
                                     ? "opacity-0 scale-75"
-                                    : "opacity-75 scale-100"
+                                    : "opacity-100 scale-100"
                                 )}
                               >
-                                <div className="w-4 h-7 rounded-full bg-[#07162B]/90 border border-[#C5A059]/60 text-[#FFE394] flex items-center justify-center shadow-sm">
-                                  <Plus className="h-2.5 w-2.5 stroke-[2.8]" />
+                                <div className="w-9 h-9 rounded-lg bg-[#07162B] border-2 border-[#C5A059]/85 text-[#FFE394] flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.75)]">
+                                  <Plus className="h-4.5 w-4.5 stroke-[3]" />
                                 </div>
                               </div>
 
@@ -1395,8 +1395,8 @@ export function StageOverviewGrid({
                                     : "opacity-0 scale-90 translate-y-0.5"
                                 )}
                               >
-                                <div className="w-6 h-6 rounded-full bg-gradient-to-b from-[#F2CD80] to-[#C5A059] text-[#07162B] flex items-center justify-center shadow-[0_2px_10px_rgba(242,205,128,0.55)]">
-                                  <Plus className="h-3.5 w-3.5 stroke-[3]" />
+                                <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-[#F2CD80] to-[#C5A059] text-[#07162B] flex items-center justify-center shadow-[0_2px_10px_rgba(242,205,128,0.55)]">
+                                  <Plus className="h-4 w-4 stroke-[3]" />
                                 </div>
                                 <span className="text-[9px] font-bold uppercase tracking-wider text-[#FFF4D4] leading-tight text-center whitespace-nowrap">
                                   Add Card Here

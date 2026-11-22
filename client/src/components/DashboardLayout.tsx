@@ -197,9 +197,9 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
         },
         {
           icon: FileText,
-          label: "Billing",
+          label: "Invoices",
           path: "/invoices",
-          keywords: ["billing", "invoices", "payments", "revenue", "bill guardian", "fee tracker", "audit", "pg-005", "pg-022"]
+          keywords: ["billing", "invoices", "payments", "revenue", "pg-005"]
         },
         {
           icon: FileSignature,
@@ -262,6 +262,12 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
           label: "Archive",
           path: "/archive",
           keywords: ["archive", "archived records", "do not serve", "blacklist", "restricted", "restrictions", "pg-048"]
+        },
+        {
+          icon: Banknote,
+          label: "Bill Guardian",
+          path: "/bill-guardian",
+          keywords: ["bill guardian", "bills", "fee tracker", "audit", "expenses", "transactions", "pg-022"]
         },
         {
           icon: Settings,
@@ -408,7 +414,7 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       icon: FileSignature,
       label: "Documents",
       path: "/agreements",
-      isActive: (loc) => loc === "/agreements" || loc === "/contracts" || loc.startsWith("/smart-files") || loc === "/invoices" || loc === "/bill-guardian",
+      isActive: (loc) => loc === "/agreements" || loc === "/contracts" || loc.startsWith("/smart-files") || loc === "/invoices",
     },
     {
       id: "templates",
@@ -469,6 +475,13 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
         loc.startsWith("/archive/") ||
         loc === "/do-not-serve" ||
         loc.startsWith("/do-not-serve/"),
+    },
+    {
+      id: "bill-guardian",
+      icon: Banknote,
+      label: "Bill Guardian",
+      path: "/bill-guardian",
+      isActive: (loc) => loc === "/bill-guardian" || loc.startsWith("/bill-guardian/"),
     },
     {
       id: "settings",
