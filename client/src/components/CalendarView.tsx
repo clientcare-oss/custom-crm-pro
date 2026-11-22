@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Calendar as CalendarIcon,
+  ChevronLeft,
   ChevronRight,
   Clock,
   Plus,
@@ -673,7 +674,37 @@ export default function CalendarView({
 
       {viewMode === "month" && (
         <Card className="rounded-xl border-2 border-[#5B4323] bg-gradient-to-b from-[#091E3B]/95 via-[#071933]/95 to-[#06152B]/95 shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_30px_rgba(197,160,89,0.08),inset_0_1px_2px_rgba(255,255,255,0.12)] overflow-hidden backdrop-blur-md">
-          <CardContent className="p-3.5">
+          <CardContent className="p-3.5 space-y-2.5">
+            {/* ── Month Header Bar on Large Calendar with Back & Next Month Buttons on Either Side ── */}
+            <div className="flex items-center justify-between px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#0A2242] via-[#10315C] to-[#0A2242] border border-[#C5A059]/45 shadow-[0_4px_14px_rgba(0,0,0,0.55),inset_0_1px_1px_rgba(255,255,255,0.08)]">
+              <button
+                type="button"
+                onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[#C5A059]/45 bg-[#05142B]/90 text-xs font-serif font-bold text-[#EAD8B1] hover:text-[#FFF4D4] hover:bg-[#0C254A] hover:border-[#FFE394]/80 transition-all cursor-pointer shadow-sm active:scale-95"
+                title="Previous Month"
+              >
+                <ChevronLeft className="h-4 w-4 text-[#DFBE77]" />
+                <span className="hidden sm:inline">Prev Month</span>
+              </button>
+
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#FFF4D4] tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] select-none">
+                {currentDate.toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[#C5A059]/45 bg-[#05142B]/90 text-xs font-serif font-bold text-[#EAD8B1] hover:text-[#FFF4D4] hover:bg-[#0C254A] hover:border-[#FFE394]/80 transition-all cursor-pointer shadow-sm active:scale-95"
+                title="Next Month"
+              >
+                <span className="hidden sm:inline">Next Month</span>
+                <ChevronRight className="h-4 w-4 text-[#DFBE77]" />
+              </button>
+            </div>
+
             <div className="grid grid-cols-7 gap-0 rounded-lg overflow-hidden border border-[#5B4323]/80 shadow-md">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                 <div

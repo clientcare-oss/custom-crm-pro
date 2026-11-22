@@ -7,6 +7,7 @@ import {
   Plus,
   Check,
   X,
+  Pencil,
 } from "lucide-react";
 import {
   LOGICAL_STAGE_GROUPS,
@@ -610,15 +611,14 @@ export function StageOverviewGrid({
                       {isCustomizingOrder && (
                         <span
                           className={cn(
-                            "text-[9px] font-sans font-bold px-1.5 py-0.2 rounded-full transition-colors",
+                            "inline-flex items-center justify-center rounded-full transition-colors",
                             isGroupBubbleSelected
-                              ? "bg-[#FFE394] text-[#07162B]"
-                              : "bg-black/35 text-white/85"
+                              ? "bg-[#FFE394] text-[#07162B] px-1.5 py-0.5 text-[9px] font-sans font-bold gap-1"
+                              : "bg-black/35 text-white/90 p-1 hover:bg-[#FFE394]/25 hover:text-[#FFE394]"
                           )}
                         >
-                          {isGroupBubbleSelected
-                            ? "Select Cards ▾"
-                            : run.items.length}
+                          <Pencil className="h-2.5 w-2.5 shrink-0" />
+                          {isGroupBubbleSelected && <span>Editing</span>}
                         </span>
                       )}
                     </button>

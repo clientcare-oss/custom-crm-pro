@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface CalendarScheduleLegendBarProps {
   onSelectPattern?: (patternKey: string) => void;
+  isOpen?: boolean;
+  onToggle?: () => void;
   className?: string;
 }
 
@@ -81,45 +84,66 @@ export const LEGEND_ITEMS = [
 
 export default function CalendarScheduleLegendBar({
   onSelectPattern,
+  isOpen,
+  onToggle,
   className,
 }: CalendarScheduleLegendBarProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const expanded = isOpen !== undefined ? isOpen : internalOpen;
+  const handleToggle = onToggle || (() => setInternalOpen((prev) => !prev));
+
+  if (!expanded) {
+    return null;
+  }
+
   return (
     <div
       className={cn(
-        "w-full overflow-x-auto rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 px-4 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] scrollbar-thin scrollbar-thumb-[#3A2C18] scrollbar-track-transparent",
+        "w-full overflow-x-auto rounded-xl border border-[#C5A059]/35 bg-[#071A36]/92 px-3.5 py-2 shadow-[0_6px_18px_rgba(0,0,0,0.75),inset_0_1px_1px_rgba(255,255,255,0.08)] scrollbar-thin scrollbar-thumb-[#3A2C18] scrollbar-track-transparent",
         className
       )}
     >
-      <div className="flex items-center gap-4 min-w-max">
-        {/* Legend Title */}
-        <div className="flex items-center gap-2 pr-2 border-r border-[#3A2C18]/80 shrink-0">
-          <span className="text-xs font-serif font-bold text-[#FFE394] tracking-wide">
-            Schedule Legend
-          </span>
+      <div className="flex items-center justify-between gap-4 min-w-max">
+        <div className="flex items-center gap-4">
+          {/* Legend Title */}
+          <div className="flex items-center gap-2 pr-2 border-r border-[#C5A059]/30 shrink-0">
+            <span className="text-xs font-serif font-bold text-[#FFE394] tracking-wide">
+              Schedule Key
+            </span>
+          </div>
+
+          {/* Legend Swatches */}
+          <div className="flex items-center gap-3.5 flex-wrap">
+            {LEGEND_ITEMS.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => onSelectPattern?.(item.key)}
+                className="inline-flex items-center gap-1.5 text-xs text-[#C6B697] hover:text-[#FFF4D4] transition-colors cursor-pointer group"
+              >
+                <span
+                  style={item.style}
+                  className={cn(
+                    "h-2.5 w-3.5 rounded-[2px] shrink-0 group-hover:scale-110 transition-transform",
+                    item.swatchClass
+                  )}
+                />
+                <span className="text-[11px] font-medium tracking-tight">
+                  {item.label}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Legend Swatches */}
-        <div className="flex items-center gap-3.5 flex-wrap">
-          {LEGEND_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => onSelectPattern?.(item.key)}
-              className="inline-flex items-center gap-1.5 text-xs text-[#C6B697] hover:text-[#FFF4D4] transition-colors cursor-pointer group"
-            >
-              <span
-                style={item.style}
-                className={cn(
-                  "h-2.5 w-3.5 rounded-[2px] shrink-0 group-hover:scale-110 transition-transform",
-                  item.swatchClass
-                )}
-              />
-              <span className="text-[11px] font-medium tracking-tight">
-                {item.label}
-              </span>
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={handleToggle}
+          className="inline-flex items-center gap-1 rounded-md border border-[#C5A059]/35 bg-[#041022]/90 px-2 py-0.5 text-[10px] font-semibold text-[#EAD8B1] hover:text-[#FFF4D4] hover:border-[#FFE394]/70 transition-all cursor-pointer shrink-0"
+        >
+          <span>Collapse</span>
+          <ChevronUp className="h-3 w-3" />
+        </button>
       </div>
     </div>
   );

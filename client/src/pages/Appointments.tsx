@@ -312,6 +312,7 @@ export default function Appointments() {
   const staffList = staffRosterQuery.data || [];
 
   const [activeOperationalBlock, setActiveOperationalBlock] = useState<OperationalBlock | null>(null);
+  const [isScheduleKeyOpen, setIsScheduleKeyOpen] = useState<boolean>(false);
   const [layerFilters, setLayerFilters] = useState<CalendarLayerFilters>({
     showAppointments: true,
     showProposedHolds: true,
@@ -896,6 +897,8 @@ export default function Appointments() {
           onToggleShowWeekends={setShowWeekends}
           showCanceled={showCanceled}
           onToggleShowCanceled={setShowCanceled}
+          isLegendOpen={isScheduleKeyOpen}
+          onToggleLegend={() => setIsScheduleKeyOpen((prev) => !prev)}
           onScheduleClick={() => handleOpenSchedule()}
           onProposeHoldsClick={() => handleOpenSchedule(selectedDate, undefined, "PROPOSED_HOLDS")}
           onOpenClosuresClick={() => handleOpenSchedule(selectedDate, undefined, "OFFICE_CLOSURE")}
@@ -925,8 +928,8 @@ export default function Appointments() {
         >
           {/* Refined luminous overlay so calendar grids & cards maintain maximum visual legibility and brightness */}
           <div className="w-full min-h-full bg-gradient-to-b from-[#07162B]/10 via-transparent to-[#07162B]/20">
-            {/* ── Main Workspace Body (Padded) ── */}
-            <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
+            {/* ── Main Workspace Body (Aligned flush with Header Controls Deck & minimal vertical gap) ── */}
+            <div className="px-3 sm:px-5 lg:px-7 pt-3 pb-6 space-y-3 max-w-[1600px] mx-auto">
 
         {/* ── Slide-Out Appointment Detail Drawer (PG-007) ── */}
         <AppointmentDetailDrawer
@@ -1281,8 +1284,10 @@ export default function Appointments() {
         </div>
       ) : (
         <>
-          {/* ── SCHEDULE LEGEND STRIP (9 Swatches) ── */}
+          {/* ── SCHEDULE LEGEND STRIP (Collapsed by default, toggled via "Key" button in Command Bar) ── */}
           <CalendarScheduleLegendBar
+            isOpen={isScheduleKeyOpen}
+            onToggle={() => setIsScheduleKeyOpen((prev) => !prev)}
             onSelectPattern={(key) => {
               const action: ScheduleActionType =
                 key === "confirmed"
