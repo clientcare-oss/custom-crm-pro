@@ -55,6 +55,7 @@ export * from "./db/doNotServeMutations";
 export * from "./db/doNotServeNotesAndResolutions";
 export * from "./db/myco";
 export * from "./db/waypointPlaces";
+export * from "./db/studio";
 
 import { ENV } from './_core/env';
 

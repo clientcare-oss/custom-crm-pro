@@ -76,8 +76,10 @@ import { workspaceLockRouter } from "./routers/workspaceLock";
 import { doNotServeRouter } from "./routers/doNotServe";
 import { mycoRouter } from "./routers/myco";
 import { waypointPlacesRouter } from "./routers/waypointPlaces";
+import { studioRouter } from "./routers/studio";
 
 export const appRouter = router({
+  studio: studioRouter,
   waypointPlaces: waypointPlacesRouter,
   myco: mycoRouter,
   doNotServe: doNotServeRouter,

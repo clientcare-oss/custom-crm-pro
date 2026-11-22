@@ -38,6 +38,8 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   
   // Tools & Workspaces
   "/tools":                           { id: "PG-010", name: "Tools Hub", category: "Tools" },
+  "/studio":                          { id: "PG-049", name: "The Studio", category: "Tools", description: "Collaborative board for notes, tasks, brainstorming, and live teaching" },
+  "/tools/studio":                    { id: "PG-049", name: "The Studio", category: "Tools", description: "Collaborative board for notes, tasks, brainstorming, and live teaching" },
   "/tools/waypoint-places":           { id: "PG-010-PLC", name: "Waypoint Places", category: "Tools", description: "Family relocation intelligence platform, Georgia MapLibre/PMTiles explorer, and Places Studio" },
   "/waypoint-places":                 { id: "PG-010-PLC", name: "Waypoint Places Explorer", category: "Tools", description: "Independently deployable public Waypoint Places family relocation intelligence explorer" },
   "/tools/voyage-recorder":           { id: "PG-010-REC", name: "Voyage Meeting Recorder", category: "Tools" },
@@ -317,6 +319,12 @@ export const DYNAMIC_ROUTES: DynamicRoutePattern[] = [
     id: "PG-027",
     name: "Portal Experience",
     category: "Portal",
+  },
+  {
+    matcher: (path) => /^\/studio\/audience\/[^/]+/.test(path),
+    id: "PG-049-AUD",
+    name: "The Studio — Audience View",
+    category: "Tools",
   },
   {
     matcher: (path) => /^\/(?:tools\/)?pwn-decoder(?:\/|$)/.test(path),

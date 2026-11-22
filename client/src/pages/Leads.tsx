@@ -48,6 +48,8 @@ import {
   Sparkles,
   FileText,
   Settings,
+  UserPlus,
+  Plus,
 } from "lucide-react";
 
 type DiscoverySubFilter = "all" | "today" | "upcoming" | "needs_followup";
@@ -1049,8 +1051,8 @@ export default function Leads() {
               className="min-h-[420px] pt-2 px-1 sm:px-2 space-y-4"
               data-testid={`stage-working-area-${selectedRadioStage}`}
             >
-              {/* Row 1: Stage Title | Count on Left + Middle Action Pills (Lead Forms & Follow-Up Automations) + Gold-Rimmed Search Pill on Right */}
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              {/* Row 1: Stage Title on Left + 4 Side-by-Side Metallic Radio-Plaque Square Buttons in Line on Right */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div className="flex items-baseline gap-3 shrink-0">
                   <h2
                     className="text-2xl sm:text-[30px] font-serif font-bold text-white leading-none"
@@ -1063,55 +1065,111 @@ export default function Leads() {
                   </h2>
                 </div>
 
-                {/* Middle Buttons: Lead Forms & Follow-Up Automations (Square-ish Side-by-Side Tiles with Top-Left Settings Gear + Actual Icon) */}
-                <div className="flex items-center justify-center gap-2.5">
+                {/* 4 Side-by-Side Metallic Hardware Buttons in a Single Line */}
+                <div className="flex items-center gap-2.5 sm:gap-3 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                  {/* 1. Lead Forms — Brushed Anodized Navy-Metal & Brass Hardware Tile */}
                   <button
                     type="button"
                     onClick={() => setLocation("/leads/forms")}
                     data-testid="middle-lead-forms-btn"
-                    className="group relative inline-flex flex-col items-center justify-center gap-1 rounded-xl bg-[#040B1C]/90 border border-[#C5A059]/65 hover:border-[#FFE394] hover:bg-[#0B1A38] px-4 py-2 min-w-[136px] h-[54px] text-xs sm:text-[13px] font-serif font-semibold text-[#FFF4D4] hover:text-[#FFE394] shadow-[inset_0_2px_6px_rgba(0,0,0,0.85),0_2px_10px_rgba(0,0,0,0.55)] transition-all cursor-pointer whitespace-nowrap"
+                    className="group relative shrink-0 inline-flex flex-col items-center justify-center gap-1 rounded-xl bg-gradient-to-b from-[#1A2D52] via-[#0C172E] to-[#050B18] hover:from-[#223A68] hover:via-[#112140] hover:to-[#081022] border-[1.5px] border-[#C5A059]/85 hover:border-[#FFE394] px-4 py-2 min-w-[144px] h-[56px] text-xs sm:text-[13px] font-serif font-bold text-[#F5E6C4] hover:text-[#FFF8E7] shadow-[0_6px_16px_rgba(0,0,0,0.85),inset_0_1.5px_1px_rgba(255,227,148,0.32),inset_0_-2px_4px_rgba(0,0,0,0.9)] active:translate-y-[1px] transition-all cursor-pointer whitespace-nowrap"
                     style={{
                       fontFamily: "'Playfair Display', Georgia, serif",
                     }}
                   >
-                    {/* Small Settings Icon in Top-Left Corner */}
-                    <Settings className="w-3 h-3 text-[#C5A059]/80 group-hover:text-[#FFE394] absolute top-1.5 left-1.5 transition-colors" />
+                    {/* Top-Left Small Settings Gear Icon */}
+                    <Settings className="w-3 h-3 text-[#DFBE77]/90 group-hover:text-[#FFE394] absolute top-1.5 left-1.5 drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)] transition-colors" />
                     {/* Actual Button Icon */}
-                    <FileText className="w-4 h-4 text-[#DFBE77] group-hover:text-[#FFE394] shrink-0 transition-colors" />
-                    <span className="leading-none">Lead Forms</span>
+                    <FileText className="w-4 h-4 text-[#EAD08A] group-hover:text-[#FFE394] shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] transition-colors" />
+                    <span className="leading-none tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]">
+                      Lead Forms
+                    </span>
                   </button>
 
+                  {/* 2. Follow-Up Automations — Brushed Anodized Navy-Metal & Brass Hardware Tile */}
                   <button
                     type="button"
-                    onClick={() => setLocation("/automations")}
+                    onClick={() => setLocation("/automations?id=showcase-not-yet")}
                     data-testid="middle-followup-automations-btn"
-                    className="group relative inline-flex flex-col items-center justify-center gap-1 rounded-xl bg-[#040B1C]/90 border border-[#C5A059]/65 hover:border-[#FFE394] hover:bg-[#0B1A38] px-4 py-2 min-w-[156px] h-[54px] text-xs sm:text-[13px] font-serif font-semibold text-[#FFF4D4] hover:text-[#FFE394] shadow-[inset_0_2px_6px_rgba(0,0,0,0.85),0_2px_10px_rgba(0,0,0,0.55)] transition-all cursor-pointer whitespace-nowrap"
+                    className="group relative shrink-0 inline-flex flex-col items-center justify-center gap-1 rounded-xl bg-gradient-to-b from-[#1A2D52] via-[#0C172E] to-[#050B18] hover:from-[#223A68] hover:via-[#112140] hover:to-[#081022] border-[1.5px] border-[#C5A059]/85 hover:border-[#FFE394] px-4 py-2 min-w-[168px] h-[56px] text-xs sm:text-[13px] font-serif font-bold text-[#F5E6C4] hover:text-[#FFF8E7] shadow-[0_6px_16px_rgba(0,0,0,0.85),inset_0_1.5px_1px_rgba(255,227,148,0.32),inset_0_-2px_4px_rgba(0,0,0,0.9)] active:translate-y-[1px] transition-all cursor-pointer whitespace-nowrap"
                     style={{
                       fontFamily: "'Playfair Display', Georgia, serif",
                     }}
                   >
-                    {/* Small Settings Icon in Top-Left Corner */}
-                    <Settings className="w-3 h-3 text-[#C5A059]/80 group-hover:text-[#FFE394] absolute top-1.5 left-1.5 transition-colors" />
+                    {/* Top-Left Small Settings Gear Icon */}
+                    <Settings className="w-3 h-3 text-[#DFBE77]/90 group-hover:text-[#FFE394] absolute top-1.5 left-1.5 drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)] transition-colors" />
                     {/* Actual Button Icon */}
-                    <Sparkles className="w-4 h-4 text-[#DFBE77] group-hover:text-[#FFE394] shrink-0 transition-colors" />
-                    <span className="leading-none">Follow-Up Automations</span>
+                    <Sparkles className="w-4 h-4 text-[#EAD08A] group-hover:text-[#FFE394] shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] transition-colors" />
+                    <span className="leading-none tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]">
+                      Follow-Up Automations
+                    </span>
                   </button>
-                </div>
 
-                {/* Gold-Rimmed Pill Search Input */}
-                <div className="relative w-full sm:w-80 shrink-0">
-                  <Search className="w-4 h-4 text-[#C5A059] absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search families..."
-                    data-testid="lead-search-input"
-                    className="w-full rounded-full bg-[#040B1C]/90 border border-[#C5A059]/65 pl-10 pr-4 py-1.5 text-sm font-serif italic text-white placeholder:text-[#B8CCE4]/80 focus:outline-none focus:border-[#FFE394] shadow-[inset_0_2px_6px_rgba(0,0,0,0.85)]"
+                  {/* 3. Add Test Lead — Brushed Anodized Navy-Metal & Brass Hardware Tile */}
+                  <button
+                    type="button"
+                    disabled={createTestLeadMutation.isPending}
+                    onClick={handleAddTestLead}
+                    data-testid="middle-add-test-lead-btn"
+                    className="group relative shrink-0 inline-flex flex-col items-center justify-center gap-1 rounded-xl bg-gradient-to-b from-[#1A2D52] via-[#0C172E] to-[#050B18] hover:from-[#223A68] hover:via-[#112140] hover:to-[#081022] disabled:opacity-50 border-[1.5px] border-[#C5A059]/85 hover:border-[#FFE394] px-4 py-2 min-w-[144px] h-[56px] text-xs sm:text-[13px] font-serif font-bold text-[#F5E6C4] hover:text-[#FFF8E7] shadow-[0_6px_16px_rgba(0,0,0,0.85),inset_0_1.5px_1px_rgba(255,227,148,0.32),inset_0_-2px_4px_rgba(0,0,0,0.9)] active:translate-y-[1px] transition-all cursor-pointer whitespace-nowrap"
                     style={{
                       fontFamily: "'Playfair Display', Georgia, serif",
                     }}
-                  />
+                  >
+                    {/* Top-Left Small Settings Gear Icon */}
+                    <Settings className="w-3 h-3 text-[#DFBE77]/90 group-hover:text-[#FFE394] absolute top-1.5 left-1.5 drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)] transition-colors" />
+                    {/* Actual Button Icon */}
+                    <UserPlus className="w-4 h-4 text-[#EAD08A] group-hover:text-[#FFE394] shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] transition-colors" />
+                    <span className="leading-none tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]">
+                      {createTestLeadMutation.isPending ? "Adding Lead..." : "Add Test Lead"}
+                    </span>
+                  </button>
+
+                  {/* 4. New Inquiry — Pasted Brushed Brass Radio Plaque Texture (No Settings Gear Icon, No Metal Dot Bolts) */}
+                  <button
+                    type="button"
+                    onClick={() => setNewInquiryOpen(true)}
+                    data-testid="new-service-inquiry-btn"
+                    className="group relative shrink-0 inline-flex flex-col items-center justify-center gap-0.5 rounded-[11px] px-4 py-2 min-w-[152px] h-[56px] text-xs sm:text-[13px] font-serif font-bold text-[#1A1003] active:translate-y-[1px] transition-all cursor-pointer whitespace-nowrap overflow-hidden hover:brightness-105"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      backgroundImage: [
+                        /* Top specular chamfer ridge + Bottom bevel shadow */
+                        "linear-gradient(180deg, #FFF7DC 0%, #F5DB9A 6%, rgba(255,255,255,0) 14%, rgba(0,0,0,0) 84%, #6D4B14 94%, #2F1D04 100%)",
+                        /* Fine horizontal brushed brass grain micro-lines */
+                        "repeating-linear-gradient(0deg, rgba(255,248,220,0.09) 0px, rgba(255,248,220,0.09) 1px, rgba(84,54,12,0.07) 1px, rgba(84,54,12,0.07) 2px)",
+                        /* Authentic horizontal radio plaque gold sheen (matching LEAD CENTER nameplate) */
+                        "linear-gradient(90deg, #B58534 0%, #CFA24F 14%, #ECC97A 34%, #F9DFA0 50%, #EBC776 66%, #CE9F4B 86%, #B0802F 100%)",
+                      ].join(", "),
+                      border: "1.5px solid #3A2406",
+                      boxShadow:
+                        "0 6px 16px rgba(0,0,0,0.88), 0 0 0 1px rgba(212,167,83,0.45), inset 0 1.5px 0 rgba(255,250,230,0.88), inset 0 -1.5px 1px rgba(68,42,7,0.85), inset 2px 0 3px rgba(92,58,12,0.35), inset -2px 0 3px rgba(92,58,12,0.35)",
+                    }}
+                  >
+                    {/* Inner Engraved Chamfer Bevel Frame */}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-[2px] rounded-[8px] border border-[#FFF4CE]/45"
+                      style={{
+                        boxShadow: "inset 0 1px 1px rgba(104,68,14,0.35)",
+                      }}
+                    />
+                    <Plus
+                      className="relative z-10 w-4 h-4 stroke-[2.8] text-[#1A1003] shrink-0"
+                      style={{
+                        filter: "drop-shadow(0 1px 0 rgba(255,244,204,0.75))",
+                      }}
+                    />
+                    <span
+                      className="relative z-10 leading-none uppercase tracking-[0.14em] font-extrabold text-[11px] sm:text-xs text-[#1A1003]"
+                      style={{
+                        textShadow:
+                          "0 1px 0 rgba(255,246,210,0.8), 0 -0.5px 0 rgba(0,0,0,0.35)",
+                      }}
+                    >
+                      NEW INQUIRY
+                    </span>
+                  </button>
                 </div>
               </div>
 

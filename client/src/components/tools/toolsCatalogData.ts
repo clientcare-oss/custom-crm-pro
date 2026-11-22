@@ -1037,6 +1037,63 @@ export function buildAllInstruments({
       taskCategory: "concern",
       onOpen: () => setLocation("/tools/waypoint-places"),
     },
+
+    // 17. The Studio
+    {
+      id: "the-studio",
+      sku: "PG-049 · COLLABORATIVE TEACHING & TASK BOARD",
+      drawerTitle: "The Studio",
+      drawerSubtitle: "Collaborative board for notes, tasks, brainstorming, and live teaching",
+      icon: Sparkles,
+      categoryOverline: "COLLABORATIVE STUDIO & LIVE TEACHING",
+      stageTitle: "The Studio",
+      stageSubtitle:
+        "Brainstorm on Neon or Whiteboard surfaces, convert sticky notes into synchronized CRM tasks, and present live multi-page lessons.",
+      includedLabel: "Included in your plan",
+      previewCardTitle: "Neon Teaching & Task Board",
+      previewLines: [
+        {
+          speaker: "Surfaces:",
+          text: "Switch seamlessly between Neon (#000820), Whiteboard, and 3-column Cards view.",
+        },
+        {
+          speaker: "Tasks Sync:",
+          text: "Convert any sticky note into a live CRM task or drag onto Teammates & My Focus.",
+        },
+        {
+          speaker: "Present:",
+          text: "Full-screen teaching mode with multi-page annotations and clean audience window.",
+        },
+      ],
+      placardHeader: "TEAM COLLABORATION",
+      placardQuote:
+        "Support that unites the team: Listen → Plan → Act. One clear next step.",
+      ctaLabel: "Open The Studio",
+      capabilities: [
+        "Neon, Whiteboard & Cards surfaces",
+        "1:1 CRM Task & My Focus sync",
+        "Full-screen live teaching mode",
+      ],
+      howItWorksSteps: [
+        {
+          title: "1. Sketch, brainstorm, and add sticky notes on Neon or Whiteboard",
+          detail:
+            "Use smooth freehand pen, highlighter, shapes, connectors, and sticky notes with controlled neon contrast.",
+        },
+        {
+          title: "2. Convert notes into tasks and drag to assign",
+          detail:
+            "Turn any sticky note into a synchronized CRM task without duplicates, or drop onto a teammate or My Focus.",
+        },
+        {
+          title: "3. Launch full-screen Presentation & Teaching Mode",
+          detail:
+            "Teach across multiple pages with live annotations, laser pointer, Go Full Screen, and an audience-safe window.",
+        },
+      ],
+      taskCategory: "meeting",
+      onOpen: () => setLocation("/studio"),
+    },
   ];
 }
 

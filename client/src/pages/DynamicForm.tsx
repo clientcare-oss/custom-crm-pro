@@ -28,8 +28,13 @@ import {
 } from "lucide-react";
 import InlineScheduler from "@/components/InlineScheduler";
 import PageIdBadge from "@/components/PageIdBadge";
-import { ALL_FIELDS, DEFAULT_FIELDS } from "@/lib/formFields";
-import type { FieldKey } from "@/lib/formFields";
+import {
+  ALL_FIELDS,
+  DEFAULT_FIELDS,
+  parseFormBuilderConfig,
+  type CustomFormQuestion,
+  type FieldKey,
+} from "@/lib/formFields";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -98,6 +103,7 @@ export default function DynamicForm() {
   const [bookedSlot, setBookedSlot] = useState<{ date: string; time: string } | null>(null);
   const [copiedCaseId, setCopiedCaseId] = useState(false);
   const [worksheetUrl, setWorksheetUrl] = useState<string | null>(null);
+  const [customAnswers, setCustomAnswers] = useState<Record<string, any>>({});
 
   const { data: businessPhoneData } = trpc.system.getBusinessPhone.useQuery(undefined, { enabled: true });
   const [businessPhone, setBusinessPhone] = useState("");
@@ -238,21 +244,168 @@ export default function DynamicForm() {
 
   const isFieldEnabled = (key: FieldKey) => enabledFields.includes(key);
 
-  // Parse custom labels from form config
-  const customLabels: Record<string, string> = useMemo(() => {
-    if (!formConfig?.customLabels) return {};
-    try {
-      const parsed = typeof formConfig.customLabels === "string" ? JSON.parse(formConfig.customLabels) : formConfig.customLabels;
-      if (parsed && typeof parsed === "object") return parsed as Record<string, string>;
-    } catch { /* ignore */ }
-    return {};
-  }, [formConfig?.customLabels]);
+  // Parse custom labels and custom builder questions from form config
+  const builderConfig = useMemo(
+    () => parseFormBuilderConfig(formConfig?.customLabels),
+    [formConfig?.customLabels]
+  );
+  const customLabels = builderConfig.labels;
+  const customQuestions = builderConfig.customQuestions;
 
   // Get the display label for a field (custom label overrides default)
   const getLabel = (key: FieldKey): string => {
     if (customLabels[key]) return customLabels[key];
     const field = ALL_FIELDS.find((f) => f.key === key);
     return field?.label ?? key;
+  };
+
+  const renderCustomStepQuestions = (targetStep: 1 | 2 | 3) => {
+    const stepQuestions = customQuestions.filter((q) => q.step === targetStep);
+    if (stepQuestions.length === 0) return null;
+
+    return (
+      <div className="space-y-4 pt-3 border-t border-[#0D4B84]/50">
+        {stepQuestions.map((cq: CustomFormQuestion) => {
+          const val = customAnswers[cq.id] ?? (cq.type === "checkboxes" ? [] : "");
+          return (
+            <div key={cq.id} className="space-y-1.5">
+              <Label className="text-blue-100 font-medium text-xs sm:text-sm tracking-wide">
+                {cq.label}
+                {cq.required && (
+                  <span className="text-amber-400 font-bold ml-0.5">*</span>
+                )}
+              </Label>
+
+              {cq.type === "long_text" && (
+                <Textarea
+                  value={String(val)}
+                  onChange={(e) =>
+                    setCustomAnswers((prev) => ({
+                      ...prev,
+                      [cq.id]: e.target.value,
+                    }))
+                  }
+                  placeholder={cq.placeholder || "Enter details..."}
+                  rows={3}
+                  className="bg-[#030C22]/85 border-[#0D4B84]/80 text-white placeholder:text-blue-200/30 focus:border-blue-400 rounded-xl p-3 text-sm resize-none"
+                />
+              )}
+
+              {(cq.type === "short_text" ||
+                cq.type === "phone" ||
+                cq.type === "date") && (
+                <Input
+                  type={
+                    cq.type === "date"
+                      ? "date"
+                      : cq.type === "phone"
+                      ? "tel"
+                      : "text"
+                  }
+                  value={String(val)}
+                  onChange={(e) =>
+                    setCustomAnswers((prev) => ({
+                      ...prev,
+                      [cq.id]: e.target.value,
+                    }))
+                  }
+                  placeholder={cq.placeholder || ""}
+                  className="bg-[#030C22]/85 border-[#0D4B84]/80 text-white placeholder:text-blue-200/30 focus:border-blue-400 rounded-xl h-11 px-3.5 text-sm"
+                />
+              )}
+
+              {cq.type === "dropdown" && (
+                <Select
+                  value={String(val)}
+                  onValueChange={(v) =>
+                    setCustomAnswers((prev) => ({ ...prev, [cq.id]: v }))
+                  }
+                >
+                  <SelectTrigger className="bg-[#030C22]/85 border-[#0D4B84]/80 text-white rounded-xl h-11 px-3.5 text-sm">
+                    <SelectValue placeholder="Select an option" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0A254D] border-[#0D4B84] text-white shadow-2xl">
+                    {(cq.options || []).map((opt) => (
+                      <SelectItem
+                        key={opt}
+                        value={opt}
+                        className="hover:bg-blue-600/30 text-white"
+                      >
+                        {opt}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {cq.type === "checkboxes" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  {(cq.options || []).map((opt) => {
+                    const arr = Array.isArray(val) ? val : [];
+                    const checked = arr.includes(opt);
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => {
+                          const next = checked
+                            ? arr.filter((x: string) => x !== opt)
+                            : [...arr, opt];
+                          setCustomAnswers((prev) => ({
+                            ...prev,
+                            [cq.id]: next,
+                          }));
+                        }}
+                        className={`p-2.5 rounded-xl border text-left text-xs font-medium flex items-center gap-2 transition-all cursor-pointer ${
+                          checked
+                            ? "bg-blue-500/20 border-blue-400 text-white"
+                            : "bg-[#030C22]/80 border-[#0D4B84]/80 text-blue-200/80 hover:border-blue-400/50"
+                        }`}
+                      >
+                        <span
+                          className={`w-4 h-4 rounded flex items-center justify-center border ${
+                            checked
+                              ? "bg-blue-500 border-blue-300 text-white"
+                              : "border-blue-400/40"
+                          }`}
+                        >
+                          {checked && <Check className="w-3 h-3" />}
+                        </span>
+                        <span>{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {cq.type === "yes_no" && (
+                <div className="flex items-center gap-2 pt-1">
+                  {["Yes", "No"].map((choice) => (
+                    <button
+                      key={choice}
+                      type="button"
+                      onClick={() =>
+                        setCustomAnswers((prev) => ({
+                          ...prev,
+                          [cq.id]: choice,
+                        }))
+                      }
+                      className={`px-5 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                        val === choice
+                          ? "bg-blue-500/25 border-blue-400 text-white"
+                          : "bg-[#030C22]/80 border-[#0D4B84]/80 text-blue-200/80"
+                      }`}
+                    >
+                      {choice}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   const validateStep = () => {
@@ -277,6 +430,22 @@ export default function DynamicForm() {
 
   const handleBack = () => setStep((s) => Math.max(s - 1, 1));
 
+  const buildFormattedChallengesWithCustomAnswers = () => {
+    const extraLines: string[] = [];
+    for (const cq of customQuestions) {
+      const rawAns = customAnswers[cq.id];
+      if (rawAns === undefined || rawAns === null || rawAns === "") continue;
+      if (Array.isArray(rawAns) && rawAns.length === 0) continue;
+      const formatted = Array.isArray(rawAns) ? rawAns.join(", ") : String(rawAns);
+      extraLines.push(`${cq.label}: ${formatted}`);
+    }
+    const base = form.challenges?.trim() || "";
+    if (extraLines.length === 0) return base || undefined;
+    return [base, "--- Additional Form Responses ---", ...extraLines]
+      .filter(Boolean)
+      .join("\n");
+  };
+
   const handleSubmit = () => {
     if (isPreview) { toast.info("Preview mode — form won't be submitted"); return; }
     if (!validateStep()) return;
@@ -293,7 +462,7 @@ export default function DynamicForm() {
       dateOfBirth: form.dateOfBirth || undefined, diagnosis: form.diagnosis || undefined,
       schoolName: form.schoolName || undefined, gradeLevel: form.gradeLevel || undefined,
       city: form.city || undefined, state: form.state || undefined, zipCode: form.zipCode || undefined,
-      countyDistrict: form.countyDistrict || undefined, challenges: form.challenges || undefined,
+      countyDistrict: form.countyDistrict || undefined, challenges: buildFormattedChallengesWithCustomAnswers(),
     });
   };
 
@@ -831,6 +1000,7 @@ export default function DynamicForm() {
                   )}
                 </div>
               )}
+              {renderCustomStepQuestions(1)}
             </div>
           )}
 
@@ -969,6 +1139,7 @@ export default function DynamicForm() {
                   </div>
                 </div>
               )}
+              {renderCustomStepQuestions(2)}
             </div>
           )}
 
@@ -987,6 +1158,7 @@ export default function DynamicForm() {
                   />
                 </div>
               )}
+              {renderCustomStepQuestions(3)}
               {!isPreview && (
                 <div className="bg-[#030C22]/70 border border-[#0D4B84]/60 rounded-2xl p-4 sm:p-5 shadow-inner">
                   <p className="text-blue-300 text-sm font-semibold mb-2.5 flex items-center gap-2">

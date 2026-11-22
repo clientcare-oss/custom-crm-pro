@@ -186,151 +186,42 @@ export function LeadTunerConsole({
   }, [activeStageIndex, selectedStage]);
 
   return (
-    <div className="w-full space-y-2.5" data-testid="lead-tuner-console">
-      {/* ─── 1. TOP HEADER BAR: WAYPOINT CRM ——— Lead Center | + New inquiry ─── */}
-      <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-3 px-2">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <span
-              className="text-[11px] sm:text-xs font-serif uppercase tracking-[0.24em] text-[#D8C7A5] whitespace-nowrap"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              WAYPOINT CRM
-            </span>
-            <span
-              aria-hidden="true"
-              className="w-8 sm:w-16 h-[1px] bg-gradient-to-r from-[#C5A059]/40 via-[#DFBE77]/80 to-[#C5A059]/40 shrink-0"
-            />
-            <h1
-              className="text-2xl sm:text-[32px] font-bold tracking-tight text-white leading-none truncate"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              Lead Center
-            </h1>
-          </div>
-
-          {/* Right Header Controls: Follow-up automation link + New inquiry (+ discreet 3-dot menu) */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
-            <Link
-              href="/automations?id=showcase-not-yet"
-              data-testid="header-followup-automation-link"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-serif italic text-[#DFBE77] hover:text-[#FFF4D4] underline decoration-[#C5A059]/60 underline-offset-4 transition-colors cursor-pointer whitespace-nowrap"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              <span>Follow-up automation</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  data-testid="lead-center-more-options-btn"
-                  aria-label="More Lead Center options"
-                  className="h-8 w-8 rounded-full bg-[#09152B]/80 hover:bg-[#12264A] border border-[#C5A059]/40 hover:border-[#FFE394]/70 text-[#D8C7A5] hover:text-[#FFE394] inline-flex items-center justify-center transition-all cursor-pointer"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-60 bg-[#07162B] border border-[#3A2C18] text-[#FFF4D4] shadow-2xl"
-              >
-                {onAddTestLead && (
-                  <>
-                    <DropdownMenuItem
-                      data-testid="add-test-lead-menu-item"
-                      disabled={isAddingTestLead}
-                      onClick={onAddTestLead}
-                      className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2 font-semibold text-[#FFE394]"
-                    >
-                      <UserPlus className="w-3.5 h-3.5 text-[#DFBE77]" />
-                      <span>
-                        {isAddingTestLead
-                          ? "Adding Test Lead..."
-                          : "Add Test Lead"}
-                      </span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-[#3A2C18]/60" />
-                  </>
-                )}
-                <DropdownMenuItem
-                  onClick={() => onSelectStage("discovery")}
-                  className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"
-                >
-                  <Phone className="w-3.5 h-3.5 text-[#C5A059]" />
-                  <span>Tune to Discovery Stage</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={onManageForms}
-                  className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" />
-                  <span>Lead Forms & Intake Routing</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/automations?id=showcase-not-yet"
-                    className="cursor-pointer focus:bg-[#102B4E] focus:text-[#FFE394] gap-2 text-xs py-2 flex items-center"
-                  >
-                    <Zap className="w-3.5 h-3.5 text-[#C5A059]" />
-                    <span>Edit Follow-up Automation</span>
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <button
-              type="button"
-              onClick={onNewInquiry}
-              data-testid="new-service-inquiry-btn"
-              className="h-9 px-5 rounded-full bg-gradient-to-b from-[#EAD08A] via-[#C89D4C] to-[#987026] hover:from-[#F3DC9B] hover:via-[#D5AA58] hover:to-[#A87D2E] text-[#07162B] font-serif font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 border border-[#FFE5A3]/85 shadow-[0_4px_14px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.5)] transition-all cursor-pointer"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>New inquiry</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ─── 2. PHOTOREALISTIC BRASS & NAVY CB RADIO CHASSIS WITH LIVE INTERACTIVE OVERLAYS ─── */}
+    <div className="w-full" data-testid="lead-tuner-console">
+      {/* ─── PHOTOREALISTIC BRASS & NAVY CB RADIO CHASSIS WITH LIVE INTERACTIVE OVERLAYS (FIRST ELEMENT AT TOP) ─── */}
       <div className="relative max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative w-full aspect-[1004/318] select-none">
-          {/* Base High-Res Radio Hardware Artwork (Switches cleanly between Browse Mode & Single-Client Mode) */}
-          <img
-            src={
-              isClientOpen
-                ? "/images/lead-center-radio-client-clean.png?v=2"
-                : "/images/lead-center-radio-chassis-clean.png?v=5"
-            }
-            alt="Waypoint Lead Center Radio Console"
-            draggable={false}
-            className="w-full h-full object-contain pointer-events-none block"
-            style={{
-              WebkitMaskImage:
-                "linear-gradient(to right, transparent 0%, black 1.7%, black 98.8%, transparent 100%)",
-              maskImage:
-                "linear-gradient(to right, transparent 0%, black 1.7%, black 98.8%, transparent 100%)",
-            }}
-          />
+          <div className="relative w-full aspect-[1004/318] select-none">
+            {/* Base High-Res Radio Hardware Artwork (Switches cleanly between Browse Mode & Single-Client Mode) */}
+            <img
+              src={
+                isClientOpen
+                  ? "/images/lead-center-radio-client-clean.png?v=2"
+                  : "/images/lead-center-radio-chassis-clean.png?v=6"
+              }
+              alt="Waypoint Lead Center Radio Console"
+              draggable={false}
+              className="w-full h-full object-contain pointer-events-none block"
+              style={{
+                WebkitMaskImage:
+                  "linear-gradient(to right, transparent 0%, black 1.7%, black 98.8%, transparent 100%)",
+                maskImage:
+                  "linear-gradient(to right, transparent 0%, black 1.7%, black 98.8%, transparent 100%)",
+              }}
+            />
 
-          {/* Subtle bottom-left & bottom-right outer corner blend so side purple glow fades cleanly into navy outside the brass feet */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0"
-            style={{
-              backgroundImage: [
-                "radial-gradient(ellipse 6.2% 22% at 0% 94%, #000820 45%, transparent 100%)",
-                "radial-gradient(ellipse 6.5% 22% at 100% 94%, #000820 45%, transparent 100%)",
-              ].join(", "),
-            }}
-          />
+            {/* Subtle bottom-left & bottom-right outer corner blend so side purple glow fades cleanly into navy outside the brass feet */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage: [
+                  "radial-gradient(ellipse 6.2% 22% at 0% 94%, #000820 45%, transparent 100%)",
+                  "radial-gradient(ellipse 6.5% 22% at 100% 94%, #000820 45%, transparent 100%)",
+                ].join(", "),
+              }}
+            />
 
-        {/* ── DYNAMIC BRASS PLAQUES FOR SINGLE-CLIENT MODE ── */}
-        {isClientOpen && (
-          <>
-            {/* Top-Center Brass Plaque: "{FIRST_NAME}'S JOURNEY" (Exact brass face: x 43.92%..71.91%, y 7.86%..15.09%) */}
+            {/* ── DYNAMIC BRASS PLAQUES (TOP-CENTER IN BOTH MODES, BOTTOM-LEFT IN SINGLE-CLIENT MODE) ── */}
+            {/* Top-Center Brass Plaque: "LEAD CENTER" in Browse Mode, "{FIRST_NAME}'S JOURNEY" in Single-Client Mode */}
             <div
               className="absolute flex items-center justify-center pointer-events-none overflow-hidden px-4"
               style={{
@@ -341,436 +232,440 @@ export function LeadTunerConsole({
               }}
             >
               <span
-                className="max-w-full font-serif font-bold uppercase tracking-[0.22em] pl-[0.22em] leading-none text-center text-[#1C1204] drop-shadow-[0_1px_0_rgba(255,236,185,0.5)] truncate"
+                className="max-w-full font-serif font-bold uppercase tracking-[0.26em] pl-[0.26em] leading-none text-center text-[#1C1204] drop-shadow-[0_1px_0_rgba(255,236,185,0.55)] truncate"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(7px, 0.95vw, 12px)",
+                  fontSize: "clamp(7.5px, 1.02vw, 13px)",
                 }}
               >
-                {clientFirstName.toUpperCase()}&apos;S JOURNEY
+                {isClientOpen
+                  ? `${clientFirstName.toUpperCase()}'S JOURNEY`
+                  : "LEAD CENTER"}
               </span>
             </div>
 
-            {/* Bottom-Left Brass Plaque: "FAMILY WORKSPACE" (Exact brass face: x 11.85%..27.39%, y 82.39%..87.11%) */}
-            <div
-              className="absolute flex items-center justify-center pointer-events-none overflow-hidden px-2.5"
-              style={{
-                left: "11.85%",
-                top: "82.39%",
-                width: "15.54%",
-                height: "4.72%",
-              }}
-            >
-              <span
-                className="max-w-full font-serif font-bold uppercase tracking-[0.14em] pl-[0.14em] leading-none text-center text-[#1C1204] drop-shadow-[0_1px_0_rgba(255,236,185,0.5)] truncate"
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(5.5px, 0.65vw, 8.2px)",
-                }}
-              >
-                FAMILY WORKSPACE
-              </span>
-            </div>
-          </>
-        )}
-
-        {/* ── OVERLAY A: LEFT CRT SCREEN LIVE READOUT (STRICTLY SCOPED INSIDE INNER BLUE GLASS: x 8.8%..29.2%, y 14.5%..69.0%) ── */}
-        {isClientOpen ? (
-          /* SINGLE-CLIENT CRT VIEW ("NOW VIEWING" + Initials Circle + Parent + Student + Green Status Dot) */
-          <div
-            className="absolute flex flex-col items-center justify-between text-center pointer-events-none overflow-hidden px-2"
-            style={{
-              left: "8.8%",
-              top: "14.5%",
-              width: "20.4%",
-              height: "54.5%",
-            }}
-          >
-            {/* Top Header: —— NOW VIEWING —— */}
-            <div className="w-full min-w-0 overflow-hidden flex items-center justify-center gap-1.5">
-              <span className="w-3.5 sm:w-5 h-[1px] bg-gradient-to-r from-transparent to-[#CBD5E1]/70 shrink-0" />
-              <span
-                className="font-serif uppercase tracking-[0.18em] text-[#E2E8F0] whitespace-nowrap truncate"
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(6px, 0.72vw, 9.5px)",
-                }}
-              >
-                NOW VIEWING
-              </span>
-              <span className="w-3.5 sm:w-5 h-[1px] bg-gradient-to-l from-transparent to-[#CBD5E1]/70 shrink-0" />
-            </div>
-
-            {/* Circular Initials Ring (EV) */}
-            <div
-              className="rounded-full border-[1.5px] border-[#E2E8F0]/85 bg-[#0A1936]/80 shadow-[0_0_10px_rgba(148,163,184,0.35),inset_0_0_6px_rgba(255,255,255,0.18)] flex items-center justify-center font-serif font-bold text-white shrink-0"
-              style={{
-                width: "clamp(18px, 2.3vw, 29px)",
-                height: "clamp(18px, 2.3vw, 29px)",
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(7.5px, 0.92vw, 11.5px)",
-              }}
-            >
-              {clientInitials}
-            </div>
-
-            {/* Parent Name + PARENT Label */}
-            <div className="w-full min-w-0 overflow-hidden px-1 flex flex-col items-center leading-none">
-              <div
-                data-testid="radio-channel-display"
-                title={openedClientName || "Family Inquiry"}
-                className="w-full max-w-full truncate font-serif font-bold text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize:
-                    (openedClientName || "").length > 16
-                      ? "clamp(9px, 1.25vw, 15.5px)"
-                      : "clamp(10px, 1.5vw, 18.5px)",
-                  lineHeight: 1.08,
-                }}
-              >
-                {openedClientName || "Family Inquiry"}
-              </div>
-              <span
-                className="mt-0.5 font-serif uppercase tracking-[0.22em] text-[#CBD5E1]/90"
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(5px, 0.6vw, 7.8px)",
-                }}
-              >
-                PARENT
-              </span>
-            </div>
-
-            {/* Horizontal Divider */}
-            <div className="w-[76%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/45 to-transparent shrink-0" />
-
-            {/* Student Name + STUDENT Label */}
-            <div className="w-full min-w-0 overflow-hidden px-1 flex flex-col items-center leading-none">
-              <div
-                title={openedClientStudentName || "Student"}
-                className="w-full max-w-full truncate font-serif italic text-[#F1F5F9] drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)]"
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(8px, 1.05vw, 13.5px)",
-                  lineHeight: 1.12,
-                }}
-              >
-                {formatCrtStudentDisplay(openedClientStudentName)}
-              </div>
-              <span
-                className="mt-0.5 font-serif uppercase tracking-[0.22em] text-[#CBD5E1]/85"
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(5px, 0.58vw, 7.5px)",
-                }}
-              >
-                STUDENT
-              </span>
-            </div>
-
-            {/* Horizontal Divider */}
-            <div className="w-[68%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent shrink-0" />
-
-            {/* Green Glowing Status Dot + Sub-Status Label */}
-            <div className="w-full min-w-0 overflow-hidden px-1 flex items-center justify-center gap-1.5">
-              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#4ADE80] shadow-[0_0_8px_#4ADE80,0_0_12px_#22C55E] shrink-0" />
-              <span
-                className="max-w-full truncate font-serif italic text-[#F1F5F9] leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(7.5px, 0.92vw, 11.5px)",
-                }}
-              >
-                {openedClientStatusLabel || "Intake received"}
-              </span>
-            </div>
-          </div>
-        ) : (
-          /* BROWSE ALL FAMILIES CRT VIEW */
-          <div
-            className="absolute flex flex-col items-center justify-between text-center pointer-events-none overflow-hidden px-2"
-            style={{
-              left: "8.8%",
-              top: "36.5%",
-              width: "20.4%",
-              height: "33.0%",
-            }}
-          >
-            {/* Active Stage Title */}
-            <div
-              data-testid="radio-channel-display"
-              className="w-full max-w-full truncate font-serif font-bold text-white leading-none tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
-              style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(13px, 2.35vw, 29px)",
-              }}
-            >
-              {activeStageMeta.label}
-            </div>
-
-            {/* Top Horizontal Divider */}
-            <div className="w-[82%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/55 to-transparent shrink-0" />
-
-            {/* Live Family Count */}
-            <div
-              className="w-full max-w-full truncate font-serif italic text-[#F1F5F9] leading-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]"
-              style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(10px, 1.75vw, 21px)",
-              }}
-            >
-              {activeStageCount}{" "}
-              {activeStageCount === 1 ? "family" : "families"}
-            </div>
-
-            {/* Bottom Horizontal Divider */}
-            <div className="w-[70%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent shrink-0" />
-
-            {/* Subtitle */}
-            <div
-              className="w-full max-w-full truncate font-serif italic text-[#CBD5E1] leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
-              style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(8px, 1.1vw, 13.5px)",
-              }}
-            >
-              Open a family below
-            </div>
-          </div>
-        )}
-
-        {/* ── OVERLAY B: CENTER 4-STAGE TUNER GLASS WINDOW (`x: 35.7%..74.2%, y: 21.0%..51.8%`) ── */}
-        <div
-          className="absolute rounded-[11px] overflow-hidden flex flex-col justify-between"
-          style={{
-            left: "35.7%",
-            top: "21.0%",
-            width: "38.5%",
-            height: "30.8%",
-          }}
-        >
-          {/* Warm Amber/Gold Spotlight Glow Behind Selected Stage */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 w-[34%] -translate-x-1/2 transition-all duration-300 motion-reduce:transition-none ease-out"
-            style={{
-              left: `${activeStageMeta.needlePercent}%`,
-              background:
-                "radial-gradient(ellipse at 50% 68%, rgba(255, 195, 85, 0.42) 0%, rgba(212, 148, 48, 0.16) 52%, transparent 80%)",
-            }}
-          />
-
-          {/* 4 Clickable Stage Columns */}
-          <div
-            className="relative z-10 grid grid-cols-4 divide-x divide-[#C5A059]/30 h-[74%] items-start pt-[2.5%]"
-            role="tablist"
-            aria-label="Lead Center Stages"
-          >
-            {TUNER_STAGES.map((stage, stageIdx) => {
-              const count = stageCounts[stage.id] ?? 0;
-              const isSelected = stage.id === selectedStage;
-              const clientStageState =
-                stageIdx < clientCurrentStageIndex
-                  ? "COMPLETE"
-                  : stageIdx === clientCurrentStageIndex
-                  ? "CURRENT"
-                  : "UPCOMING";
-
-              return (
-                <button
-                  key={stage.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isSelected}
-                  data-testid={`radio-stage-${stage.id}`}
-                  onClick={() => onSelectStage(stage.id)}
-                  className="group h-full min-w-0 px-1 flex flex-col items-center justify-start gap-1 sm:gap-1.5 transition-colors cursor-pointer focus:outline-hidden"
+            {isClientOpen && (
+              <>
+                {/* Bottom-Left Brass Plaque: "FAMILY WORKSPACE" (Exact brass face: x 11.85%..27.39%, y 82.39%..87.11%) */}
+                <div
+                  className="absolute flex items-center justify-center pointer-events-none overflow-hidden px-2.5"
+                  style={{
+                    left: "11.85%",
+                    top: "82.39%",
+                    width: "15.54%",
+                    height: "4.72%",
+                  }}
                 >
                   <span
-                    className={cn(
-                      "font-serif leading-none tracking-tight transition-colors whitespace-nowrap",
-                      isSelected
-                        ? "font-bold text-[#FFFDF5] drop-shadow-[0_0_10px_rgba(255,215,120,0.85)]"
-                        : "font-medium text-[#D8CFC0] group-hover:text-white"
-                    )}
+                    className="max-w-full font-serif font-bold uppercase tracking-[0.14em] pl-[0.14em] leading-none text-center text-[#1C1204] drop-shadow-[0_1px_0_rgba(255,236,185,0.5)] truncate"
                     style={{
                       fontFamily: "'Playfair Display', Georgia, serif",
-                      fontSize: "clamp(9px, 1.32vw, 16.5px)",
+                      fontSize: "clamp(5.5px, 0.65vw, 8.2px)",
                     }}
                   >
-                    {stage.label}
+                    FAMILY WORKSPACE
                   </span>
+                </div>
+              </>
+            )}
 
-                  {isClientOpen ? (
-                    /* Single-Client Mode: CURRENT / UPCOMING / COMPLETE */
-                    <span
-                      data-testid={`radio-stage-count-${stage.id}`}
-                      className={cn(
-                        "font-serif italic uppercase tracking-[0.08em] leading-none transition-colors whitespace-nowrap mt-0.5",
-                        clientStageState === "CURRENT"
-                          ? "text-[#FFE394] font-semibold drop-shadow-[0_0_8px_rgba(255,215,120,0.75)]"
-                          : clientStageState === "COMPLETE"
-                          ? "text-[#D8C7A5]"
-                          : "text-[#94A3B8]/90 group-hover:text-[#CBD5E1]"
-                      )}
-                      style={{
-                        fontFamily: "'Playfair Display', Georgia, serif",
-                        fontSize: "clamp(6.5px, 0.78vw, 10px)",
-                      }}
-                    >
-                      {clientStageState}
-                    </span>
-                  ) : (
-                    /* Browse Mode: Stage Count Bubble */
-                    <span
-                      data-testid={`radio-stage-count-${stage.id}`}
-                      className={cn(
-                        "inline-flex items-center justify-center rounded-full min-w-[22px] sm:min-w-[28px] px-2 py-[1px] sm:py-[2px] font-serif font-bold leading-none transition-all whitespace-nowrap",
-                        isSelected
-                          ? "bg-gradient-to-b from-[#FFE59E] via-[#D6A648] to-[#9E711E] text-[#07162B] border border-[#FFF4D4] shadow-[0_0_10px_rgba(255,215,120,0.7),0_2px_4px_rgba(0,0,0,0.8)]"
-                          : "bg-[#061124]/95 text-[#E5D7B8] border border-[#C5A059]/55 shadow-[inset_0_1px_2px_rgba(0,0,0,0.85)] group-hover:border-[#FFE394]/80 group-hover:text-[#FFF4D4]"
-                      )}
-                      style={{
-                        fontFamily: "'Playfair Display', Georgia, serif",
-                        fontSize: "clamp(8px, 1.05vw, 13px)",
-                      }}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Horizontal Gold Frequency Scale + Tick Marks + Sliding Glowing Needle (Pinned Near Bottom Edge) */}
-          <div className="relative z-10 h-[24%] flex items-end pb-[4.5%] px-[3%]">
-            <div className="relative h-[1.5px] w-full bg-gradient-to-r from-[#6E5528] via-[#E5C175] to-[#6E5528]">
-              {/* Tick Marks Along Bottom Scale */}
-              {Array.from({ length: 29 }).map((_, idx) => {
-                const pct = 3 + (idx * 94) / 28;
-                const isMajor = idx % 7 === 0;
-                const isMedium = idx % 7 === 3 || idx % 7 === 4;
-                return (
-                  <span
-                    key={idx}
-                    style={{ left: `${pct}%` }}
-                    className={cn(
-                      "absolute -translate-x-1/2 w-[1px] sm:w-[1.5px]",
-                      isMajor
-                        ? "h-1.5 sm:h-2.5 -top-1.5 sm:-top-2.5 bg-[#FFE394]"
-                        : isMedium
-                        ? "h-1 sm:h-1.5 -top-1 sm:-top-1.5 bg-[#C5A059]/80"
-                        : "h-0.5 sm:h-1 -top-0.5 sm:-top-1 bg-[#C5A059]/50"
-                    )}
-                  />
-                );
-              })}
-
-              {/* Glowing Vertical Gold Needle & Luminous Orb */}
+            {/* ── OVERLAY A: LEFT CRT SCREEN LIVE READOUT (STRICTLY SCOPED INSIDE INNER BLUE GLASS: x 8.8%..29.2%, y 14.5%..69.0%) ── */}
+            {isClientOpen ? (
+              /* SINGLE-CLIENT CRT VIEW ("NOW VIEWING" + Initials Circle + Parent + Student + Green Status Dot) */
               <div
-                data-testid="radio-tuning-needle"
-                className="absolute -top-2.5 sm:-top-3.5 -translate-x-1/2 flex flex-col items-center transition-all duration-300 motion-reduce:transition-none ease-out"
-                style={{ left: `${activeStageMeta.needlePercent}%` }}
+                className="absolute flex flex-col items-center justify-between text-center pointer-events-none overflow-hidden px-2"
+                style={{
+                  left: "8.8%",
+                  top: "14.5%",
+                  width: "20.4%",
+                  height: "54.5%",
+                }}
               >
-                <div className="w-[2px] sm:w-[2.5px] h-2.5 sm:h-3.5 rounded-full bg-gradient-to-b from-[#FFFDF5] via-[#FFE394] to-[#E5A93C] shadow-[0_0_8px_#FFE394,0_0_14px_#F59E0B]" />
-                <div className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 -mt-0.5 rounded-full bg-gradient-to-b from-[#FFFDF5] via-[#FFE394] to-[#B87D1E] border border-[#FFF6D6] shadow-[0_0_12px_#FFE394,0_0_20px_#F59E0B]" />
+                {/* Top Header: —— NOW VIEWING —— */}
+                <div className="w-full min-w-0 overflow-hidden flex items-center justify-center gap-1.5">
+                  <span className="w-3.5 sm:w-5 h-[1px] bg-gradient-to-r from-transparent to-[#CBD5E1]/70 shrink-0" />
+                  <span
+                    className="font-serif uppercase tracking-[0.18em] text-[#E2E8F0] whitespace-nowrap truncate"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize: "clamp(6px, 0.72vw, 9.5px)",
+                    }}
+                  >
+                    NOW VIEWING
+                  </span>
+                  <span className="w-3.5 sm:w-5 h-[1px] bg-gradient-to-l from-transparent to-[#CBD5E1]/70 shrink-0" />
+                </div>
+
+                {/* Circular Initials Ring (EV) */}
+                <div
+                  className="rounded-full border-[1.5px] border-[#E2E8F0]/85 bg-[#0A1936]/80 shadow-[0_0_10px_rgba(148,163,184,0.35),inset_0_0_6px_rgba(255,255,255,0.18)] flex items-center justify-center font-serif font-bold text-white shrink-0"
+                  style={{
+                    width: "clamp(18px, 2.3vw, 29px)",
+                    height: "clamp(18px, 2.3vw, 29px)",
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: "clamp(7.5px, 0.92vw, 11.5px)",
+                  }}
+                >
+                  {clientInitials}
+                </div>
+
+                {/* Parent Name + PARENT Label */}
+                <div className="w-full min-w-0 overflow-hidden px-1 flex flex-col items-center leading-none">
+                  <div
+                    data-testid="radio-channel-display"
+                    title={openedClientName || "Family Inquiry"}
+                    className="w-full max-w-full truncate font-serif font-bold text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize:
+                        (openedClientName || "").length > 16
+                          ? "clamp(9px, 1.25vw, 15.5px)"
+                          : "clamp(10px, 1.5vw, 18.5px)",
+                      lineHeight: 1.08,
+                    }}
+                  >
+                    {openedClientName || "Family Inquiry"}
+                  </div>
+                  <span
+                    className="mt-0.5 font-serif uppercase tracking-[0.22em] text-[#CBD5E1]/90"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize: "clamp(5px, 0.6vw, 7.8px)",
+                    }}
+                  >
+                    PARENT
+                  </span>
+                </div>
+
+                {/* Horizontal Divider */}
+                <div className="w-[76%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/45 to-transparent shrink-0" />
+
+                {/* Student Name + STUDENT Label */}
+                <div className="w-full min-w-0 overflow-hidden px-1 flex flex-col items-center leading-none">
+                  <div
+                    title={openedClientStudentName || "Student"}
+                    className="w-full max-w-full truncate font-serif italic text-[#F1F5F9] drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)]"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize: "clamp(8px, 1.05vw, 13.5px)",
+                      lineHeight: 1.12,
+                    }}
+                  >
+                    {formatCrtStudentDisplay(openedClientStudentName)}
+                  </div>
+                  <span
+                    className="mt-0.5 font-serif uppercase tracking-[0.22em] text-[#CBD5E1]/85"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize: "clamp(5px, 0.58vw, 7.5px)",
+                    }}
+                  >
+                    STUDENT
+                  </span>
+                </div>
+
+                {/* Horizontal Divider */}
+                <div className="w-[68%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent shrink-0" />
+
+                {/* Green Glowing Status Dot + Sub-Status Label */}
+                <div className="w-full min-w-0 overflow-hidden px-1 flex items-center justify-center gap-1.5">
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#4ADE80] shadow-[0_0_8px_#4ADE80,0_0_12px_#22C55E] shrink-0" />
+                  <span
+                    className="max-w-full truncate font-serif italic text-[#F1F5F9] leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize: "clamp(7.5px, 0.92vw, 11.5px)",
+                    }}
+                  >
+                    {openedClientStatusLabel || "Intake received"}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              /* BROWSE ALL FAMILIES CRT VIEW */
+              <div
+                className="absolute flex flex-col items-center justify-between text-center pointer-events-none overflow-hidden px-2"
+                style={{
+                  left: "8.8%",
+                  top: "36.5%",
+                  width: "20.4%",
+                  height: "33.0%",
+                }}
+              >
+                {/* Active Stage Title */}
+                <div
+                  data-testid="radio-channel-display"
+                  className="w-full max-w-full truncate font-serif font-bold text-white leading-none tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: "clamp(13px, 2.35vw, 29px)",
+                  }}
+                >
+                  {activeStageMeta.label}
+                </div>
+
+                {/* Top Horizontal Divider */}
+                <div className="w-[82%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/55 to-transparent shrink-0" />
+
+                {/* Live Family Count */}
+                <div
+                  className="w-full max-w-full truncate font-serif italic text-[#F1F5F9] leading-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]"
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: "clamp(10px, 1.75vw, 21px)",
+                  }}
+                >
+                  {activeStageCount}{" "}
+                  {activeStageCount === 1 ? "family" : "families"}
+                </div>
+
+                {/* Bottom Horizontal Divider */}
+                <div className="w-[70%] h-[1px] bg-gradient-to-r from-transparent via-[#93C5FD]/30 to-transparent shrink-0" />
+
+                {/* Subtitle */}
+                <div
+                  className="w-full max-w-full truncate font-serif italic text-[#CBD5E1] leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: "clamp(8px, 1.1vw, 13.5px)",
+                  }}
+                >
+                  Open a family below
+                </div>
+              </div>
+            )}
+
+            {/* ── OVERLAY B: CENTER 4-STAGE TUNER GLASS WINDOW (`x: 35.7%..74.2%, y: 21.0%..51.8%`) ── */}
+            <div
+              className="absolute rounded-[11px] overflow-hidden flex flex-col justify-between"
+              style={{
+                left: "35.7%",
+                top: "21.0%",
+                width: "38.5%",
+                height: "30.8%",
+              }}
+            >
+              {/* Warm Amber/Gold Spotlight Glow Behind Selected Stage */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 w-[34%] -translate-x-1/2 transition-all duration-300 motion-reduce:transition-none ease-out"
+                style={{
+                  left: `${activeStageMeta.needlePercent}%`,
+                  background:
+                    "radial-gradient(ellipse at 50% 68%, rgba(255, 195, 85, 0.42) 0%, rgba(212, 148, 48, 0.16) 52%, transparent 80%)",
+                }}
+              />
+
+              {/* 4 Clickable Stage Columns */}
+              <div
+                className="relative z-10 grid grid-cols-4 divide-x divide-[#C5A059]/30 h-[74%] items-start pt-[2.5%]"
+                role="tablist"
+                aria-label="Lead Center Stages"
+              >
+                {TUNER_STAGES.map((stage, stageIdx) => {
+                  const count = stageCounts[stage.id] ?? 0;
+                  const isSelected = stage.id === selectedStage;
+                  const clientStageState =
+                    stageIdx < clientCurrentStageIndex
+                      ? "COMPLETE"
+                      : stageIdx === clientCurrentStageIndex
+                        ? "CURRENT"
+                        : "UPCOMING";
+
+                  return (
+                    <button
+                      key={stage.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isSelected}
+                      data-testid={`radio-stage-${stage.id}`}
+                      onClick={() => onSelectStage(stage.id)}
+                      className="group h-full min-w-0 px-1 flex flex-col items-center justify-start gap-1 sm:gap-1.5 transition-colors cursor-pointer focus:outline-hidden"
+                    >
+                      <span
+                        className={cn(
+                          "font-serif leading-none tracking-tight transition-colors whitespace-nowrap",
+                          isSelected
+                            ? "font-bold text-[#FFFDF5] drop-shadow-[0_0_10px_rgba(255,215,120,0.85)]"
+                            : "font-medium text-[#D8CFC0] group-hover:text-white"
+                        )}
+                        style={{
+                          fontFamily: "'Playfair Display', Georgia, serif",
+                          fontSize: "clamp(9px, 1.32vw, 16.5px)",
+                        }}
+                      >
+                        {stage.label}
+                      </span>
+
+                      {isClientOpen ? (
+                        /* Single-Client Mode: CURRENT / UPCOMING / COMPLETE */
+                        <span
+                          data-testid={`radio-stage-count-${stage.id}`}
+                          className={cn(
+                            "font-serif italic uppercase tracking-[0.08em] leading-none transition-colors whitespace-nowrap mt-0.5",
+                            clientStageState === "CURRENT"
+                              ? "text-[#FFE394] font-semibold drop-shadow-[0_0_8px_rgba(255,215,120,0.75)]"
+                              : clientStageState === "COMPLETE"
+                                ? "text-[#D8C7A5]"
+                                : "text-[#94A3B8]/90 group-hover:text-[#CBD5E1]"
+                          )}
+                          style={{
+                            fontFamily: "'Playfair Display', Georgia, serif",
+                            fontSize: "clamp(6.5px, 0.78vw, 10px)",
+                          }}
+                        >
+                          {clientStageState}
+                        </span>
+                      ) : (
+                        /* Browse Mode: Stage Count Bubble */
+                        <span
+                          data-testid={`radio-stage-count-${stage.id}`}
+                          className={cn(
+                            "inline-flex items-center justify-center rounded-full min-w-[22px] sm:min-w-[28px] px-2 py-[1px] sm:py-[2px] font-serif font-bold leading-none transition-all whitespace-nowrap",
+                            isSelected
+                              ? "bg-gradient-to-b from-[#FFE59E] via-[#D6A648] to-[#9E711E] text-[#07162B] border border-[#FFF4D4] shadow-[0_0_10px_rgba(255,215,120,0.7),0_2px_4px_rgba(0,0,0,0.8)]"
+                              : "bg-[#061124]/95 text-[#E5D7B8] border border-[#C5A059]/55 shadow-[inset_0_1px_2px_rgba(0,0,0,0.85)] group-hover:border-[#FFE394]/80 group-hover:text-[#FFF4D4]"
+                          )}
+                          style={{
+                            fontFamily: "'Playfair Display', Georgia, serif",
+                            fontSize: "clamp(8px, 1.05vw, 13px)",
+                          }}
+                        >
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Horizontal Gold Frequency Scale + Tick Marks + Sliding Glowing Needle (Pinned Near Bottom Edge) */}
+              <div className="relative z-10 h-[24%] flex items-end pb-[4.5%] px-[3%]">
+                <div className="relative h-[1.5px] w-full bg-gradient-to-r from-[#6E5528] via-[#E5C175] to-[#6E5528]">
+                  {/* Tick Marks Along Bottom Scale */}
+                  {Array.from({ length: 29 }).map((_, idx) => {
+                    const pct = 3 + (idx * 94) / 28;
+                    const isMajor = idx % 7 === 0;
+                    const isMedium = idx % 7 === 3 || idx % 7 === 4;
+                    return (
+                      <span
+                        key={idx}
+                        style={{ left: `${pct}%` }}
+                        className={cn(
+                          "absolute -translate-x-1/2 w-[1px] sm:w-[1.5px]",
+                          isMajor
+                            ? "h-1.5 sm:h-2.5 -top-1.5 sm:-top-2.5 bg-[#FFE394]"
+                            : isMedium
+                              ? "h-1 sm:h-1.5 -top-1 sm:-top-1.5 bg-[#C5A059]/80"
+                              : "h-0.5 sm:h-1 -top-0.5 sm:-top-1 bg-[#C5A059]/50"
+                        )}
+                      />
+                    );
+                  })}
+
+                  {/* Glowing Vertical Gold Needle & Luminous Orb */}
+                  <div
+                    data-testid="radio-tuning-needle"
+                    className="absolute -top-2.5 sm:-top-3.5 -translate-x-1/2 flex flex-col items-center transition-all duration-300 motion-reduce:transition-none ease-out"
+                    style={{ left: `${activeStageMeta.needlePercent}%` }}
+                  >
+                    <div className="w-[2px] sm:w-[2.5px] h-2.5 sm:h-3.5 rounded-full bg-gradient-to-b from-[#FFFDF5] via-[#FFE394] to-[#E5A93C] shadow-[0_0_8px_#FFE394,0_0_14px_#F59E0B]" />
+                    <div className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 -mt-0.5 rounded-full bg-gradient-to-b from-[#FFFDF5] via-[#FFE394] to-[#B87D1E] border border-[#FFF6D6] shadow-[0_0_12px_#FFE394,0_0_20px_#F59E0B]" />
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* ── OVERLAY C: STATUS PILL (Exact inner recessed face: x 37.15%..75.30%, y 55.66%..64.15%) ── */}
+            <div
+              className="absolute flex items-center justify-center gap-2 pointer-events-none overflow-hidden px-3"
+              style={{
+                left: "37.15%",
+                top: "55.66%",
+                width: "38.15%",
+                height: "8.49%",
+              }}
+            >
+              <span
+                className="font-serif uppercase tracking-[0.22em] leading-none text-[#D8C7A5] shrink-0"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(7px, 0.9vw, 11px)",
+                }}
+              >
+                {isClientOpen ? "NEXT:" : "VIEWING:"}
+              </span>
+              <span
+                className="min-w-0 truncate font-serif italic font-semibold leading-none text-[#FFF4D4] -mt-[1px]"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(9px, 1.25vw, 15.5px)",
+                }}
+              >
+                {isClientOpen
+                  ? openedClientNextAction || "Schedule discovery"
+                  : activeStageMeta.label}
+              </span>
+            </div>
+
+            {/* ── OVERLAY D: INTERACTIVE "VIEW STAGE" BUTTONS & ROTARY KNOB ── */}
+            {/* Left Step Button `◀` */}
+            <button
+              type="button"
+              onClick={() => handleStepStage(-1)}
+              aria-label="Previous stage"
+              data-testid="radio-prev-stage-btn"
+              title="Previous Stage (Arrow Left)"
+              className="absolute rounded-full hover:ring-2 hover:ring-[#FFE394]/80 focus:outline-hidden cursor-pointer transition-all"
+              style={{
+                left: "75.8%",
+                top: "33.5%",
+                width: "2.9%",
+                height: "9.2%",
+              }}
+            />
+
+            {/* Central 3D Rotary Knob (Whole Knob Physically Rotates Inside Dark Socket) */}
+            <button
+              type="button"
+              onClick={() => handleStepStage(1)}
+              data-testid="radio-rotary-dial"
+              aria-label={`Current stage: ${activeStageMeta.label}. Click to tune next stage`}
+              title={`Current stage: ${activeStageMeta.label} (Click to turn dial)`}
+              className="absolute rounded-full hover:brightness-105 focus:outline-hidden cursor-pointer transition-transform duration-300 motion-reduce:transition-none ease-out flex items-center justify-center"
+              style={{
+                left: "78.64%",
+                top: "22.01%",
+                width: "9.16%",
+                height: "28.93%",
+                transform: `rotate(${activeStageMeta.knobAngle}deg)`,
+              }}
+            >
+              <img
+                src="/images/lead-center-radio-knob.png?v=5"
+                alt=""
+                draggable={false}
+                className="w-full h-full object-contain pointer-events-none block rounded-full"
+              />
+            </button>
+
+            {/* Right Step Button `▶` */}
+            <button
+              type="button"
+              onClick={() => handleStepStage(1)}
+              aria-label="Next stage"
+              data-testid="radio-next-stage-btn"
+              title="Next Stage (Arrow Right)"
+              className="absolute rounded-full hover:ring-2 hover:ring-[#FFE394]/80 focus:outline-hidden cursor-pointer transition-all"
+              style={{
+                left: "87.5%",
+                top: "33.5%",
+                width: "2.9%",
+                height: "9.2%",
+              }}
+            />
           </div>
         </div>
-
-        {/* ── OVERLAY C: STATUS PILL (Exact inner recessed face: x 37.15%..75.30%, y 55.66%..64.15%) ── */}
-        <div
-          className="absolute flex items-center justify-center gap-2 pointer-events-none overflow-hidden px-3"
-          style={{
-            left: "37.15%",
-            top: "55.66%",
-            width: "38.15%",
-            height: "8.49%",
-          }}
-        >
-          <span
-            className="font-serif uppercase tracking-[0.22em] leading-none text-[#D8C7A5] shrink-0"
-            style={{
-              fontFamily: "'Playfair Display', Georgia, serif",
-              fontSize: "clamp(7px, 0.9vw, 11px)",
-            }}
-          >
-            {isClientOpen ? "NEXT:" : "VIEWING:"}
-          </span>
-          <span
-            className="min-w-0 truncate font-serif italic font-semibold leading-none text-[#FFF4D4] -mt-[1px]"
-            style={{
-              fontFamily: "'Playfair Display', Georgia, serif",
-              fontSize: "clamp(9px, 1.25vw, 15.5px)",
-            }}
-          >
-            {isClientOpen
-              ? openedClientNextAction || "Schedule discovery"
-              : activeStageMeta.label}
-          </span>
-        </div>
-
-        {/* ── OVERLAY D: INTERACTIVE "VIEW STAGE" BUTTONS & ROTARY KNOB ── */}
-        {/* Left Step Button `◀` */}
-        <button
-          type="button"
-          onClick={() => handleStepStage(-1)}
-          aria-label="Previous stage"
-          data-testid="radio-prev-stage-btn"
-          title="Previous Stage (Arrow Left)"
-          className="absolute rounded-full hover:ring-2 hover:ring-[#FFE394]/80 focus:outline-hidden cursor-pointer transition-all"
-          style={{
-            left: "75.8%",
-            top: "33.5%",
-            width: "2.9%",
-            height: "9.2%",
-          }}
-        />
-
-        {/* Central 3D Rotary Knob (Whole Knob Physically Rotates Inside Dark Socket) */}
-        <button
-          type="button"
-          onClick={() => handleStepStage(1)}
-          data-testid="radio-rotary-dial"
-          aria-label={`Current stage: ${activeStageMeta.label}. Click to tune next stage`}
-          title={`Current stage: ${activeStageMeta.label} (Click to turn dial)`}
-          className="absolute rounded-full hover:brightness-105 focus:outline-hidden cursor-pointer transition-transform duration-300 motion-reduce:transition-none ease-out flex items-center justify-center"
-          style={{
-            left: "78.64%",
-            top: "22.01%",
-            width: "9.16%",
-            height: "28.93%",
-            transform: `rotate(${activeStageMeta.knobAngle}deg)`,
-          }}
-        >
-          <img
-            src="/images/lead-center-radio-knob.png?v=5"
-            alt=""
-            draggable={false}
-            className="w-full h-full object-contain pointer-events-none block rounded-full"
-          />
-        </button>
-
-          {/* Right Step Button `▶` */}
-          <button
-            type="button"
-            onClick={() => handleStepStage(1)}
-            aria-label="Next stage"
-            data-testid="radio-next-stage-btn"
-            title="Next Stage (Arrow Right)"
-            className="absolute rounded-full hover:ring-2 hover:ring-[#FFE394]/80 focus:outline-hidden cursor-pointer transition-all"
-            style={{
-              left: "87.5%",
-              top: "33.5%",
-              width: "2.9%",
-              height: "9.2%",
-            }}
-          />
-        </div>
       </div>
-    </div>
-  );
+      );
 }

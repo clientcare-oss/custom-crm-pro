@@ -85,6 +85,8 @@ import ReceiptView from "./pages/ReceiptView";
 import LegacyStudentWorkspace from "./pages/archived/LegacyStudentWorkspace";
 import DoNotServe from "./pages/DoNotServe";
 import WaypointPlaces from "./pages/WaypointPlaces";
+import Studio from "./pages/Studio";
+import StudioAudienceView from "./pages/StudioAudienceView";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
@@ -104,15 +106,17 @@ function CaseCompassRedirect() {
 }
 
 function Router() {
-  // First Mate standalone pop-out window: mount immediately to prevent auth-loading flicker or remount loops
+  // First Mate standalone pop-out window & The Studio Audience window: mount immediately without CRM shell
   if (
     typeof window !== "undefined" &&
     (window.location.pathname === "/first-mate/popout" ||
-      window.location.pathname.startsWith("/first-mate/popout"))
+      window.location.pathname.startsWith("/first-mate/popout") ||
+      window.location.pathname.startsWith("/studio/audience/"))
   ) {
     return (
       <Switch>
         <Route path="/first-mate/popout" component={FirstMatePopout} />
+        <Route path="/studio/audience/:boardId" component={StudioAudienceView} />
       </Switch>
     );
   }
@@ -274,6 +278,9 @@ function Router() {
           <Route path="/session-types">{() => <Redirect to="/calendar?tab=session-types" />}</Route>
           <Route path="/tasks" component={Tasks} />
           <Route path="/tech-tasks">{() => <Redirect to="/tasks" />}</Route>
+          <Route path="/studio/audience/:boardId" component={StudioAudienceView} />
+          <Route path="/studio" component={Studio} />
+          <Route path="/tools/studio" component={Studio} />
           <Route path="/tools" component={Tools} />
           <Route path="/tools/waypoint-places" component={WaypointPlaces} />
           <Route path="/waypoint-places/public" component={WaypointPlaces} />

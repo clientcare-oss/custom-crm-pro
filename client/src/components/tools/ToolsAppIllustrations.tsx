@@ -437,6 +437,61 @@ export function Tool3DAppIcon({
     );
   }
 
+  // 7. The Studio — Glossy Deep Navy / Neon Cyan & Violet Teaching Canvas Icon
+  if (id === "the-studio") {
+    return (
+      <svg viewBox="0 0 96 96" fill="none" className={`${dims} shrink-0 select-none`}>
+        <defs>
+          <radialGradient id="studioBg" cx="25%" cy="18%" r="85%">
+            <stop offset="0%" stopColor="#1E1B4B" />
+            <stop offset="50%" stopColor="#091538" />
+            <stop offset="100%" stopColor="#000820" />
+          </radialGradient>
+        </defs>
+        <rect
+          x="2"
+          y="2"
+          width="92"
+          height="92"
+          rx="22"
+          fill="url(#studioBg)"
+          stroke="#38BDF8"
+          strokeOpacity="0.6"
+          strokeWidth="1.5"
+        />
+        <rect
+          x="14"
+          y="18"
+          width="68"
+          height="50"
+          rx="10"
+          fill="#02081F"
+          stroke="#818CF8"
+          strokeWidth="1.8"
+        />
+        <path
+          d="M22 48 Q 34 26, 48 42 T 74 34"
+          stroke="#22D3EE"
+          strokeWidth="4"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <circle cx="30" cy="33" r="4" fill="#A78BFA" />
+        <circle cx="66" cy="54" r="4" fill="#FFE394" />
+        <rect
+          x="26"
+          y="73"
+          width="44"
+          height="8"
+          rx="4"
+          fill="#1E295B"
+          stroke="#A78BFA"
+          strokeWidth="1"
+        />
+      </svg>
+    );
+  }
+
   // Remaining Waypoint Tools 3D Glossy Badge
   return (
     <svg viewBox="0 0 96 96" fill="none" className={`${dims} shrink-0 select-none`}>

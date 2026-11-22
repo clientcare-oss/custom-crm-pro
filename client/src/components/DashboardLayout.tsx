@@ -161,6 +161,12 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
       groupLabel: "Resources",
       items: [
         {
+          icon: Sparkles,
+          label: "The Studio",
+          path: "/studio",
+          keywords: ["studio", "the studio", "whiteboard", "neon", "teaching", "presentation", "board", "notes", "brainstorming", "pg-049"]
+        },
+        {
           icon: Wrench,
           label: "Tools",
           path: "/tools",
@@ -412,11 +418,18 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       isActive: (loc) => loc === "/templates" || loc.startsWith("/templates/"),
     },
     {
+      id: "studio",
+      icon: Sparkles,
+      label: "The Studio",
+      path: "/studio",
+      isActive: (loc) => loc === "/studio" || loc.startsWith("/studio/") || loc === "/tools/studio",
+    },
+    {
       id: "tools",
       icon: Wrench,
       label: "Tools",
       path: "/tools",
-      isActive: (loc) => loc === "/tools" || (loc.startsWith("/tools/") && !loc.startsWith("/tools/state-complaint")) || loc === "/first-mate",
+      isActive: (loc) => loc === "/tools" || (loc.startsWith("/tools/") && !loc.startsWith("/tools/state-complaint") && loc !== "/tools/studio") || loc === "/first-mate",
     },
     {
       id: "knowledge-base",
@@ -1768,6 +1781,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects") && "p-0 bg-[#020712]",
           (location.startsWith("/students/") || location.startsWith("/contacts/") || location.startsWith("/project-workspace/")) && "p-0 overflow-hidden",
           (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/")) && "p-0 bg-[#000820] flex flex-col min-h-0 h-full overflow-hidden",
+          (location === "/studio" || location.startsWith("/studio/") || location === "/tools/studio") && "p-0 bg-[#000820] flex flex-col min-h-0 h-full overflow-hidden",
           location === "/contacts" && "p-0 bg-[#07152B]",
           (location === "/giving" || location.startsWith("/giving")) && "p-0 bg-[#07162B]",
           (location === "/agreements" || location.startsWith("/agreements") || location === "/contracts" || location.startsWith("/smart-files")) && "p-0 bg-[#07162B]",
@@ -1776,7 +1790,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location === "/calendar" || location.startsWith("/calendar") || location === "/appointments" || location.startsWith("/appointments")) && "p-0 bg-[#07162B]",
           (location === "/" || location.startsWith("/crew-quarters")) && "p-0 bg-[#07162B]",
           (location === "/knowledge-base" || location.startsWith("/knowledge-base") || location === "/walkthroughs" || location.startsWith("/walkthroughs")) && "p-0 bg-[#07162B]",
-          (location === "/leads" || location.startsWith("/leads")) && "p-0 bg-[#000820]",
+          (location === "/leads" || location.startsWith("/leads") || location === "/lead-forms" || location.startsWith("/lead-forms")) && "p-0 bg-[#000820]",
           (location === "/advocacy-pipeline" || location.startsWith("/advocacy-pipeline") || location === "/pipeline" || location.startsWith("/pipeline")) && "p-0 bg-[#000820]",
           (location === "/templates" || location.startsWith("/templates")) && "p-0 bg-[#000820]",
           (location === "/tools" || (location.startsWith("/tools") && !location.startsWith("/tools/state-complaint-builder"))) && "p-0 bg-[#000820]",
