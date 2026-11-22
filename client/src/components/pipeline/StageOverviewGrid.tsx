@@ -258,9 +258,11 @@ export function StageOverviewGrid({
     return () => window.removeEventListener("resize", updateScrollIndicators);
   }, [updateScrollIndicators, activeStages.length]);
 
-  // Automatically scroll selected stage into view when selected or restored
+  // Automatically scroll selected stage into view ONLY when a specific stage is selected
+  // (Never scroll back to the "All" card when deselecting a stage on second click)
   useEffect(() => {
-    const key = selectedStageName ? selectedStageName.toLowerCase() : "__all__";
+    if (!selectedStageName) return;
+    const key = selectedStageName.toLowerCase();
     const targetEl = stageRefs.current[key];
     if (targetEl && railRef.current) {
       targetEl.scrollIntoView({
