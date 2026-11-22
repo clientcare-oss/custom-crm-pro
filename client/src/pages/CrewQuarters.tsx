@@ -348,107 +348,105 @@ export default function CrewQuarters() {
   if (currentTab === "messages") {
     return (
       <ScopedErrorBoundary moduleName="Crew Messages">
-        <div className="h-screen max-h-screen bg-[#0D213F] [background:radial-gradient(ellipse_at_50%_0%,_#18396B_0%,_#0E2343_55%,_#08152A_100%)] text-[#FFF4D4] flex flex-col overflow-hidden select-none p-2 sm:p-3 gap-2">
+        <div className="h-screen max-h-screen bg-[#091D38] [background:radial-gradient(ellipse_at_50%_0%,_#14345E_0%,_#091D38_55%,_#051122_100%)] text-[#FFF4D4] flex flex-col overflow-hidden select-none p-2 sm:p-3 gap-2">
           {/* Top Bar with Crew Quarters identification & quick controls */}
-          <div className="w-full flex flex-col p-1.5 sm:p-2 bg-[#0F2647]/95 border border-[#C5A059]/40 rounded-xl shadow-[0_6px_20px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] gap-1 shrink-0 relative overflow-hidden">
+          <div className="w-full flex flex-col p-1.5 sm:p-2 bg-[#071A34]/95 border border-[#543F22] rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.06)] gap-1 shrink-0 relative overflow-hidden">
             {/* Top subtle golden accent shimmer line */}
-            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#FFE394]/80 to-transparent pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#C5A059]/60 to-transparent pointer-events-none" />
 
             {/* Quick Header Row */}
-            <div className="flex items-center justify-between gap-2 px-1 pb-1 border-b border-[#C5A059]/25">
+            <div className="flex items-center justify-between gap-2 px-1 pb-1 border-b border-[#543F22]/60">
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#091830] border border-[#C5A059]/45 text-[#FFE394] text-xs font-bold tracking-wider uppercase font-mono">
-                  <LighthouseCottageIcon className="w-3.5 h-3.5 text-[#F2CD80] shrink-0" />
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#051326] border border-[#543F22] text-[#FFE394] text-xs font-bold tracking-wider uppercase font-mono">
+                  <LighthouseCottageIcon className="w-3.5 h-3.5 text-[#C5A059] shrink-0" />
                   <span>Crew Quarters</span>
                 </div>
                 <PageIdBadge id="PG-038-MSG" name="Crew Messages" inline />
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[11px] font-semibold">
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>On Duty</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-xs font-serif text-[#D8C7A5]">
+              <div className="flex items-center gap-2 text-xs font-serif text-[#C6B697]">
                 <span className="font-bold text-[#FFF4D4]">{employeeName}</span>
-                <span className="text-[#C5A059]/50">•</span>
+                <span className="text-[#3A2C18]">•</span>
                 <span>{new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</span>
               </div>
             </div>
 
-            {/* Row 1: Team & Daily Operations (Calm, Organized Waypoint Admiralty Pill Tabs) */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 w-full relative z-10 pt-0.5">
-              {[
-                { id: "overview", label: "Overview", icon: LayoutDashboard },
-                { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
-                { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
-                { id: "schedule", label: "Team Schedule", icon: Calendar },
-                { id: "resources", label: "Resources", icon: BookOpen },
-              ].map((tab) => {
-                const isActive = currentTab === tab.id;
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`group relative h-9 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap select-none ${
-                      isActive
-                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/80 shadow-[0_3px_10px_rgba(0,0,0,0.5)]"
-                        : "bg-[#15315B]/95 text-[#FFF4D4] border border-[#C5A059]/40 hover:border-[#FFE394]/75 hover:bg-[#1C3F73] hover:text-white"
-                    }`}
-                  >
-                    <Icon
-                      className={`w-3.5 h-3.5 shrink-0 transition-colors ${
-                        isActive ? "text-[#07162B]" : "text-[#F2CD80] group-hover:text-[#FFE394]"
+            {/* Row 1: Team & Daily Operations */}
+            <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full relative z-10 overflow-x-auto pt-0.5">
+              <div className="flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0">
+                <span className="hidden xl:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest text-[#C5A059] bg-[#051326] border border-[#543F22] shrink-0 mr-1 select-none font-mono">
+                  Team Ops
+                </span>
+                {[
+                  { id: "overview", label: "Overview", icon: LayoutDashboard },
+                  { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
+                  { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
+                  { id: "schedule", label: "Team Schedule", icon: Calendar },
+                  { id: "resources", label: "Resources", icon: BookOpen },
+                ].map((tab) => {
+                  const isActive = currentTab === tab.id;
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`flex-1 min-w-0 h-7 sm:h-8 px-2 sm:px-2.5 py-0.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                        isActive
+                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
+                          : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
                       }`}
-                    />
-                    <span>{tab.label}</span>
-                    {Boolean(tab.badge && tab.badge > 0) && (
-                      <span
-                        className={`ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none shrink-0 ${
-                          isActive
-                            ? "bg-[#07162B] text-[#FFE394]"
-                            : "bg-[#C5A059]/30 text-[#FFE394] border border-[#FFE394]/50"
-                        }`}
-                      >
-                        {tab.badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                    >
+                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
+                      <span className="truncate">{tab.label}</span>
+                      {Boolean(tab.badge && tab.badge > 0) && (
+                        <span className={`ml-0.5 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight shrink-0 ${
+                          isActive ? "bg-[#07162B] text-[#FFE394]" : "bg-[#C5A059] text-[#07162B]"
+                        }`}>
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Row 2: Employee Self-Service & Personal Management (Calm, Uniform 7-Column Grid — Zero Truncation) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 w-full pt-1.5 border-t border-[#C5A059]/25 relative z-10">
-              {[
-                { id: "notes", label: "My Notes", icon: Lightbulb },
-                { id: "availability", label: "Availability", icon: Clock },
-                { id: "time-off", label: "Time Off & PTO", icon: Palmtree },
-                { id: "timesheet", label: "Timesheet", icon: Timer },
-                { id: "profile", label: "Credentials", icon: Award },
-                { id: "payroll", label: "Payroll", icon: CreditCard },
-                { id: "equipment", label: "Tech & Gear", icon: Laptop },
-              ].map((tab) => {
-                const isActive = currentTab === tab.id;
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`group relative h-8 px-2.5 rounded-lg text-[11.5px] font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer whitespace-nowrap select-none ${
-                      isActive
-                        ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/80 shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-                        : "bg-[#102749]/95 text-[#EADBC0] border border-[#C5A059]/35 hover:border-[#FFE394]/70 hover:bg-[#173663] hover:text-[#FFF4D4]"
-                    }`}
-                  >
-                    <Icon
-                      className={`w-3.5 h-3.5 shrink-0 transition-colors ${
-                        isActive ? "text-[#07162B]" : "text-[#F2CD80]/90 group-hover:text-[#FFE394]"
+            {/* Row 2: Employee Self-Service & Personal Management */}
+            <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1 border-t border-[#543F22]/60 relative z-10 overflow-x-auto">
+              <div className="flex items-center gap-1 sm:gap-1.5 w-full">
+                <span className="hidden xl:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest text-[#FFE394] bg-[#051326] border border-[#543F22] shrink-0 mr-1 select-none font-mono">
+                  Employee Hub
+                </span>
+                {[
+                  { id: "notes", label: "My Notes", icon: Lightbulb },
+                  { id: "availability", label: "My Availability", icon: Clock },
+                  { id: "time-off", label: "Time Off & PTO", icon: Palmtree },
+                  { id: "timesheet", label: "My Timesheet", icon: Timer },
+                  { id: "profile", label: "Profile & Credentials", icon: Award },
+                  { id: "payroll", label: "Payroll & Direct Deposit", icon: CreditCard },
+                  { id: "equipment", label: "Equipment & Tech", icon: Laptop },
+                ].map((tab) => {
+                  const isActive = currentTab === tab.id;
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`flex-1 min-w-0 h-7 sm:h-8 px-2 sm:px-2.5 py-0.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                        isActive
+                          ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
+                          : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
                       }`}
-                    />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
+                    >
+                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
+                      <span className="truncate">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -463,29 +461,29 @@ export default function CrewQuarters() {
 
   return (
     <ScopedErrorBoundary moduleName="Crew Quarters">
-      <div className="min-h-screen bg-[#0D213F] [background:radial-gradient(ellipse_at_50%_0%,_#18396B_0%,_#0E2343_55%,_#08152A_100%)] text-[#FFF4D4] pb-12 flex flex-col">
+      <div className="min-h-screen bg-[#091D38] [background:radial-gradient(ellipse_at_50%_0%,_#14345E_0%,_#091D38_55%,_#051122_100%)] text-[#FFF4D4] pb-12 flex flex-col">
         {/* ── Top Header Panoramic Observation Window (Animated & Interactive) ── */}
         <CrewQuartersAnimatedHeader />
 
         {/* ── Main UI Deck (All UI Below the Header Window) ── */}
         <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1600px] mx-auto w-full flex-1">
           {/* ── Top Header & Personalized Welcome Banner ── */}
-          <div className="relative overflow-hidden rounded-3xl border border-[#C5A059]/45 bg-[#102648]/95 shadow-[0_12px_36px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] p-6 sm:p-8">
+          <div className="relative overflow-hidden rounded-3xl border border-[#543F22] bg-[#071A34]/90 shadow-[0_15px_45px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] p-6 sm:p-8">
           {/* Subtle bathymetric wave texture */}
           <div
-            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-25 mix-blend-screen"
+            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen"
             style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#102648]/95 via-[#15315C]/85 to-[#102648]/95 pointer-events-none" />
-          <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#C5A059]/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-[#1E447A]/35 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#05142B] via-[#071F3D]/85 to-[#05142B]/90 pointer-events-none" />
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#C5A059]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-[#0F2D54]/30 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-3">
               {/* Crew Quarters Pill & Page ID */}
               <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#0A1931] border border-[#C5A059]/45 text-[#FFE394] text-xs font-bold tracking-wider uppercase font-mono">
-                  <LighthouseCottageIcon className="w-4 h-4 text-[#F2CD80] shrink-0" />
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#051326] border border-[#543F22] text-[#FFE394] text-xs font-bold tracking-wider uppercase font-mono">
+                  <LighthouseCottageIcon className="w-4 h-4 text-[#C5A059] shrink-0" />
                   <span>Crew Quarters</span>
                 </div>
                 <PageIdBadge
@@ -493,7 +491,7 @@ export default function CrewQuarters() {
                   name={resolveCrewQuartersTabId(currentTab)?.name || "Crew Quarters"}
                   inline
                 />
-                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-semibold">
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span>On Duty</span>
                 </div>
@@ -505,8 +503,8 @@ export default function CrewQuarters() {
                   Good morning, <span className="font-serif italic font-bold text-[#FFE394]">{firstName}!</span>
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
-                  <WaypointWaveIcon className="w-9 h-2.5 text-[#F2CD80] shrink-0" />
-                  <p className="text-xs sm:text-sm text-[#D8C7A5] font-medium">
+                  <WaypointWaveIcon className="w-9 h-2.5 text-[#C5A059] shrink-0" />
+                  <p className="text-xs sm:text-sm text-[#C6B697] font-medium">
                     Same Mission. Stronger Together. Here's what's on deck today.
                   </p>
                 </div>
@@ -516,18 +514,18 @@ export default function CrewQuarters() {
             {/* Employee Identity & Inspirational Motto Ribbon */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               {/* Mission Quote */}
-              <div className="hidden xl:flex flex-col text-right border-r border-[#C5A059]/35 pr-5">
-                <span className="text-xs italic text-[#D8C7A5] font-serif">
+              <div className="hidden xl:flex flex-col text-right border-r border-[#543F22]/60 pr-5">
+                <span className="text-xs italic text-[#C6B697] font-serif">
                   &ldquo;Different abilities. Brighter futures.&rdquo;
                 </span>
-                <span className="text-[10px] text-[#F2CD80] font-semibold tracking-wider uppercase mt-0.5 font-mono">
+                <span className="text-[10px] text-[#C5A059] font-semibold tracking-wider uppercase mt-0.5 font-mono">
                   Waypoint Core Creed
                 </span>
               </div>
 
               {/* Date & Day Badge */}
-              <div className="flex items-center gap-3 bg-[#0A1931]/90 backdrop-blur-md border border-[#C5A059]/45 rounded-2xl p-3 shadow-lg">
-                <div className="p-2.5 rounded-xl bg-[#132C52] text-[#F2CD80] border border-[#C5A059]/45 shrink-0">
+              <div className="flex items-center gap-3 bg-[#051326]/85 backdrop-blur-md border border-[#543F22] rounded-2xl p-3 shadow-lg">
+                <div className="p-2.5 rounded-xl bg-[#07162B] text-[#C5A059] border border-[#543F22] shrink-0">
                   <Calendar className="w-5 h-5" />
                 </div>
                 <div className="flex items-center gap-2.5 pr-2">
@@ -538,14 +536,14 @@ export default function CrewQuarters() {
                     <span className="text-xs font-bold text-[#FFF4D4] leading-tight font-serif">
                       {new Date().toLocaleDateString(undefined, { weekday: "long" })}
                     </span>
-                    <span className="text-[11px] font-medium text-[#D8C7A5] leading-tight">
+                    <span className="text-[11px] font-medium text-[#C6B697] leading-tight">
                       {new Date().toLocaleDateString(undefined, { month: "short" })}
                     </span>
                   </div>
                 </div>
 
                 {/* Employee Name */}
-                <div className="pl-3.5 border-l border-[#C5A059]/35 flex items-center">
+                <div className="pl-3.5 border-l border-[#543F22]/60 flex items-center">
                   <span className="text-sm font-serif font-bold text-[#FFF4D4] tracking-wide whitespace-nowrap">
                     {employeeName}
                   </span>
@@ -561,26 +559,26 @@ export default function CrewQuarters() {
           {/* Card 1: New Leads */}
           <div 
             onClick={() => setLocation("/leads")}
-            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 hover:border-[#FFE394] px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:shadow-[0_10px_30px_rgba(197,160,89,0.28)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
+            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#543F22] bg-[#071A34]/90 hover:border-[#C5A059]/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
           >
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/15 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/25 transition-all duration-300" />
+            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all duration-300" />
             
             {/* Top Left Tiny Icon */}
             <div className="relative z-10 flex items-center justify-between w-full">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-[#091830] text-[#F2CD80] border border-[#C5A059]/45 shrink-0 group-hover:scale-105 transition-transform">
+              <div className="p-1 sm:p-1.5 rounded-lg bg-[#051326] text-[#C5A059] border border-[#543F22] shrink-0 group-hover:scale-105 transition-transform">
                 <UserPlus className="w-3.5 h-3.5" />
               </div>
             </div>
 
             {/* Centered Huge Number */}
             <div className="flex-1 flex items-center justify-center my-1 relative z-10">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
                 {newLeadsCount}
               </div>
             </div>
 
             {/* Full Text at Bottom */}
-            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#D8C7A5] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
+            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#C6B697] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
               New Leads
             </div>
           </div>
@@ -588,26 +586,26 @@ export default function CrewQuarters() {
           {/* Card 2: Meetings Today */}
           <div 
             onClick={() => setLocation("/calendar?view=day&date=today&scope=my")}
-            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 hover:border-[#FFE394] px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:shadow-[0_10px_30px_rgba(197,160,89,0.28)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
+            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#543F22] bg-[#071A34]/90 hover:border-[#C5A059]/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
           >
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/15 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/25 transition-all duration-300" />
+            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all duration-300" />
             
             {/* Top Left Tiny Icon */}
             <div className="relative z-10 flex items-center justify-between w-full">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-[#091830] text-[#F2CD80] border border-[#C5A059]/45 shrink-0 group-hover:scale-105 transition-transform">
+              <div className="p-1 sm:p-1.5 rounded-lg bg-[#051326] text-[#C5A059] border border-[#543F22] shrink-0 group-hover:scale-105 transition-transform">
                 <Calendar className="w-3.5 h-3.5" />
               </div>
             </div>
 
             {/* Centered Huge Number */}
             <div className="flex-1 flex items-center justify-center my-1 relative z-10">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
                 {todayAppointments.length || 2}
               </div>
             </div>
 
             {/* Full Text at Bottom */}
-            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#D8C7A5] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
+            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#C6B697] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
               Meetings Today
             </div>
           </div>
@@ -615,13 +613,13 @@ export default function CrewQuarters() {
           {/* Card 3: Client Emails */}
           <div 
             onClick={() => setLocation("/messages")}
-            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 hover:border-[#FFE394] px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:shadow-[0_10px_30px_rgba(197,160,89,0.28)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
+            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#543F22] bg-[#071A34]/90 hover:border-[#C5A059]/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
           >
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/15 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/25 transition-all duration-300" />
+            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all duration-300" />
             
             {/* Top Left Tiny Icon */}
             <div className="relative z-10 flex items-center justify-between w-full">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-[#091830] text-[#F2CD80] border border-[#C5A059]/45 shrink-0 group-hover:scale-105 transition-transform">
+              <div className="p-1 sm:p-1.5 rounded-lg bg-[#051326] text-[#C5A059] border border-[#543F22] shrink-0 group-hover:scale-105 transition-transform">
                 <Mail className="w-3.5 h-3.5" />
               </div>
               {clientMessagesCount > 0 && (
@@ -634,13 +632,13 @@ export default function CrewQuarters() {
 
             {/* Centered Huge Number */}
             <div className="flex-1 flex items-center justify-center my-1 relative z-10">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
                 {clientMessagesCount}
               </div>
             </div>
 
             {/* Full Text at Bottom */}
-            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#D8C7A5] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
+            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#C6B697] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
               Client Emails
             </div>
           </div>
@@ -648,26 +646,26 @@ export default function CrewQuarters() {
           {/* Card 4: Tasks Due */}
           <div 
             onClick={() => handleTabChange("tasks")}
-            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 hover:border-[#FFE394] px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:shadow-[0_10px_30px_rgba(197,160,89,0.28)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
+            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#543F22] bg-[#071A34]/90 hover:border-[#C5A059]/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
           >
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/15 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/25 transition-all duration-300" />
+            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all duration-300" />
             
             {/* Top Left Tiny Icon */}
             <div className="relative z-10 flex items-center justify-between w-full">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-[#091830] text-[#F2CD80] border border-[#C5A059]/45 shrink-0 group-hover:scale-105 transition-transform">
+              <div className="p-1 sm:p-1.5 rounded-lg bg-[#051326] text-[#C5A059] border border-[#543F22] shrink-0 group-hover:scale-105 transition-transform">
                 <CheckSquare className="w-3.5 h-3.5" />
               </div>
             </div>
 
             {/* Centered Huge Number */}
             <div className="flex-1 flex items-center justify-center my-1 relative z-10">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
                 {openTasks.length || 4}
               </div>
             </div>
 
             {/* Full Text at Bottom */}
-            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#D8C7A5] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
+            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#C6B697] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
               Tasks Due
             </div>
           </div>
@@ -675,13 +673,13 @@ export default function CrewQuarters() {
           {/* Card 5: Crew Messages */}
           <div 
             onClick={() => handleTabChange("messages")}
-            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 hover:border-[#FFE394] px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:shadow-[0_10px_30px_rgba(197,160,89,0.28)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
+            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#543F22] bg-[#071A34]/90 hover:border-[#C5A059]/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
           >
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/15 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/25 transition-all duration-300" />
+            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all duration-300" />
             
             {/* Top Left Tiny Icon */}
             <div className="relative z-10 flex items-center justify-between w-full">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-[#091830] text-[#F2CD80] border border-[#C5A059]/45 shrink-0 group-hover:scale-105 transition-transform">
+              <div className="p-1 sm:p-1.5 rounded-lg bg-[#051326] text-[#C5A059] border border-[#543F22] shrink-0 group-hover:scale-105 transition-transform">
                 <MessageSquare className="w-3.5 h-3.5" />
               </div>
               {crewUnreadTotal > 0 && (
@@ -694,27 +692,27 @@ export default function CrewQuarters() {
 
             {/* Centered Huge Number */}
             <div className="flex-1 flex items-center justify-center my-1 relative z-10">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
                 {crewUnreadTotal}
               </div>
             </div>
 
             {/* Full Text at Bottom */}
-            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#D8C7A5] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
+            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#C6B697] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
               Crew Messages
             </div>
           </div>
 
           {/* Card 6: Waypoint Motto Tile — Admiralty Bathymetric Chart & Gold Typography */}
-          <div className="col-span-1 relative rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] group hover:border-[#FFE394] transition-all duration-300 min-h-[125px] sm:min-h-[135px]">
+          <div className="col-span-1 relative rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] group hover:border-[#C5A059]/80 transition-all duration-300 min-h-[125px] sm:min-h-[135px]">
             {/* Bathymetric Contours in Aged Brass */}
-            <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden opacity-40">
+            <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden opacity-30">
               <svg viewBox="0 0 300 120" fill="none" className="absolute inset-0 w-full h-full object-cover" preserveAspectRatio="none">
                 <path d="M-10 125 C 20 120, 35 105, 55 98 C 80 90, 105 106, 140 100 C 180 94, 220 106, 310 98" stroke="#C5A059" strokeWidth="0.75" />
                 <path d="M-10 110 C 24 104, 42 90, 65 83 C 92 75, 120 92, 158 85 C 200 78, 240 93, 310 84" stroke="#DFBE77" strokeWidth="0.85" />
                 <path d="M-10 94 C 28 86, 50 74, 76 66 C 106 58, 136 76, 178 69 C 220 62, 260 79, 310 70" stroke="#FFE394" strokeWidth="0.95" />
                 <path d="M-10 77 C 32 68, 58 56, 88 48 C 121 40, 154 60, 198 53 C 240 46, 280 65, 310 56" stroke="#C5A059" strokeWidth="0.85" />
-                <path d="M-10 59 C 36 49, 66 38, 100 30 C 136 22, 171 43, 218 36 C 260 29, 295 48, 310 42" stroke="#9E7D3B" strokeWidth="0.65" />
+                <path d="M-10 59 C 36 49, 66 38, 100 30 C 136 22, 171 43, 218 36 C 260 29, 295 48, 310 42" stroke="#3A2C18" strokeWidth="0.65" />
               </svg>
             </div>
 
@@ -730,86 +728,100 @@ export default function CrewQuarters() {
           </div>
         </div>
 
-      {/* ── Internal Tab Navigation Bar: Calm, Organized Waypoint Admiralty Double Bar ── */}
-      <div className="w-full flex flex-col p-2.5 bg-[#0F2647]/95 border border-[#C5A059]/45 rounded-xl shadow-[0_8px_22px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] gap-2 mb-6 relative overflow-hidden">
-        {/* Top subtle brass hairline */}
-        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#FFE394]/80 to-transparent pointer-events-none" />
+      {/* ── Internal Tab Navigation Bar: Double Bar (Team Operations + Employee Self-Service) ── */}
+      <div className="w-full flex flex-col p-1.5 sm:p-2 bg-[#071A34]/95 border border-[#543F22] rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] gap-1.5 mb-6 relative overflow-hidden">
+        {/* Top subtle golden accent shimmer line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#C5A059]/60 to-transparent pointer-events-none" />
 
-        {/* Row 1: Team & Daily Operations (5 Uniform Centered Admiralty Buttons — Zero Truncation) */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 w-full relative z-10">
-          {[
-            { id: "overview", label: "Overview", icon: LayoutDashboard },
-            { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
-            { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
-            { id: "schedule", label: "Team Schedule", icon: Calendar },
-            { id: "resources", label: "Resources", icon: BookOpen },
-          ].map((tab) => {
-            const isActive = currentTab === tab.id;
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`group relative h-10 px-3 rounded-lg text-xs sm:text-[13px] font-semibold flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap select-none ${
-                  isActive
-                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/80 shadow-[0_3px_10px_rgba(0,0,0,0.5)]"
-                    : "bg-[#15315B]/95 text-[#FFF4D4] border border-[#C5A059]/40 hover:border-[#FFE394]/75 hover:bg-[#1C3F73] hover:text-white"
-                }`}
-              >
-                <Icon
-                  className={`w-4 h-4 shrink-0 transition-colors ${
-                    isActive ? "text-[#07162B]" : "text-[#F2CD80] group-hover:text-[#FFE394]"
+        {/* Row 1: Team & Daily Operations */}
+        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full relative z-10 overflow-x-auto pb-0.5">
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0">
+            <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-[#C5A059] bg-[#051326] border border-[#543F22] shrink-0 mr-1 select-none font-mono">
+              Team Ops
+            </span>
+            {[
+              { id: "overview", label: "Overview", icon: LayoutDashboard },
+              { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
+              { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
+              { id: "schedule", label: "Team Schedule", icon: Calendar },
+              { id: "resources", label: "Resources", icon: BookOpen },
+            ].map((tab) => {
+              const isActive = currentTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`flex-1 min-w-0 h-8 sm:h-9 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
+                      : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
                   }`}
-                />
-                <span>{tab.label}</span>
-                {Boolean(tab.badge && tab.badge > 0) && (
-                  <span
-                    className={`ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none shrink-0 ${
-                      isActive
-                        ? "bg-[#07162B] text-[#FFE394]"
-                        : "bg-[#C5A059]/30 text-[#FFE394] border border-[#FFE394]/50"
-                    }`}
-                  >
-                    {tab.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+                >
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
+                  <span className="truncate">{tab.label}</span>
+                  {Boolean(tab.badge && tab.badge > 0) && (
+                    <span
+                      className={`ml-0.5 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight shrink-0 ${
+                        isActive
+                          ? "bg-[#07162B] text-[#FFE394] border border-[#543F22]"
+                          : "bg-[#051326] text-[#FFE394] border border-[#543F22]"
+                      }`}
+                    >
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {currentTab === "overview" && (
+            <Button
+              size="sm"
+              onClick={() => handleTabChange("messages")}
+              className="hidden lg:flex items-center gap-1.5 border border-[#543F22] bg-[#051326] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs font-semibold rounded-xl px-3 py-1.5 h-8 cursor-pointer shadow-sm transition-all shrink-0 ml-1"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-[#C5A059] shrink-0" />
+              <span>Messages</span>
+              <ArrowRight className="w-3 h-3 shrink-0" />
+            </Button>
+          )}
         </div>
 
-        {/* Row 2: Employee Self-Service & Personal Management (7 Uniform Centered Admiralty Buttons — Zero Truncation) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 w-full pt-2 border-t border-[#C5A059]/25 relative z-10">
-          {[
-            { id: "notes", label: "My Notes", icon: Lightbulb },
-            { id: "availability", label: "Availability", icon: Clock },
-            { id: "time-off", label: "Time Off & PTO", icon: Palmtree },
-            { id: "timesheet", label: "Timesheet", icon: Timer },
-            { id: "profile", label: "Credentials", icon: Award },
-            { id: "payroll", label: "Payroll", icon: CreditCard },
-            { id: "equipment", label: "Tech & Gear", icon: Laptop },
-          ].map((tab) => {
-            const isActive = currentTab === tab.id;
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`group relative h-9 px-2.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer whitespace-nowrap select-none ${
-                  isActive
-                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border border-[#FFE394]/80 shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-                    : "bg-[#102749]/95 text-[#EADBC0] border border-[#C5A059]/35 hover:border-[#FFE394]/70 hover:bg-[#173663] hover:text-[#FFF4D4]"
-                }`}
-              >
-                <Icon
-                  className={`w-3.5 h-3.5 shrink-0 transition-colors ${
-                    isActive ? "text-[#07162B]" : "text-[#F2CD80]/90 group-hover:text-[#FFE394]"
+        {/* Row 2: Employee Self-Service & Personal Management */}
+        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1.5 border-t border-[#543F22]/60 relative z-10 overflow-x-auto">
+          <div className="flex items-center gap-1 sm:gap-1.5 w-full">
+            <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-[#FFE394] bg-[#051326] border border-[#543F22] shrink-0 mr-1 select-none font-mono">
+              Employee Hub
+            </span>
+            {[
+              { id: "notes", label: "My Notes", icon: Lightbulb },
+              { id: "availability", label: "My Availability", icon: Clock },
+              { id: "time-off", label: "Time Off & PTO", icon: Palmtree },
+              { id: "timesheet", label: "My Timesheet", icon: Timer },
+              { id: "profile", label: "Profile & Credentials", icon: Award },
+              { id: "payroll", label: "Payroll & Direct Deposit", icon: CreditCard },
+              { id: "equipment", label: "Equipment & Tech", icon: Laptop },
+            ].map((tab) => {
+              const isActive = currentTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`flex-1 min-w-0 h-8 sm:h-9 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
+                      : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
                   }`}
-                />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+                >
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
+                  <span className="truncate">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -828,9 +840,9 @@ export default function CrewQuarters() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
         {/* Card 2A: Today's Schedule */}
-        <Card className="rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 p-5 sm:p-6 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col justify-between h-full space-y-4">
+        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#C5A059]/40/60">
+            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
               <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
                 <Calendar className="w-4 h-4 text-[#C5A059]" />
                 <span>Today's Schedule</span>
@@ -852,7 +864,7 @@ export default function CrewQuarters() {
                 { time: "1:00 PM", title: "Callback — Parent (M. Carter)", subtitle: "Discuss assessment results", dot: "bg-emerald-400" },
                 { time: "3:00 PM", title: "Records Review", subtitle: "Johnson Case", dot: "bg-[#DFBE77]" },
               ].map((item, idx) => (
-                <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-[#0A1931]/90 hover:bg-[#07162B] transition-colors border border-[#C5A059]/40 hover:border-[#C5A059]/60">
+                <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-[#051326]/85 hover:bg-[#07162B] transition-colors border border-[#543F22] hover:border-[#C5A059]/60">
                   <div className="w-16 text-right shrink-0 pt-0.5">
                     <span className="text-xs font-mono font-bold text-[#FFE394]">{item.time}</span>
                   </div>
@@ -868,16 +880,16 @@ export default function CrewQuarters() {
             </div>
           </div>
 
-          <div className="pt-2 border-t border-[#C5A059]/40/60 flex items-center justify-between text-[11px] text-[#C6B697]">
+          <div className="pt-2 border-t border-[#543F22]/60 flex items-center justify-between text-[11px] text-[#C6B697]">
             <span>4 events scheduled</span>
             <span className="text-[#FFE394] font-mono">Next: 10:30 AM</span>
           </div>
         </Card>
 
         {/* Card 2B: My Tasks */}
-        <Card className="rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 p-5 sm:p-6 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col justify-between h-full space-y-4">
+        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#C5A059]/40/60">
+            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
               <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
                 <CheckSquare className="w-4 h-4 text-[#C5A059]" />
                 <span>My Tasks</span>
@@ -897,12 +909,12 @@ export default function CrewQuarters() {
                 { title: "Complete draft of Parent Concerns", tag: "High", tagColor: "bg-rose-500/15 text-rose-300 border-rose-500/30" },
                 { title: "Follow up with SLP", tag: "Today", tagColor: "bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/40" },
                 { title: "Send meeting summary to parent", tag: "Today", tagColor: "bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/40" },
-                { title: "Review evaluation documents", tag: "Tomorrow", tagColor: "bg-[#020A17] text-[#D8C7A5] border-[#C5A059]/40" },
-                { title: "Prepare for IEP meeting", tag: "Tomorrow", tagColor: "bg-[#020A17] text-[#D8C7A5] border-[#C5A059]/40" },
+                { title: "Review evaluation documents", tag: "Tomorrow", tagColor: "bg-[#051326] text-[#D8C7A5] border-[#543F22]" },
+                { title: "Prepare for IEP meeting", tag: "Tomorrow", tagColor: "bg-[#051326] text-[#D8C7A5] border-[#543F22]" },
               ].map((task, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-[#0A1931]/90 border border-[#C5A059]/40 text-xs hover:border-[#C5A059]/50 transition-colors">
+                <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-[#051326]/85 border border-[#543F22] text-xs hover:border-[#C5A059]/50 transition-colors">
                   <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                    <input type="checkbox" className="rounded border-[#C5A059]/40 bg-[#020A17] text-[#C5A059] focus:ring-[#C5A059] h-3.5 w-3.5" />
+                    <input type="checkbox" className="rounded border-[#543F22] bg-[#051326] text-[#C5A059] focus:ring-[#C5A059] h-3.5 w-3.5" />
                     <span className="text-[#FFF4D4] truncate font-medium">{task.title}</span>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${task.tagColor}`}>
@@ -918,7 +930,7 @@ export default function CrewQuarters() {
               variant="outline"
               size="sm"
               onClick={() => setTaskModalOpen(true)}
-              className="w-full border border-[#C5A059]/40 bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] text-xs rounded-xl py-2 gap-1.5 cursor-pointer"
+              className="w-full border border-[#543F22] bg-[#051326] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] text-xs rounded-xl py-2 gap-1.5 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 text-[#C5A059]" />
               <span>Add Task</span>
@@ -927,9 +939,9 @@ export default function CrewQuarters() {
         </Card>
 
         {/* Card 2C: Quick Actions Grid */}
-        <Card className="rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 p-5 sm:p-6 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col justify-between h-full space-y-4">
+        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#C5A059]/40/60">
+            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
               <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
                 <Sparkles className="w-4 h-4 text-[#C5A059]" />
                 <span>Quick Actions</span>
@@ -940,7 +952,7 @@ export default function CrewQuarters() {
               <Button
                 variant="outline"
                 onClick={() => setTimeOffModalOpen(true)}
-                className="h-[84px] flex-col py-3 px-2 border-[#C5A059]/40 bg-[#0A1931]/90 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
+                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
               >
                 <Calendar className="w-5 h-5 text-[#C5A059]" />
                 <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">Request<br />Time Off</span>
@@ -949,7 +961,7 @@ export default function CrewQuarters() {
               <Button
                 variant="outline"
                 onClick={() => setLocation("/calendar")}
-                className="h-[84px] flex-col py-3 px-2 border-[#C5A059]/40 bg-[#0A1931]/90 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
+                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
               >
                 <CalendarClock className="w-5 h-5 text-[#C5A059]" />
                 <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">View<br />My Calendar</span>
@@ -958,7 +970,7 @@ export default function CrewQuarters() {
               <Button
                 variant="outline"
                 onClick={() => setTaskModalOpen(true)}
-                className="h-[84px] flex-col py-3 px-2 border-[#C5A059]/40 bg-[#0A1931]/90 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
+                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
               >
                 <CheckSquare className="w-5 h-5 text-[#C5A059]" />
                 <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">Add Task</span>
@@ -967,7 +979,7 @@ export default function CrewQuarters() {
               <Button
                 variant="outline"
                 onClick={() => setLocation("/projects")}
-                className="h-[84px] flex-col py-3 px-2 border-[#C5A059]/40 bg-[#0A1931]/90 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
+                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
               >
                 <Users className="w-5 h-5 text-[#C5A059]" />
                 <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">My Cases</span>
@@ -976,7 +988,7 @@ export default function CrewQuarters() {
               <Button
                 variant="outline"
                 onClick={() => toast.info("Team Messaging Console is active")}
-                className="h-[84px] flex-col py-3 px-2 border-[#C5A059]/40 bg-[#0A1931]/90 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
+                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
               >
                 <MessageSquare className="w-5 h-5 text-[#C5A059]" />
                 <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">Team<br />Messages</span>
@@ -985,7 +997,7 @@ export default function CrewQuarters() {
               <Button
                 variant="outline"
                 onClick={() => setLocation("/knowledge-base")}
-                className="h-[84px] flex-col py-3 px-2 border-[#C5A059]/40 bg-[#0A1931]/90 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
+                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
               >
                 <BookOpen className="w-5 h-5 text-[#C5A059]" />
                 <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">Training &amp;<br />Resources</span>
@@ -1004,9 +1016,9 @@ export default function CrewQuarters() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
         {/* Card 3A: Time Off Center */}
-        <Card className="rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 p-5 sm:p-6 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
+        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#C5A059]/40/60">
+            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
               <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
                 <Plane className="w-4 h-4 text-[#C5A059]" />
                 <span>Time Off</span>
@@ -1039,12 +1051,12 @@ export default function CrewQuarters() {
               </div>
               <div className="space-y-2">
                 {timeOffRequests.filter((r) => r.status === "Approved").length === 0 ? (
-                  <div className="p-2.5 rounded-xl bg-[#0A1931]/90 border border-[#C5A059]/40/60 text-xs text-[#A69371] text-center">
+                  <div className="p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs text-[#A69371] text-center">
                     No approved upcoming leave scheduled.
                   </div>
                 ) : (
                   timeOffRequests.filter((r) => r.status === "Approved").slice(0, 2).map((r) => (
-                    <div key={r.id} className="p-2.5 rounded-xl bg-[#0A1931]/90 border border-[#C5A059]/40/60 text-xs">
+                    <div key={r.id} className="p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-[#FFF4D4]">
                           {r.startDate}{r.endDate && r.endDate !== r.startDate ? ` – ${r.endDate}` : ""}
@@ -1071,12 +1083,12 @@ export default function CrewQuarters() {
                 Pending Requests
               </div>
               {timeOffRequests.filter((r) => r.status === "Pending").length === 0 ? (
-                <div className="p-2.5 rounded-xl bg-[#0A1931]/90 border border-[#C5A059]/40/60 text-xs text-[#A69371] text-center">
+                <div className="p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs text-[#A69371] text-center">
                   No requests currently pending review.
                 </div>
               ) : (
                 timeOffRequests.filter((r) => r.status === "Pending").slice(0, 2).map((r) => (
-                  <div key={r.id} className="p-2.5 rounded-xl bg-[#0A1931]/90 border border-[#C5A059]/40/60 text-xs">
+                  <div key={r.id} className="p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-[#FFF4D4]">
                         {r.startDate}{r.endDate && r.endDate !== r.startDate ? ` – ${r.endDate}` : ""}
@@ -1097,16 +1109,16 @@ export default function CrewQuarters() {
             </div>
           </div>
 
-          <div className="pt-2 border-t border-[#C5A059]/40/50 flex items-center justify-between text-[11px] text-[#A69371]">
+          <div className="pt-2 border-t border-[#543F22]/50 flex items-center justify-between text-[11px] text-[#A69371]">
             <span>Annual Allowance: 15 Days</span>
             <span className="text-emerald-400 font-mono font-semibold">11 Days Remaining</span>
           </div>
         </Card>
 
         {/* Card 3B: My Cases */}
-        <Card className="rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 p-5 sm:p-6 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
+        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#C5A059]/40/60">
+            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
               <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
                 <Users className="w-4 h-4 text-[#C5A059]" />
                 <span>My Cases</span>
@@ -1132,10 +1144,10 @@ export default function CrewQuarters() {
                 <div 
                   key={idx} 
                   onClick={() => setLocation("/projects")}
-                  className="flex items-center justify-between p-2 rounded-xl bg-[#0A1931]/90 border border-[#C5A059]/40/60 text-xs hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all cursor-pointer"
+                  className="flex items-center justify-between p-2 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-full bg-[#05142B] border border-[#C5A059]/40 text-[#FFE394] font-bold flex items-center justify-center text-[10px] shrink-0 font-serif">
+                    <div className="w-7 h-7 rounded-full bg-[#071A34] border border-[#543F22] text-[#FFE394] font-bold flex items-center justify-center text-[10px] shrink-0 font-serif">
                       {c.initials}
                     </div>
                     <div className="min-w-0">
@@ -1167,9 +1179,9 @@ export default function CrewQuarters() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
         {/* Card 4A: Company Announcements */}
-        <Card className="rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 p-5 sm:p-6 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
+        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#C5A059]/40/60">
+            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
               <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
                 <Megaphone className="w-4 h-4 text-[#C5A059]" />
                 <span>Company Announcements</span>
@@ -1191,24 +1203,24 @@ export default function CrewQuarters() {
                   desc: "In observance of staff training day.",
                   date: "Sept 9",
                   icon: Calendar,
-                  iconColor: "text-[#FFE394] bg-[#020A17] border border-[#C5A059]/40",
+                  iconColor: "text-[#FFE394] bg-[#051326] border border-[#543F22]",
                 },
                 {
                   title: "New Training Module",
                   desc: "IEP Meeting Best Practices is now available.",
                   date: "Sept 8",
                   icon: BookOpen,
-                  iconColor: "text-[#C5A059] bg-[#020A17] border border-[#C5A059]/40",
+                  iconColor: "text-[#C5A059] bg-[#051326] border border-[#543F22]",
                 },
                 {
                   title: "Welcome to the Team!",
                   desc: "Please join us in welcoming our newest advocate!",
                   date: "Sept 5",
                   icon: Megaphone,
-                  iconColor: "text-emerald-400 bg-[#020A17] border border-[#C5A059]/40",
+                  iconColor: "text-emerald-400 bg-[#051326] border border-[#543F22]",
                 },
               ].map((ann, idx) => (
-                <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-[#0A1931]/90 border border-[#C5A059]/40/60 text-xs">
+                <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs">
                   <div className={`p-2 rounded-xl shrink-0 ${ann.iconColor}`}>
                     <ann.icon className="w-4 h-4" />
                   </div>
@@ -1230,9 +1242,9 @@ export default function CrewQuarters() {
         </Card>
 
         {/* Card 4B: Training & Resources */}
-        <Card className="rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 p-5 sm:p-6 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
+        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#C5A059]/40/60">
+            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
               <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
                 <BookOpen className="w-4 h-4 text-[#C5A059]" />
                 <span>Training &amp; Resources</span>
@@ -1257,7 +1269,7 @@ export default function CrewQuarters() {
                 <div
                   key={idx}
                   onClick={() => setLocation(res.path)}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#0A1931]/90 border border-[#C5A059]/40/60 hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all cursor-pointer text-xs"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all cursor-pointer text-xs"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 pr-2">
                     <res.icon className="w-4 h-4 text-[#C5A059] shrink-0" />
@@ -1278,7 +1290,7 @@ export default function CrewQuarters() {
         </Card>
 
         {/* Card 4C: Waypoint Inspiration Poster Tile — Vibrant Cinematic Lighthouse Theme */}
-        <div className="rounded-2xl border border-[#C5A059]/40 bg-[#05142B] p-6 shadow-[0_12px_36px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/80 flex flex-col items-center justify-between text-center relative overflow-hidden h-full group min-h-[340px] transition-all">
+        <div className="rounded-2xl border border-[#543F22] bg-[#071A34] p-6 shadow-[0_12px_36px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/80 flex flex-col items-center justify-between text-center relative overflow-hidden h-full group min-h-[340px] transition-all">
           {/* Vibrant Cinematic Lighthouse Night Ocean Backdrop (Bright & Rich) */}
           <div
             className="absolute inset-0 bg-cover bg-[position:72%_center] brightness-[1.1] contrast-[1.08] saturate-[1.15] group-hover:scale-105 transition-transform duration-700 pointer-events-none"
@@ -1368,7 +1380,7 @@ export default function CrewQuarters() {
       {currentTab === "tasks" && (
         <div className="space-y-6">
           {/* Tasks Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#102648]/95 border border-[#C5A059]/40 rounded-2xl p-5 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#071A34]/90 border border-[#543F22] rounded-2xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <CheckSquare className="w-5 h-5 text-[#C5A059]" />
@@ -1393,7 +1405,7 @@ export default function CrewQuarters() {
                 size="sm"
                 variant="outline"
                 onClick={() => setLocation("/tasks")}
-                className="border border-[#C5A059]/40 bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs rounded-xl py-2 px-3 cursor-pointer"
+                className="border border-[#543F22] bg-[#051326] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs rounded-xl py-2 px-3 cursor-pointer"
               >
                 <span>Full Tasks Board →</span>
               </Button>
@@ -1413,7 +1425,7 @@ export default function CrewQuarters() {
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                   taskFilter === f.id
                     ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-                    : "bg-[#020A17] border-[#C5A059]/40 text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#05142B]"
+                    : "bg-[#051326] border-[#543F22] text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#071A34]"
                 }`}
               >
                 {f.label}
@@ -1422,7 +1434,7 @@ export default function CrewQuarters() {
           </div>
 
           {/* Tasks List */}
-          <div className="rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 p-5 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] space-y-3">
+          <div className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-3">
             {tasks.length === 0 ? (
               <div className="text-center py-12 space-y-2">
                 <CheckSquare className="w-8 h-8 text-[#C5A059]/40 mx-auto" />
@@ -1441,7 +1453,7 @@ export default function CrewQuarters() {
                   return (
                     <div
                       key={task.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-[#0A1931]/90 border border-[#C5A059]/40/60 hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all text-xs"
+                      className="flex items-center justify-between p-3 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all text-xs"
                     >
                       <div className="flex items-center gap-3 min-w-0 pr-3">
                         <input
@@ -1453,7 +1465,7 @@ export default function CrewQuarters() {
                               status: e.target.checked ? "complete" : "not_started",
                             });
                           }}
-                          className="rounded border-[#C5A059]/40 bg-[#05142B] text-[#C5A059] focus:ring-[#C5A059] h-4 w-4 cursor-pointer accent-[#C5A059]"
+                          className="rounded border-[#543F22] bg-[#071A34] text-[#C5A059] focus:ring-[#C5A059] h-4 w-4 cursor-pointer accent-[#C5A059]"
                         />
                         <div className="min-w-0">
                           <span
@@ -1479,7 +1491,7 @@ export default function CrewQuarters() {
                                 ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
                                 : task.priority === "medium"
                                 ? "bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/40"
-                                : "bg-[#0F2D54]/50 text-[#C6B697] border-[#C5A059]/40"
+                                : "bg-[#0F2D54]/50 text-[#C6B697] border-[#543F22]"
                             }`}
                           >
                             {task.priority.toUpperCase()}
@@ -1489,7 +1501,7 @@ export default function CrewQuarters() {
                           className={`px-2 py-0.5 rounded text-[10px] font-semibold font-mono ${
                             isDone
                               ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                              : "bg-[#05142B] text-[#FFE394] border border-[#C5A059]/40"
+                              : "bg-[#071A34] text-[#FFE394] border border-[#543F22]"
                           }`}
                         >
                           {isDone ? "Completed" : "In Progress"}
@@ -1506,7 +1518,7 @@ export default function CrewQuarters() {
       {/* ── TAB CONTENT 4: TEAM SCHEDULE & TIME OFF ── */}
       {currentTab === "schedule" && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#102648]/95 border border-[#C5A059]/40 rounded-2xl p-5 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#071A34]/90 border border-[#543F22] rounded-2xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-[#C5A059]" />
@@ -1531,7 +1543,7 @@ export default function CrewQuarters() {
                 size="sm"
                 variant="outline"
                 onClick={() => setLocation("/calendar")}
-                className="border border-[#C5A059]/40 bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs rounded-xl py-2 px-3 cursor-pointer"
+                className="border border-[#543F22] bg-[#051326] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs rounded-xl py-2 px-3 cursor-pointer"
               >
                 <span>Full Calendar →</span>
               </Button>
@@ -1540,8 +1552,8 @@ export default function CrewQuarters() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Today's Schedule Card */}
-            <Card className="rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 p-5 sm:p-6 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] space-y-4 hover:border-[#C5A059]/60 transition-all">
-              <div className="flex items-center justify-between pb-3 border-b border-[#C5A059]/40/60">
+            <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-4 hover:border-[#C5A059]/60 transition-all">
+              <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
                 <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-base">
                   <Clock className="w-4 h-4 text-[#C5A059]" />
                   <span>Today's Sessions &amp; Meetings</span>
@@ -1558,7 +1570,7 @@ export default function CrewQuarters() {
                   { time: "1:00 PM", title: "Callback — Parent (M. Carter)", subtitle: "Discuss assessment results", dot: "bg-emerald-400" },
                   { time: "3:00 PM", title: "Records Review", subtitle: "Johnson Case Workspace", dot: "bg-[#8A9EB5]" },
                 ].map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-[#0A1931]/90 border border-[#C5A059]/40/60 hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all">
+                  <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all">
                     <div className="w-20 text-right shrink-0 pt-0.5">
                       <span className="text-xs font-mono font-bold text-[#FFE394]">{item.time}</span>
                     </div>
@@ -1575,8 +1587,8 @@ export default function CrewQuarters() {
             </Card>
 
             {/* Time Off Center Card */}
-            <Card className="rounded-2xl border border-[#C5A059]/40 bg-[#102648]/95 p-5 sm:p-6 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] space-y-4 hover:border-[#C5A059]/60 transition-all">
-              <div className="flex items-center justify-between pb-3 border-b border-[#C5A059]/40/60">
+            <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-4 hover:border-[#C5A059]/60 transition-all">
+              <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
                 <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-base">
                   <Plane className="w-4 h-4 text-[#C5A059]" />
                   <span>Time Off &amp; Availability</span>
@@ -1589,7 +1601,7 @@ export default function CrewQuarters() {
                   Upcoming Approved Leave
                 </div>
                 {timeOffRequests.filter((r) => r.status === "Approved").map((r) => (
-                  <div key={r.id} className="p-3 rounded-xl bg-[#0A1931]/90 border border-[#C5A059]/40/60 text-xs space-y-1">
+                  <div key={r.id} className="p-3 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="font-serif font-bold text-[#FFF4D4]">{r.type}</span>
                       <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold font-mono">
@@ -1614,7 +1626,7 @@ export default function CrewQuarters() {
       {/* ── TAB CONTENT 5: RESOURCES & KNOWLEDGE BASE ── */}
       {currentTab === "resources" && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#102648]/95 border border-[#C5A059]/40 rounded-2xl p-5 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#071A34]/90 border border-[#543F22] rounded-2xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-[#C5A059]" />
@@ -1648,10 +1660,10 @@ export default function CrewQuarters() {
               <div
                 key={idx}
                 onClick={() => setLocation(res.path)}
-                className="p-5 rounded-2xl bg-[#102648]/95 border border-[#C5A059]/40 hover:border-[#C5A059]/80 transition-all cursor-pointer space-y-3 shadow-[0_8px_22px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] group"
+                className="p-5 rounded-2xl bg-[#071A34]/90 border border-[#543F22] hover:border-[#C5A059]/80 transition-all cursor-pointer space-y-3 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] group"
               >
                 <div className="flex items-center justify-between">
-                  <div className="p-2.5 rounded-xl bg-[#020A17] text-[#FFE394] border border-[#C5A059]/40 group-hover:scale-105 transition-transform">
+                  <div className="p-2.5 rounded-xl bg-[#051326] text-[#FFE394] border border-[#543F22] group-hover:scale-105 transition-transform">
                     <res.icon className="w-5 h-5" />
                   </div>
                   <ChevronRight className="w-4 h-4 text-[#A69371] group-hover:text-[#FFE394] group-hover:translate-x-1 transition-all" />
@@ -1714,10 +1726,10 @@ export default function CrewQuarters() {
 
       {/* ── Time Off Request Modal ── */}
       <Dialog open={timeOffModalOpen} onOpenChange={setTimeOffModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#05142B] border border-[#C5A059]/40 text-[#FFF4D4] shadow-[0_15px_45px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl">
+        <DialogContent className="sm:max-w-md bg-[#071A34] border border-[#543F22] text-[#FFF4D4] shadow-[0_15px_45px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl">
           <DialogHeader>
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-[#020A17] text-[#FFE394] border border-[#C5A059]/40">
+              <div className="p-2 rounded-xl bg-[#051326] text-[#FFE394] border border-[#543F22]">
                 <Plane className="w-4 h-4" />
               </div>
               <div>
@@ -1738,10 +1750,10 @@ export default function CrewQuarters() {
                 value={timeOffForm.type}
                 onValueChange={(val) => setTimeOffForm({ ...timeOffForm, type: val })}
               >
-                <SelectTrigger className="bg-[#020A17] border border-[#C5A059]/40 text-[#FFF4D4] rounded-xl text-xs focus:ring-[#C5A059]">
+                <SelectTrigger className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:ring-[#C5A059]">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#05142B] border border-[#C5A059]/40 text-[#FFF4D4]">
+                <SelectContent className="bg-[#071A34] border border-[#543F22] text-[#FFF4D4]">
                   <SelectItem value="Vacation">Vacation / PTO</SelectItem>
                   <SelectItem value="Personal">Personal Day</SelectItem>
                   <SelectItem value="Medical / Sick">Medical / Sick Leave</SelectItem>
@@ -1758,7 +1770,7 @@ export default function CrewQuarters() {
                   type="date"
                   value={timeOffForm.startDate}
                   onChange={(e) => setTimeOffForm({ ...timeOffForm, startDate: e.target.value })}
-                  className="bg-[#020A17] border border-[#C5A059]/40 text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
+                  className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
                   required
                 />
               </div>
@@ -1768,14 +1780,14 @@ export default function CrewQuarters() {
                   type="date"
                   value={timeOffForm.endDate}
                   onChange={(e) => setTimeOffForm({ ...timeOffForm, endDate: e.target.value })}
-                  className="bg-[#020A17] border border-[#C5A059]/40 text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
+                  className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
                   required
                 />
               </div>
             </div>
 
             {/* Explicit First Day Back Question */}
-            <div className="space-y-2 rounded-xl border border-[#C5A059]/40 bg-[#020A17] p-3">
+            <div className="space-y-2 rounded-xl border border-[#C5A059]/40 bg-[#051326] p-3">
               <div className="flex items-center gap-2">
                 <CalendarCheck className="w-4 h-4 text-[#C5A059] shrink-0" />
                 <Label htmlFor="returnDateInput" className="text-xs text-[#FFE394] font-semibold leading-snug">
@@ -1787,7 +1799,7 @@ export default function CrewQuarters() {
                 type="date"
                 value={timeOffForm.returnDate}
                 onChange={(e) => setTimeOffForm({ ...timeOffForm, returnDate: e.target.value })}
-                className="bg-[#05142B] border border-[#C5A059]/50 text-[#FFF4D4] rounded-xl text-xs focus-visible:ring-[#C5A059]/50"
+                className="bg-[#071A34] border border-[#C5A059]/50 text-[#FFF4D4] rounded-xl text-xs focus-visible:ring-[#C5A059]/50"
                 required
               />
               <p className="text-[11px] text-[#C6B697]">
@@ -1801,7 +1813,7 @@ export default function CrewQuarters() {
                 placeholder="Mention any ongoing IEP cases or upcoming deadlines requiring team coverage..."
                 value={timeOffForm.notes}
                 onChange={(e) => setTimeOffForm({ ...timeOffForm, notes: e.target.value })}
-                className="bg-[#020A17] border border-[#C5A059]/40 text-[#FFF4D4] rounded-xl text-xs min-h-[80px] focus:border-[#C5A059]"
+                className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs min-h-[80px] focus:border-[#C5A059]"
               />
             </div>
 
@@ -1810,7 +1822,7 @@ export default function CrewQuarters() {
                 type="button"
                 variant="outline"
                 onClick={() => setTimeOffModalOpen(false)}
-                className="border border-[#C5A059]/40 text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] rounded-xl text-xs"
+                className="border border-[#543F22] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] rounded-xl text-xs"
               >
                 Cancel
               </Button>
@@ -1827,10 +1839,10 @@ export default function CrewQuarters() {
 
       {/* ── Quick Add Task Modal ── */}
       <Dialog open={taskModalOpen} onOpenChange={setTaskModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#05142B] border border-[#C5A059]/40 text-[#FFF4D4] shadow-[0_15px_45px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl">
+        <DialogContent className="sm:max-w-md bg-[#071A34] border border-[#543F22] text-[#FFF4D4] shadow-[0_15px_45px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl">
           <DialogHeader>
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-[#020A17] text-[#FFE394] border border-[#C5A059]/40">
+              <div className="p-2 rounded-xl bg-[#051326] text-[#FFE394] border border-[#543F22]">
                 <Plus className="w-4 h-4" />
               </div>
               <div>
@@ -1864,7 +1876,7 @@ export default function CrewQuarters() {
                 placeholder="e.g. Review OT service hours log for Johnson case..."
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
-                className="bg-[#020A17] border border-[#C5A059]/40 text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
+                className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
                 autoFocus
               />
             </div>
@@ -1875,10 +1887,10 @@ export default function CrewQuarters() {
                 value={newTaskPriority}
                 onValueChange={(val: any) => setNewTaskPriority(val)}
               >
-                <SelectTrigger className="bg-[#020A17] border border-[#C5A059]/40 text-[#FFF4D4] rounded-xl text-xs">
+                <SelectTrigger className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs">
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#05142B] border border-[#C5A059]/40 text-[#FFF4D4]">
+                <SelectContent className="bg-[#071A34] border border-[#543F22] text-[#FFF4D4]">
                   <SelectItem value="high">High Priority</SelectItem>
                   <SelectItem value="medium">Normal / Medium</SelectItem>
                   <SelectItem value="low">Low Priority</SelectItem>
@@ -1891,7 +1903,7 @@ export default function CrewQuarters() {
                 type="button"
                 variant="outline"
                 onClick={() => setTaskModalOpen(false)}
-                className="border border-[#C5A059]/40 text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] rounded-xl text-xs"
+                className="border border-[#543F22] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] rounded-xl text-xs"
               >
                 Cancel
               </Button>
