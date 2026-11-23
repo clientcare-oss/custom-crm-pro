@@ -34,29 +34,29 @@ interface CarPose {
 function sampleCarPoses(
   pathEl: SVGPathElement | null,
   fraction: number,
-  carSpacing = 23.5
+  carSpacing = 26.5
 ): [CarPose, CarPose, CarPose] | null {
   if (!pathEl) return null;
   try {
     const total = pathEl.getTotalLength();
     if (!Number.isFinite(total) || total <= 1) return null;
 
-    // Keep all 3 cars strictly inside valid path bounds
-    const padFrac = Math.min(0.08, (carSpacing * 1.4) / total);
+    // Keep all 3 articulated cars strictly inside valid path bounds
+    const padFrac = Math.min(0.09, (carSpacing * 1.45) / total);
     const clamped = Math.max(padFrac, Math.min(1 - padFrac, fraction));
     const centerDist = clamped * total;
 
     const sampleAt = (dist: number): CarPose => {
       const d = Math.max(1, Math.min(total - 1, dist));
       const p = pathEl.getPointAtLength(d);
-      const pAhead = pathEl.getPointAtLength(Math.min(total, d + 3));
-      const pBehind = pathEl.getPointAtLength(Math.max(0, d - 3));
+      const pAhead = pathEl.getPointAtLength(Math.min(total, d + 3.2));
+      const pBehind = pathEl.getPointAtLength(Math.max(0, d - 3.2));
       const angleDeg =
         (Math.atan2(pAhead.y - pBehind.y, pAhead.x - pBehind.x) * 180) / Math.PI;
       return { x: p.x, y: p.y, angleDeg };
     };
 
-    // 3 independently tangent-aligned articulated sections: lead nose, center car, tail nose
+    // 3 independently tangent-aligned articulated sections: forward nose, center cabin, rear nose
     return [
       sampleAt(centerDist + carSpacing),
       sampleAt(centerDist),
@@ -68,10 +68,14 @@ function sampleCarPoses(
 }
 
 /**
- * Reusable Component #3: Tiny Streamlined Articulated Monorail Train
- * Low aerodynamic profile, pearl-silver/midnight-navy metallic body, continuous obsidian
- * window band, 3 articulated sections following curves cleanly, restrained champagne gold trim,
- * zero road wheels, seated directly on the monorail track.
+ * Reusable Component #3: Sculpted, Realistic 3-Car Articulated Streamlined Monorail Train
+ * Photorealistic layered vector shading:
+ * - Sculpted cylindrical pearl-silver / brushed-titanium roof fading to midnight-navy straddle skirt
+ * - Flush smoked-glass panoramic windows with thin mullions, warm interior cabin glow, and glass sheen
+ * - Ribbed articulated gangway bellows flexing seamlessly between cars around 180° curves
+ * - Sweeping champagne-gold metallic livery pinstripe and flush panel seams
+ * - Direction-aware LED headlamp cone illuminating the gold track ahead + ruby tail LEDs
+ * - Soft ambient occlusion contact shadow grounding the straddle skirt directly onto the rail
  */
 export function MonorailTrain({
   pathElement,
@@ -87,8 +91,10 @@ export function MonorailTrain({
   trainId,
 }: MonorailTrainProps) {
   const [currentFraction, setCurrentFraction] = useState(targetFraction);
+  const [travelDir, setTravelDir] = useState<1 | -1>(1);
   const [hovered, setHovered] = useState(false);
   const currentFracRef = useRef(targetFraction);
+  const hasInitializedPathRef = useRef(false);
   const rafRef = useRef<number | null>(null);
   const onArriveRef = useRef(onArriveStation);
   onArriveRef.current = onArriveStation;
@@ -100,7 +106,6 @@ export function MonorailTrain({
     }
 
     let cancelled = false;
-    // Start targeting the next station ahead of current position
     let targetIdx = stationFractions.findIndex((f) => f > currentFracRef.current + 0.015);
     if (targetIdx < 0) targetIdx = 1;
 
@@ -109,6 +114,7 @@ export function MonorailTrain({
     let endFrac = stationFractions[targetIdx];
     let phaseStart: number | null = null;
     const dwellMs = 880;
+    setTravelDir(endFrac >= startFrac ? 1 : -1);
 
     const tick = (ts: number) => {
       if (cancelled) return;
@@ -136,11 +142,9 @@ export function MonorailTrain({
           phaseStart = ts;
         }
       } else {
-        // Dwelling calmly at station before departing to next station
         if (elapsed >= dwellMs) {
           const nextIdx = targetIdx + 1;
           if (nextIdx >= stationFractions.length) {
-            // Smoothly loop back to start of route
             targetIdx = 0;
             currentFracRef.current = stationFractions[0];
             setCurrentFraction(stationFractions[0]);
@@ -152,6 +156,7 @@ export function MonorailTrain({
             targetIdx = nextIdx;
             endFrac = stationFractions[targetIdx];
           }
+          setTravelDir(endFrac >= startFrac ? 1 : -1);
           phase = "gliding";
           phaseStart = ts;
         }
@@ -167,9 +172,18 @@ export function MonorailTrain({
     };
   }, [demoPlaying, reducedMotion, pathElement, stationFractions]);
 
-  // 2. Controlled targetFraction animation (used when stepping manually, stopping demo, or moving a live Case Train)
+  // 2. Controlled targetFraction animation (station click summon, step button, or live Case Train)
   useEffect(() => {
     if (demoPlaying) return;
+
+    // On initial path hydration, snap cleanly into starting position facing forward along the route
+    if (!hasInitializedPathRef.current && pathElement) {
+      hasInitializedPathRef.current = true;
+      currentFracRef.current = targetFraction;
+      setCurrentFraction(targetFraction);
+      setTravelDir(1);
+      return;
+    }
 
     if (reducedMotion || !pathElement) {
       currentFracRef.current = targetFraction;
@@ -185,7 +199,8 @@ export function MonorailTrain({
       return;
     }
 
-    const durationMs = Math.min(1350, Math.max(420, Math.abs(delta) * 2600));
+    setTravelDir(delta >= 0 ? 1 : -1);
+    const durationMs = Math.min(2200, Math.max(480, Math.abs(delta) * 2800));
     let startTime: number | null = null;
 
     const step = (ts: number) => {
@@ -211,14 +226,33 @@ export function MonorailTrain({
     };
   }, [targetFraction, demoPlaying, reducedMotion, pathElement]);
 
-  const poses = sampleCarPoses(pathElement, currentFraction, 22.5);
+  const poses = sampleCarPoses(pathElement, currentFraction, 26.5);
   if (!poses) return null;
 
-  const [lead, middle, tail] = poses;
+  const [frontCar, middleCar, rearCar] = poses;
   const hullGradId = `train-hull-${trainId}`;
+  const skirtGradId = `train-skirt-${trainId}`;
+  const roofSheenId = `train-roof-${trainId}`;
   const glassGradId = `train-glass-${trainId}`;
-  const accentColor = variant === "case" ? "#F0D084" : "#DFBE76";
-  const rimHighlight = hovered ? "#FFF4D4" : "#BFD0E8";
+  const cabinGlowId = `train-cabin-${trainId}`;
+  const goldTrimId = `train-gold-${trainId}`;
+  const beamForwardId = `train-beam-f-${trainId}`;
+  const beamRearId = `train-beam-r-${trainId}`;
+  const shadowFilterId = `train-ao-${trainId}`;
+
+  const rimColor = hovered ? "#FFF4D4" : "#A9BCD9";
+  const isMovingForward = travelDir === 1;
+
+  // Compute midpoint for articulated bellows ribs
+  const midBackX = (rearCar.x + middleCar.x) / 2;
+  const midBackY = (rearCar.y + middleCar.y) / 2;
+  const midBackAngle =
+    (Math.atan2(middleCar.y - rearCar.y, middleCar.x - rearCar.x) * 180) / Math.PI;
+
+  const midFrontX = (middleCar.x + frontCar.x) / 2;
+  const midFrontY = (middleCar.y + frontCar.y) / 2;
+  const midFrontAngle =
+    (Math.atan2(frontCar.y - middleCar.y, frontCar.x - middleCar.x) * 180) / Math.PI;
 
   return (
     <g
@@ -241,118 +275,283 @@ export function MonorailTrain({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="cursor-pointer outline-none"
-      style={{ filter: "drop-shadow(0 5px 5px rgba(0, 2, 12, 0.9))" }}
+      filter={`url(#${shadowFilterId})`}
     >
       <defs>
-        {/* Pearl Silver -> Midnight Navy Aerodynamic Metallic Hull */}
+        {/* Realistic Grounding Shadow beneath straddle chassis */}
+        <filter id={shadowFilterId} x="-35%" y="-60%" width="170%" height="240%">
+          <feDropShadow dx="0" dy="5.5" stdDeviation="3.2" floodColor="#00020B" floodOpacity="0.92" />
+        </filter>
+
+        {/* Sculpted 3D Brushed Pearl-Platinum -> Steel-Blue -> Deep Navy Fuselage */}
         <linearGradient id={hullGradId} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#FFFFFF" />
-          <stop offset="28%" stopColor="#DCE6F5" />
-          <stop offset="56%" stopColor="#849BBE" />
-          <stop offset="82%" stopColor="#263B63" />
-          <stop offset="100%" stopColor="#09132B" />
+          <stop offset="0%" stopColor="#94A9C8" />
+          <stop offset="14%" stopColor="#F5F9FF" />
+          <stop offset="30%" stopColor="#FFFFFF" />
+          <stop offset="46%" stopColor="#C4D4EB" />
+          <stop offset="66%" stopColor="#546E97" />
+          <stop offset="84%" stopColor="#1B2E52" />
+          <stop offset="100%" stopColor="#071024" />
         </linearGradient>
-        {/* Continuous Smoked Obsidian Panoramic Glass Band */}
-        <linearGradient id={glassGradId} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#030816" />
-          <stop offset="48%" stopColor="#172E5B" />
-          <stop offset="100%" stopColor="#040A19" />
+
+        {/* Lower Straddle Skirt hugging the Gold Beam */}
+        <linearGradient id={skirtGradId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#1E3156" />
+          <stop offset="55%" stopColor="#0B1630" />
+          <stop offset="100%" stopColor="#030816" />
+        </linearGradient>
+
+        {/* Subtle Brushed Roof Metallic Crown Reflection */}
+        <linearGradient id={roofSheenId} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.18" />
+          <stop offset="35%" stopColor="#FFFFFF" stopOpacity="0.88" />
+          <stop offset="65%" stopColor="#E6F0FF" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.15" />
+        </linearGradient>
+
+        {/* Deep Smoked Panoramic Aviation Glass */}
+        <linearGradient id={glassGradId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#050B1C" />
+          <stop offset="38%" stopColor="#132952" />
+          <stop offset="72%" stopColor="#0A1938" />
+          <stop offset="100%" stopColor="#030714" />
+        </linearGradient>
+
+        {/* Warm Ambient Cabin Interior Light subtly visible inside smoked glass */}
+        <linearGradient id={cabinGlowId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#FFE8B0" stopOpacity="0.12" />
+          <stop offset="56%" stopColor="#FAD584" stopOpacity="0.48" />
+          <stop offset="100%" stopColor="#C99B42" stopOpacity="0.18" />
+        </linearGradient>
+
+        {/* Brushed Champagne Gold Livery Stripe */}
+        <linearGradient id={goldTrimId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#FFF4CE" />
+          <stop offset="50%" stopColor={variant === "case" ? "#F0CD7A" : "#DFBA69"} />
+          <stop offset="100%" stopColor="#8E6B2B" />
+        </linearGradient>
+
+        {/* Volumetric Warm LED Headlight Cone projecting along the Gold Track */}
+        <linearGradient id={beamForwardId} x1="0%" y1="50%" x2="100%" y2="50%">
+          <stop offset="0%" stopColor="#FFF7DC" stopOpacity="0.58" />
+          <stop offset="45%" stopColor="#FDE7AC" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#FDE7AC" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id={beamRearId} x1="100%" y1="50%" x2="0%" y2="50%">
+          <stop offset="0%" stopColor="#FFF7DC" stopOpacity="0.58" />
+          <stop offset="45%" stopColor="#FDE7AC" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#FDE7AC" stopOpacity="0" />
         </linearGradient>
       </defs>
 
-      {/* Large accessible hit target */}
-      <g transform={`translate(${middle.x}, ${middle.y}) rotate(${middle.angleDeg})`}>
-        <rect x={-42} y={-20} width={84} height={40} rx={14} fill="transparent" />
+      {/* Generous accessible hit target centered on the train */}
+      <g transform={`translate(${middleCar.x}, ${middleCar.y}) rotate(${middleCar.angleDeg})`}>
+        <rect x={-52} y={-22} width={104} height={44} rx={14} fill="transparent" />
       </g>
 
-      {/* Articulated obsidian bellows connecting tail -> middle -> lead cleanly around bends */}
-      <line
-        x1={tail.x}
-        y1={tail.y}
-        x2={middle.x}
-        y2={middle.y}
-        stroke="#071024"
-        strokeWidth={7.5}
-        strokeLinecap="round"
-      />
-      <line
-        x1={middle.x}
-        y1={middle.y}
-        x2={lead.x}
-        y2={lead.y}
-        stroke="#071024"
-        strokeWidth={7.5}
+      {/* Soft Contact Ambient Occlusion directly along the rail underside */}
+      <path
+        d={`M ${rearCar.x} ${rearCar.y + 3.2} Q ${middleCar.x} ${middleCar.y + 3.6} ${frontCar.x} ${frontCar.y + 3.2}`}
+        fill="none"
+        stroke="#00030C"
+        strokeOpacity={0.72}
+        strokeWidth={11}
         strokeLinecap="round"
       />
 
-      {/* Tail Streamlined Tapered End Car */}
-      <g transform={`translate(${tail.x}, ${tail.y}) rotate(${tail.angleDeg})`}>
+      {/* ── ARTICULATED ACCORDION GANGWAY BELLOWS (Rear <-> Center) ── */}
+      <g transform={`translate(${midBackX}, ${midBackY}) rotate(${midBackAngle})`}>
+        <rect x={-5.5} y={-5.4} width={11} height={10.8} rx={1.6} fill="#081126" stroke="#23375E" strokeWidth={0.55} />
+        <line x1={-2.6} y1={-5.1} x2={-2.6} y2={5.1} stroke="#364E7C" strokeWidth={0.7} />
+        <line x1={0} y1={-5.1} x2={0} y2={5.1} stroke="#1B2D52" strokeWidth={0.85} />
+        <line x1={2.6} y1={-5.1} x2={2.6} y2={5.1} stroke="#364E7C" strokeWidth={0.7} />
+        {/* Roof fairing bridge */}
+        <line x1={-4.5} y1={-4.6} x2={4.5} y2={-4.6} stroke="#8EA5C7" strokeOpacity={0.45} strokeWidth={0.9} />
+      </g>
+
+      {/* ── ARTICULATED ACCORDION GANGWAY BELLOWS (Center <-> Front) ── */}
+      <g transform={`translate(${midFrontX}, ${midFrontY}) rotate(${midFrontAngle})`}>
+        <rect x={-5.5} y={-5.4} width={11} height={10.8} rx={1.6} fill="#081126" stroke="#23375E" strokeWidth={0.55} />
+        <line x1={-2.6} y1={-5.1} x2={-2.6} y2={5.1} stroke="#364E7C" strokeWidth={0.7} />
+        <line x1={0} y1={-5.1} x2={0} y2={5.1} stroke="#1B2D52" strokeWidth={0.85} />
+        <line x1={2.6} y1={-5.1} x2={2.6} y2={5.1} stroke="#364E7C" strokeWidth={0.7} />
+        <line x1={-4.5} y1={-4.6} x2={4.5} y2={-4.6} stroke="#8EA5C7" strokeOpacity={0.45} strokeWidth={0.9} />
+      </g>
+
+      {/* ── REAR STREAMLINED BULLET CAR ── */}
+      <g transform={`translate(${rearCar.x}, ${rearCar.y}) rotate(${rearCar.angleDeg})`}>
+        {/* Direction-aware volumetric LED headlight cone when traveling in reverse */}
+        {!isMovingForward && (
+          <path d="M -18.5 -2.2 L -44 -8.2 L -44 8.2 L -18.5 2.2 Z" fill={`url(#${beamRearId})`} pointerEvents="none" />
+        )}
+
+        {/* Sculpted Aerodynamic Rear Bullet Fuselage */}
         <path
-          d="M -15 0.5 C -12.5 -4.4, -5.5 -5.8, 9.5 -5.8 L 11 -5.8 L 11 5.6 L 9.5 5.6 C -5.5 5.6, -12.5 4.4, -15 0.5 Z"
+          d="M -19.5 0.6 C -17.5 -3.8, -11.5 -6.5, -2 -6.8 L 11.2 -6.8 C 12.2 -6.8, 12.8 -6.1, 12.8 -5.2 L 12.8 5.2 C 12.8 6.1, 12.2 6.6, 11.2 6.6 L -3.5 6.6 C -12.5 6.6, -17.6 4.4, -19.5 0.6 Z"
           fill={`url(#${hullGradId})`}
-          stroke={rimHighlight}
+          stroke={rimColor}
           strokeWidth={hovered ? 0.95 : 0.55}
         />
+
+        {/* Lower Midnight-Navy Straddle Skirt */}
         <path
-          d="M -10 -1.3 C -7.5 -2.6, -2.5 -2.8, 9.5 -2.8 L 9.5 0.9 L -10 0.9 Z"
+          d="M -16.2 3.3 C -13.2 5.3, -8.5 6.3, -2 6.3 L 12.4 6.3 L 12.4 3.4 L -15.4 3.4 Z"
+          fill={`url(#${skirtGradId})`}
+        />
+
+        {/* Flush Wrap-Around Rear Cockpit Visor + Cabin Windows */}
+        <path
+          d="M -14.8 -0.8 C -12.6 -3.3, -8.2 -3.9, -2.5 -3.9 L 11.2 -3.9 L 11.2 1.1 L -14.2 1.1 C -15.2 1.1, -15.4 0.1, -14.8 -0.8 Z"
           fill={`url(#${glassGradId})`}
         />
-        <line x1={-9.5} y1={2.7} x2={10} y2={2.7} stroke={accentColor} strokeWidth={1.15} />
-        {/* Tiny warm ruby tail marker */}
-        <circle cx={-13.2} cy={0.3} r={1.1} fill="#FDA4AF" opacity={0.85} />
+        {/* Subtle Warm Interior Cabin Illumination inside window panes */}
+        <rect x={-3.5} y={-2.8} width={5.8} height={3.2} rx={0.7} fill={`url(#${cabinGlowId})`} />
+        <rect x={3.8} y={-2.8} width={6.2} height={3.2} rx={0.7} fill={`url(#${cabinGlowId})`} />
+        {/* Flush dark smoked window pillars */}
+        <line x1={-4.6} y1={-3.8} x2={-4.6} y2={1.1} stroke="#070F22" strokeWidth={1.1} />
+        <line x1={2.9} y1={-3.8} x2={2.9} y2={1.1} stroke="#070F22" strokeWidth={1.0} />
+        {/* Diagonal aviation glass reflection glints */}
+        <path d="M -11.5 -2.6 L -8.2 -0.2 M -1.2 -2.9 L 1.2 0.2 M 6.2 -2.9 L 8.5 0.2" stroke="#DCEBFF" strokeOpacity={0.28} strokeWidth={0.85} strokeLinecap="round" />
+
+        {/* Roof Specular Crown Highlight + Subtle Rooftop Aero Fairing */}
+        <path d="M -8.5 -5.3 C -4 -5.7, 3 -5.7, 11 -5.7" fill="none" stroke={`url(#${roofSheenId})`} strokeWidth={1.25} strokeLinecap="round" />
+        <rect x={1} y={-6.4} width={7} height={1.1} rx={0.5} fill="#89A0C4" opacity={0.45} />
+
+        {/* Sweeping Champagne-Gold Metallic Livery Stripe */}
+        <path
+          d="M -16.8 2.2 C -12 3.1, -6 3.3, 12.2 3.3"
+          fill="none"
+          stroke={`url(#${goldTrimId})`}
+          strokeWidth={1.35}
+          strokeLinecap="round"
+        />
+
+        {/* Subtle Flush Door Seam */}
+        <line x1={10.5} y1={-4.5} x2={10.5} y2={5.4} stroke="#10203F" strokeOpacity={0.55} strokeWidth={0.55} />
+
+        {/* Direction-aware Nose Lighting: Warm LED Headlamp (reverse) OR Ruby LED Tail Strip (forward) */}
+        {!isMovingForward ? (
+          <>
+            <ellipse cx={-17.8} cy={0.3} rx={2.2} ry={1.4} fill="#FFF8E2" opacity={0.95} />
+            <circle cx={-18.3} cy={0.3} r={0.9} fill="#FFFFFF" />
+          </>
+        ) : (
+          <path d="M -18.2 -0.9 C -18.9 0, -18.9 1.1, -18.1 1.7" fill="none" stroke="#FB7185" strokeWidth={1.55} strokeLinecap="round" />
+        )}
       </g>
 
-      {/* Center Articulated Cabin Car */}
-      <g transform={`translate(${middle.x}, ${middle.y}) rotate(${middle.angleDeg})`}>
+      {/* ── CENTER ARTICULATED PASSENGER CABIN CAR ── */}
+      <g transform={`translate(${middleCar.x}, ${middleCar.y}) rotate(${middleCar.angleDeg})`}>
+        {/* Sculpted Cylindrical Metallic Cabin Body */}
         <rect
-          x={-11}
-          y={-5.8}
-          width={22}
-          height={11.4}
+          x={-13.2}
+          y={-6.8}
+          width={26.4}
+          height={13.4}
           rx={2.2}
           fill={`url(#${hullGradId})`}
-          stroke={rimHighlight}
+          stroke={rimColor}
           strokeWidth={hovered ? 0.95 : 0.55}
         />
-        <rect
-          x={-10}
-          y={-2.8}
-          width={20}
-          height={3.6}
-          rx={1}
-          fill={`url(#${glassGradId})`}
-        />
-        <line x1={-8.5} y1={-4.3} x2={8.5} y2={-4.3} stroke="#FFFFFF" strokeOpacity={0.65} strokeWidth={0.75} />
-        <line x1={-10} y1={2.7} x2={10} y2={2.7} stroke={accentColor} strokeWidth={1.15} />
+
+        {/* Lower Midnight-Navy Straddle Skirt */}
+        <rect x={-12.9} y={3.4} width={25.8} height={3.0} rx={1} fill={`url(#${skirtGradId})`} />
+
+        {/* Continuous Smoked Panoramic Window Band */}
+        <rect x={-11.8} y={-3.9} width={23.6} height={5.0} rx={1.1} fill={`url(#${glassGradId})`} />
+        {/* 3 Warmly Lit Flush Cabin Panes */}
+        <rect x={-10.7} y={-2.9} width={6.3} height={3.3} rx={0.7} fill={`url(#${cabinGlowId})`} />
+        <rect x={-3.1} y={-2.9} width={6.2} height={3.3} rx={0.7} fill={`url(#${cabinGlowId})`} />
+        <rect x={4.4} y={-2.9} width={6.3} height={3.3} rx={0.7} fill={`url(#${cabinGlowId})`} />
+        {/* Ultra-thin Flush Window Mullions */}
+        <line x1={-3.8} y1={-3.8} x2={-3.8} y2={1.1} stroke="#060E21" strokeWidth={1.05} />
+        <line x1={3.8} y1={-3.8} x2={3.8} y2={1.1} stroke="#060E21" strokeWidth={1.05} />
+        {/* Glass Sky Reflection Streaks */}
+        <path d="M -8.6 -2.9 L -6.2 0.2 M -0.8 -2.9 L 1.6 0.2 M 6.8 -2.9 L 9.2 0.2" stroke="#DCEBFF" strokeOpacity={0.28} strokeWidth={0.85} strokeLinecap="round" />
+
+        {/* Roof Metallic Crown Specular Line & Aero Pod */}
+        <line x1={-11.5} y1={-5.6} x2={11.5} y2={-5.6} stroke={`url(#${roofSheenId})`} strokeWidth={1.3} strokeLinecap="round" />
+        <rect x={-5.5} y={-6.4} width={11} height={1.15} rx={0.55} fill="#8FA6C9" opacity={0.45} />
+
+        {/* Brushed Champagne-Gold Livery Stripe */}
+        <line x1={-12.4} y1={3.3} x2={12.4} y2={3.3} stroke={`url(#${goldTrimId})`} strokeWidth={1.35} />
+
+        {/* Subtle Flush Boarding Door Seams */}
+        <line x1={-10.2} y1={-4.6} x2={-10.2} y2={5.5} stroke="#0E1D3B" strokeOpacity={0.5} strokeWidth={0.55} />
+        <line x1={10.2} y1={-4.6} x2={10.2} y2={5.5} stroke="#0E1D3B" strokeOpacity={0.5} strokeWidth={0.55} />
       </g>
 
-      {/* Lead Aerodynamic Bullet Nose Car */}
-      <g transform={`translate(${lead.x}, ${lead.y}) rotate(${lead.angleDeg})`}>
+      {/* ── FRONT AERODYNAMIC BULLET NOSE CAR ── */}
+      <g transform={`translate(${frontCar.x}, ${frontCar.y}) rotate(${frontCar.angleDeg})`}>
+        {/* Direction-aware volumetric LED headlight beam illuminating the gold rail ahead */}
+        {isMovingForward && (
+          <path d="M 18.5 -2.2 L 46 -8.4 L 46 8.4 L 18.5 2.2 Z" fill={`url(#${beamForwardId})`} pointerEvents="none" />
+        )}
+
+        {/* Sculpted Aerodynamic Forward Bullet Fuselage */}
         <path
-          d="M -11 -5.8 L -9.5 -5.8 C 5.5 -5.8, 12.8 -4.4, 16.5 0.2 C 12.8 4.4, 5.5 5.6, -9.5 5.6 L -11 5.6 Z"
+          d="M -12.8 -5.2 C -12.8 -6.1, -12.2 -6.8, -11.2 -6.8 L 2 -6.8 C 11.8 -6.5, 17.8 -3.7, 20.2 0.4 C 17.8 4.4, 12.6 6.6, 3.5 6.6 L -11.2 6.6 C -12.2 6.6, -12.8 6.1, -12.8 5.2 Z"
           fill={`url(#${hullGradId})`}
-          stroke={rimHighlight}
+          stroke={rimColor}
           strokeWidth={hovered ? 0.95 : 0.55}
         />
-        {/* Swept wrap-around smoked cockpit visor */}
+
+        {/* Lower Midnight-Navy Straddle Skirt */}
         <path
-          d="M -9.5 -2.8 L 5.2 -2.8 C 9.2 -2.8, 12.2 -1.6, 13.4 -0.1 L 11.4 0.9 L -9.5 0.9 Z"
+          d="M -12.4 3.4 L 15.8 3.4 C 13.4 5.3, 8.6 6.3, 2 6.3 L -12.4 6.3 Z"
+          fill={`url(#${skirtGradId})`}
+        />
+
+        {/* Continuous Cabin Windows Sweeping Into Aerodynamic Cockpit Visor */}
+        <path
+          d="M -11.2 -3.9 L 2.8 -3.9 C 8.6 -3.9, 13.2 -3.1, 15.6 -0.6 C 16.2 0.2, 15.8 1.1, 14.5 1.1 L -11.2 1.1 Z"
           fill={`url(#${glassGradId})`}
         />
-        <line x1={-9} y1={-4.3} x2={5} y2={-4.3} stroke="#FFFFFF" strokeOpacity={0.65} strokeWidth={0.75} />
-        <line x1={-10} y1={2.7} x2={10.5} y2={2.7} stroke={accentColor} strokeWidth={1.15} />
-        {/* Subtle warm champagne headlamp beam & pinpoint */}
-        <ellipse cx={18} cy={0.2} rx={4.5} ry={2.2} fill="#FFF5D6" opacity={0.22} />
-        <circle cx={14.8} cy={0.2} r={1.45} fill="#FFF7DF" opacity={0.96} />
+        {/* Warm Interior Cabin Illumination + Subtle Cockpit Console Glow */}
+        <rect x={-10.0} y={-2.8} width={6.2} height={3.2} rx={0.7} fill={`url(#${cabinGlowId})`} />
+        <rect x={-2.3} y={-2.8} width={5.8} height={3.2} rx={0.7} fill={`url(#${cabinGlowId})`} />
+        <path d="M 6.2 -2.6 C 9.4 -2.5, 12.2 -1.6, 13.8 -0.2 L 12.6 0.6 L 6.2 0.6 Z" fill="#93C5FD" fillOpacity={0.14} />
+
+        {/* Flush Smoked Window Pillars */}
+        <line x1={-3.0} y1={-3.8} x2={-3.0} y2={1.1} stroke="#070F22" strokeWidth={1.0} />
+        <line x1={4.8} y1={-3.8} x2={4.8} y2={1.1} stroke="#070F22" strokeWidth={1.15} />
+        {/* Aviation Cockpit Specular Glass Glints */}
+        <path d="M -8.0 -2.9 L -5.6 0.2 M -0.2 -2.9 L 2.1 0.2 M 8.4 -2.4 L 11.8 -0.1" stroke="#E0F0FF" strokeOpacity={0.34} strokeWidth={0.9} strokeLinecap="round" />
+
+        {/* Roof Specular Crown Highlight + Aero Fairing */}
+        <path d="M -11 -5.7 L 3 -5.7 C 6.5 -5.7, 9.8 -5.1, 12.4 -4.1" fill="none" stroke={`url(#${roofSheenId})`} strokeWidth={1.3} strokeLinecap="round" />
+        <rect x={-8} y={-6.4} width={7} height={1.1} rx={0.5} fill="#89A0C4" opacity={0.45} />
+
+        {/* Sweeping Champagne-Gold Metallic Livery Stripe curving into nosecone */}
+        <path
+          d="M -12.2 3.3 L 6 3.3 C 11.8 3.3, 15.6 2.7, 17.6 1.7"
+          fill="none"
+          stroke={`url(#${goldTrimId})`}
+          strokeWidth={1.35}
+          strokeLinecap="round"
+        />
+
+        {/* Subtle Flush Nose Panel & Door Seam */}
+        <line x1={-10.5} y1={-4.5} x2={-10.5} y2={5.4} stroke="#10203F" strokeOpacity={0.55} strokeWidth={0.55} />
+
+        {/* Direction-aware Nose Lighting: Dual Warm LED Headlamps (forward) OR Ruby LED Tail Strip (reverse) */}
+        {isMovingForward ? (
+          <>
+            <ellipse cx={18.3} cy={0.3} rx={2.4} ry={1.5} fill="#FFF7DE" opacity={0.95} />
+            <circle cx={19.0} cy={0.3} r={0.95} fill="#FFFFFF" />
+          </>
+        ) : (
+          <path d="M 18.6 -0.9 C 19.3 0, 19.3 1.1, 18.5 1.7" fill="none" stroke="#FB7185" strokeWidth={1.55} strokeLinecap="round" />
+        )}
       </g>
 
       {/* Subtle floating badge on hover or for live Case Train */}
       {(hovered || variant === "case") && (
-        <g transform={`translate(${middle.x}, ${middle.y - 23})`}>
+        <g transform={`translate(${middleCar.x}, ${middleCar.y - 25})`}>
           <rect
-            x={-Math.max(30, shortBadge.length * 3.7 + 12)}
+            x={-Math.max(32, shortBadge.length * 3.7 + 12)}
             y={-10}
-            width={Math.max(60, shortBadge.length * 7.4 + 24)}
+            width={Math.max(64, shortBadge.length * 7.4 + 24)}
             height={19}
             rx={9.5}
             fill="#06122E"

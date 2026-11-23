@@ -70,6 +70,7 @@ export interface ConnectedCaseSummary {
 }
 
 export interface MonorailCanvasProps {
+  workflowId?: number | null;
   doc: WorkflowDocumentV2;
   experienceMode: WorkflowExperienceMode;
   canEdit: boolean;
@@ -133,6 +134,7 @@ interface DraggingTrayGhost {
  * approval gates, and a collapsible Edit Routes premade snap rail-parts tray.
  */
 export function MonorailCanvas({
+  workflowId = null,
   doc,
   experienceMode,
   canEdit,
@@ -207,6 +209,7 @@ export function MonorailCanvas({
   const [isPanning, setIsPanning] = useState(false);
   const [isWheelZooming, setIsWheelZooming] = useState(false);
   const wheelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasUserAdjustedCameraRef = useRef(false);
   const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
 
   // Edit Routes: collapsible tray, armed click-to-place piece, dragging tray piece, dragging existing piece/station
@@ -433,6 +436,7 @@ export function MonorailCanvas({
       x: targetScreenCenterX - centerX * nextZoom,
       y: targetScreenCenterY - centerY * nextZoom,
     });
+    hasUserAdjustedCameraRef.current = false;
   }, [
     geometry.bounds,
     geometry.stationMap,
@@ -444,22 +448,27 @@ export function MonorailCanvas({
     isStarterPreviewMode,
   ]);
 
-  // Auto-fit on mount, workflow change, or container resize
+  const fitToScreenRef = useRef(fitToScreen);
+  fitToScreenRef.current = fitToScreen;
+
+  // Auto-fit ONLY on initial load or when switching workflows / toggling empty starter mode.
+  // NEVER auto-zoom out when clicking stations, toggling branches, or interacting with controls!
   useEffect(() => {
-    const raf = requestAnimationFrame(() => fitToScreen());
-    const el = containerRef.current;
-    const ro =
-      typeof ResizeObserver !== "undefined" && el
-        ? new ResizeObserver(() => fitToScreen())
-        : null;
-    if (ro && el) ro.observe(el);
-    window.addEventListener("resize", fitToScreen);
-    return () => {
-      cancelAnimationFrame(raf);
-      ro?.disconnect();
-      window.removeEventListener("resize", fitToScreen);
+    hasUserAdjustedCameraRef.current = false;
+    const raf = requestAnimationFrame(() => fitToScreenRef.current());
+    return () => cancelAnimationFrame(raf);
+  }, [workflowId, isStarterPreviewMode]);
+
+  // Refit on genuine viewport resize ONLY if the user hasn't manually zoomed or panned
+  useEffect(() => {
+    const handleResize = () => {
+      if (!hasUserAdjustedCameraRef.current) {
+        fitToScreenRef.current();
+      }
     };
-  }, [fitToScreen]);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Keyboard shortcuts: Escape dismisses popover/armed piece; Ctrl+Z / Ctrl+Y undo/redo in Edit Routes
   useEffect(() => {
@@ -691,22 +700,35 @@ export function MonorailCanvas({
     });
   };
 
-  // Compute resting preview train fraction: sit visibly ON the open gold rail span between Station 0 and 1!
+  // Compute resting preview train fraction:
+  // - On initial load (idle), sit visibly halfway between Station 0 and Station 1.
+  // - Whenever the user clicks a gold station, pull smoothly right up to that station's docking rim
+  //   (leaving the station's circular icon unobstructed while clearly docked at that station!).
   const restingPreviewFraction = useMemo(() => {
     if (stationFractions.length >= 2) {
       if (previewTrainIdleOnSpan && previewTrainStationIdx === 0) {
         return (stationFractions[0] + stationFractions[1]) * 0.5;
       }
       const clampedIdx = Math.min(previewTrainStationIdx, stationFractions.length - 1);
-      // Park slightly forward of the station center so the train is unmistakably visible on the rail!
-      const nextIdx = Math.min(clampedIdx + 1, stationFractions.length - 1);
-      if (clampedIdx < nextIdx) {
-        return stationFractions[clampedIdx] + (stationFractions[nextIdx] - stationFractions[clampedIdx]) * 0.42;
+      const stationFrac = stationFractions[clampedIdx];
+      let totalLen = 0;
+      try {
+        totalLen = railPathNode?.getTotalLength() ?? 0;
+      } catch {}
+
+      // Dock ~78px from station center along the rail so the sculpted bullet nose kisses the golden station rim
+      const dockFracOffset =
+        Number.isFinite(totalLen) && totalLen > 200 ? 78 / totalLen : 0.036;
+
+      if (clampedIdx === 0) {
+        const span = stationFractions[1] - stationFractions[0];
+        return Math.min(0.96, stationFrac + Math.min(dockFracOffset, span * 0.45));
       }
-      return Math.max(0.06, stationFractions[clampedIdx] - 0.045);
+      const prevSpan = stationFrac - stationFractions[clampedIdx - 1];
+      return Math.max(0.04, stationFrac - Math.min(dockFracOffset, prevSpan * 0.45));
     }
     return 0.5;
-  }, [stationFractions, previewTrainIdleOnSpan, previewTrainStationIdx]);
+  }, [stationFractions, previewTrainIdleOnSpan, previewTrainStationIdx, railPathNode]);
 
   // Match real selected case(s) to their actual stage on the rail in Employee View
   const caseTrains = useMemo(() => {
@@ -827,6 +849,7 @@ export function MonorailCanvas({
 
     // 4. Canvas pan
     if (!isPanning) return;
+    hasUserAdjustedCameraRef.current = true;
     const dx = e.clientX - panStartRef.current.x;
     const dy = e.clientY - panStartRef.current.y;
     setPan({ x: panStartRef.current.panX + dx, y: panStartRef.current.panY + dy });
@@ -952,6 +975,7 @@ export function MonorailCanvas({
 
       zoomRef.current = nextZoom;
       panRef.current = nextPan;
+      hasUserAdjustedCameraRef.current = true;
       setIsWheelZooming(true);
       setZoom(nextZoom);
       setPan(nextPan);
@@ -995,16 +1019,23 @@ export function MonorailCanvas({
     const left = placeLeft
       ? Math.max(12, sx - cardW - 44)
       : Math.min(rect.width - cardW - 10, sx + 44);
+    // Keep the horizontal gold track & docked train right beside the station 100% unobstructed:
+    // if the popover is on the train's docking side, offset it cleanly below the rail line!
+    const trainDocksOnRight =
+      (selectedStationPos.direction === -1 && visibleStages.findIndex((s) => s.id === selectedStage?.id) > 0) ||
+      (selectedStationPos.direction === 1 && visibleStages.findIndex((s) => s.id === selectedStage?.id) === 0);
+    const popoverOnTrainSide = (!placeLeft && trainDocksOnRight) || (placeLeft && !trainDocksOnRight);
+    const desiredTop = popoverOnTrainSide ? sy + 26 : sy - 22;
     const top = Math.max(
       isStarterPreviewMode ? 82 : 16,
-      Math.min(rect.height - cardH - 58, sy - 22)
+      Math.min(rect.height - cardH - 58, desiredTop)
     );
 
     // Rim anchor & popover edge anchor for crisp hairline gold pointer matching reference image
     const anchorX = placeLeft ? sx - 32 * zoom : sx + 32 * zoom;
-    const anchorY = sy;
+    const anchorY = popoverOnTrainSide ? sy + 12 * zoom : sy;
     const cardEdgeX = placeLeft ? left + cardW : left;
-    const cardEdgeY = top + 24;
+    const cardEdgeY = top + 20;
 
     return { left, top, anchorX, anchorY, cardEdgeX, cardEdgeY };
   }, [selectedStationPos, zoom, pan, isStarterPreviewMode]);
@@ -1368,7 +1399,7 @@ export function MonorailCanvas({
                 pos={pos}
                 isSelected={isSelected}
                 isCurrentCase={activeCaseHere}
-                isTrainDocked={dockedTrainStageIdx === idx && previewPlaying}
+                isTrainDocked={dockedTrainStageIdx === idx}
                 isStageComplete={isStageComplete}
                 inScope={inScope}
                 canDrag={canEdit && editRoutesMode && !isStarterPreviewMode}
@@ -1390,6 +1421,13 @@ export function MonorailCanvas({
                   };
                 }}
                 onSelect={() => {
+                  // Summon the preview train smoothly along the gold track right to this clicked station!
+                  if (experienceMode === "designer" || isStarterPreviewMode) {
+                    setPreviewPlaying(false);
+                    setPreviewTrainIdleOnSpan(false);
+                    setPreviewTrainStationIdx(idx);
+                    setDockedTrainStageIdx(idx);
+                  }
                   if (isStarterPreviewMode) {
                     setSampleSelectedStageId(isSelected ? null : stage.id);
                   } else {
@@ -1397,8 +1435,15 @@ export function MonorailCanvas({
                   }
                 }}
                 onNavigateArrow={(delta) => {
-                  const target = visibleStages[idx + delta];
+                  const targetIdx = idx + delta;
+                  const target = visibleStages[targetIdx];
                   if (!target) return;
+                  if (experienceMode === "designer" || isStarterPreviewMode) {
+                    setPreviewPlaying(false);
+                    setPreviewTrainIdleOnSpan(false);
+                    setPreviewTrainStationIdx(targetIdx);
+                    setDockedTrainStageIdx(targetIdx);
+                  }
                   if (isStarterPreviewMode) setSampleSelectedStageId(target.id);
                   else onSelectStage(target.id);
                 }}
@@ -1963,6 +2008,7 @@ export function MonorailCanvas({
                 const wy = (cy - panRef.current.y) / zoomRef.current;
                 setPan({ x: cx - wx * nextZoom, y: cy - wy * nextZoom });
               }
+              hasUserAdjustedCameraRef.current = true;
               setZoom(nextZoom);
             }}
             className="h-8 w-8 flex items-center justify-center text-[#DCE6F5] hover:bg-[#10244D] hover:text-white cursor-pointer border-r border-[#1F355D]"
@@ -1983,6 +2029,7 @@ export function MonorailCanvas({
                 const wy = (cy - panRef.current.y) / zoomRef.current;
                 setPan({ x: cx - wx * nextZoom, y: cy - wy * nextZoom });
               }
+              hasUserAdjustedCameraRef.current = true;
               setZoom(nextZoom);
             }}
             className="h-8 w-8 flex items-center justify-center text-[#DCE6F5] hover:bg-[#10244D] hover:text-white cursor-pointer"

@@ -1159,6 +1159,7 @@ export default function Workflows() {
             />
           ) : (
             <MonorailCanvas
+              workflowId={selectedId}
               doc={workflowDoc}
               experienceMode={experienceMode}
               canEdit={canEdit}
