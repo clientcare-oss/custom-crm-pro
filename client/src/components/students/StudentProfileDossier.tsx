@@ -367,38 +367,13 @@ export function StudentProfileDossier({
         transform: `translate(${offset.x}px, ${offset.y}px)`,
       }}
     >
-      {/* 3D Cast-Brass & Domed Sapphire-Navy Avatar Medallion Centered on Top */}
+      {/* Golden Glowing Avatar Badge Centered on Top */}
       <div className="flex flex-col items-center text-center mb-2.5">
         <div className="relative mb-1.5 mt-0.5">
-          {/* Ambient warm brass under-glow & deep leather contact shadow */}
-          <div className="relative w-17 h-17 sm:w-19 sm:h-19 rounded-full p-[3px] bg-gradient-to-b from-[#17335C] via-[#091933] to-[#030A18] shadow-[0_12px_26px_rgba(0,0,0,0.92),0_4px_10px_rgba(0,0,0,0.8),0_0_22px_rgba(212,175,55,0.28),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-            {/* 3D Machined Cast-Brass Bezel Ring */}
-            <div className="w-full h-full rounded-full p-[2.2px] bg-gradient-to-b from-[#FFF4C8] via-[#D9B34C] to-[#6E4F12] shadow-[0_2px_6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.75)]">
-              {/* Inner Recessed Domed Sapphire-Navy Medallion Core */}
-              <div
-                className="relative w-full h-full rounded-full flex items-center justify-center overflow-hidden shadow-[inset_0_4px_8px_rgba(0,0,0,0.85),inset_0_-5px_10px_rgba(0,0,0,0.92),inset_0_1.5px_2px_rgba(147,197,253,0.28)]"
-                style={{
-                  background:
-                    "radial-gradient(circle at 36% 26%, #214B85 0%, #10294E 46%, #07152B 78%, #030A16 100%)",
-                }}
-              >
-                {/* Top 3D Specular Dome Crescent Reflection */}
-                <div className="absolute top-[2px] inset-x-2.5 h-5 rounded-t-full bg-gradient-to-b from-white/22 via-sky-200/8 to-transparent pointer-events-none" />
-
-                {/* Subtle Inner Hairline Gold Filigree Ring */}
-                <div className="absolute inset-[3px] rounded-full border border-[#F5D77F]/25 pointer-events-none" />
-
-                {/* 3D Embossed Gold Initials */}
-                <span
-                  className="relative z-10 font-bold text-xl sm:text-[22px] tracking-wider bg-gradient-to-b from-[#FFF8DC] via-[#F4D068] to-[#B68926] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                >
-                  {isEditing && (formState.firstName || formState.lastName)
-                    ? ((formState.firstName?.[0] || "") + (formState.lastName?.[0] || "")).toUpperCase() || studentInitials
-                    : studentInitials}
-                </span>
-              </div>
-            </div>
+          <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full border-2 border-[#D4AF37] bg-gradient-to-br from-[#122847] to-[#081628] flex items-center justify-center text-[#F4D068] font-bold text-xl shadow-[0_0_20px_rgba(212,175,55,0.4)] ring-4 ring-[#081b35]/50">
+            {isEditing && (formState.firstName || formState.lastName)
+              ? ((formState.firstName?.[0] || "") + (formState.lastName?.[0] || "")).toUpperCase() || studentInitials
+              : studentInitials}
           </div>
         </div>
 
