@@ -200,7 +200,13 @@ export function MonorailCanvas({
   // Viewport camera (zoom & pan inside canvas — zero browser horizontal scroll)
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const zoomRef = useRef(zoom);
+  const panRef = useRef(pan);
+  zoomRef.current = zoom;
+  panRef.current = pan;
   const [isPanning, setIsPanning] = useState(false);
+  const [isWheelZooming, setIsWheelZooming] = useState(false);
+  const wheelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
 
   // Edit Routes: collapsible tray, armed click-to-place piece, dragging tray piece, dragging existing piece/station
@@ -901,12 +907,65 @@ export function MonorailCanvas({
     setDraggingStageId(null);
   };
 
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (!e.ctrlKey && !e.metaKey) return;
-    e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.09 : 0.92;
-    setZoom((z) => Math.max(0.36, Math.min(1.85, Number((z * factor).toFixed(2)))));
-  };
+  // Native non-passive mouse-wheel zoom directly toward cursor (works with plain mouse wheel + trackpad)
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || showAccessibleList) return;
+
+    const onWheel = (e: WheelEvent) => {
+      // Allow scrollable overlays (e.g. Rail Parts tray) to scroll natively when overflowing
+      const target = e.target as HTMLElement | null;
+      const scrollableOverlay = target?.closest(".overflow-y-auto") as HTMLElement | null;
+      if (
+        scrollableOverlay &&
+        scrollableOverlay !== el &&
+        scrollableOverlay.scrollHeight > scrollableOverlay.clientHeight + 2
+      ) {
+        return;
+      }
+
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+
+      const currZoom = zoomRef.current;
+      const currPan = panRef.current;
+
+      // Normalize line/page wheel modes into smooth pixel deltas
+      const rawDelta =
+        e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * 120 : e.deltaY;
+      if (rawDelta === 0) return;
+      const clampedDelta = Math.max(-180, Math.min(180, rawDelta));
+      const factor = Math.exp(-clampedDelta * 0.00145);
+      const nextZoom = Math.max(0.32, Math.min(2.2, Number((currZoom * factor).toFixed(4))));
+      if (Math.abs(nextZoom - currZoom) < 0.0001) return;
+
+      // Keep the world coordinate directly under the cursor pinned in place while zooming
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const worldX = (mx - currPan.x) / currZoom;
+      const worldY = (my - currPan.y) / currZoom;
+      const nextPan = {
+        x: mx - worldX * nextZoom,
+        y: my - worldY * nextZoom,
+      };
+
+      zoomRef.current = nextZoom;
+      panRef.current = nextPan;
+      setIsWheelZooming(true);
+      setZoom(nextZoom);
+      setPan(nextPan);
+
+      if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
+      wheelTimerRef.current = setTimeout(() => setIsWheelZooming(false), 130);
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
+    };
+  }, [showAccessibleList]);
 
   const selectedStage = useMemo(
     () => visibleStages.find((s) => s.id === effectiveSelectedStageId) || null,
@@ -1071,7 +1130,6 @@ export function MonorailCanvas({
       onPointerMove={handleCanvasPointerMove}
       onPointerUp={handleCanvasPointerUp}
       onPointerLeave={handleCanvasPointerUp}
-      onWheel={handleWheel}
       onClick={(e) => {
         if (!(e.target as HTMLElement).closest("[data-interactive-node='true']")) {
           if (isStarterPreviewMode) setSampleSelectedStageId(null);
@@ -1145,7 +1203,7 @@ export function MonorailCanvas({
           transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}
           style={{
             transition:
-              isPanning || draggingStageId || draggingCosmeticPieceId || reducedMotion
+              isPanning || isWheelZooming || draggingStageId || draggingCosmeticPieceId || reducedMotion
                 ? "none"
                 : "transform 220ms ease-out",
           }}
@@ -1895,7 +1953,18 @@ export function MonorailCanvas({
             type="button"
             aria-label="Zoom out"
             data-testid="monorail-zoom-out-btn"
-            onClick={() => setZoom((z) => Math.max(0.36, Number((z - 0.12).toFixed(2))))}
+            onClick={() => {
+              const rect = containerRef.current?.getBoundingClientRect();
+              const nextZoom = Math.max(0.32, Number((zoomRef.current - 0.14).toFixed(2)));
+              if (rect && rect.width > 0 && rect.height > 0) {
+                const cx = rect.width / 2;
+                const cy = rect.height / 2;
+                const wx = (cx - panRef.current.x) / zoomRef.current;
+                const wy = (cy - panRef.current.y) / zoomRef.current;
+                setPan({ x: cx - wx * nextZoom, y: cy - wy * nextZoom });
+              }
+              setZoom(nextZoom);
+            }}
             className="h-8 w-8 flex items-center justify-center text-[#DCE6F5] hover:bg-[#10244D] hover:text-white cursor-pointer border-r border-[#1F355D]"
           >
             <Minus className="w-3.5 h-3.5" />
@@ -1904,7 +1973,18 @@ export function MonorailCanvas({
             type="button"
             aria-label="Zoom in"
             data-testid="monorail-zoom-in-btn"
-            onClick={() => setZoom((z) => Math.min(1.85, Number((z + 0.12).toFixed(2))))}
+            onClick={() => {
+              const rect = containerRef.current?.getBoundingClientRect();
+              const nextZoom = Math.min(2.2, Number((zoomRef.current + 0.14).toFixed(2)));
+              if (rect && rect.width > 0 && rect.height > 0) {
+                const cx = rect.width / 2;
+                const cy = rect.height / 2;
+                const wx = (cx - panRef.current.x) / zoomRef.current;
+                const wy = (cy - panRef.current.y) / zoomRef.current;
+                setPan({ x: cx - wx * nextZoom, y: cy - wy * nextZoom });
+              }
+              setZoom(nextZoom);
+            }}
             className="h-8 w-8 flex items-center justify-center text-[#DCE6F5] hover:bg-[#10244D] hover:text-white cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
