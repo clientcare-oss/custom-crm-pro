@@ -439,7 +439,7 @@ export default function CrewMessagesWorkspace({
             <button
               type="button"
               onClick={() => {
-                setNewMessageType(directoryTab === "families" ? "case" : "dm");
+                setNewMessageType("dm");
                 setNewMessageModalOpen(true);
               }}
               style={{
@@ -456,32 +456,6 @@ export default function CrewMessagesWorkspace({
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-[#5A4012]" />
             </button>
-
-            {/* Razor-Sharp "Team | Families" Switch */}
-            <div className="grid grid-cols-2 p-0.5 rounded-lg bg-[#040915] border border-[#9E7D3B]/85 shadow-[inset_0_2px_5px_rgba(0,0,0,0.9)]">
-              <button
-                type="button"
-                onClick={() => setDirectoryTab("team")}
-                className={`h-7 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  directoryTab === "team"
-                    ? "bg-gradient-to-b from-[#335691] to-[#1B325B] text-white border border-[#82AEF0]/65 shadow"
-                    : "text-[#CBD5E1] hover:text-white"
-                }`}
-              >
-                Team
-              </button>
-              <button
-                type="button"
-                onClick={() => setDirectoryTab("families")}
-                className={`h-7 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  directoryTab === "families"
-                    ? "bg-gradient-to-b from-[#335691] to-[#1B325B] text-white border border-[#82AEF0]/65 shadow"
-                    : "text-[#CBD5E1] hover:text-white"
-                }`}
-              >
-                Families
-              </button>
-            </div>
           </div>
 
           {/* Middle List: TEAMS & DIRECT MESSAGES */}
@@ -1022,8 +996,7 @@ export default function CrewMessagesWorkspace({
               Compose Message
             </DialogTitle>
             <DialogDescription className="text-xs text-[#C6B697]">
-              Switch or start a direct message, team channel discussion, or
-              family thread.
+              Switch or start a direct message or team channel discussion.
             </DialogDescription>
           </DialogHeader>
 
@@ -1034,19 +1007,17 @@ export default function CrewMessagesWorkspace({
               if (newMessageType === "dm") {
                 setActiveKey("david-howard");
                 toast.success("Opened direct message");
-              } else if (newMessageType === "group") {
+              } else {
                 setActiveKey("operations");
                 toast.success(
                   `Opened ${groupName.trim() || "Operations"} channel`
                 );
-              } else {
-                toast.success("Family thread opened");
               }
             }}
             className="flex flex-col flex-1 min-h-0 overflow-hidden"
           >
             <div className="flex-1 overflow-y-auto space-y-3.5 py-3 pr-1 text-xs">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setNewMessageType("dm")}
@@ -1071,19 +1042,6 @@ export default function CrewMessagesWorkspace({
                 >
                   <Users className="w-4 h-4" />
                   <span>Team Group</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setNewMessageType("case")}
-                  className={`py-2 px-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                    newMessageType === "case"
-                      ? "bg-gradient-to-b from-[#E5C883] to-[#A8843E] border-[#FFF2C2] text-[#140E04] font-bold shadow"
-                      : "bg-[#040B1A] border-[#C5A059]/35 text-[#C6B697] hover:text-white"
-                  }`}
-                >
-                  <GraduationCap className="w-4 h-4" />
-                  <span>Family Thread</span>
                 </button>
               </div>
 
