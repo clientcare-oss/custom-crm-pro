@@ -13,7 +13,14 @@ import {
   Calendar,
   ArrowLeft,
   Radio,
+  Plus,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { GuideClientLiveModal } from "@/components/guidance/GuideClientLiveModal";
 import type { FamilyLifecycleStage } from "./StudentCurrentFocusPanel";
@@ -492,17 +499,17 @@ export function StudentJourneyGuideButton({
           : `Open Guided Student Journey on Right Panel for ${studentName}`
       }
       className={cn(
-        "group relative inline-flex items-center gap-3.5 px-4.5 py-2.5 rounded-[12px] select-none cursor-pointer transition-all duration-200 shrink-0",
+        "group relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[9px] select-none cursor-pointer transition-all duration-200 shrink-0",
         isOpen
-          ? "bg-gradient-to-b from-[#1E4682] via-[#122F5E] to-[#091A38] border-2 border-[#FFE394] shadow-[0_0_20px_rgba(244,208,104,0.38),0_10px_24px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,248,214,0.45)]"
-          : "bg-gradient-to-b from-[#143364] via-[#0B2144] to-[#061329] border border-[#D4AF37]/70 hover:border-[#FFE394] shadow-[0_10px_24px_rgba(0,0,0,0.88),0_2px_6px_rgba(0,0,0,0.7),inset_0_1px_0.5px_rgba(255,243,196,0.28),inset_0_-2px_3px_rgba(0,0,0,0.92)] hover:from-[#1A407C] hover:via-[#0F2A56] hover:to-[#081833] hover:shadow-[0_12px_28px_rgba(0,0,0,0.92),0_0_16px_rgba(229,193,104,0.32),inset_0_1px_1px_rgba(255,248,214,0.4)]",
+          ? "bg-gradient-to-b from-[#1E4682] via-[#122F5E] to-[#091A38] border-2 border-[#FFE394] shadow-[0_0_16px_rgba(244,208,104,0.35),0_6px_16px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,248,214,0.4)]"
+          : "bg-gradient-to-b from-[#143364] via-[#0B2144] to-[#061329] border border-[#D4AF37]/70 hover:border-[#FFE394] shadow-[0_6px_16px_rgba(0,0,0,0.85),0_2px_4px_rgba(0,0,0,0.7),inset_0_1px_0.5px_rgba(255,243,196,0.28),inset_0_-1.5px_2px_rgba(0,0,0,0.92)] hover:from-[#1A407C] hover:via-[#0F2A56] hover:to-[#081833] hover:shadow-[0_8px_20px_rgba(0,0,0,0.9),0_0_12px_rgba(229,193,104,0.3),inset_0_1px_1px_rgba(255,248,214,0.4)]",
         "active:translate-y-[0.5px]",
         className
       )}
     >
       {/* Subtle inner top specular reflection & brushed sheen */}
       <div
-        className="absolute inset-0 rounded-[10px] pointer-events-none opacity-45"
+        className="absolute inset-0 rounded-[8px] pointer-events-none opacity-45"
         style={{
           background:
             "radial-gradient(ellipse at 35% 15%, rgba(147,197,253,0.24) 0%, transparent 68%)",
@@ -511,18 +518,18 @@ export function StudentJourneyGuideButton({
 
       {/* Left Golden Open Book Icon */}
       <BookOpen
-        className="relative z-10 w-7 h-7 text-[#F2CE74] group-hover:text-[#FFF0B8] stroke-[1.85] shrink-0 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] transition-transform duration-200 group-hover:scale-105"
+        className="relative z-10 w-4 h-4 text-[#F2CE74] group-hover:text-[#FFF0B8] stroke-[1.9] shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] transition-transform duration-200 group-hover:scale-105"
       />
 
-      {/* Right Stacked Two-Line Typography: "Student Journey" / "Guide Me" */}
+      {/* Right Stacked Two-Line Typography: "Workflow Guide" / "Guide Me" */}
       <div className="relative z-10 flex flex-col items-start text-left leading-none">
         <span
-          className="text-[16px] sm:text-[17.5px] font-bold tracking-tight text-[#FFFDF7] group-hover:text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] whitespace-nowrap"
+          className="text-[11.5px] font-bold tracking-tight text-[#FFFDF7] group-hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] whitespace-nowrap"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
-          Student Journey
+          Workflow Guide
         </span>
-        <span className="text-[12.5px] sm:text-[13.5px] italic font-normal text-[#C8D7EC] group-hover:text-[#E2EEFF] mt-1 tracking-wide whitespace-nowrap drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+        <span className="text-[9.5px] italic font-normal text-[#C8D7EC] group-hover:text-[#E2EEFF] mt-0.5 tracking-wide whitespace-nowrap drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
           {isOpen ? "Back to Overview" : "Guide Me"}
         </span>
       </div>
@@ -576,66 +583,339 @@ export function StudentJourneyInlinePanel({
   // Live co-browse portal modal trigger if advocate wants to co-browse with parent
   const [liveCoBrowseOpen, setLiveCoBrowseOpen] = useState(false);
 
+  // Selected Plan & Project dropdown selectors + extensible custom workflow filter tags
+  const PLAN_OPTIONS = [
+    "Anchor",
+    "Navigator",
+    "Family",
+    "Harbor",
+    "State Complaint",
+  ];
+  const PROJECT_OPTIONS = [
+    "Annual IEP",
+    "Initial Evaluation",
+    "504 Plan Review",
+    "Triennial Re-Eval",
+    "Manifestation (MDR)",
+    "State Complaint",
+  ];
+
+  const EXTRA_WORKFLOW_MODULES: {
+    id: string;
+    label: string;
+    defaultValue: string;
+    options: string[];
+  }[] = [
+      {
+        id: "track",
+        label: "Track",
+        defaultValue: "Standard Prep",
+        options: [
+          "Standard Prep",
+          "Expedited 10-Day",
+          "Dispute / PWN Audit",
+          "IEE Request",
+          "Placement Change",
+        ],
+      },
+      {
+        id: "focus",
+        label: "Focus",
+        defaultValue: "Reading & Goals",
+        options: [
+          "Reading & Goals",
+          "Behavior / BIP",
+          "Speech & OT Minutes",
+          "Accommodations",
+          "Transition Plan",
+        ],
+      },
+      {
+        id: "mode",
+        label: "Meeting",
+        defaultValue: "Virtual (Zoom/Teams)",
+        options: [
+          "Virtual (Zoom/Teams)",
+          "In-Person School",
+          "Parent Prep Only",
+          "State Mediation",
+        ],
+      },
+      {
+        id: "district_stance",
+        label: "Stance",
+        defaultValue: "Collaborative",
+        options: [
+          "Collaborative",
+          "Data-Contested",
+          "High-Conflict",
+          "Compliance Escalation",
+        ],
+      },
+    ];
+
+  const [selectedPlan, setSelectedPlan] = useState<string>(() => {
+    const raw = (parent?.planTier || student?.planType || "").toLowerCase();
+    if (raw.includes("navigator")) return "Navigator";
+    if (raw.includes("family")) return "Family";
+    if (raw.includes("harbor")) return "Harbor";
+    if (raw.includes("complaint")) return "State Complaint";
+    return "Anchor";
+  });
+
+  const [selectedProject, setSelectedProject] = useState<string>(() => {
+    if (hasComplaintDraft) return "State Complaint";
+    const raw = (student?.planType || "").toLowerCase();
+    if (raw.includes("504")) return "504 Plan Review";
+    if (raw.includes("initial")) return "Initial Evaluation";
+    return "Annual IEP";
+  });
+
+  const [activeExtraModules, setActiveExtraModules] = useState<
+    Record<string, string>
+  >({});
+
   const toggleTodo = (todoId: string) => {
     setTodoChecks((prev) => ({ ...prev, [todoId]: !prev[todoId] }));
-  };
-
-  const handleHeaderGuideMeClick = () => {
-    // Expand the current active step (Step 3: Meeting Blueprint) and toggle its detailed Guide Me sub-stepper view (Image 2)
-    setExpandedStepId("meeting_blueprint");
-    setGuidedDetailStepId((prev) =>
-      prev === "meeting_blueprint" ? null : "meeting_blueprint"
-    );
   };
 
   return (
     <div
       data-testid="student-journey-inline-panel"
-      className="flex flex-col justify-between h-full space-y-3.5 text-left animate-in fade-in duration-200"
+      className="flex flex-col justify-between h-full space-y-3 text-left animate-in fade-in duration-200"
     >
       <div>
-        {/* ─── Top Header Row: "Student Journey" + Gold "✦ Guide Me" Pill & Back Button ─── */}
-        <div className="flex flex-wrap items-start justify-between gap-3 pb-1">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2.5">
-              <h3
-                className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#FFFDF7] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] leading-tight"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              >
-                Student Journey
-              </h3>
-              <button
-                type="button"
-                onClick={onClose}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#081A38] hover:bg-[#102A54] border border-[#D4AF37]/55 hover:border-[#FFE394] text-[#D8C7A5] hover:text-white text-[11px] font-semibold cursor-pointer transition-all shadow-sm"
-                title="Return to standard Student Dossier overview"
-              >
-                <ArrowLeft className="w-3 h-3 text-[#FFE394]" />
-                <span>Dossier View</span>
-              </button>
+        {/* ─── Top Header Row: "Student Workflow Guide" + Back Button + Compact Custom Workflow Builder Strip ─── */}
+        <div className="space-y-2 pb-0.5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2.5">
+                <h3
+                  className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#FFFDF7] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] leading-tight"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  Student Workflow Guide
+                </h3>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#081A38] hover:bg-[#102A54] border border-[#D4AF37]/55 hover:border-[#FFE394] text-[#D8C7A5] hover:text-white text-[11px] font-semibold cursor-pointer transition-all shadow-sm"
+                  title="Return to standard Student Dossier overview"
+                >
+                  <ArrowLeft className="w-3 h-3 text-[#FFE394]" />
+                  <span>Dossier View</span>
+                </button>
+              </div>
+              <p className="text-xs sm:text-[13px] text-[#C8D6EA] drop-shadow">
+                A guided, step-by-step workflow for this client.
+              </p>
             </div>
-            <p className="text-xs sm:text-[13.5px] text-[#C8D6EA] drop-shadow">
-              A guided, step-by-step workflow for this client.
-            </p>
           </div>
 
-          {/* Right Top Pill Buttons: Gold "✦ Guide Me" Pill (Reference Image 1 top-right) */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleHeaderGuideMeClick}
-              data-testid="student-journey-top-pill-guide-me"
-              className={cn(
-                "inline-flex items-center gap-2 px-4.5 py-2 rounded-full font-bold text-xs sm:text-[13.5px] cursor-pointer transition-all select-none",
-                "bg-gradient-to-b from-[#F5D98B] via-[#D8AD54] to-[#A67B28] hover:from-[#FFE49E] hover:via-[#E3B85F] hover:to-[#B5882F]",
-                "text-[#131822] border border-[#FFF2C2]/80",
-                "shadow-[0_6px_16px_rgba(0,0,0,0.8),0_0_14px_rgba(216,173,84,0.35),inset_0_1px_1px_rgba(255,255,255,0.75)]",
-                "active:translate-y-[0.5px]"
+          {/* ─── Compact Custom Workflow Selector Strip (Smaller pills so more workflow selectors fit side-by-side) ─── */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            {/* 1. Plan Dropdown Pill (Compact) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  data-testid="student-journey-plan-selector"
+                  className="inline-flex items-center justify-between gap-1.5 h-6.5 px-2.5 rounded-[6px] bg-gradient-to-b from-[#0A1D3B] via-[#07152C] to-[#040D1E] hover:from-[#102952] hover:to-[#07162E] border border-[#C5A059]/75 hover:border-[#FFE394] text-[#E6EEF8] hover:text-white text-[11px] leading-none shadow-[0_2px_8px_rgba(0,0,0,0.7),inset_0_1px_0.5px_rgba(255,238,186,0.2)] cursor-pointer transition-all shrink-0"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  <span>
+                    <span className="text-[#B8CAE0]">Plan:</span>{" "}
+                    <strong className="font-semibold text-[#FFFDF7]">
+                      {selectedPlan}
+                    </strong>
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-[#E5C168] shrink-0" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="bg-[#06152D] border border-[#C5A059]/70 text-[#FFF4D4] rounded-xl p-1 min-w-[150px] shadow-2xl"
+              >
+                {PLAN_OPTIONS.map((plan) => (
+                  <DropdownMenuItem
+                    key={plan}
+                    onClick={() => setSelectedPlan(plan)}
+                    className={cn(
+                      "text-[11.5px] py-1.5 px-2.5 rounded-lg cursor-pointer flex items-center justify-between",
+                      selectedPlan === plan
+                        ? "bg-[#133262] text-[#FFE394] font-bold"
+                        : "text-[#DCE6F5] hover:bg-white/10"
+                    )}
+                  >
+                    <span>Plan: {plan}</span>
+                    {selectedPlan === plan && (
+                      <Check className="w-3 h-3 text-[#FFE394]" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* 2. Project Dropdown Pill (Compact) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  data-testid="student-journey-project-selector"
+                  className="inline-flex items-center justify-between gap-1.5 h-6.5 px-2.5 rounded-[6px] bg-gradient-to-b from-[#0A1D3B] via-[#07152C] to-[#040D1E] hover:from-[#102952] hover:to-[#07162E] border border-[#C5A059]/75 hover:border-[#FFE394] text-[#E6EEF8] hover:text-white text-[11px] leading-none shadow-[0_2px_8px_rgba(0,0,0,0.7),inset_0_1px_0.5px_rgba(255,238,186,0.2)] cursor-pointer transition-all shrink-0"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  <span>
+                    <span className="text-[#B8CAE0]">Project:</span>{" "}
+                    <strong className="font-semibold text-[#FFFDF7]">
+                      {selectedProject}
+                    </strong>
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-[#E5C168] shrink-0" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="bg-[#06152D] border border-[#C5A059]/70 text-[#FFF4D4] rounded-xl p-1 min-w-[170px] shadow-2xl"
+              >
+                {PROJECT_OPTIONS.map((proj) => (
+                  <DropdownMenuItem
+                    key={proj}
+                    onClick={() => setSelectedProject(proj)}
+                    className={cn(
+                      "text-[11.5px] py-1.5 px-2.5 rounded-lg cursor-pointer flex items-center justify-between",
+                      selectedProject === proj
+                        ? "bg-[#133262] text-[#FFE394] font-bold"
+                        : "text-[#DCE6F5] hover:bg-white/10"
+                    )}
+                  >
+                    <span>Project: {proj}</span>
+                    {selectedProject === proj && (
+                      <Check className="w-3 h-3 text-[#FFE394]" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* 3. Any Additional Custom Workflow Pills Added by the Advocate */}
+            {EXTRA_WORKFLOW_MODULES.filter(
+              (m) => activeExtraModules[m.id] !== undefined
+            ).map((mod) => {
+              const currentVal = activeExtraModules[mod.id];
+              return (
+                <DropdownMenu key={mod.id}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      data-testid={`student-journey-extra-${mod.id}`}
+                      className="inline-flex items-center justify-between gap-1.5 h-6.5 px-2.5 rounded-[6px] bg-gradient-to-b from-[#0A1D3B] via-[#07152C] to-[#040D1E] hover:from-[#102952] hover:to-[#07162E] border border-[#C5A059]/75 hover:border-[#FFE394] text-[#E6EEF8] hover:text-white text-[11px] leading-none shadow-[0_2px_8px_rgba(0,0,0,0.7),inset_0_1px_0.5px_rgba(255,238,186,0.2)] cursor-pointer transition-all shrink-0"
+                      style={{
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                      }}
+                    >
+                      <span>
+                        <span className="text-[#B8CAE0]">{mod.label}:</span>{" "}
+                        <strong className="font-semibold text-[#FFFDF7]">
+                          {currentVal}
+                        </strong>
+                      </span>
+                      <ChevronDown className="w-3 h-3 text-[#E5C168] shrink-0" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="bg-[#06152D] border border-[#C5A059]/70 text-[#FFF4D4] rounded-xl p-1 min-w-[175px] shadow-2xl"
+                  >
+                    {mod.options.map((opt) => (
+                      <DropdownMenuItem
+                        key={opt}
+                        onClick={() =>
+                          setActiveExtraModules((prev) => ({
+                            ...prev,
+                            [mod.id]: opt,
+                          }))
+                        }
+                        className={cn(
+                          "text-[11.5px] py-1.5 px-2.5 rounded-lg cursor-pointer flex items-center justify-between",
+                          currentVal === opt
+                            ? "bg-[#133262] text-[#FFE394] font-bold"
+                            : "text-[#DCE6F5] hover:bg-white/10"
+                        )}
+                      >
+                        <span>
+                          {mod.label}: {opt}
+                        </span>
+                        {currentVal === opt && (
+                          <Check className="w-3 h-3 text-[#FFE394]" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                    <div className="my-1 border-t border-[#1E3B68]" />
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setActiveExtraModules((prev) => {
+                          const next = { ...prev };
+                          delete next[mod.id];
+                          return next;
+                        })
+                      }
+                      className="text-[11px] py-1 px-2.5 rounded-lg cursor-pointer text-rose-300 hover:bg-rose-950/50"
+                    >
+                      Remove {mod.label} Filter
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            })}
+
+            {/* 4. Compact "+ Add" Button to Add More Workflow Selectors to this Student Space */}
+            {EXTRA_WORKFLOW_MODULES.some(
+              (m) => activeExtraModules[m.id] === undefined
+            ) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      data-testid="student-journey-add-workflow-pill"
+                      title="Add another custom workflow filter to this student's journey"
+                      className="inline-flex items-center justify-center gap-1 h-6.5 px-2 rounded-[6px] bg-[#07162E]/90 hover:bg-[#102952] border border-dashed border-[#C5A059]/65 hover:border-[#FFE394] text-[#FFE394] hover:text-white text-[10.5px] font-semibold leading-none shadow-sm cursor-pointer transition-all shrink-0"
+                    >
+                      <Plus className="w-3 h-3 text-[#FFE394]" />
+                      <span>Add</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="bg-[#06152D] border border-[#C5A059]/70 text-[#FFF4D4] rounded-xl p-1 min-w-[185px] shadow-2xl"
+                  >
+                    <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-[#C6B697] border-b border-[#1E3B68]/80">
+                      Add Workflow Parameter
+                    </div>
+                    {EXTRA_WORKFLOW_MODULES.filter(
+                      (m) => activeExtraModules[m.id] === undefined
+                    ).map((mod) => (
+                      <DropdownMenuItem
+                        key={mod.id}
+                        onClick={() =>
+                          setActiveExtraModules((prev) => ({
+                            ...prev,
+                            [mod.id]: mod.defaultValue,
+                          }))
+                        }
+                        className="text-[11.5px] py-1.5 px-2.5 rounded-lg cursor-pointer flex items-center justify-between text-[#DCE6F5] hover:bg-white/10"
+                      >
+                        <span>
+                          + {mod.label} ({mod.defaultValue})
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#131822] fill-[#131822]" />
-              <span>Guide Me</span>
-            </button>
+
+            {/* Subtle Horizontal Extending Rule Line to the Right */}
+            <div className="flex-1 min-w-[24px] h-[1px] bg-gradient-to-r from-[#2B4C7E]/80 via-[#2B4C7E]/45 to-transparent ml-1" />
           </div>
         </div>
 
@@ -658,7 +938,7 @@ export function StudentJourneyInlinePanel({
                   className="text-base sm:text-[18px] font-bold text-[#FFE8A3] tracking-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"
                   style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                 >
-                  What is the Student Journey?
+                  What is the Student Workflow Guide?
                 </h4>
                 <p className="text-xs sm:text-[12.5px] text-[#DCE6F5] leading-relaxed">
                   A streamlined, connected workflow that takes you from reviewing
@@ -724,8 +1004,8 @@ export function StudentJourneyInlinePanel({
                       isExpanded || isCurrent
                         ? "bg-[#F4D068]"
                         : isCompleted
-                        ? "bg-emerald-500/60"
-                        : "bg-[#2C4E80]"
+                          ? "bg-emerald-500/60"
+                          : "bg-[#2C4E80]"
                     )}
                   />
 
@@ -877,8 +1157,8 @@ export function StudentJourneyInlinePanel({
                                     isSubCurrent
                                       ? "text-[#FFE394] font-bold"
                                       : isSubDone
-                                      ? "text-[#DCE6F5]"
-                                      : "text-[#9FB4D4]"
+                                        ? "text-[#DCE6F5]"
+                                        : "text-[#9FB4D4]"
                                   )}
                                 >
                                   {sub.label}

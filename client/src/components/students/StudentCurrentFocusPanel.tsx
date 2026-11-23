@@ -322,17 +322,17 @@ export function StudentCurrentFocusPanel({
     return (
       <div className="flex flex-col justify-between h-full space-y-4">
         <div>
-          {/* Header Banner + Right-Side Stacked "Student Journey / Guide Me" & "Send Portal Access" Buttons */}
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-            <div className="space-y-1 min-w-0 flex-1">
+          {/* Header Banner + Right-Side Stacked "Student Workflow Guide" & "Send Portal Access" Buttons */}
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="space-y-1.5 min-w-0 flex-1 pr-1">
               <h3 
-                className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight"
+                className="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-snug"
                 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
               >
                 {isCompleted ? "Discovery Completed — Review & Enrollment" : "Initial Discovery Consultation"}
               </h3>
 
-              <p className="text-xs sm:text-sm text-white/80 drop-shadow max-w-2xl">
+              <p className="text-xs sm:text-[13px] text-white/85 drop-shadow leading-relaxed max-w-xl">
                 {isCompleted 
                   ? "Discovery consultation finished and notes recorded. Family is eligible for enrollment review."
                   : scheduledDate
@@ -342,7 +342,7 @@ export function StudentCurrentFocusPanel({
               </p>
 
               {/* Left Action Button: Start Discovery Call */}
-              <div className="flex flex-wrap items-center gap-3 pt-2.5">
+              <div className="flex flex-wrap items-center gap-2.5 pt-2">
                 <Button
                   onClick={() => onNavigate(`/leads/${discoveryLeadId}/discovery`)}
                   className={DOSSIER_TOP_ACTION_BUTTON}
@@ -363,8 +363,8 @@ export function StudentCurrentFocusPanel({
               </div>
             </div>
 
-            {/* Top-Right Stack: Student Journey / Guide Me + Send Portal Access Directly Underneath */}
-            <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
+            {/* Top-Right Stack: Compact Workflow Guide + Send Portal Access Directly Underneath */}
+            <div className="flex flex-col items-stretch sm:items-end gap-1.5 shrink-0 w-[138px]">
               <StudentJourneyGuideButton
                 student={student}
                 parent={parent}
@@ -384,10 +384,10 @@ export function StudentCurrentFocusPanel({
                 onClick={handleResendPortal}
                 disabled={resendPortalMutation.isPending || (!parent?.email && !student?.email)}
                 variant="outline"
-                className={cn(DOSSIER_TOP_ACTION_BUTTON, "w-full justify-center h-9 px-4")}
+                className={cn(DOSSIER_TOP_ACTION_BUTTON, "w-full justify-center h-7 px-2.5 text-[10.5px] rounded-[9px] gap-1.5")}
                 title="Send or resend parent portal access link"
               >
-                <Send className="h-3.5 w-3.5 text-amber-300" />
+                <Send className="h-3 w-3 text-amber-300 shrink-0" />
                 <span>{resendPortalMutation.isPending ? "Sending..." : "Send Portal Access"}</span>
               </Button>
             </div>
