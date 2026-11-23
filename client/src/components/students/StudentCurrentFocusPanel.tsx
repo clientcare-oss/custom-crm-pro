@@ -12,7 +12,10 @@ import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { FamilyEnrollmentApprovalModal } from "@/components/enrollment/FamilyEnrollmentApprovalModal";
-import { StudentJourneyGuideButton } from "@/components/students/StudentJourneyGuideButton";
+import {
+  StudentJourneyGuideButton,
+  StudentJourneyInlinePanel,
+} from "@/components/students/StudentJourneyGuideButton";
 
 
 const DOSSIER_CARD_SURFACE =
@@ -181,6 +184,7 @@ export function StudentCurrentFocusPanel({
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [isSupersedeMode, setIsSupersedeMode] = useState(false);
   const [isDiscoveryFormExpanded, setIsDiscoveryFormExpanded] = useState(false);
+  const [isStudentJourneyOpen, setIsStudentJourneyOpen] = useState(false);
   const enrollmentStateQuery = trpc.familyEnrollment.getState.useQuery(
     { parentContactId: parent?.id, studentContactId: student?.id },
     { enabled: !!parent?.id || !!student?.id }
@@ -288,6 +292,26 @@ export function StudentCurrentFocusPanel({
   };
 
   // ─────────────────────────────────────────────────────────────
+  // INLINE RIGHT-SIDE STUDENT JOURNEY PANEL (Opens directly on right side of Dossier)
+  // ─────────────────────────────────────────────────────────────
+  if (isStudentJourneyOpen) {
+    return (
+      <StudentJourneyInlinePanel
+        student={student}
+        parent={parent}
+        stage={stage}
+        isDiscoveryCompleted={
+          latestDiscoveryCall?.status === "completed" ||
+          activeLead?.status === "Discovery Completed"
+        }
+        hasComplaintDraft={Boolean(complaintDraftInfo)}
+        onNavigate={onNavigate}
+        onClose={() => setIsStudentJourneyOpen(false)}
+      />
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // VIEW 1: DISCOVERY STAGE (Pre-Enrollment Family)
   // ─────────────────────────────────────────────────────────────
   if (stage === "DISCOVERY") {
@@ -351,6 +375,8 @@ export function StudentCurrentFocusPanel({
                 onSetActiveTab={onSetActiveTab}
                 onOpenScheduleModal={onOpenScheduleModal}
                 onOpenApprovalModal={() => setIsApprovalModalOpen(true)}
+                isOpen={isStudentJourneyOpen}
+                onToggle={() => setIsStudentJourneyOpen((prev) => !prev)}
                 className="w-full justify-center"
               />
 
@@ -867,6 +893,8 @@ export function StudentCurrentFocusPanel({
               onSetActiveTab={onSetActiveTab}
               onOpenScheduleModal={onOpenScheduleModal}
               onOpenApprovalModal={() => setIsApprovalModalOpen(true)}
+              isOpen={isStudentJourneyOpen}
+              onToggle={() => setIsStudentJourneyOpen((prev) => !prev)}
             />
           </div>
 

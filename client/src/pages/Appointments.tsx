@@ -96,11 +96,13 @@ export default function Appointments() {
   }, []);
   
   // URL Query Parameters support for direct dashboard routing (e.g. /calendar?view=month&date=today&scope=my)
+  // Default view for PG-007 Appointments & Calendar is ALWAYS Month unless explicitly overridden via ?view=day or ?view=week in the URL
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
-  const initialView =
-    (searchParams.get("view") as CalendarViewMode) ||
-    (typeof localStorage !== "undefined" && (localStorage.getItem("waypoint_calendar_view_mode") as CalendarViewMode)) ||
-    "month";
+  const urlViewParam = searchParams.get("view") as CalendarViewMode | null;
+  const initialView: CalendarViewMode =
+    urlViewParam === "day" || urlViewParam === "week" || urlViewParam === "month"
+      ? urlViewParam
+      : "month";
   const initialScope = (searchParams.get("scope") as CalendarScope) || "my";
   const initialFilter = searchParams.get("advocate") || "all";
   const initialTab = searchParams.get("tab") === "coverage"
@@ -133,9 +135,6 @@ export default function Appointments() {
 
   const handleViewModeChange = (mode: CalendarViewMode) => {
     setViewMode(mode);
-    try {
-      localStorage.setItem("waypoint_calendar_view_mode", mode);
-    } catch {}
   };
   const [scope, setScope] = useState<CalendarScope>(initialScope);
   const [selectedAdvocateFilter, setSelectedAdvocateFilter] = useState<string>(initialFilter);

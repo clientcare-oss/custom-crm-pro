@@ -79,7 +79,7 @@ export default function CalendarConsoleHeader({
   activeNavTab = "calendar",
   onNavTabChange,
   stats,
-  viewMode = "week",
+  viewMode = "month",
   onViewModeChange,
   scope = "all",
   onScopeChange,
