@@ -298,7 +298,7 @@ export function StudentCurrentFocusPanel({
     return (
       <div className="flex flex-col justify-between h-full space-y-4">
         <div>
-          {/* Header Banner + Right-Side "Student Journey / Guide Me" Button */}
+          {/* Header Banner + Right-Side Stacked "Student Journey / Guide Me" & "Send Portal Access" Buttons */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             <div className="space-y-1 min-w-0 flex-1">
               <h3 
@@ -316,51 +316,55 @@ export function StudentCurrentFocusPanel({
                   : "Schedule the initial discovery consultation to evaluate the student's IEP history and advocacy needs."
                 }
               </p>
+
+              {/* Left Action Button: Start Discovery Call */}
+              <div className="flex flex-wrap items-center gap-3 pt-2.5">
+                <Button
+                  onClick={() => onNavigate(`/leads/${discoveryLeadId}/discovery`)}
+                  className={DOSSIER_TOP_ACTION_BUTTON}
+                >
+                  <Compass className="h-4 w-4 text-amber-300" />
+                  <span>{isCompleted ? "Review Discovery Session" : "Start Discovery Call"}</span>
+                </Button>
+
+                {complaintDraftInfo && (
+                  <Button
+                    onClick={() => onNavigate(`/state-complaint-builder?studentId=${student?.id || 0}`)}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs rounded-xl h-10 px-5 gap-2 shadow-md border border-[#FFE394]/70 cursor-pointer"
+                  >
+                    <Landmark className="h-4 w-4 text-[#07162B]" />
+                    <span>State Complaint ({complaintDraftInfo.pageCount} Pages)</span>
+                  </Button>
+                )}
+              </div>
             </div>
 
-            <StudentJourneyGuideButton
-              student={student}
-              parent={parent}
-              stage={stage}
-              isDiscoveryCompleted={isCompleted}
-              hasComplaintDraft={Boolean(complaintDraftInfo)}
-              onNavigate={onNavigate}
-              onSetActiveTab={onSetActiveTab}
-              onOpenScheduleModal={onOpenScheduleModal}
-              onOpenApprovalModal={() => setIsApprovalModalOpen(true)}
-            />
-          </div>
+            {/* Top-Right Stack: Student Journey / Guide Me + Send Portal Access Directly Underneath */}
+            <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
+              <StudentJourneyGuideButton
+                student={student}
+                parent={parent}
+                stage={stage}
+                isDiscoveryCompleted={isCompleted}
+                hasComplaintDraft={Boolean(complaintDraftInfo)}
+                onNavigate={onNavigate}
+                onSetActiveTab={onSetActiveTab}
+                onOpenScheduleModal={onOpenScheduleModal}
+                onOpenApprovalModal={() => setIsApprovalModalOpen(true)}
+                className="w-full justify-center"
+              />
 
-          {/* Primary Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 mt-4">
-            <Button
-              onClick={() => onNavigate(`/leads/${discoveryLeadId}/discovery`)}
-              className={DOSSIER_TOP_ACTION_BUTTON}
-            >
-              <Compass className="h-4 w-4 text-amber-300" />
-              <span>{isCompleted ? "Review Discovery Session" : "Start Discovery Call"}</span>
-            </Button>
-
-            <Button
-              onClick={handleResendPortal}
-              disabled={resendPortalMutation.isPending || (!parent?.email && !student?.email)}
-              variant="outline"
-              className={DOSSIER_TOP_ACTION_BUTTON}
-              title="Send or resend parent portal access link"
-            >
-              <Send className="h-3.5 w-3.5 text-amber-300" />
-              <span>{resendPortalMutation.isPending ? "Sending..." : "Send Portal Access"}</span>
-            </Button>
-
-            {complaintDraftInfo && (
               <Button
-                onClick={() => onNavigate(`/state-complaint-builder?studentId=${student?.id || 0}`)}
-                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:brightness-110 text-[#07162B] font-extrabold text-xs rounded-xl h-10 px-5 gap-2 shadow-md border border-[#FFE394]/70 cursor-pointer"
+                onClick={handleResendPortal}
+                disabled={resendPortalMutation.isPending || (!parent?.email && !student?.email)}
+                variant="outline"
+                className={cn(DOSSIER_TOP_ACTION_BUTTON, "w-full justify-center h-9 px-4")}
+                title="Send or resend parent portal access link"
               >
-                <Landmark className="h-4 w-4 text-[#07162B]" />
-                <span>State Complaint ({complaintDraftInfo.pageCount} Pages)</span>
+                <Send className="h-3.5 w-3.5 text-amber-300" />
+                <span>{resendPortalMutation.isPending ? "Sending..." : "Send Portal Access"}</span>
               </Button>
-            )}
+            </div>
           </div>
 
           {/* Prominent Saved Complaint Filing Card (Discovery View) */}
