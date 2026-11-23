@@ -804,97 +804,8 @@ export function StudentJourneyInlinePanel({
                     </div>
                   </div>
 
-                  {/* ── Expanded Body: Either Reference Image 1 (Overview) OR Reference Image 2 (Guided Stepper Detail) ── */}
-                  {isExpanded && !isGuidedDetailView && (
-                    /* ════════════════════════════════════════════════════════════════
-                       MODE A: Reference Image 1 ("In this step, you will:" | "Why it matters:")
-                       ════════════════════════════════════════════════════════════════ */
-                    <div className="px-4 pb-3.5 pt-2.5 border-t border-[#D4AF37]/30 bg-gradient-to-b from-[#0A1C3A]/95 to-[#061226]/95 animate-in fade-in duration-150">
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-center">
-                        {/* Left Column: "In this step, you will:" */}
-                        <div className="md:col-span-5 space-y-1.5 md:border-r md:border-[#244373]/70 md:pr-3">
-                          <h5
-                            className="text-xs sm:text-[13px] font-bold text-[#FFF4D4]"
-                            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                          >
-                            In this step, you will:
-                          </h5>
-                          <ul className="space-y-1">
-                            {step.inThisStepBullets.map((item) => (
-                              <li
-                                key={item}
-                                className="flex items-center gap-2 text-[11.5px] sm:text-xs text-[#DCE6F5]"
-                              >
-                                <Check className="w-3.5 h-3.5 text-[#F4D068] shrink-0 stroke-[2.5]" />
-                                <span>{item}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        {/* Right Column: "Why it matters:" + Open > / Guide Me Buttons + Blueprint Illustration */}
-                        <div className="md:col-span-7 flex flex-col justify-between space-y-2.5">
-                          <div className="flex items-start justify-between gap-2.5">
-                            <div className="space-y-1 flex-1">
-                              <h5
-                                className="text-xs sm:text-[13px] font-bold text-[#FFF4D4]"
-                                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                              >
-                                Why it matters:
-                              </h5>
-                              <p className="text-[11.5px] sm:text-xs text-[#C6D5EB] leading-relaxed">
-                                {step.whyItMatters}
-                              </p>
-                            </div>
-
-                            <BlueprintScrollIllustration className="w-20 h-15 hidden sm:flex" />
-                          </div>
-
-                          {/* Action Buttons Row: Gold "Open >" & Navy-Gold "✦ Guide Me" */}
-                          <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                onNavigate(
-                                  step.openPath(studentId, hasComplaintDraft)
-                                )
-                              }
-                              data-testid={`journey-step-open-${step.id}`}
-                              className={cn(
-                                "inline-flex items-center justify-center gap-1.5 px-5 py-1.5 rounded-lg font-bold text-xs cursor-pointer transition-all",
-                                "bg-gradient-to-b from-[#F5D98B] via-[#D8AD54] to-[#A67B28] hover:from-[#FFE49E] hover:via-[#E3B85F] hover:to-[#B5882F]",
-                                "text-[#131822] border border-[#FFF2C2]/80",
-                                "shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.75)]"
-                              )}
-                            >
-                              <span>Open</span>
-                              <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => setGuidedDetailStepId(step.id)}
-                              data-testid={`journey-step-guide-me-${step.id}`}
-                              className={cn(
-                                "inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full font-semibold text-xs cursor-pointer transition-all",
-                                "bg-gradient-to-b from-[#132F5C] via-[#0B1E3D] to-[#061226] hover:from-[#1B3F7A] hover:to-[#0A1B38]",
-                                "text-[#FFE394] hover:text-white border border-[#D4AF37]/80 hover:border-[#FFE394]",
-                                "shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_0.5px_rgba(255,243,196,0.28)]"
-                              )}
-                            >
-                              <Sparkles className="w-3.5 h-3.5 text-[#F4D068]" />
-                              <span>Guide Me</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {isExpanded && isGuidedDetailView && (
-                    /* ════════════════════════════════════════════════════════════════
-                       MODE B: Reference Image 2 (Progress Bar, 5 Sub-Steps, To Do in This Step, Next Action)
-                       ════════════════════════════════════════════════════════════════ */
+                  {/* ── Expanded Body: Progress Bar + 5-Stage Horizontal Stepper + To Do in This Step + Next Action (Matches Reference Image) ── */}
+                  {isExpanded && (
                     <div
                       data-testid={`journey-guided-detail-${step.id}`}
                       className="px-4 pb-4 pt-2.5 border-t border-[#D4AF37]/35 bg-gradient-to-b from-[#091A36]/95 to-[#051024]/95 space-y-3.5 animate-in fade-in duration-150"
@@ -1058,6 +969,7 @@ export function StudentJourneyInlinePanel({
                                   step.openPath(studentId, hasComplaintDraft)
                                 )
                               }
+                              data-testid={`journey-step-open-${step.id}`}
                               className={cn(
                                 "inline-flex items-center justify-center gap-1.5 px-5 py-1.5 rounded-lg font-bold text-xs cursor-pointer transition-all",
                                 "bg-gradient-to-b from-[#F5D98B] via-[#D8AD54] to-[#A67B28] hover:from-[#FFE49E] hover:via-[#E3B85F] hover:to-[#B5882F]",
@@ -1071,14 +983,19 @@ export function StudentJourneyInlinePanel({
 
                             <button
                               type="button"
-                              onClick={() => setGuidedDetailStepId(null)}
+                              onClick={() =>
+                                setGuidedDetailStepId((prev) =>
+                                  prev === step.id ? null : step.id
+                                )
+                              }
+                              data-testid={`journey-step-guide-me-${step.id}`}
                               className={cn(
                                 "inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full font-semibold text-xs cursor-pointer transition-all",
-                                "bg-gradient-to-b from-[#1B3F7A] via-[#102A54] to-[#081730]",
-                                "text-[#FFE394] hover:text-white border border-[#FFE394]",
-                                "shadow-[0_0_12px_rgba(244,208,104,0.3),0_4px_12px_rgba(0,0,0,0.8)]"
+                                "bg-gradient-to-b from-[#132F5C] via-[#0B1E3D] to-[#061226] hover:from-[#1B3F7A] hover:to-[#0A1B38]",
+                                "text-[#FFE394] hover:text-white border border-[#D4AF37]/80 hover:border-[#FFE394]",
+                                "shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_0.5px_rgba(255,243,196,0.28)]"
                               )}
-                              title="Toggle between step overview and guided checklist"
+                              title="Toggle step overview details"
                             >
                               <Sparkles className="w-3.5 h-3.5 text-[#F4D068]" />
                               <span>Guide Me</span>
@@ -1086,6 +1003,43 @@ export function StudentJourneyInlinePanel({
                           </div>
                         </div>
                       </div>
+
+                      {/* Optional Secondary Overview Strip ("In this step, you will:" & "Why it matters:") toggled when clicking Guide Me */}
+                      {isGuidedDetailView && (
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 pt-2.5 border-t border-[#1E3B68]/70 items-start animate-in fade-in duration-150">
+                          <div className="md:col-span-5 space-y-1 md:border-r md:border-[#244373]/70 md:pr-3">
+                            <h5
+                              className="text-xs font-bold text-[#FFE394]"
+                              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                            >
+                              In this step, you will:
+                            </h5>
+                            <ul className="space-y-1">
+                              {step.inThisStepBullets.map((item) => (
+                                <li
+                                  key={item}
+                                  className="flex items-center gap-2 text-[11px] text-[#DCE6F5]"
+                                >
+                                  <Check className="w-3 h-3 text-[#F4D068] shrink-0 stroke-[2.5]" />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          <div className="md:col-span-7 space-y-1">
+                            <h5
+                              className="text-xs font-bold text-[#FFE394]"
+                              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                            >
+                              Why it matters:
+                            </h5>
+                            <p className="text-[11.5px] text-[#C6D5EB] leading-relaxed">
+                              {step.whyItMatters}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
