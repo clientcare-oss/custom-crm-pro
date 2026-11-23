@@ -3,7 +3,8 @@ import {
   Calendar, CheckSquare, FileText, Clock, CheckCircle2, 
   ShieldCheck, ArrowRight, ExternalLink, Send, AlertCircle, 
   Sparkles, RefreshCw, Lock, Award, Compass, PhoneCall,
-  UserCheck, AlertTriangle, Landmark
+  UserCheck, AlertTriangle, Landmark, ChevronDown, ChevronUp,
+  Eye, Mail, Phone, School, GraduationCap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,17 @@ import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { FamilyEnrollmentApprovalModal } from "@/components/enrollment/FamilyEnrollmentApprovalModal";
+import { StudentJourneyGuideButton } from "@/components/students/StudentJourneyGuideButton";
 
+
+const DOSSIER_CARD_SURFACE =
+  "rounded-xl bg-gradient-to-b from-[#0E274E] via-[#081A38] to-[#040E21] border border-[#D4AF37]/60 hover:border-[#FFE394]/90 shadow-[0_10px_26px_rgba(0,0,0,0.85),0_2px_8px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,235,175,0.22),inset_0_-2px_4px_rgba(0,0,0,0.9)] transition-all";
+
+const DOSSIER_CARD_BUTTON =
+  "w-full mt-2 bg-gradient-to-b from-[#153668] via-[#0C2348] to-[#07152E] hover:from-[#1C4582] hover:via-[#102D5C] hover:to-[#0A1C3C] border border-[#D4AF37]/65 hover:border-[#FFE394] text-[#FFF4D4] hover:text-white text-xs font-semibold rounded-lg h-8.5 gap-1.5 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_0.5px_rgba(255,243,196,0.25)] transition-all";
+
+const DOSSIER_TOP_ACTION_BUTTON =
+  "bg-gradient-to-b from-[#153668] via-[#0C2348] to-[#07152E] hover:from-[#1C4582] hover:via-[#102D5C] hover:to-[#0A1C3C] text-[#FFF4D4] hover:text-white border border-[#D4AF37]/65 hover:border-[#FFE394] font-semibold text-xs rounded-xl h-10 px-5 gap-2 shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,243,196,0.25)] cursor-pointer transition-all";
 
 export type FamilyLifecycleStage = "DISCOVERY" | "ENROLLMENT_PENDING" | "ACTIVE" | "RENEWAL";
 
@@ -169,6 +180,7 @@ export function StudentCurrentFocusPanel({
   // Phase 2: Family Enrollment Approval State & Mutations
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [isSupersedeMode, setIsSupersedeMode] = useState(false);
+  const [isDiscoveryFormExpanded, setIsDiscoveryFormExpanded] = useState(false);
   const enrollmentStateQuery = trpc.familyEnrollment.getState.useQuery(
     { parentContactId: parent?.id, studentContactId: student?.id },
     { enabled: !!parent?.id || !!student?.id }
@@ -286,69 +298,57 @@ export function StudentCurrentFocusPanel({
     return (
       <div className="flex flex-col justify-between h-full space-y-4">
         <div>
-          {/* Header Banner */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-amber-300/90 drop-shadow">
-                CURRENT FOCUS — DISCOVERY &amp; EVALUATION
-              </p>
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  "text-[10px] font-semibold uppercase tracking-wider py-0 px-2",
-                  isCompleted 
-                    ? "border-emerald-500/50 text-emerald-300 bg-emerald-950/40" 
-                    : "border-amber-500/50 text-amber-300 bg-amber-950/40"
-                )}
+          {/* Header Banner + Right-Side "Student Journey / Guide Me" Button */}
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div className="space-y-1 min-w-0 flex-1">
+              <h3 
+                className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
               >
-                {isCompleted ? "Discovery Completed" : scheduledDate ? "Call Scheduled" : "Discovery Pending"}
-              </Badge>
+                {isCompleted ? "Discovery Completed — Review & Enrollment" : "Initial Discovery Consultation"}
+              </h3>
+
+              <p className="text-xs sm:text-sm text-white/80 drop-shadow max-w-2xl">
+                {isCompleted 
+                  ? "Discovery consultation finished and notes recorded. Family is eligible for enrollment review."
+                  : scheduledDate
+                  ? `Discovery call scheduled for ${new Date(scheduledDate).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}. Review case details and parent priorities.`
+                  : "Schedule the initial discovery consultation to evaluate the student's IEP history and advocacy needs."
+                }
+              </p>
             </div>
 
-            <h3 
-              className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              {isCompleted ? "Discovery Completed — Review & Enrollment" : "Initial Discovery Consultation"}
-            </h3>
-
-            <p className="text-xs sm:text-sm text-white/80 drop-shadow max-w-2xl">
-              {isCompleted 
-                ? "Discovery consultation finished and notes recorded. Family is eligible for Phase 2 enrollment review."
-                : scheduledDate
-                ? `Discovery call scheduled for ${new Date(scheduledDate).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}. Review case details and parent priorities.`
-                : "Schedule the initial discovery consultation to evaluate the student's IEP history and advocacy needs."
-              }
-            </p>
+            <StudentJourneyGuideButton
+              student={student}
+              parent={parent}
+              stage={stage}
+              isDiscoveryCompleted={isCompleted}
+              hasComplaintDraft={Boolean(complaintDraftInfo)}
+              onNavigate={onNavigate}
+              onSetActiveTab={onSetActiveTab}
+              onOpenScheduleModal={onOpenScheduleModal}
+              onOpenApprovalModal={() => setIsApprovalModalOpen(true)}
+            />
           </div>
 
           {/* Primary Action Buttons */}
           <div className="flex flex-wrap items-center gap-3 mt-4">
             <Button
               onClick={() => onNavigate(`/leads/${discoveryLeadId}/discovery`)}
-              className="bg-gradient-to-r from-[#0d2242] to-[#14325c] hover:from-[#13305c] hover:to-[#1a4078] text-white border border-[#D4AF37]/80 font-semibold text-xs rounded-xl h-10 px-5 gap-2 shadow-md cursor-pointer"
+              className={DOSSIER_TOP_ACTION_BUTTON}
             >
               <Compass className="h-4 w-4 text-amber-300" />
-              <span>{isCompleted ? "Review Discovery Session" : "Start / Resume Discovery Call"}</span>
-            </Button>
-
-            <Button
-              onClick={() => onOpenScheduleModal()}
-              variant="outline"
-              className="bg-[#081a33]/60 hover:bg-[#0c2447] text-white/95 hover:text-white border-white/20 font-semibold text-xs rounded-xl h-10 px-5 gap-2 shadow-sm cursor-pointer"
-            >
-              <Calendar className="h-4 w-4 text-amber-300" />
-              <span>{scheduledDate ? "Reschedule Discovery" : "Schedule Discovery Call"}</span>
+              <span>{isCompleted ? "Review Discovery Session" : "Start Discovery Call"}</span>
             </Button>
 
             <Button
               onClick={handleResendPortal}
               disabled={resendPortalMutation.isPending || (!parent?.email && !student?.email)}
               variant="outline"
-              className="bg-[#081a33]/60 hover:bg-[#0c2447] text-white/95 hover:text-white border-white/20 font-semibold text-xs rounded-xl h-10 px-4 gap-2 shadow-sm cursor-pointer"
+              className={DOSSIER_TOP_ACTION_BUTTON}
               title="Send or resend parent portal access link"
             >
-              <Send className="h-3.5 w-3.5 text-sky-300" />
+              <Send className="h-3.5 w-3.5 text-amber-300" />
               <span>{resendPortalMutation.isPending ? "Sending..." : "Send Portal Access"}</span>
             </Button>
 
@@ -402,14 +402,14 @@ export function StudentCurrentFocusPanel({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             
             {/* Card 1: Discovery Appointment & Status */}
-            <div className="rounded-xl bg-[#020b18]/40 border border-[#3A2C18] p-4 flex flex-col justify-between min-h-[170px] shadow-inner">
-              <div className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase text-[#C6B697]">
+            <div className={cn(DOSSIER_CARD_SURFACE, "p-4 flex flex-col justify-between min-h-[170px]")}>
+              <div className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase text-[#DFC896]">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-amber-300" />
                   DISCOVERY SESSION
                 </span>
                 <span className="text-[11px] text-[#FFE394]">
-                  {parent?.firstName ? `Anchor: ${parent.firstName} ${parent.lastName}` : "Parent Profile"}
+                  {parent?.firstName ? `${parent.firstName} ${parent.lastName}` : "Parent Profile"}
                 </span>
               </div>
 
@@ -426,14 +426,14 @@ export function StudentCurrentFocusPanel({
                         minute: "2-digit" 
                       })}
                     </p>
-                    <p className="text-[11px] text-[#C6B697] truncate">
+                    <p className="text-[11px] text-[#D8C7A5] truncate">
                       {parent?.phone || student?.phone ? `Contact: ${parent?.phone || student?.phone}` : "Phone pending"}
                     </p>
                   </>
                 ) : (
                   <div className="text-center py-2 space-y-1">
-                    <p className="text-xs font-semibold text-white/90">No Discovery Appointment Booked</p>
-                    <p className="text-[11px] text-[#C6B697]">
+                    <p className="text-xs font-semibold text-white">No Discovery Appointment Booked</p>
+                    <p className="text-[11px] text-[#D8C7A5]">
                       Schedule a call to begin the formal IEP advocacy intake.
                     </p>
                   </div>
@@ -441,26 +441,23 @@ export function StudentCurrentFocusPanel({
               </div>
 
               <Button
-                onClick={() => onNavigate(`/calendar`)}
+                onClick={() => onOpenScheduleModal()}
                 size="sm"
                 variant="outline"
-                className="w-full mt-2 bg-[#091b35]/60 hover:bg-[#0f2a52] border-[#D4AF37]/50 text-white text-xs font-semibold rounded-lg h-8 gap-1.5 cursor-pointer"
+                className={DOSSIER_CARD_BUTTON}
               >
                 <Calendar className="h-3.5 w-3.5 text-amber-300" />
-                <span>Open Calendar Dispatch</span>
+                <span>Schedule Discovery Call</span>
               </Button>
             </div>
 
             {/* Card 2: Shared Architecture Enrollment Approval Placement */}
-            <div className="rounded-xl bg-[#020b18]/40 border border-[#3A2C18] p-4 flex flex-col justify-between min-h-[170px] shadow-inner">
-              <div className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase text-[#C6B697]">
+            <div className={cn(DOSSIER_CARD_SURFACE, "p-4 flex flex-col justify-between min-h-[170px]")}>
+              <div className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase text-[#DFC896]">
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck className="h-3.5 w-3.5 text-amber-300" />
                   ENROLLMENT APPROVAL
                 </span>
-                <Badge variant="outline" className="text-[9px] border-amber-400/40 text-amber-300 bg-amber-950/30">
-                  Phase 2 Pipeline
-                </Badge>
               </div>
 
               <div className="my-2 space-y-1">
@@ -470,18 +467,18 @@ export function StudentCurrentFocusPanel({
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       <span>Discovery Completed — Ready for Approval</span>
                     </div>
-                    <p className="text-[11px] text-[#C6B697]">
-                      Family is eligible for enrollment approval. Phase 2 will unlock plan selection, agreement generator, and checkout.
+                    <p className="text-[11px] text-[#D8C7A5]">
+                      Family is eligible for enrollment approval to unlock plan selection, agreement generator, and checkout.
                     </p>
                   </>
                 ) : (
                   <>
-                    <div className="flex items-center gap-1.5 text-xs text-amber-300/90 font-semibold">
+                    <div className="flex items-center gap-1.5 text-xs text-amber-300 font-semibold">
                       <AlertCircle className="h-3.5 w-3.5" />
                       <span>Discovery In Progress</span>
                     </div>
-                    <p className="text-[11px] text-[#C6B697]">
-                      Completed discovery is normally required. Staff exception requires authorized reason &amp; timeline entry (Phase 2).
+                    <p className="text-[11px] text-[#D8C7A5]">
+                      Completed discovery is normally required. Staff exception requires authorized reason &amp; timeline entry.
                     </p>
                   </>
                 )}
@@ -491,42 +488,322 @@ export function StudentCurrentFocusPanel({
                 onClick={() => setIsApprovalModalOpen(true)}
                 size="sm"
                 variant="outline"
-                className="w-full mt-2 border-[#C5A059] text-[#FFE394] hover:text-white bg-[#07162B] hover:bg-[#0f2a52] text-xs font-semibold rounded-lg h-8 gap-1.5 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                className={DOSSIER_CARD_BUTTON}
               >
-                <ShieldCheck className="h-3.5 w-3.5 text-[#C5A059]" />
+                <ShieldCheck className="h-3.5 w-3.5 text-[#FFE394]" />
                 <span>Approve for Enrollment</span>
               </Button>
             </div>
           </div>
 
-          {/* Bottom Card: Discovery Intake History Inset */}
-          <div className="rounded-xl bg-[#020b18]/25 border border-white/15 p-3.5 mt-4 flex items-center justify-between">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50">
-                <FileText className="h-3.5 w-3.5" />
-                <span>DISCOVERY &amp; INTAKE DOSSIER</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-white/75">
-                <Clock className="h-3.5 w-3.5 text-white/40" />
-                <span>
-                  {latestDiscoveryCall 
-                    ? `Session created on ${new Date(latestDiscoveryCall.createdAt).toLocaleDateString()} — Pre-enrollment record active.`
-                    : "No discovery session recorded yet."
-                  }
-                </span>
-              </div>
-            </div>
+          {/* Bottom Card: Collapsible Discovery Call Form Submission (Remains Collapsed Until Clicked) */}
+          {(() => {
+            const submittedAtDate =
+              activeLead?.createdAt ||
+              latestDiscoveryCall?.createdAt ||
+              student?.createdAt;
+            const formattedSubmittedAt = submittedAtDate
+              ? new Date(submittedAtDate).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : "Nov 20, 2026";
 
-            <Button
-              onClick={() => onNavigate(`/leads/${discoveryLeadId}/discovery`)}
-              variant="outline"
-              size="sm"
-              className="bg-transparent hover:bg-white/5 border-white/20 text-white text-xs sm:text-sm font-semibold rounded-lg h-8 px-3 gap-2 cursor-pointer"
-            >
-              <ExternalLink className="h-3.5 w-3.5 text-white/70" />
-              <span>Open Console</span>
-            </Button>
-          </div>
+            const selectedCallDateDisplay = scheduledDate
+              ? new Date(scheduledDate).toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                }) + " EST"
+              : activeLead?.preferredDate ||
+                parent?.bestTimeToCall ||
+                "Thu, Nov 26, 2026 at 10:00 AM EST (Requested Slot)";
+
+            const parentDisplayName = parent
+              ? `${parent.firstName || ""} ${parent.lastName || ""}`.trim()
+              : student?.parentName || "Berk Dog";
+            const parentEmailDisplay =
+              parent?.email ||
+              activeLead?.email ||
+              student?.email ||
+              "family@clientcare.example.com";
+            const parentPhoneDisplay =
+              parent?.phone ||
+              activeLead?.phone ||
+              student?.phone ||
+              "(404) 555-0148";
+            const bestTimeDisplay =
+              parent?.bestTimeToCall ||
+              "Mornings (9:00 AM – 12:00 PM EST)";
+            const studentDisplayName = student
+              ? `${student.firstName || ""} ${student.lastName || ""}`.trim()
+              : "Student";
+            const studentGradeDisplay =
+              student?.gradeLevel || "5th Grade";
+            const schoolDisplay =
+              student?.schoolName || "Connie Dugan Elementary";
+            const districtDisplay =
+              student?.countyDistrict ||
+              "Paulding County School District";
+            const planStatusDisplay =
+              student?.planType || "Active IEP (Annual Review Needed)";
+            const eligibilityDisplay =
+              student?.iepEligibility ||
+              student?.diagnosis ||
+              "Autism Spectrum Disorder (ASD) / ADHD";
+            const primaryConcernsAnswer =
+              student?.challenges ||
+              activeLead?.notes ||
+              latestDiscoveryCall?.parentConcerns ||
+              latestDiscoveryCall?.notes ||
+              "Parent reports that current reading and executive functioning goals are not producing measurable progress, speech/OT service minutes were reduced without data, and the school team has not addressed sensory or behavior supports.";
+            const upcomingMeetingAnswer = scheduledDate
+              ? `IEP Review / Discovery Prep — ${new Date(scheduledDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+              : "Yes — School requested an IEP meeting within the next 30 days";
+            const desiredOutcomeAnswer =
+              latestDiscoveryCall?.desiredOutcomes ||
+              "Comprehensive IEP audit, updated measurable reading & behavior goals, restoration of related service minutes, and full advocate representation at the upcoming IEP table.";
+            const referralSourceAnswer =
+              parent?.howHeardAboutUs ||
+              activeLead?.source ||
+              "Waypoint Website — Public Discovery Call Intake Form (PG-012)";
+
+            return (
+              <div
+                className={cn(
+                  DOSSIER_CARD_SURFACE,
+                  "mt-4 overflow-hidden transition-all duration-200"
+                )}
+              >
+                {/* Collapsed Header Row (Always Visible — Click Anywhere or Button to Expand/Collapse) */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() =>
+                    setIsDiscoveryFormExpanded((prev) => !prev)
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setIsDiscoveryFormExpanded((prev) => !prev);
+                    }
+                  }}
+                  className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none hover:bg-white/[0.03] transition-colors"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-[#DFC896]">
+                        <FileText className="h-3.5 w-3.5 text-amber-300" />
+                        <span>DISCOVERY CALL FORM &amp; SUBMISSION</span>
+                      </div>
+                      <span className="px-2 py-0.2 rounded-full text-[9.5px] font-semibold bg-emerald-950/90 text-emerald-300 border border-emerald-500/40">
+                        Submitted {formattedSubmittedAt}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-white/95 flex-wrap">
+                      <Calendar className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+                      <span className="text-[#D8C7A5]">
+                        Selected Discovery Call Date:
+                      </span>
+                      <strong className="text-[#FFE394] font-semibold">
+                        {selectedCallDateDisplay}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsDiscoveryFormExpanded((prev) => !prev);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="bg-gradient-to-b from-[#153668] to-[#081833] hover:from-[#1C4582] hover:to-[#0C2248] border border-[#D4AF37]/65 hover:border-[#FFE394] text-[#FFF4D4] text-xs font-semibold rounded-lg h-8.5 px-3.5 gap-1.5 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_0.5px_rgba(255,243,196,0.22)]"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-[#FFE394]" />
+                      <span>
+                        {isDiscoveryFormExpanded
+                          ? "Hide Submission"
+                          : "View Submission"}
+                      </span>
+                      {isDiscoveryFormExpanded ? (
+                        <ChevronUp className="h-3.5 w-3.5 text-[#FFE394]" />
+                      ) : (
+                        <ChevronDown className="h-3.5 w-3.5 text-[#FFE394]" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Expanded Submission Body (Only renders when clicked) */}
+                {isDiscoveryFormExpanded && (
+                  <div className="px-4 pb-4 pt-3 border-t border-[#D4AF37]/30 bg-[#040D1E]/95 space-y-4 text-xs animate-in fade-in slide-in-from-top-1 duration-200">
+                    {/* 1. Highlighted Selected Calendar Date & Time Banner */}
+                    <div className="p-3 rounded-xl bg-gradient-to-r from-[#102A52] via-[#0B1F3F] to-[#07152C] border border-[#D4AF37]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-start sm:items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-[#051022] border border-[#D4AF37]/60 flex items-center justify-center text-[#FFE394] shrink-0">
+                          <Calendar className="h-4.5 w-4.5" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-[#DFC896] block">
+                            Parent&apos;s Selected Discovery Call Calendar Slot
+                          </span>
+                          <p className="text-sm font-bold text-[#FFF4D4] mt-0.5">
+                            {selectedCallDateDisplay}
+                          </p>
+                          <p className="text-[11px] text-[#93B4DB]">
+                            Preferred Call Window: {bestTimeDisplay}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onOpenScheduleModal()}
+                          className="bg-gradient-to-b from-[#153668] to-[#07152E] hover:from-[#1C4582] hover:to-[#0A1C3C] border border-[#D4AF37]/65 text-[#FFF4D4] text-[11px] font-semibold h-8 px-3 rounded-lg cursor-pointer"
+                        >
+                          <Calendar className="h-3 w-3 text-[#FFE394] mr-1.5" />
+                          Change Date
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            onNavigate(`/leads/${discoveryLeadId}/discovery`)
+                          }
+                          className="bg-gradient-to-b from-[#153668] to-[#07152E] hover:from-[#1C4582] hover:to-[#0A1C3C] border border-[#D4AF37]/65 text-[#FFF4D4] text-[11px] font-semibold h-8 px-3 rounded-lg cursor-pointer"
+                        >
+                          <ExternalLink className="h-3 w-3 text-[#FFE394] mr-1.5" />
+                          Open Call Console
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* 2. Submitted Contact & Student Information Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="p-3 rounded-xl bg-[#07162E] border border-[#1E3B68] space-y-2">
+                        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#FFE394] border-b border-[#1E3B68] pb-1">
+                          Submitted Parent / Guardian Info
+                        </div>
+                        <div className="space-y-1.5 text-[11.5px]">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[#93B4DB]">Parent Name:</span>
+                            <span className="font-semibold text-white text-right">
+                              {parentDisplayName}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[#93B4DB]">Phone Number:</span>
+                            <span className="font-semibold text-[#FFE394] text-right">
+                              {parentPhoneDisplay}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[#93B4DB]">Email Address:</span>
+                            <span className="font-semibold text-white truncate max-w-[180px] text-right">
+                              {parentEmailDisplay}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[#93B4DB]">Best Time to Call:</span>
+                            <span className="font-medium text-[#D8C7A5] text-right">
+                              {bestTimeDisplay}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-[#07162E] border border-[#1E3B68] space-y-2">
+                        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#FFE394] border-b border-[#1E3B68] pb-1">
+                          Submitted Student &amp; School Details
+                        </div>
+                        <div className="space-y-1.5 text-[11.5px]">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[#93B4DB]">Student Name:</span>
+                            <span className="font-semibold text-white text-right">
+                              {studentDisplayName} ({studentGradeDisplay})
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[#93B4DB]">School &amp; District:</span>
+                            <span className="font-semibold text-white truncate max-w-[185px] text-right">
+                              {schoolDisplay} · {districtDisplay}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[#93B4DB]">Current Plan Status:</span>
+                            <span className="font-semibold text-[#FFE394] text-right">
+                              {planStatusDisplay}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[#93B4DB]">Eligibility / Diagnosis:</span>
+                            <span className="font-medium text-[#D8C7A5] truncate max-w-[185px] text-right">
+                              {eligibilityDisplay}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Questionnaire Answers Submitted by Parent */}
+                    <div className="p-3.5 rounded-xl bg-[#07162E] border border-[#1E3B68] space-y-3">
+                      <div className="flex items-center justify-between border-b border-[#1E3B68] pb-1.5">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#FFE394]">
+                          Discovery Call Questionnaire Answers
+                        </span>
+                        <span className="text-[10px] text-[#93B4DB]">
+                          Source: {referralSourceAnswer}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2.5 text-[11.5px]">
+                        <div>
+                          <p className="font-semibold text-[#DFC896]">
+                            1. What are your primary concerns with your child&apos;s current IEP, 504 plan, or school support?
+                          </p>
+                          <p className="text-white/95 mt-0.5 leading-relaxed bg-[#040C1B] p-2.5 rounded-lg border border-[#162D52]">
+                            {primaryConcernsAnswer}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div className="bg-[#040C1B] p-2.5 rounded-lg border border-[#162D52]">
+                            <p className="font-semibold text-[#DFC896]">
+                              2. Upcoming IEP / 504 Meeting Status:
+                            </p>
+                            <p className="text-white/95 mt-0.5">
+                              {upcomingMeetingAnswer}
+                            </p>
+                          </div>
+
+                          <div className="bg-[#040C1B] p-2.5 rounded-lg border border-[#162D52]">
+                            <p className="font-semibold text-[#DFC896]">
+                              3. Primary Advocacy Goal:
+                            </p>
+                            <p className="text-white/95 mt-0.5">
+                              {desiredOutcomeAnswer}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Shared Family Enrollment Approval Modal */}
@@ -561,40 +838,40 @@ export function StudentCurrentFocusPanel({
     return (
       <div className="flex flex-col justify-between h-full space-y-4">
         <div>
-          {/* Header Banner */}
-          <div className="space-y-1">
-              <div className="flex items-center gap-2">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-sky-300 drop-shadow">
-                CURRENT FOCUS — ENROLLMENT &amp; ONBOARDING
+          {/* Header Banner + Right-Side "Student Journey / Guide Me" Button */}
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div className="space-y-1 min-w-0 flex-1">
+              <h3 
+                className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              >
+                Enrollment Offer Under Review
+              </h3>
+
+              <p className="text-xs sm:text-sm text-white/80 drop-shadow max-w-2xl">
+                Family has been approved for enrollment. Parent selects their preferred plan in the portal, executes the advocacy agreement, and authorizes payment.
               </p>
-              <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-wider py-0 px-2 border-sky-400/50 text-sky-200 bg-sky-950/40">
-                Enrollment Pending
-              </Badge>
-              {activeOffer?.hasPendingRevision && (
-                <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-wider py-0 px-2 border-amber-400/50 text-amber-300 bg-amber-950/40">
-                  Revision Pending
-                </Badge>
-              )}
             </div>
 
-            <h3 
-              className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              Enrollment Offer Under Review
-            </h3>
-
-            <p className="text-xs sm:text-sm text-white/80 drop-shadow max-w-2xl">
-              Family has been approved for enrollment. Parent selects their preferred plan in the portal, executes the advocacy agreement, and authorizes payment.
-            </p>
+            <StudentJourneyGuideButton
+              student={student}
+              parent={parent}
+              stage={stage}
+              isDiscoveryCompleted={true}
+              hasComplaintDraft={Boolean(complaintDraftInfo)}
+              onNavigate={onNavigate}
+              onSetActiveTab={onSetActiveTab}
+              onOpenScheduleModal={onOpenScheduleModal}
+              onOpenApprovalModal={() => setIsApprovalModalOpen(true)}
+            />
           </div>
 
           {/* Offer & Pipeline Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             
             {/* Card 1: Approval & Plan Tier */}
-            <div className="rounded-xl bg-[#020b18]/40 border border-[#3A2C18] p-4 flex flex-col justify-between min-h-[160px] shadow-inner">
-              <div className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase text-[#C6B697]">
+            <div className={cn(DOSSIER_CARD_SURFACE, "p-4 flex flex-col justify-between min-h-[160px]")}>
+              <div className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase text-[#DFC896]">
                 <span className="flex items-center gap-1.5">
                   <UserCheck className="h-3.5 w-3.5 text-emerald-400" />
                   APPROVAL STATUS
@@ -625,7 +902,7 @@ export function StudentCurrentFocusPanel({
                     </Badge>
                   </div>
                 )}
-                <p className="text-[11px] text-[#C6B697]">
+                <p className="text-[11px] text-[#D8C7A5]">
                   {activeOffer?.billingArrangement === "manual_invoice"
                     ? `Manual Invoicing: Due ${activeOffer.manualInvoiceDueDate}`
                     : "Autopay Billing via Stripe"}
@@ -643,7 +920,7 @@ export function StudentCurrentFocusPanel({
                   }}
                   size="sm"
                   variant="outline"
-                  className="w-full mt-2 border-amber-500/40 text-amber-300 hover:text-white bg-[#07162B] hover:bg-[#0f2a52] text-xs font-semibold rounded-lg h-8 gap-1.5 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                  className={DOSSIER_CARD_BUTTON}
                 >
                   <RefreshCw className="h-3.5 w-3.5 text-amber-400" />
                   <span>Supersede Offer Terms</span>
@@ -656,17 +933,17 @@ export function StudentCurrentFocusPanel({
                   }}
                   size="sm"
                   variant="outline"
-                  className="w-full mt-2 border-[#C5A059] text-[#FFE394] hover:text-white bg-[#07162B] hover:bg-[#0f2a52] text-xs font-semibold rounded-lg h-8 gap-1.5 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                  className={DOSSIER_CARD_BUTTON}
                 >
-                  <ShieldCheck className="h-3.5 w-3.5 text-[#C5A059]" />
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#FFE394]" />
                   <span>Edit Offer Terms</span>
                 </Button>
               )}
             </div>
 
             {/* Card 2: Agreement & Payment Status */}
-            <div className="rounded-xl bg-[#020b18]/40 border border-[#3A2C18] p-4 flex flex-col justify-between min-h-[160px] shadow-inner">
-              <div className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase text-[#C6B697]">
+            <div className={cn(DOSSIER_CARD_SURFACE, "p-4 flex flex-col justify-between min-h-[160px]")}>
+              <div className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase text-[#DFC896]">
                 <span className="flex items-center gap-1.5">
                   <FileText className="h-3.5 w-3.5 text-amber-300" />
                   AGREEMENT &amp; CHECKOUT
@@ -781,9 +1058,9 @@ export function StudentCurrentFocusPanel({
                   disabled={createManualInvoiceMutation.isPending}
                   size="sm"
                   variant="outline"
-                  className="w-full mt-2 border-sky-500/50 text-sky-200 hover:text-white bg-[#07162B] hover:bg-[#0f2a52] text-xs font-semibold rounded-lg h-8 gap-1.5 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                  className={DOSSIER_CARD_BUTTON}
                 >
-                  <FileText className="h-3.5 w-3.5 text-sky-400" />
+                  <FileText className="h-3.5 w-3.5 text-amber-300" />
                   <span>{createManualInvoiceMutation.isPending ? "Generating..." : "Generate Initial Invoice"}</span>
                 </Button>
               ) : (
@@ -798,9 +1075,9 @@ export function StudentCurrentFocusPanel({
                   disabled={!activeOffer?.id || resendEnrollmentMutation.isPending}
                   size="sm"
                   variant="outline"
-                  className="w-full mt-2 border-[#C5A059] text-[#FFE394] hover:text-white bg-[#07162B] hover:bg-[#0f2a52] text-xs font-semibold rounded-lg h-8 gap-1.5 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                  className={DOSSIER_CARD_BUTTON}
                 >
-                  <Send className="h-3.5 w-3.5 text-[#C5A059]" />
+                  <Send className="h-3.5 w-3.5 text-[#FFE394]" />
                   <span>{resendEnrollmentMutation.isPending ? "Sending..." : "Resend Enrollment Link"}</span>
                 </Button>
               )}
@@ -808,14 +1085,14 @@ export function StudentCurrentFocusPanel({
           </div>
 
           {/* Bottom Card: Portal Account Status */}
-          <div className="rounded-xl bg-[#020b18]/25 border border-white/15 p-3.5 mt-4 flex items-center justify-between">
+          <div className={cn(DOSSIER_CARD_SURFACE, "p-3.5 mt-4 flex items-center justify-between")}>
             <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50">
-                <ShieldCheck className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-[#DFC896]">
+                <ShieldCheck className="h-3.5 w-3.5 text-amber-300" />
                 <span>PARENT PORTAL ACCESS</span>
               </div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-white/75">
-                <Clock className="h-3.5 w-3.5 text-white/40" />
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-white/90">
+                <Clock className="h-3.5 w-3.5 text-amber-300/80" />
                 <span>
                   {parent?.email ? `Pre-enrollment access active for ${parent.email}` : "Portal access available upon parent invite."}
                 </span>
@@ -827,9 +1104,9 @@ export function StudentCurrentFocusPanel({
               disabled={resendPortalMutation.isPending || (!parent?.email && !student?.email)}
               variant="outline"
               size="sm"
-              className="bg-transparent hover:bg-white/5 border-white/20 text-white text-xs sm:text-sm font-semibold rounded-lg h-8 px-3 gap-2 cursor-pointer"
+              className="bg-gradient-to-b from-[#153668] to-[#07152E] hover:from-[#1C4582] hover:to-[#0A1C3C] border border-[#D4AF37]/65 hover:border-[#FFE394] text-[#FFF4D4] text-xs sm:text-sm font-semibold rounded-lg h-8.5 px-3.5 gap-2 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.75),inset_0_1px_0.5px_rgba(255,243,196,0.22)]"
             >
-              <Send className="h-3.5 w-3.5 text-white/70" />
+              <Send className="h-3.5 w-3.5 text-[#FFE394]" />
               <span>{resendPortalMutation.isPending ? "Sending..." : "Resend Invite"}</span>
             </Button>
           </div>
@@ -892,9 +1169,9 @@ export function StudentCurrentFocusPanel({
               variant="outline"
               size="sm"
               className="border-[#C5A059]/40 text-[#FFE394] bg-[#07162B] opacity-80 cursor-not-allowed text-xs font-semibold rounded-lg h-8 px-3 gap-1.5 shrink-0"
-              title="Renewal review will be connected in Phase 2"
+              title="Renewal review terms"
             >
-              <span>Review Renewal Terms (Phase 2)</span>
+              <span>Review Renewal Terms</span>
             </Button>
           </div>
         )}
@@ -956,27 +1233,38 @@ export function StudentCurrentFocusPanel({
           </div>
         )}
 
-        {/* Existing Current Focus Banner */}
-        <div className="space-y-1">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-sky-300/90 drop-shadow">
-            CURRENT FOCUS
-          </p>
-          <h3 
-            className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-          >
-            {compass?.currentStatus || "Prepare for the next IEP meeting"}
-          </h3>
-          <p className="text-xs sm:text-sm text-white/80 drop-shadow">
-            {compass?.nextStep || "Review records and organize parent concerns."}
-          </p>
+        {/* Existing Current Focus Banner + Right-Side "Student Journey / Guide Me" Button */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+          <div className="space-y-1 min-w-0 flex-1">
+            <h3 
+              className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              {compass?.currentStatus || "Prepare for the next IEP meeting"}
+            </h3>
+            <p className="text-xs sm:text-sm text-white/80 drop-shadow">
+              {compass?.nextStep || "Review records and organize parent concerns."}
+            </p>
+          </div>
+
+          <StudentJourneyGuideButton
+            student={student}
+            parent={parent}
+            stage={stage}
+            isDiscoveryCompleted={true}
+            hasComplaintDraft={Boolean(complaintDraftInfo)}
+            onNavigate={onNavigate}
+            onSetActiveTab={onSetActiveTab}
+            onOpenScheduleModal={onOpenScheduleModal}
+            onOpenApprovalModal={() => setIsApprovalModalOpen(true)}
+          />
         </div>
 
-        {/* Primary Action Buttons (Preserved exactly) */}
+        {/* Primary Action Buttons */}
         <div className="flex flex-wrap items-center gap-3 mt-4">
           <Button
             onClick={() => onNavigate(`/meeting-workspace/${student?.id || 0}`)}
-            className="bg-gradient-to-r from-[#0d2242] to-[#14325c] hover:from-[#13305c] hover:to-[#1a4078] text-white border border-[#D4AF37]/80 font-semibold text-xs rounded-xl h-10 px-5 gap-2 shadow-md cursor-pointer"
+            className={DOSSIER_TOP_ACTION_BUTTON}
           >
             <Calendar className="h-4 w-4 text-amber-300" />
             <span>Prepare for Meeting</span>
@@ -985,9 +1273,9 @@ export function StudentCurrentFocusPanel({
           <Button
             onClick={() => onNavigate(`/post-meeting-review/${student?.id || 0}`)}
             variant="outline"
-            className="bg-[#081a33]/60 hover:bg-[#0c2447] text-white/95 hover:text-white border-white/20 font-semibold text-xs rounded-xl h-10 px-5 gap-2 shadow-sm cursor-pointer"
+            className={DOSSIER_TOP_ACTION_BUTTON}
           >
-            <FileText className="h-4 w-4 text-white/75" />
+            <FileText className="h-4 w-4 text-amber-300" />
             <span>Post-Meeting Review</span>
           </Button>
 
@@ -1037,13 +1325,13 @@ export function StudentCurrentFocusPanel({
           </div>
         )}
 
-        {/* Middle Cards: Next Meeting & Next Actions (Preserved exactly) */}
+        {/* Middle Cards: Next Meeting & Next Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
           
           {/* Card 1: Next Meeting */}
-          <div className="rounded-xl bg-[#020b18]/25 border border-white/15 p-4 flex flex-col justify-between min-h-[160px]">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50">
-              <Calendar className="h-3.5 w-3.5" />
+          <div className={cn(DOSSIER_CARD_SURFACE, "p-4 flex flex-col justify-between min-h-[160px]")}>
+            <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-[#DFC896]">
+              <Calendar className="h-3.5 w-3.5 text-amber-300" />
               <span>NEXT MEETING</span>
             </div>
 
@@ -1056,9 +1344,9 @@ export function StudentCurrentFocusPanel({
               </div>
             ) : (
               <div className="flex flex-col items-center text-center my-2 space-y-1">
-                <Calendar className="h-6 w-6 text-white/35" />
-                <p className="text-xs sm:text-sm font-semibold text-white/95">No meeting scheduled</p>
-                <p className="text-[11px] text-white/55 max-w-[220px]">
+                <Calendar className="h-6 w-6 text-[#FFE394]/60" />
+                <p className="text-xs sm:text-sm font-semibold text-white">No meeting scheduled</p>
+                <p className="text-[11px] text-[#D8C7A5] max-w-[220px]">
                   Schedule a meeting to keep this case on track.
                 </p>
               </div>
@@ -1068,7 +1356,7 @@ export function StudentCurrentFocusPanel({
               onClick={() => onOpenScheduleModal()}
               size="sm"
               variant="outline"
-              className="w-full mt-2 bg-[#091b35]/60 hover:bg-[#0f2a52] border-[#D4AF37]/50 text-white text-xs font-semibold rounded-lg h-8 gap-2 cursor-pointer"
+              className={DOSSIER_CARD_BUTTON}
             >
               <Calendar className="h-3.5 w-3.5 text-amber-300" />
               <span>Schedule meeting</span>
@@ -1076,9 +1364,9 @@ export function StudentCurrentFocusPanel({
           </div>
 
           {/* Card 2: Next Actions */}
-          <div className="rounded-xl bg-[#020b18]/25 border border-white/15 p-4 flex flex-col justify-between min-h-[160px]">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50 mb-2.5">
-              <CheckSquare className="h-3.5 w-3.5" />
+          <div className={cn(DOSSIER_CARD_SURFACE, "p-4 flex flex-col justify-between min-h-[160px]")}>
+            <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-[#DFC896] mb-2.5">
+              <CheckSquare className="h-3.5 w-3.5 text-amber-300" />
               <span>NEXT ACTIONS</span>
             </div>
 
@@ -1093,13 +1381,13 @@ export function StudentCurrentFocusPanel({
                   <button
                     key={action.id}
                     onClick={() => onToggleAction(action.id)}
-                    className="w-full flex items-center gap-2.5 text-left text-xs sm:text-sm text-white/90 hover:text-white transition-colors cursor-pointer group"
+                    className="w-full flex items-center gap-2.5 text-left text-xs sm:text-sm text-white/95 hover:text-white transition-colors cursor-pointer group"
                   >
                     <div className={cn(
                       "w-4 h-4 rounded border flex items-center justify-center transition-all",
                       isDone 
                         ? "bg-amber-400 border-amber-300 text-slate-950 font-bold" 
-                        : "border-white/30 group-hover:border-amber-300 bg-black/20"
+                        : "border-[#D4AF37]/60 group-hover:border-amber-300 bg-black/30"
                     )}>
                       {isDone && <CheckCircle2 className="h-3.5 w-3.5" />}
                     </div>
@@ -1111,21 +1399,21 @@ export function StudentCurrentFocusPanel({
               })}
             </div>
 
-            <div className="pt-1.5 text-[11px] text-white/40">
+            <div className="pt-1.5 text-[11px] text-[#D8C7A5]">
               {Object.values(checkedActions).filter(Boolean).length} of 3 completed
             </div>
           </div>
         </div>
 
         {/* Bottom Card: Recent Activity */}
-        <div className="rounded-xl bg-[#020b18]/25 border border-white/15 p-3.5 mt-4 flex items-center justify-between">
+        <div className={cn(DOSSIER_CARD_SURFACE, "p-3.5 mt-4 flex items-center justify-between")}>
           <div className="space-y-0.5">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-white/50">
-              <FileText className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-[#DFC896]">
+              <FileText className="h-3.5 w-3.5 text-amber-300" />
               <span>RECENT ACTIVITY</span>
             </div>
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-white/75">
-              <Clock className="h-3.5 w-3.5 text-white/40" />
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-white/90">
+              <Clock className="h-3.5 w-3.5 text-amber-300/80" />
               <span>Case updates appear here.</span>
             </div>
           </div>
@@ -1134,9 +1422,9 @@ export function StudentCurrentFocusPanel({
             onClick={() => onSetActiveTab?.("more")}
             variant="outline"
             size="sm"
-            className="bg-transparent hover:bg-white/5 border-white/20 text-white text-xs sm:text-sm font-semibold rounded-lg h-8 px-3 gap-2 cursor-pointer"
+            className="bg-gradient-to-b from-[#133262] to-[#081833] hover:from-[#1A427E] hover:to-[#0C2248] border border-[#D4AF37]/65 hover:border-[#FFE394] text-[#FFF4D4] text-xs sm:text-sm font-semibold rounded-lg h-8.5 px-3.5 gap-2 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_0.5px_rgba(255,243,196,0.22)]"
           >
-            <Clock className="h-3.5 w-3.5 text-white/70" />
+            <Clock className="h-3.5 w-3.5 text-[#FFE394]" />
             <span>View timeline</span>
           </Button>
         </div>

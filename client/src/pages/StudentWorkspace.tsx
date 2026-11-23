@@ -329,7 +329,9 @@ export default function StudentWorkspace() {
     return (first + last).toUpperCase() || "S";
   }, [student]);
 
-  const fullName = student ? `${student.firstName} ${student.lastName}` : "Student Record";
+  const fullName = student
+    ? `${(student.firstName || "").trim().replace(/(^|\s|-)([a-z])/g, (_: string, s: string, c: string) => `${s}${c.toUpperCase()}`)} ${(student.lastName || "").trim().replace(/(^|\s|-)([a-z])/g, (_: string, s: string, c: string) => `${s}${c.toUpperCase()}`)}`.trim()
+    : "Student Record";
   const parentName = parent ? `${parent.firstName} ${parent.lastName}` : (student?.parentName || "Parent on File");
   const parentPhone = parent?.phone || student?.phone || "No phone listed";
 
@@ -584,9 +586,9 @@ export default function StudentWorkspace() {
                   const targetUrl = `/portal?preview=true&contactId=${effectiveStudentId}${parentId ? `&parentContactId=${parentId}` : ""}${student?.caseId ? `&caseId=${student.caseId}` : ""}`;
                   window.open(targetUrl, "_blank");
                 }}
-                className="bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-100 text-xs font-semibold rounded-lg h-8 px-3.5 gap-2 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
+                className="bg-gradient-to-b from-[#153668] via-[#0B2144] to-[#07152E] hover:from-[#1C4582] hover:to-[#0A1C3C] border border-[#D4AF37]/65 hover:border-[#FFE394] text-[#FFF4D4] hover:text-white text-xs font-semibold rounded-lg h-8.5 px-3.5 gap-2 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.75),inset_0_1px_0.5px_rgba(255,243,196,0.22)] cursor-pointer"
               >
-                <Eye className="h-3.5 w-3.5 text-sky-300" />
+                <Eye className="h-3.5 w-3.5 text-[#FFE394]" />
                 <span>Preview Parent Portal</span>
               </Button>
 
@@ -595,7 +597,7 @@ export default function StudentWorkspace() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 rounded-lg bg-[#071d3a]/75 hover:bg-[#0c2950] border border-sky-400/35 hover:border-sky-300 text-sky-200 hover:text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer"
+                    className="h-8.5 w-8.5 rounded-lg bg-gradient-to-b from-[#153668] via-[#0B2144] to-[#07152E] hover:from-[#1C4582] hover:to-[#0A1C3C] border border-[#D4AF37]/65 hover:border-[#FFE394] text-[#FFE394] hover:text-white transition-all shadow-[0_4px_12px_rgba(0,0,0,0.75),inset_0_1px_0.5px_rgba(255,243,196,0.22)] cursor-pointer"
                     title="Record actions & Archive options"
                   >
                     <MoreHorizontal className="h-4 w-4" />

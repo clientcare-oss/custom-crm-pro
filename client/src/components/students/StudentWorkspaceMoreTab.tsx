@@ -352,16 +352,16 @@ export function StudentWorkspaceMoreTab({
                 "text-left select-none cursor-pointer transition-all duration-150 ease-out",
                 // Keyboard focus outline in restrained warm brass
                 "focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-[#D4AF37]/90 focus-visible:border-[#C59E45]",
-                // Surface: Translucent midnight-navy leather letting the portfolio texture subtly show through
-                "bg-gradient-to-b from-[#0c2449]/55 via-[#071933]/65 to-[#030e20]/80 backdrop-blur-[1.5px]",
-                // Thin muted steel-blue edge
-                "border border-[#1d3f6d]/80",
-                // Layered shadows: faint top highlight, bottom dark edge, soft external shadow beneath
-                "shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.18),inset_0_-1.5px_2px_rgba(0,0,0,0.85),0_4px_14px_rgba(0,0,0,0.55),0_1px_3px_rgba(0,0,0,0.65)]",
-                // Hover: Gently brightens leather surface and edge
-                "hover:from-[#112f5a]/65 hover:via-[#092244]/75 hover:to-[#051328]/85",
-                "hover:border-[#2b5894]/85",
-                "hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.24),inset_0_-1.5px_2px_rgba(0,0,0,0.85),0_6px_18px_rgba(0,0,0,0.65),0_1px_3px_rgba(0,0,0,0.7)]",
+                // Surface: 100% solid opaque royal-navy brushed plaque with thin gold outline and 3D depth
+                "bg-gradient-to-b from-[#133262] via-[#0B2042] to-[#061329]",
+                // Thin metallic gold border
+                "border border-[#D4AF37]/65",
+                // Layered shadows: top specular highlight, bottom dark edge, deep external drop shadow
+                "shadow-[inset_0_1px_0.5px_rgba(255,235,175,0.22),inset_0_-2px_3px_rgba(0,0,0,0.9),0_8px_22px_rgba(0,0,0,0.75),0_2px_6px_rgba(0,0,0,0.75)]",
+                // Hover: Gently brightens solid surface and thin gold edge
+                "hover:from-[#19407A] hover:via-[#0E2954] hover:to-[#081835]",
+                "hover:border-[#FFE394]",
+                "hover:shadow-[inset_0_1px_1px_rgba(255,243,196,0.32),inset_0_-2px_3px_rgba(0,0,0,0.9),0_10px_26px_rgba(0,0,0,0.85),0_0_14px_rgba(212,175,55,0.22)]",
                 // Pressed state: Slightly compresses shadow to feel physically pressed
                 "active:translate-y-[0.5px] active:shadow-[inset_0_1.5px_2.5px_rgba(0,0,0,0.9),0_1px_2px_rgba(0,0,0,0.5)]",
                 // Selected state: Restrained brass outline

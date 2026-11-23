@@ -7,6 +7,41 @@ import { recordCaseActivity } from "../services/caseActivityService";
 
 export const inMemoryContacts = new Map<number, any>();
 
+export function capitalizeNamePart(raw?: string | null): string {
+  if (!raw || typeof raw !== "string") return raw ?? "";
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  return trimmed
+    .split(/(\s+|-)/)
+    .map((part) =>
+      part.length > 0 && /[a-zA-Z]/.test(part[0])
+        ? part.charAt(0).toUpperCase() + part.slice(1)
+        : part
+    )
+    .join("");
+}
+
+function normalizeContactNameFields<T>(row: T): T {
+  if (!row || typeof row !== "object") return row;
+  const r = row as any;
+  const nextFirst =
+    typeof r.firstName === "string" && r.firstName.trim()
+      ? capitalizeNamePart(r.firstName)
+      : r.firstName;
+  const nextLast =
+    typeof r.lastName === "string" && r.lastName.trim()
+      ? capitalizeNamePart(r.lastName)
+      : r.lastName;
+  if (nextFirst === r.firstName && nextLast === r.lastName) {
+    return row;
+  }
+  return {
+    ...r,
+    firstName: nextFirst,
+    lastName: nextLast,
+  };
+}
+
 function mergeWithInMemory(list: any[]): any[] {
   const result = [...list];
   const memList = Array.from(inMemoryContacts.values());
@@ -15,7 +50,7 @@ function mergeWithInMemory(list: any[]): any[] {
       result.unshift(mc);
     }
   }
-  return result;
+  return result.map((item) => normalizeContactNameFields(item));
 }
 
 function mergeLists(remoteList: any[], localList: any[]): any[] {
@@ -376,6 +411,8 @@ export async function createContact(data: any, ownerId: number) {
 
   const enrichedData = {
     ...data,
+    ...(typeof data.firstName === "string" ? { firstName: capitalizeNamePart(data.firstName) } : {}),
+    ...(typeof data.lastName === "string" ? { lastName: capitalizeNamePart(data.lastName) } : {}),
     ownerId,
     caseId,
     pipelineStage: data.pipelineStage || "Active",
@@ -459,7 +496,11 @@ export async function updateContact(id: number, ownerId: number, data: any): Pro
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  let updateData = { ...data };
+  let updateData = {
+    ...data,
+    ...(typeof data.firstName === "string" ? { firstName: capitalizeNamePart(data.firstName) } : {}),
+    ...(typeof data.lastName === "string" ? { lastName: capitalizeNamePart(data.lastName) } : {}),
+  };
 
   // Keep in-memory cache synchronized (essential for tests and fast reads)
   if (inMemoryContacts.has(id)) {
@@ -568,7 +609,11 @@ export async function updateContactById(id: number, data: any): Promise<any> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  let updateData = { ...data };
+  let updateData = {
+    ...data,
+    ...(typeof data.firstName === "string" ? { firstName: capitalizeNamePart(data.firstName) } : {}),
+    ...(typeof data.lastName === "string" ? { lastName: capitalizeNamePart(data.lastName) } : {}),
+  };
 
   // Keep in-memory cache synchronized
   if (inMemoryContacts.has(id)) {

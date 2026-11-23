@@ -10,6 +10,22 @@ export interface StudentDiagnoses {
   medicalDiagnoses: string;
 }
 
+/**
+ * Automatically capitalizes the first letter of a student's first name or last name
+ * (including multi-part or hyphenated names) while preserving live typing ergonomics.
+ */
+export function autoCapStudentNameInput(value: string): string {
+  if (!value) return "";
+  return value.replace(/(^|\s|-)([a-z])/g, (_, sep, ch) => `${sep}${ch.toUpperCase()}`);
+}
+
+export function formatCapitalizedName(value?: string | null): string {
+  if (!value || typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return autoCapStudentNameInput(trimmed);
+}
+
 export function parseStudentDiagnoses(contact?: any): StudentDiagnoses {
   if (!contact) {
     return {

@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import VoiceInput from "@/components/VoiceInput";
 import { PhoneInput } from "@/components/PhoneInput";
 import { validatePhone, formatPhone } from "@/lib/phone";
+import { autoCapStudentNameInput, formatCapitalizedName } from "@/lib/studentUtils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { StudentsHeader } from "@/components/students/StudentsHeader";
@@ -1386,16 +1387,16 @@ export default function Students() {
                   toast.error(phoneErr);
                   return;
                 }
-                let sFirst = formData.firstName.trim();
-                let sLast = formData.lastName.trim();
+                let sFirst = formatCapitalizedName(formData.firstName);
+                let sLast = formatCapitalizedName(formData.lastName);
                 if (!sLast && sFirst.includes(" ")) {
                   const parts = sFirst.split(/\s+/);
-                  sFirst = parts[0] || sFirst;
-                  sLast = parts.slice(1).join(" ");
+                  sFirst = formatCapitalizedName(parts[0] || sFirst);
+                  sLast = formatCapitalizedName(parts.slice(1).join(" "));
                 }
                 if (!sLast && formData.newParentName.trim().includes(" ")) {
                   const pParts = formData.newParentName.trim().split(/\s+/);
-                  sLast = pParts.slice(1).join(" ");
+                  sLast = formatCapitalizedName(pParts.slice(1).join(" "));
                 }
                 const { parentContactId, newParentName, ...rest } = formData;
                 createMutation.mutate({
@@ -1415,7 +1416,7 @@ export default function Students() {
                   <VoiceInput
                     value={formData.firstName}
                     onChange={(e) => {
-                      const val = e.target.value;
+                      const val = autoCapStudentNameInput(e.target.value);
                       setFormData({ ...formData, firstName: val });
                     }}
                     placeholder="e.g. Lucas or Lucas Sterling"
@@ -1427,7 +1428,12 @@ export default function Students() {
                   <label className="text-xs font-semibold text-[#CBD7E8]">Last Name <span className="text-[10px] font-normal text-[#7E97B8]">(or auto-split)</span></label>
                   <VoiceInput
                     value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        lastName: autoCapStudentNameInput(e.target.value),
+                      })
+                    }
                     placeholder="e.g. Sterling"
                     className="bg-[#050D1A] border-[#B88943]/30 text-white"
                   />

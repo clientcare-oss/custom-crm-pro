@@ -8,6 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { autoCapStudentNameInput, formatCapitalizedName } from "@/lib/studentUtils";
 
 export interface StudentProfileDossierProps {
   student: any;
@@ -214,8 +215,8 @@ export function StudentProfileDossier({
   // Populate or reset form values whenever editing mode toggles or incoming student updates
   const syncFromProps = () => {
     const fresh = {
-      firstName: student?.firstName || "",
-      lastName: student?.lastName || "",
+      firstName: formatCapitalizedName(student?.firstName),
+      lastName: formatCapitalizedName(student?.lastName),
       dateOfBirth: toDateInputValue(student?.dateOfBirth),
       gradeLevel: student?.gradeLevel || cleanGrade || "5th Grade",
       state: student?.state || "Georgia",
@@ -286,10 +287,12 @@ export function StudentProfileDossier({
 
     setIsSaving(true);
     try {
+      const capFirst = formatCapitalizedName(dataToSave.firstName);
+      const capLast = formatCapitalizedName(dataToSave.lastName);
       await updateMutation.mutateAsync({
         id: student.id,
-        firstName: dataToSave.firstName,
-        lastName: dataToSave.lastName,
+        firstName: capFirst,
+        lastName: capLast,
         dateOfBirth: dataToSave.dateOfBirth,
         gradeLevel: dataToSave.gradeLevel,
         state: dataToSave.state,
@@ -300,7 +303,7 @@ export function StudentProfileDossier({
         iepEligibility: dataToSave.iepEligibility,
         medicalDiagnoses: dataToSave.medicalDiagnoses,
       });
-      initialValuesRef.current = { ...dataToSave };
+      initialValuesRef.current = { ...dataToSave, firstName: capFirst, lastName: capLast };
       if (shouldExit) {
         setIsEditing(false);
       }
@@ -310,7 +313,11 @@ export function StudentProfileDossier({
   };
 
   const handleChange = (field: keyof typeof formState, val: string) => {
-    setFormState((prev) => ({ ...prev, [field]: val }));
+    const formattedVal =
+      field === "firstName" || field === "lastName"
+        ? autoCapStudentNameInput(val)
+        : val;
+    setFormState((prev) => ({ ...prev, [field]: formattedVal }));
   };
 
   const handleDropdownChange = (field: keyof typeof formState, val: string) => {
