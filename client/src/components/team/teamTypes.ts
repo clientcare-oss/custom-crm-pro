@@ -478,7 +478,7 @@ export const CRM_MODULES: ModuleDefinition[] = [
   { id: "giving", label: "Giving & Impact", path: "/giving", group: "Giving & Impact", icon: HandHeart },
   // Company & Leadership
   { id: "team", label: "Team & Staff Management", path: "/team", group: "Company", icon: UserCheck, isSensitive: true },
-  { id: "workflows", label: "Workflow Designer", path: "/settings?section=operations", group: "Company", icon: GitBranch, isSensitive: true },
+  { id: "workflows", label: "Workflow Designer", path: "/workflows", group: "Company", icon: GitBranch, isSensitive: true },
   { id: "settings", label: "System Settings", path: "/settings", group: "Company", icon: Settings, isSensitive: true },
 ];
 

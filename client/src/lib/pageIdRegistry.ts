@@ -62,7 +62,7 @@ export const PAGE_IDS: Record<string, PageIdInfo> = {
   "/integrations/myco":               { id: "PG-014-MYC", name: "Myco Collective Memory & CRM Bridge", category: "Integrations", description: "Persistent AI coding agent MCP memory (.myco/spores.json) and live CRM webhook/spore sync" },
   "/integrations/quo":                { id: "PG-014-QUO", name: "Quo Integration Settings", category: "Integrations" },
   "/settings/integrations/quo":       { id: "PG-014-QUO", name: "Quo Integration Settings", category: "Integrations" },
-  "/workflows":                       { id: "PG-015", name: "Workflow Pipelines", category: "Automation" },
+  "/workflows":                       { id: "PG-015", name: "Workflow Designer", category: "Automation", description: "Interactive Workflow Designer with Traditional and Monorail map views" },
   "/knowledge-base":                  { id: "PG-016", name: "Knowledge Base", category: "Advocacy" },
   "/knowledge-base/state-law":        { id: "PG-016-LAW", name: "State Education Law Library", category: "Advocacy", description: "Searchable education law and parent rights library across all 50 states, DC, and federal law" },
   "/walkthroughs":                    { id: "PG-017", name: "System Walkthroughs", category: "Help" },

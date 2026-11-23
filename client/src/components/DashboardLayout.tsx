@@ -225,6 +225,12 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
           keywords: ["automations", "triggers", "workflow automation", "actions", "pg-013"]
         },
         {
+          icon: GitBranch,
+          label: "Workflow Designer",
+          path: "/workflows",
+          keywords: ["workflow designer", "workflows", "monorail", "workflow map", "sop", "guide steps", "pg-015"]
+        },
+        {
           icon: UserCheck,
           label: "Team",
           path: "/team",
@@ -449,7 +455,14 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       icon: Zap,
       label: "Automations",
       path: "/automations",
-      isActive: (loc) => loc === "/automations" || loc.startsWith("/automations") || loc === "/workflows",
+      isActive: (loc) => loc === "/automations" || loc.startsWith("/automations"),
+    },
+    {
+      id: "workflows",
+      icon: GitBranch,
+      label: "Workflow Designer",
+      path: "/workflows",
+      isActive: (loc) => loc === "/workflows" || loc.startsWith("/workflows/"),
     },
     {
       id: "reports",
@@ -586,6 +599,7 @@ const SEARCHABLE_DIRECTORY: SearchDirectoryItem[] = [
   { id: "mod-invoices", name: "Invoices & Billing", category: "module", path: "/invoices", badge: "PG-005", keywords: ["invoices", "payments", "receipts", "billing", "charges"], icon: Banknote },
   { id: "mod-templates", name: "Templates", category: "module", path: "/templates", badge: "PG-011", keywords: ["templates", "forms", "letters", "documents", "email templates"], icon: LayoutTemplate },
   { id: "mod-automations", name: "Automations", category: "module", path: "/automations", badge: "PG-013", keywords: ["automations", "triggers", "actions", "workflows", "zapier", "webhooks"], icon: Zap },
+  { id: "mod-workflows", name: "Workflow Designer", category: "module", path: "/workflows", badge: "PG-015", keywords: ["workflow designer", "workflows", "monorail", "workflow map", "guide steps", "stations", "traditional"], icon: GitBranch },
   { id: "mod-reports", name: "Reports & Metrics", category: "module", path: "/metrics", badge: "PG-042", keywords: ["analytics", "metrics", "kpi", "performance", "financials"], icon: Activity },
   { id: "mod-giving", name: "Giving & Impact", category: "module", path: "/giving", badge: "PG-040", keywords: ["giving", "scholarships", "donations", "charity", "funds", "sponsors"], icon: HandHeart },
   { id: "mod-settings", name: "Settings", category: "module", path: "/settings", badge: "PG-024", keywords: ["settings", "configuration", "preferences", "receipts", "domain"], icon: Settings },
@@ -1773,6 +1787,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         location === "/templates" || location.startsWith("/templates") ||
         location === "/tools" || (location.startsWith("/tools") && !location.startsWith("/tools/state-complaint-builder")) ||
         location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai") ||
+        location === "/workflows" || location.startsWith("/workflows") ||
         location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics") ||
         location === "/settings" || location.startsWith("/settings") ||
         location === "/messages" || location.startsWith("/messages") ||
@@ -1780,7 +1795,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         location === "/do-not-serve" || location.startsWith("/do-not-serve/") ||
         location === "/bill-guardian" || location.startsWith("/bill-guardian")
       ) && "bg-[#000820]",
-      (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/")) && "h-svh max-h-svh min-h-0 overflow-hidden"
+      (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/") || location === "/workflows" || location.startsWith("/workflows")) && "h-svh max-h-svh min-h-0 overflow-hidden"
       )}>
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40 shrink-0">
@@ -1809,6 +1824,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location === "/templates" || location.startsWith("/templates")) && "p-0 bg-[#000820]",
           (location === "/tools" || (location.startsWith("/tools") && !location.startsWith("/tools/state-complaint-builder"))) && "p-0 bg-[#000820]",
           (location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai")) && "p-0 bg-[#000820]",
+          (location === "/workflows" || location.startsWith("/workflows")) && "p-0 bg-[#000820] flex flex-col min-h-0 h-full overflow-hidden",
           (location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics")) && "p-0 bg-[#000820]",
           (location === "/settings" || location.startsWith("/settings")) && "p-0 bg-[#000820]",
           (location === "/messages" || location.startsWith("/messages")) && "p-0 bg-[#000820]",
