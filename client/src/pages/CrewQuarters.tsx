@@ -81,6 +81,7 @@ import EmployeePayrollTab from "@/components/crew-quarters/EmployeePayrollTab";
 import EmployeeEquipmentTab from "@/components/crew-quarters/EmployeeEquipmentTab";
 import NotesWorkspace from "@/components/braindump/NotesWorkspace";
 import CrewQuartersAnimatedHeader from "@/components/crew-quarters/CrewQuartersAnimatedHeader";
+import "@/styles/admiraltyBridge.css";
 
 interface TimeOffRequest {
   id: string;
@@ -311,7 +312,7 @@ export default function CrewQuarters() {
     setTimeOffRequests(updated);
     try {
       localStorage.setItem("waypoint_time_off_requests", JSON.stringify(updated));
-    } catch {}
+    } catch { }
 
     toast.success("Time off request submitted to management for review!");
     setTimeOffModalOpen(false);
@@ -319,8 +320,11 @@ export default function CrewQuarters() {
   };
 
   // Derive employee details
-  const employeeName = user?.name || "Wyatt Smith";
+  const employeeName = user?.name || "Byron Honea";
   const firstName = employeeName.split(" ")[0] || "Advocate";
+  const currentHour = new Date().getHours();
+  const timeGreeting =
+    currentHour < 12 ? "Good morning" : currentHour < 18 ? "Good afternoon" : "Good evening";
   const employeeRole = user?.role === "admin" ? "Lead Advocate / Practice Owner" : "Senior IEP Advocate";
   const userInitials = employeeName
     .split(" ")
@@ -363,1463 +367,1426 @@ export default function CrewQuarters() {
 
   return (
     <ScopedErrorBoundary moduleName="Crew Quarters">
-      <div className="min-h-screen bg-[#091D38] [background:radial-gradient(ellipse_at_50%_0%,_#14345E_0%,_#091D38_55%,_#051122_100%)] text-[#FFF4D4] pb-12 flex flex-col">
+      <div className="adm-bridge-canvas min-h-screen text-[#F7F4EC] pb-12 flex flex-col">
         {/* ── Top Header Panoramic Observation Window (Animated & Interactive) ── */}
         <CrewQuartersAnimatedHeader />
 
         {/* ── Main UI Deck (All UI Below the Header Window) ── */}
-        <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1600px] mx-auto w-full flex-1">
-          {/* ── Top Header & Personalized Welcome Banner ── */}
-          <div className="relative overflow-hidden rounded-3xl border border-[#543F22] bg-[#071A34]/90 shadow-[0_15px_45px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] p-6 sm:p-8">
-          {/* Subtle bathymetric wave texture */}
-          <div
-            className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-screen"
-            style={{ backgroundImage: `url('/waypoint-wave-bg.jpg')` }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#05142B] via-[#071F3D]/85 to-[#05142B]/90 pointer-events-none" />
-          <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#C5A059]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-[#0F2D54]/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 px-4 sm:px-6 lg:px-8 pt-6 pb-8 space-y-6 max-w-[1540px] mx-auto w-full flex-1">
+          {/* ── Top Header & Personalized Welcome Banner (Sculpted Pebbled Navy Leather & Platinum-Champagne Bevel) ── */}
+          <div className="adm-hero-card overflow-hidden rounded-[22px] px-6 sm:px-9 py-6 sm:py-7">
+            <div aria-hidden="true" className="adm-rim-glint-top" />
+            <div aria-hidden="true" className="adm-rim-glint-bottom" />
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="space-y-3">
-              {/* Crew Quarters Pill & Page ID */}
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#051326] border border-[#543F22] text-[#FFE394] text-xs font-bold tracking-wider uppercase font-mono">
-                  <LighthouseCottageIcon className="w-4 h-4 text-[#C5A059] shrink-0" />
-                  <span>Crew Quarters</span>
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="space-y-3.5">
+                {/* Crew Quarters Pill · On Duty · Page ID */}
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <div className="adm-crew-pill inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[#F6E2AE] text-[11px] font-bold tracking-[0.14em] uppercase">
+                    <LighthouseCottageIcon className="w-3.5 h-3.5 text-[#E8C678] shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
+                    <span>Crew Quarters</span>
+                  </div>
+                  <div className="adm-onduty-pill inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[#A6F6DB] text-[11.5px] font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-[#30F29E] shadow-[0_0_8px_rgba(48,242,158,0.9)] animate-pulse" />
+                    <span>On Duty</span>
+                  </div>
+                  <PageIdBadge
+                    id={resolveCrewQuartersTabId(currentTab)?.id || "PG-038"}
+                    name={resolveCrewQuartersTabId(currentTab)?.name || "Crew Quarters"}
+                    inline
+                  />
                 </div>
-                <PageIdBadge
-                  id={resolveCrewQuartersTabId(currentTab)?.id || "PG-038"}
-                  name={resolveCrewQuartersTabId(currentTab)?.name || "Crew Quarters"}
-                  inline
-                />
-                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>On Duty</span>
-                </div>
-              </div>
 
-              {/* Personalized Welcome Headline */}
-              <div>
-                <h1 className="text-2xl sm:text-4xl font-serif text-[#FFF4D4] font-normal tracking-wide">
-                  Good morning, <span className="font-serif italic font-bold text-[#FFE394]">{firstName}!</span>
-                </h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <WaypointWaveIcon className="w-9 h-2.5 text-[#C5A059] shrink-0" />
-                  <p className="text-xs sm:text-sm text-[#C6B697] font-medium">
-                    Same Mission. Stronger Together. Here's what's on deck today.
-                  </p>
+                {/* Personalized Welcome Headline */}
+                <div>
+                  <h1 className="text-3xl sm:text-[42px] leading-[1.12] font-serif text-[#F8F6F0] font-medium tracking-[0.005em] drop-shadow-[0_3px_12px_rgba(0,0,0,0.82)]">
+                    {timeGreeting},{" "}
+                    <span className="font-serif italic font-bold text-[#F5DC93] drop-shadow-[0_2px_10px_rgba(245,220,147,0.2)]">
+                      {firstName}!
+                    </span>
+                  </h1>
+                  <div className="flex items-center gap-2.5 mt-2.5">
+                    <WaypointWaveIcon className="w-8 h-2.5 text-[#E0BC6D] shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]" />
+                    <p className="text-xs sm:text-[13.5px] text-[#D4DFEE] font-normal tracking-[0.012em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.75)]">
+                      Same Mission. Stronger Together. Here&apos;s what&apos;s on deck today.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Employee Identity & Inspirational Motto Ribbon */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              {/* Mission Quote */}
-              <div className="hidden xl:flex flex-col text-right border-r border-[#543F22]/60 pr-5">
-                <span className="text-xs italic text-[#C6B697] font-serif">
-                  &ldquo;Different abilities. Brighter futures.&rdquo;
-                </span>
-                <span className="text-[10px] text-[#C5A059] font-semibold tracking-wider uppercase mt-0.5 font-mono">
-                  Waypoint Core Creed
-                </span>
-              </div>
-
-              {/* Date & Day Badge */}
-              <div className="flex items-center gap-3 bg-[#051326]/85 backdrop-blur-md border border-[#543F22] rounded-2xl p-3 shadow-lg">
-                <div className="p-2.5 rounded-xl bg-[#07162B] text-[#C5A059] border border-[#543F22] shrink-0">
-                  <Calendar className="w-5 h-5" />
+              {/* Right-Aligned Sculpted Obsidian-Navy & Gleaming Gold Date Capsule */}
+              <div className="adm-date-capsule overflow-hidden flex items-center gap-3.5 rounded-[16px] px-4 py-3 shrink-0 self-start lg:self-center">
+                <div aria-hidden="true" className="adm-rim-glint-top" />
+                <div aria-hidden="true" className="adm-rim-glint-bottom" />
+                <div className="adm-icon-tile relative z-10 p-2 rounded-[10px] text-[#EBC878] shrink-0">
+                  <Calendar className="w-4 h-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]" />
                 </div>
-                <div className="flex items-center gap-2.5 pr-2">
-                  <span className="text-2xl sm:text-3xl font-black text-[#FFF4D4] font-mono leading-none">
+                <div className="relative z-10 flex items-center gap-2.5 pr-1">
+                  <span className="text-[28px] sm:text-[32px] font-bold text-[#FAF7EE] leading-none tabular-nums drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
                     {new Date().getDate()}
                   </span>
                   <div className="flex flex-col text-left">
-                    <span className="text-xs font-bold text-[#FFF4D4] leading-tight font-serif">
+                    <span className="text-[12.5px] font-bold text-[#F7F4EC] leading-tight">
                       {new Date().toLocaleDateString(undefined, { weekday: "long" })}
                     </span>
-                    <span className="text-[11px] font-medium text-[#C6B697] leading-tight">
+                    <span className="text-[11px] font-medium text-[#B8C6DC] leading-tight mt-0.5">
                       {new Date().toLocaleDateString(undefined, { month: "short" })}
                     </span>
                   </div>
                 </div>
 
-                {/* Employee Name */}
-                <div className="pl-3.5 border-l border-[#543F22]/60 flex items-center">
-                  <span className="text-sm font-serif font-bold text-[#FFF4D4] tracking-wide whitespace-nowrap">
+                {/* Thin Vertical Satin-Brass Divider + Employee Name */}
+                <div className="relative z-10 pl-3.5 border-l border-[#d8c092]/35 flex items-center">
+                  <span className="text-[14.5px] font-serif font-semibold text-[#F8F5EC] tracking-wide whitespace-nowrap drop-shadow-[0_1px_4px_rgba(0,0,0,0.75)]">
                     {employeeName}
                   </span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* ── Top Operational Metric Blocks (6 Metric Cards) ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4">
-          
-          {/* Card 1: New Leads */}
-          <div 
-            onClick={() => setLocation("/leads")}
-            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#543F22] bg-[#071A34]/90 hover:border-[#C5A059]/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
-          >
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all duration-300" />
-            
-            {/* Top Left Tiny Icon */}
-            <div className="relative z-10 flex items-center justify-between w-full">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-[#051326] text-[#C5A059] border border-[#543F22] shrink-0 group-hover:scale-105 transition-transform">
-                <UserPlus className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Centered Huge Number */}
-            <div className="flex-1 flex items-center justify-center my-1 relative z-10">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-                {newLeadsCount}
-              </div>
-            </div>
-
-            {/* Full Text at Bottom */}
-            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#C6B697] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
-              New Leads
-            </div>
-          </div>
-
-          {/* Card 2: Meetings Today */}
-          <div 
-            onClick={() => setLocation("/calendar?view=day&date=today&scope=my")}
-            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#543F22] bg-[#071A34]/90 hover:border-[#C5A059]/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
-          >
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all duration-300" />
-            
-            {/* Top Left Tiny Icon */}
-            <div className="relative z-10 flex items-center justify-between w-full">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-[#051326] text-[#C5A059] border border-[#543F22] shrink-0 group-hover:scale-105 transition-transform">
-                <Calendar className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Centered Huge Number */}
-            <div className="flex-1 flex items-center justify-center my-1 relative z-10">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-                {todayAppointments.length || 2}
-              </div>
-            </div>
-
-            {/* Full Text at Bottom */}
-            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#C6B697] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
-              Meetings Today
-            </div>
-          </div>
-
-          {/* Card 3: Client Emails */}
-          <div 
-            onClick={() => setLocation("/messages")}
-            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#543F22] bg-[#071A34]/90 hover:border-[#C5A059]/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
-          >
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all duration-300" />
-            
-            {/* Top Left Tiny Icon */}
-            <div className="relative z-10 flex items-center justify-between w-full">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-[#051326] text-[#C5A059] border border-[#543F22] shrink-0 group-hover:scale-105 transition-transform">
-                <Mail className="w-3.5 h-3.5" />
-              </div>
-              {clientMessagesCount > 0 && (
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C5A059] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FFE394]" />
-                </span>
-              )}
-            </div>
-
-            {/* Centered Huge Number */}
-            <div className="flex-1 flex items-center justify-center my-1 relative z-10">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-                {clientMessagesCount}
-              </div>
-            </div>
-
-            {/* Full Text at Bottom */}
-            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#C6B697] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
-              Client Emails
-            </div>
-          </div>
-
-          {/* Card 4: Tasks Due */}
-          <div 
-            onClick={() => handleTabChange("tasks")}
-            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#543F22] bg-[#071A34]/90 hover:border-[#C5A059]/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
-          >
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all duration-300" />
-            
-            {/* Top Left Tiny Icon */}
-            <div className="relative z-10 flex items-center justify-between w-full">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-[#051326] text-[#C5A059] border border-[#543F22] shrink-0 group-hover:scale-105 transition-transform">
-                <CheckSquare className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Centered Huge Number */}
-            <div className="flex-1 flex items-center justify-center my-1 relative z-10">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-                {openTasks.length || 4}
-              </div>
-            </div>
-
-            {/* Full Text at Bottom */}
-            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#C6B697] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
-              Tasks Due
-            </div>
-          </div>
-
-          {/* Card 5: Crew Messages */}
-          <div 
-            onClick={() => handleTabChange("messages")}
-            className="group cursor-pointer relative overflow-hidden rounded-2xl border border-[#543F22] bg-[#071A34]/90 hover:border-[#C5A059]/80 px-2 sm:px-2.5 py-3.5 sm:py-4 transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.25)] flex flex-col justify-between min-h-[125px] sm:min-h-[135px]"
-          >
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#C5A059]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#C5A059]/20 transition-all duration-300" />
-            
-            {/* Top Left Tiny Icon */}
-            <div className="relative z-10 flex items-center justify-between w-full">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-[#051326] text-[#C5A059] border border-[#543F22] shrink-0 group-hover:scale-105 transition-transform">
-                <MessageSquare className="w-3.5 h-3.5" />
-              </div>
-              {crewUnreadTotal > 0 && (
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C5A059] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FFE394]" />
-                </span>
-              )}
-            </div>
-
-            {/* Centered Huge Number */}
-            <div className="flex-1 flex items-center justify-center my-1 relative z-10">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-[#FFF4D4] leading-none tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-                {crewUnreadTotal}
-              </div>
-            </div>
-
-            {/* Full Text at Bottom */}
-            <div className="relative z-10 text-center text-[11px] sm:text-xs xl:text-[13px] font-semibold text-[#C6B697] group-hover:text-[#FFF4D4] transition-colors tracking-tight whitespace-nowrap">
-              Crew Messages
-            </div>
-          </div>
-
-          {/* Card 6: Waypoint Motto Tile — Admiralty Bathymetric Chart & Gold Typography */}
-          <div className="col-span-1 relative rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-4 sm:p-5 flex items-center justify-between overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] group hover:border-[#C5A059]/80 transition-all duration-300 min-h-[125px] sm:min-h-[135px]">
-            {/* Bathymetric Contours in Aged Brass */}
-            <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden opacity-30">
-              <svg viewBox="0 0 300 120" fill="none" className="absolute inset-0 w-full h-full object-cover" preserveAspectRatio="none">
-                <path d="M-10 125 C 20 120, 35 105, 55 98 C 80 90, 105 106, 140 100 C 180 94, 220 106, 310 98" stroke="#C5A059" strokeWidth="0.75" />
-                <path d="M-10 110 C 24 104, 42 90, 65 83 C 92 75, 120 92, 158 85 C 200 78, 240 93, 310 84" stroke="#DFBE77" strokeWidth="0.85" />
-                <path d="M-10 94 C 28 86, 50 74, 76 66 C 106 58, 136 76, 178 69 C 220 62, 260 79, 310 70" stroke="#FFE394" strokeWidth="0.95" />
-                <path d="M-10 77 C 32 68, 58 56, 88 48 C 121 40, 154 60, 198 53 C 240 46, 280 65, 310 56" stroke="#C5A059" strokeWidth="0.85" />
-                <path d="M-10 59 C 36 49, 66 38, 100 30 C 136 22, 171 43, 218 36 C 260 29, 295 48, 310 42" stroke="#3A2C18" strokeWidth="0.65" />
-              </svg>
-            </div>
-
-            {/* Right-Aligned Stacked Gold Typography + Accent Bar */}
-            <div className="relative z-10 ml-auto flex flex-col items-end text-right select-none pl-4">
-              <div className="text-[13px] sm:text-[14px] font-serif font-black tracking-[0.2em] text-[#FFF4D4] leading-[1.35] drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">
-                <div>ADVOCACY</div>
-                <div>CHANGES</div>
-                <div>LIVES</div>
-              </div>
-              <div className="w-9 h-[2.5px] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] rounded-full mt-2 shadow-[0_0_10px_rgba(197,160,89,0.8)]" />
-            </div>
-          </div>
-        </div>
-
-      {/* ── Internal Tab Navigation Bar: Double Bar (Team Operations + Employee Self-Service) ── */}
-      <div className="w-full flex flex-col p-1.5 sm:p-2 bg-[#071A34]/95 border border-[#543F22] rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] gap-1.5 mb-6 relative overflow-hidden">
-        {/* Top subtle golden accent shimmer line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#C5A059]/60 to-transparent pointer-events-none" />
-
-        {/* Row 1: Team & Daily Operations */}
-        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full relative z-10 overflow-x-auto pb-0.5">
-          <div className="flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0">
-            <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-[#C5A059] bg-[#051326] border border-[#543F22] shrink-0 mr-1 select-none font-mono">
-              Team Ops
-            </span>
-            {[
-              { id: "overview", label: "Overview", icon: LayoutDashboard },
-              { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
-              { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
-              { id: "schedule", label: "Team Schedule", icon: Calendar },
-              { id: "resources", label: "Resources", icon: BookOpen },
-            ].map((tab) => {
-              const isActive = currentTab === tab.id;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`flex-1 min-w-0 h-8 sm:h-9 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap ${
-                    isActive
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
-                      : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
-                  }`}
-                >
-                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
-                  <span className="truncate">{tab.label}</span>
-                  {Boolean(tab.badge && tab.badge > 0) && (
-                    <span
-                      className={`ml-0.5 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight shrink-0 ${
-                        isActive
-                          ? "bg-[#07162B] text-[#FFE394] border border-[#543F22]"
-                          : "bg-[#051326] text-[#FFE394] border border-[#543F22]"
-                      }`}
-                    >
-                      {tab.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {currentTab === "overview" && (
-            <Button
-              size="sm"
-              onClick={() => handleTabChange("messages")}
-              className="hidden lg:flex items-center gap-1.5 border border-[#543F22] bg-[#051326] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs font-semibold rounded-xl px-3 py-1.5 h-8 cursor-pointer shadow-sm transition-all shrink-0 ml-1"
+          {/* ── Top Operational Metric Blocks (6 Sculpted Pebbled-Leather & Platinum-Champagne Plaques) ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {/* Card 1: New Leads */}
+            <div
+              onClick={() => setLocation("/leads")}
+              className="adm-metric-card group cursor-pointer overflow-hidden rounded-[18px] px-4 py-4 flex flex-col justify-between min-h-[164px] sm:min-h-[172px]"
             >
-              <MessageSquare className="w-3.5 h-3.5 text-[#C5A059] shrink-0" />
-              <span>Messages</span>
-              <ArrowRight className="w-3 h-3 shrink-0" />
-            </Button>
-          )}
-        </div>
-
-        {/* Row 2: Employee Self-Service & Personal Management */}
-        <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1.5 border-t border-[#543F22]/60 relative z-10 overflow-x-auto">
-          <div className="flex items-center gap-1 sm:gap-1.5 w-full">
-            <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-[#FFE394] bg-[#051326] border border-[#543F22] shrink-0 mr-1 select-none font-mono">
-              Employee Hub
-            </span>
-            {[
-              { id: "notes", label: "My Notes", icon: Lightbulb },
-              { id: "availability", label: "My Availability", icon: Clock },
-              { id: "time-off", label: "Time Off & PTO", icon: Palmtree },
-              { id: "timesheet", label: "My Timesheet", icon: Timer },
-              { id: "profile", label: "Profile & Credentials", icon: Award },
-              { id: "payroll", label: "Payroll & Direct Deposit", icon: CreditCard },
-              { id: "equipment", label: "Equipment & Tech", icon: Laptop },
-            ].map((tab) => {
-              const isActive = currentTab === tab.id;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`flex-1 min-w-0 h-8 sm:h-9 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap ${
-                    isActive
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 font-bold"
-                      : "text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent"
-                  }`}
-                >
-                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#07162B]" : "text-[#C5A059]"}`} />
-                  <span className="truncate">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* ── TAB CONTENT 1: CREW MESSAGES WORKSPACE ── */}
-      {currentTab === "messages" && (
-        <div className="space-y-4">
-          <CrewMessagesWorkspace initialConversationId={selectedConversationId} />
-        </div>
-      )}
-
-      {/* ── TAB CONTENT 2: OVERVIEW DASHBOARD ── */}
-      {currentTab === "overview" && (
-        <div className="space-y-8">
-
-      {/* ── ROW 2: Today's Schedule · My Tasks · Quick Actions ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-
-        {/* Card 2A: Today's Schedule */}
-        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
-              <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
-                <Calendar className="w-4 h-4 text-[#C5A059]" />
-                <span>Today's Schedule</span>
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="relative z-10 flex items-center justify-between w-full">
+                <div className="adm-icon-tile w-9 h-9 rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                  <UserPlus className="w-4 h-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation("/calendar")}
-                className="text-xs text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] p-0 h-auto font-medium"
-              >
-                View Calendar →
-              </Button>
+              <div className="flex-1 flex items-center justify-center my-1.5 relative z-10">
+                <div className="text-[44px] sm:text-[48px] font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
+                  {newLeadsCount}
+                </div>
+              </div>
+              <div className="relative z-10 text-center text-[12.5px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                New Leads
+              </div>
             </div>
 
-            <div className="space-y-2.5 pt-3">
-              {[
-                { time: "9:00 AM", title: "Team Check-In", subtitle: "Virtual Meeting", dot: "bg-[#C5A059]" },
-                { time: "10:30 AM", title: "IEP Meeting — Jackson R.", subtitle: "Riverside School", dot: "bg-[#FFE394]" },
-                { time: "1:00 PM", title: "Callback — Parent (M. Carter)", subtitle: "Discuss assessment results", dot: "bg-emerald-400" },
-                { time: "3:00 PM", title: "Records Review", subtitle: "Johnson Case", dot: "bg-[#DFBE77]" },
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-[#051326]/85 hover:bg-[#07162B] transition-colors border border-[#543F22] hover:border-[#C5A059]/60">
-                  <div className="w-16 text-right shrink-0 pt-0.5">
-                    <span className="text-xs font-mono font-bold text-[#FFE394]">{item.time}</span>
-                  </div>
-                  <div className="flex items-start gap-2.5 min-w-0">
-                    <div className={`w-2 h-2 rounded-full ${item.dot} mt-1.5 shrink-0 shadow-sm`} />
-                    <div className="min-w-0">
-                      <div className="text-xs font-serif font-bold text-[#FFF4D4] truncate">{item.title}</div>
-                      <div className="text-[11px] text-[#C6B697] truncate">{item.subtitle}</div>
+            {/* Card 2: Meetings Today */}
+            <div
+              onClick={() => setLocation("/calendar?view=day&date=today&scope=my")}
+              className="adm-metric-card group cursor-pointer overflow-hidden rounded-[18px] px-4 py-4 flex flex-col justify-between min-h-[164px] sm:min-h-[172px]"
+            >
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="relative z-10 flex items-center justify-between w-full">
+                <div className="adm-icon-tile w-9 h-9 rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                  <Calendar className="w-4 h-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
+                </div>
+              </div>
+              <div className="flex-1 flex items-center justify-center my-1.5 relative z-10">
+                <div className="text-[44px] sm:text-[48px] font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
+                  {todayAppointments.length || 2}
+                </div>
+              </div>
+              <div className="relative z-10 text-center text-[12.5px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                Meetings Today
+              </div>
+            </div>
+
+            {/* Card 3: Client Emails */}
+            <div
+              onClick={() => setLocation("/messages")}
+              className="adm-metric-card group cursor-pointer overflow-hidden rounded-[18px] px-4 py-4 flex flex-col justify-between min-h-[164px] sm:min-h-[172px]"
+            >
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="relative z-10 flex items-center justify-between w-full">
+                <div className="adm-icon-tile w-9 h-9 rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                  <Mail className="w-4 h-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
+                </div>
+                {clientMessagesCount > 0 && (
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#DFBE77] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FFE394]" />
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 flex items-center justify-center my-1.5 relative z-10">
+                <div className="text-[44px] sm:text-[48px] font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
+                  {clientMessagesCount}
+                </div>
+              </div>
+              <div className="relative z-10 text-center text-[12.5px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                Client Emails
+              </div>
+            </div>
+
+            {/* Card 4: Tasks Due */}
+            <div
+              onClick={() => handleTabChange("tasks")}
+              className="adm-metric-card group cursor-pointer overflow-hidden rounded-[18px] px-4 py-4 flex flex-col justify-between min-h-[164px] sm:min-h-[172px]"
+            >
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="relative z-10 flex items-center justify-between w-full">
+                <div className="adm-icon-tile w-9 h-9 rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                  <CheckSquare className="w-4 h-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
+                </div>
+              </div>
+              <div className="flex-1 flex items-center justify-center my-1.5 relative z-10">
+                <div className="text-[44px] sm:text-[48px] font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
+                  {openTasks.length || 4}
+                </div>
+              </div>
+              <div className="relative z-10 text-center text-[12.5px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                Tasks Due
+              </div>
+            </div>
+
+            {/* Card 5: Crew Messages */}
+            <div
+              onClick={() => handleTabChange("messages")}
+              className="adm-metric-card group cursor-pointer overflow-hidden rounded-[18px] px-4 py-4 flex flex-col justify-between min-h-[164px] sm:min-h-[172px]"
+            >
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="relative z-10 flex items-center justify-between w-full">
+                <div className="adm-icon-tile w-9 h-9 rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                  <MessageSquare className="w-4 h-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
+                </div>
+                {crewUnreadTotal > 0 && (
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#DFBE77] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FFE394]" />
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 flex items-center justify-center my-1.5 relative z-10">
+                <div className="text-[44px] sm:text-[48px] font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
+                  {crewUnreadTotal}
+                </div>
+              </div>
+              <div className="relative z-10 text-center text-[12.5px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                Crew Messages
+              </div>
+            </div>
+
+            {/* Card 6: Waypoint Motto Tile — Sculpted Calfskin Leather + Contours + Full-Width Editorial Motto */}
+            <div
+              className="adm-metric-card adm-metric-card-motto col-span-1 overflow-hidden rounded-[18px] px-3 py-4 flex items-center justify-center min-h-[164px] sm:min-h-[172px]"
+              style={{ containerType: "inline-size" }}
+            >
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="relative z-10 w-full flex flex-col items-end text-right select-none">
+                <div
+                  className="w-full font-serif font-bold tracking-[0.09em] text-[#F9F6EE] leading-[1.32] drop-shadow-[0_3px_10px_rgba(0,0,0,0.88)]"
+                  style={{ fontSize: "clamp(12px, 12.4cqi, 26px)" }}
+                >
+                  <div>ADVOCACY</div>
+                  <div>CHANGES</div>
+                  <div>LIVES</div>
+                </div>
+                <div className="w-[48%] max-w-[92px] h-[3.5px] bg-gradient-to-r from-[#b5893a] via-[#fff2c2] to-[#c99e4d] rounded-full mt-3 shadow-[0_2px_10px_rgba(0,0,0,0.88),0_0_12px_rgba(242,208,128,0.58)]" />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Internal Tab Navigation Bar: Double Bar (Team Operations + Employee Self-Service) ── */}
+          <div className="adm-panel-card w-full flex flex-col p-2 rounded-[18px] gap-1.5 mb-2 overflow-hidden">
+            <div aria-hidden="true" className="adm-rim-glint-top" />
+            <div aria-hidden="true" className="adm-rim-glint-bottom" />
+
+            {/* Row 1: Team & Daily Operations */}
+            <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full relative z-10 overflow-x-auto pb-0.5">
+              <div className="flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0">
+                <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-[#E5C57A] bg-[#061120] border border-[#d4bc88]/30 shrink-0 mr-1 select-none font-mono">
+                  Team Ops
+                </span>
+                {[
+                  { id: "overview", label: "Overview", icon: LayoutDashboard },
+                  { id: "messages", label: "Crew Messages", icon: MessageSquare, badge: crewUnreadTotal },
+                  { id: "tasks", label: "My Tasks", icon: CheckSquare, badge: openTasks.length },
+                  { id: "schedule", label: "Team Schedule", icon: Calendar },
+                  { id: "resources", label: "Resources", icon: BookOpen },
+                ].map((tab) => {
+                  const isActive = currentTab === tab.id;
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`flex-1 min-w-0 h-8 sm:h-9 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap ${isActive
+                        ? "bg-gradient-to-r from-[#E6C87E] via-[#C8A257] to-[#9F7E3D] text-[#071528] shadow-[0_4px_12px_rgba(0,0,0,0.82),inset_0_1px_0_rgba(255,248,224,0.45)] border border-[#FFF0C2]/55 font-bold"
+                        : "text-[#CFDCEF] hover:text-[#FFF8E6] hover:bg-white/[0.05] border border-transparent"
+                        }`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#071528]" : "text-[#E4C072]"}`} />
+                      <span className="truncate">{tab.label}</span>
+                      {Boolean(tab.badge && tab.badge > 0) && (
+                        <span
+                          className={`ml-0.5 text-[10px] font-black px-1.5 py-0.2 rounded-full leading-tight shrink-0 ${isActive
+                            ? "bg-[#07162B] text-[#FFE394] border border-[#d4bc88]/40"
+                            : "bg-[#061120] text-[#FFE394] border border-[#d4bc88]/30"
+                            }`}
+                        >
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {currentTab === "overview" && (
+                <Button
+                  size="sm"
+                  onClick={() => handleTabChange("messages")}
+                  className="adm-sidebar-util-btn hidden lg:flex items-center gap-1.5 text-[#E4ECF7] hover:text-[#FFF4D6] text-xs font-semibold rounded-xl px-3 py-1.5 h-8 cursor-pointer transition-all shrink-0 ml-1"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-[#E4C072] shrink-0" />
+                  <span>Messages</span>
+                  <ArrowRight className="w-3 h-3 shrink-0" />
+                </Button>
+              )}
+            </div>
+
+            {/* Row 2: Employee Self-Service & Personal Management */}
+            <div className="flex items-center justify-between gap-1 sm:gap-1.5 w-full pt-1.5 border-t border-[#d4bc88]/20 relative z-10 overflow-x-auto">
+              <div className="flex items-center gap-1 sm:gap-1.5 w-full">
+                <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-[#F0D48C] bg-[#061120] border border-[#d4bc88]/30 shrink-0 mr-1 select-none font-mono">
+                  Employee Hub
+                </span>
+                {[
+                  { id: "notes", label: "My Notes", icon: Lightbulb },
+                  { id: "availability", label: "My Availability", icon: Clock },
+                  { id: "time-off", label: "Time Off & PTO", icon: Palmtree },
+                  { id: "timesheet", label: "My Timesheet", icon: Timer },
+                  { id: "profile", label: "Profile & Credentials", icon: Award },
+                  { id: "payroll", label: "Payroll & Direct Deposit", icon: CreditCard },
+                  { id: "equipment", label: "Equipment & Tech", icon: Laptop },
+                ].map((tab) => {
+                  const isActive = currentTab === tab.id;
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`flex-1 min-w-0 h-8 sm:h-9 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-150 cursor-pointer whitespace-nowrap ${isActive
+                        ? "bg-gradient-to-r from-[#E6C87E] via-[#C8A257] to-[#9F7E3D] text-[#071528] shadow-[0_4px_12px_rgba(0,0,0,0.82),inset_0_1px_0_rgba(255,248,224,0.45)] border border-[#FFF0C2]/55 font-bold"
+                        : "text-[#CFDCEF] hover:text-[#FFF8E6] hover:bg-white/[0.05] border border-transparent"
+                        }`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#071528]" : "text-[#E4C072]"}`} />
+                      <span className="truncate">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ── TAB CONTENT 1: CREW MESSAGES WORKSPACE ── */}
+          {currentTab === "messages" && (
+            <div className="space-y-4">
+              <CrewMessagesWorkspace initialConversationId={selectedConversationId} />
+            </div>
+          )}
+
+          {/* ── TAB CONTENT 2: OVERVIEW DASHBOARD ── */}
+          {currentTab === "overview" && (
+            <div className="space-y-8">
+
+              {/* ── ROW 2: Today's Schedule · My Tasks · Quick Actions ── */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+
+                {/* Card 2A: Today's Schedule */}
+                <Card className="adm-panel-card overflow-hidden rounded-[18px] p-5 sm:p-6 flex flex-col justify-between h-full space-y-4">
+                  <div aria-hidden="true" className="adm-rim-glint-top" />
+                  <div aria-hidden="true" className="adm-rim-glint-bottom" />
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-[#c8a055]/25">
+                      <div className="flex items-center gap-2 text-[#F7F3E9] font-serif font-bold text-sm sm:text-base">
+                        <Calendar className="w-4 h-4 text-[#E4C072]" />
+                        <span>Today's Schedule</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLocation("/calendar")}
+                        className="text-xs text-[#C6D1E4] hover:text-[#FFF4D6] hover:bg-white/[0.06] p-0 h-auto font-medium"
+                      >
+                        View Calendar →
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2.5 pt-3">
+                      {[
+                        { time: "9:00 AM", title: "Team Check-In", subtitle: "Virtual Meeting", dot: "bg-[#C5A059]" },
+                        { time: "10:30 AM", title: "IEP Meeting — Jackson R.", subtitle: "Riverside School", dot: "bg-[#FFE394]" },
+                        { time: "1:00 PM", title: "Callback — Parent (M. Carter)", subtitle: "Discuss assessment results", dot: "bg-emerald-400" },
+                        { time: "3:00 PM", title: "Records Review", subtitle: "Johnson Case", dot: "bg-[#DFBE77]" },
+                      ].map((item, idx) => (
+                        <div key={idx} className="adm-inset-row flex items-start gap-3 p-2.5 rounded-xl">
+                          <div className="w-16 text-right shrink-0 pt-0.5">
+                            <span className="text-xs font-mono font-bold text-[#F3D892]">{item.time}</span>
+                          </div>
+                          <div className="flex items-start gap-2.5 min-w-0">
+                            <div className={`w-2 h-2 rounded-full ${item.dot} mt-1.5 shrink-0 shadow-sm`} />
+                            <div className="min-w-0">
+                              <div className="text-xs font-serif font-bold text-[#F7F3E9] truncate">{item.title}</div>
+                              <div className="text-[11px] text-[#B9C7DD] truncate">{item.subtitle}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="pt-2 border-t border-[#543F22]/60 flex items-center justify-between text-[11px] text-[#C6B697]">
-            <span>4 events scheduled</span>
-            <span className="text-[#FFE394] font-mono">Next: 10:30 AM</span>
-          </div>
-        </Card>
-
-        {/* Card 2B: My Tasks */}
-        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
-              <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
-                <CheckSquare className="w-4 h-4 text-[#C5A059]" />
-                <span>My Tasks</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation("/tasks")}
-                className="text-xs text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#07162B] p-0 h-auto font-medium"
-              >
-                View All →
-              </Button>
-            </div>
-
-            <div className="space-y-2 pt-3">
-              {[
-                { title: "Complete draft of Parent Concerns", tag: "High", tagColor: "bg-rose-500/15 text-rose-300 border-rose-500/30" },
-                { title: "Follow up with SLP", tag: "Today", tagColor: "bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/40" },
-                { title: "Send meeting summary to parent", tag: "Today", tagColor: "bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/40" },
-                { title: "Review evaluation documents", tag: "Tomorrow", tagColor: "bg-[#051326] text-[#D8C7A5] border-[#543F22]" },
-                { title: "Prepare for IEP meeting", tag: "Tomorrow", tagColor: "bg-[#051326] text-[#D8C7A5] border-[#543F22]" },
-              ].map((task, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-[#051326]/85 border border-[#543F22] text-xs hover:border-[#C5A059]/50 transition-colors">
-                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                    <input type="checkbox" className="rounded border-[#543F22] bg-[#051326] text-[#C5A059] focus:ring-[#C5A059] h-3.5 w-3.5" />
-                    <span className="text-[#FFF4D4] truncate font-medium">{task.title}</span>
+                  <div className="pt-2 border-t border-[#c8a055]/20 flex items-center justify-between text-[11px] text-[#B9C7DD]">
+                    <span>4 events scheduled</span>
+                    <span className="text-[#F3D892] font-mono">Next: 10:30 AM</span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${task.tagColor}`}>
-                    {task.tag}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+                </Card>
 
-          <div className="pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTaskModalOpen(true)}
-              className="w-full border border-[#543F22] bg-[#051326] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] text-xs rounded-xl py-2 gap-1.5 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 text-[#C5A059]" />
-              <span>Add Task</span>
-            </Button>
-          </div>
-        </Card>
-
-        {/* Card 2C: Quick Actions Grid */}
-        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
-              <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
-                <Sparkles className="w-4 h-4 text-[#C5A059]" />
-                <span>Quick Actions</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-3">
-              <Button
-                variant="outline"
-                onClick={() => setTimeOffModalOpen(true)}
-                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
-              >
-                <Calendar className="w-5 h-5 text-[#C5A059]" />
-                <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">Request<br />Time Off</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/calendar")}
-                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
-              >
-                <CalendarClock className="w-5 h-5 text-[#C5A059]" />
-                <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">View<br />My Calendar</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setTaskModalOpen(true)}
-                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
-              >
-                <CheckSquare className="w-5 h-5 text-[#C5A059]" />
-                <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">Add Task</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/projects")}
-                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
-              >
-                <Users className="w-5 h-5 text-[#C5A059]" />
-                <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">My Cases</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => toast.info("Team Messaging Console is active")}
-                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
-              >
-                <MessageSquare className="w-5 h-5 text-[#C5A059]" />
-                <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">Team<br />Messages</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/knowledge-base")}
-                className="h-[84px] flex-col py-3 px-2 border-[#543F22] bg-[#051326]/85 hover:border-[#C5A059]/60 hover:bg-[#07162B] text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer transition-all"
-              >
-                <BookOpen className="w-5 h-5 text-[#C5A059]" />
-                <span className="text-xs font-serif font-bold text-[#FFF4D4] leading-tight">Training &amp;<br />Resources</span>
-              </Button>
-            </div>
-          </div>
-
-          <div className="pt-2 text-center text-[11px] text-[#A69371]">
-            Quick employee utilities
-          </div>
-        </Card>
-
-      </div>
-
-      {/* ── ROW 3: Time Off · My Cases · Team Messages ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-
-        {/* Card 3A: Time Off Center */}
-        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
-              <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
-                <Plane className="w-4 h-4 text-[#C5A059]" />
-                <span>Time Off</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setTimeOffModalOpen(true)}
-                className="text-xs text-[#C6B697] hover:text-[#FFE394] hover:bg-[#07162B] p-0 h-auto font-medium"
-              >
-                View All →
-              </Button>
-            </div>
-
-            {/* Request Time Off Action Button */}
-            <div className="pt-3 pb-2">
-              <Button
-                onClick={() => setTimeOffModalOpen(true)}
-                className="w-full bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-xs rounded-xl py-2.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 flex items-center justify-center gap-2 cursor-pointer transition-all"
-              >
-                <Plus className="w-4 h-4 stroke-[3]" />
-                <span>Request Time Off</span>
-              </Button>
-            </div>
-
-            {/* Upcoming Time Off */}
-            <div className="space-y-2 pt-1">
-              <div className="text-[11px] font-mono font-semibold text-[#A69371] uppercase tracking-wider">
-                Upcoming Time Off
-              </div>
-              <div className="space-y-2">
-                {timeOffRequests.filter((r) => r.status === "Approved").length === 0 ? (
-                  <div className="p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs text-[#A69371] text-center">
-                    No approved upcoming leave scheduled.
-                  </div>
-                ) : (
-                  timeOffRequests.filter((r) => r.status === "Approved").slice(0, 2).map((r) => (
-                    <div key={r.id} className="p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-[#FFF4D4]">
-                          {r.startDate}{r.endDate && r.endDate !== r.startDate ? ` – ${r.endDate}` : ""}
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
-                          Approved
-                        </span>
+                {/* Card 2B: My Tasks */}
+                <Card className="adm-panel-card overflow-hidden rounded-[18px] p-5 sm:p-6 flex flex-col justify-between h-full space-y-4">
+                  <div aria-hidden="true" className="adm-rim-glint-top" />
+                  <div aria-hidden="true" className="adm-rim-glint-bottom" />
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-[#c8a055]/25">
+                      <div className="flex items-center gap-2 text-[#F7F3E9] font-serif font-bold text-sm sm:text-base">
+                        <CheckSquare className="w-4 h-4 text-[#E4C072]" />
+                        <span>My Tasks</span>
                       </div>
-                      {r.returnDate && (
-                        <div className="text-[10px] text-[#FFE394]/90 mt-1 flex items-center gap-1 font-mono">
-                          <CalendarCheck className="w-3 h-3 text-[#C5A059] shrink-0" />
-                          <span>First day back: <strong className="text-[#FFF4D4]">{r.returnDate}</strong></span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLocation("/tasks")}
+                        className="text-xs text-[#C6D1E4] hover:text-[#FFF4D6] hover:bg-white/[0.06] p-0 h-auto font-medium"
+                      >
+                        View All →
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2 pt-3">
+                      {[
+                        { title: "Complete draft of Parent Concerns", tag: "High", tagColor: "bg-rose-500/15 text-rose-300 border-rose-500/30" },
+                        { title: "Follow up with SLP", tag: "Today", tagColor: "bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/40" },
+                        { title: "Send meeting summary to parent", tag: "Today", tagColor: "bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/40" },
+                        { title: "Review evaluation documents", tag: "Tomorrow", tagColor: "bg-[#051326] text-[#C8D3E6] border-[#c8a055]/30" },
+                        { title: "Prepare for IEP meeting", tag: "Tomorrow", tagColor: "bg-[#051326] text-[#C8D3E6] border-[#c8a055]/30" },
+                      ].map((task, idx) => (
+                        <div key={idx} className="adm-inset-row flex items-center justify-between p-2 rounded-xl text-xs">
+                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                            <input type="checkbox" className="rounded border-[#c8a055]/45 bg-[#051326] text-[#C5A059] focus:ring-[#C5A059] h-3.5 w-3.5" />
+                            <span className="text-[#F7F3E9] truncate font-medium">{task.title}</span>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${task.tagColor}`}>
+                            {task.tag}
+                          </span>
                         </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTaskModalOpen(true)}
+                      className="adm-sidebar-util-btn w-full text-[#F5EFE0] hover:text-white text-xs rounded-xl py-2 gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-[#E4C072]" />
+                      <span>Add Task</span>
+                    </Button>
+                  </div>
+                </Card>
+
+                {/* Card 2C: Quick Actions Grid */}
+                <Card className="adm-panel-card overflow-hidden rounded-[18px] p-5 sm:p-6 flex flex-col justify-between h-full space-y-4">
+                  <div aria-hidden="true" className="adm-rim-glint-top" />
+                  <div aria-hidden="true" className="adm-rim-glint-bottom" />
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-[#c8a055]/25">
+                      <div className="flex items-center gap-2 text-[#F7F3E9] font-serif font-bold text-sm sm:text-base">
+                        <Sparkles className="w-4 h-4 text-[#E4C072]" />
+                        <span>Quick Actions</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => setTimeOffModalOpen(true)}
+                        className="adm-inset-row h-[84px] flex-col py-3 px-2 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer"
+                      >
+                        <Calendar className="w-5 h-5 text-[#E4C072]" />
+                        <span className="text-xs font-serif font-bold text-[#F7F3E9] leading-tight">Request<br />Time Off</span>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => setLocation("/calendar")}
+                        className="adm-inset-row h-[84px] flex-col py-3 px-2 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer"
+                      >
+                        <CalendarClock className="w-5 h-5 text-[#E4C072]" />
+                        <span className="text-xs font-serif font-bold text-[#F7F3E9] leading-tight">View<br />My Calendar</span>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => setTaskModalOpen(true)}
+                        className="adm-inset-row h-[84px] flex-col py-3 px-2 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer"
+                      >
+                        <CheckSquare className="w-5 h-5 text-[#E4C072]" />
+                        <span className="text-xs font-serif font-bold text-[#F7F3E9] leading-tight">Add Task</span>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => setLocation("/projects")}
+                        className="adm-inset-row h-[84px] flex-col py-3 px-2 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer"
+                      >
+                        <Users className="w-5 h-5 text-[#E4C072]" />
+                        <span className="text-xs font-serif font-bold text-[#F7F3E9] leading-tight">My Cases</span>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => toast.info("Team Messaging Console is active")}
+                        className="adm-inset-row h-[84px] flex-col py-3 px-2 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer"
+                      >
+                        <MessageSquare className="w-5 h-5 text-[#E4C072]" />
+                        <span className="text-xs font-serif font-bold text-[#F7F3E9] leading-tight">Team<br />Messages</span>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => setLocation("/knowledge-base")}
+                        className="adm-inset-row h-[84px] flex-col py-3 px-2 text-center items-center justify-center rounded-xl gap-1.5 cursor-pointer"
+                      >
+                        <BookOpen className="w-5 h-5 text-[#E4C072]" />
+                        <span className="text-xs font-serif font-bold text-[#F7F3E9] leading-tight">Training &amp;<br />Resources</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 text-center text-[11px] text-[#9FB0CB]">
+                    Quick employee utilities
+                  </div>
+                </Card>
+
+              </div>
+
+              {/* ── ROW 3: Time Off · My Cases · Team Messages ── */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+
+                {/* Card 3A: Time Off Center */}
+                <Card className="adm-panel-card overflow-hidden rounded-[18px] p-5 sm:p-6 flex flex-col justify-between h-full space-y-4">
+                  <div aria-hidden="true" className="adm-rim-glint-top" />
+                  <div aria-hidden="true" className="adm-rim-glint-bottom" />
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-[#c8a055]/25">
+                      <div className="flex items-center gap-2 text-[#F7F3E9] font-serif font-bold text-sm sm:text-base">
+                        <Plane className="w-4 h-4 text-[#E4C072]" />
+                        <span>Time Off</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setTimeOffModalOpen(true)}
+                        className="text-xs text-[#C6D1E4] hover:text-[#FFF4D6] hover:bg-white/[0.06] p-0 h-auto font-medium"
+                      >
+                        View All →
+                      </Button>
+                    </div>
+
+                    {/* Request Time Off Action Button */}
+                    <div className="pt-3 pb-2">
+                      <Button
+                        onClick={() => setTimeOffModalOpen(true)}
+                        className="w-full bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-xs rounded-xl py-2.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 flex items-center justify-center gap-2 cursor-pointer transition-all"
+                      >
+                        <Plus className="w-4 h-4 stroke-[3]" />
+                        <span>Request Time Off</span>
+                      </Button>
+                    </div>
+
+                    {/* Upcoming Time Off */}
+                    <div className="space-y-2 pt-1">
+                      <div className="text-[11px] font-mono font-semibold text-[#A9BAD4] uppercase tracking-wider">
+                        Upcoming Time Off
+                      </div>
+                      <div className="space-y-2">
+                        {timeOffRequests.filter((r) => r.status === "Approved").length === 0 ? (
+                          <div className="adm-inset-row p-2.5 rounded-xl text-xs text-[#A9BAD4] text-center">
+                            No approved upcoming leave scheduled.
+                          </div>
+                        ) : (
+                          timeOffRequests.filter((r) => r.status === "Approved").slice(0, 2).map((r) => (
+                            <div key={r.id} className="adm-inset-row p-2.5 rounded-xl text-xs">
+                              <div className="flex items-center justify-between">
+                                <span className="font-semibold text-[#F7F3E9]">
+                                  {r.startDate}{r.endDate && r.endDate !== r.startDate ? ` – ${r.endDate}` : ""}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
+                                  Approved
+                                </span>
+                              </div>
+                              {r.returnDate && (
+                                <div className="text-[10px] text-[#FFE394]/90 mt-1 flex items-center gap-1 font-mono">
+                                  <CalendarCheck className="w-3 h-3 text-[#E4C072] shrink-0" />
+                                  <span>First day back: <strong className="text-[#FAF6ED]">{r.returnDate}</strong></span>
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Pending Requests */}
+                    <div className="space-y-2 pt-3">
+                      <div className="text-[11px] font-mono font-semibold text-[#A9BAD4] uppercase tracking-wider">
+                        Pending Requests
+                      </div>
+                      {timeOffRequests.filter((r) => r.status === "Pending").length === 0 ? (
+                        <div className="adm-inset-row p-2.5 rounded-xl text-xs text-[#A9BAD4] text-center">
+                          No requests currently pending review.
+                        </div>
+                      ) : (
+                        timeOffRequests.filter((r) => r.status === "Pending").slice(0, 2).map((r) => (
+                          <div key={r.id} className="adm-inset-row p-2.5 rounded-xl text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-[#F7F3E9]">
+                                {r.startDate}{r.endDate && r.endDate !== r.startDate ? ` – ${r.endDate}` : ""}
+                              </span>
+                              <span className="px-2.5 py-0.5 rounded-full bg-[#C5A059]/20 text-[#FFE394] border border-[#C5A059]/40 text-[10px] font-bold">
+                                Pending
+                              </span>
+                            </div>
+                            {r.returnDate && (
+                              <div className="text-[10px] text-[#FFE394]/90 mt-1 flex items-center gap-1 font-mono">
+                                <CalendarCheck className="w-3 h-3 text-[#E4C072] shrink-0" />
+                                <span>First day back: <strong className="text-[#FAF6ED]">{r.returnDate}</strong></span>
+                              </div>
+                            )}
+                          </div>
+                        ))
                       )}
                     </div>
-                  ))
+                  </div>
+
+                  <div className="pt-2 border-t border-[#c8a055]/20 flex items-center justify-between text-[11px] text-[#A9BAD4]">
+                    <span>Annual Allowance: 15 Days</span>
+                    <span className="text-emerald-400 font-mono font-semibold">11 Days Remaining</span>
+                  </div>
+                </Card>
+
+                {/* Card 3B: My Cases */}
+                <Card className="adm-panel-card overflow-hidden rounded-[18px] p-5 sm:p-6 flex flex-col justify-between h-full space-y-4">
+                  <div aria-hidden="true" className="adm-rim-glint-top" />
+                  <div aria-hidden="true" className="adm-rim-glint-bottom" />
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-[#c8a055]/25">
+                      <div className="flex items-center gap-2 text-[#F7F3E9] font-serif font-bold text-sm sm:text-base">
+                        <Users className="w-4 h-4 text-[#E4C072]" />
+                        <span>My Cases</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLocation("/projects")}
+                        className="text-xs text-[#C6D1E4] hover:text-[#FFF4D6] hover:bg-white/[0.06] p-0 h-auto font-medium"
+                      >
+                        View All →
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2 pt-3">
+                      {[
+                        { name: "Alex P.", initials: "AP", milestone: "IEP Meeting 9/15", status: "Active" },
+                        { name: "Bella R.", initials: "BR", milestone: "Records Review", status: "Active" },
+                        { name: "Chris T.", initials: "CT", milestone: "Draft in Progress", status: "Active" },
+                        { name: "Jordan M.", initials: "JM", milestone: "Parent Follow-Up", status: "Active" },
+                        { name: "Taylor S.", initials: "TS", milestone: "Evaluation Review", status: "Active" },
+                      ].map((c, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => setLocation("/projects")}
+                          className="adm-inset-row flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="adm-icon-tile w-7 h-7 rounded-full text-[#F3D892] font-bold flex items-center justify-center text-[10px] shrink-0 font-serif">
+                              {c.initials}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-bold text-[#F7F3E9] truncate font-serif">{c.name}</div>
+                              <div className="text-[10px] text-[#9FB0CB] truncate">{c.milestone}</div>
+                            </div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-semibold font-mono">
+                            {c.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 text-center text-[11px] text-[#9FB0CB]">
+                    Primary caseload snapshot · All CRM students remain accessible
+                  </div>
+                </Card>
+
+                {/* Card 3C: Live Crew Messages Widget */}
+                <CrewMessagesOverviewWidget
+                  onOpenCrewMessages={(convId) => handleTabChange("messages", convId)}
+                />
+
+              </div>
+
+              {/* ── ROW 4: Company Announcements · Training & Resources · Waypoint Inspiration Card ── */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+
+                {/* Card 4A: Company Announcements */}
+                <Card className="adm-panel-card overflow-hidden rounded-[18px] p-5 sm:p-6 flex flex-col justify-between h-full space-y-4">
+                  <div aria-hidden="true" className="adm-rim-glint-top" />
+                  <div aria-hidden="true" className="adm-rim-glint-bottom" />
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-[#c8a055]/25">
+                      <div className="flex items-center gap-2 text-[#F7F3E9] font-serif font-bold text-sm sm:text-base">
+                        <Megaphone className="w-4 h-4 text-[#E4C072]" />
+                        <span>Company Announcements</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toast.info("Viewing all announcements")}
+                        className="text-xs text-[#C6D1E4] hover:text-[#FFF4D6] hover:bg-white/[0.06] p-0 h-auto font-medium"
+                      >
+                        View All →
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2.5 pt-3">
+                      {[
+                        {
+                          title: "Office Closed – Sept 20",
+                          desc: "In observance of staff training day.",
+                          date: "Sept 9",
+                          icon: Calendar,
+                          iconColor: "adm-icon-tile text-[#F3D892]",
+                        },
+                        {
+                          title: "New Training Module",
+                          desc: "IEP Meeting Best Practices is now available.",
+                          date: "Sept 8",
+                          icon: BookOpen,
+                          iconColor: "adm-icon-tile text-[#E4C072]",
+                        },
+                        {
+                          title: "Welcome to the Team!",
+                          desc: "Please join us in welcoming our newest advocate!",
+                          date: "Sept 5",
+                          icon: Megaphone,
+                          iconColor: "adm-icon-tile text-emerald-400",
+                        },
+                      ].map((ann, idx) => (
+                        <div key={idx} className="adm-inset-row flex items-start gap-3 p-2.5 rounded-xl text-xs">
+                          <div className={`p-2 rounded-xl shrink-0 ${ann.iconColor}`}>
+                            <ann.icon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 space-y-0.5 flex-1">
+                            <div className="flex items-center justify-between">
+                              <div className="font-bold text-[#F7F3E9] truncate pr-2 font-serif">{ann.title}</div>
+                              <span className="text-[10px] font-mono text-[#9FB0CB] shrink-0">{ann.date}</span>
+                            </div>
+                            <div className="text-[11px] text-[#B9C7DD] leading-relaxed">{ann.desc}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 text-center text-[11px] text-[#9FB0CB]">
+                    Waypoint Practice News &amp; Updates
+                  </div>
+                </Card>
+
+                {/* Card 4B: Training & Resources */}
+                <Card className="adm-panel-card overflow-hidden rounded-[18px] p-5 sm:p-6 flex flex-col justify-between h-full space-y-4">
+                  <div aria-hidden="true" className="adm-rim-glint-top" />
+                  <div aria-hidden="true" className="adm-rim-glint-bottom" />
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-[#c8a055]/25">
+                      <div className="flex items-center gap-2 text-[#F7F3E9] font-serif font-bold text-sm sm:text-base">
+                        <BookOpen className="w-4 h-4 text-[#E4C072]" />
+                        <span>Training &amp; Resources</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLocation("/knowledge-base")}
+                        className="text-xs text-[#C6D1E4] hover:text-[#FFF4D6] hover:bg-white/[0.06] p-0 h-auto font-medium"
+                      >
+                        View All →
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2 pt-3">
+                      {[
+                        { title: "Waypoint Field Guide", desc: "Your step-by-step resource", path: "/knowledge-base", icon: FileText },
+                        { title: "Standard Operating Procedures", desc: "Office processes and workflows", path: "/walkthroughs", icon: FileText },
+                        { title: "Phone Scripts", desc: "Ready-to-use communication templates", path: "/templates", icon: Phone },
+                        { title: "Training Modules", desc: "Continue your professional development", path: "/knowledge-base", icon: Video },
+                      ].map((res, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => setLocation(res.path)}
+                          className="adm-inset-row flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                            <res.icon className="w-4 h-4 text-[#E4C072] shrink-0" />
+                            <div className="min-w-0">
+                              <div className="font-bold text-[#F7F3E9] truncate font-serif">{res.title}</div>
+                              <div className="text-[10px] text-[#9FB0CB] truncate">{res.desc}</div>
+                            </div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-[#9FB0CB] shrink-0" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 text-center text-[11px] text-[#9FB0CB]">
+                    Waypoint Advocates internal library
+                  </div>
+                </Card>
+
+                {/* Card 4C: Waypoint Inspiration Poster Tile — Satin Brass Framed Lighthouse */}
+                <div className="adm-panel-card rounded-[18px] p-6 flex flex-col items-center justify-between text-center relative overflow-hidden h-full group min-h-[340px] transition-all">
+                  {/* Vibrant Cinematic Lighthouse Night Ocean Backdrop (Bright & Rich) */}
+                  <div
+                    className="absolute inset-0 bg-cover bg-[position:72%_center] brightness-[1.1] contrast-[1.08] saturate-[1.15] group-hover:scale-105 transition-transform duration-700 pointer-events-none"
+                    style={{ backgroundImage: "url('/lighthouse-night-bg.png')" }}
+                  />
+                  {/* Gentle, Transparent Edge Scrims (Preserves Picture Brightness) */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-[#05142B]/50 via-transparent to-[#020A17]/90 pointer-events-none" />
+
+                  {/* Upper Section: Elegant Script Typography */}
+                  <div className="relative z-10 pt-2 flex flex-col items-center">
+                    <h3 className="font-serif italic text-2xl sm:text-3xl text-[#FFF4D4] tracking-wide leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                      The work<br />you do matters.
+                    </h3>
+                    <div className="w-12 h-[2.5px] bg-[#C5A059] rounded-full my-2.5 shadow-[0_0_12px_rgba(197,160,89,0.9)]" />
+                  </div>
+
+                  {/* Lower Section: Waypoint Lighthouse Emblem & Brand Wordmark */}
+                  <div className="relative z-10 pb-2 flex flex-col items-center">
+                    {/* Custom Golden Lighthouse Emblem (Replacing Mountains) */}
+                    <svg
+                      viewBox="0 0 70 55"
+                      className="w-14 h-11 text-[#C5A059] mb-1 drop-shadow-[0_0_12px_rgba(197,160,89,0.5)]"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <defs>
+                        <linearGradient id="posterGoldRayLeft" x1="100%" y1="50%" x2="0%" y2="0%">
+                          <stop offset="0%" stopColor="#FFE394" stopOpacity="0.85" />
+                          <stop offset="100%" stopColor="#C5A059" stopOpacity="0" />
+                        </linearGradient>
+                        <linearGradient id="posterGoldRayRight" x1="0%" y1="50%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#FFE394" stopOpacity="0.85" />
+                          <stop offset="100%" stopColor="#C5A059" stopOpacity="0" />
+                        </linearGradient>
+                        <linearGradient id="posterTowerGold" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#DFBE77" />
+                          <stop offset="45%" stopColor="#FFF4D4" />
+                          <stop offset="100%" stopColor="#9E7D3B" />
+                        </linearGradient>
+                        <linearGradient id="posterBaseGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#C5A059" />
+                          <stop offset="100%" stopColor="#3A2C18" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* Radiant Beacon Light Beams */}
+                      <path d="M28 15 L2 8 L5 21 Z" fill="url(#posterGoldRayLeft)" />
+                      <path d="M42 15 L68 8 L65 21 Z" fill="url(#posterGoldRayRight)" />
+
+                      {/* Lighthouse Cap & Spire */}
+                      <circle cx="35" cy="3.5" r="1.2" fill="#FFE394" />
+                      <rect x="34.4" y="3.5" width="1.2" height="3.5" fill="#C5A059" />
+                      <path d="M30.5 9 C30.5 6.5 39.5 6.5 39.5 9 L40.5 11 L29.5 11 Z" fill="#C5A059" />
+
+                      {/* Illuminated Lantern Room */}
+                      <rect x="29" y="11" width="12" height="7" rx="1" fill="#FFE394" />
+                      <rect x="31" y="11" width="1.2" height="7" fill="#3A2C18" />
+                      <rect x="37.8" y="11" width="1.2" height="7" fill="#3A2C18" />
+                      <line x1="27" y1="18" x2="43" y2="18" stroke="#9E7D3B" strokeWidth="1.6" strokeLinecap="round" />
+
+                      {/* Tapered Lighthouse Tower */}
+                      <polygon points="30,18 40,18 43,41 27,41" fill="url(#posterTowerGold)" />
+                      {/* Slit Windows */}
+                      <rect x="33.5" y="23" width="3" height="4" rx="1" fill="#020A17" />
+                      <rect x="33.5" y="32" width="3" height="4" rx="1" fill="#020A17" />
+
+                      {/* Stone Foundation Base & Coastline Rocks */}
+                      <polygon points="25,41 45,41 48,46 22,46" fill="url(#posterBaseGold)" />
+                      <path d="M12 50 C18 46 25 48 31 46 C38 44 45 47 58 49 C48 53 24 53 12 50 Z" fill="#C5A059" opacity="0.9" />
+                    </svg>
+
+                    {/* Typography */}
+                    <div className="text-sm font-serif font-black tracking-[0.25em] text-[#FFF4D4] uppercase drop-shadow-md">
+                      WAYPOINT
+                    </div>
+                    <div className="text-[9px] font-mono font-bold tracking-[0.22em] text-[#FFE394] uppercase mt-0.5">
+                      ADVOCACY · EDUCATION · RESULTS
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB CONTENT 3: MY TASKS ── */}
+          {currentTab === "tasks" && (
+            <div className="space-y-6">
+              {/* Tasks Header Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#071A34]/90 border border-[#543F22] rounded-2xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CheckSquare className="w-5 h-5 text-[#C5A059]" />
+                    <h2 className="text-xl font-serif font-bold text-[#FFF4D4] tracking-wide">My Personal Task Queue</h2>
+                    <PageIdBadge id="PG-038-TSK" name="Crew Task Queue" inline />
+                  </div>
+                  <p className="text-xs text-[#C6B697]">
+                    Track personal advocacy milestones, IEP reviews, and action items across your caseload.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => setTaskModalOpen(true)}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-xs rounded-xl py-2 px-3.5 gap-1.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Task</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setLocation("/tasks")}
+                    className="border border-[#543F22] bg-[#051326] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs rounded-xl py-2 px-3 cursor-pointer"
+                  >
+                    <span>Full Tasks Board →</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Task Filter Pills */}
+              <div className="flex items-center gap-2">
+                {[
+                  { id: "all", label: "All Tasks" },
+                  { id: "pending", label: "Pending" },
+                  { id: "completed", label: "Completed" },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setTaskFilter(f.id as any)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${taskFilter === f.id
+                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+                      : "bg-[#051326] border-[#543F22] text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#071A34]"
+                      }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tasks List */}
+              <div className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-3">
+                {tasks.length === 0 ? (
+                  <div className="text-center py-12 space-y-2">
+                    <CheckSquare className="w-8 h-8 text-[#C5A059]/40 mx-auto" />
+                    <p className="text-sm font-serif font-semibold text-[#FFF4D4]">No tasks found</p>
+                    <p className="text-xs text-[#A69371]">Your task queue is clear! Click "Add Task" to record an action item.</p>
+                  </div>
+                ) : (
+                  (tasks as any[])
+                    .filter((t) => {
+                      if (taskFilter === "pending") return t.status !== "complete";
+                      if (taskFilter === "completed") return t.status === "complete";
+                      return true;
+                    })
+                    .map((task) => {
+                      const isDone = task.status === "complete";
+                      return (
+                        <div
+                          key={task.id}
+                          className="flex items-center justify-between p-3 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all text-xs"
+                        >
+                          <div className="flex items-center gap-3 min-w-0 pr-3">
+                            <input
+                              type="checkbox"
+                              checked={isDone}
+                              onChange={(e) => {
+                                updateTaskMutation.mutate({
+                                  id: task.id,
+                                  status: e.target.checked ? "complete" : "not_started",
+                                });
+                              }}
+                              className="rounded border-[#543F22] bg-[#071A34] text-[#C5A059] focus:ring-[#C5A059] h-4 w-4 cursor-pointer accent-[#C5A059]"
+                            />
+                            <div className="min-w-0">
+                              <span
+                                className={`font-semibold text-sm ${isDone ? "line-through text-[#A69371]/60" : "font-serif text-[#FFF4D4]"
+                                  }`}
+                              >
+                                {task.title}
+                              </span>
+                              {task.description && (
+                                <p className="text-xs text-[#C6B697] truncate mt-0.5">
+                                  {task.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {task.priority && (
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold border font-mono ${task.priority === "high"
+                                  ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
+                                  : task.priority === "medium"
+                                    ? "bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/40"
+                                    : "bg-[#0F2D54]/50 text-[#C6B697] border-[#543F22]"
+                                  }`}
+                              >
+                                {task.priority.toUpperCase()}
+                              </span>
+                            )}
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-semibold font-mono ${isDone
+                                ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                                : "bg-[#071A34] text-[#FFE394] border border-[#543F22]"
+                                }`}
+                            >
+                              {isDone ? "Completed" : "In Progress"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
                 )}
               </div>
             </div>
+          )}
 
-            {/* Pending Requests */}
-            <div className="space-y-2 pt-3">
-              <div className="text-[11px] font-mono font-semibold text-[#A69371] uppercase tracking-wider">
-                Pending Requests
-              </div>
-              {timeOffRequests.filter((r) => r.status === "Pending").length === 0 ? (
-                <div className="p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs text-[#A69371] text-center">
-                  No requests currently pending review.
-                </div>
-              ) : (
-                timeOffRequests.filter((r) => r.status === "Pending").slice(0, 2).map((r) => (
-                  <div key={r.id} className="p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#FFF4D4]">
-                        {r.startDate}{r.endDate && r.endDate !== r.startDate ? ` – ${r.endDate}` : ""}
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#C5A059]/20 text-[#FFE394] border border-[#C5A059]/40 text-[10px] font-bold">
-                        Pending
-                      </span>
-                    </div>
-                    {r.returnDate && (
-                      <div className="text-[10px] text-[#FFE394]/90 mt-1 flex items-center gap-1 font-mono">
-                        <CalendarCheck className="w-3 h-3 text-[#C5A059] shrink-0" />
-                        <span>First day back: <strong className="text-[#FFF4D4]">{r.returnDate}</strong></span>
-                      </div>
-                    )}
+          {/* ── TAB CONTENT 4: TEAM SCHEDULE & TIME OFF ── */}
+          {currentTab === "schedule" && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#071A34]/90 border border-[#543F22] rounded-2xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-[#C5A059]" />
+                    <h2 className="text-xl font-serif font-bold text-[#FFF4D4] tracking-wide">Team Schedule &amp; Coverage</h2>
+                    <PageIdBadge id="PG-038-SCH" name="Team Schedule & Time Off" inline />
                   </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-[#543F22]/50 flex items-center justify-between text-[11px] text-[#A69371]">
-            <span>Annual Allowance: 15 Days</span>
-            <span className="text-emerald-400 font-mono font-semibold">11 Days Remaining</span>
-          </div>
-        </Card>
-
-        {/* Card 3B: My Cases */}
-        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
-              <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
-                <Users className="w-4 h-4 text-[#C5A059]" />
-                <span>My Cases</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation("/projects")}
-                className="text-xs text-[#C6B697] hover:text-[#FFE394] hover:bg-[#07162B] p-0 h-auto font-medium"
-              >
-                View All →
-              </Button>
-            </div>
-
-            <div className="space-y-2 pt-3">
-              {[
-                { name: "Alex P.", initials: "AP", milestone: "IEP Meeting 9/15", status: "Active" },
-                { name: "Bella R.", initials: "BR", milestone: "Records Review", status: "Active" },
-                { name: "Chris T.", initials: "CT", milestone: "Draft in Progress", status: "Active" },
-                { name: "Jordan M.", initials: "JM", milestone: "Parent Follow-Up", status: "Active" },
-                { name: "Taylor S.", initials: "TS", milestone: "Evaluation Review", status: "Active" },
-              ].map((c, idx) => (
-                <div 
-                  key={idx} 
-                  onClick={() => setLocation("/projects")}
-                  className="flex items-center justify-between p-2 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-full bg-[#071A34] border border-[#543F22] text-[#FFE394] font-bold flex items-center justify-center text-[10px] shrink-0 font-serif">
-                      {c.initials}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-bold text-[#FFF4D4] truncate font-serif">{c.name}</div>
-                      <div className="text-[10px] text-[#A69371] truncate">{c.milestone}</div>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-semibold font-mono">
-                    {c.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-2 text-center text-[11px] text-[#A69371]">
-            Primary caseload snapshot · All CRM students remain accessible
-          </div>
-        </Card>
-
-        {/* Card 3C: Live Crew Messages Widget */}
-        <CrewMessagesOverviewWidget
-          onOpenCrewMessages={(convId) => handleTabChange("messages", convId)}
-        />
-
-      </div>
-
-      {/* ── ROW 4: Company Announcements · Training & Resources · Waypoint Inspiration Card ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-
-        {/* Card 4A: Company Announcements */}
-        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
-              <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
-                <Megaphone className="w-4 h-4 text-[#C5A059]" />
-                <span>Company Announcements</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toast.info("Viewing all announcements")}
-                className="text-xs text-[#C6B697] hover:text-[#FFE394] hover:bg-[#07162B] p-0 h-auto font-medium"
-              >
-                View All →
-              </Button>
-            </div>
-
-            <div className="space-y-2.5 pt-3">
-              {[
-                {
-                  title: "Office Closed – Sept 20",
-                  desc: "In observance of staff training day.",
-                  date: "Sept 9",
-                  icon: Calendar,
-                  iconColor: "text-[#FFE394] bg-[#051326] border border-[#543F22]",
-                },
-                {
-                  title: "New Training Module",
-                  desc: "IEP Meeting Best Practices is now available.",
-                  date: "Sept 8",
-                  icon: BookOpen,
-                  iconColor: "text-[#C5A059] bg-[#051326] border border-[#543F22]",
-                },
-                {
-                  title: "Welcome to the Team!",
-                  desc: "Please join us in welcoming our newest advocate!",
-                  date: "Sept 5",
-                  icon: Megaphone,
-                  iconColor: "text-emerald-400 bg-[#051326] border border-[#543F22]",
-                },
-              ].map((ann, idx) => (
-                <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs">
-                  <div className={`p-2 rounded-xl shrink-0 ${ann.iconColor}`}>
-                    <ann.icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 space-y-0.5 flex-1">
-                    <div className="flex items-center justify-between">
-                      <div className="font-bold text-[#FFF4D4] truncate pr-2 font-serif">{ann.title}</div>
-                      <span className="text-[10px] font-mono text-[#A69371] shrink-0">{ann.date}</span>
-                    </div>
-                    <div className="text-[11px] text-[#C6B697] leading-relaxed">{ann.desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-2 text-center text-[11px] text-[#A69371]">
-            Waypoint Practice News &amp; Updates
-          </div>
-        </Card>
-
-        {/* Card 4B: Training & Resources */}
-        <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] flex flex-col justify-between h-full space-y-4 hover:border-[#C5A059]/60 transition-all">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
-              <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-sm sm:text-base">
-                <BookOpen className="w-4 h-4 text-[#C5A059]" />
-                <span>Training &amp; Resources</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation("/knowledge-base")}
-                className="text-xs text-[#C6B697] hover:text-[#FFE394] hover:bg-[#07162B] p-0 h-auto font-medium"
-              >
-                View All →
-              </Button>
-            </div>
-
-            <div className="space-y-2 pt-3">
-              {[
-                { title: "Waypoint Field Guide", desc: "Your step-by-step resource", path: "/knowledge-base", icon: FileText },
-                { title: "Standard Operating Procedures", desc: "Office processes and workflows", path: "/walkthroughs", icon: FileText },
-                { title: "Phone Scripts", desc: "Ready-to-use communication templates", path: "/templates", icon: Phone },
-                { title: "Training Modules", desc: "Continue your professional development", path: "/knowledge-base", icon: Video },
-              ].map((res, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setLocation(res.path)}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all cursor-pointer text-xs"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                    <res.icon className="w-4 h-4 text-[#C5A059] shrink-0" />
-                    <div className="min-w-0">
-                      <div className="font-bold text-[#FFF4D4] truncate font-serif">{res.title}</div>
-                      <div className="text-[10px] text-[#A69371] truncate">{res.desc}</div>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#A69371] shrink-0" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-2 text-center text-[11px] text-[#A69371]">
-            Waypoint Advocates internal library
-          </div>
-        </Card>
-
-        {/* Card 4C: Waypoint Inspiration Poster Tile — Vibrant Cinematic Lighthouse Theme */}
-        <div className="rounded-2xl border border-[#543F22] bg-[#071A34] p-6 shadow-[0_12px_36px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] hover:border-[#C5A059]/80 flex flex-col items-center justify-between text-center relative overflow-hidden h-full group min-h-[340px] transition-all">
-          {/* Vibrant Cinematic Lighthouse Night Ocean Backdrop (Bright & Rich) */}
-          <div
-            className="absolute inset-0 bg-cover bg-[position:72%_center] brightness-[1.1] contrast-[1.08] saturate-[1.15] group-hover:scale-105 transition-transform duration-700 pointer-events-none"
-            style={{ backgroundImage: "url('/lighthouse-night-bg.png')" }}
-          />
-          {/* Gentle, Transparent Edge Scrims (Preserves Picture Brightness) */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#05142B]/50 via-transparent to-[#020A17]/90 pointer-events-none" />
-
-          {/* Upper Section: Elegant Script Typography */}
-          <div className="relative z-10 pt-2 flex flex-col items-center">
-            <h3 className="font-serif italic text-2xl sm:text-3xl text-[#FFF4D4] tracking-wide leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-              The work<br />you do matters.
-            </h3>
-            <div className="w-12 h-[2.5px] bg-[#C5A059] rounded-full my-2.5 shadow-[0_0_12px_rgba(197,160,89,0.9)]" />
-          </div>
-
-          {/* Lower Section: Waypoint Lighthouse Emblem & Brand Wordmark */}
-          <div className="relative z-10 pb-2 flex flex-col items-center">
-            {/* Custom Golden Lighthouse Emblem (Replacing Mountains) */}
-            <svg
-              viewBox="0 0 70 55"
-              className="w-14 h-11 text-[#C5A059] mb-1 drop-shadow-[0_0_12px_rgba(197,160,89,0.5)]"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                <linearGradient id="posterGoldRayLeft" x1="100%" y1="50%" x2="0%" y2="0%">
-                  <stop offset="0%" stopColor="#FFE394" stopOpacity="0.85" />
-                  <stop offset="100%" stopColor="#C5A059" stopOpacity="0" />
-                </linearGradient>
-                <linearGradient id="posterGoldRayRight" x1="0%" y1="50%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#FFE394" stopOpacity="0.85" />
-                  <stop offset="100%" stopColor="#C5A059" stopOpacity="0" />
-                </linearGradient>
-                <linearGradient id="posterTowerGold" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#DFBE77" />
-                  <stop offset="45%" stopColor="#FFF4D4" />
-                  <stop offset="100%" stopColor="#9E7D3B" />
-                </linearGradient>
-                <linearGradient id="posterBaseGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#C5A059" />
-                  <stop offset="100%" stopColor="#3A2C18" />
-                </linearGradient>
-              </defs>
-
-              {/* Radiant Beacon Light Beams */}
-              <path d="M28 15 L2 8 L5 21 Z" fill="url(#posterGoldRayLeft)" />
-              <path d="M42 15 L68 8 L65 21 Z" fill="url(#posterGoldRayRight)" />
-
-              {/* Lighthouse Cap & Spire */}
-              <circle cx="35" cy="3.5" r="1.2" fill="#FFE394" />
-              <rect x="34.4" y="3.5" width="1.2" height="3.5" fill="#C5A059" />
-              <path d="M30.5 9 C30.5 6.5 39.5 6.5 39.5 9 L40.5 11 L29.5 11 Z" fill="#C5A059" />
-
-              {/* Illuminated Lantern Room */}
-              <rect x="29" y="11" width="12" height="7" rx="1" fill="#FFE394" />
-              <rect x="31" y="11" width="1.2" height="7" fill="#3A2C18" />
-              <rect x="37.8" y="11" width="1.2" height="7" fill="#3A2C18" />
-              <line x1="27" y1="18" x2="43" y2="18" stroke="#9E7D3B" strokeWidth="1.6" strokeLinecap="round" />
-
-              {/* Tapered Lighthouse Tower */}
-              <polygon points="30,18 40,18 43,41 27,41" fill="url(#posterTowerGold)" />
-              {/* Slit Windows */}
-              <rect x="33.5" y="23" width="3" height="4" rx="1" fill="#020A17" />
-              <rect x="33.5" y="32" width="3" height="4" rx="1" fill="#020A17" />
-
-              {/* Stone Foundation Base & Coastline Rocks */}
-              <polygon points="25,41 45,41 48,46 22,46" fill="url(#posterBaseGold)" />
-              <path d="M12 50 C18 46 25 48 31 46 C38 44 45 47 58 49 C48 53 24 53 12 50 Z" fill="#C5A059" opacity="0.9" />
-            </svg>
-
-            {/* Typography */}
-            <div className="text-sm font-serif font-black tracking-[0.25em] text-[#FFF4D4] uppercase drop-shadow-md">
-              WAYPOINT
-            </div>
-            <div className="text-[9px] font-mono font-bold tracking-[0.22em] text-[#FFE394] uppercase mt-0.5">
-              ADVOCACY · EDUCATION · RESULTS
-            </div>
-          </div>
-        </div>
-
-      </div>
-        </div>
-      )}
-
-      {/* ── TAB CONTENT 3: MY TASKS ── */}
-      {currentTab === "tasks" && (
-        <div className="space-y-6">
-          {/* Tasks Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#071A34]/90 border border-[#543F22] rounded-2xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-[#C5A059]" />
-                <h2 className="text-xl font-serif font-bold text-[#FFF4D4] tracking-wide">My Personal Task Queue</h2>
-                <PageIdBadge id="PG-038-TSK" name="Crew Task Queue" inline />
-              </div>
-              <p className="text-xs text-[#C6B697]">
-                Track personal advocacy milestones, IEP reviews, and action items across your caseload.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={() => setTaskModalOpen(true)}
-                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-xs rounded-xl py-2 px-3.5 gap-1.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Task</span>
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setLocation("/tasks")}
-                className="border border-[#543F22] bg-[#051326] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs rounded-xl py-2 px-3 cursor-pointer"
-              >
-                <span>Full Tasks Board →</span>
-              </Button>
-            </div>
-          </div>
-
-          {/* Task Filter Pills */}
-          <div className="flex items-center gap-2">
-            {[
-              { id: "all", label: "All Tasks" },
-              { id: "pending", label: "Pending" },
-              { id: "completed", label: "Completed" },
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setTaskFilter(f.id as any)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                  taskFilter === f.id
-                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-                    : "bg-[#051326] border-[#543F22] text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#071A34]"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Tasks List */}
-          <div className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-3">
-            {tasks.length === 0 ? (
-              <div className="text-center py-12 space-y-2">
-                <CheckSquare className="w-8 h-8 text-[#C5A059]/40 mx-auto" />
-                <p className="text-sm font-serif font-semibold text-[#FFF4D4]">No tasks found</p>
-                <p className="text-xs text-[#A69371]">Your task queue is clear! Click "Add Task" to record an action item.</p>
-              </div>
-            ) : (
-              (tasks as any[])
-                .filter((t) => {
-                  if (taskFilter === "pending") return t.status !== "complete";
-                  if (taskFilter === "completed") return t.status === "complete";
-                  return true;
-                })
-                .map((task) => {
-                  const isDone = task.status === "complete";
-                  return (
-                    <div
-                      key={task.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all text-xs"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 pr-3">
-                        <input
-                          type="checkbox"
-                          checked={isDone}
-                          onChange={(e) => {
-                            updateTaskMutation.mutate({
-                              id: task.id,
-                              status: e.target.checked ? "complete" : "not_started",
-                            });
-                          }}
-                          className="rounded border-[#543F22] bg-[#071A34] text-[#C5A059] focus:ring-[#C5A059] h-4 w-4 cursor-pointer accent-[#C5A059]"
-                        />
-                        <div className="min-w-0">
-                          <span
-                            className={`font-semibold text-sm ${
-                              isDone ? "line-through text-[#A69371]/60" : "font-serif text-[#FFF4D4]"
-                            }`}
-                          >
-                            {task.title}
-                          </span>
-                          {task.description && (
-                            <p className="text-xs text-[#C6B697] truncate mt-0.5">
-                              {task.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        {task.priority && (
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold border font-mono ${
-                              task.priority === "high"
-                                ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
-                                : task.priority === "medium"
-                                ? "bg-[#C5A059]/20 text-[#FFE394] border-[#C5A059]/40"
-                                : "bg-[#0F2D54]/50 text-[#C6B697] border-[#543F22]"
-                            }`}
-                          >
-                            {task.priority.toUpperCase()}
-                          </span>
-                        )}
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold font-mono ${
-                            isDone
-                              ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                              : "bg-[#071A34] text-[#FFE394] border border-[#543F22]"
-                          }`}
-                        >
-                          {isDone ? "Completed" : "In Progress"}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── TAB CONTENT 4: TEAM SCHEDULE & TIME OFF ── */}
-      {currentTab === "schedule" && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#071A34]/90 border border-[#543F22] rounded-2xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-[#C5A059]" />
-                <h2 className="text-xl font-serif font-bold text-[#FFF4D4] tracking-wide">Team Schedule &amp; Coverage</h2>
-                <PageIdBadge id="PG-038-SCH" name="Team Schedule & Time Off" inline />
-              </div>
-              <p className="text-xs text-[#C6B697]">
-                View upcoming meetings, IEP appointments, and staff availability.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={() => setTimeOffModalOpen(true)}
-                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-xs rounded-xl py-2 px-3.5 gap-1.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 cursor-pointer"
-              >
-                <Plane className="w-4 h-4" />
-                <span>Request Time Off</span>
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setLocation("/calendar")}
-                className="border border-[#543F22] bg-[#051326] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs rounded-xl py-2 px-3 cursor-pointer"
-              >
-                <span>Full Calendar →</span>
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Today's Schedule Card */}
-            <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-4 hover:border-[#C5A059]/60 transition-all">
-              <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
-                <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-base">
-                  <Clock className="w-4 h-4 text-[#C5A059]" />
-                  <span>Today's Sessions &amp; Meetings</span>
-                </div>
-                <span className="text-xs font-mono text-[#FFE394] font-semibold">
-                  {new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-                </span>
-              </div>
-
-              <div className="space-y-2.5">
-                {[
-                  { time: "9:00 AM", title: "Team Check-In", subtitle: "Virtual Meeting · Room A", dot: "bg-sky-400" },
-                  { time: "10:30 AM", title: "IEP Meeting — Jackson R.", subtitle: "Riverside School · Byron Honea", dot: "bg-[#C5A059]" },
-                  { time: "1:00 PM", title: "Callback — Parent (M. Carter)", subtitle: "Discuss assessment results", dot: "bg-emerald-400" },
-                  { time: "3:00 PM", title: "Records Review", subtitle: "Johnson Case Workspace", dot: "bg-[#8A9EB5]" },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all">
-                    <div className="w-20 text-right shrink-0 pt-0.5">
-                      <span className="text-xs font-mono font-bold text-[#FFE394]">{item.time}</span>
-                    </div>
-                    <div className="flex items-start gap-2.5 min-w-0">
-                      <div className={`w-2.5 h-2.5 rounded-full ${item.dot} mt-1.5 shrink-0 shadow-sm`} />
-                      <div className="min-w-0">
-                        <div className="text-xs font-serif font-bold text-[#FFF4D4] truncate">{item.title}</div>
-                        <div className="text-[11px] text-[#C6B697] truncate">{item.subtitle}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* Time Off Center Card */}
-            <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-4 hover:border-[#C5A059]/60 transition-all">
-              <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
-                <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-base">
-                  <Plane className="w-4 h-4 text-[#C5A059]" />
-                  <span>Time Off &amp; Availability</span>
-                </div>
-                <span className="text-xs font-mono text-emerald-400 font-semibold">11 Days Remaining</span>
-              </div>
-
-              <div className="space-y-3">
-                <div className="text-xs font-mono font-semibold text-[#A69371] uppercase tracking-wider">
-                  Upcoming Approved Leave
-                </div>
-                {timeOffRequests.filter((r) => r.status === "Approved").map((r) => (
-                  <div key={r.id} className="p-3 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-serif font-bold text-[#FFF4D4]">{r.type}</span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold font-mono">
-                        Approved
-                      </span>
-                    </div>
-                    <div className="text-[#C6B697]">{r.startDate} – {r.endDate}</div>
-                    {r.returnDate && (
-                      <div className="text-[10px] text-[#FFE394]/90 flex items-center gap-1 font-mono">
-                        <CalendarCheck className="w-3 h-3 text-[#C5A059]" />
-                        <span>First day back: <strong className="text-[#FFF4D4]">{r.returnDate}</strong></span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {/* ── TAB CONTENT 5: RESOURCES & KNOWLEDGE BASE ── */}
-      {currentTab === "resources" && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#071A34]/90 border border-[#543F22] rounded-2xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-[#C5A059]" />
-                <h2 className="text-xl font-serif font-bold text-[#FFF4D4] tracking-wide">Waypoint Knowledge &amp; Resources</h2>
-                <PageIdBadge id="PG-038-RES" name="Employee Resources" inline />
-              </div>
-              <p className="text-xs text-[#C6B697]">
-                Waypoint Advocates internal field guides, standard operating procedures, and professional training.
-              </p>
-            </div>
-
-            <Button
-              size="sm"
-              onClick={() => setLocation("/knowledge-base")}
-              className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-xs rounded-xl py-2 px-3.5 gap-1.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 cursor-pointer"
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>Full Knowledge Base</span>
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { title: "Waypoint Field Guide", desc: "Step-by-step guidance for client representation and meeting preparation.", path: "/knowledge-base", icon: FileText },
-              { title: "Standard Operating Procedures", desc: "Official office processes, filing guidelines, and privacy workflows.", path: "/walkthroughs", icon: Shield },
-              { title: "Phone Scripts & Email Templates", desc: "Ready-to-use communication templates for schools and parents.", path: "/templates", icon: Phone },
-              { title: "IEP Meeting Best Practices", desc: "Video modules on dispute prevention and active team collaboration.", path: "/knowledge-base", icon: Video },
-              { title: "State Complaint Builder", desc: "Guided generator for formal state complaint filings.", path: "/tools/state-complaint-builder", icon: FileText },
-              { title: "IEP Goal Comparator", desc: "Compare previous vs proposed IEP accommodations and goals.", path: "/tools/iep-comparator", icon: Sparkles },
-            ].map((res, idx) => (
-              <div
-                key={idx}
-                onClick={() => setLocation(res.path)}
-                className="p-5 rounded-2xl bg-[#071A34]/90 border border-[#543F22] hover:border-[#C5A059]/80 transition-all cursor-pointer space-y-3 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="p-2.5 rounded-xl bg-[#051326] text-[#FFE394] border border-[#543F22] group-hover:scale-105 transition-transform">
-                    <res.icon className="w-5 h-5" />
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#A69371] group-hover:text-[#FFE394] group-hover:translate-x-1 transition-all" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-serif font-bold text-[#FFF4D4] group-hover:text-[#FFE394] transition-colors">
-                    {res.title}
-                  </h4>
-                  <p className="text-xs text-[#C6B697] leading-relaxed mt-1">
-                    {res.desc}
+                  <p className="text-xs text-[#C6B697]">
+                    View upcoming meetings, IEP appointments, and staff availability.
                   </p>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => setTimeOffModalOpen(true)}
+                    className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-xs rounded-xl py-2 px-3.5 gap-1.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 cursor-pointer"
+                  >
+                    <Plane className="w-4 h-4" />
+                    <span>Request Time Off</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setLocation("/calendar")}
+                    className="border border-[#543F22] bg-[#051326] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs rounded-xl py-2 px-3 cursor-pointer"
+                  >
+                    <span>Full Calendar →</span>
+                  </Button>
+                </div>
               </div>
-            ))}
-          </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Today's Schedule Card */}
+                <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-4 hover:border-[#C5A059]/60 transition-all">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
+                    <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-base">
+                      <Clock className="w-4 h-4 text-[#C5A059]" />
+                      <span>Today's Sessions &amp; Meetings</span>
+                    </div>
+                    <span className="text-xs font-mono text-[#FFE394] font-semibold">
+                      {new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {[
+                      { time: "9:00 AM", title: "Team Check-In", subtitle: "Virtual Meeting · Room A", dot: "bg-sky-400" },
+                      { time: "10:30 AM", title: "IEP Meeting — Jackson R.", subtitle: "Riverside School · Byron Honea", dot: "bg-[#C5A059]" },
+                      { time: "1:00 PM", title: "Callback — Parent (M. Carter)", subtitle: "Discuss assessment results", dot: "bg-emerald-400" },
+                      { time: "3:00 PM", title: "Records Review", subtitle: "Johnson Case Workspace", dot: "bg-[#8A9EB5]" },
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 hover:border-[#C5A059]/60 hover:bg-[#07162B] transition-all">
+                        <div className="w-20 text-right shrink-0 pt-0.5">
+                          <span className="text-xs font-mono font-bold text-[#FFE394]">{item.time}</span>
+                        </div>
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <div className={`w-2.5 h-2.5 rounded-full ${item.dot} mt-1.5 shrink-0 shadow-sm`} />
+                          <div className="min-w-0">
+                            <div className="text-xs font-serif font-bold text-[#FFF4D4] truncate">{item.title}</div>
+                            <div className="text-[11px] text-[#C6B697] truncate">{item.subtitle}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                {/* Time Off Center Card */}
+                <Card className="rounded-2xl border border-[#543F22] bg-[#071A34]/90 p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-4 hover:border-[#C5A059]/60 transition-all">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#543F22]/60">
+                    <div className="flex items-center gap-2 text-[#FFF4D4] font-serif font-bold text-base">
+                      <Plane className="w-4 h-4 text-[#C5A059]" />
+                      <span>Time Off &amp; Availability</span>
+                    </div>
+                    <span className="text-xs font-mono text-emerald-400 font-semibold">11 Days Remaining</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="text-xs font-mono font-semibold text-[#A69371] uppercase tracking-wider">
+                      Upcoming Approved Leave
+                    </div>
+                    {timeOffRequests.filter((r) => r.status === "Approved").map((r) => (
+                      <div key={r.id} className="p-3 rounded-xl bg-[#051326]/80 border border-[#543F22]/60 text-xs space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-serif font-bold text-[#FFF4D4]">{r.type}</span>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold font-mono">
+                            Approved
+                          </span>
+                        </div>
+                        <div className="text-[#C6B697]">{r.startDate} – {r.endDate}</div>
+                        {r.returnDate && (
+                          <div className="text-[10px] text-[#FFE394]/90 flex items-center gap-1 font-mono">
+                            <CalendarCheck className="w-3 h-3 text-[#C5A059]" />
+                            <span>First day back: <strong className="text-[#FFF4D4]">{r.returnDate}</strong></span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB CONTENT 5: RESOURCES & KNOWLEDGE BASE ── */}
+          {currentTab === "resources" && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#071A34]/90 border border-[#543F22] rounded-2xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-[#C5A059]" />
+                    <h2 className="text-xl font-serif font-bold text-[#FFF4D4] tracking-wide">Waypoint Knowledge &amp; Resources</h2>
+                    <PageIdBadge id="PG-038-RES" name="Employee Resources" inline />
+                  </div>
+                  <p className="text-xs text-[#C6B697]">
+                    Waypoint Advocates internal field guides, standard operating procedures, and professional training.
+                  </p>
+                </div>
+
+                <Button
+                  size="sm"
+                  onClick={() => setLocation("/knowledge-base")}
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-xs rounded-xl py-2 px-3.5 gap-1.5 shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 cursor-pointer"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>Full Knowledge Base</span>
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  { title: "Waypoint Field Guide", desc: "Step-by-step guidance for client representation and meeting preparation.", path: "/knowledge-base", icon: FileText },
+                  { title: "Standard Operating Procedures", desc: "Official office processes, filing guidelines, and privacy workflows.", path: "/walkthroughs", icon: Shield },
+                  { title: "Phone Scripts & Email Templates", desc: "Ready-to-use communication templates for schools and parents.", path: "/templates", icon: Phone },
+                  { title: "IEP Meeting Best Practices", desc: "Video modules on dispute prevention and active team collaboration.", path: "/knowledge-base", icon: Video },
+                  { title: "State Complaint Builder", desc: "Guided generator for formal state complaint filings.", path: "/tools/state-complaint-builder", icon: FileText },
+                  { title: "IEP Goal Comparator", desc: "Compare previous vs proposed IEP accommodations and goals.", path: "/tools/iep-comparator", icon: Sparkles },
+                ].map((res, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setLocation(res.path)}
+                    className="p-5 rounded-2xl bg-[#071A34]/90 border border-[#543F22] hover:border-[#C5A059]/80 transition-all cursor-pointer space-y-3 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="p-2.5 rounded-xl bg-[#051326] text-[#FFE394] border border-[#543F22] group-hover:scale-105 transition-transform">
+                        <res.icon className="w-5 h-5" />
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-[#A69371] group-hover:text-[#FFE394] group-hover:translate-x-1 transition-all" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-serif font-bold text-[#FFF4D4] group-hover:text-[#FFE394] transition-colors">
+                        {res.title}
+                      </h4>
+                      <p className="text-xs text-[#C6B697] leading-relaxed mt-1">
+                        {res.desc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB CONTENT 6: MY AVAILABILITY ── */}
+          {currentTab === "availability" && (
+            <EmployeeAvailabilityTab onViewTeamSchedule={() => handleTabChange("schedule")} />
+          )}
+
+          {/* ── TAB CONTENT 7: TIME OFF & PTO ── */}
+          {currentTab === "time-off" && (
+            <EmployeeTimeOffTab />
+          )}
+
+          {/* ── TAB CONTENT 8: MY TIMESHEET & HOURS ── */}
+          {currentTab === "timesheet" && (
+            <EmployeeTimesheetTab />
+          )}
+
+          {/* ── TAB CONTENT 9: PROFILE & CREDENTIALS ── */}
+          {currentTab === "profile" && (
+            <EmployeeProfileTab />
+          )}
+
+          {/* ── TAB CONTENT 10: PAYROLL & DIRECT DEPOSIT ── */}
+          {currentTab === "payroll" && (
+            <EmployeePayrollTab />
+          )}
+
+          {/* ── TAB CONTENT 11: EQUIPMENT & TECH ASSETS ── */}
+          {currentTab === "equipment" && (
+            <EmployeeEquipmentTab />
+          )}
+
+          {/* ── TAB CONTENT 12: MY NOTES (PG-038-NOT) ── */}
+          {currentTab === "notes" && (
+            <NotesWorkspace
+              scope="employee"
+              targetEmployeeId="emp-byron-honea"
+              targetEmployeeName="Byron Honea"
+              isCeoOrAdmin={true}
+              companyName="Waypoint Advocates"
+            />
+          )}
         </div>
-      )}
 
-      {/* ── TAB CONTENT 6: MY AVAILABILITY ── */}
-      {currentTab === "availability" && (
-        <EmployeeAvailabilityTab onViewTeamSchedule={() => handleTabChange("schedule")} />
-      )}
-
-      {/* ── TAB CONTENT 7: TIME OFF & PTO ── */}
-      {currentTab === "time-off" && (
-        <EmployeeTimeOffTab />
-      )}
-
-      {/* ── TAB CONTENT 8: MY TIMESHEET & HOURS ── */}
-      {currentTab === "timesheet" && (
-        <EmployeeTimesheetTab />
-      )}
-
-      {/* ── TAB CONTENT 9: PROFILE & CREDENTIALS ── */}
-      {currentTab === "profile" && (
-        <EmployeeProfileTab />
-      )}
-
-      {/* ── TAB CONTENT 10: PAYROLL & DIRECT DEPOSIT ── */}
-      {currentTab === "payroll" && (
-        <EmployeePayrollTab />
-      )}
-
-      {/* ── TAB CONTENT 11: EQUIPMENT & TECH ASSETS ── */}
-      {currentTab === "equipment" && (
-        <EmployeeEquipmentTab />
-      )}
-
-      {/* ── TAB CONTENT 12: MY NOTES (PG-038-NOT) ── */}
-      {currentTab === "notes" && (
-        <NotesWorkspace
-          scope="employee"
-          targetEmployeeId="emp-byron-honea"
-          targetEmployeeName="Byron Honea"
-          isCeoOrAdmin={true}
-          companyName="Waypoint Advocates"
-        />
-      )}
-        </div>
-
-      {/* ── Time Off Request Modal ── */}
-      <Dialog open={timeOffModalOpen} onOpenChange={setTimeOffModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#071A34] border border-[#543F22] text-[#FFF4D4] shadow-[0_15px_45px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl">
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-[#051326] text-[#FFE394] border border-[#543F22]">
-                <Plane className="w-4 h-4" />
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-serif font-bold text-[#FFF4D4]">
-                  Request Time Off
-                </DialogTitle>
-                <DialogDescription className="text-xs text-[#C6B697]">
-                  Submit planned PTO, sick leave, or conference travel for management review.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          <form onSubmit={handleSaveTimeOff} className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-[#FFE394] font-semibold">Leave Category</Label>
-              <Select
-                value={timeOffForm.type}
-                onValueChange={(val) => setTimeOffForm({ ...timeOffForm, type: val })}
-              >
-                <SelectTrigger className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:ring-[#C5A059]">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#071A34] border border-[#543F22] text-[#FFF4D4]">
-                  <SelectItem value="Vacation">Vacation / PTO</SelectItem>
-                  <SelectItem value="Personal">Personal Day</SelectItem>
-                  <SelectItem value="Medical / Sick">Medical / Sick Leave</SelectItem>
-                  <SelectItem value="Training / Conference">Training &amp; Conference</SelectItem>
-                  <SelectItem value="Bereavement">Bereavement</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-[#FFE394] font-semibold">Start Date</Label>
-                <Input
-                  type="date"
-                  value={timeOffForm.startDate}
-                  onChange={(e) => setTimeOffForm({ ...timeOffForm, startDate: e.target.value })}
-                  className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-[#FFE394] font-semibold">End Date</Label>
-                <Input
-                  type="date"
-                  value={timeOffForm.endDate}
-                  onChange={(e) => setTimeOffForm({ ...timeOffForm, endDate: e.target.value })}
-                  className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Explicit First Day Back Question */}
-            <div className="space-y-2 rounded-xl border border-[#C5A059]/40 bg-[#051326] p-3">
+        {/* ── Time Off Request Modal ── */}
+        <Dialog open={timeOffModalOpen} onOpenChange={setTimeOffModalOpen}>
+          <DialogContent className="sm:max-w-md bg-[#071A34] border border-[#543F22] text-[#FFF4D4] shadow-[0_15px_45px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl">
+            <DialogHeader>
               <div className="flex items-center gap-2">
-                <CalendarCheck className="w-4 h-4 text-[#C5A059] shrink-0" />
-                <Label htmlFor="returnDateInput" className="text-xs text-[#FFE394] font-semibold leading-snug">
-                  When will be your first day back on job after leave?
-                </Label>
+                <div className="p-2 rounded-xl bg-[#051326] text-[#FFE394] border border-[#543F22]">
+                  <Plane className="w-4 h-4" />
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-serif font-bold text-[#FFF4D4]">
+                    Request Time Off
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-[#C6B697]">
+                    Submit planned PTO, sick leave, or conference travel for management review.
+                  </DialogDescription>
+                </div>
               </div>
-              <Input
-                id="returnDateInput"
-                type="date"
-                value={timeOffForm.returnDate}
-                onChange={(e) => setTimeOffForm({ ...timeOffForm, returnDate: e.target.value })}
-                className="bg-[#071A34] border border-[#C5A059]/50 text-[#FFF4D4] rounded-xl text-xs focus-visible:ring-[#C5A059]/50"
-                required
-              />
-              <p className="text-[11px] text-[#C6B697]">
-                Confirms the exact morning you will resume caseload duties and client communications.
-              </p>
-            </div>
+            </DialogHeader>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs text-[#FFE394] font-semibold">Coverage Notes &amp; Details</Label>
-              <Textarea
-                placeholder="Mention any ongoing IEP cases or upcoming deadlines requiring team coverage..."
-                value={timeOffForm.notes}
-                onChange={(e) => setTimeOffForm({ ...timeOffForm, notes: e.target.value })}
-                className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs min-h-[80px] focus:border-[#C5A059]"
-              />
-            </div>
-
-            <DialogFooter className="gap-2 sm:gap-0 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setTimeOffModalOpen(false)}
-                className="border border-[#543F22] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] rounded-xl text-xs"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold rounded-xl text-xs shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50"
-              >
-                Submit Request
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Quick Add Task Modal ── */}
-      <Dialog open={taskModalOpen} onOpenChange={setTaskModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#071A34] border border-[#543F22] text-[#FFF4D4] shadow-[0_15px_45px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl">
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-[#051326] text-[#FFE394] border border-[#543F22]">
-                <Plus className="w-4 h-4" />
+            <form onSubmit={handleSaveTimeOff} className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#FFE394] font-semibold">Leave Category</Label>
+                <Select
+                  value={timeOffForm.type}
+                  onValueChange={(val) => setTimeOffForm({ ...timeOffForm, type: val })}
+                >
+                  <SelectTrigger className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:ring-[#C5A059]">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#071A34] border border-[#543F22] text-[#FFF4D4]">
+                    <SelectItem value="Vacation">Vacation / PTO</SelectItem>
+                    <SelectItem value="Personal">Personal Day</SelectItem>
+                    <SelectItem value="Medical / Sick">Medical / Sick Leave</SelectItem>
+                    <SelectItem value="Training / Conference">Training &amp; Conference</SelectItem>
+                    <SelectItem value="Bereavement">Bereavement</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div>
-                <DialogTitle className="text-lg font-serif font-bold text-[#FFF4D4]">
-                  Add Task to Queue
-                </DialogTitle>
-                <DialogDescription className="text-xs text-[#C6B697]">
-                  Quickly add an action item to your personal advocacy workload.
-                </DialogDescription>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-[#FFE394] font-semibold">Start Date</Label>
+                  <Input
+                    type="date"
+                    value={timeOffForm.startDate}
+                    onChange={(e) => setTimeOffForm({ ...timeOffForm, startDate: e.target.value })}
+                    className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-[#FFE394] font-semibold">End Date</Label>
+                  <Input
+                    type="date"
+                    value={timeOffForm.endDate}
+                    onChange={(e) => setTimeOffForm({ ...timeOffForm, endDate: e.target.value })}
+                    className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
+                    required
+                  />
+                </div>
               </div>
-            </div>
-          </DialogHeader>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!newTaskTitle.trim()) {
-                toast.error("Please enter a task title.");
-                return;
-              }
-              createTaskMutation.mutate({
-                title: newTaskTitle.trim(),
-                status: "not_started",
-              });
-            }}
-            className="space-y-4 pt-2"
-          >
-            <div className="space-y-1.5">
-              <Label className="text-xs text-[#FFE394] font-semibold">Task Title</Label>
-              <Input
-                placeholder="e.g. Review OT service hours log for Johnson case..."
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
-                autoFocus
-              />
-            </div>
+              {/* Explicit First Day Back Question */}
+              <div className="space-y-2 rounded-xl border border-[#C5A059]/40 bg-[#051326] p-3">
+                <div className="flex items-center gap-2">
+                  <CalendarCheck className="w-4 h-4 text-[#C5A059] shrink-0" />
+                  <Label htmlFor="returnDateInput" className="text-xs text-[#FFE394] font-semibold leading-snug">
+                    When will be your first day back on job after leave?
+                  </Label>
+                </div>
+                <Input
+                  id="returnDateInput"
+                  type="date"
+                  value={timeOffForm.returnDate}
+                  onChange={(e) => setTimeOffForm({ ...timeOffForm, returnDate: e.target.value })}
+                  className="bg-[#071A34] border border-[#C5A059]/50 text-[#FFF4D4] rounded-xl text-xs focus-visible:ring-[#C5A059]/50"
+                  required
+                />
+                <p className="text-[11px] text-[#C6B697]">
+                  Confirms the exact morning you will resume caseload duties and client communications.
+                </p>
+              </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs text-[#FFE394] font-semibold">Priority Level</Label>
-              <Select
-                value={newTaskPriority}
-                onValueChange={(val: any) => setNewTaskPriority(val)}
-              >
-                <SelectTrigger className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#071A34] border border-[#543F22] text-[#FFF4D4]">
-                  <SelectItem value="high">High Priority</SelectItem>
-                  <SelectItem value="medium">Normal / Medium</SelectItem>
-                  <SelectItem value="low">Low Priority</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#FFE394] font-semibold">Coverage Notes &amp; Details</Label>
+                <Textarea
+                  placeholder="Mention any ongoing IEP cases or upcoming deadlines requiring team coverage..."
+                  value={timeOffForm.notes}
+                  onChange={(e) => setTimeOffForm({ ...timeOffForm, notes: e.target.value })}
+                  className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs min-h-[80px] focus:border-[#C5A059]"
+                />
+              </div>
 
-            <DialogFooter className="gap-2 sm:gap-0 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setTaskModalOpen(false)}
-                className="border border-[#543F22] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] rounded-xl text-xs"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={createTaskMutation.isPending}
-                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold rounded-xl text-xs shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50"
-              >
-                {createTaskMutation.isPending ? "Adding..." : "Add Task"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter className="gap-2 sm:gap-0 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setTimeOffModalOpen(false)}
+                  className="border border-[#543F22] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] rounded-xl text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold rounded-xl text-xs shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50"
+                >
+                  Submit Request
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* ── Quick Add Task Modal ── */}
+        <Dialog open={taskModalOpen} onOpenChange={setTaskModalOpen}>
+          <DialogContent className="sm:max-w-md bg-[#071A34] border border-[#543F22] text-[#FFF4D4] shadow-[0_15px_45px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-2xl">
+            <DialogHeader>
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-[#051326] text-[#FFE394] border border-[#543F22]">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-serif font-bold text-[#FFF4D4]">
+                    Add Task to Queue
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-[#C6B697]">
+                    Quickly add an action item to your personal advocacy workload.
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newTaskTitle.trim()) {
+                  toast.error("Please enter a task title.");
+                  return;
+                }
+                createTaskMutation.mutate({
+                  title: newTaskTitle.trim(),
+                  status: "not_started",
+                });
+              }}
+              className="space-y-4 pt-2"
+            >
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#FFE394] font-semibold">Task Title</Label>
+                <Input
+                  placeholder="e.g. Review OT service hours log for Johnson case..."
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs focus:border-[#C5A059]"
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#FFE394] font-semibold">Priority Level</Label>
+                <Select
+                  value={newTaskPriority}
+                  onValueChange={(val: any) => setNewTaskPriority(val)}
+                >
+                  <SelectTrigger className="bg-[#051326] border border-[#543F22] text-[#FFF4D4] rounded-xl text-xs">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#071A34] border border-[#543F22] text-[#FFF4D4]">
+                    <SelectItem value="high">High Priority</SelectItem>
+                    <SelectItem value="medium">Normal / Medium</SelectItem>
+                    <SelectItem value="low">Low Priority</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setTaskModalOpen(false)}
+                  className="border border-[#543F22] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] rounded-xl text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createTaskMutation.isPending}
+                  className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold rounded-xl text-xs shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50"
+                >
+                  {createTaskMutation.isPending ? "Adding..." : "Add Task"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
 
       </div>
     </ScopedErrorBoundary>

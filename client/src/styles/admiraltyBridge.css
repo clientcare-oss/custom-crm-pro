@@ -1,0 +1,873 @@
+/* ============================================================================
+ * Waypoint Admiralty Bridge — Photorealistic Full-Grain Calfskin Navy Leather
+ * & Machined Platinum-Champagne Brass Material Kit
+ *
+ * Scoped exclusively to the Sidebar shell and Home screen (Crew Quarters PG-038)
+ * so the user can review exact texture, studio lighting, and 3D bevels locally
+ * before pushing or expanding across the rest of the CRM.
+ * ============================================================================ */
+
+:root {
+  --adm-leather-tex: url("/assets/admiralty/pebbled-leather.png");
+  --adm-grain-tex: url("/assets/admiralty/matte-grain.png");
+  --adm-topo-tex: url("/assets/admiralty/topo-contours.svg");
+}
+
+/* ── 1. SIDEBAR: LIT FULL-GRAIN CALFSKIN LEATHER SHELL & 3D BRUSHED-BRASS RAIL ── */
+.adm-sidebar-surface {
+  position: relative;
+  background:
+    /* Overhead studio spotlight cone centered behind Waypoint crest */
+    radial-gradient(ellipse 92% 25% at 50% 3%, rgba(68, 102, 146, 0.68) 0%, rgba(34, 60, 94, 0.42) 38%, rgba(14, 29, 52, 0.14) 70%, transparent 100%),
+    /* Subtle mid-column ambient sheen behind nav items */
+    radial-gradient(ellipse 105% 42% at 44% 46%, rgba(28, 52, 84, 0.34) 0%, transparent 74%),
+    /* Deep velvety navy leather base */
+    linear-gradient(180deg, #13253d 0%, #0d1c31 38%, #091526 74%, #060f1d 100%) !important;
+  border-right: 1px solid #040911 !important;
+  box-shadow:
+    inset -2px 0 6px rgba(0, 0, 0, 0.65),
+    inset 0 2px 14px rgba(176, 208, 246, 0.16),
+    12px 0 38px rgba(0, 0, 0, 0.88),
+    3px 0 10px rgba(0, 0, 0, 0.92);
+}
+
+/* Seamless ultra-fine full-grain calfskin leather across entire sidebar */
+.adm-sidebar-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: var(--adm-leather-tex);
+  background-size: 360px 360px;
+  background-repeat: repeat;
+  mix-blend-mode: soft-light;
+  opacity: 0.48;
+}
+
+/* 3D machined brushed-brass right border rail with specular variation */
+.adm-sidebar-surface::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2px;
+  pointer-events: none;
+  z-index: 48;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 246, 214, 0.95) 0%,
+    rgba(218, 186, 122, 0.78) 14%,
+    rgba(128, 102, 58, 0.56) 36%,
+    rgba(212, 178, 114, 0.76) 54%,
+    rgba(116, 92, 52, 0.52) 78%,
+    rgba(182, 148, 88, 0.68) 94%,
+    rgba(102, 80, 44, 0.58) 100%
+  );
+  box-shadow:
+    -1px 0 0 rgba(4, 9, 17, 0.88),
+    1px 0 8px rgba(0, 0, 0, 0.9);
+}
+
+/* Make sidebar children sit cleanly above the ::before leather texture */
+.adm-sidebar-surface > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Top gleaming champagne-brass bezel rail on sidebar with blazing center glare */
+.adm-sidebar-top-bezel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+  z-index: 49;
+  background: linear-gradient(
+    90deg,
+    rgba(124, 98, 56, 0.62) 0%,
+    rgba(208, 178, 120, 0.86) 24%,
+    rgba(255, 250, 232, 1) 49%,
+    rgba(208, 178, 120, 0.86) 74%,
+    rgba(138, 110, 64, 0.7) 100%
+  );
+  box-shadow:
+    0 1px 10px rgba(255, 236, 186, 0.36),
+    0 2px 2px rgba(0, 0, 0, 0.65);
+}
+
+/* Sculpted 3D Moon Medallion (top-left of sidebar — never override Tailwind absolute) */
+.adm-moon-medallion {
+  border: 1.5px solid transparent;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(54, 82, 120, 0.45) 0%, rgba(12, 24, 42, 0.95) 68%, #060e1a 100%) padding-box,
+    linear-gradient(
+      145deg,
+      rgba(255, 246, 212, 0.94) 0%,
+      rgba(206, 172, 106, 0.68) 40%,
+      rgba(102, 82, 46, 0.5) 70%,
+      rgba(234, 200, 132, 0.84) 100%
+    ) border-box;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.82),
+    0 1px 3px rgba(0, 0, 0, 0.95),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.72),
+    inset 0 2px 4px rgba(255, 244, 206, 0.14);
+}
+
+/* Sculpted 3D Monorail Sliding Nav Carriage (120fps GPU Web Animations API glide) */
+.adm-nav-monorail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: 13px;
+  contain: layout style paint;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, opacity;
+  transition: opacity 180ms ease;
+}
+
+/* Sculpted 3D Active Nav Pill (exact match to Home macro close-up: soft leather + warm icon aura + solid 3D brass frame) */
+.adm-nav-active {
+  overflow: hidden;
+  border: 1.75px solid transparent !important;
+  background:
+    /* Warm golden radial halo softly illuminating behind the active left icon */
+    radial-gradient(circle 46px at 28px 50%, rgba(250, 204, 108, 0.34) 0%, rgba(224, 174, 82, 0.1) 54%, transparent 100%) padding-box,
+    /* Overhead cool steel-navy leather dome sheen */
+    radial-gradient(ellipse 92% 96% at 44% -18%, rgba(68, 104, 150, 0.66) 0%, rgba(28, 54, 90, 0.3) 54%, transparent 100%) padding-box,
+    /* Deep sculpted navy leather base */
+    linear-gradient(180deg, #1d3656 0%, #112540 54%, #0b192d 100%) padding-box,
+    /* 3D beveled brushed-gold rim (bright top-center, gleaming warm gold bottom, antique bronze sides) */
+    linear-gradient(
+      180deg,
+      rgba(255, 246, 214, 0.96) 0%,
+      rgba(208, 172, 102, 0.72) 22%,
+      rgba(138, 108, 56, 0.58) 52%,
+      rgba(196, 158, 90, 0.74) 78%,
+      rgba(248, 222, 156, 0.96) 100%
+    ) border-box !important;
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.88),
+    0 4px 10px rgba(0, 0, 0, 0.94),
+    inset 0 0 0 1.25px rgba(2, 7, 15, 0.8),
+    inset 0 2px 8px rgba(255, 246, 214, 0.16),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.56);
+}
+
+/* Soft fine calfskin leather grain directly over the active pill face */
+.adm-nav-active::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background-image: var(--adm-leather-tex);
+  background-size: 320px 320px;
+  mix-blend-mode: soft-light;
+  opacity: 0.42;
+}
+
+/* Gleaming top & bottom metallic specular catchlights on active pill */
+.adm-nav-active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 5;
+  background:
+    linear-gradient(90deg, transparent 8%, rgba(255, 250, 230, 0.9) 38%, rgba(255, 242, 200, 0.75) 68%, transparent 92%) top / 100% 1.5px no-repeat,
+    linear-gradient(90deg, transparent 8%, rgba(250, 224, 158, 0.88) 50%, transparent 92%) bottom / 100% 1.5px no-repeat;
+}
+
+.adm-nav-active > * {
+  position: relative;
+  z-index: 3;
+}
+
+/* Bottom sidebar recessed leather-and-brass hardware buttons (never override Tailwind absolute) */
+.adm-sidebar-util-btn {
+  border: 1.25px solid transparent;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 0%, rgba(44, 72, 110, 0.34) 0%, transparent 72%) padding-box,
+    linear-gradient(180deg, #0d1c32 0%, #071120 100%) padding-box,
+    linear-gradient(
+      180deg,
+      rgba(244, 224, 174, 0.78) 0%,
+      rgba(148, 122, 74, 0.44) 48%,
+      rgba(214, 182, 118, 0.68) 100%
+    ) border-box;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.8),
+    0 1px 3px rgba(0, 0, 0, 0.92),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.7),
+    inset 0 1px 0 rgba(255, 244, 208, 0.16);
+  transition: transform 140ms ease, filter 140ms ease, box-shadow 150ms ease;
+}
+
+.adm-sidebar-util-btn:hover {
+  filter: brightness(1.16);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.88),
+    0 0 12px rgba(232, 198, 122, 0.22),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.65),
+    inset 0 1px 0 rgba(255, 248, 224, 0.26);
+}
+
+/* Pressed horizontal leather crease centered evenly between Search/Messages icons and Home nav */
+.adm-sidebar-leather-crease {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+  z-index: 25;
+  background: linear-gradient(
+    180deg,
+    rgba(2, 6, 14, 0.92) 0%,
+    rgba(2, 6, 14, 0.92) 50%,
+    rgba(162, 194, 232, 0.18) 50%,
+    rgba(162, 194, 232, 0.14) 100%
+  );
+  box-shadow:
+    0 -1px 2px rgba(0, 0, 0, 0.42),
+    0 1px 2px rgba(132, 170, 218, 0.08);
+}
+
+/* Full-width gleaming champagne-brass bezel rail above sidebar profile bar (matches top sidebar rail) */
+.adm-sidebar-footer-rule {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+  z-index: 20;
+  background: linear-gradient(
+    90deg,
+    rgba(124, 98, 56, 0.62) 0%,
+    rgba(208, 178, 120, 0.86) 24%,
+    rgba(255, 250, 232, 1) 49%,
+    rgba(208, 178, 120, 0.86) 74%,
+    rgba(138, 110, 64, 0.7) 100%
+  );
+  box-shadow:
+    0 1px 10px rgba(255, 236, 186, 0.36),
+    0 2px 2px rgba(0, 0, 0, 0.65);
+}
+
+/* ── 2. HOME BRIDGE CANVAS & 3D BRUSHED-BRASS WINDOW MANTELPIECE SILL ── */
+.adm-bridge-canvas {
+  position: relative;
+  background-color: #050e1c;
+  background-image:
+    /* Subtle atmospheric slate pool behind the hero & KPI plaques */
+    radial-gradient(ellipse 74% 34% at 50% 24%, rgba(28, 52, 86, 0.46) 0%, rgba(11, 24, 44, 0.28) 54%, transparent 100%),
+    radial-gradient(ellipse 70% 42% at 50% 82%, rgba(16, 33, 58, 0.34) 0%, transparent 74%),
+    linear-gradient(180deg, #040a14 0%, #09182c 22%, #061222 68%, #040c18 100%);
+}
+
+/* Subtle dark fine-grain wall backdrop texture */
+.adm-bridge-canvas::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: var(--adm-grain-tex);
+  background-size: 160px 160px;
+  mix-blend-mode: soft-light;
+  opacity: 0.22;
+}
+
+/* 3D Brushed-Brass Window Shelf Molding & Cast Wall Shadow */
+.adm-window-sill {
+  position: relative;
+  z-index: 15;
+  box-shadow:
+    0 24px 44px rgba(0, 0, 0, 0.94),
+    0 8px 18px rgba(0, 0, 0, 0.96);
+}
+
+.adm-brass-mantel {
+  position: relative;
+  height: 11px;
+  width: 100%;
+  background:
+    /* Top razor specular edge + brushed brass face + undercut bevel */
+    linear-gradient(
+      180deg,
+      rgba(255, 244, 206, 0.82) 0%,
+      rgba(214, 178, 108, 0.45) 14%,
+      rgba(148, 114, 58, 0.12) 48%,
+      rgba(48, 34, 15, 0.65) 84%,
+      rgba(16, 11, 5, 0.95) 100%
+    ),
+    /* Horizontal reflections matched to lava lamp, brass pillars, and amethyst crystal */
+    linear-gradient(
+      90deg,
+      #3f2f17 0%,
+      #5b6485 4.5%,
+      #9a7a42 9%,
+      #d8b56d 16%,
+      #6a5027 24%,
+      #f8dfa0 35%,
+      #c6a15c 48%,
+      #785c30 61%,
+      #f2d590 72%,
+      #7b6240 81%,
+      #9b7eb8 87.5%,
+      #d8b46d 94%,
+      #423118 100%
+    );
+  border-top: 1px solid rgba(255, 240, 194, 0.55);
+  border-bottom: 1px solid rgba(10, 7, 3, 0.95);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 224, 0.42),
+    0 12px 26px rgba(0, 0, 0, 0.92),
+    0 3px 6px rgba(0, 0, 0, 0.96);
+}
+
+/* ── 3. SCULPTED FULL-GRAIN LEATHER & MACHINED PLATINUM-CHAMPAGNE HERO CARD ── */
+.adm-hero-card {
+  position: relative;
+  border: 1.5px solid transparent;
+  background:
+    /* 1. Organic swirling topographic contour lines */
+    var(--adm-topo-tex) center / 920px auto repeat padding-box,
+    /* 2. Dramatic studio overhead cool-steel spotlight centered behind greeting */
+    radial-gradient(ellipse 62% 96% at 48% -14%, rgba(68, 106, 152, 0.64) 0%, rgba(32, 60, 96, 0.36) 40%, rgba(13, 27, 48, 0.14) 72%, transparent 100%) padding-box,
+    /* 3. Deep petrol-navy vignette base */
+    linear-gradient(180deg, #122640 0%, #0c1b30 50%, #071222 100%) padding-box,
+    /* 4. 3D Platinum-Champagne Machined Metallic Bevel Frame */
+    linear-gradient(
+      180deg,
+      rgba(255, 250, 234, 0.94) 0%,
+      rgba(196, 174, 134, 0.52) 16%,
+      rgba(94, 80, 56, 0.36) 50%,
+      rgba(164, 144, 106, 0.5) 84%,
+      rgba(246, 232, 198, 0.9) 100%
+    ) border-box;
+  box-shadow:
+    0 24px 50px rgba(0, 0, 0, 0.9),
+    0 8px 18px rgba(0, 0, 0, 0.94),
+    0 1px 3px rgba(0, 0, 0, 0.98),
+    /* Crisp 1px dark recessed channel right inside the raised metal bezel */
+    inset 0 0 0 1px rgba(2, 7, 15, 0.78),
+    /* Soft overhead metallic sheen spill inside top edge */
+    inset 0 3px 22px rgba(176, 210, 250, 0.16),
+    inset 0 -2px 10px rgba(0, 0, 0, 0.58);
+}
+
+/* Ultra-fine matte calfskin leather across Hero Card */
+.adm-hero-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background-image: var(--adm-leather-tex);
+  background-size: 360px 360px;
+  mix-blend-mode: soft-light;
+  opacity: 0.44;
+}
+
+/* Blazing white-champagne specular glare concentrated along top edge */
+.adm-rim-glint-top {
+  position: absolute !important;
+  top: -0.5px;
+  left: 6%;
+  right: 6%;
+  height: 2px;
+  margin: 0 !important;
+  pointer-events: none;
+  z-index: 25 !important;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(222, 204, 166, 0.55) 22%,
+    rgba(255, 253, 244, 1) 48%,
+    rgba(232, 216, 180, 0.65) 74%,
+    transparent 100%
+  );
+  filter: drop-shadow(0 2px 8px rgba(255, 246, 218, 0.45));
+}
+
+/* Crisp bright champagne-silver metallic catchlight along bottom bevel lip */
+.adm-rim-glint-bottom {
+  position: absolute !important;
+  bottom: -0.5px;
+  left: 8%;
+  right: 8%;
+  height: 1.5px;
+  margin: 0 !important;
+  pointer-events: none;
+  z-index: 25 !important;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(224, 206, 168, 0.65) 24%,
+    rgba(255, 250, 232, 0.96) 52%,
+    rgba(228, 210, 172, 0.7) 78%,
+    transparent 100%
+  );
+}
+
+/* ── 4. SCULPTED 6 METRIC & MOTTO PLAQUES (Matches 6-card close-up photo) ── */
+.adm-metric-card {
+  position: relative;
+  border: 1.5px solid transparent;
+  background:
+    /* Dramatic top-right-to-center overhead cool-steel leather spotlight */
+    radial-gradient(ellipse 96% 68% at 58% -6%, rgba(74, 112, 158, 0.68) 0%, rgba(34, 62, 100, 0.36) 40%, rgba(12, 25, 44, 0.14) 72%, transparent 100%) padding-box,
+    /* Rich petrol-navy leather base falling into dark bottom shadow */
+    linear-gradient(180deg, #132844 0%, #0d1d33 48%, #071222 100%) padding-box,
+    /* Platinum-champagne top & bottom beveled rims with dark bronze sides */
+    linear-gradient(
+      180deg,
+      rgba(255, 252, 240, 0.94) 0%,
+      rgba(192, 176, 146, 0.52) 15%,
+      rgba(74, 68, 58, 0.3) 50%,
+      rgba(154, 140, 112, 0.46) 84%,
+      rgba(250, 238, 208, 0.9) 100%
+    ) border-box;
+  box-shadow:
+    0 18px 36px rgba(0, 0, 0, 0.88),
+    0 6px 14px rgba(0, 0, 0, 0.94),
+    0 1px 2px rgba(0, 0, 0, 0.98),
+    /* 1px inner dark leather inlay groove */
+    inset 0 0 0 1px rgba(2, 6, 14, 0.76),
+    /* Soft upper leather sheen */
+    inset 0 3px 16px rgba(186, 218, 255, 0.18),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.56);
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 200ms ease, filter 200ms ease;
+}
+
+/* Ultra-fine matte calfskin leather across every metric plaque */
+.adm-metric-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background-image: var(--adm-leather-tex);
+  background-size: 320px 320px;
+  mix-blend-mode: soft-light;
+  opacity: 0.52;
+}
+
+/* Motto tile variant: fine calfskin leather + subtle cartographic contour waves */
+.adm-metric-card-motto {
+  background:
+    var(--adm-topo-tex) -60px -40px / 540px auto repeat padding-box,
+    radial-gradient(ellipse 92% 66% at 54% -6%, rgba(64, 98, 142, 0.58) 0%, rgba(26, 48, 80, 0.3) 44%, transparent 100%) padding-box,
+    linear-gradient(180deg, #11243d 0%, #0b192d 50%, #061020 100%) padding-box,
+    linear-gradient(
+      180deg,
+      rgba(255, 252, 240, 0.94) 0%,
+      rgba(192, 176, 146, 0.5) 15%,
+      rgba(74, 68, 58, 0.3) 50%,
+      rgba(154, 140, 112, 0.46) 84%,
+      rgba(250, 238, 208, 0.9) 100%
+    ) border-box;
+}
+
+.adm-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 22px 42px rgba(0, 0, 0, 0.92),
+    0 0 24px rgba(226, 196, 134, 0.16),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.72),
+    inset 0 3px 18px rgba(206, 230, 255, 0.24),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.55);
+  filter: brightness(1.05);
+}
+
+/* ── 5. LOWER OVERVIEW DECK PANELS (Matching Full-Grain Leather + Topographic + Bevel Kit) ── */
+.adm-panel-card {
+  position: relative;
+  border: 1.5px solid transparent;
+  background:
+    var(--adm-topo-tex) center / 780px auto repeat padding-box,
+    radial-gradient(ellipse 78% 44% at 50% -6%, rgba(56, 90, 134, 0.52) 0%, rgba(24, 46, 78, 0.22) 48%, transparent 100%) padding-box,
+    linear-gradient(180deg, #11233b 0%, #0b1a2e 48%, #061020 100%) padding-box,
+    linear-gradient(
+      180deg,
+      rgba(248, 240, 218, 0.82) 0%,
+      rgba(176, 158, 124, 0.44) 16%,
+      rgba(74, 66, 52, 0.28) 52%,
+      rgba(148, 132, 100, 0.42) 84%,
+      rgba(236, 220, 184, 0.78) 100%
+    ) border-box;
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.88),
+    0 5px 14px rgba(0, 0, 0, 0.92),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.75),
+    inset 0 2px 14px rgba(176, 210, 250, 0.14);
+}
+
+.adm-panel-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background-image: var(--adm-leather-tex);
+  background-size: 360px 360px;
+  mix-blend-mode: soft-light;
+  opacity: 0.4;
+}
+
+.adm-panel-card > :not(.adm-rim-glint-top):not(.adm-rim-glint-bottom) {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── 6. HERO DATE & NAME CAPSULE, PILLS, ICON BADGES, INSET ROWS ── */
+.adm-date-capsule {
+  position: relative;
+  border: 1.5px solid transparent;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 0%, rgba(36, 62, 96, 0.36) 0%, transparent 72%) padding-box,
+    linear-gradient(180deg, #0b182a 0%, #060f1c 56%, #040a14 100%) padding-box,
+    linear-gradient(
+      180deg,
+      rgba(255, 246, 218, 0.92) 0%,
+      rgba(202, 172, 112, 0.56) 28%,
+      rgba(128, 104, 62, 0.44) 56%,
+      rgba(244, 220, 164, 0.88) 100%
+    ) border-box;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.88),
+    0 4px 10px rgba(0, 0, 0, 0.94),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.76),
+    inset 0 1px 0 rgba(255, 246, 214, 0.18),
+    inset 0 3px 10px rgba(0, 0, 0, 0.58);
+}
+
+.adm-crew-pill {
+  position: relative;
+  border: 1.25px solid transparent;
+  background:
+    linear-gradient(180deg, #102036 0%, #071220 100%) padding-box,
+    linear-gradient(
+      180deg,
+      rgba(252, 236, 194, 0.84) 0%,
+      rgba(164, 134, 78, 0.48) 50%,
+      rgba(226, 196, 134, 0.76) 100%
+    ) border-box;
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.76),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.65),
+    inset 0 1px 0 rgba(255, 246, 216, 0.22);
+}
+
+.adm-onduty-pill {
+  position: relative;
+  border: 1.25px solid transparent;
+  background:
+    linear-gradient(180deg, #144849 0%, #0b2d34 100%) padding-box,
+    linear-gradient(
+      180deg,
+      rgba(148, 246, 224, 0.68) 0%,
+      rgba(48, 168, 146, 0.48) 55%,
+      rgba(96, 216, 192, 0.62) 100%
+    ) border-box;
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(196, 255, 242, 0.3);
+}
+
+.adm-icon-tile {
+  position: relative;
+  border: 1.25px solid transparent;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(44, 72, 110, 0.36) 0%, transparent 72%) padding-box,
+    linear-gradient(180deg, #0d1c32 0%, #06101e 100%) padding-box,
+    linear-gradient(
+      155deg,
+      rgba(255, 246, 216, 0.88) 0%,
+      rgba(182, 152, 96, 0.46) 44%,
+      rgba(116, 96, 60, 0.4) 68%,
+      rgba(234, 206, 146, 0.78) 100%
+    ) border-box;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.82),
+    0 2px 4px rgba(0, 0, 0, 0.92),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.72),
+    inset 0 1px 0 rgba(255, 244, 210, 0.16);
+}
+
+.adm-inset-row {
+  background: linear-gradient(180deg, rgba(7, 17, 32, 0.88) 0%, rgba(4, 11, 22, 0.94) 100%);
+  border: 1px solid rgba(204, 182, 136, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 212, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.45);
+  transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+}
+
+.adm-inset-row:hover {
+  border-color: rgba(240, 214, 154, 0.54);
+  background: linear-gradient(180deg, rgba(13, 28, 52, 0.92) 0%, rgba(7, 17, 34, 0.96) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 246, 216, 0.14),
+    0 6px 16px rgba(0, 0, 0, 0.6);
+}
+
+/* ── 7. 3D CHISELED SOLID-BRASS SIDEBAR ICON SHADER ── */
+.adm-brass-icon {
+  color: #e8c370;
+  stroke: url(#adm-brass-grad) !important;
+  stroke-width: 2.25;
+  filter: url(#adm-brass-3d);
+  overflow: visible !important;
+  transition: transform 150ms ease;
+}
+
+.adm-brass-icon-active {
+  color: #fce090;
+  stroke: url(#adm-brass-grad-active) !important;
+  stroke-width: 2.25;
+  filter: url(#adm-brass-3d-active);
+  overflow: visible !important;
+  transition: transform 150ms ease;
+}
+
+.adm-brass-icon-home {
+  stroke-width: 1.95;
+}
+
+/* ── 8. ADMIRALTY PIPELINE DECK, PILLS, GROUP BRACKETS & NEON-LIT LEATHER STAGE CARDS ── */
+.adm-pipeline-deck {
+  position: relative;
+  overflow: hidden;
+  background-color: #050f1e;
+  background-image:
+    radial-gradient(ellipse 68% 72% at 46% 0%, rgba(56, 94, 142, 0.56) 0%, rgba(20, 42, 74, 0.32) 48%, rgba(5, 13, 26, 0.96) 100%),
+    linear-gradient(180deg, #0c1d34 0%, #071426 54%, #040d1b 100%);
+  border-top: 1px solid rgba(186, 208, 238, 0.16);
+  border-bottom: 1px solid rgba(212, 182, 120, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 226, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.8),
+    0 16px 36px rgba(0, 0, 0, 0.78);
+}
+
+.adm-pipeline-deck::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: var(--adm-leather-tex);
+  background-size: 340px 340px;
+  mix-blend-mode: soft-light;
+  opacity: 0.44;
+}
+
+.adm-pipeline-deck > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Sculpted dark obsidian-navy pill with platinum-champagne bevel (Close Pipeline, View Archive, Customize, List/Grid) */
+.adm-pipe-pill {
+  border: 1.25px solid transparent;
+  background:
+    radial-gradient(ellipse 85% 65% at 50% 0%, rgba(48, 78, 118, 0.34) 0%, transparent 72%) padding-box,
+    linear-gradient(180deg, #0f2037 0%, #081324 100%) padding-box,
+    linear-gradient(
+      180deg,
+      rgba(244, 224, 174, 0.76) 0%,
+      rgba(148, 124, 78, 0.44) 48%,
+      rgba(220, 190, 130, 0.68) 100%
+    ) border-box;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.72),
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.7),
+    inset 0 1px 0 rgba(255, 246, 218, 0.18);
+  transition: filter 150ms ease, box-shadow 150ms ease, transform 140ms ease;
+}
+
+.adm-pipe-pill:hover {
+  filter: brightness(1.14);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.82),
+    0 0 12px rgba(232, 198, 122, 0.18),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.65),
+    inset 0 1px 0 rgba(255, 248, 226, 0.26);
+}
+
+/* Advocate circle buttons (All | BH | ES | MS | KL) */
+.adm-pipe-avatar {
+  border: 1.25px solid rgba(154, 178, 212, 0.34);
+  background: linear-gradient(180deg, #10223a 0%, #071222 100%);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.68),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 150ms ease;
+}
+
+.adm-pipe-avatar:hover {
+  border-color: rgba(232, 200, 132, 0.62);
+  color: #fff6dc;
+}
+
+.adm-pipe-avatar-active {
+  border: 1.5px solid transparent;
+  background:
+    radial-gradient(circle at 38% 24%, rgba(62, 92, 132, 0.44) 0%, #091526 76%) padding-box,
+    linear-gradient(
+      145deg,
+      rgba(255, 246, 214, 0.96) 0%,
+      rgba(218, 182, 108, 0.78) 48%,
+      rgba(246, 218, 148, 0.92) 100%
+    ) border-box;
+  box-shadow:
+    0 0 12px rgba(242, 205, 128, 0.38),
+    0 4px 12px rgba(0, 0, 0, 0.78),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.7);
+}
+
+/* Glowing incandescent champagne-gold tab underline */
+.adm-pipe-tab-glow {
+  position: absolute;
+  bottom: -1.5px;
+  left: -2px;
+  right: -2px;
+  height: 2.5px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    rgba(222, 176, 86, 0.25) 0%,
+    rgba(255, 244, 202, 1) 46%,
+    rgba(242, 205, 124, 0.92) 72%,
+    rgba(212, 166, 76, 0.25) 100%
+  );
+  box-shadow:
+    0 0 12px rgba(248, 212, 126, 0.85),
+    0 0 4px rgba(255, 248, 224, 0.92);
+}
+
+/* Sculpted Obsidian-Navy & Satin-Gold Group Bracket Capsule (LEAD OPPORTUNITIES, FOLLOW-UPS) */
+.adm-pipe-group-pill {
+  border: 1.25px solid transparent;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 0%, rgba(44, 74, 114, 0.36) 0%, transparent 74%) padding-box,
+    linear-gradient(180deg, #102138 0%, #071222 100%) padding-box,
+    linear-gradient(
+      180deg,
+      rgba(252, 236, 192, 0.82) 0%,
+      rgba(156, 128, 76, 0.46) 50%,
+      rgba(228, 198, 134, 0.72) 100%
+    ) border-box;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.84),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.74),
+    inset 0 1px 0 rgba(255, 246, 216, 0.18);
+}
+
+/* "All" Summary Card: Deep midnight calfskin leather inside a blazing 3D solid-gold frame */
+.adm-stage-card-all {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background:
+    radial-gradient(ellipse 86% 64% at 50% 0%, rgba(56, 94, 142, 0.42) 0%, transparent 74%) padding-box,
+    linear-gradient(180deg, #11253f 0%, #09172a 56%, #050f1d 100%) padding-box,
+    linear-gradient(
+      180deg,
+      rgba(255, 248, 214, 1) 0%,
+      rgba(218, 178, 96, 0.82) 24%,
+      rgba(148, 112, 48, 0.7) 52%,
+      rgba(222, 182, 100, 0.86) 78%,
+      rgba(255, 242, 194, 0.98) 100%
+    ) border-box;
+  box-shadow:
+    0 0 22px rgba(244, 202, 108, 0.34),
+    0 12px 26px rgba(0, 0, 0, 0.86),
+    inset 0 0 0 1.25px rgba(2, 6, 14, 0.8),
+    inset 0 2px 10px rgba(255, 242, 198, 0.16);
+  transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+}
+
+.adm-stage-card-all-idle {
+  border: 1.5px solid transparent;
+  background:
+    radial-gradient(ellipse 86% 64% at 50% 0%, rgba(44, 74, 114, 0.32) 0%, transparent 74%) padding-box,
+    linear-gradient(180deg, #0e2036 0%, #081526 58%, #050e1b 100%) padding-box,
+    linear-gradient(
+      180deg,
+      rgba(244, 222, 168, 0.78) 0%,
+      rgba(154, 122, 62, 0.48) 50%,
+      rgba(218, 184, 114, 0.72) 100%
+    ) border-box;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.8),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.76);
+}
+
+.adm-stage-card-all::before,
+.adm-stage-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background-image: var(--adm-leather-tex);
+  background-size: 280px 280px;
+  mix-blend-mode: soft-light;
+  opacity: 0.44;
+}
+
+.adm-stage-card-all > :not([class*="absolute"]):not(.adm-stage-topbar),
+.adm-stage-card > :not([class*="absolute"]):not(.adm-stage-topbar) {
+  position: relative;
+  z-index: 2;
+}
+
+/* Colored Stage Card: Dark calfskin leather illuminated downward from its glowing top-edge neon bar */
+.adm-stage-card {
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.84),
+    0 3px 8px rgba(0, 0, 0, 0.92),
+    inset 0 0 0 1px rgba(2, 6, 14, 0.74),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), filter 180ms ease, box-shadow 180ms ease;
+}
+
+.adm-stage-card:hover,
+.adm-stage-card-all:hover {
+  transform: translateY(-1.5px);
+  filter: brightness(1.08);
+}
+
+.adm-stage-topbar {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  z-index: 5 !important;
+  pointer-events: none;
+}
+
+

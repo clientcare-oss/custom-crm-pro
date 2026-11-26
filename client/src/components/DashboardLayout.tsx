@@ -35,7 +35,7 @@ import {
 import { CRM_MODULES } from "@/components/team/teamTypes";
 import { useTerminology, type ProjectIconKey } from "@/contexts/TerminologyContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { CSSProperties, useEffect, useRef, useState, useMemo } from "react";
+import { CSSProperties, startTransition, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
@@ -62,6 +62,7 @@ import { MarineRadarIcon } from "@/components/ui/MarineRadarIcon";
 import { getTestUnreadState } from "@/lib/testUnreadHelper";
 import { broadcastPageId } from "@/lib/pageIdRegistry";
 import { useWorkspaceLock } from "@/contexts/WorkspaceLockContext";
+import "@/styles/admiraltyBridge.css";
 
 const LOGO_URL = "/waypoint-logo.png";
 
@@ -1264,7 +1265,253 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     });
   };
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const navMenuRef = useRef<HTMLUListElement>(null);
+  const monorailRef = useRef<HTMLLIElement>(null);
+  const monorailAnimRef = useRef<Animation | null>(null);
+  const pageContentRef = useRef<HTMLDivElement>(null);
+  const pageFadeAnimRef = useRef<Animation | null>(null);
+  const navTimerRef = useRef<number | null>(null);
+  const prevRouteKeyRef = useRef<string | null>(null);
+  const navItemRefs = useRef<Record<string, HTMLLIElement | null>>({});
+  const monorailInitializedRef = useRef(false);
+  const monorailGeoRef = useRef<{ x: number; y: number; height: number; width: number }>({
+    x: 0,
+    y: 0,
+    height: 46,
+    width: 0,
+  });
+  const [optimisticNavId, setOptimisticNavId] = useState<string | null>(null);
   const activeMenuItem = navItems.find((item) => item.isActive(location));
+  const routeNavId = activeMenuItem?.id ?? null;
+
+  const normalizeRouteKey = (rawPath: string) => {
+    const cleanPath = (rawPath.split("?")[0] || "/").replace(/\/+$/, "") || "/";
+    if (cleanPath === "/" || cleanPath === "/crew-quarters" || cleanPath === "/crew-messages") {
+      return "/crew-quarters";
+    }
+    return cleanPath;
+  };
+
+  // Normalize pathname so same-page aliases (/ and /crew-quarters) don't double-fade on tab switches
+  const routeTransitionKey = useMemo(() => normalizeRouteKey(location), [location]);
+
+  // Clear optimistic target as soon as the real route catches up
+  useEffect(() => {
+    setOptimisticNavId(null);
+  }, [location]);
+
+  // Clean up any pending fade-out navigation timer on unmount
+  useEffect(() => {
+    return () => {
+      if (navTimerRef.current !== null) {
+        window.clearTimeout(navTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Smooth GPU quickfade-in on EVERY page change (sidebar clicks, in-page links, Back/Forward, Go to Page)
+  useLayoutEffect(() => {
+    const el = pageContentRef.current;
+    if (!el) return;
+
+    if (prevRouteKeyRef.current === null) {
+      prevRouteKeyRef.current = routeTransitionKey;
+      el.style.opacity = "1";
+      return;
+    }
+
+    if (prevRouteKeyRef.current === routeTransitionKey) return;
+    prevRouteKeyRef.current = routeTransitionKey;
+
+    if (pageFadeAnimRef.current) {
+      pageFadeAnimRef.current.cancel();
+      pageFadeAnimRef.current = null;
+    }
+
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    el.style.opacity = "1";
+    if (!prefersReduced && typeof el.animate === "function") {
+      const anim = el.animate(
+        [
+          { opacity: 0 },
+          { opacity: 1 },
+        ],
+        {
+          duration: 220,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          fill: "none",
+        }
+      );
+      pageFadeAnimRef.current = anim;
+      anim.onfinish = () => {
+        if (pageFadeAnimRef.current === anim) pageFadeAnimRef.current = null;
+      };
+    }
+  }, [routeTransitionKey]);
+
+  const activeNavId = optimisticNavId ?? routeNavId;
+
+  useLayoutEffect(() => {
+    const syncMonorail = (instant = false) => {
+      const menuEl = navMenuRef.current;
+      const pillEl = monorailRef.current;
+      const itemEl = activeNavId ? navItemRefs.current[activeNavId] : null;
+      if (!menuEl || !pillEl) return;
+
+      if (!itemEl || menuEl.offsetWidth === 0) {
+        if (!itemEl) pillEl.style.opacity = "0";
+        return;
+      }
+
+      const btnEl = (itemEl.querySelector("button") as HTMLElement | null) || itemEl;
+      const targetX = itemEl.offsetLeft + btnEl.offsetLeft;
+      const targetY = itemEl.offsetTop + btnEl.offsetTop;
+      const targetW = btnEl.offsetWidth;
+      const targetH = btnEl.offsetHeight;
+      if (targetH === 0) return;
+
+      pillEl.style.height = `${targetH}px`;
+      pillEl.style.width = isCollapsed && targetW > 0 ? `${targetW}px` : "";
+      pillEl.style.opacity = "1";
+
+      const prefersReduced =
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+      // Read the LIVE mid-flight GPU position if an animation is already running
+      let fromX = monorailGeoRef.current.x;
+      let fromY = monorailGeoRef.current.y;
+      if (monorailAnimRef.current && monorailInitializedRef.current) {
+        try {
+          const matrix = new DOMMatrixReadOnly(getComputedStyle(pillEl).transform);
+          fromX = matrix.m41;
+          fromY = matrix.m42;
+        } catch {
+          // fallback to last recorded coordinates
+        }
+      }
+
+      // Cancel any running Web Animation cleanly before committing new coordinates
+      if (monorailAnimRef.current) {
+        monorailAnimRef.current.cancel();
+        monorailAnimRef.current = null;
+      }
+
+      const targetTransform = `translate3d(${targetX}px, ${targetY}px, 0)`;
+      const deltaY = Math.abs(targetY - fromY);
+      const shouldAnimate =
+        !instant &&
+        !prefersReduced &&
+        monorailInitializedRef.current &&
+        deltaY > 1 &&
+        typeof pillEl.animate === "function";
+
+      monorailGeoRef.current = { x: targetX, y: targetY, height: targetH, width: targetW };
+      pillEl.style.transform = targetTransform;
+
+      if (shouldAnimate) {
+        // Silky weighted monorail velocity: gentle smooth launch, liquid cruise, soft magnetic settle
+        const duration = Math.round(Math.min(620, Math.max(440, 400 + deltaY * 0.54)));
+        const anim = pillEl.animate(
+          [
+            { transform: `translate3d(${fromX}px, ${fromY}px, 0)` },
+            { transform: targetTransform },
+          ],
+          {
+            duration,
+            easing: "cubic-bezier(0.36, 0.04, 0.2, 1)",
+            fill: "none",
+          }
+        );
+        monorailAnimRef.current = anim;
+        anim.onfinish = () => {
+          if (monorailAnimRef.current === anim) monorailAnimRef.current = null;
+        };
+      }
+
+      monorailInitializedRef.current = true;
+    };
+
+    syncMonorail(false);
+
+    const menuEl = navMenuRef.current;
+    if (!menuEl || typeof ResizeObserver === "undefined") return;
+    let prevWidth = menuEl.offsetWidth;
+    const ro = new ResizeObserver(() => {
+      const nextWidth = menuEl.offsetWidth;
+      if (nextWidth > 0 && nextWidth !== prevWidth) {
+        const wasHidden = prevWidth === 0;
+        prevWidth = nextWidth;
+        if (wasHidden) monorailInitializedRef.current = false;
+        syncMonorail(true);
+      }
+    });
+    ro.observe(menuEl);
+    return () => ro.disconnect();
+  }, [activeNavId, isCollapsed, navItems.length]);
+
+  const handleNavItemSelect = (itemId: string, path: string) => {
+    if (navTimerRef.current !== null) {
+      window.clearTimeout(navTimerRef.current);
+      navTimerRef.current = null;
+    }
+
+    const targetRouteKey = normalizeRouteKey(path);
+    const sameRoute = targetRouteKey === routeTransitionKey;
+
+    // 1. Immediately start 120fps GPU compositor monorail glide on Frame 0
+    if (itemId !== activeNavId) {
+      setOptimisticNavId(itemId);
+    }
+
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const el = pageContentRef.current;
+
+    if (sameRoute || prefersReduced || !el || typeof el.animate !== "function") {
+      if (!sameRoute || location !== path) {
+        startTransition(() => setLocation(path));
+      }
+      return;
+    }
+
+    // 2. Quick silky fade-out (~90ms) over the dark Admiralty canvas, then swap route & fade-in
+    if (pageFadeAnimRef.current) {
+      pageFadeAnimRef.current.cancel();
+      pageFadeAnimRef.current = null;
+    }
+    const outAnim = el.animate(
+      [
+        { opacity: 1 },
+        { opacity: 0 },
+      ],
+      {
+        duration: 100,
+        easing: "cubic-bezier(0.4, 0, 1, 1)",
+        fill: "forwards",
+      }
+    );
+    pageFadeAnimRef.current = outAnim;
+
+    navTimerRef.current = window.setTimeout(() => {
+      navTimerRef.current = null;
+      startTransition(() => {
+        setLocation(path);
+      });
+      // Safety guard: guarantee page is never left hidden if navigation is prevented/redirected back
+      window.setTimeout(() => {
+        if (pageFadeAnimRef.current === outAnim) {
+          outAnim.cancel();
+          pageFadeAnimRef.current = null;
+          el.style.opacity = "1";
+        }
+      }, 280);
+    }, 85);
+  };
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
@@ -1294,41 +1541,132 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
 
   return (
     <>
+      {/* Hidden Global SVG Shader Definitions: 3D Chiseled Solid-Brass Embossed Hardware Icons */}
+      <svg
+        aria-hidden="true"
+        width="0"
+        height="0"
+        className="fixed pointer-events-none opacity-0"
+        style={{ position: "fixed", width: 0, height: 0 }}
+      >
+        <defs>
+          {/* Vertical metallic brushed-gold gradient for sidebar icons (userSpaceOnUse preserves straight horizontal/vertical lines!) */}
+          <linearGradient id="adm-brass-grad" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22">
+            <stop offset="0%" stopColor="#FFF7D6" />
+            <stop offset="28%" stopColor="#F5D57E" />
+            <stop offset="65%" stopColor="#CF9D42" />
+            <stop offset="100%" stopColor="#8A601B" />
+          </linearGradient>
+
+          {/* Brighter gleaming champagne-gold gradient for active nav icon */}
+          <linearGradient id="adm-brass-grad-active" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22">
+            <stop offset="0%" stopColor="#FFFDEC" />
+            <stop offset="30%" stopColor="#FCE190" />
+            <stop offset="68%" stopColor="#E1B14E" />
+            <stop offset="100%" stopColor="#A67624" />
+          </linearGradient>
+
+          {/* 3D Embossed Bevel + Extruded Metallic Thickness + Deep Leather Cast Shadow */}
+          <filter id="adm-brass-3d" x="-35%" y="-35%" width="170%" height="185%">
+            {/* Soft dark ambient shadow onto navy leather */}
+            <feDropShadow dx="0" dy="2.4" stdDeviation="1.6" floodColor="#000000" floodOpacity="0.92" result="castShadow" />
+            {/* Tight extruded bronze bottom thickness edge (gives 3D physical metal depth) */}
+            <feOffset in="SourceAlpha" dx="0" dy="1.05" result="extrudeOff" />
+            <feFlood floodColor="#3A2406" floodOpacity="0.95" result="extrudeColor" />
+            <feComposite in="extrudeColor" in2="extrudeOff" operator="in" result="extrudeLip" />
+            {/* Specular bevel catchlight on upper-left ridge of every icon stroke */}
+            <feGaussianBlur in="SourceAlpha" stdDeviation="0.55" result="blurAlpha" />
+            <feSpecularLighting
+              in="blurAlpha"
+              surfaceScale="2.6"
+              specularConstant="1.15"
+              specularExponent="22"
+              lightingColor="#FFF8DC"
+              result="specLight"
+            >
+              <feDistantLight azimuth="238" elevation="56" />
+            </feSpecularLighting>
+            <feComposite in="specLight" in2="SourceAlpha" operator="in" result="specClipped" />
+            <feMerge>
+              <feMergeNode in="castShadow" />
+              <feMergeNode in="extrudeLip" />
+              <feMergeNode in="SourceGraphic" />
+              <feMergeNode in="specClipped" />
+            </feMerge>
+          </filter>
+
+          {/* Active Icon: 3D Embossed Bevel + Extruded Lip + Warm Golden Radial Aura */}
+          <filter id="adm-brass-3d-active" x="-55%" y="-55%" width="210%" height="210%">
+            {/* Warm golden halo radiating over the dark leather pill */}
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3.4" result="haloBlur" />
+            <feFlood floodColor="#F6C15A" floodOpacity="0.62" result="haloColor" />
+            <feComposite in="haloColor" in2="haloBlur" operator="in" result="warmHalo" />
+            {/* Deep grounded drop shadow */}
+            <feDropShadow dx="0" dy="2.4" stdDeviation="1.6" floodColor="#000000" floodOpacity="0.92" result="castShadow" />
+            {/* Tight extruded bronze bottom thickness edge */}
+            <feOffset in="SourceAlpha" dx="0" dy="1.1" result="extrudeOff" />
+            <feFlood floodColor="#462B07" floodOpacity="0.96" result="extrudeColor" />
+            <feComposite in="extrudeColor" in2="extrudeOff" operator="in" result="extrudeLip" />
+            {/* Razor specular bevel highlight along upper ridge */}
+            <feGaussianBlur in="SourceAlpha" stdDeviation="0.55" result="blurAlpha" />
+            <feSpecularLighting
+              in="blurAlpha"
+              surfaceScale="2.8"
+              specularConstant="1.35"
+              specularExponent="20"
+              lightingColor="#FFFCE8"
+              result="specLight"
+            >
+              <feDistantLight azimuth="238" elevation="58" />
+            </feSpecularLighting>
+            <feComposite in="specLight" in2="SourceAlpha" operator="in" result="specClipped" />
+            <feMerge>
+              <feMergeNode in="warmHalo" />
+              <feMergeNode in="castShadow" />
+              <feMergeNode in="extrudeLip" />
+              <feMergeNode in="SourceGraphic" />
+              <feMergeNode in="specClipped" />
+            </feMerge>
+          </filter>
+        </defs>
+      </svg>
+
       <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
           className="border-r-0 transition-all duration-200 ease-in-out"
           disableTransition={isResizing}
         >
-          {/* ── Header: Gold Shimmer + Circle Theme Toggle + Collapse Button + Logo & Wordmark ── */}
-          <SidebarHeader className="px-3 pt-3.5 pb-2 bg-transparent border-b border-[#152744] gap-0 relative z-40 overflow-visible">
-            {/* Top golden accent shimmer line */}
-            <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#F7D287] to-transparent shadow-[0_0_10px_rgba(247,210,135,0.75)] pointer-events-none z-30" />
+          {/* ── Header: Gleaming Champagne-Brass Top Bezel + 3D Moon Medallion + Collapse Button + Logo & Wordmark ── */}
+          <SidebarHeader className="px-4 pt-4 pb-3 bg-transparent border-b-0 gap-0 relative z-40 overflow-visible">
+            {/* Top gleaming champagne-brass specular rail with center flare */}
+            <div aria-hidden="true" className="adm-sidebar-top-bezel" />
 
             {!isCollapsed ? (
-              <div className="relative w-full flex flex-col items-center justify-center pt-1 pb-1">
-                {/* Circle Light/Dark Mode Toggle at top left (matching Client Portal) */}
+              <div className="relative w-full flex flex-col items-center justify-center pt-1 pb-0">
+                {/* Circle Light/Dark Mode Medallion at top left */}
                 <button
                   onClick={toggleTheme}
-                  className={`absolute top-0 left-0 w-7 h-7 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer shadow-md z-20 ${isLight
-                      ? "border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500"
-                      : "border-[#F5B544]/70 hover:border-[#F5B544] bg-[#07152B] hover:bg-[#0C1F3D] text-[#F5B544] shadow-amber-500/10"
+                  className={`absolute top-0 left-0 w-9 h-9 rounded-full flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer z-20 ${isLight
+                    ? "border border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500 shadow-md"
+                    : "adm-moon-medallion text-[#f5d888] hover:brightness-115"
                     }`}
                   title={isLight ? "Switch to dark mode" : "Switch to light mode"}
                   aria-label="Toggle theme"
                 >
                   {/* Sun Icon (rises and rotates in light mode) */}
                   <Sun
-                    className={`absolute h-3.5 w-3.5 text-amber-500 transition-all duration-[300ms] ease-in-out transform ${isLight
-                        ? "translate-y-0 rotate-0 scale-100 opacity-100"
-                        : "translate-y-6 -rotate-90 scale-50 opacity-0"
+                    className={`absolute h-4 w-4 text-amber-500 transition-all duration-[300ms] ease-in-out transform ${isLight
+                      ? "translate-y-0 rotate-0 scale-100 opacity-100"
+                      : "translate-y-6 -rotate-90 scale-50 opacity-0"
                       }`}
                   />
                   {/* Moon Icon (sets and rotates in dark mode) */}
                   <Moon
-                    className={`absolute h-3.5 w-3.5 text-amber-300 transition-all duration-[300ms] ease-in-out transform ${!isLight
-                        ? "translate-y-0 rotate-0 scale-100 opacity-100"
-                        : "-translate-y-6 rotate-90 scale-50 opacity-0"
+                    strokeWidth={2.15}
+                    className={`adm-brass-icon absolute h-[18px] w-[18px] fill-[#f5d88a]/25 transition-all duration-[300ms] ease-in-out transform ${!isLight
+                      ? "translate-y-0 rotate-0 scale-100 opacity-100"
+                      : "-translate-y-6 rotate-90 scale-50 opacity-0"
                       }`}
                   />
                 </button>
@@ -1336,54 +1674,58 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 {/* Collapse button at top right */}
                 <button
                   onClick={toggleSidebar}
-                  className="absolute top-0 right-0 h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] text-white/60 hover:text-white cursor-pointer z-20"
+                  className="adm-sidebar-util-btn absolute top-0.5 right-0 h-7 w-7 flex items-center justify-center rounded-[7px] transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] text-[#dce5f2] hover:text-[#fff3cc] cursor-pointer z-20"
                   title="Close sidebar"
                   aria-label="Close sidebar"
                 >
-                  <PanelLeftClose className="h-4 w-4" />
+                  <PanelLeftClose className="h-3.5 w-3.5" />
                 </button>
 
                 {/* Waypoint Advocates Logo & Wordmark */}
-                <div className="flex flex-col items-center gap-1.5 w-full">
+                <div className="flex flex-col items-center gap-1.5 w-full pt-2">
                   <img
                     src={logoData?.logoUrl || LOGO_URL}
                     alt="Waypoint Advocates"
-                    className="h-12 w-12 object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
+                    className="h-[88px] w-[88px] object-contain drop-shadow-[0_10px_22px_rgba(0,0,0,0.88)]"
                   />
-                  <div className="flex flex-col items-center leading-tight w-full">
-                    <span className="font-serif tracking-[0.24em] text-[#E5C175] text-[15px] font-bold uppercase select-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] pl-1">
+                  <div className="flex flex-col items-center leading-none w-full">
+                    <span className="font-serif tracking-[0.26em] text-[#FAF5E8] text-[18px] leading-none font-bold uppercase select-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)] pl-1">
                       WAYPOINT
                     </span>
 
-                    {/* ADVOCATES Row with Expanding Search Bar */}
-                    <div ref={searchContainerRef} className="relative w-full flex items-center justify-center min-h-[28px] mt-0.5">
-                      {/* Normal State: ADVOCATES with Magnifying Glass to its Left, Lined Up Under Moon Icon */}
+                    {/* Centered ADVOCATES Text with Hairline Rules — directly under WAYPOINT */}
+                    <div className="flex items-center justify-center gap-2.5 select-none leading-none mt-[1px]">
+                      <span aria-hidden="true" className="h-[1px] w-7 bg-gradient-to-r from-transparent to-[#d8c49a]/80" />
+                      <span className="tracking-[0.28em] text-[#D2DCEF] text-[9.5px] leading-none font-semibold uppercase drop-shadow-[0_1px_4px_rgba(0,0,0,0.75)] pl-0.5">
+                        ADVOCATES
+                      </span>
+                      <span aria-hidden="true" className="h-[1px] w-7 bg-gradient-to-l from-transparent to-[#d8c49a]/80" />
+                    </div>
+
+                    {/* Quick Search & Crew Messages Icon Row (below the ADVOCATES line) + Expanding Search Bar */}
+                    <div ref={searchContainerRef} className="relative w-full flex items-center justify-between min-h-[26px] mt-1.5">
+                      {/* Normal State: Quick Search (left) & Crew Messages (right) below ADVOCATES */}
                       <div
                         className={cn(
-                          "w-full relative flex items-center justify-center transition-all duration-200",
+                          "w-full flex items-center justify-between transition-all duration-200",
                           isSearchOpen ? "opacity-0 pointer-events-none scale-95" : "opacity-100 scale-100"
                         )}
                       >
-                        {/* Magnifying Glass Icon Button (left of ADVOCATES, lined up directly under the moon icon) */}
+                        {/* Magnifying Glass Icon Button (left, aligned under moon icon) */}
                         <button
                           type="button"
                           onClick={handleOpenSearch}
-                          className="absolute left-0 w-7 h-7 rounded-full flex items-center justify-center text-[#B9CDE3]/80 hover:text-[#F8D279] hover:bg-white/[0.08] transition-all cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] group"
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-[#9db4d2]/75 hover:text-[#F8D279] hover:bg-white/[0.07] transition-all cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] group"
                           aria-label="Search students, clients, modules, tools"
                         >
                           <Search className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
                         </button>
 
-                        {/* Centered ADVOCATES Text */}
-                        <span className="tracking-[0.28em] text-[#B9CDE3] text-[10.5px] font-semibold uppercase select-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] pl-1">
-                          ADVOCATES
-                        </span>
-
-                        {/* Messages Icon Button (right of ADVOCATES, directly under the close/collapse button) */}
+                        {/* Messages Icon Button (right, aligned under collapse button) */}
                         <button
                           type="button"
                           onClick={handleOpenCrewMessages}
-                          className="absolute right-0 w-7 h-7 rounded-full flex items-center justify-center text-[#B9CDE3]/80 hover:text-[#F8D279] hover:bg-white/[0.08] transition-all cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] group"
+                          className="relative w-6 h-6 rounded-full flex items-center justify-center text-[#9bb0cf]/75 hover:text-[#F8D279] hover:bg-white/[0.07] transition-all cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] group"
                           aria-label="Crew Messages Workspace (PG-038-MSG)"
                           title={hasUnreadMessages ? `${unreadMessageCount} new message${unreadMessageCount > 1 ? "s" : ""} — click to open Crew Messages Workspace` : "Crew Messages Workspace (PG-038-MSG)"}
                         >
@@ -1629,59 +1971,77 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 <button
                   onClick={toggleTheme}
                   className={`relative w-7 h-7 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer shadow-md ${isLight
-                      ? "border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500"
-                      : "border-[#F5B544]/70 hover:border-[#F5B544] bg-[#07152B] hover:bg-[#0C1F3D] text-[#F5B544] shadow-amber-500/10"
+                    ? "border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500"
+                    : "border-[#F5B544]/70 hover:border-[#F5B544] bg-[#07152B] hover:bg-[#0C1F3D] text-[#F5B544] shadow-amber-500/10"
                     }`}
                   title={isLight ? "Switch to dark mode" : "Switch to light mode"}
                   aria-label="Toggle theme"
                 >
                   <Sun
                     className={`absolute h-3.5 w-3.5 text-amber-500 transition-all duration-[300ms] ease-in-out transform ${isLight
-                        ? "translate-y-0 rotate-0 scale-100 opacity-100"
-                        : "translate-y-6 -rotate-90 scale-50 opacity-0"
+                      ? "translate-y-0 rotate-0 scale-100 opacity-100"
+                      : "translate-y-6 -rotate-90 scale-50 opacity-0"
                       }`}
                   />
                   <Moon
                     className={`absolute h-3.5 w-3.5 text-amber-300 transition-all duration-[300ms] ease-in-out transform ${!isLight
-                        ? "translate-y-0 rotate-0 scale-100 opacity-100"
-                        : "-translate-y-6 rotate-90 scale-50 opacity-0"
+                      ? "translate-y-0 rotate-0 scale-100 opacity-100"
+                      : "-translate-y-6 rotate-90 scale-50 opacity-0"
                       }`}
                   />
                 </button>
               </div>
             )}
+
+            {/* Even horizontal debossed leather crease centered between Search/Messages row and Home */}
+            <div aria-hidden="true" className="adm-sidebar-leather-crease" />
           </SidebarHeader>
 
-          {/* ── Nav items: Clean Vertical List with Byron's Picked Icons & Radiant Highlight ── */}
-          <SidebarContent className="bg-transparent px-2.5 py-3 overflow-y-auto space-y-1">
-            <SidebarMenu className="gap-1">
+          {/* ── Nav items: Smooth Monorail Sliding Leather-and-Brass Selection Switch ── */}
+          <SidebarContent className="bg-transparent px-3.5 pt-3 pb-3 overflow-y-auto space-y-1">
+            <SidebarMenu ref={navMenuRef} className="relative gap-1.5">
+              {/* Floating Sculpted 3D Monorail Slider Carriage (120fps Web Animations API GPU glide) */}
+              <li
+                ref={monorailRef}
+                aria-hidden="true"
+                data-testid="sidebar-monorail-pill"
+                className="adm-nav-active adm-nav-monorail list-none"
+              />
+
               {navItems.map((item) => {
-                const isActive = item.isActive(location);
+                const isActive = activeNavId === item.id;
                 const IconComponent = item.icon;
+                const isHomeIcon = item.id === "home";
                 return (
-                  <SidebarMenuItem key={item.id}>
+                  <SidebarMenuItem
+                    key={item.id}
+                    ref={(el) => {
+                      navItemRefs.current[item.id] = el;
+                    }}
+                    className="relative z-10"
+                  >
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => setLocation(item.path)}
+                      onClick={() => handleNavItemSelect(item.id, item.path)}
                       tooltip={item.label}
                       className={cn(
-                        "h-10 w-full px-3 rounded-lg text-[13.5px] cursor-pointer transition-all duration-150 flex items-center gap-3.5 select-none",
+                        "h-[46px] w-full px-3.5 rounded-[13px] text-[14.5px] cursor-pointer transition-colors duration-250 flex items-center gap-3.5 select-none [&>svg]:!size-[22px] border border-transparent",
+                        isHomeIcon && "[&>svg]:!size-[24px]",
                         isActive
-                          ? "bg-gradient-to-r from-[#173050]/95 via-[#23456F]/85 to-[#162E4D]/95 border border-[#D4AF37]/50 text-white font-semibold shadow-[0_2px_12px_rgba(212,175,55,0.18),inset_0_1px_0_rgba(255,255,255,0.12)]"
-                          : "text-[#B9CDE3] hover:text-white hover:bg-white/[0.07] border border-transparent font-medium"
+                          ? "!bg-transparent hover:!bg-transparent active:!bg-transparent text-[#FAF7EE] font-semibold"
+                          : "bg-transparent text-[#E1E9F6] hover:text-[#FFF8E6] hover:bg-white/[0.045] hover:border-[#d4bc88]/25 font-normal"
                       )}
                     >
                       {IconComponent && (
                         <IconComponent
                           className={cn(
-                            "h-4 w-4 shrink-0 transition-transform",
-                            isActive
-                              ? "text-[#F8D279] drop-shadow-[0_0_6px_rgba(248,210,121,0.6)] scale-105"
-                              : "text-[#E0B86C] drop-shadow-[0_0_2px_rgba(224,184,108,0.3)]"
+                            "shrink-0",
+                            isHomeIcon && "adm-brass-icon-home",
+                            isActive ? "adm-brass-icon-active" : "adm-brass-icon"
                           )}
                         />
                       )}
-                      <span className="truncate tracking-wide">{item.label}</span>
+                      <span className="truncate tracking-[0.015em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -1689,32 +2049,30 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </SidebarMenu>
           </SidebarContent>
 
-          {/* ── Footer: Compact Employee Pill Matching Reference ── */}
-          <SidebarFooter className="bg-[#07152B] border-t border-[#152744] px-2 py-2">
+          {/* ── Footer: Full-Width Gleaming Gold Rail (Matches Top Rail) + Sculpted Hardware Tiles ── */}
+          <SidebarFooter className="relative bg-transparent border-t-0 px-2.5 pt-3 pb-3">
+            <div aria-hidden="true" className="adm-sidebar-footer-rule" />
             <div className="flex items-center gap-1.5 w-full">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center h-8 rounded-md border border-[#172D4D] bg-[#07172E]/90 hover:bg-[#0B1E38] hover:border-[#D4AF37]/50 transition-all flex-1 text-left overflow-hidden focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] cursor-pointer shadow-sm group">
-                    {/* Left Star compartment matching reference image */}
-                    <div className="h-full px-2 flex items-center justify-center border-r border-[#152B4B] bg-[#051122]/60 group-hover:bg-[#07172E]/80 transition-colors shrink-0">
-                      <Star className="h-3.5 w-3.5 text-[#D8B467] fill-[#D8B467]/20 shrink-0" />
+                  <button className="adm-sidebar-util-btn flex items-center h-8 rounded-[9px] flex-1 text-left overflow-hidden focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] cursor-pointer group">
+                    {/* Left Star compartment */}
+                    <div className="h-full px-2 flex items-center justify-center border-r border-[#d4bc88]/25 bg-[#050d1a]/55 group-hover:bg-[#0a1930]/80 transition-colors shrink-0">
+                      <Star strokeWidth={2.1} className="adm-brass-icon h-4 w-4 fill-[#E8C678]/15 shrink-0" />
                     </div>
 
                     {/* Employee Name & Up/Down Chevron */}
-                    <div className="flex-1 flex items-center justify-between px-2 min-w-0 relative group-data-[collapsible=icon]:hidden">
-                      <div className="flex items-center gap-1.5 min-w-0 py-0.5">
-                        <span className="text-[12px] font-serif font-medium text-[#F1E8D9] tracking-wide truncate group-hover:text-white transition-colors">
+                    <div className="flex-1 flex items-center justify-between px-1.5 min-w-0 relative group-data-[collapsible=icon]:hidden">
+                      <div className="flex items-center gap-1 min-w-0 py-0.5">
+                        <span className="text-[11.5px] font-serif font-semibold text-[#F8F3E6] tracking-wide truncate group-hover:text-white transition-colors">
                           {user?.name || currentEmployee?.name || "Byron Honea"}
                         </span>
                       </div>
-                      <ChevronsUpDown className="h-3 w-3 text-[#7E95B3] group-hover:text-white shrink-0 ml-1 transition-colors opacity-70 group-hover:opacity-100" />
-
-                      {/* Subtle golden underline glint matching the reference image */}
-                      <div className="absolute -bottom-0.5 left-2 right-5 h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/50 to-transparent pointer-events-none" />
+                      <ChevronsUpDown className="h-3 w-3 text-[#CBB582] group-hover:text-[#FFF0BE] shrink-0 ml-0.5 transition-colors" />
                     </div>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-[#082043] border border-[#0D4B84] text-white shadow-xl backdrop-blur-md">
+                <DropdownMenuContent align="end" className="w-56 bg-[#081934] border border-[#c8a055]/45 text-white shadow-2xl backdrop-blur-md">
                   <div className="px-3 py-2 border-b border-white/10">
                     <p className="text-xs font-semibold text-white truncate">
                       {user?.name || currentEmployee?.name || "Byron Honea"}
@@ -1761,25 +2119,25 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 onClick={() => openStartScreen()}
                 title="Open Waypoint Start Screen"
                 data-testid="sidebar-start-screen-btn"
-                className="h-8 w-8 rounded-md bg-[#07172E] hover:border-[#D4AF37]/40 border border-[#172D4D] transition-colors flex items-center justify-center text-white/60 hover:text-amber-300 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer shadow-sm"
+                className="adm-sidebar-util-btn h-8 w-8 rounded-[9px] flex items-center justify-center shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
               >
-                <Lock className="h-3.5 w-3.5 text-[#E5A946]" />
+                <Lock strokeWidth={2.1} className="adm-brass-icon h-4 w-4" />
               </button>
 
               <button
                 onClick={() => setIssueReporterOpen(true)}
                 title="Report Issue / Linear Backlog (⌥+F)"
-                className="h-8 w-8 rounded-md bg-[#07172E] hover:border-[#D4AF37]/40 border border-[#172D4D] transition-colors flex items-center justify-center text-white/60 hover:text-rose-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-rose-400 cursor-pointer shadow-sm"
+                className="adm-sidebar-util-btn h-8 w-8 rounded-[9px] flex items-center justify-center shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
               >
-                <Bug className="h-3.5 w-3.5 text-rose-400" />
+                <Bug strokeWidth={2.1} className="adm-brass-icon h-4 w-4" />
               </button>
 
               <button
                 onClick={() => setGoToPageOpen(true)}
                 title="Go to Page"
-                className="h-8 w-8 rounded-md bg-[#07172E] hover:border-[#D4AF37]/40 border border-[#172D4D] transition-colors flex items-center justify-center text-white/60 hover:text-amber-400 shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer shadow-sm"
+                className="adm-sidebar-util-btn h-8 w-8 rounded-[9px] flex items-center justify-center shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
               >
-                <Compass className="h-3.5 w-3.5 text-amber-400" />
+                <Compass strokeWidth={2.1} className="adm-brass-icon h-4 w-4" />
               </button>
             </div>
           </SidebarFooter>
@@ -1793,24 +2151,26 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         />
       </div>
 
-      <SidebarInset className={cn((
-        location.startsWith("/meeting-workspace") ||
-        location === "/leads" || location.startsWith("/leads") ||
-        location === "/advocacy-pipeline" || location.startsWith("/advocacy-pipeline") ||
-        location === "/pipeline" || location.startsWith("/pipeline") ||
-        location === "/templates" || location.startsWith("/templates") ||
-        location === "/tools" || (location.startsWith("/tools") && !location.startsWith("/tools/state-complaint-builder")) ||
-        location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai") ||
-        location === "/workflows" || location.startsWith("/workflows") ||
-        location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics") ||
-        location === "/settings" || location.startsWith("/settings") ||
-        location === "/messages" || location.startsWith("/messages") ||
-        location === "/archive" || location.startsWith("/archive/") ||
-        location === "/do-not-serve" || location.startsWith("/do-not-serve/") ||
-        location === "/bill-guardian" || location.startsWith("/bill-guardian") ||
-        location === "/payment-station" || location.startsWith("/payment-station") || location === "/payments" || location === "/pos"
-      ) && "bg-[#000820]",
-      (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/") || location === "/workflows" || location.startsWith("/workflows")) && "h-svh max-h-svh min-h-0 overflow-hidden"
+      <SidebarInset className={cn(
+        !isLight && "bg-[#040d1d]",
+        (
+          location.startsWith("/meeting-workspace") ||
+          location === "/leads" || location.startsWith("/leads") ||
+          location === "/advocacy-pipeline" || location.startsWith("/advocacy-pipeline") ||
+          location === "/pipeline" || location.startsWith("/pipeline") ||
+          location === "/templates" || location.startsWith("/templates") ||
+          location === "/tools" || (location.startsWith("/tools") && !location.startsWith("/tools/state-complaint-builder")) ||
+          location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai") ||
+          location === "/workflows" || location.startsWith("/workflows") ||
+          location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics") ||
+          location === "/settings" || location.startsWith("/settings") ||
+          location === "/messages" || location.startsWith("/messages") ||
+          location === "/archive" || location.startsWith("/archive/") ||
+          location === "/do-not-serve" || location.startsWith("/do-not-serve/") ||
+          location === "/bill-guardian" || location.startsWith("/bill-guardian") ||
+          location === "/payment-station" || location.startsWith("/payment-station") || location === "/payments" || location === "/pos"
+        ) && "bg-[#000820]",
+        (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/") || location === "/workflows" || location.startsWith("/workflows")) && "h-svh max-h-svh min-h-0 overflow-hidden"
       )}>
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40 shrink-0">
@@ -1820,33 +2180,36 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </div>
           </div>
         )}
-        <div className={cn(
-          "flex-1 min-w-0 p-4 relative",
-          (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects") && "p-0 bg-[#020712]",
-          (location.startsWith("/students/") || location.startsWith("/contacts/") || location.startsWith("/project-workspace/")) && "p-0 overflow-hidden",
-          (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/")) && "p-0 bg-[#000820] flex flex-col min-h-0 h-full overflow-hidden",
-          (location === "/studio" || location.startsWith("/studio/") || location === "/tools/studio") && "p-0 bg-[#000820] flex flex-col min-h-0 h-full overflow-hidden",
-          location === "/contacts" && "p-0 bg-[#07152B]",
-          (location === "/giving" || location.startsWith("/giving")) && "p-0 bg-[#07162B]",
-          (location === "/agreements" || location.startsWith("/agreements") || location === "/contracts" || location.startsWith("/smart-files")) && "p-0 bg-[#07162B]",
-          (location.startsWith("/state-complaint-builder") || location.startsWith("/tools/state-complaint-builder")) && "p-0 bg-[#030D1A]",
-          (location.startsWith("/call-center") || location.startsWith("/call-logs")) && "p-0 bg-[#07162B]",
-          (location === "/calendar" || location.startsWith("/calendar") || location === "/appointments" || location.startsWith("/appointments")) && "p-0 bg-[#07162B]",
-          (location === "/" || location.startsWith("/crew-quarters")) && "p-0 bg-[#07162B]",
-          (location === "/knowledge-base" || location.startsWith("/knowledge-base") || location === "/walkthroughs" || location.startsWith("/walkthroughs")) && "p-0 bg-[#07162B]",
-          (location === "/leads" || location.startsWith("/leads") || location === "/lead-forms" || location.startsWith("/lead-forms")) && "p-0 bg-[#000820]",
-          (location === "/advocacy-pipeline" || location.startsWith("/advocacy-pipeline") || location === "/pipeline" || location.startsWith("/pipeline")) && "p-0 bg-[#000820]",
-          (location === "/templates" || location.startsWith("/templates")) && "p-0 bg-[#000820]",
-          (location === "/tools" || (location.startsWith("/tools") && !location.startsWith("/tools/state-complaint-builder"))) && "p-0 bg-[#000820]",
-          (location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai")) && "p-0 bg-[#000820]",
-          (location === "/workflows" || location.startsWith("/workflows")) && "p-0 bg-[#000820] flex flex-col min-h-0 h-full overflow-hidden",
-          (location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics")) && "p-0 bg-[#000820]",
-          (location === "/settings" || location.startsWith("/settings")) && "p-0 bg-[#000820]",
-          (location === "/messages" || location.startsWith("/messages")) && "p-0 bg-[#000820]",
-          (location === "/archive" || location.startsWith("/archive/") || location === "/do-not-serve" || location.startsWith("/do-not-serve/")) && "p-0 bg-[#000820]",
-          (location === "/payment-station" || location.startsWith("/payment-station") || location === "/payments" || location === "/pos") && "p-0 bg-[#000820]",
-          (location === "/bill-guardian" || location.startsWith("/bill-guardian")) && "p-0 bg-[#07162B]"
-        )}>
+        <div
+          ref={pageContentRef}
+          data-testid="page-transition-stage"
+          className={cn(
+            "flex-1 min-w-0 p-4 relative will-change-[opacity]",
+            (location.startsWith("/meeting-workspace") || location === "/students" || location === "/projects") && "p-0 bg-[#020712]",
+            (location.startsWith("/students/") || location.startsWith("/contacts/") || location.startsWith("/project-workspace/")) && "p-0 overflow-hidden",
+            (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/")) && "p-0 bg-[#000820] flex flex-col min-h-0 h-full overflow-hidden",
+            (location === "/studio" || location.startsWith("/studio/") || location === "/tools/studio") && "p-0 bg-[#000820] flex flex-col min-h-0 h-full overflow-hidden",
+            location === "/contacts" && "p-0 bg-[#07152B]",
+            (location === "/giving" || location.startsWith("/giving")) && "p-0 bg-[#07162B]",
+            (location === "/agreements" || location.startsWith("/agreements") || location === "/contracts" || location.startsWith("/smart-files")) && "p-0 bg-[#07162B]",
+            (location.startsWith("/state-complaint-builder") || location.startsWith("/tools/state-complaint-builder")) && "p-0 bg-[#030D1A]",
+            (location.startsWith("/call-center") || location.startsWith("/call-logs")) && "p-0 bg-[#07162B]",
+            (location === "/calendar" || location.startsWith("/calendar") || location === "/appointments" || location.startsWith("/appointments")) && "p-0 bg-[#07162B]",
+            (location === "/" || location.startsWith("/crew-quarters")) && "p-0 bg-[#040d1d]",
+            (location === "/knowledge-base" || location.startsWith("/knowledge-base") || location === "/walkthroughs" || location.startsWith("/walkthroughs")) && "p-0 bg-[#07162B]",
+            (location === "/leads" || location.startsWith("/leads") || location === "/lead-forms" || location.startsWith("/lead-forms")) && "p-0 bg-[#000820]",
+            (location === "/advocacy-pipeline" || location.startsWith("/advocacy-pipeline") || location === "/pipeline" || location.startsWith("/pipeline")) && "p-0 bg-[#000820]",
+            (location === "/templates" || location.startsWith("/templates")) && "p-0 bg-[#000820]",
+            (location === "/tools" || (location.startsWith("/tools") && !location.startsWith("/tools/state-complaint-builder"))) && "p-0 bg-[#000820]",
+            (location === "/automations" || location.startsWith("/automations") || location.startsWith("/waypoint-ai")) && "p-0 bg-[#000820]",
+            (location === "/workflows" || location.startsWith("/workflows")) && "p-0 bg-[#000820] flex flex-col min-h-0 h-full overflow-hidden",
+            (location === "/metrics" || location.startsWith("/metrics") || location === "/company/metrics" || location.startsWith("/company/metrics")) && "p-0 bg-[#000820]",
+            (location === "/settings" || location.startsWith("/settings")) && "p-0 bg-[#000820]",
+            (location === "/messages" || location.startsWith("/messages")) && "p-0 bg-[#000820]",
+            (location === "/archive" || location.startsWith("/archive/") || location === "/do-not-serve" || location.startsWith("/do-not-serve/")) && "p-0 bg-[#000820]",
+            (location === "/payment-station" || location.startsWith("/payment-station") || location === "/payments" || location === "/pos") && "p-0 bg-[#000820]",
+            (location === "/bill-guardian" || location.startsWith("/bill-guardian")) && "p-0 bg-[#07162B]"
+          )}>
           {currentForbiddenModule ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-lg mx-auto text-center px-4 py-12">
               <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-5 shadow-lg shadow-rose-950/40">

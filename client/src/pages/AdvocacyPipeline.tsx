@@ -813,9 +813,10 @@ export default function AdvocacyPipeline() {
 
   return (
     <ScopedErrorBoundary moduleName="Advocacy Pipeline">
-      <div className="space-y-2.5 p-3 sm:px-5 sm:py-3.5 min-h-screen text-slate-100 relative bg-[#000820] w-full max-w-full overflow-x-hidden">
-        {/* Compact Page Title Bar */}
-        <AdvocacyPipelineHeader
+      <div className="min-h-screen text-slate-100 relative bg-[#040c18] w-full max-w-full overflow-x-hidden">
+        <div className="adm-pipeline-deck px-4 sm:px-6 lg:px-8 pt-4 pb-3 space-y-3">
+          {/* Compact Page Title Bar */}
+          <AdvocacyPipelineHeader
           onViewArchive={() => setLocation("/archive")}
           selectedAdvocate={filters.advocate}
           onSelectAdvocate={(advocate) =>
@@ -952,8 +953,10 @@ export default function AdvocacyPipeline() {
             setShowAddStageModal(true);
           }}
         />
+        </div>
 
         {/* Focused Case Workspace Directly Beneath the Pipeline */}
+        <div className="p-3 sm:px-6 lg:px-8 py-4 space-y-3">
         {viewMode === "list" || selectedStageFilter ? (
           <PipelineListView
             cards={displayedCards}
@@ -993,6 +996,7 @@ export default function AdvocacyPipeline() {
             onDeleteStage={(stage) => deleteStageMutation.mutate({ id: stage.id })}
           />
         )}
+        </div>
 
         {/* Contextual Case Details Drawer */}
         <PipelineCaseDrawer

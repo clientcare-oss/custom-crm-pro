@@ -53,113 +53,137 @@ interface StageJewelPalette {
   selectedBg: string;
   border: string;
   topBar: string;
+  topBarGradient: string;
+  topBarGlow: string;
   text: string;
   countText: string;
 }
 
 /**
- * Waypoint Admiralty Jewel & Brass palette for pipeline stage tiles,
- * matching the rich jewel-toned Company Tags palette.
+ * Waypoint Admiralty Neon-Lit Calfskin Leather palette for pipeline stage tiles:
+ * dark full-grain leather plaques illuminated downward by a blazing top-edge light bar.
  */
 const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
-  // 0: SeaGlass Teal (Discovery)
+  // 0: Electric Cyan-Teal (Discovery)
   {
-    bg: "linear-gradient(180deg, #10495C 0%, #0A313F 100%)",
-    selectedBg: "linear-gradient(180deg, #17647D 0%, #0E4254 100%)",
-    border: "#2B8CA3",
-    topBar: "#38BDF8",
-    text: "#B6F0FA",
-    countText: "#E6FAFF",
+    bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(44, 218, 238, 0.34) 0%, rgba(16, 94, 118, 0.2) 48%, rgba(6, 20, 32, 0.96) 100%), linear-gradient(180deg, #0b2433 0%, #071623 60%, #050f1a 100%)",
+    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(62, 232, 250, 0.46) 0%, rgba(22, 118, 146, 0.28) 52%, rgba(8, 26, 40, 0.96) 100%), linear-gradient(180deg, #103246 0%, #0a1f30 60%, #061422 100%)",
+    border: "rgba(62, 212, 230, 0.42)",
+    topBar: "#4CEEF8",
+    topBarGradient: "linear-gradient(90deg, #1caac0 0%, #86fdff 32%, #44e2f2 68%, #1d8aa0 100%)",
+    topBarGlow: "0 2px 16px rgba(68, 236, 255, 0.75)",
+    text: "#D6E8F4",
+    countText: "#FAF7EE",
   },
-  // 1: Imperial Amethyst (Free Session)
+  // 1: Imperial Violet-Amethyst (Free Session)
   {
-    bg: "linear-gradient(180deg, #321E61 0%, #211342 100%)",
-    selectedBg: "linear-gradient(180deg, #452A85 0%, #2C1A57 100%)",
-    border: "#7D56C9",
+    bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(154, 108, 255, 0.34) 0%, rgba(64, 38, 128, 0.22) 48%, rgba(12, 13, 30, 0.96) 100%), linear-gradient(180deg, #1d163e 0%, #11102a 60%, #0b0c1e 100%)",
+    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(176, 134, 255, 0.46) 0%, rgba(82, 50, 158, 0.3) 52%, rgba(16, 16, 38, 0.96) 100%), linear-gradient(180deg, #281e54 0%, #171538 60%, #0f1028 100%)",
+    border: "rgba(150, 114, 240, 0.42)",
     topBar: "#A78BFA",
-    text: "#E5D4FF",
-    countText: "#F5EEFF",
+    topBarGradient: "linear-gradient(90deg, #6f45d8 0%, #d2bcff 36%, #9b72f8 70%, #5b36b4 100%)",
+    topBarGlow: "0 2px 16px rgba(158, 116, 255, 0.75)",
+    text: "#DDD8F4",
+    countText: "#FAF7EE",
   },
-  // 2: Burgundy Plum (Proposal)
+  // 2: Luminous Rose-Plum (Proposal)
   {
-    bg: "linear-gradient(180deg, #4D1940 0%, #33102B 100%)",
-    selectedBg: "linear-gradient(180deg, #692257 0%, #451639 100%)",
-    border: "#A34187",
-    topBar: "#E879F9",
-    text: "#FAD1E8",
-    countText: "#FFEBF6",
+    bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(232, 92, 154, 0.34) 0%, rgba(108, 34, 70, 0.22) 48%, rgba(20, 11, 22, 0.96) 100%), linear-gradient(180deg, #2c1427 0%, #1a0e1d 60%, #120a16 100%)",
+    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(248, 116, 174, 0.46) 0%, rgba(132, 44, 86, 0.3) 52%, rgba(26, 14, 28, 0.96) 100%), linear-gradient(180deg, #3b1b34 0%, #241328 60%, #180d1d 100%)",
+    border: "rgba(218, 98, 152, 0.42)",
+    topBar: "#F472B6",
+    topBarGradient: "linear-gradient(90deg, #bd3d7a 0%, #ffa4ce 38%, #e45a9a 70%, #942c5e 100%)",
+    topBarGlow: "0 2px 16px rgba(242, 102, 166, 0.75)",
+    text: "#EEDAE6",
+    countText: "#FAF7EE",
   },
-  // 3: Admiralty Cobalt (2-Week Follow-Up)
+  // 3: Admiralty Sapphire-Cobalt (2-Week Follow-Up)
   {
-    bg: "linear-gradient(180deg, #153769 0%, #0D2345 100%)",
-    selectedBg: "linear-gradient(180deg, #1E4C8F 0%, #13315E 100%)",
-    border: "#3E79C9",
+    bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(70, 144, 255, 0.34) 0%, rgba(26, 66, 138, 0.22) 48%, rgba(8, 17, 34, 0.96) 100%), linear-gradient(180deg, #10254b 0%, #0a1833 60%, #061024 100%)",
+    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(92, 166, 255, 0.46) 0%, rgba(36, 86, 172, 0.3) 52%, rgba(11, 22, 44, 0.96) 100%), linear-gradient(180deg, #173466 0%, #0f2246 60%, #091630 100%)",
+    border: "rgba(88, 152, 240, 0.42)",
     topBar: "#60A5FA",
-    text: "#C7E0FF",
-    countText: "#EDF5FF",
+    topBarGradient: "linear-gradient(90deg, #296ad4 0%, #92c5ff 36%, #4a93f6 70%, #2254ae 100%)",
+    topBarGlow: "0 2px 16px rgba(84, 158, 255, 0.75)",
+    text: "#D6E4F6",
+    countText: "#FAF7EE",
   },
-  // 4: Royal Indigo (30-Day Follow-Up)
+  // 4: Electric Periwinkle-Indigo (30-Day Follow-Up)
   {
-    bg: "linear-gradient(180deg, #1E2966 0%, #131B45 100%)",
-    selectedBg: "linear-gradient(180deg, #29388A 0%, #1A245C 100%)",
-    border: "#586DD4",
+    bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(110, 128, 255, 0.34) 0%, rgba(42, 54, 134, 0.22) 48%, rgba(10, 15, 34, 0.96) 100%), linear-gradient(180deg, #161e4c 0%, #0e1434 60%, #080d24 100%)",
+    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(132, 148, 255, 0.46) 0%, rgba(56, 70, 168, 0.3) 52%, rgba(14, 20, 44, 0.96) 100%), linear-gradient(180deg, #1f2a66 0%, #141c46 60%, #0c1230 100%)",
+    border: "rgba(116, 130, 240, 0.42)",
     topBar: "#818CF8",
-    text: "#D6E0FF",
-    countText: "#F0F4FF",
+    topBarGradient: "linear-gradient(90deg, #485ad4 0%, #b4bfff 38%, #6c7ef6 70%, #3848ae 100%)",
+    topBarGlow: "0 2px 16px rgba(118, 134, 255, 0.75)",
+    text: "#DBE0F8",
+    countText: "#FAF7EE",
   },
-  // 5: Burnished Copper (60-Day Follow-Up / School Contact)
+  // 5: Burnished Amber-Copper (60-Day Follow-Up / School Contact)
   {
-    bg: "linear-gradient(180deg, #54290F 0%, #381B0A 100%)",
-    selectedBg: "linear-gradient(180deg, #703714 0%, #4A240D 100%)",
-    border: "#C26D2E",
+    bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(242, 144, 62, 0.32) 0%, rgba(116, 56, 18, 0.22) 48%, rgba(22, 14, 12, 0.96) 100%), linear-gradient(180deg, #2b1a12 0%, #1a110e 60%, #110b0a 100%)",
+    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(255, 166, 86, 0.44) 0%, rgba(142, 70, 24, 0.3) 52%, rgba(28, 18, 14, 0.96) 100%), linear-gradient(180deg, #3a2318 0%, #241712 60%, #170f0c 100%)",
+    border: "rgba(222, 134, 64, 0.42)",
     topBar: "#FB923C",
-    text: "#FFE0BA",
-    countText: "#FFF2E2",
+    topBarGradient: "linear-gradient(90deg, #c26422 0%, #ffc48c 38%, #f08938 70%, #984c18 100%)",
+    topBarGlow: "0 2px 16px rgba(246, 148, 68, 0.72)",
+    text: "#F0E2D4",
+    countText: "#FAF7EE",
   },
-  // 6: Crimson Garnet (Reconnect Review / State Complaint)
+  // 6: Crimson Garnet (Reconnect Review / Needs Attention / Past Due)
   {
-    bg: "linear-gradient(180deg, #571820 0%, #3B1015 100%)",
-    selectedBg: "linear-gradient(180deg, #75202B 0%, #4F151C 100%)",
-    border: "#BD3E4B",
+    bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(238, 86, 102, 0.32) 0%, rgba(114, 28, 38, 0.22) 48%, rgba(22, 10, 14, 0.96) 100%), linear-gradient(180deg, #2c1218 0%, #1b0c12 60%, #12080d 100%)",
+    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(252, 108, 124, 0.44) 0%, rgba(142, 36, 48, 0.3) 52%, rgba(28, 12, 18, 0.96) 100%), linear-gradient(180deg, #3b1820 0%, #251018 60%, #180a10 100%)",
+    border: "rgba(224, 88, 104, 0.42)",
     topBar: "#F87171",
-    text: "#FFD1D6",
-    countText: "#FFECEE",
+    topBarGradient: "linear-gradient(90deg, #bf3644 0%, #ffa2ac 38%, #ec5b6a 70%, #942632 100%)",
+    topBarGlow: "0 2px 16px rgba(244, 96, 112, 0.72)",
+    text: "#F2DCE0",
+    countText: "#FAF7EE",
   },
-  // 7: Emerald Forest (Intake / Onboarding / Monitoring)
+  // 7: Luminous Emerald-Jade (Intake / Onboarding / Monitoring)
   {
-    bg: "linear-gradient(180deg, #114A3A 0%, #0B3026 100%)",
-    selectedBg: "linear-gradient(180deg, #18634E 0%, #0F4234 100%)",
-    border: "#2E8B6D",
+    bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(48, 212, 156, 0.32) 0%, rgba(18, 92, 68, 0.2) 48%, rgba(8, 20, 22, 0.96) 100%), linear-gradient(180deg, #0d2724 0%, #081819 60%, #051012 100%)",
+    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(68, 232, 174, 0.44) 0%, rgba(24, 118, 86, 0.28) 52%, rgba(10, 26, 28, 0.96) 100%), linear-gradient(180deg, #133632 0%, #0c2222 60%, #071618 100%)",
+    border: "rgba(56, 204, 152, 0.42)",
     topBar: "#34D399",
-    text: "#B8F5D8",
-    countText: "#E8FDF3",
+    topBarGradient: "linear-gradient(90deg, #1f9e72 0%, #90fad2 38%, #3dd49e 70%, #177c58 100%)",
+    topBarGlow: "0 2px 16px rgba(58, 218, 162, 0.72)",
+    text: "#D6EFE6",
+    countText: "#FAF7EE",
   },
-  // 8: Sovereign Brass (Records Review / Renewal)
+  // 8: Sovereign Champagne-Gold (Records Review / Renewal)
   {
-    bg: "linear-gradient(180deg, #4A340F 0%, #30220A 100%)",
-    selectedBg: "linear-gradient(180deg, #634614 0%, #422F0D 100%)",
-    border: "#C5A059",
+    bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(236, 192, 92, 0.3) 0%, rgba(108, 80, 28, 0.2) 48%, rgba(18, 16, 14, 0.96) 100%), linear-gradient(180deg, #241d14 0%, #151415 60%, #0d0e14 100%)",
+    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(250, 210, 114, 0.42) 0%, rgba(134, 100, 36, 0.28) 52%, rgba(24, 20, 16, 0.96) 100%), linear-gradient(180deg, #32281a 0%, #1e1a18 60%, #131318 100%)",
+    border: "rgba(220, 182, 98, 0.44)",
     topBar: "#FBBF24",
-    text: "#FFE394",
-    countText: "#FFF6D6",
+    topBarGradient: "linear-gradient(90deg, #b88c34 0%, #fff0b8 38%, #e4b654 70%, #926d24 100%)",
+    topBarGlow: "0 2px 16px rgba(242, 198, 102, 0.7)",
+    text: "#EFE6D2",
+    countText: "#FAF7EE",
   },
-  // 9: Aged Parchment (Archive / Closed)
+  // 9: Brushed Slate-Pewter (Archive / Closed)
   {
-    bg: "linear-gradient(180deg, #382C20 0%, #241C14 100%)",
-    selectedBg: "linear-gradient(180deg, #4D3C2B 0%, #33281D 100%)",
-    border: "#8F7556",
-    topBar: "#D4B895",
-    text: "#EADBC6",
-    countText: "#F7EFE4",
+    bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(168, 184, 210, 0.26) 0%, rgba(62, 74, 96, 0.2) 48%, rgba(12, 16, 26, 0.96) 100%), linear-gradient(180deg, #1b2232 0%, #101624 60%, #090e1a 100%)",
+    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(192, 208, 232, 0.36) 0%, rgba(80, 96, 122, 0.28) 52%, rgba(16, 22, 34, 0.96) 100%), linear-gradient(180deg, #252e42 0%, #171f32 60%, #0e1424 100%)",
+    border: "rgba(164, 180, 206, 0.38)",
+    topBar: "#CBD5E1",
+    topBarGradient: "linear-gradient(90deg, #74849c 0%, #e4edf8 38%, #a6b6cc 70%, #5a687e 100%)",
+    topBarGlow: "0 2px 14px rgba(180, 198, 224, 0.55)",
+    text: "#D8E0EC",
+    countText: "#FAF7EE",
   },
   // 10: Obsidian Bloodstone (Blacklisted)
   {
-    bg: "linear-gradient(180deg, #2B0910 0%, #140307 100%)",
-    selectedBg: "linear-gradient(180deg, #3F0D17 0%, #22060C 100%)",
-    border: "#881337",
+    bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(216, 48, 86, 0.32) 0%, rgba(92, 16, 34, 0.22) 48%, rgba(18, 6, 12, 0.96) 100%), linear-gradient(180deg, #240a14 0%, #14060d 60%, #0c0409 100%)",
+    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(238, 68, 108, 0.44) 0%, rgba(118, 22, 46, 0.3) 52%, rgba(24, 8, 16, 0.96) 100%), linear-gradient(180deg, #320e1c 0%, #1d0912 60%, #12060c 100%)",
+    border: "rgba(196, 48, 84, 0.45)",
     topBar: "#E11D48",
-    text: "#FDA4AF",
-    countText: "#FFE4E6",
+    topBarGradient: "linear-gradient(90deg, #981634 0%, #ff86a2 38%, #dc2f58 70%, #781028 100%)",
+    topBarGlow: "0 2px 16px rgba(226, 46, 88, 0.72)",
+    text: "#F2D2DA",
+    countText: "#FAF7EE",
   },
 ];
 
@@ -574,7 +598,7 @@ export function StageOverviewGrid({
           type="button"
           onClick={() => scrollByAmount(-360)}
           aria-label="Scroll stages left"
-          className="absolute left-0 top-[44px] z-20 h-14 w-6 rounded-r-lg bg-[#051024]/95 hover:bg-[#0D1E38] border border-l-0 border-[#233554] text-[#CBD5E1] hover:text-[#FFF4D4] flex items-center justify-center shadow-lg transition-opacity cursor-pointer"
+          className="adm-pipe-pill absolute left-0 top-[62px] z-20 h-14 w-6 rounded-r-lg text-[#DCE6F4] hover:text-[#FFF4D4] flex items-center justify-center transition-opacity cursor-pointer"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -586,7 +610,7 @@ export function StageOverviewGrid({
           type="button"
           onClick={() => scrollByAmount(360)}
           aria-label="Scroll stages right"
-          className="absolute right-0 top-[44px] z-20 h-14 w-6 rounded-l-lg bg-[#051024]/95 hover:bg-[#0D1E38] border border-r-0 border-[#233554] text-[#CBD5E1] hover:text-[#FFF4D4] flex items-center justify-center shadow-lg transition-opacity cursor-pointer"
+          className="adm-pipe-pill absolute right-0 top-[62px] z-20 h-14 w-6 rounded-l-lg text-[#DCE6F4] hover:text-[#FFF4D4] flex items-center justify-center transition-opacity cursor-pointer"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -600,15 +624,15 @@ export function StageOverviewGrid({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className="flex flex-nowrap items-end gap-[2px] w-full max-w-full overflow-x-auto pb-2"
+        className="flex flex-nowrap items-end gap-3 w-full max-w-full overflow-x-auto pb-2.5 pt-1"
         style={{
           scrollbarWidth: "thin",
           scrollbarColor: "#233554 #050E1D",
         }}
       >
-        {/* 1. Left-Most "All" Summary Segment (Sovereign Brass Jewel Fill) + Customize Pill Directly Above It */}
-        <div className="shrink-0 w-[116px] sm:w-[124px] flex flex-col justify-end">
-          <div className="h-8 mb-1 flex items-center justify-center">
+        {/* 1. Left-Most "All" Summary Segment (Dark Calfskin Leather in Blazing 3D Solid-Gold Frame) + Customize Pill Directly Above It */}
+        <div className="shrink-0 w-[124px] sm:w-[136px] flex flex-col justify-end">
+          <div className="h-9 mb-2 flex items-center justify-center">
             {onToggleCustomizingOrder && (
               <button
                 type="button"
@@ -617,10 +641,10 @@ export function StageOverviewGrid({
                   onToggleCustomizingOrder();
                 }}
                 className={cn(
-                  "h-6 w-full px-2.5 rounded-lg text-[11px] font-semibold inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer border",
+                  "h-[30px] w-full px-3 rounded-[9px] text-[12px] font-serif font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer",
                   isCustomizingOrder
-                    ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border-[#FFE394] shadow-[0_0_12px_rgba(197,160,89,0.5)]"
-                    : "bg-[#0C1D3A] text-[#E2E8F0] border-[#2C446E] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 hover:bg-[#132E57]"
+                    ? "bg-gradient-to-r from-[#E6C87E] via-[#C8A257] to-[#9F7E3D] text-[#07162B] border border-[#FFF0C2] shadow-[0_0_14px_rgba(232,196,118,0.5)]"
+                    : "adm-pipe-pill text-[#EEF3FA] hover:text-[#FFF8E4]"
                 )}
                 title={
                   isCustomizingOrder
@@ -635,7 +659,7 @@ export function StageOverviewGrid({
                   </>
                 ) : (
                   <>
-                    <GripVertical className="h-3.5 w-3.5 text-[#F2CD80]" />
+                    <GripVertical className="h-3.5 w-3.5 text-[#C8D4E6]" />
                     <span>Customize</span>
                   </>
                 )}
@@ -651,42 +675,30 @@ export function StageOverviewGrid({
               if (didDragRailRef.current) return;
               onSelectStage(null);
             }}
-            style={{
-              background: !selectedStageName
-                ? "linear-gradient(180deg, #523A12 0%, #33230A 100%)"
-                : "linear-gradient(180deg, #3B2A0C 0%, #241907 100%)",
-              borderColor: !selectedStageName ? "#F2CD80" : "#C5A059",
-            }}
             className={cn(
-              "w-full h-[76px] rounded-lg px-2.5 pt-2 pb-1.5 text-center transition-all cursor-pointer border flex flex-col items-center justify-between relative overflow-hidden hover:brightness-110",
-              !selectedStageName
-                ? "shadow-[0_4px_16px_rgba(197,160,89,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)] ring-1 ring-[#FFE394]/50"
-                : "shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
+              "adm-stage-card-all w-full h-[94px] rounded-[14px] px-3 pt-2.5 pb-2.5 text-center cursor-pointer flex flex-col items-center justify-between",
+              selectedStageName && "adm-stage-card-all-idle"
             )}
           >
-            <div
-              className="absolute top-0 left-0 right-0 h-[3.5px]"
-              style={{
-                backgroundColor: "#F2CD80",
-              }}
-            />
-            {/* Dead-Center Number (Center by Center) */}
+            {/* Dead-Center Bold Serif Numeral */}
             <div className="flex-1 w-full flex items-center justify-center">
-              <span className="text-2xl font-bold tracking-tight text-[#FFF4D4] leading-none text-center drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
+              <span className="text-[32px] font-serif font-bold tracking-tight text-[#FAF6EC] leading-none text-center tabular-nums drop-shadow-[0_3px_8px_rgba(0,0,0,0.85)]">
                 {cards.length}
               </span>
             </div>
-            <span className="w-full text-center text-xs font-semibold text-[#FFE394] truncate">
+            <span className="w-full text-center text-[13px] font-serif font-medium text-[#F4E3B8] truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
               All
             </span>
           </button>
         </div>
 
-        {/* 2. Connected Contiguous Stage Groups with Spanning Bracket Headers Above */}
+        {/* 2. Connected Contiguous Stage Groups with Spanning Champagne-Gold Bracket Headers Above */}
         {stageGroupRuns.map((run, runIdx) => {
           const isUngroupedRun = run.groupKey === "ungrouped";
           const groupMeta = run.groupMeta;
-          const bracketColor = groupMeta?.accentColor || "#C5A059";
+          const bracketColor = isCustomizingOrder
+            ? groupMeta?.accentColor || "#E4C072"
+            : "#D8B878";
           const groupTitle = (
             groupMeta?.label ||
             groupMeta?.shortLabel ||
@@ -707,33 +719,26 @@ export function StageOverviewGrid({
               key={`${run.groupKey}-${runIdx}`}
               className="shrink-0 flex flex-col justify-end"
             >
-              {/* Spanning Bracket Line + Centered Flat-Bottom Group Bubble */}
-              <div className="relative h-8 mb-1 w-full flex items-center justify-center px-3">
+              {/* Spanning Champagne-Gold Bracket Line + Centered Sculpted Obsidian Group Capsule */}
+              <div className="relative h-9 mb-2 w-full flex items-center justify-center px-3">
                 {!isUngroupedRun ? (
                   <>
                     {/* Left-to-Right Spanning Bracket Shape (┌─────── LABEL ───────┐) */}
                     <div
-                      className="absolute inset-x-2.5 top-[13px] bottom-0 border-t-[1.5px] border-l-[1.5px] border-r-[1.5px] rounded-t-[3px] pointer-events-none transition-all duration-300"
+                      className="absolute inset-x-1.5 top-[15px] bottom-[-2px] border-t-[1.25px] border-l-[1.25px] border-r-[1.25px] rounded-t-[6px] pointer-events-none transition-all duration-300"
                       style={{
                         borderColor: bracketColor,
-                        opacity: isGroupBubbleSelected ? 1 : 0.78,
+                        opacity: isGroupBubbleSelected ? 1 : 0.72,
                       }}
                     />
 
-                    {/* Centered Interactive Group Bubble with Inline Pencil (Edit Name), Gear (Choose Cards), and Trash Can (Offer Delete) */}
+                    {/* Centered Sculpted Obsidian-Navy & Gold Group Capsule */}
                     <div
                       className={cn(
-                        "relative z-10 inline-flex items-center justify-center gap-1.5 px-3 py-0.5 rounded-full border text-[10px] font-serif font-bold tracking-[0.14em] uppercase shadow-[0_2px_8px_rgba(0,0,0,0.85)] whitespace-nowrap transition-all",
-                        groupMeta?.badgeClass ||
-                          "bg-[#0A192F] border-[#C5A059] text-[#FFE394]",
+                        "adm-pipe-group-pill relative z-10 inline-flex items-center justify-center gap-1.5 px-4 py-1 rounded-full text-[10.5px] font-serif font-bold tracking-[0.18em] text-[#F5E8C6] uppercase whitespace-nowrap transition-all",
                         isGroupBubbleSelected &&
                           "ring-2 ring-[#FFE394] scale-105 shadow-[0_0_16px_rgba(255,227,148,0.65)]"
                       )}
-                      style={{
-                        borderColor: isGroupBubbleSelected
-                          ? "#FFE394"
-                          : bracketColor,
-                      }}
                     >
                       {isCustomizingOrder &&
                       inlineRenameGroupKey === run.groupKey ? (
@@ -953,7 +958,7 @@ export function StageOverviewGrid({
               </div>
 
               {/* Cards Row Inside This Bracket Group */}
-              <div className="flex flex-nowrap items-end gap-[2px]">
+              <div className="flex flex-nowrap items-end gap-2">
                 {run.items.map(({ stage, globalIdx: idx }) => {
                   const count =
                     countByStage.get(stage.name.toLowerCase()) || 0;
@@ -1018,7 +1023,7 @@ export function StageOverviewGrid({
                             : "w-0 mx-0 opacity-0 pointer-events-none"
                         )}
                       >
-                        <div className="w-full h-[76px] rounded-lg border-2 border-dashed border-[#FFE394] bg-[#C5A059]/20 shadow-[0_0_16px_rgba(255,227,148,0.35)] flex flex-col items-center justify-center gap-1">
+                        <div className="w-full h-[94px] rounded-[14px] border-2 border-dashed border-[#FFE394] bg-[#C5A059]/20 shadow-[0_0_16px_rgba(255,227,148,0.35)] flex flex-col items-center justify-center gap-1">
                           <div className="w-1.5 h-6 rounded-full bg-[#FFE394]" />
                           <span className="text-[9px] font-bold uppercase tracking-wider text-[#FFE394]">
                             Drop
@@ -1031,7 +1036,7 @@ export function StageOverviewGrid({
                           transition:
                             "transform 420ms cubic-bezier(0.22, 1, 0.36, 1)",
                         }}
-                        className="shrink-0 w-[132px] sm:w-[142px] flex flex-col justify-end"
+                        className="shrink-0 w-[148px] sm:w-[162px] flex flex-col justify-end"
                       >
                         <button
                           ref={(el) => {
@@ -1089,13 +1094,13 @@ export function StageOverviewGrid({
                                   ? activeEditingGroupColor
                                   : "#334155"
                                 : isSelected
-                                  ? "#F2CD80"
+                                  ? "#F4D484"
                                   : isCustomizingOrder
                                     ? "#FFE394"
                                     : jewel.border,
                           }}
                           className={cn(
-                            "w-full h-[76px] rounded-lg px-2.5 pt-2 pb-1.5 text-center transition-all border flex flex-col items-center justify-between relative overflow-hidden group hover:brightness-115",
+                            "adm-stage-card w-full h-[94px] rounded-[14px] px-3 pt-3 pb-2.5 text-center border-[1.25px] flex flex-col items-center justify-between group",
                             isCustomizingOrder
                               ? selectedGroupBubbleKey
                                 ? "cursor-pointer"
@@ -1107,21 +1112,24 @@ export function StageOverviewGrid({
                               : "opacity-60 hover:opacity-100 border-dashed"),
                             isBeingDragged && "opacity-45 scale-95",
                             isDragOver && "ring-2 ring-emerald-400 scale-[1.03]",
-                            isSelected
-                              ? "shadow-[0_4px_16px_rgba(197,160,89,0.35),inset_0_1px_1px_rgba(255,255,255,0.22)] ring-1 ring-[#FFE394]/60"
-                              : "shadow-[0_3px_10px_rgba(0,0,0,0.55),inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                            isSelected &&
+                              "ring-1 ring-[#FFE394]/70 shadow-[0_0_20px_rgba(244,204,114,0.34),0_12px_26px_rgba(0,0,0,0.86)]"
                           )}
                         >
-                          {/* Top Colored Accent Bar */}
+                          {/* Blazing Luminous Top-Edge Neon Light Bar */}
                           <div
-                            className="absolute top-0 left-0 right-0 h-[3.5px]"
-                            style={{ backgroundColor: topBarColor }}
+                            aria-hidden="true"
+                            className="adm-stage-topbar"
+                            style={{
+                              background: jewel.topBarGradient,
+                              boxShadow: jewel.topBarGlow,
+                            }}
                           />
 
                           {/* Top-Left 6-Dots Grab Handle when Customize Order Mode is Active */}
                           {isCustomizingOrder && (
                             <div
-                              className="absolute top-1.5 left-1.5 z-10 p-0.5 rounded bg-[#020A17]/80 border border-[#FFE394]/60 text-[#FFE394] shadow-sm flex items-center justify-center"
+                              className="absolute top-2 left-2 z-10 p-0.5 rounded bg-[#020A17]/80 border border-[#FFE394]/60 text-[#FFE394] shadow-sm flex items-center justify-center"
                               title="Grab and drag to reorder stage"
                             >
                               <GripVertical className="h-3.5 w-3.5" />
@@ -1132,7 +1140,7 @@ export function StageOverviewGrid({
                           {isCustomizingOrder && selectedGroupBubbleKey ? (
                             <div
                               className={cn(
-                                "absolute top-1.5 right-1.5 z-10 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider flex items-center gap-0.5 border shadow-sm transition-colors",
+                                "absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider flex items-center gap-0.5 border shadow-sm transition-colors",
                                 isInSelectedGroup
                                   ? "bg-[#FFE394] border-white text-[#07162B]"
                                   : "bg-[#051024]/90 border-[#475569] text-[#CBD5E1] group-hover:border-[#FFE394] group-hover:text-[#FFE394]"
@@ -1151,49 +1159,45 @@ export function StageOverviewGrid({
                               )}
                             </div>
                           ) : (
-                            <div className="absolute top-2 right-2 flex items-center gap-1 pointer-events-none">
+                            <div className="absolute top-2.5 right-2.5 flex items-center gap-1 pointer-events-none z-10">
                               {overdueCount > 0 && (
                                 <span
-                                  className="w-2 h-2 rounded-full bg-rose-400 shrink-0 shadow-[0_0_6px_rgba(251,113,133,0.8)]"
+                                  className="w-2 h-2 rounded-full bg-rose-400 shrink-0 shadow-[0_0_6px_rgba(251,113,133,0.85)]"
                                   title={`${overdueCount} case(s) need attention`}
                                 />
                               )}
                               <ChevronRight
                                 style={{
-                                  color: isSelected ? "#FFE394" : jewel.text,
+                                  color: isSelected ? "#FFE394" : "#DCE5F2",
                                 }}
-                                className="h-3.5 w-3.5 opacity-75 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5"
+                                className="h-3.5 w-3.5 opacity-80 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5"
                               />
                             </div>
                           )}
 
-                          {/* Center-by-Center Prominent Count */}
+                          {/* Center-by-Center Prominent Serif Count */}
                           <div className="flex-1 w-full flex items-center justify-center">
                             <span
                               style={{
-                                color: isSelected
-                                  ? "#FFE394"
-                                  : count > 0
-                                    ? jewel.countText
-                                    : jewel.text,
+                                color: isSelected ? "#FFE8A8" : jewel.countText,
                               }}
                               className={cn(
-                                "text-2xl font-bold tracking-tight leading-none text-center drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]",
-                                count === 0 && !isSelected && "opacity-75"
+                                "text-[31px] font-serif font-bold tracking-tight leading-none text-center tabular-nums drop-shadow-[0_3px_8px_rgba(0,0,0,0.85)]",
+                                count === 0 && !isSelected && "opacity-92"
                               )}
                             >
                               {count}
                             </span>
                           </div>
 
-                          {/* Bottom Row: Centered Short Stage Name */}
+                          {/* Bottom Row: Centered Refined Stage Name */}
                           <span
                             style={{
                               color: isSelected ? "#FFF4D4" : jewel.text,
                             }}
                             className={cn(
-                              "w-full text-center text-[11px] font-semibold leading-tight truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]",
-                              isSelected && "font-bold"
+                              "w-full text-center text-[12px] font-normal leading-tight truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]",
+                              isSelected && "font-semibold"
                             )}
                           >
                             {stage.name.toLowerCase() === "closed"
@@ -1222,7 +1226,7 @@ export function StageOverviewGrid({
                             : "w-0 mx-0 opacity-0 pointer-events-none"
                         )}
                       >
-                        <div className="w-full h-[76px] rounded-lg border-2 border-dashed border-[#FFE394] bg-[#C5A059]/20 shadow-[0_0_16px_rgba(255,227,148,0.35)] flex flex-col items-center justify-center gap-1">
+                        <div className="w-full h-[94px] rounded-[14px] border-2 border-dashed border-[#FFE394] bg-[#C5A059]/20 shadow-[0_0_16px_rgba(255,227,148,0.35)] flex flex-col items-center justify-center gap-1">
                           <div className="w-1.5 h-6 rounded-full bg-[#FFE394]" />
                           <span className="text-[9px] font-bold uppercase tracking-wider text-[#FFE394]">
                             Drop
@@ -1240,7 +1244,7 @@ export function StageOverviewGrid({
                                 background: jewel.selectedBg,
                                 borderColor: "#FFE394",
                               }}
-                              className="w-full h-[76px] rounded-lg px-2 py-1.5 border-2 border-dashed flex flex-col items-center justify-between relative overflow-hidden shadow-[0_4px_20px_rgba(255,227,148,0.4)]"
+                              className="w-full h-[94px] rounded-[14px] px-2 py-1.5 border-2 border-dashed flex flex-col items-center justify-between relative overflow-hidden shadow-[0_4px_20px_rgba(255,227,148,0.4)]"
                             >
                               <div
                                 className="absolute top-0 left-0 right-0 h-[3.5px]"
@@ -1358,7 +1362,7 @@ export function StageOverviewGrid({
                                   "background-color 380ms cubic-bezier(0.22, 1, 0.36, 1), border-color 380ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 380ms cubic-bezier(0.22, 1, 0.36, 1)",
                               }}
                               className={cn(
-                                "w-full h-[76px] rounded-lg relative overflow-hidden flex items-center justify-center cursor-pointer",
+                                "w-full h-[94px] rounded-[14px] relative overflow-hidden flex items-center justify-center cursor-pointer",
                                 isAddSlotHoveredAfterThis
                                   ? "border-2 border-dashed border-[#FFE394]/90 bg-[#0A1E3C]/95 hover:bg-[#102B4E] shadow-[0_4px_20px_rgba(255,227,148,0.3)]"
                                   : "border border-transparent bg-transparent"

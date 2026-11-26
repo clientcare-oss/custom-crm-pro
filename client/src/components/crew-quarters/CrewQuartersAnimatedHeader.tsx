@@ -44,7 +44,7 @@ export function CrewQuartersAnimatedHeader() {
   const [lavaConfig] = useState<LavaLampConfig>(loadLavaLampConfig);
 
   return (
-    <div className="w-full relative select-none overflow-hidden bg-[#020712] border-b border-[#3A2C18] shadow-[0_12px_32px_rgba(0,0,0,0.85)]">
+    <div className="adm-window-sill w-full relative select-none overflow-hidden bg-[#020712]">
       {/* ── CSS Keyframe Animations ── */}
       <style>{`
         /* Gentle, calm star shimmer */
@@ -126,11 +126,12 @@ export function CrewQuartersAnimatedHeader() {
       `}</style>
 
       {/* ── Base Panoramic Observation Window Image (Includes static celestial globe on right) ── */}
-      <img
-        src="/images/crew-quarters-window-trimmed.png"
-        alt="Crew Quarters Panoramic Observation Window"
-        className="w-full h-auto block select-none pointer-events-none"
-      />
+      <div className="relative w-full overflow-hidden">
+        <img
+          src="/images/crew-quarters-window-trimmed.png"
+          alt="Crew Quarters Panoramic Observation Window"
+          className="w-full h-auto block select-none pointer-events-none"
+        />
 
       {/* ── INTERACTIVE & ANIMATED OVERLAY DECK (Relative to 1020 x 158 Aspect) ── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -342,6 +343,10 @@ export function CrewQuartersAnimatedHeader() {
         })()}
 
       </div>
+      </div>
+
+      {/* ── 3D Brushed-Brass Architectural Mantelpiece Shelf Molding ── */}
+      <div aria-hidden="true" className="adm-brass-mantel" />
     </div>
   );
 }

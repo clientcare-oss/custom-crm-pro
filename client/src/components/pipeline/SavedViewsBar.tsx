@@ -119,8 +119,8 @@ export function SavedViewsBar({
 
   return (
     <div className="space-y-2.5">
-      {/* ── LEVEL 1: Pipeline | My Caseload | + Add View (Serif Gold Underline Tab Strip Under Title) ── */}
-      <div className="flex items-center gap-6 border-b border-[#1E2E48]/90 px-1 flex-wrap">
+      {/* ── LEVEL 1: Pipeline | My Caseload | + Add View | More Views (Glowing Gold Filament Tab Bar) ── */}
+      <div className="flex items-center gap-6 border-b border-[#88a8d4]/22 px-0.5 flex-wrap">
         {primaryViews.map((view) => {
           const isActive = activeViewSlug === view.slug;
           const count = viewCounts[view.slug];
@@ -137,23 +137,23 @@ export function SavedViewsBar({
               type="button"
               onClick={() => onSelectView(view)}
               className={cn(
-                "relative inline-flex items-center gap-1.5 pb-2.5 pt-1 text-sm sm:text-[15px] font-serif tracking-wide transition-colors cursor-pointer whitespace-nowrap",
+                "relative inline-flex items-center gap-2 pb-2.5 pt-1 text-[15px] sm:text-[16px] font-serif tracking-wide transition-colors cursor-pointer whitespace-nowrap",
                 isActive
-                  ? "text-[#DFB668] font-semibold"
-                  : "text-[#7A90AC] hover:text-[#CBD5E1]"
+                  ? "text-[#F3D58C] font-semibold drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]"
+                  : "text-[#C6D4E8] hover:text-[#FAF6EC]"
               )}
             >
               <span>{displayLabel}</span>
               {view.isPrivate && (
-                <Lock className="h-3 w-3 text-[#C5A059] shrink-0" />
+                <Lock className="h-3 w-3 text-[#E5C175] shrink-0" />
               )}
               {count !== undefined && (
                 <span
                   className={cn(
-                    "text-[10px] font-sans font-semibold px-1.5 py-0.2 rounded-full",
+                    "text-[11px] font-sans font-semibold px-2 py-0.5 rounded-full leading-none",
                     isActive
-                      ? "bg-[#C5A059]/20 text-[#FFE394]"
-                      : "text-[#64748B]"
+                      ? "bg-[#112238]/90 border border-[#d8bc82]/35 text-[#F6E2AE] shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
+                      : "text-[#9AB0CE]"
                   )}
                 >
                   {count}
@@ -168,14 +168,12 @@ export function SavedViewsBar({
                     onDeleteView(view);
                   }}
                   title="Delete custom view"
-                  className="ml-0.5 p-0.5 rounded hover:bg-rose-950/80 text-[#64748B] hover:text-rose-400 transition-colors"
+                  className="ml-0.5 p-0.5 rounded hover:bg-rose-950/80 text-[#88A0C0] hover:text-rose-400 transition-colors"
                 >
                   <Trash2 className="h-3 w-3" />
                 </span>
               )}
-              {isActive && (
-                <span className="absolute bottom-[-1.5px] left-0 right-0 h-[3px] rounded-full bg-gradient-to-r from-[#DFB668] via-[#F2CD80] to-[#C5A059] shadow-[0_0_8px_rgba(242,205,128,0.6)]" />
-              )}
+              {isActive && <span aria-hidden="true" className="adm-pipe-tab-glow" />}
             </button>
           );
         })}
@@ -185,9 +183,9 @@ export function SavedViewsBar({
           type="button"
           onClick={onNewView}
           title="Add a custom saved view"
-          className="relative inline-flex items-center gap-1.5 pb-2.5 pt-1 text-sm sm:text-[15px] font-serif tracking-wide text-[#94ADC9] hover:text-[#FFE394] transition-colors cursor-pointer whitespace-nowrap"
+          className="relative inline-flex items-center gap-1.5 pb-2.5 pt-1 text-[15px] sm:text-[16px] font-serif tracking-wide text-[#EEF3FA] hover:text-[#FFE8A8] transition-colors cursor-pointer whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
         >
-          <Plus className="h-3.5 w-3.5 text-[#C5A059]" />
+          <Plus className="h-3.5 w-3.5 text-[#E8C574]" />
           <span>Add View</span>
         </button>
 
@@ -198,19 +196,17 @@ export function SavedViewsBar({
               <button
                 type="button"
                 className={cn(
-                  "relative inline-flex items-center gap-1 pb-2.5 pt-1 text-xs sm:text-sm font-serif tracking-wide transition-colors cursor-pointer whitespace-nowrap",
+                  "relative inline-flex items-center gap-1.5 pb-2.5 pt-1 text-[14.5px] sm:text-[15.5px] font-serif tracking-wide transition-colors cursor-pointer whitespace-nowrap",
                   isOverflowActive
-                    ? "text-[#DFB668] font-semibold"
-                    : "text-[#64748B] hover:text-[#CBD5E1]"
+                    ? "text-[#F3D58C] font-semibold"
+                    : "text-[#B4C4DC] hover:text-[#FAF6EC]"
                 )}
               >
                 <span>
                   {isOverflowActive ? activeOverflowView?.name : "More Views"}
                 </span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-75" />
-                {isOverflowActive && (
-                  <span className="absolute bottom-[-1.5px] left-0 right-0 h-[3px] rounded-full bg-gradient-to-r from-[#DFB668] via-[#F2CD80] to-[#C5A059] shadow-[0_0_8px_rgba(242,205,128,0.6)]" />
-                )}
+                <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+                {isOverflowActive && <span aria-hidden="true" className="adm-pipe-tab-glow" />}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent

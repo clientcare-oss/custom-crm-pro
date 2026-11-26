@@ -171,12 +171,9 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          "relative text-sidebar-foreground border-r border-[#152744] flex h-full w-(--sidebar-width) flex-col shadow-2xl overflow-hidden",
+          "adm-sidebar-surface relative text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col overflow-hidden",
           className
         )}
-        style={{
-          background: "#07152B",
-        }}
         {...props}
       >
         {children}
@@ -191,11 +188,10 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="text-sidebar-foreground border-r border-[#152744] w-(--sidebar-width) p-0 [&>button]:hidden shadow-2xl overflow-hidden"
+          className="adm-sidebar-surface text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden overflow-hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-              background: "#07152B",
             } as React.CSSProperties
           }
           side={side}
@@ -255,10 +251,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="relative border-r border-[#152744] text-sidebar-foreground group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border shadow-2xl overflow-hidden"
-          style={{
-            background: "#07152B",
-          }}
+          className="adm-sidebar-surface relative text-sidebar-foreground group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border overflow-hidden"
         >
           {children}
         </div>
