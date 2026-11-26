@@ -77,8 +77,10 @@ import { doNotServeRouter } from "./routers/doNotServe";
 import { mycoRouter } from "./routers/myco";
 import { waypointPlacesRouter } from "./routers/waypointPlaces";
 import { studioRouter } from "./routers/studio";
+import { paymentStationRouter } from "./routers/paymentStation";
 
 export const appRouter = router({
+  paymentStation: paymentStationRouter,
   studio: studioRouter,
   waypointPlaces: waypointPlacesRouter,
   myco: mycoRouter,

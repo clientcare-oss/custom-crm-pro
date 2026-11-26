@@ -198,6 +198,7 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
       "case_compass",
       "smart_files",
       "contracts",
+      "payment_station",
       "first_mate",
       "tools_hub",
       "voyage_log",
@@ -215,6 +216,7 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
       "manage_appointments",
       "view_team_calendar",
       "view_reports",
+      "collect_payments",
     ],
     defaultCaseAccess: {
       compass: "edit",
@@ -354,6 +356,7 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
       "calendar",
       "do_not_serve",
       "invoices",
+      "payment_station",
       "services",
       "bill_guardian",
       "tasks",
@@ -366,6 +369,7 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
       "manage_team_calendar",
       "view_reports",
       "modify_billing",
+      "collect_payments",
       "modify_contracts",
       "upload_files",
       "export_records",
@@ -416,6 +420,7 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   { id: "manage_roles", label: "Manage Roles & Permissions", category: "Staff & Management", description: "Configure system roles, case workspace access, and security policies." },
 
   // Finance & System
+  { id: "collect_payments", label: "Collect Payments (Payment Station)", category: "Finance & System", description: "Collect client invoice payments, authorized service charges, payment links, and donations via Payment Station." },
   { id: "modify_billing", label: "Modify Billing & Retainers", category: "Finance & System", description: "Adjust hourly advocate rates, create/edit invoices, and credit retainer hours." },
   { id: "issue_refunds", label: "Issue Refunds & Adjustments", category: "Finance & System", description: "Process payment refunds, void charges, and issue retainer credits." },
   { id: "manage_payroll", label: "View & Manage Payroll (Sensitive)", category: "Finance & System", description: "Access compensation, pay rates, and direct deposit details." },
@@ -460,6 +465,7 @@ export const CRM_MODULES: ModuleDefinition[] = [
   { id: "smart_files", label: "Smart Files Suite", path: "/smart-files", group: "Templates & Forms", icon: LayoutTemplate },
   { id: "contracts", label: "Contracts & Agreements", path: "/contracts", group: "Templates & Forms", icon: ScrollText },
   { id: "invoices", label: "Invoices & Billing", path: "/invoices", group: "Templates & Forms", icon: FileText, isSensitive: true },
+  { id: "payment_station", label: "Payment Station (POS)", path: "/payment-station", group: "Templates & Forms", icon: Banknote, isSensitive: true },
   { id: "services", label: "Services Catalog", path: "/services", group: "Templates & Forms", icon: Briefcase },
   { id: "bill_guardian", label: "Bill Guardian", path: "/bill-guardian", group: "Templates & Forms", icon: Banknote, isSensitive: true },
   // Advocacy & AI Tools

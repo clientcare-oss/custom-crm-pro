@@ -141,7 +141,14 @@ export function MonorailTrain({
     let startFrac = currentFracRef.current;
     let endFrac = stationFractions[targetIdx];
     let phaseStart: number | null = null;
-    const dwellMs = 880;
+    const dwellMs = 1350;
+    const totalPathLen = (() => {
+      try {
+        return pathElement.getTotalLength() || 2400;
+      } catch {
+        return 2400;
+      }
+    })();
     setTravelDir(endFrac >= startFrac ? 1 : -1);
 
     const tick = (ts: number) => {
@@ -157,9 +164,11 @@ export function MonorailTrain({
 
       if (phase === "gliding") {
         const dist = Math.abs(endFrac - startFrac);
-        const glideMs = Math.max(700, Math.min(1850, dist * 9500));
+        const pixelDist = dist * totalPathLen;
+        // Calm, unhurried ~165 px/sec cruising speed with gentle sine ease-in-out
+        const glideMs = Math.max(1550, Math.min(3600, (pixelDist / 165) * 1000));
         const t = Math.min(1, elapsed / glideMs);
-        const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        const eased = 0.5 - 0.5 * Math.cos(Math.PI * t);
         const next = startFrac + (endFrac - startFrac) * eased;
         currentFracRef.current = next;
         setCurrentFraction(next);
@@ -228,7 +237,13 @@ export function MonorailTrain({
     }
 
     setTravelDir(delta >= 0 ? 1 : -1);
-    const durationMs = Math.min(2200, Math.max(480, Math.abs(delta) * 2800));
+    let totalPathLen = 2400;
+    try {
+      totalPathLen = pathElement.getTotalLength() || 2400;
+    } catch {}
+    const pixelDist = Math.abs(delta) * totalPathLen;
+    // Calm, steady ~210 px/sec gliding speed (never rockets across multi-station journeys)
+    const durationMs = Math.max(1150, Math.min(5400, (pixelDist / 210) * 1000));
     let startTime: number | null = null;
 
     const step = (ts: number) => {
@@ -239,7 +254,7 @@ export function MonorailTrain({
       if (startTime === null) startTime = ts;
       const elapsed = ts - startTime;
       const t = Math.min(1, elapsed / durationMs);
-      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      const eased = 0.5 - 0.5 * Math.cos(Math.PI * t);
       const next = startFrac + delta * eased;
       currentFracRef.current = next;
       setCurrentFraction(next);

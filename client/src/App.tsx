@@ -87,6 +87,7 @@ import DoNotServe from "./pages/DoNotServe";
 import WaypointPlaces from "./pages/WaypointPlaces";
 import Studio from "./pages/Studio";
 import StudioAudienceView from "./pages/StudioAudienceView";
+import PaymentStation from "./pages/PaymentStation";
 // Students page replaces Projects page
 import { TerminologyProvider } from "./contexts/TerminologyContext";
 import { FirstMateProvider } from "./contexts/FirstMateContext";
@@ -266,6 +267,9 @@ function Router() {
           <Route path="/pipeline">{() => <Redirect to="/students" />}</Route>
           <Route path="/projects" component={Students} />
           <Route path="/invoices" component={Invoices} />
+          <Route path="/payment-station" component={PaymentStation} />
+          <Route path="/payments" component={PaymentStation} />
+          <Route path="/pos" component={PaymentStation} />
           <Route path="/agreements" component={Agreements} />
           <Route path="/contracts">{() => <Redirect to="/agreements" />}</Route>
           <Route path="/smart-files">{() => <Redirect to="/agreements" />}</Route>

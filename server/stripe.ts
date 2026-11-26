@@ -42,6 +42,21 @@ export function registerStripeRoutes(app: Router) {
       return res.json({ verified: true });
     }
 
+    // Reconcile Payment Station (PG-050) asynchronous Stripe events before generic handlers
+    try {
+      const { handlePaymentStationStripeWebhook } = await import("./services/paymentStationService");
+      const handledByPos = await handlePaymentStationStripeWebhook(event);
+      if (handledByPos) {
+        console.log(`[Stripe Webhook] Payment Station event reconciled: ${event.type} (${event.id})`);
+        return res.json({ received: true, handledBy: "payment_station" });
+      }
+    } catch (posErr: unknown) {
+      console.error(
+        "[Stripe Webhook] Payment Station reconciliation error:",
+        posErr instanceof Error ? posErr.message : posErr
+      );
+    }
+
     // Handle different event types
     switch (event.type) {
       case "checkout.session.completed": {

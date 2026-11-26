@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import CopilotUtilityCapsule from "@/components/CopilotUtilityCapsule";
-import { LayoutDashboard, Banknote, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, FileBox, Archive, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, CreditCard, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, FileBox, Archive, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
 import {
   getStoredEmployees,
   checkEmployeeModuleAccess,
@@ -200,6 +200,12 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
           label: "Invoices",
           path: "/invoices",
           keywords: ["billing", "invoices", "payments", "revenue", "pg-005"]
+        },
+        {
+          icon: CreditCard,
+          label: "Payment Station",
+          path: "/payment-station",
+          keywords: ["payment station", "payments", "pos", "point of sale", "charge", "card by phone", "donation", "stripe", "pg-050"]
         },
         {
           icon: FileSignature,
@@ -423,6 +429,13 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
       isActive: (loc) => loc === "/agreements" || loc === "/contracts" || loc.startsWith("/smart-files") || loc === "/invoices",
     },
     {
+      id: "payment-station",
+      icon: CreditCard,
+      label: "Payment Station",
+      path: "/payment-station",
+      isActive: (loc) => loc === "/payment-station" || loc.startsWith("/payment-station/") || loc === "/payments" || loc === "/pos",
+    },
+    {
       id: "templates",
       icon: LayoutTemplate,
       label: "Templates",
@@ -597,6 +610,7 @@ const SEARCHABLE_DIRECTORY: SearchDirectoryItem[] = [
   { id: "mod-contacts", name: "Contacts Directory", category: "module", path: "/contacts", badge: "PG-002", keywords: ["clients", "parents", "directory", "people", "directory", "families"], icon: Users },
   { id: "mod-agreements", name: "Agreements Engine", category: "module", path: "/agreements", badge: "PG-046", keywords: ["contracts", "signatures", "smart files", "agreements", "terms"], icon: FileSignature },
   { id: "mod-invoices", name: "Invoices & Billing", category: "module", path: "/invoices", badge: "PG-005", keywords: ["invoices", "payments", "receipts", "billing", "charges"], icon: Banknote },
+  { id: "mod-payment-station", name: "Payment Station", category: "module", path: "/payment-station", badge: "PG-050", keywords: ["payment station", "pos", "point of sale", "payments", "card by phone", "charge", "donation", "receipt", "stripe"], icon: CreditCard },
   { id: "mod-templates", name: "Templates", category: "module", path: "/templates", badge: "PG-011", keywords: ["templates", "forms", "letters", "documents", "email templates"], icon: LayoutTemplate },
   { id: "mod-automations", name: "Automations", category: "module", path: "/automations", badge: "PG-013", keywords: ["automations", "triggers", "actions", "workflows", "zapier", "webhooks"], icon: Zap },
   { id: "mod-workflows", name: "Workflow Designer", category: "module", path: "/workflows", badge: "PG-015", keywords: ["workflow designer", "workflows", "monorail", "workflow map", "guide steps", "stations", "traditional"], icon: GitBranch },
@@ -1793,7 +1807,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
         location === "/messages" || location.startsWith("/messages") ||
         location === "/archive" || location.startsWith("/archive/") ||
         location === "/do-not-serve" || location.startsWith("/do-not-serve/") ||
-        location === "/bill-guardian" || location.startsWith("/bill-guardian")
+        location === "/bill-guardian" || location.startsWith("/bill-guardian") ||
+        location === "/payment-station" || location.startsWith("/payment-station") || location === "/payments" || location === "/pos"
       ) && "bg-[#000820]",
       (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/") || location === "/workflows" || location.startsWith("/workflows")) && "h-svh max-h-svh min-h-0 overflow-hidden"
       )}>
@@ -1829,6 +1844,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           (location === "/settings" || location.startsWith("/settings")) && "p-0 bg-[#000820]",
           (location === "/messages" || location.startsWith("/messages")) && "p-0 bg-[#000820]",
           (location === "/archive" || location.startsWith("/archive/") || location === "/do-not-serve" || location.startsWith("/do-not-serve/")) && "p-0 bg-[#000820]",
+          (location === "/payment-station" || location.startsWith("/payment-station") || location === "/payments" || location === "/pos") && "p-0 bg-[#000820]",
           (location === "/bill-guardian" || location.startsWith("/bill-guardian")) && "p-0 bg-[#07162B]"
         )}>
           {currentForbiddenModule ? (
@@ -2048,6 +2064,7 @@ const PAGE_LIST = [
   { id: "PG-044", name: "Post-Meeting Review", path: "/post-meeting-review" },
   { id: "PG-046", name: "Agreements Engine", path: "/agreements" },
   { id: "PG-047", name: "Payment Receipt Experience", path: "/settings?section=receipts" },
+  { id: "PG-050", name: "Payment Station (POS)", path: "/payment-station" },
 ];
 
 function GoToPageModal({ open, onClose }: { open: boolean; onClose: () => void }) {

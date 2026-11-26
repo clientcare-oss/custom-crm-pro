@@ -1,0 +1,896 @@
+/* Waypoint Payment Station (PG-050) — Photorealistic 3D Hardware Integration */
+
+.pos-stage {
+  background-color: #000820;
+  background-image:
+    radial-gradient(ellipse 68% 42% at 44% 78%, rgba(86, 56, 206, 0.14) 0%, rgba(18, 44, 112, 0.1) 46%, transparent 74%),
+    radial-gradient(ellipse 75% 42% at 50% 0%, rgba(16, 40, 88, 0.22) 0%, transparent 66%);
+}
+
+/* ── PHOTOREALISTIC SYMMETRICAL FULL-PILL BRUSHED-BRASS & NAVY TOP COMMAND BAR ── */
+.pos-topbar-pill-frame {
+  padding: 2.5px;
+  background: linear-gradient(180deg,
+      #fff5c8 0%,
+      #e6ba60 18%,
+      #a87928 50%,
+      #90621c 76%,
+      #d8aa50 93%,
+      #59380c 100%);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.8),
+    0 2px 6px rgba(0, 0, 0, 0.92),
+    0 0 0 1px rgba(18, 12, 4, 0.95);
+}
+
+.pos-topbar-pill-inner {
+  background:
+    radial-gradient(ellipse 42% 140% at 50% 50%, rgba(28, 62, 118, 0.34) 0%, rgba(7, 20, 44, 0) 70%),
+    linear-gradient(180deg, #0b1c3a 0%, #06132a 48%, #030a18 100%);
+  border: 1px solid rgba(5, 11, 24, 0.94);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.78),
+    inset 0 0 0 1.5px rgba(212, 172, 92, 0.24),
+    inset 0 -1px 2px rgba(255, 232, 168, 0.12);
+}
+
+/* Outer full-pill brushed-brass capsule around [Client ▾ | Search or select client...] */
+.pos-topbar-combo-outer {
+  padding: 1.75px;
+  background: linear-gradient(180deg,
+      #fce9ad 0%,
+      #d4a64d 24%,
+      #8b601c 56%,
+      #b58634 86%,
+      #6a4612 100%);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.72),
+    0 1px 0 rgba(255, 240, 192, 0.14);
+}
+
+.pos-topbar-combo-well {
+  background: linear-gradient(180deg, #0b1c39 0%, #07142b 52%, #050f22 100%);
+  border: 1px solid rgba(4, 10, 22, 0.92);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.76),
+    inset 0 -1px 1px rgba(176, 202, 246, 0.08);
+}
+
+/* Raised inner full-pill brushed-brass cap for [🔍 👤 Client ▾] */
+.pos-topbar-client-cap-rim {
+  padding: 1.5px;
+  background: linear-gradient(180deg,
+      #fff2c2 0%,
+      #dfa94c 26%,
+      #8f621c 58%,
+      #be8f3a 88%,
+      #684410 100%);
+  box-shadow:
+    2px 0 8px rgba(0, 0, 0, 0.75),
+    0 2px 5px rgba(0, 0, 0, 0.65);
+}
+
+.pos-topbar-client-cap {
+  background: linear-gradient(180deg, #102446 0%, #091730 52%, #061024 100%);
+  border: 1px solid rgba(5, 11, 24, 0.9);
+  box-shadow:
+    inset 0 1px 1px rgba(186, 212, 255, 0.18),
+    inset 0 -2px 3px rgba(2, 6, 16, 0.75);
+  transition: filter 120ms ease;
+}
+
+.pos-topbar-client-cap:hover {
+  filter: brightness(1.14);
+}
+
+.pos-topbar-client-cap-expanded {
+  background:
+    radial-gradient(ellipse 85% 90% at 50% 15%, rgba(62, 98, 168, 0.34) 0%, rgba(12, 28, 60, 0) 72%),
+    linear-gradient(180deg, #162e59 0%, #0d1f40 52%, #07132a 100%);
+  border: 1px solid rgba(255, 236, 178, 0.22);
+  box-shadow:
+    inset 0 1px 1.5px rgba(255, 244, 206, 0.28),
+    inset 0 -2px 4px rgba(2, 6, 16, 0.82);
+}
+
+/* Matching Photorealistic Tubular Brushed-Brass & Navy Dropdown Panel (exact top-bar materials) */
+.pos-topbar-dropdown-frame {
+  padding: 2.5px;
+  border-radius: 22px;
+  background: linear-gradient(180deg,
+      #fff5c8 0%,
+      #e6ba60 16%,
+      #a87928 48%,
+      #8e601b 74%,
+      #d8aa50 93%,
+      #59380c 100%);
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.88),
+    0 6px 16px rgba(0, 0, 0, 0.92),
+    0 0 0 1px rgba(18, 12, 4, 0.96);
+  animation: posDropdownReveal 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pos-topbar-dropdown-inner {
+  border-radius: 19.5px;
+  background:
+    radial-gradient(ellipse 80% 45% at 50% 0%, rgba(34, 72, 134, 0.34) 0%, rgba(7, 20, 44, 0) 70%),
+    linear-gradient(180deg, #0b1c3a 0%, #06132a 48%, #030a18 100%);
+  border: 1px solid rgba(5, 11, 24, 0.95);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.78),
+    inset 0 0 0 1.5px rgba(212, 172, 92, 0.24),
+    inset 0 -1px 2px rgba(255, 232, 168, 0.12);
+}
+
+/* Compact live type-ahead search popover (stays small, matches bar brass & navy) */
+.pos-topbar-search-popover-frame {
+  padding: 2px;
+  border-radius: 16px;
+  background: linear-gradient(180deg,
+      #fff4c4 0%,
+      #e2b458 20%,
+      #9e7024 54%,
+      #c6963e 88%,
+      #59380c 100%);
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.84),
+    0 4px 10px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(18, 12, 4, 0.95);
+  animation: posDropdownReveal 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pos-topbar-search-popover-inner {
+  border-radius: 14px;
+  background: linear-gradient(180deg, #0a1a36 0%, #051126 58%, #030a18 100%);
+  border: 1px solid rgba(5, 11, 24, 0.94);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.74),
+    inset 0 0 0 1px rgba(212, 172, 92, 0.2);
+}
+
+@keyframes posDropdownReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Symmetrical full-pill dark-navy & tubular brushed-brass Donation button */
+.pos-topbar-donation-rim {
+  padding: 2px;
+  background: linear-gradient(180deg,
+      #fff3c6 0%,
+      #e2b359 22%,
+      #9a6c22 54%,
+      #c6963e 86%,
+      #63400e 100%);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.76),
+    0 1px 0 rgba(255, 240, 192, 0.12);
+  transition: filter 130ms ease, transform 85ms ease, box-shadow 140ms ease;
+}
+
+.pos-topbar-donation-rim:hover {
+  filter: brightness(1.09);
+  box-shadow:
+    0 5px 15px rgba(0, 0, 0, 0.8),
+    0 0 14px rgba(236, 196, 110, 0.28);
+}
+
+.pos-topbar-donation-rim:active {
+  transform: translateY(1px);
+}
+
+.pos-topbar-donation-face {
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 20%, rgba(44, 78, 138, 0.28) 0%, rgba(8, 20, 44, 0) 72%),
+    linear-gradient(180deg, #102447 0%, #091730 52%, #050f23 100%);
+  border: 1px solid rgba(5, 11, 24, 0.92);
+  box-shadow:
+    inset 0 1px 1px rgba(186, 212, 255, 0.2),
+    inset 0 -2px 4px rgba(2, 6, 16, 0.78);
+}
+
+/* Seamless radial/edge feather so studio #02081E edges melt invisibly into #000820 */
+.pos-studio-blend {
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0%, black 3.5%, black 96.5%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, black 3.5%, black 96.5%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent 0%, black 3.5%, black 96.5%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, black 3.5%, black 96.5%, transparent 100%);
+  mask-composite: intersect;
+}
+
+/* Mobile compact velvety micro-grain navy housing */
+.pos-mobile-leather {
+  background-color: #06132f;
+  background-image:
+    linear-gradient(180deg, rgba(16, 40, 88, 0.72) 0%, rgba(6, 17, 42, 0.84) 45%, rgba(2, 8, 22, 0.94) 100%),
+    url("/assets/pos/navy-leather-pebble.png");
+  background-size: 100% 100%, 88px 88px;
+}
+
+/* Mobile VFD display bezel (desktop uses the real 3D glass bezel in register-chassis-3d.jpg) */
+.pos-display-bezel-mobile {
+  background: linear-gradient(180deg,
+      #fff3c7 0%,
+      #e6c373 16%,
+      #a87e34 38%,
+      #6a4b19 54%,
+      #c69b49 76%,
+      #f5dc99 91%,
+      #8c6626 100%);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.72);
+}
+
+/* Transparent cyan LED dot-matrix overlay sitting inside the real 3D glass display */
+.pos-dotmatrix-glass-overlay {
+  background-image:
+    radial-gradient(ellipse 52% 110% at 80% 52%, rgba(66, 228, 255, 0.16) 0%, transparent 72%),
+    radial-gradient(rgba(102, 236, 255, 0.085) 0.85px, transparent 0.85px);
+  background-size: 100% 100%, 4px 4px;
+}
+
+.pos-dotmatrix-glass-declined {
+  background-image:
+    radial-gradient(ellipse 46% 115% at 24% 52%, rgba(235, 42, 54, 0.24) 0%, transparent 70%),
+    radial-gradient(ellipse 44% 110% at 82% 52%, rgba(66, 228, 255, 0.15) 0%, transparent 70%),
+    radial-gradient(rgba(255, 118, 124, 0.075) 0.85px, transparent 0.85px);
+  background-size: 100% 100%, 100% 100%, 4px 4px;
+}
+
+.pos-dotmatrix-glass-success {
+  background-image:
+    radial-gradient(ellipse 48% 115% at 26% 52%, rgba(24, 214, 134, 0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 44% 110% at 82% 52%, rgba(66, 228, 255, 0.14) 0%, transparent 70%),
+    radial-gradient(rgba(96, 245, 182, 0.08) 0.85px, transparent 0.85px);
+  background-size: 100% 100%, 100% 100%, 4px 4px;
+}
+
+.pos-dotmatrix-name {
+  font-family: "DotGothic16", "Courier New", ui-monospace, SFMono-Regular, monospace;
+  color: #84eaff;
+  text-shadow:
+    0 0 5px rgba(72, 222, 255, 0.65),
+    0 0 14px rgba(42, 194, 255, 0.34);
+  letter-spacing: 0.09em;
+}
+
+/* Crisp ON / OFF red decline blink on dot-matrix letters (asynchronous rate from printer red LED) */
+@keyframes posDeclineTextPulse {
+  0%,
+  50% {
+    opacity: 1;
+    text-shadow:
+      0 0 6px rgba(255, 62, 72, 0.8),
+      0 0 16px rgba(214, 30, 42, 0.48);
+  }
+
+  57%,
+  92% {
+    opacity: 0.06;
+    text-shadow: none;
+  }
+
+  100% {
+    opacity: 1;
+    text-shadow:
+      0 0 6px rgba(255, 62, 72, 0.8),
+      0 0 16px rgba(214, 30, 42, 0.48);
+  }
+}
+
+/* Soft, understated antique-gold pulse for DONATION mode (warm, readable, never glaring/bright) */
+@keyframes posDonationGoldPulse {
+  0%, 100% {
+    opacity: 0.95;
+  }
+
+  50% {
+    opacity: 0.56;
+  }
+}
+
+.pos-dotmatrix-donation {
+  font-family: "DotGothic16", "Share Tech Mono", monospace;
+  color: #e4bc68;
+  letter-spacing: 0.14em;
+  text-shadow:
+    0 0 5px rgba(228, 188, 104, 0.44),
+    0 0 11px rgba(196, 146, 54, 0.22);
+  animation: posDonationGoldPulse 2.8s ease-in-out infinite;
+}
+
+.pos-dotmatrix-glass-donation {
+  background:
+    radial-gradient(rgba(228, 188, 104, 0.08) 1px, transparent 0) 0 0 / 5px 5px,
+    linear-gradient(180deg, rgba(22, 16, 6, 0.92) 0%, rgba(12, 10, 8, 0.95) 60%, rgba(16, 13, 8, 0.94) 100%);
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.92),
+    inset 0 0 14px rgba(212, 168, 78, 0.12);
+}
+
+.pos-dotmatrix-declined {
+  font-family: "DotGothic16", "Courier New", ui-monospace, SFMono-Regular, monospace;
+  color: #ff4a52;
+  text-shadow:
+    0 0 6px rgba(255, 62, 72, 0.8),
+    0 0 16px rgba(214, 30, 42, 0.48);
+  letter-spacing: 0.09em;
+  animation: posDeclineTextPulse 1.85s linear infinite;
+}
+
+@keyframes posOfflineTextPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.62;
+  }
+}
+
+.pos-dotmatrix-offline {
+  font-family: "DotGothic16", "Courier New", ui-monospace, SFMono-Regular, monospace;
+  color: #ffb946;
+  text-shadow:
+    0 0 6px rgba(255, 180, 56, 0.68),
+    0 0 15px rgba(214, 126, 22, 0.36);
+  letter-spacing: 0.1em;
+  animation: posOfflineTextPulse 2.4s ease-in-out infinite;
+}
+
+.pos-dotmatrix-glass-offline {
+  background-image:
+    radial-gradient(ellipse 48% 115% at 24% 52%, rgba(235, 148, 28, 0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 44% 110% at 82% 52%, rgba(66, 228, 255, 0.12) 0%, transparent 70%),
+    radial-gradient(rgba(255, 198, 92, 0.08) 0.85px, transparent 0.85px);
+  background-size: 100% 100%, 100% 100%, 4px 4px;
+}
+
+.pos-dotmatrix-success {
+  font-family: "DotGothic16", "Courier New", ui-monospace, SFMono-Regular, monospace;
+  color: #56f7b0;
+  text-shadow:
+    0 0 5px rgba(56, 238, 158, 0.72),
+    0 0 15px rgba(18, 194, 118, 0.38);
+  letter-spacing: 0.08em;
+}
+
+/* Celebratory stadium-wave sweep across green PAYMENT SUCCESSFUL letters -> $, digits, commas, decimal */
+@keyframes posSuccessWave {
+  0% {
+    transform: translateY(0);
+    filter: brightness(1);
+  }
+
+  9% {
+    transform: translateY(-6.5px);
+    filter: brightness(1.34);
+  }
+
+  18% {
+    transform: translateY(0.8px);
+    filter: brightness(1.04);
+  }
+
+  24%, 100% {
+    transform: translateY(0);
+    filter: brightness(1);
+  }
+}
+
+@keyframes posSuccessWaveAmount {
+  0% {
+    transform: translateY(0);
+    filter: brightness(1);
+  }
+
+  9% {
+    transform: translateY(-5.5px);
+    color: #7bffca;
+    filter: brightness(1.26);
+  }
+
+  18% {
+    transform: translateY(0.6px);
+    filter: brightness(1.04);
+  }
+
+  24%, 100% {
+    transform: translateY(0);
+    filter: brightness(1);
+  }
+}
+
+.pos-success-wave-char {
+  display: inline-block;
+  will-change: transform;
+  animation: posSuccessWave 3s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+}
+
+.pos-success-wave-amount-char {
+  display: inline-block;
+  will-change: transform;
+  animation: posSuccessWaveAmount 3s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+}
+
+.pos-dotmatrix-amount {
+  font-family: "DotGothic16", "Courier New", ui-monospace, SFMono-Regular, monospace;
+  color: #cdfcff;
+  text-shadow:
+    0 0 4px rgba(185, 252, 255, 0.94),
+    0 0 11px rgba(78, 232, 255, 0.84),
+    0 0 22px rgba(42, 198, 255, 0.48);
+  letter-spacing: 0.06em;
+}
+
+/* Recessed hardware key pocket (matching Send receipt button recess) */
+.pos-key-pocket {
+  padding: 1px;
+  border-radius: 10px;
+  background: rgba(2, 6, 15, 0.92);
+  box-shadow:
+    0 5px 12px rgba(0, 0, 0, 0.82),
+    0 1.5px 4px rgba(0, 0, 0, 0.88),
+    inset 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+
+/* Shared gleaming tubular brushed-brass outer collar (identical hardware language to Send receipt button) */
+.pos-key-brass {
+  position: relative;
+  display: block;
+  padding: 2px;
+  border-radius: 9px;
+  background: linear-gradient(180deg,
+      #fff3c7 0%,
+      #e6bc69 20%,
+      #ba8836 52%,
+      #a87528 80%,
+      #c69340 94%,
+      #6e4712 100%);
+  border: 0.75px solid #2b1a04;
+  border-top-color: #fff8dc;
+  border-bottom-color: #362006;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.76),
+    inset 0 0.75px 0.75px rgba(255, 252, 236, 0.85),
+    inset 0 -0.75px 1px rgba(64, 38, 6, 0.65);
+  transition: transform 80ms ease, filter 120ms ease, box-shadow 90ms ease;
+}
+
+.pos-key-brass:hover:not(:disabled) {
+  filter: brightness(1.11);
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(242, 204, 120, 0.22);
+}
+
+.pos-key-brass:active:not(:disabled) {
+  transform: translateY(1.2px);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.86),
+    inset 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+/* Inner soft-touch velvety slate-navy cap — exact match to Send receipt button face */
+.pos-key-face-navy {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  background:
+    radial-gradient(ellipse 85% 65% at 50% 18%, rgba(72, 104, 164, 0.22) 0%, rgba(28, 44, 78, 0) 70%),
+    linear-gradient(180deg, #21345a 0%, #1a2a4c 48%, #152340 88%, #111d36 100%);
+  border: 1px solid rgba(11, 20, 42, 0.92);
+  border-top-color: rgba(134, 164, 214, 0.42);
+  border-left-color: rgba(88, 114, 164, 0.28);
+  border-right-color: rgba(88, 114, 164, 0.24);
+  border-bottom-color: rgba(7, 13, 28, 0.92);
+  box-shadow:
+    inset 0 1px 1px rgba(176, 202, 245, 0.26),
+    inset 0 -2px 4px rgba(5, 11, 24, 0.62);
+}
+
+/* Inner soft-touch burgundy cap for Backspace */
+.pos-key-face-burgundy {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  background:
+    radial-gradient(ellipse 85% 65% at 50% 18%, rgba(168, 72, 98, 0.22) 0%, rgba(92, 32, 48, 0) 70%),
+    linear-gradient(180deg, #6e2c3f 0%, #521e2e 52%, #3a121f 92%, #2c0c16 100%);
+  border: 1px solid rgba(36, 8, 16, 0.92);
+  border-top-color: rgba(235, 168, 186, 0.36);
+  border-left-color: rgba(164, 88, 112, 0.24);
+  border-right-color: rgba(164, 88, 112, 0.22);
+  border-bottom-color: rgba(24, 5, 10, 0.92);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 204, 218, 0.22),
+    inset 0 -2px 4px rgba(24, 5, 10, 0.65);
+}
+
+/* Inner soft-touch royal-indigo cap for Clear */
+.pos-key-face-indigo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  background:
+    radial-gradient(ellipse 85% 65% at 50% 18%, rgba(132, 126, 224, 0.24) 0%, rgba(62, 54, 134, 0) 70%),
+    linear-gradient(180deg, #4e469c 0%, #3b347e 52%, #2b2462 92%, #201a4c 100%);
+  border: 1px solid rgba(18, 13, 52, 0.92);
+  border-top-color: rgba(188, 184, 250, 0.4);
+  border-left-color: rgba(128, 122, 208, 0.26);
+  border-right-color: rgba(128, 122, 208, 0.24);
+  border-bottom-color: rgba(14, 10, 42, 0.92);
+  box-shadow:
+    inset 0 1px 1px rgba(212, 208, 255, 0.26),
+    inset 0 -2px 4px rgba(14, 10, 40, 0.65);
+}
+
+/* Real Photorealistic Single-Image Seamless 3D Brushed-Gold Charge Bar (zero tile seams under scale/zoom) */
+.pos-charge-pocket {
+  position: relative;
+}
+
+.pos-charge-gold {
+  position: relative;
+  border: 0;
+  background-color: transparent;
+  background-image: url("/assets/pos/charge-bar-final.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter:
+    drop-shadow(0 6px 14px rgba(0, 0, 0, 0.82)) drop-shadow(0 1.5px 2.5px rgba(0, 0, 0, 0.94));
+  color: #080c15;
+  text-shadow: 0 1px 0 rgba(255, 245, 204, 0.38);
+  transition: transform 90ms ease, filter 140ms ease;
+}
+
+.pos-charge-gold:hover:not(:disabled) {
+  filter:
+    brightness(1.06) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.86)) drop-shadow(0 0 14px rgba(248, 212, 126, 0.28));
+}
+
+.pos-charge-gold:active:not(:disabled) {
+  transform: translateY(1.5px);
+  filter:
+    brightness(0.96) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9));
+}
+
+.pos-charge-gold:disabled {
+  cursor: not-allowed;
+}
+
+/* Unified Continuous Hardware Tab Track & Smooth-Glide Monorail Highlight */
+.pos-tab-track {
+  position: relative;
+  background: linear-gradient(180deg, #13213c 0%, #0b162c 48%, #071022 100%);
+  border: 1.15px solid rgba(132, 156, 200, 0.46);
+  border-top-color: rgba(186, 208, 244, 0.6);
+  border-bottom-color: rgba(74, 96, 142, 0.44);
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.68),
+    inset 0 2px 5px rgba(2, 6, 18, 0.72),
+    inset 0 1px 0 rgba(196, 218, 255, 0.14);
+}
+
+.pos-tab-glide-pill {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  border-radius: 8.5px;
+  background: linear-gradient(180deg, #5e5cd8 0%, #4f4dc6 52%, #4340b4 100%);
+  border: 1.25px solid #9d92e6;
+  border-top-color: #f3e4e8;
+  border-bottom-color: #9e6ec8;
+  box-shadow:
+    0 0 0 1.45px rgba(2, 5, 14, 0.96),
+    0 3px 6px rgba(0, 0, 0, 0.7),
+    inset 0 1.5px 1px rgba(190, 190, 255, 0.44),
+    inset 1.5px 0 1.5px rgba(146, 144, 246, 0.26),
+    inset -1.5px 0 1.5px rgba(132, 128, 236, 0.26),
+    inset 0 -2px 2.5px rgba(46, 36, 134, 0.62);
+  transition:
+    left 430ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 430ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: left, width;
+}
+
+/* Deep recessed register field wells */
+.pos-field-well {
+  background: linear-gradient(180deg, rgba(3, 11, 28, 0.92) 0%, rgba(7, 22, 51, 0.88) 100%);
+  border: 1px solid rgba(144, 168, 218, 0.48);
+  box-shadow:
+    inset 0 3px 7px rgba(0, 0, 0, 0.8),
+    inset 0 -1px 0 rgba(182, 206, 255, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.pos-field-well:focus-within {
+  border-color: rgba(132, 220, 255, 0.85);
+  box-shadow:
+    inset 0 3px 7px rgba(0, 0, 0, 0.8),
+    0 0 0 2px rgba(96, 198, 255, 0.22);
+}
+
+/* Photorealistic warm curved cream thermal receipt paper emerging from inside the brass slot */
+.pos-receipt-paper-wrap {
+  filter:
+    drop-shadow(-4px 6px 12px rgba(0, 0, 0, 0.42)) drop-shadow(6px 8px 14px rgba(0, 0, 0, 0.52));
+}
+
+.pos-receipt-paper {
+  position: relative;
+  background:
+    linear-gradient(90deg,
+      rgba(255, 252, 244, 0.48) 0%,
+      rgba(255, 249, 236, 0.14) 26%,
+      rgba(218, 190, 146, 0.08) 74%,
+      rgba(176, 142, 92, 0.24) 100%),
+    linear-gradient(180deg,
+      #fffaf0 0%,
+      #fdf3e0 38%,
+      #f3e2c4 78%,
+      #e6cfa8 94%,
+      #d4b98d 100%);
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.55),
+    inset -2px 0 6px rgba(138, 106, 62, 0.16);
+}
+
+/* Printer machined 3D brushed-brass collar & soft-touch recessed navy Send receipt button */
+.pos-printer-btn-well {
+  padding: 1px;
+  border-radius: 11px;
+  background: rgba(2, 6, 15, 0.92);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.84),
+    0 2px 5px rgba(0, 0, 0, 0.9),
+    inset 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+
+/* Outer gleaming tubular brushed-brass bevel rim */
+.pos-printer-btn {
+  position: relative;
+  padding: 2.5px;
+  border-radius: 10px;
+  background: linear-gradient(180deg,
+      #fff3c7 0%,
+      #e6bc69 20%,
+      #ba8836 52%,
+      #a87528 80%,
+      #c69340 94%,
+      #6e4712 100%);
+  border: 0.75px solid #2b1a04;
+  border-top-color: #fff8dc;
+  border-bottom-color: #362006;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.78),
+    inset 0 0.75px 0.75px rgba(255, 252, 236, 0.85),
+    inset 0 -0.75px 1px rgba(64, 38, 6, 0.65);
+  transition: transform 85ms ease, filter 120ms ease, box-shadow 100ms ease;
+}
+
+/* Inner soft-touch velvety slate-navy cap with crisp step groove & subtle cool upper inner chamfer */
+.pos-printer-btn-face {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 7.5px;
+  background:
+    radial-gradient(ellipse 85% 65% at 50% 18%, rgba(72, 104, 164, 0.22) 0%, rgba(28, 44, 78, 0) 70%),
+    linear-gradient(180deg, #21345a 0%, #1a2a4c 48%, #152340 88%, #111d36 100%);
+  border: 1px solid rgba(11, 20, 42, 0.92);
+  border-top-color: rgba(134, 164, 214, 0.42);
+  border-left-color: rgba(88, 114, 164, 0.28);
+  border-right-color: rgba(88, 114, 164, 0.24);
+  border-bottom-color: rgba(7, 13, 28, 0.92);
+  box-shadow:
+    inset 0 1px 1px rgba(176, 202, 245, 0.26),
+    inset 0 -2px 4px rgba(5, 11, 24, 0.62);
+}
+
+.pos-printer-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.82),
+    0 0 12px rgba(242, 204, 120, 0.24);
+}
+
+.pos-printer-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.85),
+    inset 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+@keyframes posPaperFeed {
+  0% {
+    transform: translateY(38px);
+  }
+
+  58% {
+    transform: translateY(-3px);
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.pos-paper-feed-anim {
+  animation: posPaperFeed 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Printer hardware status indicator LED — crisp asynchronous ON / OFF red blink (distinct rate from display text) */
+@keyframes posPrinterRedLedPulse {
+  0%,
+  44% {
+    background-color: #ff2c39;
+    box-shadow:
+      0 0 6px rgba(255, 56, 68, 0.98),
+      0 0 14px rgba(235, 28, 42, 0.85),
+      0 0 24px rgba(200, 16, 32, 0.5);
+  }
+
+  52%,
+  92% {
+    background-color: #1c070a;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.95);
+  }
+
+  100% {
+    background-color: #ff2c39;
+    box-shadow:
+      0 0 6px rgba(255, 56, 68, 0.98),
+      0 0 14px rgba(235, 28, 42, 0.85),
+      0 0 24px rgba(200, 16, 32, 0.5);
+  }
+}
+
+.pos-printer-led-blue {
+  background-color: #42e4ff;
+  box-shadow:
+    0 0 6px rgba(72, 234, 255, 0.92),
+    0 0 14px rgba(34, 204, 245, 0.62);
+}
+
+.pos-printer-led-green {
+  background-color: #2ce88f;
+  box-shadow:
+    0 0 6px rgba(56, 246, 156, 0.96),
+    0 0 15px rgba(22, 212, 124, 0.72),
+    0 0 24px rgba(14, 178, 102, 0.38);
+}
+
+.pos-printer-led-red {
+  background-color: #ff2c39;
+  box-shadow:
+    0 0 6px rgba(255, 56, 68, 0.98),
+    0 0 14px rgba(235, 28, 42, 0.85),
+    0 0 24px rgba(200, 16, 32, 0.5);
+  animation: posPrinterRedLedPulse 1.15s linear -0.35s infinite;
+}
+
+@keyframes posPrinterAmberLedPulse {
+  0%, 100% {
+    background-color: #ffb838;
+    box-shadow:
+      0 0 6px rgba(255, 188, 62, 0.95),
+      0 0 14px rgba(236, 146, 22, 0.74),
+      0 0 22px rgba(196, 112, 12, 0.4);
+  }
+
+  50% {
+    background-color: #9a5e10;
+    box-shadow:
+      0 0 3px rgba(196, 126, 24, 0.56),
+      0 0 8px rgba(154, 94, 16, 0.32);
+  }
+}
+
+.pos-printer-led-amber {
+  background-color: #ffb838;
+  box-shadow:
+    0 0 6px rgba(255, 188, 62, 0.95),
+    0 0 14px rgba(236, 146, 22, 0.74),
+    0 0 22px rgba(196, 112, 12, 0.4);
+  animation: posPrinterAmberLedPulse 1.95s ease-in-out -0.35s infinite;
+}
+
+/* Physical antique-brass Manager Key Inserted in Cylinder Keyhole mounted on the register's upper apron */
+.pos-keylock-socket {
+  background: radial-gradient(circle, rgba(2, 6, 15, 0.92) 55%, rgba(2, 6, 15, 0.45) 85%, transparent 100%);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.88),
+    0 0 0 1px rgba(4, 10, 24, 0.88);
+  transition: box-shadow 220ms ease, filter 160ms ease;
+}
+
+.pos-keylock-socket-unlocked {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.92),
+    0 0 12px rgba(44, 232, 143, 0.36),
+    0 0 0 1px rgba(242, 206, 114, 0.48);
+}
+
+.pos-physical-brass-key {
+  transform-origin: center center;
+  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1), filter 160ms ease;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.84));
+}
+
+.pos-manager-key-assembly:hover .pos-physical-brass-key {
+  filter: brightness(1.09) drop-shadow(0 4px 7px rgba(0, 0, 0, 0.92));
+}
+
+.pos-key-led-bezel {
+  background: linear-gradient(180deg, #fff2c2 0%, #d4a44a 38%, #7b4e14 82%, #b58430 100%);
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.85),
+    inset 0 1px 1px rgba(255, 250, 224, 0.75);
+}
+
+/* Soft purple/violet-indigo tabletop ambient underglow matching the register's bottom glow */
+.pos-printer-underglow {
+  background:
+    radial-gradient(ellipse 36% 62% at 22% 48%, rgba(178, 66, 248, 0.62) 0%, rgba(126, 48, 226, 0.24) 52%, transparent 78%),
+    radial-gradient(ellipse 38% 62% at 80% 48%, rgba(170, 62, 242, 0.58) 0%, rgba(108, 56, 232, 0.22) 52%, transparent 78%),
+    radial-gradient(ellipse 74% 68% at 52% 52%, rgba(88, 92, 246, 0.4) 0%, rgba(48, 72, 206, 0.16) 58%, transparent 82%);
+  filter: blur(12px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pos-paper-feed-anim,
+  .pos-topbar-dropdown-frame,
+  .pos-success-wave-char,
+  .pos-success-wave-amount-char {
+    animation: none;
+  }
+
+  .pos-tab-glide-pill,
+  .pos-physical-brass-key {
+    transition: none;
+  }
+
+  /* Reduced motion: steady gold / steady red, zero pulsing */
+  .pos-dotmatrix-donation {
+    animation: none;
+    opacity: 0.92;
+  }
+
+  .pos-dotmatrix-declined,
+  .pos-dotmatrix-offline {
+    animation: none;
+    opacity: 1;
+  }
+
+  .pos-printer-led-red {
+    animation: none;
+    background-color: #ef3440;
+    box-shadow:
+      0 0 6px rgba(244, 62, 74, 0.9),
+      0 0 13px rgba(212, 28, 40, 0.62);
+  }
+
+  .pos-printer-led-amber {
+    animation: none;
+    background-color: #f5a623;
+    box-shadow:
+      0 0 6px rgba(245, 166, 35, 0.9),
+      0 0 12px rgba(212, 132, 18, 0.58);
+  }
+}
