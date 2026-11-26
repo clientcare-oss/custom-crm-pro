@@ -1164,13 +1164,15 @@ export default function CrewQuarters() {
 
                 {/* Card 4C: Waypoint Inspiration Poster Tile — Satin Brass Framed Lighthouse */}
                 <div className="adm-panel-card rounded-[18px] p-6 flex flex-col items-center justify-between text-center relative overflow-hidden h-full group min-h-[340px] transition-all">
+                  <div aria-hidden="true" className="adm-rim-glint-top" />
+                  <div aria-hidden="true" className="adm-rim-glint-bottom" />
                   {/* Vibrant Cinematic Lighthouse Night Ocean Backdrop (Bright & Rich) */}
                   <div
-                    className="absolute inset-0 bg-cover bg-[position:72%_center] brightness-[1.1] contrast-[1.08] saturate-[1.15] group-hover:scale-105 transition-transform duration-700 pointer-events-none"
+                    className="absolute inset-0 z-[2] bg-cover bg-[position:72%_center] brightness-[1.1] contrast-[1.08] saturate-[1.15] group-hover:scale-105 transition-transform duration-700 pointer-events-none"
                     style={{ backgroundImage: "url('/lighthouse-night-bg.png')" }}
                   />
                   {/* Gentle, Transparent Edge Scrims (Preserves Picture Brightness) */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-[#05142B]/50 via-transparent to-[#020A17]/90 pointer-events-none" />
+                  <div className="absolute inset-0 z-[3] bg-gradient-to-b from-[#05142B]/50 via-transparent to-[#020A17]/90 pointer-events-none" />
 
                   {/* Upper Section: Elegant Script Typography */}
                   <div className="relative z-10 pt-2 flex flex-col items-center">

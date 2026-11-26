@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
   ChevronDown,
@@ -117,10 +117,140 @@ export function SavedViewsBar({
   const isOverflowActive = overflowViews.some((v) => v.slug === activeViewSlug);
   const activeOverflowView = overflowViews.find((v) => v.slug === activeViewSlug);
 
+  const activeTabKey = isOverflowActive
+    ? "__overflow__"
+    : primaryViews.some((v) => v.slug === activeViewSlug)
+      ? activeViewSlug
+      : null;
+
+  const tabsRowRef = useRef<HTMLDivElement | null>(null);
+  const glowBarRef = useRef<HTMLSpanElement | null>(null);
+  const tabElsRef = useRef<Record<string, HTMLButtonElement | null>>({});
+  const lastTabKeyRef = useRef<string | null>(null);
+  const lastGeomRef = useRef<{ x: number; y: number; w: number } | null>(null);
+  const activeAnimRef = useRef<Animation | null>(null);
+
+  useLayoutEffect(() => {
+    const rowEl = tabsRowRef.current;
+    const glowEl = glowBarRef.current;
+    if (!rowEl || !glowEl) return;
+
+    const measureTarget = () => {
+      if (!activeTabKey) return null;
+      const tabEl = tabElsRef.current[activeTabKey];
+      if (!tabEl) return null;
+      const rowRect = rowEl.getBoundingClientRect();
+      const tabRect = tabEl.getBoundingClientRect();
+      if (tabRect.width <= 0) return null;
+      return {
+        x: Math.round((tabRect.left - rowRect.left - 2) * 100) / 100,
+        y: Math.round((tabRect.bottom - rowRect.top - 1) * 100) / 100,
+        w: Math.round((tabRect.width + 4) * 100) / 100,
+      };
+    };
+
+    const applyInstant = (geom: { x: number; y: number; w: number }) => {
+      if (activeAnimRef.current) {
+        activeAnimRef.current.cancel();
+        activeAnimRef.current = null;
+      }
+      glowEl.style.transform = `translate3d(${geom.x}px, ${geom.y}px, 0)`;
+      glowEl.style.width = `${geom.w}px`;
+      glowEl.style.opacity = "1";
+      lastGeomRef.current = geom;
+    };
+
+    const target = measureTarget();
+    if (!target) {
+      glowEl.style.opacity = "0";
+      lastTabKeyRef.current = null;
+      lastGeomRef.current = null;
+      return;
+    }
+
+    const prevKey = lastTabKeyRef.current;
+    const prevGeom = lastGeomRef.current;
+    const didSwitchTab = prevKey !== null && prevKey !== activeTabKey && prevGeom !== null;
+
+    if (didSwitchTab) {
+      // Sample current visual position so rapid back-and-forth clicks reverse seamlessly mid-flight
+      const rowRect = rowEl.getBoundingClientRect();
+      const curRect = glowEl.getBoundingClientRect();
+      const startGeom =
+        curRect.width > 0
+          ? {
+              x: Math.round((curRect.left - rowRect.left) * 100) / 100,
+              y: Math.round((curRect.top - rowRect.top) * 100) / 100,
+              w: Math.round(curRect.width * 100) / 100,
+            }
+          : prevGeom;
+
+      if (activeAnimRef.current) {
+        activeAnimRef.current.cancel();
+        activeAnimRef.current = null;
+      }
+
+      glowEl.style.opacity = "1";
+      glowEl.style.transform = `translate3d(${startGeom.x}px, ${startGeom.y}px, 0)`;
+      glowEl.style.width = `${startGeom.w}px`;
+
+      const anim = glowEl.animate(
+        [
+          {
+            transform: `translate3d(${startGeom.x}px, ${startGeom.y}px, 0)`,
+            width: `${startGeom.w}px`,
+          },
+          {
+            transform: `translate3d(${target.x}px, ${target.y}px, 0)`,
+            width: `${target.w}px`,
+          },
+        ],
+        {
+          duration: 820,
+          easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+          fill: "forwards",
+        }
+      );
+      activeAnimRef.current = anim;
+      anim.onfinish = () => {
+        if (activeAnimRef.current === anim) {
+          glowEl.style.transform = `translate3d(${target.x}px, ${target.y}px, 0)`;
+          glowEl.style.width = `${target.w}px`;
+          anim.cancel();
+          activeAnimRef.current = null;
+        }
+      };
+      lastGeomRef.current = target;
+    } else {
+      applyInstant(target);
+    }
+
+    lastTabKeyRef.current = activeTabKey;
+
+    const ro = new ResizeObserver(() => {
+      const next = measureTarget();
+      if (next && !activeAnimRef.current) {
+        applyInstant(next);
+      }
+    });
+    ro.observe(rowEl);
+    const activeEl = activeTabKey ? tabElsRef.current[activeTabKey] : null;
+    if (activeEl) ro.observe(activeEl);
+
+    return () => {
+      ro.disconnect();
+    };
+  }, [activeTabKey, activeOverflowView?.name, primaryViews.length]);
+
   return (
     <div className="space-y-2.5">
-      {/* ── LEVEL 1: Pipeline | My Caseload | + Add View | More Views (Glowing Gold Filament Tab Bar) ── */}
-      <div className="flex items-center gap-6 border-b border-[#88a8d4]/22 px-0.5 flex-wrap">
+      {/* ── LEVEL 1: Pipeline | My Caseload | + Add View | More Views (Smooth-Sliding Glowing Gold Filament Tab Bar) ── */}
+      <div
+        ref={tabsRowRef}
+        className="relative flex items-center gap-6 border-b border-[#88a8d4]/22 px-0.5 flex-wrap"
+      >
+        <span ref={glowBarRef} aria-hidden="true" className="adm-pipe-tab-glow-slider" />
+
         {primaryViews.map((view) => {
           const isActive = activeViewSlug === view.slug;
           const count = viewCounts[view.slug];
@@ -134,10 +264,13 @@ export function SavedViewsBar({
           return (
             <button
               key={view.id || view.slug}
+              ref={(el) => {
+                tabElsRef.current[view.slug] = el;
+              }}
               type="button"
               onClick={() => onSelectView(view)}
               className={cn(
-                "relative inline-flex items-center gap-2 pb-2.5 pt-1 text-[15px] sm:text-[16px] font-serif tracking-wide transition-colors cursor-pointer whitespace-nowrap",
+                "relative inline-flex items-center gap-2 pb-2.5 pt-1 text-[15px] sm:text-[16px] font-serif tracking-wide transition-colors duration-500 cursor-pointer whitespace-nowrap",
                 isActive
                   ? "text-[#F3D58C] font-semibold drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]"
                   : "text-[#C6D4E8] hover:text-[#FAF6EC]"
@@ -150,10 +283,10 @@ export function SavedViewsBar({
               {count !== undefined && (
                 <span
                   className={cn(
-                    "text-[11px] font-sans font-semibold px-2 py-0.5 rounded-full leading-none",
+                    "text-[11px] font-sans font-semibold px-2 py-0.5 rounded-full leading-none transition-all duration-500 border",
                     isActive
-                      ? "bg-[#112238]/90 border border-[#d8bc82]/35 text-[#F6E2AE] shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
-                      : "text-[#9AB0CE]"
+                      ? "bg-[#112238]/90 border-[#d8bc82]/35 text-[#F6E2AE] shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
+                      : "border-transparent text-[#9AB0CE]"
                   )}
                 >
                   {count}
@@ -173,7 +306,6 @@ export function SavedViewsBar({
                   <Trash2 className="h-3 w-3" />
                 </span>
               )}
-              {isActive && <span aria-hidden="true" className="adm-pipe-tab-glow" />}
             </button>
           );
         })}
@@ -194,9 +326,12 @@ export function SavedViewsBar({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
+                ref={(el) => {
+                  tabElsRef.current["__overflow__"] = el;
+                }}
                 type="button"
                 className={cn(
-                  "relative inline-flex items-center gap-1.5 pb-2.5 pt-1 text-[14.5px] sm:text-[15.5px] font-serif tracking-wide transition-colors cursor-pointer whitespace-nowrap",
+                  "relative inline-flex items-center gap-1.5 pb-2.5 pt-1 text-[14.5px] sm:text-[15.5px] font-serif tracking-wide transition-colors duration-200 cursor-pointer whitespace-nowrap",
                   isOverflowActive
                     ? "text-[#F3D58C] font-semibold"
                     : "text-[#B4C4DC] hover:text-[#FAF6EC]"
@@ -206,7 +341,6 @@ export function SavedViewsBar({
                   {isOverflowActive ? activeOverflowView?.name : "More Views"}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 opacity-80" />
-                {isOverflowActive && <span aria-hidden="true" className="adm-pipe-tab-glow" />}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent

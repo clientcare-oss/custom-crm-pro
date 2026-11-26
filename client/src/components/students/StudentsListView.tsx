@@ -330,7 +330,7 @@ export function StudentsListView({
           scrollbarColor: "#233554 #050E1D",
         }}
       >
-        <div className="w-max min-w-[1280px] px-2 sm:px-3 flex flex-col space-y-1.5">
+        <div className="w-max min-w-[1280px] px-2 sm:px-3 flex flex-col space-y-2">
           {/* ─── List Header Mounted On Rounded Executive Navy Bar ─── */}
           <div
             className={cn(
@@ -497,11 +497,8 @@ export function StudentsListView({
                 key={student.id}
                 onClick={() => onStudentClick(student.id)}
                 className={cn(
-                  "group w-full grid items-center px-3.5 min-h-[50px] py-2 rounded-[8px] border transition-all cursor-pointer gap-2",
-                  ROW_GRID_COLS,
-                  index % 2 === 0
-                    ? "bg-gradient-to-b from-[#1C3A62] via-[#142D4E] to-[#0E223D] border-[#224876] shadow-[inset_0_1px_0_rgba(100,160,230,0.4),inset_0_-1px_0_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.4)] hover:from-[#23487A] hover:via-[#193760] hover:to-[#122C4D] hover:border-[#3368A8]"
-                    : "bg-gradient-to-b from-[#132A48] via-[#0E2038] to-[#09172A] border-[#18355A] shadow-[inset_0_1px_0_rgba(75,130,195,0.3),inset_0_-1px_0_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.4)] hover:from-[#19355A] hover:via-[#132948] hover:to-[#0C1F37] hover:border-[#254E82]"
+                  "adm-student-bar group w-full grid items-center px-3.5 min-h-[50px] py-2 rounded-[8px] cursor-pointer gap-2",
+                  ROW_GRID_COLS
                 )}
               >
                 {/* 1. Student: Avatar + Name + Marker + Grade & School Subtitle */}
@@ -556,7 +553,7 @@ export function StudentsListView({
                       </div>
                     </div>
 
-                    <span className="text-xs text-[#7B8EA7] truncate">
+                    <span className="text-xs text-[#9BB4D0] truncate">
                       {subtitleText}
                     </span>
                   </div>
@@ -581,7 +578,7 @@ export function StudentsListView({
                   >
                     {displayParent}
                   </span>
-                  <span className="text-[11px] text-[#7B8EA7] truncate">
+                  <span className="text-[11px] text-[#9BB4D0] truncate">
                     {hasDirectParent ? "Primary Contact" : "Family File"}
                   </span>
                 </div>
@@ -613,7 +610,7 @@ export function StudentsListView({
                   >
                     {student.nextRequiredAction || getDefaultNextRequiredAction(currentStage)}
                   </span>
-                  <span className="text-[11px] text-[#7B8EA7] truncate">
+                  <span className="text-[11px] text-[#9BB4D0] truncate">
                     {schoolName}
                   </span>
                 </div>
@@ -682,7 +679,7 @@ export function StudentsListView({
                     <span className="text-xs sm:text-sm font-medium text-[#F0DFC5] whitespace-nowrap truncate">
                       {meeting.date}
                     </span>
-                    <span className="text-[11px] text-[#7B8EA7] whitespace-nowrap truncate">
+                    <span className="text-[11px] text-[#9BB4D0] whitespace-nowrap truncate">
                       {meeting.type}
                     </span>
                   </div>
@@ -693,7 +690,7 @@ export function StudentsListView({
                   <span className="text-xs sm:text-sm font-medium text-[#CBD7E8] whitespace-nowrap truncate">
                     {activity.time}
                   </span>
-                  <span className="text-[11px] text-[#7B8EA7] whitespace-nowrap truncate">
+                  <span className="text-[11px] text-[#9BB4D0] whitespace-nowrap truncate">
                     {activity.note}
                   </span>
                 </div>

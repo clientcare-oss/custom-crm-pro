@@ -55,23 +55,21 @@
   width: 2px;
   pointer-events: none;
   z-index: 48;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 246, 214, 0.95) 0%,
-    rgba(218, 186, 122, 0.78) 14%,
-    rgba(128, 102, 58, 0.56) 36%,
-    rgba(212, 178, 114, 0.76) 54%,
-    rgba(116, 92, 52, 0.52) 78%,
-    rgba(182, 148, 88, 0.68) 94%,
-    rgba(102, 80, 44, 0.58) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(255, 246, 214, 0.95) 0%,
+      rgba(218, 186, 122, 0.78) 14%,
+      rgba(128, 102, 58, 0.56) 36%,
+      rgba(212, 178, 114, 0.76) 54%,
+      rgba(116, 92, 52, 0.52) 78%,
+      rgba(182, 148, 88, 0.68) 94%,
+      rgba(102, 80, 44, 0.58) 100%);
   box-shadow:
     -1px 0 0 rgba(4, 9, 17, 0.88),
     1px 0 8px rgba(0, 0, 0, 0.9);
 }
 
 /* Make sidebar children sit cleanly above the ::before leather texture */
-.adm-sidebar-surface > * {
+.adm-sidebar-surface>* {
   position: relative;
   z-index: 2;
 }
@@ -85,14 +83,12 @@
   height: 2px;
   pointer-events: none;
   z-index: 49;
-  background: linear-gradient(
-    90deg,
-    rgba(124, 98, 56, 0.62) 0%,
-    rgba(208, 178, 120, 0.86) 24%,
-    rgba(255, 250, 232, 1) 49%,
-    rgba(208, 178, 120, 0.86) 74%,
-    rgba(138, 110, 64, 0.7) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(124, 98, 56, 0.62) 0%,
+      rgba(208, 178, 120, 0.86) 24%,
+      rgba(255, 250, 232, 1) 49%,
+      rgba(208, 178, 120, 0.86) 74%,
+      rgba(138, 110, 64, 0.7) 100%);
   box-shadow:
     0 1px 10px rgba(255, 236, 186, 0.36),
     0 2px 2px rgba(0, 0, 0, 0.65);
@@ -103,13 +99,11 @@
   border: 1.5px solid transparent;
   background:
     radial-gradient(circle at 32% 24%, rgba(54, 82, 120, 0.45) 0%, rgba(12, 24, 42, 0.95) 68%, #060e1a 100%) padding-box,
-    linear-gradient(
-      145deg,
+    linear-gradient(145deg,
       rgba(255, 246, 212, 0.94) 0%,
       rgba(206, 172, 106, 0.68) 40%,
       rgba(102, 82, 46, 0.5) 70%,
-      rgba(234, 200, 132, 0.84) 100%
-    ) border-box;
+      rgba(234, 200, 132, 0.84) 100%) border-box;
   box-shadow:
     0 6px 16px rgba(0, 0, 0, 0.82),
     0 1px 3px rgba(0, 0, 0, 0.95),
@@ -146,14 +140,12 @@
     /* Deep sculpted navy leather base */
     linear-gradient(180deg, #1d3656 0%, #112540 54%, #0b192d 100%) padding-box,
     /* 3D beveled brushed-gold rim (bright top-center, gleaming warm gold bottom, antique bronze sides) */
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(255, 246, 214, 0.96) 0%,
       rgba(208, 172, 102, 0.72) 22%,
       rgba(138, 108, 56, 0.58) 52%,
       rgba(196, 158, 90, 0.74) 78%,
-      rgba(248, 222, 156, 0.96) 100%
-    ) border-box !important;
+      rgba(248, 222, 156, 0.96) 100%) border-box !important;
   box-shadow:
     0 12px 26px rgba(0, 0, 0, 0.88),
     0 4px 10px rgba(0, 0, 0, 0.94),
@@ -189,7 +181,7 @@
     linear-gradient(90deg, transparent 8%, rgba(250, 224, 158, 0.88) 50%, transparent 92%) bottom / 100% 1.5px no-repeat;
 }
 
-.adm-nav-active > * {
+.adm-nav-active>* {
   position: relative;
   z-index: 3;
 }
@@ -200,12 +192,10 @@
   background:
     radial-gradient(ellipse 90% 60% at 50% 0%, rgba(44, 72, 110, 0.34) 0%, transparent 72%) padding-box,
     linear-gradient(180deg, #0d1c32 0%, #071120 100%) padding-box,
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(244, 224, 174, 0.78) 0%,
       rgba(148, 122, 74, 0.44) 48%,
-      rgba(214, 182, 118, 0.68) 100%
-    ) border-box;
+      rgba(214, 182, 118, 0.68) 100%) border-box;
   box-shadow:
     0 6px 14px rgba(0, 0, 0, 0.8),
     0 1px 3px rgba(0, 0, 0, 0.92),
@@ -232,13 +222,11 @@
   height: 2px;
   pointer-events: none;
   z-index: 25;
-  background: linear-gradient(
-    180deg,
-    rgba(2, 6, 14, 0.92) 0%,
-    rgba(2, 6, 14, 0.92) 50%,
-    rgba(162, 194, 232, 0.18) 50%,
-    rgba(162, 194, 232, 0.14) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(2, 6, 14, 0.92) 0%,
+      rgba(2, 6, 14, 0.92) 50%,
+      rgba(162, 194, 232, 0.18) 50%,
+      rgba(162, 194, 232, 0.14) 100%);
   box-shadow:
     0 -1px 2px rgba(0, 0, 0, 0.42),
     0 1px 2px rgba(132, 170, 218, 0.08);
@@ -253,14 +241,12 @@
   height: 2px;
   pointer-events: none;
   z-index: 20;
-  background: linear-gradient(
-    90deg,
-    rgba(124, 98, 56, 0.62) 0%,
-    rgba(208, 178, 120, 0.86) 24%,
-    rgba(255, 250, 232, 1) 49%,
-    rgba(208, 178, 120, 0.86) 74%,
-    rgba(138, 110, 64, 0.7) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(124, 98, 56, 0.62) 0%,
+      rgba(208, 178, 120, 0.86) 24%,
+      rgba(255, 250, 232, 1) 49%,
+      rgba(208, 178, 120, 0.86) 74%,
+      rgba(138, 110, 64, 0.7) 100%);
   box-shadow:
     0 1px 10px rgba(255, 236, 186, 0.36),
     0 2px 2px rgba(0, 0, 0, 0.65);
@@ -305,17 +291,14 @@
   width: 100%;
   background:
     /* Top razor specular edge + brushed brass face + undercut bevel */
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(255, 244, 206, 0.82) 0%,
       rgba(214, 178, 108, 0.45) 14%,
       rgba(148, 114, 58, 0.12) 48%,
       rgba(48, 34, 15, 0.65) 84%,
-      rgba(16, 11, 5, 0.95) 100%
-    ),
+      rgba(16, 11, 5, 0.95) 100%),
     /* Horizontal reflections matched to lava lamp, brass pillars, and amethyst crystal */
-    linear-gradient(
-      90deg,
+    linear-gradient(90deg,
       #3f2f17 0%,
       #5b6485 4.5%,
       #9a7a42 9%,
@@ -328,8 +311,7 @@
       #7b6240 81%,
       #9b7eb8 87.5%,
       #d8b46d 94%,
-      #423118 100%
-    );
+      #423118 100%);
   border-top: 1px solid rgba(255, 240, 194, 0.55);
   border-bottom: 1px solid rgba(10, 7, 3, 0.95);
   box-shadow:
@@ -350,14 +332,12 @@
     /* 3. Deep petrol-navy vignette base */
     linear-gradient(180deg, #122640 0%, #0c1b30 50%, #071222 100%) padding-box,
     /* 4. 3D Platinum-Champagne Machined Metallic Bevel Frame */
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(255, 250, 234, 0.94) 0%,
       rgba(196, 174, 134, 0.52) 16%,
       rgba(94, 80, 56, 0.36) 50%,
       rgba(164, 144, 106, 0.5) 84%,
-      rgba(246, 232, 198, 0.9) 100%
-    ) border-box;
+      rgba(246, 232, 198, 0.9) 100%) border-box;
   box-shadow:
     0 24px 50px rgba(0, 0, 0, 0.9),
     0 8px 18px rgba(0, 0, 0, 0.94),
@@ -393,14 +373,12 @@
   margin: 0 !important;
   pointer-events: none;
   z-index: 25 !important;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(222, 204, 166, 0.55) 22%,
-    rgba(255, 253, 244, 1) 48%,
-    rgba(232, 216, 180, 0.65) 74%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(222, 204, 166, 0.55) 22%,
+      rgba(255, 253, 244, 1) 48%,
+      rgba(232, 216, 180, 0.65) 74%,
+      transparent 100%);
   filter: drop-shadow(0 2px 8px rgba(255, 246, 218, 0.45));
 }
 
@@ -414,14 +392,12 @@
   margin: 0 !important;
   pointer-events: none;
   z-index: 25 !important;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(224, 206, 168, 0.65) 24%,
-    rgba(255, 250, 232, 0.96) 52%,
-    rgba(228, 210, 172, 0.7) 78%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(224, 206, 168, 0.65) 24%,
+      rgba(255, 250, 232, 0.96) 52%,
+      rgba(228, 210, 172, 0.7) 78%,
+      transparent 100%);
 }
 
 /* ── 4. SCULPTED 6 METRIC & MOTTO PLAQUES (Matches 6-card close-up photo) ── */
@@ -434,14 +410,12 @@
     /* Rich petrol-navy leather base falling into dark bottom shadow */
     linear-gradient(180deg, #132844 0%, #0d1d33 48%, #071222 100%) padding-box,
     /* Platinum-champagne top & bottom beveled rims with dark bronze sides */
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(255, 252, 240, 0.94) 0%,
       rgba(192, 176, 146, 0.52) 15%,
       rgba(74, 68, 58, 0.3) 50%,
       rgba(154, 140, 112, 0.46) 84%,
-      rgba(250, 238, 208, 0.9) 100%
-    ) border-box;
+      rgba(250, 238, 208, 0.9) 100%) border-box;
   box-shadow:
     0 18px 36px rgba(0, 0, 0, 0.88),
     0 6px 14px rgba(0, 0, 0, 0.94),
@@ -474,14 +448,12 @@
     var(--adm-topo-tex) -60px -40px / 540px auto repeat padding-box,
     radial-gradient(ellipse 92% 66% at 54% -6%, rgba(64, 98, 142, 0.58) 0%, rgba(26, 48, 80, 0.3) 44%, transparent 100%) padding-box,
     linear-gradient(180deg, #11243d 0%, #0b192d 50%, #061020 100%) padding-box,
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(255, 252, 240, 0.94) 0%,
       rgba(192, 176, 146, 0.5) 15%,
       rgba(74, 68, 58, 0.3) 50%,
       rgba(154, 140, 112, 0.46) 84%,
-      rgba(250, 238, 208, 0.9) 100%
-    ) border-box;
+      rgba(250, 238, 208, 0.9) 100%) border-box;
 }
 
 .adm-metric-card:hover {
@@ -503,14 +475,12 @@
     var(--adm-topo-tex) center / 780px auto repeat padding-box,
     radial-gradient(ellipse 78% 44% at 50% -6%, rgba(56, 90, 134, 0.52) 0%, rgba(24, 46, 78, 0.22) 48%, transparent 100%) padding-box,
     linear-gradient(180deg, #11233b 0%, #0b1a2e 48%, #061020 100%) padding-box,
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(248, 240, 218, 0.82) 0%,
       rgba(176, 158, 124, 0.44) 16%,
       rgba(74, 66, 52, 0.28) 52%,
       rgba(148, 132, 100, 0.42) 84%,
-      rgba(236, 220, 184, 0.78) 100%
-    ) border-box;
+      rgba(236, 220, 184, 0.78) 100%) border-box;
   box-shadow:
     0 18px 38px rgba(0, 0, 0, 0.88),
     0 5px 14px rgba(0, 0, 0, 0.92),
@@ -531,7 +501,7 @@
   opacity: 0.4;
 }
 
-.adm-panel-card > :not(.adm-rim-glint-top):not(.adm-rim-glint-bottom) {
+.adm-panel-card> :not([class*="absolute"]):not(.adm-rim-glint-top):not(.adm-rim-glint-bottom) {
   position: relative;
   z-index: 2;
 }
@@ -543,13 +513,11 @@
   background:
     radial-gradient(ellipse 80% 70% at 50% 0%, rgba(36, 62, 96, 0.36) 0%, transparent 72%) padding-box,
     linear-gradient(180deg, #0b182a 0%, #060f1c 56%, #040a14 100%) padding-box,
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(255, 246, 218, 0.92) 0%,
       rgba(202, 172, 112, 0.56) 28%,
       rgba(128, 104, 62, 0.44) 56%,
-      rgba(244, 220, 164, 0.88) 100%
-    ) border-box;
+      rgba(244, 220, 164, 0.88) 100%) border-box;
   box-shadow:
     0 14px 30px rgba(0, 0, 0, 0.88),
     0 4px 10px rgba(0, 0, 0, 0.94),
@@ -563,12 +531,10 @@
   border: 1.25px solid transparent;
   background:
     linear-gradient(180deg, #102036 0%, #071220 100%) padding-box,
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(252, 236, 194, 0.84) 0%,
       rgba(164, 134, 78, 0.48) 50%,
-      rgba(226, 196, 134, 0.76) 100%
-    ) border-box;
+      rgba(226, 196, 134, 0.76) 100%) border-box;
   box-shadow:
     0 5px 14px rgba(0, 0, 0, 0.76),
     inset 0 0 0 1px rgba(2, 6, 14, 0.65),
@@ -580,12 +546,10 @@
   border: 1.25px solid transparent;
   background:
     linear-gradient(180deg, #144849 0%, #0b2d34 100%) padding-box,
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(148, 246, 224, 0.68) 0%,
       rgba(48, 168, 146, 0.48) 55%,
-      rgba(96, 216, 192, 0.62) 100%
-    ) border-box;
+      rgba(96, 216, 192, 0.62) 100%) border-box;
   box-shadow:
     0 5px 14px rgba(0, 0, 0, 0.7),
     inset 0 1px 0 rgba(196, 255, 242, 0.3);
@@ -597,13 +561,11 @@
   background:
     radial-gradient(circle at 30% 20%, rgba(44, 72, 110, 0.36) 0%, transparent 72%) padding-box,
     linear-gradient(180deg, #0d1c32 0%, #06101e 100%) padding-box,
-    linear-gradient(
-      155deg,
+    linear-gradient(155deg,
       rgba(255, 246, 216, 0.88) 0%,
       rgba(182, 152, 96, 0.46) 44%,
       rgba(116, 96, 60, 0.4) 68%,
-      rgba(234, 206, 146, 0.78) 100%
-    ) border-box;
+      rgba(234, 206, 146, 0.78) 100%) border-box;
   box-shadow:
     0 6px 14px rgba(0, 0, 0, 0.82),
     0 2px 4px rgba(0, 0, 0, 0.92),
@@ -679,7 +641,7 @@
   opacity: 0.44;
 }
 
-.adm-pipeline-deck > * {
+.adm-pipeline-deck>* {
   position: relative;
   z-index: 2;
 }
@@ -690,12 +652,10 @@
   background:
     radial-gradient(ellipse 85% 65% at 50% 0%, rgba(48, 78, 118, 0.34) 0%, transparent 72%) padding-box,
     linear-gradient(180deg, #0f2037 0%, #081324 100%) padding-box,
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(244, 224, 174, 0.76) 0%,
       rgba(148, 124, 78, 0.44) 48%,
-      rgba(220, 190, 130, 0.68) 100%
-    ) border-box;
+      rgba(220, 190, 130, 0.68) 100%) border-box;
   box-shadow:
     0 6px 14px rgba(0, 0, 0, 0.72),
     0 1px 3px rgba(0, 0, 0, 0.9),
@@ -732,36 +692,48 @@
   border: 1.5px solid transparent;
   background:
     radial-gradient(circle at 38% 24%, rgba(62, 92, 132, 0.44) 0%, #091526 76%) padding-box,
-    linear-gradient(
-      145deg,
+    linear-gradient(145deg,
       rgba(255, 246, 214, 0.96) 0%,
       rgba(218, 182, 108, 0.78) 48%,
-      rgba(246, 218, 148, 0.92) 100%
-    ) border-box;
+      rgba(246, 218, 148, 0.92) 100%) border-box;
   box-shadow:
     0 0 12px rgba(242, 205, 128, 0.38),
     0 4px 12px rgba(0, 0, 0, 0.78),
     inset 0 0 0 1px rgba(2, 6, 14, 0.7);
 }
 
-/* Glowing incandescent champagne-gold tab underline */
-.adm-pipe-tab-glow {
+/* Glowing incandescent champagne-gold tab underline (static & smooth-sliding rail indicator) */
+.adm-pipe-tab-glow,
+.adm-pipe-tab-glow-slider {
   position: absolute;
-  bottom: -1.5px;
-  left: -2px;
-  right: -2px;
   height: 2.5px;
   border-radius: 9999px;
-  background: linear-gradient(
-    90deg,
-    rgba(222, 176, 86, 0.25) 0%,
-    rgba(255, 244, 202, 1) 46%,
-    rgba(242, 205, 124, 0.92) 72%,
-    rgba(212, 166, 76, 0.25) 100%
-  );
+  pointer-events: none;
+  background: linear-gradient(90deg,
+      rgba(222, 176, 86, 0.25) 0%,
+      rgba(255, 244, 202, 1) 46%,
+      rgba(242, 205, 124, 0.92) 72%,
+      rgba(212, 166, 76, 0.25) 100%);
   box-shadow:
     0 0 12px rgba(248, 212, 126, 0.85),
     0 0 4px rgba(255, 248, 224, 0.92);
+}
+
+.adm-pipe-tab-glow {
+  bottom: -1.5px;
+  left: -2px;
+  right: -2px;
+}
+
+.adm-pipe-tab-glow-slider {
+  top: 0;
+  left: 0;
+  opacity: 0;
+  z-index: 4;
+  will-change: transform, width, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: opacity 160ms ease;
 }
 
 /* Sculpted Obsidian-Navy & Satin-Gold Group Bracket Capsule (LEAD OPPORTUNITIES, FOLLOW-UPS) */
@@ -770,12 +742,10 @@
   background:
     radial-gradient(ellipse 80% 70% at 50% 0%, rgba(44, 74, 114, 0.36) 0%, transparent 74%) padding-box,
     linear-gradient(180deg, #102138 0%, #071222 100%) padding-box,
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(252, 236, 192, 0.82) 0%,
       rgba(156, 128, 76, 0.46) 50%,
-      rgba(228, 198, 134, 0.72) 100%
-    ) border-box;
+      rgba(228, 198, 134, 0.72) 100%) border-box;
   box-shadow:
     0 6px 14px rgba(0, 0, 0, 0.84),
     inset 0 0 0 1px rgba(2, 6, 14, 0.74),
@@ -790,19 +760,17 @@
   background:
     radial-gradient(ellipse 86% 64% at 50% 0%, rgba(56, 94, 142, 0.42) 0%, transparent 74%) padding-box,
     linear-gradient(180deg, #11253f 0%, #09172a 56%, #050f1d 100%) padding-box,
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(255, 248, 214, 1) 0%,
       rgba(218, 178, 96, 0.82) 24%,
       rgba(148, 112, 48, 0.7) 52%,
       rgba(222, 182, 100, 0.86) 78%,
-      rgba(255, 242, 194, 0.98) 100%
-    ) border-box;
+      rgba(255, 242, 194, 0.98) 100%) border-box;
   box-shadow:
-    0 0 22px rgba(244, 202, 108, 0.34),
     0 12px 26px rgba(0, 0, 0, 0.86),
+    0 3px 8px rgba(0, 0, 0, 0.92),
     inset 0 0 0 1.25px rgba(2, 6, 14, 0.8),
-    inset 0 2px 10px rgba(255, 242, 198, 0.16);
+    inset 0 -2px 10px rgba(244, 202, 108, 0.16);
   transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
 }
 
@@ -811,12 +779,10 @@
   background:
     radial-gradient(ellipse 86% 64% at 50% 0%, rgba(44, 74, 114, 0.32) 0%, transparent 74%) padding-box,
     linear-gradient(180deg, #0e2036 0%, #081526 58%, #050e1b 100%) padding-box,
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(244, 222, 168, 0.78) 0%,
       rgba(154, 122, 62, 0.48) 50%,
-      rgba(218, 184, 114, 0.72) 100%
-    ) border-box;
+      rgba(218, 184, 114, 0.72) 100%) border-box;
   box-shadow:
     0 10px 22px rgba(0, 0, 0, 0.8),
     inset 0 0 0 1px rgba(2, 6, 14, 0.76);
@@ -836,8 +802,8 @@
   opacity: 0.44;
 }
 
-.adm-stage-card-all > :not([class*="absolute"]):not(.adm-stage-topbar),
-.adm-stage-card > :not([class*="absolute"]):not(.adm-stage-topbar) {
+.adm-stage-card-all> :not([class*="absolute"]):not(.adm-stage-topbar),
+.adm-stage-card> :not([class*="absolute"]):not(.adm-stage-topbar) {
   position: relative;
   z-index: 2;
 }
@@ -870,4 +836,61 @@
   pointer-events: none;
 }
 
+/* Smooth fade-in / fade-out under-card light shine (strictly underneath selected stage card, zero top glow) */
+@keyframes admStageUnderShinePulse {
+  0%, 100% {
+    opacity: 0.34;
+    transform: scaleX(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.03);
+  }
+}
 
+.adm-stage-undershine {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -11px;
+  height: 16px;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 420ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.adm-stage-undershine-core {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  animation: admStageUnderShinePulse 3.2s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+/* ── 9. STUDENT LIST BARS: CLEAN UNIFORM LIGHT-NAVY AT REST, BRIGHT PERIMETER EDGE GLOW ON HOVER ── */
+.adm-student-bar {
+  background: linear-gradient(180deg, #1c3a62 0%, #142d4e 52%, #0e223d 100%);
+  border: 1px solid #224876;
+  box-shadow:
+    inset 0 1px 0 rgba(100, 160, 230, 0.34),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.42);
+  transition: border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+.adm-student-bar:hover {
+  background:
+    radial-gradient(ellipse 88% 72% at 50% 50%,
+      rgba(22, 49, 86, 0.94) 0%,
+      rgba(28, 63, 108, 0.96) 58%,
+      rgba(48, 102, 166, 0.98) 100%),
+    linear-gradient(180deg, #254d80 0%, #173459 50%, #22497a 100%);
+  border-color: rgba(154, 212, 255, 0.8);
+  box-shadow:
+    inset 0 0 16px rgba(114, 192, 255, 0.3),
+    inset 0 0 6px rgba(176, 226, 255, 0.4),
+    inset 0 1px 0 rgba(224, 244, 255, 0.68),
+    inset 0 -1px 0 rgba(160, 216, 255, 0.42),
+    0 0 14px rgba(88, 172, 255, 0.34),
+    0 4px 12px rgba(0, 0, 0, 0.56);
+}

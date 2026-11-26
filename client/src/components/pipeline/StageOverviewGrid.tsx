@@ -52,6 +52,8 @@ interface StageJewelPalette {
   bg: string;
   selectedBg: string;
   border: string;
+  underShineRgb: string;
+  underEdgeColor: string;
   topBar: string;
   topBarGradient: string;
   topBarGlow: string;
@@ -61,14 +63,16 @@ interface StageJewelPalette {
 
 /**
  * Waypoint Admiralty Neon-Lit Calfskin Leather palette for pipeline stage tiles:
- * dark full-grain leather plaques illuminated downward by a blazing top-edge light bar.
+ * dark full-grain leather plaques with a clean breathing under-card light shine when selected.
  */
 const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
   // 0: Electric Cyan-Teal (Discovery)
   {
     bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(44, 218, 238, 0.34) 0%, rgba(16, 94, 118, 0.2) 48%, rgba(6, 20, 32, 0.96) 100%), linear-gradient(180deg, #0b2433 0%, #071623 60%, #050f1a 100%)",
-    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(62, 232, 250, 0.46) 0%, rgba(22, 118, 146, 0.28) 52%, rgba(8, 26, 40, 0.96) 100%), linear-gradient(180deg, #103246 0%, #0a1f30 60%, #061422 100%)",
+    selectedBg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(44, 218, 238, 0.36) 0%, rgba(16, 94, 118, 0.22) 48%, rgba(7, 24, 38, 0.96) 100%), linear-gradient(180deg, #0c2738 0%, #081928 60%, #061422 100%)",
     border: "rgba(62, 212, 230, 0.42)",
+    underShineRgb: "74, 238, 255",
+    underEdgeColor: "#86FDFF",
     topBar: "#4CEEF8",
     topBarGradient: "linear-gradient(90deg, #1caac0 0%, #86fdff 32%, #44e2f2 68%, #1d8aa0 100%)",
     topBarGlow: "0 2px 16px rgba(68, 236, 255, 0.75)",
@@ -78,8 +82,10 @@ const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
   // 1: Imperial Violet-Amethyst (Free Session)
   {
     bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(154, 108, 255, 0.34) 0%, rgba(64, 38, 128, 0.22) 48%, rgba(12, 13, 30, 0.96) 100%), linear-gradient(180deg, #1d163e 0%, #11102a 60%, #0b0c1e 100%)",
-    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(176, 134, 255, 0.46) 0%, rgba(82, 50, 158, 0.3) 52%, rgba(16, 16, 38, 0.96) 100%), linear-gradient(180deg, #281e54 0%, #171538 60%, #0f1028 100%)",
+    selectedBg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(160, 116, 255, 0.36) 0%, rgba(70, 42, 138, 0.24) 48%, rgba(14, 15, 36, 0.96) 100%), linear-gradient(180deg, #211948 0%, #141232 60%, #0e0e26 100%)",
     border: "rgba(150, 114, 240, 0.42)",
+    underShineRgb: "174, 134, 255",
+    underEdgeColor: "#D6C2FF",
     topBar: "#A78BFA",
     topBarGradient: "linear-gradient(90deg, #6f45d8 0%, #d2bcff 36%, #9b72f8 70%, #5b36b4 100%)",
     topBarGlow: "0 2px 16px rgba(158, 116, 255, 0.75)",
@@ -89,8 +95,10 @@ const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
   // 2: Luminous Rose-Plum (Proposal)
   {
     bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(232, 92, 154, 0.34) 0%, rgba(108, 34, 70, 0.22) 48%, rgba(20, 11, 22, 0.96) 100%), linear-gradient(180deg, #2c1427 0%, #1a0e1d 60%, #120a16 100%)",
-    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(248, 116, 174, 0.46) 0%, rgba(132, 44, 86, 0.3) 52%, rgba(26, 14, 28, 0.96) 100%), linear-gradient(180deg, #3b1b34 0%, #241328 60%, #180d1d 100%)",
+    selectedBg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(238, 100, 162, 0.36) 0%, rgba(118, 38, 76, 0.24) 48%, rgba(24, 12, 26, 0.96) 100%), linear-gradient(180deg, #33172d 0%, #201124 60%, #170c1b 100%)",
     border: "rgba(218, 98, 152, 0.42)",
+    underShineRgb: "248, 118, 178",
+    underEdgeColor: "#FFAAD4",
     topBar: "#F472B6",
     topBarGradient: "linear-gradient(90deg, #bd3d7a 0%, #ffa4ce 38%, #e45a9a 70%, #942c5e 100%)",
     topBarGlow: "0 2px 16px rgba(242, 102, 166, 0.75)",
@@ -100,8 +108,10 @@ const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
   // 3: Admiralty Sapphire-Cobalt (2-Week Follow-Up)
   {
     bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(70, 144, 255, 0.34) 0%, rgba(26, 66, 138, 0.22) 48%, rgba(8, 17, 34, 0.96) 100%), linear-gradient(180deg, #10254b 0%, #0a1833 60%, #061024 100%)",
-    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(92, 166, 255, 0.46) 0%, rgba(36, 86, 172, 0.3) 52%, rgba(11, 22, 44, 0.96) 100%), linear-gradient(180deg, #173466 0%, #0f2246 60%, #091630 100%)",
+    selectedBg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(78, 152, 255, 0.36) 0%, rgba(30, 74, 152, 0.24) 48%, rgba(10, 20, 40, 0.96) 100%), linear-gradient(180deg, #132b56 0%, #0d1d3d 60%, #08132a 100%)",
     border: "rgba(88, 152, 240, 0.42)",
+    underShineRgb: "98, 174, 255",
+    underEdgeColor: "#A6D2FF",
     topBar: "#60A5FA",
     topBarGradient: "linear-gradient(90deg, #296ad4 0%, #92c5ff 36%, #4a93f6 70%, #2254ae 100%)",
     topBarGlow: "0 2px 16px rgba(84, 158, 255, 0.75)",
@@ -111,8 +121,10 @@ const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
   // 4: Electric Periwinkle-Indigo (30-Day Follow-Up)
   {
     bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(110, 128, 255, 0.34) 0%, rgba(42, 54, 134, 0.22) 48%, rgba(10, 15, 34, 0.96) 100%), linear-gradient(180deg, #161e4c 0%, #0e1434 60%, #080d24 100%)",
-    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(132, 148, 255, 0.46) 0%, rgba(56, 70, 168, 0.3) 52%, rgba(14, 20, 44, 0.96) 100%), linear-gradient(180deg, #1f2a66 0%, #141c46 60%, #0c1230 100%)",
+    selectedBg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(118, 136, 255, 0.36) 0%, rgba(48, 62, 148, 0.24) 48%, rgba(12, 18, 40, 0.96) 100%), linear-gradient(180deg, #1a2358 0%, #11183e 60%, #0a102b 100%)",
     border: "rgba(116, 130, 240, 0.42)",
+    underShineRgb: "136, 152, 255",
+    underEdgeColor: "#BCC8FF",
     topBar: "#818CF8",
     topBarGradient: "linear-gradient(90deg, #485ad4 0%, #b4bfff 38%, #6c7ef6 70%, #3848ae 100%)",
     topBarGlow: "0 2px 16px rgba(118, 134, 255, 0.75)",
@@ -122,8 +134,10 @@ const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
   // 5: Burnished Amber-Copper (60-Day Follow-Up / School Contact)
   {
     bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(242, 144, 62, 0.32) 0%, rgba(116, 56, 18, 0.22) 48%, rgba(22, 14, 12, 0.96) 100%), linear-gradient(180deg, #2b1a12 0%, #1a110e 60%, #110b0a 100%)",
-    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(255, 166, 86, 0.44) 0%, rgba(142, 70, 24, 0.3) 52%, rgba(28, 18, 14, 0.96) 100%), linear-gradient(180deg, #3a2318 0%, #241712 60%, #170f0c 100%)",
+    selectedBg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(248, 152, 70, 0.34) 0%, rgba(128, 62, 20, 0.24) 48%, rgba(26, 16, 13, 0.96) 100%), linear-gradient(180deg, #321f15 0%, #201410 60%, #150e0c 100%)",
     border: "rgba(222, 134, 64, 0.42)",
+    underShineRgb: "252, 160, 80",
+    underEdgeColor: "#FFC996",
     topBar: "#FB923C",
     topBarGradient: "linear-gradient(90deg, #c26422 0%, #ffc48c 38%, #f08938 70%, #984c18 100%)",
     topBarGlow: "0 2px 16px rgba(246, 148, 68, 0.72)",
@@ -133,8 +147,10 @@ const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
   // 6: Crimson Garnet (Reconnect Review / Needs Attention / Past Due)
   {
     bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(238, 86, 102, 0.32) 0%, rgba(114, 28, 38, 0.22) 48%, rgba(22, 10, 14, 0.96) 100%), linear-gradient(180deg, #2c1218 0%, #1b0c12 60%, #12080d 100%)",
-    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(252, 108, 124, 0.44) 0%, rgba(142, 36, 48, 0.3) 52%, rgba(28, 12, 18, 0.96) 100%), linear-gradient(180deg, #3b1820 0%, #251018 60%, #180a10 100%)",
+    selectedBg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(244, 96, 112, 0.34) 0%, rgba(126, 32, 44, 0.24) 48%, rgba(26, 12, 16, 0.96) 100%), linear-gradient(180deg, #33151c 0%, #210e15 60%, #16090f 100%)",
     border: "rgba(224, 88, 104, 0.42)",
+    underShineRgb: "250, 104, 120",
+    underEdgeColor: "#FFA8B2",
     topBar: "#F87171",
     topBarGradient: "linear-gradient(90deg, #bf3644 0%, #ffa2ac 38%, #ec5b6a 70%, #942632 100%)",
     topBarGlow: "0 2px 16px rgba(244, 96, 112, 0.72)",
@@ -144,8 +160,10 @@ const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
   // 7: Luminous Emerald-Jade (Intake / Onboarding / Monitoring)
   {
     bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(48, 212, 156, 0.32) 0%, rgba(18, 92, 68, 0.2) 48%, rgba(8, 20, 22, 0.96) 100%), linear-gradient(180deg, #0d2724 0%, #081819 60%, #051012 100%)",
-    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(68, 232, 174, 0.44) 0%, rgba(24, 118, 86, 0.28) 52%, rgba(10, 26, 28, 0.96) 100%), linear-gradient(180deg, #133632 0%, #0c2222 60%, #071618 100%)",
+    selectedBg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(56, 220, 164, 0.34) 0%, rgba(22, 104, 76, 0.22) 48%, rgba(10, 24, 26, 0.96) 100%), linear-gradient(180deg, #102f2b 0%, #0a1e1f 60%, #071517 100%)",
     border: "rgba(56, 204, 152, 0.42)",
+    underShineRgb: "68, 232, 174",
+    underEdgeColor: "#9AFCD8",
     topBar: "#34D399",
     topBarGradient: "linear-gradient(90deg, #1f9e72 0%, #90fad2 38%, #3dd49e 70%, #177c58 100%)",
     topBarGlow: "0 2px 16px rgba(58, 218, 162, 0.72)",
@@ -155,8 +173,10 @@ const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
   // 8: Sovereign Champagne-Gold (Records Review / Renewal)
   {
     bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(236, 192, 92, 0.3) 0%, rgba(108, 80, 28, 0.2) 48%, rgba(18, 16, 14, 0.96) 100%), linear-gradient(180deg, #241d14 0%, #151415 60%, #0d0e14 100%)",
-    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(250, 210, 114, 0.42) 0%, rgba(134, 100, 36, 0.28) 52%, rgba(24, 20, 16, 0.96) 100%), linear-gradient(180deg, #32281a 0%, #1e1a18 60%, #131318 100%)",
+    selectedBg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(242, 200, 100, 0.32) 0%, rgba(120, 88, 32, 0.22) 48%, rgba(22, 19, 15, 0.96) 100%), linear-gradient(180deg, #2b2217 0%, #1a1717 60%, #111117 100%)",
     border: "rgba(220, 182, 98, 0.44)",
+    underShineRgb: "248, 208, 114",
+    underEdgeColor: "#FFF0BA",
     topBar: "#FBBF24",
     topBarGradient: "linear-gradient(90deg, #b88c34 0%, #fff0b8 38%, #e4b654 70%, #926d24 100%)",
     topBarGlow: "0 2px 16px rgba(242, 198, 102, 0.7)",
@@ -166,8 +186,10 @@ const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
   // 9: Brushed Slate-Pewter (Archive / Closed)
   {
     bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(168, 184, 210, 0.26) 0%, rgba(62, 74, 96, 0.2) 48%, rgba(12, 16, 26, 0.96) 100%), linear-gradient(180deg, #1b2232 0%, #101624 60%, #090e1a 100%)",
-    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(192, 208, 232, 0.36) 0%, rgba(80, 96, 122, 0.28) 52%, rgba(16, 22, 34, 0.96) 100%), linear-gradient(180deg, #252e42 0%, #171f32 60%, #0e1424 100%)",
+    selectedBg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(180, 196, 222, 0.28) 0%, rgba(70, 84, 108, 0.22) 48%, rgba(15, 20, 32, 0.96) 100%), linear-gradient(180deg, #21293c 0%, #141b2c 60%, #0c1220 100%)",
     border: "rgba(164, 180, 206, 0.38)",
+    underShineRgb: "194, 210, 236",
+    underEdgeColor: "#E4EEFC",
     topBar: "#CBD5E1",
     topBarGradient: "linear-gradient(90deg, #74849c 0%, #e4edf8 38%, #a6b6cc 70%, #5a687e 100%)",
     topBarGlow: "0 2px 14px rgba(180, 198, 224, 0.55)",
@@ -177,8 +199,10 @@ const STAGE_JEWEL_PALETTES: StageJewelPalette[] = [
   // 10: Obsidian Bloodstone (Blacklisted)
   {
     bg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(216, 48, 86, 0.32) 0%, rgba(92, 16, 34, 0.22) 48%, rgba(18, 6, 12, 0.96) 100%), linear-gradient(180deg, #240a14 0%, #14060d 60%, #0c0409 100%)",
-    selectedBg: "radial-gradient(ellipse 98% 68% at 50% 0%, rgba(238, 68, 108, 0.44) 0%, rgba(118, 22, 46, 0.3) 52%, rgba(24, 8, 16, 0.96) 100%), linear-gradient(180deg, #320e1c 0%, #1d0912 60%, #12060c 100%)",
+    selectedBg: "radial-gradient(ellipse 96% 62% at 50% 0%, rgba(226, 56, 96, 0.34) 0%, rgba(104, 18, 38, 0.24) 48%, rgba(22, 8, 15, 0.96) 100%), linear-gradient(180deg, #2c0c18 0%, #190810 60%, #10050c 100%)",
     border: "rgba(196, 48, 84, 0.45)",
+    underShineRgb: "238, 66, 108",
+    underEdgeColor: "#FF92AC",
     topBar: "#E11D48",
     topBarGradient: "linear-gradient(90deg, #981634 0%, #ff86a2 38%, #dc2f58 70%, #781028 100%)",
     topBarGlow: "0 2px 16px rgba(226, 46, 88, 0.72)",
@@ -624,7 +648,7 @@ export function StageOverviewGrid({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className="flex flex-nowrap items-end gap-3 w-full max-w-full overflow-x-auto pb-2.5 pt-1"
+        className="flex flex-nowrap items-end gap-3 w-full max-w-full overflow-x-auto pb-5 pt-2 px-2"
         style={{
           scrollbarWidth: "thin",
           scrollbarColor: "#233554 #050E1D",
@@ -666,30 +690,48 @@ export function StageOverviewGrid({
               </button>
             )}
           </div>
-          <button
-            ref={(el) => {
-              stageRefs.current["__all__"] = el;
-            }}
-            type="button"
-            onClick={() => {
-              if (didDragRailRef.current) return;
-              onSelectStage(null);
-            }}
-            className={cn(
-              "adm-stage-card-all w-full h-[94px] rounded-[14px] px-3 pt-2.5 pb-2.5 text-center cursor-pointer flex flex-col items-center justify-between",
-              selectedStageName && "adm-stage-card-all-idle"
-            )}
-          >
-            {/* Dead-Center Bold Serif Numeral */}
-            <div className="flex-1 w-full flex items-center justify-center">
-              <span className="text-[32px] font-serif font-bold tracking-tight text-[#FAF6EC] leading-none text-center tabular-nums drop-shadow-[0_3px_8px_rgba(0,0,0,0.85)]">
-                {cards.length}
-              </span>
+          <div className="relative w-full">
+            {/* Soft breathing champagne-gold light shine strictly UNDER the active All card */}
+            <div
+              aria-hidden="true"
+              className="adm-stage-undershine"
+              style={{ opacity: !selectedStageName ? 1 : 0 }}
+            >
+              <div
+                className="adm-stage-undershine-core"
+                style={{
+                  background:
+                    "radial-gradient(ellipse 80% 70% at 50% 25%, rgba(255, 232, 158, 0.88) 0%, rgba(232, 184, 88, 0.44) 48%, rgba(232, 184, 88, 0) 82%)",
+                  filter: "blur(6px)",
+                }}
+              />
             </div>
-            <span className="w-full text-center text-[13px] font-serif font-medium text-[#F4E3B8] truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-              All
-            </span>
-          </button>
+
+            <button
+              ref={(el) => {
+                stageRefs.current["__all__"] = el;
+              }}
+              type="button"
+              onClick={() => {
+                if (didDragRailRef.current) return;
+                onSelectStage(null);
+              }}
+              className={cn(
+                "adm-stage-card-all relative z-10 w-full h-[94px] rounded-[14px] px-3 pt-2.5 pb-2.5 text-center cursor-pointer flex flex-col items-center justify-between",
+                selectedStageName && "adm-stage-card-all-idle"
+              )}
+            >
+              {/* Dead-Center Bold Serif Numeral */}
+              <div className="flex-1 w-full flex items-center justify-center">
+                <span className="text-[32px] font-serif font-bold tracking-tight text-[#FAF6EC] leading-none text-center tabular-nums drop-shadow-[0_3px_8px_rgba(0,0,0,0.85)]">
+                  {cards.length}
+                </span>
+              </div>
+              <span className="w-full text-center text-[13px] font-serif font-medium text-[#F4E3B8] truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                All
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* 2. Connected Contiguous Stage Groups with Spanning Champagne-Gold Bracket Headers Above */}
@@ -1036,8 +1078,23 @@ export function StageOverviewGrid({
                           transition:
                             "transform 420ms cubic-bezier(0.22, 1, 0.36, 1)",
                         }}
-                        className="shrink-0 w-[148px] sm:w-[162px] flex flex-col justify-end"
+                        className="relative shrink-0 w-[148px] sm:w-[162px] flex flex-col justify-end"
                       >
+                        {/* Smooth Fade-In / Fade-Out Light Shine Strictly UNDER Selected Stage Card (Zero Top Glow) */}
+                        <div
+                          aria-hidden="true"
+                          className="adm-stage-undershine"
+                          style={{ opacity: isSelected ? 1 : 0 }}
+                        >
+                          <div
+                            className="adm-stage-undershine-core"
+                            style={{
+                              background: `radial-gradient(ellipse 80% 72% at 50% 22%, rgba(${jewel.underShineRgb}, 0.92) 0%, rgba(${jewel.underShineRgb}, 0.44) 48%, rgba(${jewel.underShineRgb}, 0) 84%)`,
+                              filter: "blur(6px)",
+                            }}
+                          />
+                        </div>
+
                         <button
                           ref={(el) => {
                             stageRefs.current[stage.name.toLowerCase()] = el;
@@ -1093,14 +1150,19 @@ export function StageOverviewGrid({
                                 ? isInSelectedGroup
                                   ? activeEditingGroupColor
                                   : "#334155"
-                                : isSelected
-                                  ? "#F4D484"
-                                  : isCustomizingOrder
-                                    ? "#FFE394"
-                                    : jewel.border,
+                                : isCustomizingOrder
+                                  ? "#FFE394"
+                                  : jewel.border,
+                            borderBottomColor:
+                              isSelected && !isDragOver && !selectedGroupBubbleKey
+                                ? jewel.underEdgeColor
+                                : undefined,
+                            boxShadow: isSelected
+                              ? `0 10px 22px -4px rgba(${jewel.underShineRgb}, 0.45), 0 12px 26px rgba(0, 0, 0, 0.86), inset 0 -3px 12px rgba(${jewel.underShineRgb}, 0.24), inset 0 0 0 1px rgba(2, 6, 14, 0.74)`
+                              : undefined,
                           }}
                           className={cn(
-                            "adm-stage-card w-full h-[94px] rounded-[14px] px-3 pt-3 pb-2.5 text-center border-[1.25px] flex flex-col items-center justify-between group",
+                            "adm-stage-card relative z-10 w-full h-[94px] rounded-[14px] px-3 pt-3 pb-2.5 text-center border-[1.25px] flex flex-col items-center justify-between group",
                             isCustomizingOrder
                               ? selectedGroupBubbleKey
                                 ? "cursor-pointer"
@@ -1111,9 +1173,7 @@ export function StageOverviewGrid({
                               ? "ring-2 ring-[#FFE394] shadow-[0_0_16px_rgba(255,227,148,0.45)]"
                               : "opacity-60 hover:opacity-100 border-dashed"),
                             isBeingDragged && "opacity-45 scale-95",
-                            isDragOver && "ring-2 ring-emerald-400 scale-[1.03]",
-                            isSelected &&
-                              "ring-1 ring-[#FFE394]/70 shadow-[0_0_20px_rgba(244,204,114,0.34),0_12px_26px_rgba(0,0,0,0.86)]"
+                            isDragOver && "ring-2 ring-emerald-400 scale-[1.03]"
                           )}
                         >
                           {/* Blazing Luminous Top-Edge Neon Light Bar */}
@@ -1123,6 +1183,16 @@ export function StageOverviewGrid({
                             style={{
                               background: jewel.topBarGradient,
                               boxShadow: jewel.topBarGlow,
+                            }}
+                          />
+
+                          {/* Subtle luminous bottom rim catch-light reflecting the shine underneath */}
+                          <div
+                            aria-hidden="true"
+                            className="absolute bottom-0 left-[14%] right-[14%] h-[2px] rounded-full pointer-events-none z-20 transition-opacity duration-500"
+                            style={{
+                              opacity: isSelected ? 0.95 : 0,
+                              background: `linear-gradient(90deg, transparent 0%, ${jewel.underEdgeColor} 50%, transparent 100%)`,
                             }}
                           />
 

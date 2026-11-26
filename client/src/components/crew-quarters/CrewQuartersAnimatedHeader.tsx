@@ -123,30 +123,41 @@ export function CrewQuartersAnimatedHeader() {
             filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.7));
           }
         }
+
+        @keyframes crystalBreathingGlow {
+          0%, 100% {
+            opacity: 0.16;
+            transform: scale(0.96);
+          }
+          50% {
+            opacity: 0.46;
+            transform: scale(1.03);
+          }
+        }
       `}</style>
 
-      {/* ── Base Panoramic Observation Window Image (Includes static celestial globe on right) ── */}
+      {/* ── Base Panoramic Observation Window Image (Includes built-in brass shelf & static celestial globe) ── */}
       <div className="relative w-full overflow-hidden">
         <img
-          src="/images/crew-quarters-window-trimmed.png"
+          src="/images/crew-quarters-window-admiralty.png"
           alt="Crew Quarters Panoramic Observation Window"
           className="w-full h-auto block select-none pointer-events-none"
         />
 
-      {/* ── INTERACTIVE & ANIMATED OVERLAY DECK (Relative to 1020 x 158 Aspect) ── */}
+      {/* ── INTERACTIVE & ANIMATED OVERLAY DECK (Calibrated to 1012 x 191 Admiralty Canopy) ── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         
         {/* ======================================================== */}
-        {/* 1. TWINKLING STARS IN SKY (WINDOW 1: LEFT CIRCULAR PORTHOLE) */}
+        {/* 1. TWINKLING STARS IN SKY (WINDOW 1: LEFT PORTHOLE)      */}
         {/* ======================================================== */}
         <div
           className="absolute overflow-hidden"
           style={{
-            left: "16.47%",
-            top: "12.03%",
-            width: "13.73%",
-            height: "72.78%",
-            borderRadius: "45% 45% 40% 40%",
+            left: "16.4%",
+            top: "17.5%",
+            width: "12.2%",
+            height: "65.5%",
+            borderRadius: "36% 36% 32% 32%",
           }}
         >
           {LEFT_WINDOW_STARS.map((star) => (
@@ -172,11 +183,11 @@ export function CrewQuartersAnimatedHeader() {
         <div
           className="absolute overflow-hidden"
           style={{
-            left: "33.92%",
-            top: "12.03%",
-            width: "31.18%",
-            height: "75.95%",
-            borderRadius: "28px 28px 18px 18px",
+            left: "33.4%",
+            top: "16.0%",
+            width: "31.6%",
+            height: "67.5%",
+            borderRadius: "28px 28px 20px 20px",
           }}
         >
           {/* Subtle Twinkling Stars */}
@@ -214,16 +225,16 @@ export function CrewQuartersAnimatedHeader() {
         </div>
 
         {/* ======================================================== */}
-        {/* 3. TWINKLING STARS IN SKY (WINDOW 3: RIGHT SQUARE PORTHOLE) */}
+        {/* 3. TWINKLING STARS IN SKY (WINDOW 3: RIGHT PORTHOLE)     */}
         {/* ======================================================== */}
         <div
           className="absolute overflow-hidden"
           style={{
-            left: "69.02%",
-            top: "12.03%",
-            width: "14.22%",
-            height: "75.95%",
-            borderRadius: "38% 38% 34% 34%",
+            left: "69.7%",
+            top: "17.5%",
+            width: "12.6%",
+            height: "65.5%",
+            borderRadius: "36% 36% 32% 32%",
           }}
         >
           {RIGHT_WINDOW_STARS.map((star) => (
@@ -245,12 +256,11 @@ export function CrewQuartersAnimatedHeader() {
 
         {/* ======================================================== */}
         {/* 4. ANIMATED LAVA LAMP (ALIGNED DIRECTLY OVER THE LAMP GLASS) */}
-        {/* Center: x = 50px (4.90%), y = 88px (55.70%) */}
-        {/* Adjustable via on-screen calibration HUD or clicking directly */}
+        {/* Center: x = 49.5px (4.89%), y = 102px (53.65%)           */}
         {/* ======================================================== */}
         {(() => {
-          const topInset = Math.max(0, Math.min(45, (100 - (lavaConfig.topWidth ?? 74)) / 2));
-          const bottomInset = Math.max(0, Math.min(45, (100 - (lavaConfig.bottomWidth ?? 96)) / 2));
+          const topInset = Math.max(0, Math.min(45, (100 - (lavaConfig.topWidth ?? 62)) / 2));
+          const bottomInset = Math.max(0, Math.min(45, (100 - (lavaConfig.bottomWidth ?? 94)) / 2));
           const clipPathPolygon = `polygon(${topInset.toFixed(1)}% 0%, ${(100 - topInset).toFixed(1)}% 0%, ${(100 - bottomInset).toFixed(1)}% 98%, ${bottomInset.toFixed(1)}% 98%)`;
 
           return (
@@ -262,17 +272,17 @@ export function CrewQuartersAnimatedHeader() {
                 width: `${lavaConfig.width}%`,
                 height: `${lavaConfig.height}%`,
                 // @ts-ignore
-                "--lava-rise-max": `-${lavaConfig.riseTravel || 48}px`,
-                "--lava-rise-mid": `-${Math.round((lavaConfig.riseTravel || 48) * 0.6)}px`,
-                "--lava-rise-low": `-${Math.round((lavaConfig.riseTravel || 48) * 0.28)}px`,
-                "--lava-rise-sec-max": `-${Math.round((lavaConfig.riseTravel || 48) * 0.88)}px`,
-                "--lava-rise-sec-mid": `-${Math.round((lavaConfig.riseTravel || 48) * 0.42)}px`,
-                "--lava-rise-sec-low": `-${Math.round((lavaConfig.riseTravel || 48) * 0.2)}px`,
+                "--lava-rise-max": `-${lavaConfig.riseTravel || 54}px`,
+                "--lava-rise-mid": `-${Math.round((lavaConfig.riseTravel || 54) * 0.6)}px`,
+                "--lava-rise-low": `-${Math.round((lavaConfig.riseTravel || 54) * 0.28)}px`,
+                "--lava-rise-sec-max": `-${Math.round((lavaConfig.riseTravel || 54) * 0.88)}px`,
+                "--lava-rise-sec-mid": `-${Math.round((lavaConfig.riseTravel || 54) * 0.42)}px`,
+                "--lava-rise-sec-low": `-${Math.round((lavaConfig.riseTravel || 54) * 0.2)}px`,
               } as React.CSSProperties}
             >
-              {/* Glass Tapered Chamber: Dynamic geometric polygon of the lamp based on independent top/bottom flow widths */}
+              {/* Glass Tapered Chamber: Dynamic geometric polygon hugging the lava lamp cone */}
               <div
-                className="w-full h-full relative overflow-hidden"
+                className="w-full h-full relative overflow-hidden rounded-b-[10px]"
                 style={{
                   clipPath: clipPathPolygon,
                 }}
@@ -342,11 +352,26 @@ export function CrewQuartersAnimatedHeader() {
           );
         })()}
 
-      </div>
-      </div>
+        {/* ======================================================== */}
+        {/* 5. AMETHYST CRYSTAL LAMP SOFT BREATHING SHIMMER          */}
+        {/* ======================================================== */}
+        <div
+          className="absolute z-10 pointer-events-none mix-blend-screen"
+          style={{
+            left: "81.9%",
+            top: "56.5%",
+            width: "4.6%",
+            height: "34.5%",
+            borderRadius: "50% 50% 24% 24% / 70% 70% 20% 20%",
+            background:
+              "radial-gradient(ellipse at 50% 62%, rgba(233, 213, 255, 0.85) 0%, rgba(168, 85, 247, 0.55) 44%, rgba(99, 102, 241, 0.16) 76%, transparent 100%)",
+            filter: "blur(3px)",
+            animation: "crystalBreathingGlow 5.4s ease-in-out infinite",
+          }}
+        />
 
-      {/* ── 3D Brushed-Brass Architectural Mantelpiece Shelf Molding ── */}
-      <div aria-hidden="true" className="adm-brass-mantel" />
+      </div>
+      </div>
     </div>
   );
 }

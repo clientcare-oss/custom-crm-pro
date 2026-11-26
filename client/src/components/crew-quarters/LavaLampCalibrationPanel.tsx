@@ -26,18 +26,18 @@ export interface LavaLampConfig {
 }
 
 export const DEFAULT_LAVA_LAMP_CONFIG: LavaLampConfig = {
-  top: 33.0,
-  left: 3.14,
-  width: 3.73,
-  height: 41.5,
-  topWidth: 74,
-  bottomWidth: 96,
-  riseTravel: 48,
+  top: 33.3,
+  left: 2.72,
+  width: 4.35,
+  height: 40.7,
+  topWidth: 62,
+  bottomWidth: 94,
+  riseTravel: 54,
   glowIntensity: 1.0,
   speedMultiplier: 1.0,
 };
 
-export const LAVA_LAMP_STORAGE_KEY = "waypoint_crew_quarters_lava_lamp_cfg_v2";
+export const LAVA_LAMP_STORAGE_KEY = "waypoint_crew_quarters_lava_lamp_cfg_v3";
 
 export function loadLavaLampConfig(): LavaLampConfig {
   try {

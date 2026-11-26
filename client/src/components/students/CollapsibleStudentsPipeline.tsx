@@ -947,10 +947,7 @@ export function CollapsibleStudentsPipeline({
                     className="adm-pipe-pill h-8 px-3 rounded-[9px] text-[11px] font-serif font-semibold text-[#FFE59E] inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <X className="h-3 w-3 text-[#F2CD80]" />
-                    <span>
-                      Clear Filter
-                      {selectedStageFilter ? `: ${selectedStageFilter}` : ""}
-                    </span>
+                    <span>Clear Filter</span>
                   </button>
                 )}
 
