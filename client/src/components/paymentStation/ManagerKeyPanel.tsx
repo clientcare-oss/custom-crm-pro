@@ -17,9 +17,13 @@ import {
 } from "lucide-react";
 import {
   getSavedManagerKeyChimeStyle,
+  getSavedPrinterSoundStyle,
   playManagerKeyPong,
+  PRINTER_SOUND_OPTIONS,
   setSavedManagerKeyChimeStyle,
+  setSavedPrinterSoundStyle,
   type ManagerKeyChimeStyle,
+  type PrinterSoundStyle,
 } from "./posSounds";
 
 export type ManagerKeyMode = "locked" | "pin" | "unlocked";
@@ -192,11 +196,20 @@ export function ManagerKeyPanel({
   const [chimeStyle, setChimeStyle] = useState<ManagerKeyChimeStyle>(() =>
     getSavedManagerKeyChimeStyle()
   );
+  const [printerStyle, setPrinterStyle] = useState<PrinterSoundStyle>(() =>
+    getSavedPrinterSoundStyle()
+  );
 
   const handleSelectChime = (next: ManagerKeyChimeStyle) => {
     setChimeStyle(next);
     setSavedManagerKeyChimeStyle(next);
     playManagerKeyPong(next);
+  };
+
+  const handleSelectPrinterSound = (next: PrinterSoundStyle) => {
+    setPrinterStyle(next);
+    setSavedPrinterSoundStyle(next);
+    onTriggerPaperFeed();
   };
 
   if (mode === "pin") {
@@ -288,7 +301,7 @@ export function ManagerKeyPanel({
   return (
     <div
       data-testid="pos-manager-test-panel"
-      className="pos-field-well rounded-[10px] border border-[#CFA657]/65 px-2.5 py-2 flex flex-col justify-between gap-1.5 min-h-[166px]"
+      className="pos-field-well rounded-[10px] border border-[#CFA657]/65 px-2.5 py-1.5 flex flex-col justify-between gap-1 min-h-[164px]"
     >
       {/* Header Row */}
       <div className="flex items-center justify-between gap-2 border-b border-[#CFA657]/25 pb-1">
@@ -313,7 +326,7 @@ export function ManagerKeyPanel({
             data-testid="pos-manager-view-form"
             onClick={onHidePanelToForm}
             title="Show live register view with current preview state active"
-            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#0c1d3d] hover:bg-[#142c57] border border-[#6E86B8]/45 text-[10px] text-[#DCE6F8] cursor-pointer"
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#0c1d3d] hover:bg-[#142c57] border border-[#6E86B8]/45 text-[9.5px] text-[#DCE6F8] cursor-pointer"
           >
             <Eye className="h-2.5 w-2.5" />
             <span>View</span>
@@ -323,7 +336,7 @@ export function ManagerKeyPanel({
             data-testid="pos-manager-lock-btn"
             onClick={onLockManager}
             title="Lock manager key and return to normal live mode"
-            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#3b151e] hover:bg-[#521e2b] border border-rose-400/45 text-[10px] text-rose-100 cursor-pointer"
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#3b151e] hover:bg-[#521e2b] border border-rose-400/45 text-[9.5px] text-rose-100 cursor-pointer"
           >
             <Lock className="h-2.5 w-2.5" />
             <span>Lock</span>
@@ -332,7 +345,7 @@ export function ManagerKeyPanel({
       </div>
 
       {/* All 12 Testable Register & Printer States (4x3 grid — zero scroll, 1-click full preview) */}
-      <div className="grid grid-cols-3 gap-1">
+      <div className="grid grid-cols-3 gap-[3px]">
         {MANAGER_PREVIEW_SCENARIOS.map((sc) => {
           const active = activePreviewScenario === sc.id;
           return (
@@ -342,7 +355,7 @@ export function ManagerKeyPanel({
               data-testid={`pos-preview-scenario-${sc.id}`}
               onClick={() => onSelectPreviewScenario(sc.id)}
               title={`Preview ${sc.label} state (ephemeral, no live charge)`}
-              className={`h-[22px] px-1.5 rounded-[6px] border text-[10px] font-medium inline-flex items-center justify-center gap-1 transition-all cursor-pointer ${
+              className={`h-[20px] px-1.5 rounded-[5.5px] border text-[9.5px] font-medium inline-flex items-center justify-center gap-1 transition-all cursor-pointer ${
                 active
                   ? sc.activeBorder
                   : "bg-[#081631]/90 border-[#5B72A3]/40 text-[#CFD9EE] hover:border-[#CFA657]/75 hover:text-white"
@@ -355,70 +368,102 @@ export function ManagerKeyPanel({
         })}
       </div>
 
-      {/* Key Access Sound Audition & Station Utilities Row */}
-      <div className="flex items-center justify-between gap-1 pt-1 border-t border-white/10">
+      {/* Real Recorded Receipt Printer Sound Picker (5 CC0 options — click any to audition & select) */}
+      <div className="pt-1 border-t border-white/10 space-y-1">
         <div
           role="group"
-          aria-label="Key unlock elevator chime sound"
-          className="inline-flex items-center gap-0.5 rounded-[6px] bg-[#061128] border border-[#CFA657]/35 p-[1.5px]"
+          aria-label="Receipt printer sound selection"
+          className="flex items-center gap-0.5 rounded-[6px] bg-[#061128] border border-[#CFA657]/35 p-[1.5px]"
         >
-          <Volume2 className="h-2.5 w-2.5 text-[#DFBE77] mx-0.5 shrink-0" />
-          {(
-            [
-              { id: "otis_pong", label: "Otis" },
-              { id: "elevator_two_tone", label: "Ding-Pong" },
-              { id: "deep_pong", label: "Deep" },
-            ] as const
-          ).map((opt) => {
-            const active = chimeStyle === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                data-testid={`pos-chime-${opt.id}`}
-                onClick={() => handleSelectChime(opt.id)}
-                title={`Preview & select ${opt.label} elevator chime`}
-                className={`h-[18px] px-1.5 rounded-[4px] text-[9px] font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-                  active
-                    ? "bg-[#DFBE77] text-[#081224]"
-                    : "text-[#B8C9E8] hover:text-white hover:bg-[#13264D]"
-                }`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
+          <Printer className="h-2.5 w-2.5 text-[#DFBE77] mx-1 shrink-0" />
+          <div className="grid grid-cols-5 gap-0.5 flex-1">
+            {PRINTER_SOUND_OPTIONS.map((opt) => {
+              const active = printerStyle === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  data-testid={`pos-printer-sound-${opt.id}`}
+                  onClick={() => handleSelectPrinterSound(opt.id)}
+                  title={opt.title}
+                  className={`h-[18px] px-1 rounded-[4px] text-[9px] font-semibold transition-colors cursor-pointer whitespace-nowrap truncate ${
+                    active
+                      ? "bg-[#DFBE77] text-[#081224]"
+                      : "text-[#B8C9E8] hover:text-white hover:bg-[#13264D]"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="inline-flex items-center gap-1 shrink-0">
-          <button
-            type="button"
-            data-testid="pos-preview-feed-paper"
-            onClick={onTriggerPaperFeed}
-            title="Test thermal receipt printer sound & paper feed"
-            className="h-[21px] px-1.5 rounded-[5.5px] bg-[#091834] hover:bg-[#12284f] border border-[#5B72A3]/35 text-[9px] text-[#C8D6F0] inline-flex items-center gap-1 cursor-pointer"
+        {/* Key Access Sound Audition & Station Utilities Row */}
+        <div className="flex items-center justify-between gap-1">
+          <div
+            role="group"
+            aria-label="Key unlock elevator chime sound"
+            className="inline-flex items-center gap-0.5 rounded-[6px] bg-[#061128] border border-[#CFA657]/35 p-[1.5px]"
           >
-            <Printer className="h-2.5 w-2.5 text-[#DFBE77]" />
-            <span>Print</span>
-          </button>
-          <button
-            type="button"
-            onClick={onOpenSetupInfo}
-            title="Stripe Setup"
-            className="h-[21px] px-1.5 rounded-[5.5px] bg-[#091834] hover:bg-[#12284f] border border-[#5B72A3]/35 text-[9px] text-[#C8D6F0] inline-flex items-center gap-1 cursor-pointer"
-          >
-            <Settings className="h-2.5 w-2.5 text-[#DFBE77]" />
-            <span>Setup</span>
-          </button>
-          <button
-            type="button"
-            onClick={onOpenRecentDrawer}
-            title="Recent Payments Log"
-            className="h-[21px] px-1.5 rounded-[5.5px] bg-[#091834] hover:bg-[#12284f] border border-[#5B72A3]/35 text-[9px] text-[#C8D6F0] inline-flex items-center gap-1 cursor-pointer"
-          >
-            <Clock className="h-2.5 w-2.5 text-[#DFBE77]" />
-            <span>Log</span>
-          </button>
+            <Volume2 className="h-2.5 w-2.5 text-[#DFBE77] mx-0.5 shrink-0" />
+            {(
+              [
+                { id: "otis_pong", label: "Otis" },
+                { id: "elevator_two_tone", label: "Ding-Pong" },
+                { id: "deep_pong", label: "Deep" },
+              ] as const
+            ).map((opt) => {
+              const active = chimeStyle === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  data-testid={`pos-chime-${opt.id}`}
+                  onClick={() => handleSelectChime(opt.id)}
+                  title={`Preview & select ${opt.label} elevator chime`}
+                  className={`h-[17px] px-1.5 rounded-[4px] text-[9px] font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+                    active
+                      ? "bg-[#DFBE77] text-[#081224]"
+                      : "text-[#B8C9E8] hover:text-white hover:bg-[#13264D]"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="inline-flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              data-testid="pos-preview-feed-paper"
+              onClick={onTriggerPaperFeed}
+              title="Replay selected thermal printer sound & paper feed"
+              className="h-[19px] px-1.5 rounded-[5px] bg-[#091834] hover:bg-[#12284f] border border-[#5B72A3]/35 text-[9px] text-[#C8D6F0] inline-flex items-center gap-1 cursor-pointer"
+            >
+              <Printer className="h-2.5 w-2.5 text-[#DFBE77]" />
+              <span>Test</span>
+            </button>
+            <button
+              type="button"
+              onClick={onOpenSetupInfo}
+              title="Stripe Setup"
+              className="h-[19px] px-1.5 rounded-[5px] bg-[#091834] hover:bg-[#12284f] border border-[#5B72A3]/35 text-[9px] text-[#C8D6F0] inline-flex items-center gap-1 cursor-pointer"
+            >
+              <Settings className="h-2.5 w-2.5 text-[#DFBE77]" />
+              <span>Setup</span>
+            </button>
+            <button
+              type="button"
+              onClick={onOpenRecentDrawer}
+              title="Recent Payments Log"
+              className="h-[19px] px-1.5 rounded-[5px] bg-[#091834] hover:bg-[#12284f] border border-[#5B72A3]/35 text-[9px] text-[#C8D6F0] inline-flex items-center gap-1 cursor-pointer"
+            >
+              <Clock className="h-2.5 w-2.5 text-[#DFBE77]" />
+              <span>Log</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

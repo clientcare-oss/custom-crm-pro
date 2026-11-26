@@ -5,8 +5,96 @@
  */
 
 export type ManagerKeyChimeStyle = "otis_pong" | "elevator_two_tone" | "deep_pong";
+export type PrinterSoundStyle =
+  | "thermal_cut"
+  | "epson_pos"
+  | "retail_till"
+  | "drawer_print"
+  | "retro_matrix";
+
+export interface PrinterSoundOption {
+  id: PrinterSoundStyle;
+  label: string;
+  title: string;
+  url: string;
+  offsetSec: number;
+  durationSec: number;
+  gain: number;
+}
+
+/**
+ * Curated CC0 (Public Domain) real recorded receipt printer audio samples.
+ * Every clip is studio-clean with zero background voices or chatter.
+ */
+export const PRINTER_SOUND_OPTIONS: PrinterSoundOption[] = [
+  {
+    id: "thermal_cut",
+    label: "Thermal",
+    title: "Modern thermal receipt print & auto-cutter snip (real recording)",
+    url: "/assets/pos/sounds/printer-thermal-cut.mp3",
+    offsetSec: 0,
+    durationSec: 1.57,
+    gain: 0.95,
+  },
+  {
+    id: "epson_pos",
+    label: "Epson",
+    title: "Classic Epson POS impact receipt printer burst (real recording)",
+    url: "/assets/pos/sounds/printer-epson-pos.mp3",
+    offsetSec: 0.05,
+    durationSec: 1.45,
+    gain: 0.72,
+  },
+  {
+    id: "retail_till",
+    label: "Till",
+    title: "Compact retail thermal receipt motor feed (real recording)",
+    url: "/assets/pos/sounds/printer-retail-till.mp3",
+    offsetSec: 0.04,
+    durationSec: 1.4,
+    gain: 0.9,
+  },
+  {
+    id: "drawer_print",
+    label: "Drawer",
+    title: "Cash register drawer & thermal receipt feed (real recording)",
+    url: "/assets/pos/sounds/printer-drawer-print.mp3",
+    offsetSec: 0,
+    durationSec: 1.9,
+    gain: 0.85,
+  },
+  {
+    id: "retro_matrix",
+    label: "Matrix",
+    title: "Vintage dot-matrix receipt printer chatter (real recording)",
+    url: "/assets/pos/sounds/printer-retro-matrix.mp3",
+    offsetSec: 0.1,
+    durationSec: 1.25,
+    gain: 0.65,
+  },
+];
 
 const CHIME_STORAGE_KEY = "waypoint_pos_manager_chime_style";
+const PRINTER_SOUND_STORAGE_KEY = "waypoint_pos_printer_sound_style";
+
+export function getSavedPrinterSoundStyle(): PrinterSoundStyle {
+  try {
+    if (typeof window === "undefined") return "thermal_cut";
+    const raw = window.localStorage.getItem(PRINTER_SOUND_STORAGE_KEY);
+    if (PRINTER_SOUND_OPTIONS.some((o) => o.id === raw)) {
+      return raw as PrinterSoundStyle;
+    }
+  } catch {}
+  return "thermal_cut";
+}
+
+export function setSavedPrinterSoundStyle(style: PrinterSoundStyle): void {
+  try {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(PRINTER_SOUND_STORAGE_KEY, style);
+    }
+  } catch {}
+}
 
 export function getSavedManagerKeyChimeStyle(): ManagerKeyChimeStyle {
   try {
@@ -243,231 +331,98 @@ export function playManagerKeyPong(styleOverride?: ManagerKeyChimeStyle): void {
   }
 }
 
-/**
- * Schedules one line-printing stepper-motor burst of an authentic thermal POS receipt printer
- * (Epson TM-T88 / Star TSP100 style): mechanical stepper whine + micro-step cog modulation +
- * crisp gear-tooth chatter + subtle paper-advance backing.
- */
-function scheduleThermalPrintBurst(
-  ctx: AudioContext,
-  destination: AudioNode,
-  startTime: number,
-  durationSec: number,
-  baseHz: number,
-  endHz: number,
-  stepRateHz: number,
-  gainLevel = 0.28
-): void {
-  const sampleRate = ctx.sampleRate;
-  const burstBus = ctx.createGain();
-  burstBus.gain.setValueAtTime(0.0001, startTime);
-  burstBus.gain.linearRampToValueAtTime(gainLevel, startTime + 0.012);
-  burstBus.gain.setValueAtTime(gainLevel * 0.94, startTime + Math.max(0.02, durationSec - 0.018));
-  burstBus.gain.exponentialRampToValueAtTime(0.0008, startTime + durationSec);
-  burstBus.connect(destination);
+let sharedPrinterAudioCtx: AudioContext | null = null;
+let activePrinterSource: AudioBufferSourceNode | null = null;
+const decodedPrinterBufferCache = new Map<string, Promise<AudioBuffer | null>>();
 
-  // 1. Primary stepper-motor coil drive (sawtooth shaped through compact enclosure bandpass)
-  const motorBand = ctx.createBiquadFilter();
-  motorBand.type = "bandpass";
-  motorBand.frequency.setValueAtTime(1320, startTime);
-  motorBand.frequency.linearRampToValueAtTime(1580, startTime + durationSec);
-  motorBand.Q.setValueAtTime(1.85, startTime);
-  motorBand.connect(burstBus);
-
-  const stepperOsc = ctx.createOscillator();
-  stepperOsc.type = "sawtooth";
-  stepperOsc.frequency.setValueAtTime(baseHz, startTime);
-  stepperOsc.frequency.linearRampToValueAtTime(endHz, startTime + durationSec);
-
-  const stepperGain = ctx.createGain();
-  stepperGain.gain.setValueAtTime(0.62, startTime);
-  stepperOsc.connect(stepperGain);
-  stepperGain.connect(motorBand);
-
-  // 2. High stepper-whine harmonic (iconic "zzzzzt" thermal head advance tone)
-  const whineOsc = ctx.createOscillator();
-  whineOsc.type = "triangle";
-  whineOsc.frequency.setValueAtTime(baseHz * 2.85, startTime);
-  whineOsc.frequency.linearRampToValueAtTime(endHz * 2.95, startTime + durationSec);
-
-  // Fast micro-step amplitude modulation creates unmistakable line-by-line printer cadence
-  const modGain = ctx.createGain();
-  modGain.gain.setValueAtTime(0.46, startTime);
-  const stepLfo = ctx.createOscillator();
-  stepLfo.type = "square";
-  stepLfo.frequency.setValueAtTime(stepRateHz, startTime);
-  const stepLfoDepth = ctx.createGain();
-  stepLfoDepth.gain.setValueAtTime(0.22, startTime);
-  stepLfo.connect(stepLfoDepth);
-  stepLfoDepth.connect(modGain.gain);
-
-  whineOsc.connect(modGain);
-  modGain.connect(motorBand);
-
-  // 3. Mechanical stepper-cog & gear-tooth micro-chatter buffer (crisp printer teeth, NOT paper rustle)
-  const len = Math.max(64, Math.floor(sampleRate * durationSec));
-  const cogBuf = ctx.createBuffer(1, len, sampleRate);
-  const cogData = cogBuf.getChannelData(0);
-  const periodSamples = Math.max(12, Math.floor(sampleRate / (stepRateHz * 1.35)));
-  for (let i = 0; i < len; i++) {
-    const phase = (i % periodSamples) / periodSamples;
-    // Sharp micro-impulse on each stepper tooth + faint subtle paper friction underneath
-    const tooth = phase < 0.16 ? Math.exp(-phase * 22) * 0.85 : 0.12;
-    const t = i / sampleRate;
-    const env =
-      Math.min(1, t / 0.01) * Math.min(1, Math.max(0, (durationSec - t) / 0.014));
-    cogData[i] = (Math.random() * 2 - 1) * tooth * env;
+function getSharedPrinterAudioContext(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  if (!sharedPrinterAudioCtx || sharedPrinterAudioCtx.state === "closed") {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return null;
+    sharedPrinterAudioCtx = new AudioCtx();
   }
-
-  const cogSrc = ctx.createBufferSource();
-  cogSrc.buffer = cogBuf;
-  const cogFilter = ctx.createBiquadFilter();
-  cogFilter.type = "bandpass";
-  cogFilter.frequency.setValueAtTime(2150, startTime);
-  cogFilter.Q.setValueAtTime(2.1, startTime);
-  const cogGain = ctx.createGain();
-  cogGain.gain.setValueAtTime(0.48, startTime);
-  cogSrc.connect(cogFilter);
-  cogFilter.connect(cogGain);
-  cogGain.connect(burstBus);
-
-  // 4. Whisper-light background paper glide (kept very low so printer motor leads)
-  const paperBuf = ctx.createBuffer(1, len, sampleRate);
-  const paperData = paperBuf.getChannelData(0);
-  for (let i = 0; i < len; i++) {
-    paperData[i] = (Math.random() * 2 - 1) * 0.5;
+  if (sharedPrinterAudioCtx.state === "suspended") {
+    void sharedPrinterAudioCtx.resume();
   }
-  const paperSrc = ctx.createBufferSource();
-  paperSrc.buffer = paperBuf;
-  const paperFilter = ctx.createBiquadFilter();
-  paperFilter.type = "bandpass";
-  paperFilter.frequency.setValueAtTime(2800, startTime);
-  paperFilter.Q.setValueAtTime(1.6, startTime);
-  const paperGain = ctx.createGain();
-  paperGain.gain.setValueAtTime(0.09, startTime);
-  paperSrc.connect(paperFilter);
-  paperFilter.connect(paperGain);
-  paperGain.connect(burstBus);
+  return sharedPrinterAudioCtx;
+}
 
-  const stopAt = startTime + durationSec + 0.02;
-  stepperOsc.start(startTime);
-  whineOsc.start(startTime);
-  stepLfo.start(startTime);
-  cogSrc.start(startTime);
-  paperSrc.start(startTime);
+function loadPrinterAudioBuffer(ctx: AudioContext, url: string): Promise<AudioBuffer | null> {
+  const cached = decodedPrinterBufferCache.get(url);
+  if (cached) return cached;
 
-  stepperOsc.stop(stopAt);
-  whineOsc.stop(stopAt);
-  stepLfo.stop(stopAt);
+  const promise = fetch(url)
+    .then((res) => (res.ok ? res.arrayBuffer() : Promise.reject(new Error(`HTTP ${res.status}`))))
+    .then((arr) => ctx.decodeAudioData(arr))
+    .catch(() => {
+      decodedPrinterBufferCache.delete(url);
+      return null;
+    });
+
+  decodedPrinterBufferCache.set(url, promise);
+  return promise;
 }
 
 /**
- * Plays an authentic tabletop thermal POS receipt printer sound (~640ms):
- * platen engage click -> 3 rapid line-by-line stepper-motor print bursts ("zzzzt-zzt-zzzzt")
- * -> mechanical auto-cutter slide & metallic snap ("zzhk-TCHK"), synced to the 640ms receipt feed.
+ * Plays the selected real recorded CC0 thermal/POS receipt printer audio sample
+ * with clean slice timing, smooth fade-out, and zero overlapping when auditioning.
  */
-export function playReceiptPaperFeedSound(): void {
+export function playReceiptPaperFeedSound(styleOverride?: PrinterSoundStyle): void {
   try {
-    const ctx = createResumedAudioContext();
-    if (!ctx) return;
+    const style = styleOverride ?? getSavedPrinterSoundStyle();
+    const opt =
+      PRINTER_SOUND_OPTIONS.find((o) => o.id === style) ?? PRINTER_SOUND_OPTIONS[0];
 
-    const now = ctx.currentTime;
-    const sampleRate = ctx.sampleRate;
-
-    // Compact tabletop POS printer enclosure EQ (removes muddy lows & harsh sibilance)
-    const hp = ctx.createBiquadFilter();
-    hp.type = "highpass";
-    hp.frequency.setValueAtTime(180, now);
-
-    const bodyPeak = ctx.createBiquadFilter();
-    bodyPeak.type = "peaking";
-    bodyPeak.frequency.setValueAtTime(1380, now);
-    bodyPeak.Q.setValueAtTime(1.35, now);
-    bodyPeak.gain.setValueAtTime(4.2, now);
-
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.setValueAtTime(4600, now);
-
-    const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(0.38, now);
-
-    hp.connect(bodyPeak);
-    bodyPeak.connect(lp);
-    lp.connect(masterGain);
-    masterGain.connect(ctx.destination);
-
-    // ── Phase 0 (0.00s): Tiny platen stepper-latch engagement click ──
-    scheduleBrassKeyClick(ctx, hp, now);
-
-    // ── Phase 1 (0.018s -> 0.50s): Three unmistakable line-by-line thermal printer bursts ──
-    // Burst 1: Header wordmark ("WAYPOINT")
-    scheduleThermalPrintBurst(ctx, hp, now + 0.018, 0.132, 330, 365, 118, 0.32);
-    // Burst 2: Client & line-item lines
-    scheduleThermalPrintBurst(ctx, hp, now + 0.172, 0.145, 355, 395, 134, 0.34);
-    // Burst 3: Total, PAID status & brisk advance-to-cutter ramp
-    scheduleThermalPrintBurst(ctx, hp, now + 0.338, 0.155, 375, 455, 148, 0.36);
-
-    // ── Phase 2 (0.515s -> 0.625s): Mechanical auto-cutter slide + hardened blade snap ("zzhk-TCHK") ──
-    const cutterSlideStart = now + 0.515;
-    const cutterOsc = ctx.createOscillator();
-    cutterOsc.type = "sawtooth";
-    cutterOsc.frequency.setValueAtTime(620, cutterSlideStart);
-    cutterOsc.frequency.exponentialRampToValueAtTime(340, cutterSlideStart + 0.044);
-
-    const cutterBand = ctx.createBiquadFilter();
-    cutterBand.type = "bandpass";
-    cutterBand.frequency.setValueAtTime(1650, cutterSlideStart);
-    cutterBand.Q.setValueAtTime(2.4, cutterSlideStart);
-
-    const cutterGain = ctx.createGain();
-    cutterGain.gain.setValueAtTime(0.0001, cutterSlideStart);
-    cutterGain.gain.linearRampToValueAtTime(0.24, cutterSlideStart + 0.008);
-    cutterGain.gain.exponentialRampToValueAtTime(0.001, cutterSlideStart + 0.048);
-
-    cutterOsc.connect(cutterBand);
-    cutterBand.connect(cutterGain);
-    cutterGain.connect(hp);
-    cutterOsc.start(cutterSlideStart);
-    cutterOsc.stop(cutterSlideStart + 0.052);
-
-    // Crisp guillotine blade stop click ("TCHK")
-    const snapStart = now + 0.562;
-    const snapLen = Math.floor(sampleRate * 0.02);
-    const snapBuf = ctx.createBuffer(1, snapLen, sampleRate);
-    const snapData = snapBuf.getChannelData(0);
-    for (let i = 0; i < snapLen; i++) {
-      snapData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (snapLen * 0.2));
+    const ctx = getSharedPrinterAudioContext();
+    if (!ctx) {
+      if (typeof Audio !== "undefined") {
+        const el = new Audio(opt.url);
+        el.volume = Math.min(1, opt.gain);
+        void el.play().catch(() => {});
+      }
+      return;
     }
-    const snapSrc = ctx.createBufferSource();
-    snapSrc.buffer = snapBuf;
-    const snapFilter = ctx.createBiquadFilter();
-    snapFilter.type = "bandpass";
-    snapFilter.frequency.setValueAtTime(2350, snapStart);
-    snapFilter.Q.setValueAtTime(2.5, snapStart);
-    const snapGain = ctx.createGain();
-    snapGain.gain.setValueAtTime(0.42, snapStart);
-    snapSrc.connect(snapFilter);
-    snapFilter.connect(snapGain);
-    snapGain.connect(hp);
-    snapSrc.start(snapStart);
 
-    // Tiny damped mechanical body thud under the cutter snap
-    const thudOsc = ctx.createOscillator();
-    thudOsc.type = "triangle";
-    thudOsc.frequency.setValueAtTime(420, snapStart);
-    thudOsc.frequency.exponentialRampToValueAtTime(165, snapStart + 0.028);
-    const thudGain = ctx.createGain();
-    thudGain.gain.setValueAtTime(0.22, snapStart);
-    thudGain.gain.exponentialRampToValueAtTime(0.001, snapStart + 0.03);
-    thudOsc.connect(thudGain);
-    thudGain.connect(hp);
-    thudOsc.start(snapStart);
-    thudOsc.stop(snapStart + 0.034);
+    // Stop any prior audition immediately so rapid clicking between options sounds razor-clean
+    if (activePrinterSource) {
+      try {
+        activePrinterSource.stop();
+      } catch {}
+      activePrinterSource = null;
+    }
 
-    setTimeout(() => {
-      ctx.close().catch(() => { });
-    }, 950);
+    void loadPrinterAudioBuffer(ctx, opt.url).then((buffer) => {
+      if (!buffer) return;
+      if (ctx.state === "suspended") {
+        void ctx.resume();
+      }
+      const now = ctx.currentTime;
+      const offset = Math.min(opt.offsetSec, Math.max(0, buffer.duration - 0.1));
+      const playDur = Math.min(opt.durationSec, Math.max(0.1, buffer.duration - offset));
+
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(opt.gain, now + 0.014);
+      const fadeStart = now + Math.max(0.05, playDur - 0.065);
+      gain.gain.setValueAtTime(opt.gain, fadeStart);
+      gain.gain.exponentialRampToValueAtTime(0.0008, now + playDur);
+
+      src.connect(gain);
+      gain.connect(ctx.destination);
+      activePrinterSource = src;
+      src.onended = () => {
+        if (activePrinterSource === src) {
+          activePrinterSource = null;
+        }
+      };
+      src.start(now, offset, playDur + 0.02);
+    });
   } catch {
     // Audio playback is best-effort; never block receipt updates
   }
