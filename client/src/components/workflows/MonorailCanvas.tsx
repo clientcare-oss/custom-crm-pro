@@ -85,6 +85,7 @@ export interface MonorailCanvasProps {
   onOpenGuideMe: (stageId: string) => void;
   onOpenStageWorkspace: (stage: WorkflowStageDefinition) => void;
   onEditStage: (stage: WorkflowStageDefinition) => void;
+  onOpenAutomationsEditor: (stage: WorkflowStageDefinition) => void;
   onAddStageInline: (afterStageId?: string | null) => void;
   onQuickAddGuideStep: (stageId: string) => void;
   onQuickAddAutomation: (stageId: string) => void;
@@ -149,6 +150,7 @@ export function MonorailCanvas({
   onOpenGuideMe,
   onOpenStageWorkspace,
   onEditStage,
+  onOpenAutomationsEditor,
   onAddStageInline,
   onQuickAddGuideStep,
   onQuickAddAutomation,
@@ -701,36 +703,21 @@ export function MonorailCanvas({
   };
 
   // Compute resting preview train fraction:
-  // - On initial load (idle), sit visibly halfway between Station 0 and Station 1.
-  // - Whenever the user clicks a gold station, pull smoothly right up to that station's docking rim
-  //   (leaving the station's circular icon unobstructed while clearly docked at that station!).
+  // - On initial load (idle), sit visibly halfway between Station 0 and Station 1 so the full train is seen.
+  // - Whenever the user clicks ANY gold station (or steps/demos), glide smoothly INTO that tunnel station
+  //   and stop DEAD CENTER inside it so only the bullet nose and tail peek cleanly out both portals!
   const restingPreviewFraction = useMemo(() => {
     if (stationFractions.length >= 2) {
       if (previewTrainIdleOnSpan && previewTrainStationIdx === 0) {
         return (stationFractions[0] + stationFractions[1]) * 0.5;
       }
       const clampedIdx = Math.min(previewTrainStationIdx, stationFractions.length - 1);
-      const stationFrac = stationFractions[clampedIdx];
-      let totalLen = 0;
-      try {
-        totalLen = railPathNode?.getTotalLength() ?? 0;
-      } catch {}
-
-      // Dock ~78px from station center along the rail so the sculpted bullet nose kisses the golden station rim
-      const dockFracOffset =
-        Number.isFinite(totalLen) && totalLen > 200 ? 78 / totalLen : 0.036;
-
-      if (clampedIdx === 0) {
-        const span = stationFractions[1] - stationFractions[0];
-        return Math.min(0.96, stationFrac + Math.min(dockFracOffset, span * 0.45));
-      }
-      const prevSpan = stationFrac - stationFractions[clampedIdx - 1];
-      return Math.max(0.04, stationFrac - Math.min(dockFracOffset, prevSpan * 0.45));
+      return stationFractions[clampedIdx];
     }
     return 0.5;
-  }, [stationFractions, previewTrainIdleOnSpan, previewTrainStationIdx, railPathNode]);
+  }, [stationFractions, previewTrainIdleOnSpan, previewTrainStationIdx]);
 
-  // Match real selected case(s) to their actual stage on the rail in Employee View
+  // Match real selected case(s) to their actual stage on the rail in Employee View (centered inside tunnel station)
   const caseTrains = useMemo(() => {
     if (
       experienceMode !== "employee_preview" ||
@@ -751,15 +738,9 @@ export function MonorailCanvas({
       );
       if (matchIdx < 0) matchIdx = 0;
 
-      const baseFrac = stationFractions[matchIdx] ?? 0.1;
-      const nextFrac = stationFractions[Math.min(matchIdx + 1, stationFractions.length - 1)] ?? 0.9;
-      // Offset just ahead of the station rim so the train sits prominently on the rail right beside its station
-      const dockedFrac =
-        matchIdx < stationFractions.length - 1
-          ? baseFrac + Math.min(0.055, (nextFrac - baseFrac) * 0.36)
-          : Math.max(0.05, baseFrac - 0.045);
+      const baseFrac = stationFractions[matchIdx] ?? 0;
       const multiOffset =
-        selectedCases.length > 1 ? (idx - (selectedCases.length - 1) / 2) * 0.025 : 0;
+        selectedCases.length > 1 ? (idx - (selectedCases.length - 1) / 2) * 0.018 : 0;
       const initials = c.fullName
         .split(/\s+/)
         .map((p) => p[0])
@@ -771,7 +752,7 @@ export function MonorailCanvas({
         caseItem: c,
         stageIndex: matchIdx,
         stage: visibleStages[matchIdx],
-        fraction: Math.max(0.03, Math.min(0.97, dockedFrac + multiOffset)),
+        fraction: Math.max(0, Math.min(1, baseFrac + multiOffset)),
         shortBadge: `${initials} · ${c.fullName.split(" ")[0]}`,
       };
     });
@@ -1017,25 +998,19 @@ export function MonorailCanvas({
       : sx + 44 + cardW > rect.width - 12;
 
     const left = placeLeft
-      ? Math.max(12, sx - cardW - 44)
-      : Math.min(rect.width - cardW - 10, sx + 44);
-    // Keep the horizontal gold track & docked train right beside the station 100% unobstructed:
-    // if the popover is on the train's docking side, offset it cleanly below the rail line!
-    const trainDocksOnRight =
-      (selectedStationPos.direction === -1 && visibleStages.findIndex((s) => s.id === selectedStage?.id) > 0) ||
-      (selectedStationPos.direction === 1 && visibleStages.findIndex((s) => s.id === selectedStage?.id) === 0);
-    const popoverOnTrainSide = (!placeLeft && trainDocksOnRight) || (placeLeft && !trainDocksOnRight);
-    const desiredTop = popoverOnTrainSide ? sy + 26 : sy - 22;
+      ? Math.max(12, sx - cardW - 68)
+      : Math.min(rect.width - cardW - 10, sx + 68);
+    // Keep the larger 4-car peeking nose & tail emerging from both sides of the tunnel station unobstructed
     const top = Math.max(
       isStarterPreviewMode ? 82 : 16,
-      Math.min(rect.height - cardH - 58, desiredTop)
+      Math.min(rect.height - cardH - 58, sy + 24)
     );
 
     // Rim anchor & popover edge anchor for crisp hairline gold pointer matching reference image
-    const anchorX = placeLeft ? sx - 32 * zoom : sx + 32 * zoom;
-    const anchorY = popoverOnTrainSide ? sy + 12 * zoom : sy;
+    const anchorX = placeLeft ? sx - 30 * zoom : sx + 30 * zoom;
+    const anchorY = sy + 10 * zoom;
     const cardEdgeX = placeLeft ? left + cardW : left;
-    const cardEdgeY = top + 20;
+    const cardEdgeY = top + 18;
 
     return { left, top, anchorX, anchorY, cardEdgeX, cardEdgeY };
   }, [selectedStationPos, zoom, pan, isStarterPreviewMode]);
@@ -1307,9 +1282,22 @@ export function MonorailCanvas({
             </g>
           ))}
 
-          {/* 4. Main Connected Champagne-Gold Dimensional Monorail Track */}
+          {/* 4. Main Connected Champagne-Gold Dimensional Monorail Track (+ sleek terminal stubs at ends) */}
           {geometry.mainPathD && (
             <g filter="url(#rail-drop-shadow)">
+              {/* Short terminal buffer stubs at first & last tunnel stations so peeking tail/nose always sit on gold track */}
+              {geometry.stations.length >= 2 && (() => {
+                const first = geometry.stations[0];
+                const last = geometry.stations[geometry.stations.length - 1];
+                const entryStubD = `M ${first.x - first.direction * 84} ${first.y - 0.1} L ${first.x} ${first.y + 0.1}`;
+                const exitStubD = `M ${last.x} ${last.y - 0.1} L ${last.x + last.direction * 84} ${last.y + 0.1}`;
+                return (
+                  <>
+                    <MetallicMonorailTrack d={entryStubD} variant="main" />
+                    <MetallicMonorailTrack d={exitStubD} variant="main" />
+                  </>
+                );
+              })()}
               <MetallicMonorailTrack
                 d={geometry.mainPathD}
                 variant="main"
@@ -1378,7 +1366,48 @@ export function MonorailCanvas({
             );
           })}
 
-          {/* 7. Circular Dimensional Metallic Workflow Stations */}
+          {/* 7. Sculpted Articulated Monorail Trains (Rendered ABOVE the rail & BELOW tunnel station domes so nose & tail peek out cleanly!) */}
+          {(experienceMode === "designer" || isStarterPreviewMode) && visibleStages.length >= 2 && (
+            <MonorailTrain
+              trainId="designer-preview"
+              pathElement={railPathNode}
+              targetFraction={restingPreviewFraction}
+              demoPlaying={previewPlaying}
+              stationFractions={stationFractions}
+              onArriveStation={(idx) => {
+                setPreviewTrainStationIdx(idx);
+                setDockedTrainStageIdx(idx);
+              }}
+              label={`Preview Train at ${visibleStages[Math.min(previewTrainStationIdx, visibleStages.length - 1)]?.name || "Start"} (Simulation only — no live case changes)`}
+              shortBadge={isStarterPreviewMode ? "Sample Train" : "Preview Train"}
+              variant="preview"
+              reducedMotion={reducedMotion}
+              onClick={() => {
+                const st = visibleStages[Math.min(previewTrainStationIdx, visibleStages.length - 1)];
+                if (!st) return;
+                if (isStarterPreviewMode) setSampleSelectedStageId(st.id);
+                else onSelectStage(st.id);
+              }}
+            />
+          )}
+
+          {experienceMode === "employee_preview" &&
+            !isStarterPreviewMode &&
+            caseTrains.map((ct) => (
+              <MonorailTrain
+                key={`case-train-${ct.caseItem.contactId}`}
+                trainId={`case-${ct.caseItem.contactId}`}
+                pathElement={railPathNode}
+                targetFraction={ct.fraction}
+                label={`${ct.caseItem.fullName} currently at ${ct.stage.name}. Click for progress summary.`}
+                shortBadge={ct.shortBadge}
+                variant="case"
+                reducedMotion={reducedMotion}
+                onClick={() => onClickCaseTrain?.(ct.caseItem)}
+              />
+            ))}
+
+          {/* 8. Circular Dimensional Metallic Tunnel Stations (Occludes middle car when train is parked inside!) */}
           {visibleStages.map((stage, idx) => {
             const pos = geometry.stationMap[stage.id];
             if (!pos) return null;
@@ -1451,7 +1480,7 @@ export function MonorailCanvas({
             );
           })}
 
-          {/* 8. Dimensional Champagne-Gold Approval Gates Astride Gold Transitions */}
+          {/* 9. Dimensional Champagne-Gold Approval Gates Astride Gold Transitions */}
           {activeDoc.approvalGates
             .filter((g) => g.enabled)
             .map((gate) => {
@@ -1484,47 +1513,6 @@ export function MonorailCanvas({
                 />
               );
             })}
-
-          {/* 9. Tiny Streamlined Articulated Monorail Trains (Rendered cleanly ON TOP of the track!) */}
-          {(experienceMode === "designer" || isStarterPreviewMode) && visibleStages.length >= 2 && (
-            <MonorailTrain
-              trainId="designer-preview"
-              pathElement={railPathNode}
-              targetFraction={restingPreviewFraction}
-              demoPlaying={previewPlaying}
-              stationFractions={stationFractions}
-              onArriveStation={(idx) => {
-                setPreviewTrainStationIdx(idx);
-                setDockedTrainStageIdx(idx);
-              }}
-              label={`Preview Train at ${visibleStages[Math.min(previewTrainStationIdx, visibleStages.length - 1)]?.name || "Start"} (Simulation only — no live case changes)`}
-              shortBadge={isStarterPreviewMode ? "Sample Train" : "Preview Train"}
-              variant="preview"
-              reducedMotion={reducedMotion}
-              onClick={() => {
-                const st = visibleStages[Math.min(previewTrainStationIdx, visibleStages.length - 1)];
-                if (!st) return;
-                if (isStarterPreviewMode) setSampleSelectedStageId(st.id);
-                else onSelectStage(st.id);
-              }}
-            />
-          )}
-
-          {experienceMode === "employee_preview" &&
-            !isStarterPreviewMode &&
-            caseTrains.map((ct) => (
-              <MonorailTrain
-                key={`case-train-${ct.caseItem.contactId}`}
-                trainId={`case-${ct.caseItem.contactId}`}
-                pathElement={railPathNode}
-                targetFraction={ct.fraction}
-                label={`${ct.caseItem.fullName} currently at ${ct.stage.name}. Click for progress summary.`}
-                shortBadge={ct.shortBadge}
-                variant="case"
-                reducedMotion={reducedMotion}
-                onClick={() => onClickCaseTrain?.(ct.caseItem)}
-              />
-            ))}
 
           {/* 10. Edit Routes Connection Sockets & Proposed Snap Preview (STRICTLY hidden outside Edit Routes!) */}
           {editRoutesMode && !isStarterPreviewMode && (
@@ -1818,6 +1806,16 @@ export function MonorailCanvas({
                 >
                   {expandedAutoSet.has(selectedStage.id) ? "Hide" : "Show"} automations (
                   {selectedStage.automations.length})
+                </button>
+              )}
+              {canEdit && experienceMode === "designer" && !isStarterPreviewMode && (
+                <button
+                  type="button"
+                  data-testid="popover-add-automation-line-btn"
+                  onClick={() => onOpenAutomationsEditor(selectedStage)}
+                  className="text-[10px] px-2 py-0.5 rounded-full border bg-[#22104B] hover:bg-[#331970] border-[#9F7AEA]/75 text-[#EDE4FF] font-semibold cursor-pointer transition-colors"
+                >
+                  + Automation line
                 </button>
               )}
             </div>

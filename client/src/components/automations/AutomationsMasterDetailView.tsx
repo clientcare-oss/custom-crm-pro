@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
+import { toast } from "sonner";
 import {
   Search,
   Mail,
@@ -728,9 +729,25 @@ export function AutomationsMasterDetailView({
                       <div className="flex items-start gap-3.5 min-w-0 flex-1">
                         {renderRowIcon(item, isSelected)}
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-sm font-semibold text-[#F8FAFC] truncate">
-                            {item.name}
-                          </h4>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <h4 className="text-sm font-semibold text-[#F8FAFC] truncate">
+                              {item.name}
+                            </h4>
+                            {!String(item.id).startsWith("showcase-") && (
+                              <button
+                                type="button"
+                                title="Click to copy Automation ID for Workflow Monorail linking"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigator.clipboard?.writeText(String(item.id)).catch(() => {});
+                                  toast.success(`Copied Automation ID #${item.id}`);
+                                }}
+                                className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#140E2E] hover:bg-[#231750] border border-[#7C3AED]/50 text-[10px] font-mono text-[#DDD6FE] cursor-pointer"
+                              >
+                                ID #{item.id}
+                              </button>
+                            )}
+                          </div>
                           <p className="text-xs text-[#94A8C4] leading-relaxed line-clamp-2 mt-0.5">
                             {item.description || "Automated follow-up sequence."}
                           </p>
@@ -875,9 +892,25 @@ export function AutomationsMasterDetailView({
                 {/* Selected Workflow Header */}
                 <div className="flex items-start justify-between gap-4 mb-6">
                   <div>
-                    <h2 className="font-serif text-2xl text-[#FFF4D4] tracking-tight">
-                      {activeSelection.name}
-                    </h2>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h2 className="font-serif text-2xl text-[#FFF4D4] tracking-tight">
+                        {activeSelection.name}
+                      </h2>
+                      {!String(activeSelection.id).startsWith("showcase-") && (
+                        <button
+                          type="button"
+                          title="Click to copy Automation ID for Monorail linking"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(String(activeSelection.id)).catch(() => {});
+                            toast.success(`Copied Automation ID #${activeSelection.id}`);
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#160F34] hover:bg-[#261858] border border-[#8B5CF6]/55 text-[11px] font-mono text-[#E9D5FF] cursor-pointer"
+                        >
+                          <Copy className="w-3 h-3 text-[#C4B5FD]" />
+                          <span>ID #{activeSelection.id}</span>
+                        </button>
+                      )}
+                    </div>
                     <p className="text-xs text-[#94A8C4] mt-1">
                       {activeSubtitle}
                     </p>

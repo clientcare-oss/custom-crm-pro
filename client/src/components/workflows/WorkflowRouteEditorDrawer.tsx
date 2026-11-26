@@ -11,6 +11,9 @@ import {
   Sliders,
   AlertTriangle,
   Link2,
+  ExternalLink,
+  CheckCircle2,
+  Hash,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
@@ -52,6 +55,22 @@ const SUPPORTED_AUTOMATION_TRIGGERS = [
   { value: "manual_trigger", label: "Manual trigger (manual_trigger)" },
 ];
 
+const AUTOMATION_LABEL_PRESETS = [
+  "Create tasks",
+  "Send reminder",
+  "Prepare update",
+  "Send welcome",
+  "Assign Smart File",
+  "Notify advocate",
+];
+
+function parseAutomationIdInput(raw: string): number | null {
+  const cleaned = raw.replace(/[^0-9]/g, "").trim();
+  if (!cleaned) return null;
+  const n = parseInt(cleaned, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 interface WorkflowRouteEditorDrawerProps {
   open: boolean;
   stageId: string | null;
@@ -72,6 +91,8 @@ interface WorkflowRouteEditorDrawerProps {
   onDeleteStage: (stageId: string) => void;
   onUpsertGate: (gate: WorkflowApprovalGate) => void;
   onDeleteGate: (gateId: string) => void;
+  onExpandAutomationBranch?: (stageId: string) => void;
+  onNavigate?: (path: string) => void;
   onRefreshContext: () => void;
 }
 
@@ -89,16 +110,19 @@ export function WorkflowRouteEditorDrawer({
   onDeleteStage,
   onUpsertGate,
   onDeleteGate,
+  onExpandAutomationBranch,
+  onNavigate,
   onRefreshContext,
 }: WorkflowRouteEditorDrawerProps) {
   const [tab, setTab] = useState<"stage" | "steps" | "gates" | "automations">(initialTab);
   const [newStepTitle, setNewStepTitle] = useState("");
   const [newStepParallel, setNewStepParallel] = useState("");
   const [newAutoTitle, setNewAutoTitle] = useState("");
+  const [newAutoIdInput, setNewAutoIdInput] = useState("");
   const [newAutoTrigger, setNewAutoTrigger] = useState("stage_changed");
   const [newAutoActionType, setNewAutoActionType] = useState<"task" | "email" | "file" | "prepare_draft">("task");
   const [newAutoRequiresApproval, setNewAutoRequiresApproval] = useState(true);
-  const [createLiveInEngine, setCreateLiveInEngine] = useState(true);
+  const [createLiveInEngine, setCreateLiveInEngine] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const saveRealAutomationMutation = trpc.automations.save.useMutation({
@@ -172,15 +196,20 @@ export function WorkflowRouteEditorDrawer({
     toast.success("Approval gate added to route.");
   };
 
+  const parsedNewAutoId = parseAutomationIdInput(newAutoIdInput);
+  const matchedNewRealAuto = parsedNewAutoId
+    ? realAutomations.find((a) => a.id === parsedNewAutoId) || null
+    : null;
+
   const handleAddAutomation = async () => {
-    const title = newAutoTitle.trim();
+    const title = newAutoTitle.trim() || matchedNewRealAuto?.name?.slice(0, 36) || "";
     if (!title) {
-      toast.error("Enter an automation title.");
+      toast.error("Pick or enter a label for this violet automation node.");
       return;
     }
 
-    let createdAutomationId: number | null = null;
-    if (createLiveInEngine) {
+    let linkedAutomationId: number | null = parsedNewAutoId;
+    if (!linkedAutomationId && createLiveInEngine) {
       try {
         const engineStepType: "task" | "email" | "file" =
           newAutoActionType === "prepare_draft" ? "task" : newAutoActionType;
@@ -223,53 +252,65 @@ export function WorkflowRouteEditorDrawer({
             },
           ],
         });
-        createdAutomationId = (res as any)?.id ?? null;
+        linkedAutomationId = (res as any)?.id ?? null;
       } catch {
         return;
       }
     }
 
+    const effectiveTriggerEvent = matchedNewRealAuto?.triggerEvent || newAutoTrigger;
+    const effectiveActionType: WorkflowStageAutomationLink["actionType"] =
+      (matchedNewRealAuto?.steps?.[0]?.type as any) || newAutoActionType;
+
     const newLink: WorkflowStageAutomationLink = {
       id: `${stage.id}-auto-${Date.now()}`,
-      automationId: createdAutomationId,
+      automationId: linkedAutomationId,
       title,
       triggerLabel:
-        SUPPORTED_AUTOMATION_TRIGGERS.find((t) => t.value === newAutoTrigger)?.label.split(" (")[0] ||
-        "Stage entered",
-      triggerEvent: newAutoTrigger,
+        SUPPORTED_AUTOMATION_TRIGGERS.find((t) => t.value === effectiveTriggerEvent)?.label.split(" (")[0] ||
+        effectiveTriggerEvent.replace(/_/g, " "),
+      triggerEvent: effectiveTriggerEvent,
       conditionSummary: `Stage equals "${stage.name}"`,
-      actionType: newAutoActionType,
-      actionSummary:
-        newAutoActionType === "prepare_draft"
-          ? "Prepare draft document/message for review (remains unsent)"
-          : newAutoActionType === "task"
-          ? `Create internal task: ${title}`
-          : newAutoActionType === "email"
-          ? newAutoRequiresApproval
-            ? "Queue email draft requiring approval before sending"
-            : "Send configured email template"
-          : `Assign Smart File: ${title}`,
-      requiresApproval: newAutoRequiresApproval || newAutoActionType === "prepare_draft",
-      enabled: true,
-      communicationMode:
-        newAutoActionType === "prepare_draft"
-          ? "prepare_draft"
-          : newAutoActionType === "task"
+      actionType: effectiveActionType,
+      actionSummary: matchedNewRealAuto
+        ? matchedNewRealAuto.steps.map((s: any) => s.title).join(" → ") || matchedNewRealAuto.name
+        : newAutoActionType === "prepare_draft"
+        ? "Prepare draft document/message for review (remains unsent)"
+        : newAutoActionType === "task"
+        ? `Create internal task: ${title}`
+        : newAutoActionType === "email"
+        ? newAutoRequiresApproval
+          ? "Queue email draft requiring approval before sending"
+          : "Send configured email template"
+        : `Assign Smart File: ${title}`,
+      requiresApproval: matchedNewRealAuto
+        ? effectiveActionType === "email"
+        : newAutoRequiresApproval || newAutoActionType === "prepare_draft",
+      enabled: matchedNewRealAuto ? matchedNewRealAuto.isActive : true,
+      communicationMode: matchedNewRealAuto
+        ? effectiveActionType === "task"
           ? "internal_only"
-          : newAutoRequiresApproval
-          ? "send_after_approval"
-          : "automatic_send",
+          : "send_after_approval"
+        : newAutoActionType === "prepare_draft"
+        ? "prepare_draft"
+        : newAutoActionType === "task"
+        ? "internal_only"
+        : newAutoRequiresApproval
+        ? "send_after_approval"
+        : "automatic_send",
     };
 
     onUpdateStage(stage.id, (prev) => ({
       ...prev,
       automations: [...prev.automations, newLink],
     }));
+    onExpandAutomationBranch?.(stage.id);
     setNewAutoTitle("");
+    setNewAutoIdInput("");
     toast.success(
-      createdAutomationId
-        ? `Automation created in PG-013 (#${createdAutomationId}) and attached to ${stage.name}.`
-        : "Automation node added to stage."
+      linkedAutomationId
+        ? `Added "${title}" linked to Automation ID #${linkedAutomationId} on ${stage.name}'s violet line.`
+        : `Added "${title}" to ${stage.name}'s violet automation line.`
     );
   };
 
@@ -838,165 +879,382 @@ export function WorkflowRouteEditorDrawer({
 
         {tab === "automations" && (
           <>
-            {/* Connect Existing Live PG-013 Automation */}
-            {realAutomations.length > 0 && (
-              <div className="p-3 rounded-xl bg-[#0B102E] border border-[#7C3AED]/45 space-y-2">
-                <span className="text-[11px] font-semibold text-[#DDD6FE] flex items-center gap-1.5">
-                  <Link2 className="w-3.5 h-3.5 text-[#A78BFA]" />
-                  <span>Attach Existing PG-013 Automation</span>
+            {/* Unified Builder: Add a Violet Automation Line Node + Pick Label + Link PG-013 Automation ID */}
+            <div
+              data-testid="automation-line-builder"
+              className="p-3.5 rounded-xl bg-[#0B102E] border border-[#7C3AED]/60 space-y-3 shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11.5px] font-semibold text-[#EDE4FF] flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-[#A78BFA]" />
+                  <span>Add Violet Automation Line Node</span>
                 </span>
-                <select
-                  defaultValue=""
-                  onChange={(e) => {
-                    const id = Number(e.target.value);
-                    const found = realAutomations.find((a) => a.id === id);
-                    if (!found) return;
-                    const firstType = found.steps?.[0]?.type || "task";
-                    onUpdateStage(stage.id, (prev) => ({
-                      ...prev,
-                      automations: [
-                        ...prev.automations,
-                        {
-                          id: `${stage.id}-auto-${Date.now()}`,
-                          automationId: found.id,
-                          title: found.name.slice(0, 32),
-                          triggerLabel: found.triggerEvent.replace(/_/g, " "),
-                          triggerEvent: found.triggerEvent,
-                          actionType: firstType,
-                          actionSummary: found.steps.map((s: any) => s.title).join(" → ") || found.name,
-                          requiresApproval: firstType === "email",
-                          enabled: found.isActive,
-                          communicationMode:
-                            firstType === "task" ? "internal_only" : "send_after_approval",
-                        },
-                      ],
-                    }));
-                    e.target.value = "";
-                    toast.success(`Linked "${found.name}" to ${stage.name}.`);
-                  }}
-                  className="w-full h-8.5 rounded-lg bg-[#050A20] border border-[#4C2F9E] px-2 text-white"
-                >
-                  <option value="">Select a live PG-013 automation…</option>
-                  {realAutomations.map((ra) => (
-                    <option key={ra.id} value={ra.id}>
-                      {ra.name} ({ra.isActive ? "Active" : "Draft"})
-                    </option>
-                  ))}
-                </select>
+                {onNavigate && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigate("/automations")}
+                    className="text-[10.5px] text-[#C4B5FD] hover:text-white inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Open Automations (PG-013)</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
               </div>
-            )}
 
-            {/* Create New Automation Node (Optionally creating live rule in PG-013) */}
-            <div className="p-3 rounded-xl bg-[#091130] border border-[#5B35C9]/55 space-y-2">
-              <span className="text-[11px] font-semibold text-[#DDD6FE] block">
-                Create Stage Automation
-              </span>
-              <input
-                type="text"
-                value={newAutoTitle}
-                onChange={(e) => setNewAutoTitle(e.target.value)}
-                placeholder="e.g. Prepare parent update draft"
-                className="w-full h-8 rounded bg-[#040A1E] border border-[#322963] px-2.5 text-white"
-              />
-              <div className="grid grid-cols-2 gap-2">
+              {/* 1. Pick or type Map Label */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-[#C4B5FD] block">
+                  1. Label shown on violet line
+                </label>
+                <input
+                  type="text"
+                  data-testid="new-auto-label-input"
+                  value={newAutoTitle}
+                  onChange={(e) => setNewAutoTitle(e.target.value)}
+                  placeholder="Pick a preset below or type custom label..."
+                  className="w-full h-8.5 rounded-lg bg-[#040A1E] border border-[#3E3278] focus:border-[#A78BFA] focus:outline-none px-2.5 text-white"
+                />
+                <div className="flex flex-wrap gap-1">
+                  {AUTOMATION_LABEL_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setNewAutoTitle(preset)}
+                      className={cn(
+                        "px-2 py-0.5 rounded-full text-[10px] border cursor-pointer transition-colors",
+                        newAutoTitle === preset
+                          ? "bg-[#3B1E80] border-[#C4B5FD] text-white font-semibold"
+                          : "bg-[#060D28] border-[#2C245C] text-[#C4B5FD] hover:border-[#7C3AED]"
+                      )}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Connect to Real Automation ID from Automations Tool (PG-013) */}
+              <div className="space-y-1.5 pt-1 border-t border-[#1D1B47]">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-[#C4B5FD] flex items-center gap-1">
+                  <Link2 className="w-3 h-3 text-[#A78BFA]" />
+                  <span>2. Connect to PG-013 Automation ID</span>
+                </label>
+
+                {/* Dropdown listing every live PG-013 Automation WITH its exact numeric ID */}
                 <select
-                  value={newAutoTrigger}
-                  onChange={(e) => setNewAutoTrigger(e.target.value)}
-                  className="h-8 rounded bg-[#040A1E] border border-[#322963] px-2 text-white text-[11px]"
+                  data-testid="new-auto-pg013-select"
+                  value={matchedNewRealAuto ? String(matchedNewRealAuto.id) : ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setNewAutoIdInput(val);
+                    const found = realAutomations.find((a) => String(a.id) === val);
+                    if (found && !newAutoTitle.trim()) {
+                      setNewAutoTitle(found.name.slice(0, 34));
+                    }
+                  }}
+                  className="w-full h-8.5 rounded-lg bg-[#050A20] border border-[#4C2F9E] px-2 text-white text-[11.5px]"
                 >
-                  {SUPPORTED_AUTOMATION_TRIGGERS.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
+                  <option value="">— Pick from Automations tool (PG-013) —</option>
+                  {realAutomations.map((ra) => (
+                    <option key={ra.id} value={String(ra.id)}>
+                      #{ra.id} — {ra.name} ({ra.isActive ? "Active" : "Draft"})
                     </option>
                   ))}
                 </select>
-                <select
-                  value={newAutoActionType}
-                  onChange={(e) => setNewAutoActionType(e.target.value as any)}
-                  className="h-8 rounded bg-[#040A1E] border border-[#322963] px-2 text-white text-[11px]"
-                >
-                  <option value="task">Create Task (Internal)</option>
-                  <option value="prepare_draft">Prepare Draft (Unsent)</option>
-                  <option value="email">Queue Email (Approval)</option>
-                  <option value="file">Assign Smart File</option>
-                </select>
+
+                {/* Direct Automation ID paste / entry field */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Hash className="w-3.5 h-3.5 text-[#A78BFA] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      data-testid="new-auto-id-input"
+                      value={newAutoIdInput}
+                      onChange={(e) => setNewAutoIdInput(e.target.value)}
+                      placeholder="Or enter Automation ID (e.g. 1004)"
+                      className="w-full h-8 rounded-lg bg-[#040A1E] border border-[#3E3278] focus:border-[#A78BFA] focus:outline-none pl-7 pr-2.5 text-xs font-mono text-[#FFF4D4]"
+                    />
+                  </div>
+                  {newAutoIdInput && (
+                    <button
+                      type="button"
+                      onClick={() => setNewAutoIdInput("")}
+                      className="h-8 px-2 rounded-lg bg-[#09122F] border border-[#2C245C] text-[10.5px] text-[#A89CC8] hover:text-white cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Live ID verification badge */}
+                {matchedNewRealAuto ? (
+                  <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-[#072226] border border-emerald-500/45 text-[11px] text-emerald-200">
+                    <span className="inline-flex items-center gap-1.5 min-w-0">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span className="truncate">
+                        <strong className="font-mono text-[#FFF4D4]">#{matchedNewRealAuto.id}</strong>{" "}
+                        · {matchedNewRealAuto.name}
+                      </span>
+                    </span>
+                    <span className="text-[10px] shrink-0 text-emerald-300/90">
+                      {matchedNewRealAuto.isActive ? "Active" : "Draft"}
+                    </span>
+                  </div>
+                ) : parsedNewAutoId ? (
+                  <p className="text-[10.5px] text-amber-300/90 bg-[#231907] border border-amber-500/35 rounded-lg px-2.5 py-1.5">
+                    ID <span className="font-mono">#{parsedNewAutoId}</span> wasn&apos;t found in loaded PG-013 rules yet — you can still link this ID now.
+                  </p>
+                ) : (
+                  <div className="space-y-2 pt-1">
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        value={newAutoTrigger}
+                        onChange={(e) => setNewAutoTrigger(e.target.value)}
+                        className="h-8 rounded bg-[#040A1E] border border-[#322963] px-2 text-white text-[11px]"
+                      >
+                        {SUPPORTED_AUTOMATION_TRIGGERS.map((t) => (
+                          <option key={t.value} value={t.value}>
+                            {t.label}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={newAutoActionType}
+                        onChange={(e) => setNewAutoActionType(e.target.value as any)}
+                        className="h-8 rounded bg-[#040A1E] border border-[#322963] px-2 text-white text-[11px]"
+                      >
+                        <option value="task">Create Task (Internal)</option>
+                        <option value="prepare_draft">Prepare Draft (Unsent)</option>
+                        <option value="email">Queue Email (Approval)</option>
+                        <option value="file">Assign Smart File</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-[11px] text-[#C8D7EC]">
+                      <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newAutoRequiresApproval}
+                          onChange={(e) => setNewAutoRequiresApproval(e.target.checked)}
+                        />
+                        <span>Requires approval</span>
+                      </label>
+                      <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={createLiveInEngine}
+                          onChange={(e) => setCreateLiveInEngine(e.target.checked)}
+                        />
+                        <span>Create new in PG-013</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center justify-between gap-2 pt-1 text-[11px] text-[#C8D7EC]">
-                <label className="inline-flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={newAutoRequiresApproval}
-                    onChange={(e) => setNewAutoRequiresApproval(e.target.checked)}
-                  />
-                  <span>Requires approval</span>
-                </label>
-                <label className="inline-flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={createLiveInEngine}
-                    onChange={(e) => setCreateLiveInEngine(e.target.checked)}
-                  />
-                  <span>Save in PG-013</span>
-                </label>
-              </div>
+
               <button
                 type="button"
+                data-testid="add-violet-automation-submit-btn"
                 disabled={saveRealAutomationMutation.isPending}
                 onClick={handleAddAutomation}
-                className="w-full h-8 rounded-lg bg-[#6D44D8] hover:bg-[#7C52E8] text-white font-semibold cursor-pointer disabled:opacity-50"
+                className="w-full h-9 rounded-lg bg-gradient-to-r from-[#7C3AED] to-[#6D44D8] hover:brightness-110 text-white font-semibold cursor-pointer disabled:opacity-50 shadow-md inline-flex items-center justify-center gap-1.5"
               >
-                {saveRealAutomationMutation.isPending ? "Saving..." : "+ Add Automation to Route"}
+                <Plus className="w-3.5 h-3.5" />
+                <span>
+                  {saveRealAutomationMutation.isPending
+                    ? "Saving..."
+                    : parsedNewAutoId
+                    ? `Add to Violet Line (Linked #${parsedNewAutoId})`
+                    : "Add to Violet Automation Line"}
+                </span>
               </button>
             </div>
 
-            {/* Existing Stage Automations */}
-            <div className="space-y-2">
-              {stage.automations.map((auto) => (
-                <div
-                  key={auto.id}
-                  className="p-2.5 rounded-xl bg-[#06112B] border border-[#2C255A] flex items-center justify-between gap-2"
-                >
-                  <div className="min-w-0">
-                    <p className="font-semibold text-white truncate">{auto.title}</p>
-                    <p className="text-[10.5px] text-[#A89CC8] truncate">
-                      {auto.triggerLabel} · {auto.requiresApproval ? "Approval required" : "Automatic"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onUpdateStage(stage.id, (prev) => ({
-                          ...prev,
-                          automations: prev.automations.map((a) =>
-                            a.id === auto.id ? { ...a, enabled: !a.enabled } : a
-                          ),
-                        }))
-                      }
-                      className={cn(
-                        "px-2 py-0.5 rounded text-[10px] font-semibold cursor-pointer border",
-                        auto.enabled
-                          ? "bg-emerald-950/60 border-emerald-500/45 text-emerald-300"
-                          : "bg-slate-900 border-slate-700 text-slate-400"
-                      )}
+            {/* Existing Violet Line Nodes on This Station — Full Inline Label & PG-013 ID Editing */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#A89CC8]">
+                  Nodes on {stage.name}&apos;s Violet Line ({stage.automations.length})
+                </span>
+              </div>
+
+              {stage.automations.length === 0 ? (
+                <p className="text-[11.5px] text-[#9FB2CE] italic p-3 rounded-lg bg-[#06112B] border border-[#182C54]">
+                  No violet automation nodes on this station yet. Pick a label and Automation ID above to draw this station&apos;s violet automation line.
+                </p>
+              ) : (
+                stage.automations.map((auto) => {
+                  const linked = auto.automationId
+                    ? realAutomations.find((r) => r.id === auto.automationId) || null
+                    : null;
+
+                  return (
+                    <div
+                      key={auto.id}
+                      data-testid={`stage-auto-card-${auto.id}`}
+                      className="p-3 rounded-xl bg-[#06112B] border border-[#342868] space-y-2.5"
                     >
-                      {auto.enabled ? "On" : "Off"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onUpdateStage(stage.id, (prev) => ({
-                          ...prev,
-                          automations: prev.automations.filter((a) => a.id !== auto.id),
-                        }))
-                      }
-                      className="text-rose-400 hover:text-rose-300 cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-[#C4B5FD]">
+                          {auto.automationId ? `Connected · ID #${auto.automationId}` : "Unlinked Violet Node"}
+                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {linked && onNavigate && (
+                            <button
+                              type="button"
+                              onClick={() => onNavigate(`/automations?id=${linked.id}`)}
+                              className="px-2 py-0.5 rounded bg-[#140F34] hover:bg-[#231957] border border-[#7C3AED]/55 text-[10px] text-[#DDD6FE] inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>Open #{linked.id}</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpdateStage(stage.id, (prev) => ({
+                                ...prev,
+                                automations: prev.automations.map((a) =>
+                                  a.id === auto.id ? { ...a, enabled: !a.enabled } : a
+                                ),
+                              }))
+                            }
+                            className={cn(
+                              "px-2 py-0.5 rounded text-[10px] font-semibold cursor-pointer border",
+                              auto.enabled
+                                ? "bg-emerald-950/60 border-emerald-500/45 text-emerald-300"
+                                : "bg-slate-900 border-slate-700 text-slate-400"
+                            )}
+                          >
+                            {auto.enabled ? "On" : "Off"}
+                          </button>
+                          <button
+                            type="button"
+                            title="Remove automation node"
+                            onClick={() =>
+                              onUpdateStage(stage.id, (prev) => ({
+                                ...prev,
+                                automations: prev.automations.filter((a) => a.id !== auto.id),
+                              }))
+                            }
+                            className="text-rose-400 hover:text-rose-300 cursor-pointer p-0.5"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Editable Map Label */}
+                      <div>
+                        <label className="text-[9.5px] uppercase tracking-wider text-[#9BB0CE] block mb-1">
+                          Map Label
+                        </label>
+                        <input
+                          type="text"
+                          value={auto.title}
+                          onChange={(e) =>
+                            onUpdateStage(stage.id, (prev) => ({
+                              ...prev,
+                              automations: prev.automations.map((a) =>
+                                a.id === auto.id ? { ...a, title: e.target.value } : a
+                              ),
+                            }))
+                          }
+                          className="w-full h-8 rounded-lg bg-[#040C20] border border-[#243B64] focus:border-[#A78BFA] focus:outline-none px-2.5 text-white font-semibold text-xs"
+                        />
+                      </div>
+
+                      {/* Editable Connected PG-013 Automation ID (Picker + Direct ID Input) */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9.5px] uppercase tracking-wider text-[#9BB0CE] block">
+                          Linked PG-013 Automation ID
+                        </label>
+                        <div className="grid grid-cols-[1fr_92px] gap-1.5">
+                          <select
+                            value={linked ? String(linked.id) : ""}
+                            onChange={(e) => {
+                              const nextId = parseAutomationIdInput(e.target.value);
+                              const found = nextId
+                                ? realAutomations.find((r) => r.id === nextId) || null
+                                : null;
+                              onUpdateStage(stage.id, (prev) => ({
+                                ...prev,
+                                automations: prev.automations.map((a) =>
+                                  a.id === auto.id
+                                    ? {
+                                        ...a,
+                                        automationId: nextId,
+                                        ...(found
+                                          ? {
+                                              triggerEvent: found.triggerEvent,
+                                              triggerLabel: found.triggerEvent.replace(/_/g, " "),
+                                              actionSummary:
+                                                found.steps.map((s: any) => s.title).join(" → ") ||
+                                                found.name,
+                                            }
+                                          : {}),
+                                      }
+                                    : a
+                                ),
+                              }));
+                            }}
+                            className="h-8 rounded-lg bg-[#040C20] border border-[#2E2A64] px-2 text-[11px] text-[#EDE4FF]"
+                          >
+                            <option value="">Not linked to PG-013</option>
+                            {realAutomations.map((ra) => (
+                              <option key={ra.id} value={String(ra.id)}>
+                                #{ra.id} — {ra.name}
+                              </option>
+                            ))}
+                          </select>
+
+                          <div className="relative">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-mono text-[#A78BFA]">
+                              #
+                            </span>
+                            <input
+                              type="text"
+                              value={auto.automationId ? String(auto.automationId) : ""}
+                              placeholder="ID"
+                              onChange={(e) => {
+                                const nextId = parseAutomationIdInput(e.target.value);
+                                const found = nextId
+                                  ? realAutomations.find((r) => r.id === nextId) || null
+                                  : null;
+                                onUpdateStage(stage.id, (prev) => ({
+                                  ...prev,
+                                  automations: prev.automations.map((a) =>
+                                    a.id === auto.id
+                                      ? {
+                                          ...a,
+                                          automationId: nextId,
+                                          ...(found
+                                            ? {
+                                                triggerEvent: found.triggerEvent,
+                                                triggerLabel: found.triggerEvent.replace(/_/g, " "),
+                                                actionSummary:
+                                                  found.steps.map((s: any) => s.title).join(" → ") ||
+                                                  found.name,
+                                              }
+                                            : {}),
+                                        }
+                                      : a
+                                  ),
+                                }));
+                              }}
+                              className="w-full h-8 rounded-lg bg-[#040C20] border border-[#2E2A64] focus:border-[#A78BFA] focus:outline-none pl-5 pr-2 text-xs font-mono text-[#FFF4D4]"
+                            />
+                          </div>
+                        </div>
+                        {linked && (
+                          <p className="text-[10.5px] text-emerald-300/90 truncate">
+                            ✓ Linked to #{linked.id}: {linked.name} ({linked.isActive ? "Active" : "Draft"})
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </>
         )}

@@ -216,6 +216,26 @@ export function CircularDimensionalStation({
         strokeWidth={0.85}
       />
 
+      {/* Sleek Recessed Left & Right Monorail Tunnel Portals (where the train glides in & out) */}
+      <g pointerEvents="none">
+        {/* Left tunnel aperture */}
+        <path
+          d="M -32.8 -6.5 C -29.2 -6.5, -28.4 -3.2, -28.4 1.5 L -28.4 7.8 C -30.5 7.4, -32.1 6.7, -32.8 5.9 Z"
+          fill="#020510"
+          stroke="#C9A55A"
+          strokeOpacity={0.78}
+          strokeWidth={0.9}
+        />
+        {/* Right tunnel aperture */}
+        <path
+          d="M 32.8 -6.5 C 29.2 -6.5, 28.4 -3.2, 28.4 1.5 L 28.4 7.8 C 30.5 7.4, 32.1 6.7, 32.8 5.9 Z"
+          fill="#020510"
+          stroke="#C9A55A"
+          strokeOpacity={0.78}
+          strokeWidth={0.9}
+        />
+      </g>
+
       {/* Lower plinth specular rim line */}
       <path
         d="M -28 11.2 A 32.5 18 0 0 0 28 11.2"
@@ -659,22 +679,30 @@ export function AutomationBranch({
               </g>
             )}
 
-            {/* Crisp UI label */}
-            <foreignObject x={-64} y={17} width={128} height={36} className="pointer-events-none overflow-visible">
+            {/* Crisp UI label + linked PG-013 Automation ID */}
+            <foreignObject x={-68} y={17} width={136} height={42} className="pointer-events-none overflow-visible">
               <div className="text-center leading-tight">
                 <p className="text-[10.5px] font-medium text-[#EDE4FF] line-clamp-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                   {auto.title}
                 </p>
-                <p className="text-[8.5px] text-[#B4A6D6]">
-                  {isFailed
-                    ? "Failed · Retry"
-                    : isDisabled
-                    ? "Disabled"
-                    : auto.communicationMode === "prepare_draft"
-                    ? "Draft only"
-                    : isApproval
-                    ? "Approval req."
-                    : "Automatic"}
+                <p className="text-[8.5px] text-[#B4A6D6] flex items-center justify-center gap-1">
+                  {auto.automationId ? (
+                    <span className="font-mono text-[#E5C784] font-semibold">
+                      #{auto.automationId}
+                    </span>
+                  ) : null}
+                  <span>
+                    {auto.automationId ? "· " : ""}
+                    {isFailed
+                      ? "Failed · Retry"
+                      : isDisabled
+                      ? "Disabled"
+                      : auto.communicationMode === "prepare_draft"
+                      ? "Draft only"
+                      : isApproval
+                      ? "Approval req."
+                      : "Automatic"}
+                  </span>
                 </p>
               </div>
             </foreignObject>

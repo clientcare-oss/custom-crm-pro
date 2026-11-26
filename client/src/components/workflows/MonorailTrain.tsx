@@ -34,33 +34,61 @@ interface CarPose {
 function sampleCarPoses(
   pathEl: SVGPathElement | null,
   fraction: number,
-  carSpacing = 26.5
-): [CarPose, CarPose, CarPose] | null {
+  carSpacing = 33
+): [CarPose, CarPose, CarPose, CarPose] | null {
   if (!pathEl) return null;
   try {
     const total = pathEl.getTotalLength();
     if (!Number.isFinite(total) || total <= 1) return null;
 
-    // Keep all 3 articulated cars strictly inside valid path bounds
-    const padFrac = Math.min(0.09, (carSpacing * 1.45) / total);
-    const clamped = Math.max(padFrac, Math.min(1 - padFrac, fraction));
+    // Allow the 4-car train to stop dead center on Station 0 (fraction=0) and Last Station (fraction=1)
+    // by extrapolating smoothly along the terminal track tangents so full nose & tail cars peek out cleanly!
+    const clamped = Math.max(0, Math.min(1, fraction));
     const centerDist = clamped * total;
 
     const sampleAt = (dist: number): CarPose => {
-      const d = Math.max(1, Math.min(total - 1, dist));
-      const p = pathEl.getPointAtLength(d);
-      const pAhead = pathEl.getPointAtLength(Math.min(total, d + 3.2));
-      const pBehind = pathEl.getPointAtLength(Math.max(0, d - 3.2));
+      if (dist < 0) {
+        const p0 = pathEl.getPointAtLength(0);
+        const p1 = pathEl.getPointAtLength(Math.min(total, 4));
+        const dx = p1.x - p0.x;
+        const dy = p1.y - p0.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+        return {
+          x: p0.x + (dx / len) * dist,
+          y: p0.y + (dy / len) * dist,
+          angleDeg,
+        };
+      }
+      if (dist > total) {
+        const p0 = pathEl.getPointAtLength(Math.max(0, total - 4));
+        const p1 = pathEl.getPointAtLength(total);
+        const dx = p1.x - p0.x;
+        const dy = p1.y - p0.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const extra = dist - total;
+        const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+        return {
+          x: p1.x + (dx / len) * extra,
+          y: p1.y + (dy / len) * extra,
+          angleDeg,
+        };
+      }
+      const p = pathEl.getPointAtLength(dist);
+      const pAhead = pathEl.getPointAtLength(Math.min(total, dist + 3.2));
+      const pBehind = pathEl.getPointAtLength(Math.max(0, dist - 3.2));
       const angleDeg =
         (Math.atan2(pAhead.y - pBehind.y, pAhead.x - pBehind.x) * 180) / Math.PI;
       return { x: p.x, y: p.y, angleDeg };
     };
 
-    // 3 independently tangent-aligned articulated sections: forward nose, center cabin, rear nose
+    // 4 independently tangent-aligned articulated cars:
+    // forward bullet nose, front-middle cabin, rear-middle cabin, rear bullet nose
     return [
-      sampleAt(centerDist + carSpacing),
-      sampleAt(centerDist),
-      sampleAt(centerDist - carSpacing),
+      sampleAt(centerDist + carSpacing * 1.5),
+      sampleAt(centerDist + carSpacing * 0.5),
+      sampleAt(centerDist - carSpacing * 0.5),
+      sampleAt(centerDist - carSpacing * 1.5),
     ];
   } catch {
     return null;
@@ -226,10 +254,11 @@ export function MonorailTrain({
     };
   }, [targetFraction, demoPlaying, reducedMotion, pathElement]);
 
-  const poses = sampleCarPoses(pathElement, currentFraction, 26.5);
+  const poses = sampleCarPoses(pathElement, currentFraction, 33);
   if (!poses) return null;
 
-  const [frontCar, middleCar, rearCar] = poses;
+  const [frontCar, midFrontCar, midRearCar, rearCar] = poses;
+  const carScale = 1.16;
   const hullGradId = `train-hull-${trainId}`;
   const skirtGradId = `train-skirt-${trainId}`;
   const roofSheenId = `train-roof-${trainId}`;
@@ -243,16 +272,22 @@ export function MonorailTrain({
   const rimColor = hovered ? "#FFF4D4" : "#A9BCD9";
   const isMovingForward = travelDir === 1;
 
-  // Compute midpoint for articulated bellows ribs
-  const midBackX = (rearCar.x + middleCar.x) / 2;
-  const midBackY = (rearCar.y + middleCar.y) / 2;
-  const midBackAngle =
-    (Math.atan2(middleCar.y - rearCar.y, middleCar.x - rearCar.x) * 180) / Math.PI;
+  // Compute midpoints for all 3 articulated ribbed gangway bellows
+  const bellowsList = [
+    { a: rearCar, b: midRearCar, key: "b1" },
+    { a: midRearCar, b: midFrontCar, key: "b2" },
+    { a: midFrontCar, b: frontCar, key: "b3" },
+  ].map(({ a, b, key }) => ({
+    key,
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2,
+    angleDeg: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI,
+  }));
 
-  const midFrontX = (middleCar.x + frontCar.x) / 2;
-  const midFrontY = (middleCar.y + frontCar.y) / 2;
-  const midFrontAngle =
-    (Math.atan2(frontCar.y - middleCar.y, frontCar.x - middleCar.x) * 180) / Math.PI;
+  const centerAnchorX = (midFrontCar.x + midRearCar.x) / 2;
+  const centerAnchorY = (midFrontCar.y + midRearCar.y) / 2;
+  const centerAnchorAngle =
+    (Math.atan2(midFrontCar.y - midRearCar.y, midFrontCar.x - midRearCar.x) * 180) / Math.PI;
 
   return (
     <g
@@ -344,42 +379,35 @@ export function MonorailTrain({
         </linearGradient>
       </defs>
 
-      {/* Generous accessible hit target centered on the train */}
-      <g transform={`translate(${middleCar.x}, ${middleCar.y}) rotate(${middleCar.angleDeg})`}>
-        <rect x={-52} y={-22} width={104} height={44} rx={14} fill="transparent" />
+      {/* Generous accessible hit target centered on the 4-car train */}
+      <g transform={`translate(${centerAnchorX}, ${centerAnchorY}) rotate(${centerAnchorAngle})`}>
+        <rect x={-76} y={-24} width={152} height={48} rx={14} fill="transparent" />
       </g>
 
       {/* Soft Contact Ambient Occlusion directly along the rail underside */}
       <path
-        d={`M ${rearCar.x} ${rearCar.y + 3.2} Q ${middleCar.x} ${middleCar.y + 3.6} ${frontCar.x} ${frontCar.y + 3.2}`}
+        d={`M ${rearCar.x} ${rearCar.y + 3.8} L ${midRearCar.x} ${midRearCar.y + 4.0} L ${midFrontCar.x} ${midFrontCar.y + 4.0} L ${frontCar.x} ${frontCar.y + 3.8}`}
         fill="none"
         stroke="#00030C"
-        strokeOpacity={0.72}
-        strokeWidth={11}
+        strokeOpacity={0.75}
+        strokeWidth={12.5}
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
 
-      {/* ── ARTICULATED ACCORDION GANGWAY BELLOWS (Rear <-> Center) ── */}
-      <g transform={`translate(${midBackX}, ${midBackY}) rotate(${midBackAngle})`}>
-        <rect x={-5.5} y={-5.4} width={11} height={10.8} rx={1.6} fill="#081126" stroke="#23375E" strokeWidth={0.55} />
-        <line x1={-2.6} y1={-5.1} x2={-2.6} y2={5.1} stroke="#364E7C" strokeWidth={0.7} />
-        <line x1={0} y1={-5.1} x2={0} y2={5.1} stroke="#1B2D52" strokeWidth={0.85} />
-        <line x1={2.6} y1={-5.1} x2={2.6} y2={5.1} stroke="#364E7C" strokeWidth={0.7} />
-        {/* Roof fairing bridge */}
-        <line x1={-4.5} y1={-4.6} x2={4.5} y2={-4.6} stroke="#8EA5C7" strokeOpacity={0.45} strokeWidth={0.9} />
-      </g>
-
-      {/* ── ARTICULATED ACCORDION GANGWAY BELLOWS (Center <-> Front) ── */}
-      <g transform={`translate(${midFrontX}, ${midFrontY}) rotate(${midFrontAngle})`}>
-        <rect x={-5.5} y={-5.4} width={11} height={10.8} rx={1.6} fill="#081126" stroke="#23375E" strokeWidth={0.55} />
-        <line x1={-2.6} y1={-5.1} x2={-2.6} y2={5.1} stroke="#364E7C" strokeWidth={0.7} />
-        <line x1={0} y1={-5.1} x2={0} y2={5.1} stroke="#1B2D52" strokeWidth={0.85} />
-        <line x1={2.6} y1={-5.1} x2={2.6} y2={5.1} stroke="#364E7C" strokeWidth={0.7} />
-        <line x1={-4.5} y1={-4.6} x2={4.5} y2={-4.6} stroke="#8EA5C7" strokeOpacity={0.45} strokeWidth={0.9} />
-      </g>
+      {/* ── 3 ARTICULATED ACCORDION GANGWAY BELLOWS (Rear <-> MidRear <-> MidFront <-> Front) ── */}
+      {bellowsList.map((bel) => (
+        <g key={bel.key} transform={`translate(${bel.x}, ${bel.y}) rotate(${bel.angleDeg}) scale(${carScale})`}>
+          <rect x={-5.8} y={-5.4} width={11.6} height={10.8} rx={1.6} fill="#081126" stroke="#23375E" strokeWidth={0.55} />
+          <line x1={-2.8} y1={-5.1} x2={-2.8} y2={5.1} stroke="#364E7C" strokeWidth={0.7} />
+          <line x1={0} y1={-5.1} x2={0} y2={5.1} stroke="#1B2D52" strokeWidth={0.85} />
+          <line x1={2.8} y1={-5.1} x2={2.8} y2={5.1} stroke="#364E7C" strokeWidth={0.7} />
+          <line x1={-4.6} y1={-4.6} x2={4.6} y2={-4.6} stroke="#8EA5C7" strokeOpacity={0.45} strokeWidth={0.9} />
+        </g>
+      ))}
 
       {/* ── REAR STREAMLINED BULLET CAR ── */}
-      <g transform={`translate(${rearCar.x}, ${rearCar.y}) rotate(${rearCar.angleDeg})`}>
+      <g transform={`translate(${rearCar.x}, ${rearCar.y}) rotate(${rearCar.angleDeg}) scale(${carScale})`}>
         {/* Direction-aware volumetric LED headlight cone when traveling in reverse */}
         {!isMovingForward && (
           <path d="M -18.5 -2.2 L -44 -8.2 L -44 8.2 L -18.5 2.2 Z" fill={`url(#${beamRearId})`} pointerEvents="none" />
@@ -440,49 +468,54 @@ export function MonorailTrain({
         )}
       </g>
 
-      {/* ── CENTER ARTICULATED PASSENGER CABIN CAR ── */}
-      <g transform={`translate(${middleCar.x}, ${middleCar.y}) rotate(${middleCar.angleDeg})`}>
-        {/* Sculpted Cylindrical Metallic Cabin Body */}
-        <rect
-          x={-13.2}
-          y={-6.8}
-          width={26.4}
-          height={13.4}
-          rx={2.2}
-          fill={`url(#${hullGradId})`}
-          stroke={rimColor}
-          strokeWidth={hovered ? 0.95 : 0.55}
-        />
+      {/* ── TWO CENTER ARTICULATED PASSENGER CABIN CARS ── */}
+      {[
+        { pose: midRearCar, key: "mid-rear" },
+        { pose: midFrontCar, key: "mid-front" },
+      ].map(({ pose, key }) => (
+        <g key={key} transform={`translate(${pose.x}, ${pose.y}) rotate(${pose.angleDeg}) scale(${carScale})`}>
+          {/* Sculpted Cylindrical Metallic Cabin Body */}
+          <rect
+            x={-13.2}
+            y={-6.8}
+            width={26.4}
+            height={13.4}
+            rx={2.2}
+            fill={`url(#${hullGradId})`}
+            stroke={rimColor}
+            strokeWidth={hovered ? 0.95 : 0.55}
+          />
 
-        {/* Lower Midnight-Navy Straddle Skirt */}
-        <rect x={-12.9} y={3.4} width={25.8} height={3.0} rx={1} fill={`url(#${skirtGradId})`} />
+          {/* Lower Midnight-Navy Straddle Skirt */}
+          <rect x={-12.9} y={3.4} width={25.8} height={3.0} rx={1} fill={`url(#${skirtGradId})`} />
 
-        {/* Continuous Smoked Panoramic Window Band */}
-        <rect x={-11.8} y={-3.9} width={23.6} height={5.0} rx={1.1} fill={`url(#${glassGradId})`} />
-        {/* 3 Warmly Lit Flush Cabin Panes */}
-        <rect x={-10.7} y={-2.9} width={6.3} height={3.3} rx={0.7} fill={`url(#${cabinGlowId})`} />
-        <rect x={-3.1} y={-2.9} width={6.2} height={3.3} rx={0.7} fill={`url(#${cabinGlowId})`} />
-        <rect x={4.4} y={-2.9} width={6.3} height={3.3} rx={0.7} fill={`url(#${cabinGlowId})`} />
-        {/* Ultra-thin Flush Window Mullions */}
-        <line x1={-3.8} y1={-3.8} x2={-3.8} y2={1.1} stroke="#060E21" strokeWidth={1.05} />
-        <line x1={3.8} y1={-3.8} x2={3.8} y2={1.1} stroke="#060E21" strokeWidth={1.05} />
-        {/* Glass Sky Reflection Streaks */}
-        <path d="M -8.6 -2.9 L -6.2 0.2 M -0.8 -2.9 L 1.6 0.2 M 6.8 -2.9 L 9.2 0.2" stroke="#DCEBFF" strokeOpacity={0.28} strokeWidth={0.85} strokeLinecap="round" />
+          {/* Continuous Smoked Panoramic Window Band */}
+          <rect x={-11.8} y={-3.9} width={23.6} height={5.0} rx={1.1} fill={`url(#${glassGradId})`} />
+          {/* 3 Warmly Lit Flush Cabin Panes */}
+          <rect x={-10.7} y={-2.9} width={6.3} height={3.3} rx={0.7} fill={`url(#${cabinGlowId})`} />
+          <rect x={-3.1} y={-2.9} width={6.2} height={3.3} rx={0.7} fill={`url(#${cabinGlowId})`} />
+          <rect x={4.4} y={-2.9} width={6.3} height={3.3} rx={0.7} fill={`url(#${cabinGlowId})`} />
+          {/* Ultra-thin Flush Window Mullions */}
+          <line x1={-3.8} y1={-3.8} x2={-3.8} y2={1.1} stroke="#060E21" strokeWidth={1.05} />
+          <line x1={3.8} y1={-3.8} x2={3.8} y2={1.1} stroke="#060E21" strokeWidth={1.05} />
+          {/* Glass Sky Reflection Streaks */}
+          <path d="M -8.6 -2.9 L -6.2 0.2 M -0.8 -2.9 L 1.6 0.2 M 6.8 -2.9 L 9.2 0.2" stroke="#DCEBFF" strokeOpacity={0.28} strokeWidth={0.85} strokeLinecap="round" />
 
-        {/* Roof Metallic Crown Specular Line & Aero Pod */}
-        <line x1={-11.5} y1={-5.6} x2={11.5} y2={-5.6} stroke={`url(#${roofSheenId})`} strokeWidth={1.3} strokeLinecap="round" />
-        <rect x={-5.5} y={-6.4} width={11} height={1.15} rx={0.55} fill="#8FA6C9" opacity={0.45} />
+          {/* Roof Metallic Crown Specular Line & Aero Pod */}
+          <line x1={-11.5} y1={-5.6} x2={11.5} y2={-5.6} stroke={`url(#${roofSheenId})`} strokeWidth={1.3} strokeLinecap="round" />
+          <rect x={-5.5} y={-6.4} width={11} height={1.15} rx={0.55} fill="#8FA6C9" opacity={0.45} />
 
-        {/* Brushed Champagne-Gold Livery Stripe */}
-        <line x1={-12.4} y1={3.3} x2={12.4} y2={3.3} stroke={`url(#${goldTrimId})`} strokeWidth={1.35} />
+          {/* Brushed Champagne-Gold Livery Stripe */}
+          <line x1={-12.4} y1={3.3} x2={12.4} y2={3.3} stroke={`url(#${goldTrimId})`} strokeWidth={1.35} />
 
-        {/* Subtle Flush Boarding Door Seams */}
-        <line x1={-10.2} y1={-4.6} x2={-10.2} y2={5.5} stroke="#0E1D3B" strokeOpacity={0.5} strokeWidth={0.55} />
-        <line x1={10.2} y1={-4.6} x2={10.2} y2={5.5} stroke="#0E1D3B" strokeOpacity={0.5} strokeWidth={0.55} />
-      </g>
+          {/* Subtle Flush Boarding Door Seams */}
+          <line x1={-10.2} y1={-4.6} x2={-10.2} y2={5.5} stroke="#0E1D3B" strokeOpacity={0.5} strokeWidth={0.55} />
+          <line x1={10.2} y1={-4.6} x2={10.2} y2={5.5} stroke="#0E1D3B" strokeOpacity={0.5} strokeWidth={0.55} />
+        </g>
+      ))}
 
       {/* ── FRONT AERODYNAMIC BULLET NOSE CAR ── */}
-      <g transform={`translate(${frontCar.x}, ${frontCar.y}) rotate(${frontCar.angleDeg})`}>
+      <g transform={`translate(${frontCar.x}, ${frontCar.y}) rotate(${frontCar.angleDeg}) scale(${carScale})`}>
         {/* Direction-aware volumetric LED headlight beam illuminating the gold rail ahead */}
         {isMovingForward && (
           <path d="M 18.5 -2.2 L 46 -8.4 L 46 8.4 L 18.5 2.2 Z" fill={`url(#${beamForwardId})`} pointerEvents="none" />
@@ -545,9 +578,9 @@ export function MonorailTrain({
         )}
       </g>
 
-      {/* Subtle floating badge on hover or for live Case Train */}
+      {/* Subtle floating badge near exposed lead nose (stays visible outside tunnel station dome!) */}
       {(hovered || variant === "case") && (
-        <g transform={`translate(${middleCar.x}, ${middleCar.y - 25})`}>
+        <g transform={`translate(${(isMovingForward ? frontCar : rearCar).x}, ${(isMovingForward ? frontCar : rearCar).y - 21})`}>
           <rect
             x={-Math.max(32, shortBadge.length * 3.7 + 12)}
             y={-10}

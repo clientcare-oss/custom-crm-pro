@@ -1372,6 +1372,26 @@ export default function Automations() {
                       )}
                     </div>
 
+                    {/* Copyable Automation ID pill for linking from Workflow Designer Monorail */}
+                    {!selectedAutomation.id.startsWith("auto-") && !selectedAutomation.id.startsWith("showcase-") ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(String(selectedAutomation.id)).catch(() => {});
+                          toast.success(`Copied Automation ID #${selectedAutomation.id} — paste into Monorail to link.`);
+                        }}
+                        title="Click to copy Automation ID for linking in Workflow Designer Monorail"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#160F34] hover:bg-[#261858] border border-[#8B5CF6]/55 text-[11px] font-mono text-[#E9D5FF] cursor-pointer shrink-0"
+                      >
+                        <Copy className="w-3 h-3 text-[#C4B5FD]" />
+                        <span>ID #{selectedAutomation.id}</span>
+                      </button>
+                    ) : (
+                      <span className="text-[10px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-900/70 border border-white/10 shrink-0">
+                        Save to assign ID
+                      </span>
+                    )}
+
                     {/* Active switch */}
                     <div className="h-4 w-px bg-white/10 mx-1" />
                     <label className="relative inline-flex items-center cursor-pointer scale-90">

@@ -691,22 +691,35 @@ export function StationGuideAndInspectDrawer({
               {linkedRealAuto.name} ({linkedRealAuto.isActive ? "Active" : "Paused Draft"} ·{" "}
               {linkedRealAuto.steps.length} step(s))
             </p>
-            <button
-              type="button"
-              onClick={() => onNavigate("/automations")}
-              className="text-[11px] text-[#C4B5FD] hover:text-white inline-flex items-center gap-1 cursor-pointer"
-            >
-              <span>Inspect in Automations Engine (PG-013)</span>
-              <ExternalLink className="w-3 h-3" />
-            </button>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => onNavigate(`/automations?id=${linkedRealAuto.id}`)}
+                className="text-[11px] text-[#C4B5FD] hover:text-white inline-flex items-center gap-1 cursor-pointer"
+              >
+                <span>Open #{linkedRealAuto.id} in Automations (PG-013)</span>
+                <ExternalLink className="w-3 h-3" />
+              </button>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => onOpenStageEditor(stage, "automations")}
+                  className="ml-auto px-2.5 py-1 rounded-md bg-[#16103A] hover:bg-[#24195C] border border-[#8B5CF6]/55 text-[#E9D5FF] text-[10.5px] font-semibold cursor-pointer"
+                >
+                  Edit Label / ID
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="p-3 rounded-xl bg-[#1A1309] border border-[#C9A55A]/45 text-xs space-y-2">
             <p className="font-semibold text-[#F5E3B8]">
-              Design Node — Not Yet Linked to a Live PG-013 Rule
+              {autoLink.automationId
+                ? `Linked to Automation ID #${autoLink.automationId} (not found in current PG-013 list)`
+                : "Design Node — Not Yet Linked to a Live PG-013 Automation ID"}
             </p>
             <p className="text-[11px] text-[#C8B99B] leading-relaxed">
-              This node documents the intended automation. Connect or create a live rule in the Automations Engine to execute it on real stage transitions.
+              Connect this violet node&apos;s label to the actual ID of an automation you created in the Automations tool (PG-013).
             </p>
             {canEdit && (
               <button
@@ -714,7 +727,7 @@ export function StationGuideAndInspectDrawer({
                 onClick={() => onOpenStageEditor(stage, "automations")}
                 className="px-3 py-1.5 rounded-lg bg-gradient-to-b from-[#DFC07C] to-[#9E7C3A] text-[#061028] font-bold text-[11px] cursor-pointer"
               >
-                Connect Live Automation Rule
+                Edit Label &amp; Connect Automation ID
               </button>
             )}
           </div>

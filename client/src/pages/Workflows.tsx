@@ -627,31 +627,40 @@ export default function Workflows() {
   };
 
   const handleQuickAddAutomation = (stageId: string) => {
-    commitMonorailDocEdit((prev) => ({
-      ...prev,
-      stages: prev.stages.map((s) => {
-        if (s.id !== stageId) return s;
-        return {
-          ...s,
-          automations: [
-            ...s.automations,
-            {
-              id: `${stageId}-auto-${Date.now()}`,
-              automationId: null,
-              title: "Create follow-up task",
-              triggerLabel: "Stage entered",
-              triggerEvent: "stage_changed",
-              conditionSummary: `Stage equals "${s.name}"`,
-              actionType: "task",
-              actionSummary: "Create internal checklist task for assigned advocate",
-              requiresApproval: false,
-              enabled: true,
-              communicationMode: "internal_only",
-            },
-          ],
-        };
-      }),
-    }));
+    commitMonorailDocEdit((prev) => {
+      const existingExpanded = prev.monorailVisualPrefs?.expandedAutomationStageIds || [];
+      return {
+        ...prev,
+        monorailVisualPrefs: {
+          ...(prev.monorailVisualPrefs || {}),
+          expandedAutomationStageIds: existingExpanded.includes(stageId)
+            ? existingExpanded
+            : [...existingExpanded, stageId],
+        },
+        stages: prev.stages.map((s) => {
+          if (s.id !== stageId) return s;
+          return {
+            ...s,
+            automations: [
+              ...s.automations,
+              {
+                id: `${stageId}-auto-${Date.now()}`,
+                automationId: null,
+                title: "Create follow-up task",
+                triggerLabel: "Stage entered",
+                triggerEvent: "stage_changed",
+                conditionSummary: `Stage equals "${s.name}"`,
+                actionType: "task",
+                actionSummary: "Create internal checklist task for assigned advocate",
+                requiresApproval: false,
+                enabled: true,
+                communicationMode: "internal_only",
+              },
+            ],
+          };
+        }),
+      };
+    });
     setSelectedStageId(stageId);
     setInspectDrawer({ kind: "none" });
     setRouteEditor({ open: true, stageId, tab: "automations" });
@@ -1205,6 +1214,10 @@ export default function Workflows() {
                 setInspectDrawer({ kind: "none" });
                 setRouteEditor({ open: true, stageId: stage.id, tab: "stage" });
               }}
+              onOpenAutomationsEditor={(stage) => {
+                setInspectDrawer({ kind: "none" });
+                setRouteEditor({ open: true, stageId: stage.id, tab: "automations" });
+              }}
               onAddStageInline={handleAddStage}
               onQuickAddGuideStep={handleQuickAddGuideStep}
               onQuickAddAutomation={handleQuickAddAutomation}
@@ -1361,6 +1374,20 @@ export default function Workflows() {
                 approvalGates: prev.approvalGates.filter((g) => g.id !== gateId),
               }))
             }
+            onExpandAutomationBranch={(stageId) =>
+              commitMonorailDocEdit((prev) => {
+                const existing = prev.monorailVisualPrefs?.expandedAutomationStageIds || [];
+                if (existing.includes(stageId)) return prev;
+                return {
+                  ...prev,
+                  monorailVisualPrefs: {
+                    ...(prev.monorailVisualPrefs || {}),
+                    expandedAutomationStageIds: [...existing, stageId],
+                  },
+                };
+              }, false)
+            }
+            onNavigate={(path) => setLocation(path)}
             onRefreshContext={() => refetchContext()}
           />
         </div>
