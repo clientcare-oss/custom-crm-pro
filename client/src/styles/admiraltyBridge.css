@@ -154,6 +154,20 @@
     inset 0 -2px 6px rgba(0, 0, 0, 0.56);
 }
 
+/* Centered warm glow when monorail carriage is in collapsed icon-rail mode */
+.adm-nav-monorail-collapsed.adm-nav-active {
+  background:
+    radial-gradient(circle 22px at 50% 50%, rgba(250, 204, 108, 0.36) 0%, rgba(224, 174, 82, 0.1) 58%, transparent 100%) padding-box,
+    radial-gradient(ellipse 92% 96% at 50% -18%, rgba(68, 104, 150, 0.66) 0%, rgba(28, 54, 90, 0.3) 54%, transparent 100%) padding-box,
+    linear-gradient(180deg, #1d3656 0%, #112540 54%, #0b192d 100%) padding-box,
+    linear-gradient(180deg,
+      rgba(255, 246, 214, 0.96) 0%,
+      rgba(208, 172, 102, 0.72) 22%,
+      rgba(138, 108, 56, 0.58) 52%,
+      rgba(196, 158, 90, 0.74) 78%,
+      rgba(248, 222, 156, 0.96) 100%) border-box !important;
+}
+
 /* Soft fine calfskin leather grain directly over the active pill face */
 .adm-nav-active::before {
   content: "";
@@ -240,8 +254,14 @@
   scroll-snap-type: y mandatory;
   scroll-padding-top: var(--adm-nav-pad, 3px);
   scroll-padding-bottom: var(--adm-nav-pad, 3px);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(214, 180, 108, 0.28) transparent;
+}
+
+/* Firefox-only fallback so Chromium honors ::-webkit-scrollbar instead of drawing a wide system gray scrollbar */
+@supports not selector(::-webkit-scrollbar) {
+  .adm-sidebar-nav-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(214, 180, 108, 0.28) transparent;
+  }
 }
 
 .adm-sidebar-nav-scroll::-webkit-scrollbar {
@@ -259,6 +279,18 @@
 
 .adm-sidebar-nav-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(236, 202, 128, 0.52);
+}
+
+/* Collapsed icon-rail mode: hide scrollbar visually so icons stay dead-centered with zero right-edge clipping */
+.adm-sidebar-nav-scroll-collapsed {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+}
+
+.adm-sidebar-nav-scroll-collapsed::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .adm-sidebar-nav-item {
