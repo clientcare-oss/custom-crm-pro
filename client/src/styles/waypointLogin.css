@@ -4,18 +4,14 @@
 
 .wp-login-stage {
   position: relative;
-  min-height: 100vh;
-  width: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
   background-color: #06101e;
   font-family: "Libre Baskerville", Georgia, serif;
 }
 
-/* Full-bleed photorealistic study desk photograph */
+/* Full-bleed photorealistic study desk photograph — 50% 24% framing preserves 100% of brass lamp dome & desk props */
 .wp-login-backdrop {
   position: fixed;
   inset: 0;
@@ -23,7 +19,7 @@
   pointer-events: none;
   background-image: url("/assets/login/waypoint-desk-scene.jpg");
   background-size: cover;
-  background-position: center center;
+  background-position: 50% 24%;
   background-repeat: no-repeat;
 }
 
@@ -47,16 +43,11 @@
     );
 }
 
-/* Center positioning wrapper — sits cleanly beneath the brass banker lamp
-   inside the open study bay between the IDEA/IEP/504/FBA/BIP books and kraft checklist */
+/* Geometrically locked positioning wrapper — computed directly from backdrop image coordinates */
 .wp-login-plaque-anchor {
-  position: relative;
+  position: fixed;
   z-index: 10;
-  width: min(440px, calc(100vw - 32px));
-  /* Push down cleanly below the brass banker lamp dome & nudge slightly right so IDEA/IEP/504/FBA/BIP stay 100% unclipped */
-  margin-top: clamp(104px, 14vh, 138px);
-  margin-bottom: clamp(14px, 2.2vh, 28px);
-  transform: translateX(clamp(0px, 1.5vw, 24px));
+  will-change: transform;
 }
 
 /* Ambient contact shadow cast by the heavy parchment plaque onto the desk & wall */
@@ -67,7 +58,7 @@
   background-image: url("/assets/login/parchment-plaque.png");
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  padding: clamp(28px, 3.5vh, 38px) clamp(30px, 3.2vw, 40px) clamp(15px, 1.8vh, 20px);
+  padding: 28px 36px 28px;
   color: #1c140d;
   filter: drop-shadow(0 28px 42px rgba(4, 9, 18, 0.84))
     drop-shadow(0 8px 16px rgba(0, 0, 0, 0.68));
@@ -113,11 +104,11 @@
   filter: drop-shadow(0 4px 8px rgba(34, 21, 8, 0.38)) contrast(1.03);
 }
 
-/* Typography calibrated to match the museum-grade antique parchment reference */
+/* Typography calibrated for consistent scale under geometric viewport fit */
 .wp-login-brand-title {
   font-family: "Playfair Display", Georgia, serif;
   font-weight: 700;
-  font-size: clamp(22px, 2.2vw, 26.5px);
+  font-size: 25.5px;
   line-height: 1.08;
   letter-spacing: -0.012em;
   color: #17100a;
@@ -136,7 +127,7 @@
 .wp-login-brand-subtitle {
   font-family: "Plus Jakarta Sans", "Outfit", sans-serif;
   font-weight: 700;
-  font-size: clamp(9.5px, 0.9vw, 10.75px);
+  font-size: 10.5px;
   letter-spacing: 0.145em;
   text-transform: uppercase;
   color: #261a10;
@@ -145,7 +136,7 @@
 .wp-login-heading {
   font-family: "Playfair Display", Georgia, serif;
   font-weight: 700;
-  font-size: clamp(27px, 2.8vw, 33px);
+  font-size: 31px;
   line-height: 1.12;
   letter-spacing: -0.015em;
   color: #16100a;
@@ -155,8 +146,8 @@
 .wp-login-copy {
   font-family: "Libre Baskerville", Georgia, serif;
   font-style: italic;
-  font-size: clamp(12px, 1.1vw, 13.5px);
-  line-height: 1.44;
+  font-size: 13px;
+  line-height: 1.42;
   color: #2f2216;
 }
 
@@ -325,53 +316,4 @@
   cursor: not-allowed;
 }
 
-/* Compact vertical scaling on shorter laptop screens (e.g., 1280x720) so entire plaque + overhead lamp stay cleanly in view with zero scrollbar */
-@media (max-height: 790px) {
-  .wp-login-plaque-anchor {
-    width: min(396px, calc(100vw - 32px));
-    margin-top: clamp(92px, 13.4vh, 104px);
-    margin-bottom: 8px;
-    transform: translateX(clamp(0px, 1.4vw, 18px));
-  }
-
-  .wp-login-plaque {
-    padding: 22px 28px 10px;
-  }
-
-  .wp-login-brand-logo {
-    width: 92px;
-    height: 92px;
-    margin-top: 0;
-  }
-
-  .wp-login-ivy-overlay {
-    width: 80px;
-    top: -16px;
-    left: -26px;
-  }
-
-  .wp-login-brand-title {
-    font-size: 19.5px;
-  }
-
-  .wp-login-heading {
-    font-size: 23px;
-  }
-
-  .wp-login-copy {
-    font-size: 11px;
-    line-height: 1.28;
-  }
-
-  .wp-login-input-wrap {
-    height: 34px;
-  }
-
-  .wp-login-leather-btn {
-    height: 41px;
-  }
-
-  .wp-login-oauth-btn {
-    height: 33px;
-  }
-}
+/* Smooth scaling handles all short desktop viewports automatically without distorting proportions */

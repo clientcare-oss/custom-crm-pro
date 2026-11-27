@@ -1020,130 +1020,40 @@ export default function Students() {
   return (
     <ScopedErrorBoundary moduleName="Students">
       <div className="min-h-full w-full max-w-full min-w-0 overflow-x-hidden bg-[#020712] text-[#F0DFC5] flex flex-col">
-        {/* ─── Top Full-Bleed Maritime Header Banner (Touches Left and Right Screen Edges With No Buffer) ─── */}
-        <div
-          className="w-full relative border-b border-[#8A6731]/60 overflow-hidden bg-[#030914] bg-no-repeat bg-cover bg-bottom min-h-[240px] sm:min-h-[265px] lg:min-h-[295px] flex flex-col justify-between"
-          style={{ backgroundImage: "url('/decor/students-header-bg.png')" }}
-        >
-          {/* Row 1: Header Navigation Controls (Pushed left to give room for wide search box without touching leaves) */}
-          <div className="relative z-10 w-full pl-3 sm:pl-16 md:pl-20 lg:pl-28 xl:pl-32 pr-3 sm:pr-20 md:pr-24 lg:pr-32 xl:pr-36 pt-4 sm:pt-5">
-            <StudentsHeader
-              sortOrder={sortOrder}
-              onSortChange={setSortOrder}
-              sortBy={sortBy}
-              onSortByChange={setSortBy}
-              onNewStudentClick={() => setNewStudentOpen(true)}
-              onQuickSample={() => createSamplePairMutation.mutate({})}
-              isCreatingSample={createSamplePairMutation.isPending}
-              selectedPlanFilter={selectedPlanFilter}
-              onPlanFilterChange={setSelectedPlanFilter}
-              selectedGradeFilter={selectedGradeFilter}
-              onGradeFilterChange={setSelectedGradeFilter}
-              selectedTagFilter={selectedTagFilter}
-              onTagFilterChange={setSelectedTagFilter}
-              companyTags={companyTags}
-              onOpenManageTags={() => setManageTagsOpen(true)}
-              onResetFilters={() => {
-                setSelectedPlanFilter("ALL");
-                setSelectedGradeFilter("ALL");
-                setSelectedTagFilter("ALL");
-                setSortBy("name");
-                setSelectedLetter("ALL");
-                setSearchQuery("");
-              }}
-              hasActiveFilters={hasActiveFilters}
-            />
-          </div>
-
-          {/* Row 2: Alphabetical Brass Rail & View Controls (Lifted up into the deep blue nautical chart space) */}
-          <div className="relative z-10 w-full pl-3 sm:pl-16 md:pl-20 lg:pl-28 xl:pl-32 pr-3 sm:pr-20 md:pr-24 lg:pr-32 xl:pr-36 pb-12 sm:pb-16 lg:pb-20 xl:pb-24">
-            <div className="max-w-[1300px] xl:max-w-[1340px] mx-auto">
+        {/* ─── Top Full-Bleed Photorealistic Study Wall & Mahogany Desk Header Banner ─── */}
+        <div className="wp-stu-banner w-full min-h-[250px] sm:min-h-[272px] lg:min-h-[296px] flex flex-col justify-start">
+          <div className="relative z-10 w-full px-4 sm:pl-[12%] sm:pr-[12.5%] lg:pl-[11.5%] lg:pr-[12%] pt-5 sm:pt-6 pb-14 sm:pb-16 lg:pb-[74px]">
+            <div className="max-w-[1160px] mx-auto">
               <PageIdBadge id="PG-004" name="Student Workspaces" />
-
-              {/* Coherent Line: Search Bar + View Mode Switcher Box (Nudged slightly right) */}
-              <div className="relative flex items-center justify-center gap-2.5 sm:gap-3 mb-2.5 sm:mb-3 translate-x-2.5 sm:translate-x-4 md:translate-x-5 -translate-y-1.5 sm:-translate-y-2.5 md:-translate-y-3">
-                {/* Active Letter Filter Pill (Anchored to left so center line remains strictly balanced) */}
-                {selectedLetter !== "ALL" && (
-                  <div className="absolute left-0 hidden xl:flex items-center gap-1.5 select-none">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-serif text-[#C4D7ED] bg-[#061427]/90 px-2.5 py-0.5 rounded-full border border-[#8A6731]/40 shadow-xs">
-                      Letter <span className="font-bold text-[#F2CD80]">{selectedLetter}</span>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedLetter("ALL")}
-                        className="ml-1 text-[#748CA8] hover:text-[#FFF] cursor-pointer"
-                        title="Show all letters"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  </div>
-                )}
-
-                {/* Search Bar: Sized and positioned clear of the compass rose */}
-                <div className="relative flex items-center w-full max-w-[210px] xs:max-w-[250px] sm:max-w-[280px] md:max-w-[320px]">
-                  <Search className="absolute left-3 w-4 h-4 text-[#7E97B8] pointer-events-none" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search students or tags..."
-                    className={cn(
-                      "w-full h-10 pl-8.5 sm:pl-9 pr-8 rounded-xl text-xs sm:text-sm text-[#F0F6FC] placeholder:text-[#6E87A8]",
-                      "bg-[#040B17]/92 border border-[#8A6731]/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.7),0_4px_16px_rgba(0,0,0,0.6)]",
-                      "focus:border-[#F2CD80] focus:ring-1 focus:ring-[#F2CD80]/40 transition-all"
-                    )}
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-2 p-1 rounded hover:bg-white/10 text-[#7E97B8] hover:text-white cursor-pointer"
-                      title="Clear search"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Center: Tactile Brass Cards / List View Switcher Capsule (Directly next to the search bar) */}
-                <div className="flex items-center p-1 h-10 rounded-xl border border-[#8A6731]/60 bg-[#051327]/90 shadow-[0_4px_16px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.08)] backdrop-blur-md shrink-0">
-                  <span className="font-serif text-xs text-[#9BB1CC] px-2 hidden sm:inline select-none tracking-wide">
-                    View:
-                  </span>
-                  <div className="flex items-center gap-1 h-full">
-                    <button
-                      type="button"
-                      onClick={() => handleViewModeChange("cards")}
-                      className={cn(
-                        "flex items-center gap-1.5 px-2.5 sm:px-3 h-full rounded-lg text-xs font-serif font-bold transition-all cursor-pointer select-none",
-                        viewMode === "cards"
-                          ? "bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#B88943] text-[#1A1208] shadow-[0_2px_6px_rgba(216,164,82,0.45),inset_0_1px_1px_rgba(255,255,255,0.7)]"
-                          : "text-[#7E97B8] hover:text-[#E2EDF8] hover:bg-[#12233B]/50"
-                      )}
-                      title="Cards Filing View"
-                    >
-                      <LayoutGrid className="w-3.5 h-3.5 stroke-[2.4]" />
-                      <span>Cards</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleViewModeChange("list")}
-                      className={cn(
-                        "flex items-center gap-1.5 px-2.5 sm:px-3 h-full rounded-lg text-xs font-serif font-bold transition-all cursor-pointer select-none",
-                        viewMode === "list"
-                          ? "bg-gradient-to-b from-[#FCE09E] via-[#D8A452] to-[#B88943] text-[#1A1208] shadow-[0_2px_6px_rgba(216,164,82,0.45),inset_0_1px_1px_rgba(255,255,255,0.7)]"
-                          : "text-[#7E97B8] hover:text-[#E2EDF8] hover:bg-[#12233B]/50"
-                      )}
-                      title="Compact Registry List View"
-                    >
-                      <List className="w-3.5 h-3.5 stroke-[2.4]" />
-                      <span>List</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <BrassAlphabetRail
+              <StudentsHeader
+                sortOrder={sortOrder}
+                onSortChange={setSortOrder}
+                sortBy={sortBy}
+                onSortByChange={setSortBy}
+                onNewStudentClick={() => setNewStudentOpen(true)}
+                onQuickSample={() => createSamplePairMutation.mutate({})}
+                isCreatingSample={createSamplePairMutation.isPending}
+                selectedPlanFilter={selectedPlanFilter}
+                onPlanFilterChange={setSelectedPlanFilter}
+                selectedGradeFilter={selectedGradeFilter}
+                onGradeFilterChange={setSelectedGradeFilter}
+                selectedTagFilter={selectedTagFilter}
+                onTagFilterChange={setSelectedTagFilter}
+                companyTags={companyTags}
+                onOpenManageTags={() => setManageTagsOpen(true)}
+                onResetFilters={() => {
+                  setSelectedPlanFilter("ALL");
+                  setSelectedGradeFilter("ALL");
+                  setSelectedTagFilter("ALL");
+                  setSortBy("name");
+                  setSelectedLetter("ALL");
+                  setSearchQuery("");
+                }}
+                hasActiveFilters={hasActiveFilters}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
                 selectedLetter={selectedLetter}
                 onSelectLetter={setSelectedLetter}
                 letterCounts={letterCounts}

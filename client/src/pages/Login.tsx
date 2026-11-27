@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useClerk, useSignIn, useUser } from "@clerk/react";
 import { ArrowLeft, Eye, EyeOff, KeyRound, Loader2, Lock, Mail } from "lucide-react";
 import { useLocation } from "wouter";
@@ -7,12 +7,20 @@ import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import {
   AppleInkIcon,
   EngravedCompassDivider,
-  EngravedSuspensionBridge,
   GoogleInkIcon,
   MicrosoftInkIcon,
   OrnateLeatherButton,
 } from "@/components/login/LoginEngravings";
 import "@/styles/waypointLogin.css";
+
+// Exact normalized coordinates measured directly from lamp-arm-free pendant waypoint-desk-scene.jpg (1376x768)
+const SCENE_IMG_W = 1376;
+const SCENE_IMG_H = 768;
+const SCENE_Y_ANCHOR = 0.24; // Matches background-position: 50% 24% (keeps full pendant brass dome + desk props visible)
+const SCENE_LAMP_BOTTOM_Y = 110 / 768; // Exact bottom rim of pendant brass lamp shade (y=110px)
+const SCENE_BOOKS_RIGHT_X = 0.377; // Exact right edge of the gold-lettered IDEA / IEP / 504 / FBA / BIP spine (page touches spine flush)
+const SCENE_KRAFT_LEFT_X = 0.694;  // Left edge of hanging Cases / Meetings checklist
+const PLAQUE_BASE_W = 452;
 
 type LoginViewMode =
   | "sign-in"
@@ -64,7 +72,82 @@ function WaypointLoginContent() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
 
+  const plaqueRef = useRef<HTMLElement | null>(null);
+  const [plaqueGeom, setPlaqueGeom] = useState<{
+    left: number;
+    top: number;
+    scale: number;
+    isMobile: boolean;
+  }>({ left: 0, top: 120, scale: 1, isMobile: false });
+
   const isBusy = submitting || fetchStatus === "fetching" || Boolean(oauthLoading);
+
+  // Lock the parchment plaque mathematically right under the brass banker lamp,
+  // strictly to the right of the IDEA / IEP / 504 / FBA / BIP book spines, and scaled
+  // so it ALWAYS fits 100% inside the viewport with zero vertical scrolling.
+  useLayoutEffect(() => {
+    const computePlacement = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const naturalH = plaqueRef.current?.offsetHeight || 595;
+
+      if (vw < 820) {
+        const availW = vw - 24;
+        const availH = vh - 24;
+        const scale = Math.min(1, availW / PLAQUE_BASE_W, availH / naturalH);
+        const scaledW = PLAQUE_BASE_W * scale;
+        const scaledH = naturalH * scale;
+        setPlaqueGeom({
+          left: Math.round((vw - scaledW) / 2),
+          top: Math.max(12, Math.round((vh - scaledH) / 2)),
+          scale,
+          isMobile: true,
+        });
+        return;
+      }
+
+      // Backdrop uses object-cover anchored at (50%, 42%) so both brass lamp & bottom compass/mug stay cleanly framed
+      const coverScale = Math.max(vw / SCENE_IMG_W, vh / SCENE_IMG_H);
+      const renderedW = SCENE_IMG_W * coverScale;
+      const renderedH = SCENE_IMG_H * coverScale;
+      const offsetX = (vw - renderedW) / 2;
+      const offsetY = (vh - renderedH) * SCENE_Y_ANCHOR;
+
+      const lampBottomY = offsetY + SCENE_LAMP_BOTTOM_Y * renderedH;
+      const booksRightX = offsetX + SCENE_BOOKS_RIGHT_X * renderedW;
+      const kraftLeftX = offsetX + SCENE_KRAFT_LEFT_X * renderedW;
+
+      // Sit right under the brass lamp rim & scale up generously to touch the IDEA/IEP books on the left with zero scroll
+      const top = Math.max(52, Math.round(lampBottomY + 5));
+      const bottomPad = 10;
+      const availH = Math.max(340, vh - top - bottomPad);
+      const bayLeft = booksRightX;
+      const bayRight = kraftLeftX - 4;
+      const availW = Math.max(300, bayRight - bayLeft);
+
+      const scale = Math.min(1.35, availW / PLAQUE_BASE_W, availH / naturalH);
+
+      setPlaqueGeom({
+        left: Math.round(bayLeft),
+        top,
+        scale,
+        isMobile: false,
+      });
+    };
+
+    computePlacement();
+    window.addEventListener("resize", computePlacement);
+    const ro =
+      typeof ResizeObserver !== "undefined" && plaqueRef.current
+        ? new ResizeObserver(computePlacement)
+        : null;
+    if (ro && plaqueRef.current) ro.observe(plaqueRef.current);
+
+    return () => {
+      window.removeEventListener("resize", computePlacement);
+      ro?.disconnect();
+    };
+  }, [mode, Boolean(errorMsg), Boolean(infoMsg)]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -382,9 +465,19 @@ function WaypointLoginContent() {
       <div className="wp-login-backdrop" aria-hidden="true" />
       <div className="wp-login-lighting" aria-hidden="true" />
 
-      {/* Centered Antique Parchment Plaque */}
-      <main className="wp-login-plaque-anchor" aria-label="Waypoint Advocates Login">
-        <section className="wp-login-plaque">
+      {/* Centered Antique Parchment Plaque locked right under the brass lamp with zero scroll */}
+      <main
+        className="wp-login-plaque-anchor"
+        aria-label="Waypoint Advocates Login"
+        style={{
+          left: `${plaqueGeom.left}px`,
+          top: `${plaqueGeom.top}px`,
+          width: `${PLAQUE_BASE_W}px`,
+          transform: `scale(${plaqueGeom.scale})`,
+          transformOrigin: "top left",
+        }}
+      >
+        <section ref={plaqueRef} className="wp-login-plaque">
           {/* Trailing backlit green ivy vine draping physically over the top-left corner */}
           <img
             src="/assets/login/ivy-corner-overlay.png"
@@ -791,13 +884,6 @@ function WaypointLoginContent() {
             </div>
           )}
 
-          {/* Engraved Suspension Bridge & Tagline Footer */}
-          <footer className="relative z-10 flex flex-col items-center mt-2 sm:mt-2.5">
-            <EngravedSuspensionBridge className="w-[196px] sm:w-[224px] h-[30px] sm:h-[34px]" />
-            <p className="font-serif text-[12px] sm:text-[13px] text-[#1C140C] text-center mt-0.5 tracking-[0.005em]">
-              Guided by Knowledge. Driven by Advocacy.
-            </p>
-          </footer>
         </section>
       </main>
     </div>
