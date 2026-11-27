@@ -1,7 +1,7 @@
 /* ============================================================================
  * Waypoint Advocates — Photorealistic Student Workspaces Header Console
- * Matches the burnished antique brass, riveted navy hardware, and mahogany
- * study mantel aesthetic.
+ * Uses real matted 3-slice photorealistic cast-brass, blackened-steel, and
+ * antiqued-bronze metalwork PNG sprites over the mahogany study mantel.
  * ============================================================================ */
 
 .wp-stu-banner {
@@ -13,298 +13,126 @@
   background-size: cover;
   background-position: center bottom;
   background-repeat: no-repeat;
-  border-bottom: 1.5px solid rgba(168, 125, 58, 0.58);
-  box-shadow: inset 0 -10px 24px rgba(0, 0, 0, 0.52);
+  border-bottom: 1.5px solid rgba(168, 125, 58, 0.62);
+  box-shadow: inset 0 -10px 24px rgba(0, 0, 0, 0.56);
 }
 
-/* Subtle vignette & contrast backing behind controls without hiding left/right props */
 .wp-stu-banner::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(
-      ellipse 64% 72% at 50% 42%,
-      rgba(4, 14, 28, 0.24) 0%,
-      rgba(4, 14, 28, 0.04) 72%,
-      rgba(2, 8, 16, 0.22) 100%
-    );
+  background: radial-gradient(
+    ellipse 66% 74% at 50% 40%,
+    rgba(3, 12, 24, 0.22) 0%,
+    rgba(3, 12, 24, 0.03) 72%,
+    rgba(2, 7, 15, 0.24) 100%
+  );
   z-index: 1;
 }
 
-/* Embossed 3D burnished antique gold title */
-.wp-stu-title {
+/* Real forged 3D hammered antique-brass masthead image (title + subtitle + compass-star spear) */
+.wp-stu-masthead-img {
+  display: block;
+  width: min(100%, 540px);
+  height: auto;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.94))
+    drop-shadow(0 6px 12px rgba(0, 0, 0, 0.72));
+}
+
+/* 3-Slice Photorealistic Metal Hardware Interactive Containers */
+.wp-stu-hw-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  user-select: none;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.86))
+    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.78));
+  transition:
+    filter 140ms ease,
+    transform 110ms ease;
+}
+
+.wp-stu-hw-btn:hover {
+  filter: drop-shadow(0 7px 14px rgba(0, 0, 0, 0.9))
+    drop-shadow(0 0 8px rgba(236, 184, 92, 0.22))
+    brightness(1.07);
+}
+
+.wp-stu-hw-btn:active {
+  transform: translateY(1px);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.88)) brightness(0.97);
+}
+
+.wp-stu-hw-btn[data-active="true"] {
+  filter: drop-shadow(0 6px 13px rgba(0, 0, 0, 0.88))
+    drop-shadow(0 0 10px rgba(242, 196, 102, 0.36));
+}
+
+/* 3-Slice Photorealistic Tubular Antique-Bronze Pill Bezel (Search + View Capsule) */
+.wp-stu-hw-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.88))
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+  transition: filter 150ms ease;
+}
+
+.wp-stu-hw-pill:focus-within {
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.92))
+    drop-shadow(0 0 9px rgba(238, 194, 106, 0.32));
+}
+
+/* 3-Slice Photorealistic Brass A-Z Slide-Rule Housing */
+.wp-stu-hw-az {
+  position: relative;
+  width: 100%;
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.92))
+    drop-shadow(0 4px 6px rgba(0, 0, 0, 0.84));
+}
+
+/* Embossed chiseled 3D antique bronze serif letters inside the scuffed blackened-steel track */
+.wp-stu-az-letter {
   font-family: "Playfair Display", Georgia, serif;
   font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: -0.005em;
+  line-height: 1;
   background: linear-gradient(
     180deg,
-    #fff4d0 0%,
-    #f0cc7c 32%,
-    #cfa04b 64%,
-    #8c5e20 100%
+    #f2d59a 0%,
+    #cc994f 48%,
+    #8d5d22 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.92))
-    drop-shadow(0 4px 10px rgba(0, 0, 0, 0.65));
-}
-
-.wp-stu-subtitle {
-  font-family: "Plus Jakarta Sans", "Outfit", sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.145em;
-  text-transform: uppercase;
-  color: #d8c298;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.92);
-}
-
-/* Riveted dark brushed-obsidian metal plaque (Filters + inactive View button) */
-.wp-stu-dark-plaque {
-  position: relative;
-  border-radius: 11px;
-  border: 1.5px solid #b58a43;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(36, 51, 71, 0.95) 0%,
-      rgba(16, 26, 40, 0.97) 48%,
-      rgba(8, 15, 25, 0.99) 100%
-    );
-  color: #efe2c4;
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.82),
-    0 2px 4px rgba(0, 0, 0, 0.72),
-    inset 0 1px 1px rgba(255, 238, 194, 0.34),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.8);
+  filter: drop-shadow(0 1.5px 1.5px rgba(0, 0, 0, 0.96));
   transition:
-    filter 140ms ease,
-    border-color 140ms ease,
-    transform 120ms ease;
+    transform 130ms ease,
+    filter 140ms ease;
 }
 
-.wp-stu-dark-plaque::before {
-  content: "";
-  position: absolute;
-  inset: 2.5px;
-  border-radius: 8px;
-  border: 1px solid rgba(214, 174, 96, 0.34);
-  pointer-events: none;
-}
-
-.wp-stu-dark-plaque:hover {
-  border-color: #e2bc72;
-  filter: brightness(1.08);
-}
-
-.wp-stu-dark-plaque:active {
-  transform: translateY(0.5px);
-}
-
-.wp-stu-dark-plaque[data-active="true"] {
-  border-color: #f3cf80;
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.85),
-    0 0 12px rgba(236, 186, 94, 0.35),
-    inset 0 1px 1px rgba(255, 240, 200, 0.48);
-}
-
-/* Riveted solid brushed antique-brass plaque (New Student + active View button) */
-.wp-stu-brass-plaque {
-  position: relative;
-  border-radius: 11px;
-  border: 1.5px solid #f7dc96;
-  background:
-    linear-gradient(
-      180deg,
-      #f6dc99 0%,
-      #e2b965 26%,
-      #c2903c 64%,
-      #8b5e1d 100%
-    );
-  color: #191005;
-  text-shadow: 0 1px 0 rgba(255, 244, 212, 0.55);
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.84),
-    0 2px 4px rgba(0, 0, 0, 0.72),
-    inset 0 1px 1px rgba(255, 250, 232, 0.85),
-    inset 0 -2px 3px rgba(72, 44, 8, 0.65);
-  transition:
-    filter 140ms ease,
-    transform 120ms ease,
-    box-shadow 140ms ease;
-}
-
-.wp-stu-brass-plaque::before {
-  content: "";
-  position: absolute;
-  inset: 2.5px;
-  border-radius: 8px;
-  border: 1px solid rgba(82, 50, 10, 0.42);
-  pointer-events: none;
-}
-
-.wp-stu-brass-plaque:hover {
-  filter: brightness(1.07);
-  box-shadow:
-    0 7px 18px rgba(0, 0, 0, 0.88),
-    0 0 14px rgba(242, 198, 104, 0.32),
-    inset 0 1px 1px rgba(255, 252, 238, 0.92),
-    inset 0 -2px 3px rgba(72, 44, 8, 0.6);
-}
-
-.wp-stu-brass-plaque:active {
-  transform: translateY(0.5px);
-}
-
-/* Tubular antique brass recessed Search pill well */
-.wp-stu-search-bezel {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 44px;
-  border-radius: 9999px;
-  padding: 2.5px;
+.wp-stu-az-letter-btn:hover .wp-stu-az-letter,
+.wp-stu-az-letter[data-selected="true"] {
   background: linear-gradient(
     180deg,
-    #f0ce82 0%,
-    #b7883a 35%,
-    #6b4917 65%,
-    #cfa04f 100%
+    #fff9e4 0%,
+    #f8dc96 46%,
+    #d6a14c 100%
   );
-  box-shadow:
-    0 7px 18px rgba(0, 0, 0, 0.86),
-    0 2px 4px rgba(0, 0, 0, 0.75);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 8px rgba(255, 214, 126, 0.88))
+    drop-shadow(0 1.5px 2px rgba(0, 0, 0, 0.98));
 }
 
-.wp-stu-search-well {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  border-radius: 9999px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(5, 13, 24, 0.97) 0%,
-      rgba(10, 23, 38, 0.95) 55%,
-      rgba(15, 31, 49, 0.96) 100%
-    );
-  box-shadow:
-    inset 0 3px 7px rgba(0, 0, 0, 0.88),
-    inset 0 -1px 1px rgba(255, 224, 158, 0.16);
-}
-
-.wp-stu-search-bezel:focus-within {
-  box-shadow:
-    0 7px 20px rgba(0, 0, 0, 0.9),
-    0 0 0 2px rgba(242, 202, 114, 0.35);
-}
-
-/* Tubular antique brass View switcher outer bezel */
-.wp-stu-view-bezel {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  height: 44px;
-  border-radius: 9999px;
-  padding: 2.5px;
-  background: linear-gradient(
-    180deg,
-    #f0ce82 0%,
-    #b7883a 38%,
-    #6b4917 68%,
-    #cfa04f 100%
-  );
-  box-shadow:
-    0 7px 18px rgba(0, 0, 0, 0.86),
-    0 2px 4px rgba(0, 0, 0, 0.75);
-}
-
-.wp-stu-view-inner {
-  display: inline-flex;
-  align-items: center;
-  height: 100%;
-  gap: 5px;
-  padding: 3px 5px 3px 13px;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, #071322 0%, #0d1d31 60%, #091525 100%);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.85);
-}
-
-/* Mini corner rivets for riveted hardware plaques */
-.wp-stu-rivet {
-  position: absolute;
-  width: 4.5px;
-  height: 4.5px;
-  border-radius: 9999px;
-  pointer-events: none;
-  background: radial-gradient(
-    circle at 32% 32%,
-    #fff4d2 0%,
-    #cfa04c 48%,
-    #4c300a 100%
-  );
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.75);
-}
-
-.wp-stu-rivet-dark {
-  background: radial-gradient(
-    circle at 32% 32%,
-    #d7c59e 0%,
-    #6c5b3e 52%,
-    #1c160c 100%
-  );
-}
-
-/* Brass Mechanical A-Z Slide-Rule Outer Casing */
-.wp-stu-az-casing {
-  position: relative;
-  border-radius: 9999px;
-  padding: 3px;
-  background: linear-gradient(
-    180deg,
-    #f8df9c 0%,
-    #c89948 28%,
-    #6c4816 62%,
-    #dfb462 100%
-  );
-  box-shadow:
-    0 12px 26px rgba(0, 0, 0, 0.92),
-    0 4px 8px rgba(0, 0, 0, 0.82);
-}
-
-.wp-stu-az-core {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 46px;
-  border-radius: 9999px;
-  background: linear-gradient(
-    180deg,
-    #0a1524 0%,
-    #060f1c 50%,
-    #030811 100%
-  );
-  box-shadow:
-    inset 0 4px 10px rgba(0, 0, 0, 0.92),
-    inset 0 -2px 5px rgba(255, 224, 158, 0.08);
-}
-
-.wp-stu-az-cap {
-  background: linear-gradient(
-    180deg,
-    #f6dc99 0%,
-    #d9ad59 30%,
-    #b68534 68%,
-    #7f561a 100%
-  );
-  box-shadow:
-    inset 0 1px 1px rgba(255, 250, 232, 0.85),
-    inset 0 -2px 4px rgba(68, 42, 8, 0.65);
+.wp-stu-az-letter[data-selected="true"] {
+  transform: scale(1.16);
 }

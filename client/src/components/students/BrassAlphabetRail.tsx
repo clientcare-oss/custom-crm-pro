@@ -11,59 +11,38 @@ interface BrassAlphabetRailProps {
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 /**
- * Authentic Slotted Brass Rivet Head with realistic metallic bevel
+ * Machined Cast Antique-Brass Dish Slider Thumb Knob riding on the real photographic brass rod
  */
-function BrassScrewHead({ className = "w-2 h-2" }: { className?: string }) {
+function BrassSliderDishKnob({ className = "w-[26px] h-[26px]" }: { className?: string }) {
   return (
-    <div className={`shrink-0 ${className} drop-shadow-[0_1px_2px_rgba(0,0,0,0.88)]`}>
-      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-        <circle cx="8" cy="8" r="6.8" fill="url(#wp-az-screw)" stroke="#382206" strokeWidth="1" />
-        <circle cx="6.2" cy="6.2" r="2" fill="#FFF9E6" opacity="0.65" />
+    <div className={`relative shrink-0 ${className} drop-shadow-[0_4px_9px_rgba(0,0,0,0.96)]`}>
+      <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+        {/* Outer Weathered Cast Bronze Collar */}
+        <circle cx="18" cy="18" r="16" fill="url(#wp-kn-outer)" stroke="#241504" strokeWidth="1.3" />
+        {/* Warm Specular Bevel Ring */}
+        <circle cx="18" cy="18" r="14.2" stroke="#FBE7B2" strokeWidth="0.9" opacity="0.88" />
+        {/* Deep Machined Dish Well */}
+        <circle cx="18" cy="18" r="11.2" fill="url(#wp-kn-dish)" stroke="#1C1003" strokeWidth="1" />
+        {/* Domed Center Antique Brass Boss */}
+        <circle cx="18" cy="18" r="7.2" fill="url(#wp-kn-boss)" stroke="#2E1B05" strokeWidth="0.9" />
+        <ellipse cx="15.8" cy="14.6" rx="3.1" ry="1.8" transform="rotate(-24 15.8 14.6)" fill="#FFF8E2" opacity="0.72" />
         <defs>
-          <radialGradient id="wp-az-screw" cx="35%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#FFF7DF" />
-            <stop offset="38%" stopColor="#DFB35F" />
-            <stop offset="78%" stopColor="#9D6E25" />
-            <stop offset="100%" stopColor="#492E08" />
-          </radialGradient>
-        </defs>
-      </svg>
-    </div>
-  );
-}
-
-/**
- * Machined Cast Brass Dish Slider Thumb Knob riding on the lower brass rod
- */
-function BrassSliderDishKnob({ className = "w-6 h-6" }: { className?: string }) {
-  return (
-    <div className={`relative shrink-0 ${className} drop-shadow-[0_4px_9px_rgba(0,0,0,0.95)]`}>
-      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-        {/* Outer Machined Brass Ring */}
-        <circle cx="16" cy="16" r="14.5" fill="url(#wp-knob-rim)" stroke="#241604" strokeWidth="1.25" />
-        <circle cx="16" cy="16" r="12.8" stroke="#FFF7E2" strokeWidth="0.85" opacity="0.85" />
-        {/* Recessed Inner Bronze Dish */}
-        <circle cx="16" cy="16" r="9.6" fill="url(#wp-knob-dish)" stroke="#221303" strokeWidth="0.9" />
-        {/* Center Raised Domed Brass Boss */}
-        <circle cx="16" cy="16" r="5.2" fill="url(#wp-knob-boss)" stroke="#2B1904" strokeWidth="0.8" />
-        <circle cx="14.6" cy="14.2" r="1.7" fill="#FFFFFA" opacity="0.92" />
-        <defs>
-          <linearGradient id="wp-knob-rim" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#FFF8E2" />
-            <stop offset="0.32" stopColor="#F2CE7D" />
-            <stop offset="0.68" stopColor="#B88635" />
-            <stop offset="1" stopColor="#5A390C" />
+          <linearGradient id="wp-kn-outer" x1="4" y1="3" x2="32" y2="33" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#FCE7B2" />
+            <stop offset="0.34" stopColor="#D6A654" />
+            <stop offset="0.72" stopColor="#8E6020" />
+            <stop offset="1" stopColor="#3B2306" />
           </linearGradient>
-          <radialGradient id="wp-knob-dish" cx="55%" cy="60%" r="65%">
-            <stop offset="0%" stopColor="#8E5F20" />
-            <stop offset="55%" stopColor="#4A2E0A" />
-            <stop offset="100%" stopColor="#1E1103" />
+          <radialGradient id="wp-kn-dish" cx="55%" cy="62%" r="65%">
+            <stop offset="0%" stopColor="#7C511A" />
+            <stop offset="55%" stopColor="#3A2207" />
+            <stop offset="100%" stopColor="#160C02" />
           </radialGradient>
-          <radialGradient id="wp-knob-boss" cx="35%" cy="32%" r="70%">
-            <stop offset="0%" stopColor="#FFFBEF" />
-            <stop offset="35%" stopColor="#F2CB78" />
-            <stop offset="78%" stopColor="#A9792C" />
-            <stop offset="100%" stopColor="#4A2E07" />
+          <radialGradient id="wp-kn-boss" cx="35%" cy="30%" r="72%">
+            <stop offset="0%" stopColor="#FFF7DF" />
+            <stop offset="32%" stopColor="#E4B865" />
+            <stop offset="76%" stopColor="#9C6C24" />
+            <stop offset="100%" stopColor="#462A07" />
           </radialGradient>
         </defs>
       </svg>
@@ -77,129 +56,114 @@ export function BrassAlphabetRail({
   letterCounts = {},
   className,
 }: BrassAlphabetRailProps) {
-  // Default knob rests centered under M when ALL is active (matching the photorealistic reference)
+  // Default knob rests centered under M when ALL is active (matching reference photograph)
   const activeIndex = selectedLetter === "ALL" ? 12 : ALPHABET.indexOf(selectedLetter);
 
   return (
-    <div className={cn("wp-stu-az-casing select-none overflow-visible", className)}>
-      <div className="wp-stu-az-core overflow-visible">
-        {/* ─── 1. LEFT END CAP: Riveted Brushed Antique Brass "ALL" Plate ─── */}
-        <button
-          type="button"
-          onClick={() => onSelectLetter("ALL")}
-          title="Show All Students"
-          className={cn(
-            "wp-stu-az-cap relative shrink-0 flex items-center justify-center h-full rounded-l-full cursor-pointer z-20 transition-all",
-            "border-r-[1.5px] border-[#3F2807] w-[76px] sm:w-[88px] md:w-[96px]",
-            "hover:brightness-106 active:brightness-95"
-          )}
-        >
-          {/* 4 Hammered Brass Rivets */}
-          <div className="absolute top-[6px] left-[14px] pointer-events-none">
-            <BrassScrewHead className="w-[7px] h-[7px]" />
-          </div>
-          <div className="absolute bottom-[6px] left-[14px] pointer-events-none">
-            <BrassScrewHead className="w-[7px] h-[7px]" />
-          </div>
-          <div className="absolute top-[6px] right-[9px] pointer-events-none">
-            <BrassScrewHead className="w-[7px] h-[7px]" />
-          </div>
-          <div className="absolute bottom-[6px] right-[9px] pointer-events-none">
-            <BrassScrewHead className="w-[7px] h-[7px]" />
-          </div>
-
-          {/* Engraved "ALL" Label */}
-          <span
-            className={cn(
-              "font-serif font-bold tracking-[0.08em] text-[13.5px] sm:text-[15px] uppercase pl-1.5 transition-all",
-              selectedLetter === "ALL"
-                ? "text-[#140D04] drop-shadow-[0_1px_0_rgba(255,246,216,0.85)]"
-                : "text-[#2A1A06]/85 hover:text-[#140D04]"
-            )}
-          >
-            ALL
-          </span>
-
-          {/* Left Horizontal Rod Collar Fitting */}
-          <div className="absolute -right-[7px] bottom-[8px] w-[9px] h-[7px] rounded-[1.5px] bg-gradient-to-b from-[#FCE2A4] via-[#C69443] to-[#4E320A] border border-[#241503] shadow-[0_1px_3px_rgba(0,0,0,0.9)] pointer-events-none z-30" />
-        </button>
-
-        {/* ─── 2. CENTER RECESSED TRACK: Embossed A–Z Letters + Lower Machined Brass Rod ─── */}
-        <div className="relative flex-1 h-full px-3 sm:px-4 flex flex-col justify-start">
-          <div className="relative w-full h-full">
-            {/* Upper A–Z Serif Letter Row */}
-            <div className="relative flex items-center justify-between w-full h-[30px] pt-1 z-10">
-              {ALPHABET.map((letter) => {
-                const isSelected = selectedLetter === letter;
-                const count = letterCounts[letter] ?? 0;
-
-                return (
-                  <button
-                    key={letter}
-                    type="button"
-                    onClick={() => onSelectLetter(letter)}
-                    title={`${letter}${count ? ` (${count} student${count === 1 ? "" : "s"})` : ""}`}
-                    className="relative flex items-center justify-center flex-1 h-full cursor-pointer transition-all duration-150 focus:outline-none group"
-                  >
-                    <span
-                      className={cn(
-                        "font-serif text-[12px] sm:text-[14px] md:text-[15.5px] leading-none tracking-[0.02em] transition-all select-none",
-                        isSelected
-                          ? "text-[#FFF6D6] font-bold scale-115 drop-shadow-[0_0_9px_rgba(255,216,130,0.95)]"
-                          : "text-[#D9B166] group-hover:text-[#FFF3CF] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]"
-                      )}
-                    >
-                      {letter}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Lower Machined Horizontal Brass Slider Rod */}
-            <div className="absolute -left-[4px] -right-[4px] bottom-[9.5px] h-[3.5px] rounded-full bg-gradient-to-b from-[#FFF1C9] via-[#C99744] to-[#4E320A] shadow-[0_2px_4px_rgba(0,0,0,0.95)] pointer-events-none z-10" />
-
-            {/* Sliding 3D Cast Brass Dish Thumb Knob */}
-            {activeIndex >= 0 && activeIndex < 26 && (
-              <div
-                className="absolute z-30 pointer-events-none transition-all duration-200 ease-out flex items-center justify-center"
-                style={{
-                  left: `${((activeIndex + 0.5) / 26) * 100}%`,
-                  bottom: "11px",
-                  transform: "translate(-50%, 50%)",
-                }}
-              >
-                <BrassSliderDishKnob className="w-[22px] h-[22px] sm:w-[25px] sm:h-[25px]" />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ─── 3. RIGHT END CAP: Riveted Brushed Antique Brass Terminal Plate ─── */}
+    <div
+      className={cn(
+        "wp-stu-hw-az relative flex items-stretch h-[52px] sm:h-[56px] select-none overflow-visible",
+        className
+      )}
+    >
+      {/* ─── 3-SLICE PHOTOREALISTIC HARDWARE HOUSING LAYER (Zero distortion on rivets/caps) ─── */}
+      <div className="absolute inset-0 flex items-stretch pointer-events-none" aria-hidden="true">
+        <img
+          src="/assets/students/hw/az-left.png"
+          alt=""
+          className="h-full w-auto shrink-0 block"
+          draggable={false}
+        />
         <div
+          className="flex-1 h-full min-w-0"
+          style={{
+            backgroundImage: "url('/assets/students/hw/az-mid.png')",
+            backgroundSize: "100% 100%",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+        <img
+          src="/assets/students/hw/az-right.png"
+          alt=""
+          className="h-full w-auto shrink-0 block"
+          draggable={false}
+        />
+      </div>
+
+      {/* ─── INTERACTIVE OVERLAY LAYER ALIGNED TO REAL METAL CAP & TRACK GEOMETRY ─── */}
+      {/* Left "ALL" Brass End-Cap Click Zone (native cap ratio 223/165 = 1.352 × height) */}
+      <button
+        type="button"
+        onClick={() => onSelectLetter("ALL")}
+        title="Show All Students"
+        className="relative z-20 h-full shrink-0 flex items-center justify-center cursor-pointer focus:outline-none group"
+        style={{ width: "calc(56px * 1.24)" }}
+      >
+        <span
           className={cn(
-            "wp-stu-az-cap relative shrink-0 flex items-center justify-center h-full rounded-r-full select-none z-20",
-            "border-l-[1.5px] border-[#3F2807] w-[70px] sm:w-[82px] md:w-[88px]"
+            "font-serif font-bold tracking-[0.06em] text-[14px] sm:text-[15.5px] uppercase pl-2 transition-all",
+            selectedLetter === "ALL"
+              ? "text-[#160D04] drop-shadow-[0_1px_0_rgba(255,244,212,0.75)]"
+              : "text-[#291908]/80 group-hover:text-[#140B03]"
           )}
         >
-          {/* Right Horizontal Rod Collar Fitting */}
-          <div className="absolute -left-[7px] bottom-[8px] w-[9px] h-[7px] rounded-[1.5px] bg-gradient-to-b from-[#FCE2A4] via-[#C69443] to-[#4E320A] border border-[#241503] shadow-[0_1px_3px_rgba(0,0,0,0.9)] pointer-events-none z-30" />
+          ALL
+        </span>
+      </button>
 
-          {/* 4 Hammered Brass Rivets */}
-          <div className="absolute top-[6px] left-[9px] pointer-events-none">
-            <BrassScrewHead className="w-[7px] h-[7px]" />
+      {/* Center Recessed Scuffed-Steel Track: Chiseled Bronze A–Z Letters + Sliding Knob on Real Brass Rod */}
+      <div className="relative z-20 flex-1 h-full min-w-0 px-2.5 sm:px-3.5">
+        <div className="relative w-full h-full">
+          {/* Upper Track Letters (sits cleanly inside y=12%..56% above the real photographic rod at y=65.5%) */}
+          <div
+            className="absolute inset-x-0 flex items-center justify-between z-20"
+            style={{ top: "13%", height: "45%" }}
+          >
+            {ALPHABET.map((letter) => {
+              const isSelected = selectedLetter === letter;
+              const count = letterCounts[letter] ?? 0;
+
+              return (
+                <button
+                  key={letter}
+                  type="button"
+                  onClick={() => onSelectLetter(letter)}
+                  title={`${letter}${count ? ` (${count} student${count === 1 ? "" : "s"})` : ""}`}
+                  className="wp-stu-az-letter-btn relative flex items-center justify-center flex-1 h-full cursor-pointer focus:outline-none"
+                >
+                  <span
+                    data-selected={isSelected ? "true" : "false"}
+                    className="wp-stu-az-letter text-[13px] sm:text-[15px] md:text-[16.5px] select-none"
+                  >
+                    {letter}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          <div className="absolute bottom-[6px] left-[9px] pointer-events-none">
-            <BrassScrewHead className="w-[7px] h-[7px]" />
-          </div>
-          <div className="absolute top-[6px] right-[14px] pointer-events-none">
-            <BrassScrewHead className="w-[7px] h-[7px]" />
-          </div>
-          <div className="absolute bottom-[6px] right-[14px] pointer-events-none">
-            <BrassScrewHead className="w-[7px] h-[7px]" />
-          </div>
+
+          {/* Sliding 3D Cast Brass Dish Thumb Knob riding dead-center on the real photographic brass rod (y=65.5%) */}
+          {activeIndex >= 0 && activeIndex < 26 && (
+            <div
+              className="absolute z-30 pointer-events-none transition-all duration-200 ease-out flex items-center justify-center"
+              style={{
+                left: `${((activeIndex + 0.5) / 26) * 100}%`,
+                top: "66%",
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+              <BrassSliderDishKnob className="w-[24px] h-[24px] sm:w-[27px] sm:h-[27px]" />
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Right Brass Terminal End-Cap Spacer (mirrors left cap symmetrically) */}
+      <div
+        className="relative z-10 h-full shrink-0 pointer-events-none"
+        style={{ width: "calc(56px * 1.24)" }}
+        aria-hidden="true"
+      />
     </div>
   );
 }

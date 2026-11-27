@@ -1021,8 +1021,8 @@ export default function Students() {
     <ScopedErrorBoundary moduleName="Students">
       <div className="min-h-full w-full max-w-full min-w-0 overflow-x-hidden bg-[#020712] text-[#F0DFC5] flex flex-col">
         {/* ─── Top Full-Bleed Photorealistic Study Wall & Mahogany Desk Header Banner ─── */}
-        <div className="wp-stu-banner w-full min-h-[250px] sm:min-h-[272px] lg:min-h-[296px] flex flex-col justify-start">
-          <div className="relative z-10 w-full px-4 sm:pl-[12%] sm:pr-[12.5%] lg:pl-[11.5%] lg:pr-[12%] pt-5 sm:pt-6 pb-14 sm:pb-16 lg:pb-[74px]">
+        <div className="wp-stu-banner w-full min-h-[268px] sm:min-h-[296px] lg:min-h-[322px] flex flex-col justify-start">
+          <div className="relative z-10 w-full px-4 sm:pl-[11.5%] sm:pr-[12.5%] lg:pl-[11.2%] lg:pr-[12.2%] pt-4 sm:pt-5 pb-[76px] sm:pb-[86px] lg:pb-[92px]">
             <div className="max-w-[1160px] mx-auto">
               <PageIdBadge id="PG-004" name="Student Workspaces" />
               <StudentsHeader
