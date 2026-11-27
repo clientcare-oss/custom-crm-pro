@@ -430,7 +430,7 @@ function WaypointLoginContent() {
                 </div>
               )}
 
-              <form onSubmit={handlePasswordSignIn} className="space-y-3" noValidate>
+              <form onSubmit={handlePasswordSignIn} className="space-y-2.5" noValidate>
                 {/* Email Address */}
                 <label className="wp-login-input-wrap">
                   <span className="sr-only">Email Address</span>

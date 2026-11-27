@@ -67,7 +67,7 @@
   background-image: url("/assets/login/parchment-plaque.png");
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  padding: clamp(14px, 1.9vh, 20px) clamp(30px, 3.2vw, 40px) clamp(15px, 1.9vh, 21px);
+  padding: clamp(28px, 3.5vh, 38px) clamp(30px, 3.2vw, 40px) clamp(15px, 1.8vh, 20px);
   color: #1c140d;
   filter: drop-shadow(0 28px 42px rgba(4, 9, 18, 0.84))
     drop-shadow(0 8px 16px rgba(0, 0, 0, 0.68));
@@ -107,7 +107,7 @@
 .wp-login-brand-logo {
   width: 132px;
   height: 132px;
-  margin-top: -2px;
+  margin-top: 2px;
   object-fit: contain;
   user-select: none;
   filter: drop-shadow(0 4px 8px rgba(34, 21, 8, 0.38)) contrast(1.03);
@@ -335,12 +335,13 @@
   }
 
   .wp-login-plaque {
-    padding: 9px 28px 10px;
+    padding: 22px 28px 10px;
   }
 
   .wp-login-brand-logo {
-    width: 96px;
-    height: 96px;
+    width: 92px;
+    height: 92px;
+    margin-top: 0;
   }
 
   .wp-login-ivy-overlay {
