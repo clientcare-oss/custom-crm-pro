@@ -58,6 +58,7 @@ import { Label } from "@/components/ui/label";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { LighthouseCottageIcon } from "@/components/ui/LighthouseCottageIcon";
+import { CashRegisterIcon } from "@/components/ui/CashRegisterIcon";
 import { MarineRadarIcon } from "@/components/ui/MarineRadarIcon";
 import { getTestUnreadState } from "@/lib/testUnreadHelper";
 import { broadcastPageId } from "@/lib/pageIdRegistry";
@@ -203,10 +204,10 @@ function buildMenuGroups(projectLabelPlural: string, projectIcon: LucideIcon): M
           keywords: ["billing", "invoices", "payments", "revenue", "pg-005"]
         },
         {
-          icon: CreditCard,
-          label: "Payment Station",
+          icon: CashRegisterIcon as any,
+          label: "Register",
           path: "/payment-station",
-          keywords: ["payment station", "payments", "pos", "point of sale", "charge", "card by phone", "donation", "stripe", "pg-050"]
+          keywords: ["register", "cash register", "payment station", "payments", "pos", "point of sale", "charge", "card by phone", "donation", "stripe", "pg-050"]
         },
         {
           icon: FileSignature,
@@ -431,8 +432,8 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
     },
     {
       id: "payment-station",
-      icon: CreditCard,
-      label: "Payment Station",
+      icon: CashRegisterIcon as any,
+      label: "Register",
       path: "/payment-station",
       isActive: (loc) => loc === "/payment-station" || loc.startsWith("/payment-station/") || loc === "/payments" || loc === "/pos",
     },
@@ -611,7 +612,7 @@ const SEARCHABLE_DIRECTORY: SearchDirectoryItem[] = [
   { id: "mod-contacts", name: "Contacts Directory", category: "module", path: "/contacts", badge: "PG-002", keywords: ["clients", "parents", "directory", "people", "directory", "families"], icon: Users },
   { id: "mod-agreements", name: "Agreements Engine", category: "module", path: "/agreements", badge: "PG-046", keywords: ["contracts", "signatures", "smart files", "agreements", "terms"], icon: FileSignature },
   { id: "mod-invoices", name: "Invoices & Billing", category: "module", path: "/invoices", badge: "PG-005", keywords: ["invoices", "payments", "receipts", "billing", "charges"], icon: Banknote },
-  { id: "mod-payment-station", name: "Payment Station", category: "module", path: "/payment-station", badge: "PG-050", keywords: ["payment station", "pos", "point of sale", "payments", "card by phone", "charge", "donation", "receipt", "stripe"], icon: CreditCard },
+  { id: "mod-payment-station", name: "Register", category: "module", path: "/payment-station", badge: "PG-050", keywords: ["register", "cash register", "payment station", "pos", "point of sale", "payments", "card by phone", "charge", "donation", "receipt", "stripe"], icon: CashRegisterIcon as any },
   { id: "mod-templates", name: "Templates", category: "module", path: "/templates", badge: "PG-011", keywords: ["templates", "forms", "letters", "documents", "email templates"], icon: LayoutTemplate },
   { id: "mod-automations", name: "Automations", category: "module", path: "/automations", badge: "PG-013", keywords: ["automations", "triggers", "actions", "workflows", "zapier", "webhooks"], icon: Zap },
   { id: "mod-workflows", name: "Workflow Designer", category: "module", path: "/workflows", badge: "PG-015", keywords: ["workflow designer", "workflows", "monorail", "workflow map", "guide steps", "stations", "traditional"], icon: GitBranch },
@@ -1265,6 +1266,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     });
   };
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const navSlotRef = useRef<HTMLDivElement>(null);
+  const navScrollRef = useRef<HTMLDivElement>(null);
   const navMenuRef = useRef<HTMLUListElement>(null);
   const monorailRef = useRef<HTMLLIElement>(null);
   const monorailAnimRef = useRef<Animation | null>(null);
@@ -1273,6 +1276,16 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
   const navTimerRef = useRef<number | null>(null);
   const prevRouteKeyRef = useRef<string | null>(null);
   const navItemRefs = useRef<Record<string, HTMLLIElement | null>>({});
+  const navMetricsRef = useRef<{ pitch: number; visibleRows: number; totalRows: number; pad: number }>({
+    pitch: 52,
+    visibleRows: 12,
+    totalRows: navItems.length,
+    pad: 3,
+  });
+  const navWheelTargetRowRef = useRef<number>(0);
+  const navWheelActiveUntilRef = useRef<number>(0);
+  const navSnapTimerRef = useRef<number | null>(null);
+  const [navViewportHeight, setNavViewportHeight] = useState<number | null>(null);
   const monorailInitializedRef = useRef(false);
   const monorailGeoRef = useRef<{ x: number; y: number; height: number; width: number }>({
     x: 0,
@@ -1452,6 +1465,204 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     ro.observe(menuEl);
     return () => ro.disconnect();
   }, [activeNavId, isCollapsed, navItems.length]);
+
+  // Lock sidebar scroll viewport to an exact integer number of full items (zero half-cut items at top or bottom)
+  const navItemsKey = navItems.map((item) => item.id).join("|");
+  const navItemIdsRef = useRef<string[]>([]);
+  navItemIdsRef.current = navItems.map((item) => item.id);
+
+  useLayoutEffect(() => {
+    const slotEl = navSlotRef.current;
+    const scrollEl = navScrollRef.current;
+    if (!slotEl || !scrollEl) return;
+
+    const recalcViewport = () => {
+      const ids = navItemIdsRef.current;
+      const firstId = ids[0];
+      const secondId = ids[1];
+      const firstEl = firstId ? navItemRefs.current[firstId] : null;
+      const secondEl = secondId ? navItemRefs.current[secondId] : null;
+
+      const measuredItemH = firstEl ? Math.round(firstEl.getBoundingClientRect().height) : 0;
+      const itemH = measuredItemH > 0 ? measuredItemH : isCollapsed ? 32 : 46;
+      const measuredPitch =
+        firstEl && secondEl ? Math.round(secondEl.offsetTop - firstEl.offsetTop) : 0;
+      const pitch = measuredPitch >= itemH ? measuredPitch : itemH + 6;
+      const gap = Math.max(0, pitch - itemH);
+      const pad = gap / 2;
+
+      const slotStyle = getComputedStyle(slotEl);
+      const padTop = parseFloat(slotStyle.paddingTop) || 0;
+      const padBottom = parseFloat(slotStyle.paddingBottom) || 0;
+      const availH = Math.floor(slotEl.clientHeight - padTop - padBottom);
+      if (availH <= 0 || pitch <= 0) return;
+
+      const totalRows = ids.length;
+      const visibleRows = Math.max(1, Math.min(totalRows, Math.floor(availH / pitch)));
+      const snappedHeight = visibleRows * pitch;
+
+      navMetricsRef.current = { pitch, visibleRows, totalRows, pad };
+      scrollEl.style.setProperty("--adm-nav-pad", `${pad}px`);
+      scrollEl.style.height = `${snappedHeight}px`;
+      setNavViewportHeight((prev) => (prev === snappedHeight ? prev : snappedHeight));
+
+      const maxRow = Math.max(0, totalRows - visibleRows);
+      const snappedRow = Math.min(maxRow, Math.max(0, Math.round(scrollEl.scrollTop / pitch)));
+      const snappedTop = snappedRow * pitch;
+      if (Math.abs(scrollEl.scrollTop - snappedTop) > 0.5) {
+        scrollEl.scrollTop = snappedTop;
+      }
+      navWheelTargetRowRef.current = snappedRow;
+    };
+
+    recalcViewport();
+
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      recalcViewport();
+    });
+    ro.observe(slotEl);
+    if (navMenuRef.current) ro.observe(navMenuRef.current);
+    return () => ro.disconnect();
+  }, [navItemsKey, isCollapsed]);
+
+  // Clean row-by-row wheel stepping + scrollend/debounced snap guarantee for trackpad & scrollbar drags
+  useEffect(() => {
+    const scrollEl = navScrollRef.current;
+    if (!scrollEl) return;
+
+    const prefersReduced = () =>
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    const snapToNearestRow = () => {
+      const { pitch, visibleRows, totalRows } = navMetricsRef.current;
+      if (pitch <= 0 || totalRows <= visibleRows) return;
+      const maxRow = Math.max(0, totalRows - visibleRows);
+      const nearestRow = Math.min(maxRow, Math.max(0, Math.round(scrollEl.scrollTop / pitch)));
+      const exactTop = nearestRow * pitch;
+      navWheelTargetRowRef.current = nearestRow;
+      if (Math.abs(scrollEl.scrollTop - exactTop) > 0.5) {
+        scrollEl.scrollTo({
+          top: exactTop,
+          behavior: prefersReduced() ? "auto" : "smooth",
+        });
+      }
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      const { pitch, visibleRows, totalRows } = navMetricsRef.current;
+      if (pitch <= 0 || totalRows <= visibleRows) return;
+      if (e.ctrlKey || e.metaKey) return;
+
+      // Discrete notched mouse wheel (lines/pages or standard ±100/±120 integer pixel ticks)
+      const isDiscreteWheel =
+        e.deltaMode !== 0 ||
+        (e.deltaX === 0 && Math.abs(e.deltaY) >= 48 && Number.isInteger(e.deltaY));
+      if (!isDiscreteWheel) return;
+
+      e.preventDefault();
+
+      const maxRow = Math.max(0, totalRows - visibleRows);
+      const now = performance.now();
+      const baseRow =
+        now < navWheelActiveUntilRef.current
+          ? navWheelTargetRowRef.current
+          : Math.round(scrollEl.scrollTop / pitch);
+
+      let stepRows = 0;
+      if (e.deltaMode === 2) {
+        stepRows = Math.sign(e.deltaY) * Math.max(1, visibleRows - 1);
+      } else if (e.deltaMode === 1) {
+        stepRows = Math.sign(e.deltaY) * Math.max(1, Math.round(Math.abs(e.deltaY) / 3));
+      } else {
+        stepRows = Math.sign(e.deltaY) * Math.max(1, Math.round(Math.abs(e.deltaY) / 100));
+      }
+
+      const nextRow = Math.min(maxRow, Math.max(0, baseRow + stepRows));
+      navWheelTargetRowRef.current = nextRow;
+      navWheelActiveUntilRef.current = now + 380;
+
+      scrollEl.scrollTo({
+        top: nextRow * pitch,
+        behavior: prefersReduced() ? "auto" : "smooth",
+      });
+    };
+
+    const supportsScrollEnd = typeof window !== "undefined" && "onscrollend" in window;
+    const handleScrollFallback = () => {
+      if (navSnapTimerRef.current !== null) {
+        window.clearTimeout(navSnapTimerRef.current);
+      }
+      navSnapTimerRef.current = window.setTimeout(() => {
+        navSnapTimerRef.current = null;
+        if (performance.now() >= navWheelActiveUntilRef.current) {
+          snapToNearestRow();
+        }
+      }, 160);
+    };
+
+    const handleScrollEnd = () => {
+      if (navSnapTimerRef.current !== null) {
+        window.clearTimeout(navSnapTimerRef.current);
+        navSnapTimerRef.current = null;
+      }
+      snapToNearestRow();
+    };
+
+    scrollEl.addEventListener("wheel", handleWheel, { passive: false });
+    if (supportsScrollEnd) {
+      scrollEl.addEventListener("scrollend", handleScrollEnd);
+    } else {
+      scrollEl.addEventListener("scroll", handleScrollFallback, { passive: true });
+    }
+
+    return () => {
+      scrollEl.removeEventListener("wheel", handleWheel);
+      if (supportsScrollEnd) {
+        scrollEl.removeEventListener("scrollend", handleScrollEnd);
+      } else {
+        scrollEl.removeEventListener("scroll", handleScrollFallback);
+      }
+      if (navSnapTimerRef.current !== null) {
+        window.clearTimeout(navSnapTimerRef.current);
+        navSnapTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  // Ensure active route item scrolls cleanly into full integer-row view when navigated off-fold
+  useEffect(() => {
+    const scrollEl = navScrollRef.current;
+    if (!scrollEl || !activeNavId) return;
+    const activeIdx = navItemIdsRef.current.indexOf(activeNavId);
+    if (activeIdx < 0) return;
+
+    const { pitch, visibleRows, totalRows } = navMetricsRef.current;
+    if (pitch <= 0 || totalRows <= visibleRows) return;
+
+    const maxRow = Math.max(0, totalRows - visibleRows);
+    const currentTopRow = Math.round(scrollEl.scrollTop / pitch);
+    const currentBottomRow = currentTopRow + visibleRows - 1;
+
+    let targetRow: number | null = null;
+    if (activeIdx < currentTopRow) {
+      targetRow = activeIdx;
+    } else if (activeIdx > currentBottomRow) {
+      targetRow = Math.min(maxRow, activeIdx - visibleRows + 1);
+    }
+
+    if (targetRow !== null) {
+      const prefersReduced =
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      navWheelTargetRowRef.current = targetRow;
+      scrollEl.scrollTo({
+        top: targetRow * pitch,
+        behavior: prefersReduced ? "auto" : "smooth",
+      });
+    }
+  }, [activeNavId, navViewportHeight, navItemsKey]);
 
   const handleNavItemSelect = (itemId: string, path: string) => {
     if (navTimerRef.current !== null) {
@@ -1997,56 +2208,67 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             <div aria-hidden="true" className="adm-sidebar-leather-crease" />
           </SidebarHeader>
 
-          {/* ── Nav items: Smooth Monorail Sliding Leather-and-Brass Selection Switch ── */}
-          <SidebarContent className="bg-transparent px-3.5 pt-3 pb-3 overflow-y-auto space-y-1">
-            <SidebarMenu ref={navMenuRef} className="relative gap-1.5">
-              {/* Floating Sculpted 3D Monorail Slider Carriage (120fps Web Animations API GPU glide) */}
-              <li
-                ref={monorailRef}
-                aria-hidden="true"
-                data-testid="sidebar-monorail-pill"
-                className="adm-nav-active adm-nav-monorail list-none"
-              />
+          {/* ── Nav items: Row-Locked Scroll Viewport + Smooth Monorail Sliding Leather-and-Brass Switch ── */}
+          <SidebarContent
+            ref={navSlotRef}
+            className="bg-transparent px-0 pt-[9px] pb-[9px] overflow-hidden flex flex-col justify-start"
+          >
+            <div
+              ref={navScrollRef}
+              data-testid="sidebar-nav-scroll"
+              className="adm-sidebar-nav-scroll w-full px-3.5 shrink-0"
+              style={navViewportHeight !== null ? { height: `${navViewportHeight}px` } : undefined}
+            >
+              <SidebarMenu ref={navMenuRef} className="relative gap-[6px] py-[3px]">
+                {/* Floating Sculpted 3D Monorail Slider Carriage (120fps Web Animations API GPU glide) */}
+                <li
+                  ref={monorailRef}
+                  aria-hidden="true"
+                  data-testid="sidebar-monorail-pill"
+                  className="adm-nav-active adm-nav-monorail list-none"
+                />
 
-              {navItems.map((item) => {
-                const isActive = activeNavId === item.id;
-                const IconComponent = item.icon;
-                const isHomeIcon = item.id === "home";
-                return (
-                  <SidebarMenuItem
-                    key={item.id}
-                    ref={(el) => {
-                      navItemRefs.current[item.id] = el;
-                    }}
-                    className="relative z-10"
-                  >
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => handleNavItemSelect(item.id, item.path)}
-                      tooltip={item.label}
-                      className={cn(
-                        "h-[46px] w-full px-3.5 rounded-[13px] text-[14.5px] cursor-pointer transition-colors duration-250 flex items-center gap-3.5 select-none [&>svg]:!size-[22px] border border-transparent",
-                        isHomeIcon && "[&>svg]:!size-[24px]",
-                        isActive
-                          ? "!bg-transparent hover:!bg-transparent active:!bg-transparent text-[#FAF7EE] font-semibold"
-                          : "bg-transparent text-[#E1E9F6] hover:text-[#FFF8E6] hover:bg-white/[0.045] hover:border-[#d4bc88]/25 font-normal"
-                      )}
+                {navItems.map((item) => {
+                  const isActive = activeNavId === item.id;
+                  const IconComponent = item.icon;
+                  const isHomeIcon = item.id === "home";
+                  const isCustomBrassIcon = isHomeIcon || item.id === "payment-station";
+                  return (
+                    <SidebarMenuItem
+                      key={item.id}
+                      ref={(el) => {
+                        navItemRefs.current[item.id] = el;
+                      }}
+                      className="adm-sidebar-nav-item relative z-10"
                     >
-                      {IconComponent && (
-                        <IconComponent
-                          className={cn(
-                            "shrink-0",
-                            isHomeIcon && "adm-brass-icon-home",
-                            isActive ? "adm-brass-icon-active" : "adm-brass-icon"
-                          )}
-                        />
-                      )}
-                      <span className="truncate tracking-[0.015em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => handleNavItemSelect(item.id, item.path)}
+                        tooltip={item.label}
+                        className={cn(
+                          "h-[46px] w-full px-3.5 rounded-[13px] text-[14.5px] cursor-pointer transition-colors duration-250 flex items-center gap-3.5 select-none [&>svg]:!size-[22px] border border-transparent",
+                          isCustomBrassIcon && "[&>svg]:!size-[24px]",
+                          isActive
+                            ? "!bg-transparent hover:!bg-transparent active:!bg-transparent text-[#FAF7EE] font-semibold"
+                            : "bg-transparent text-[#E1E9F6] hover:text-[#FFF8E6] hover:bg-white/[0.045] hover:border-[#d4bc88]/25 font-normal"
+                        )}
+                      >
+                        {IconComponent && (
+                          <IconComponent
+                            className={cn(
+                              "shrink-0",
+                              isCustomBrassIcon && "adm-brass-icon-home",
+                              isActive ? "adm-brass-icon-active" : "adm-brass-icon"
+                            )}
+                          />
+                        )}
+                        <span className="truncate tracking-[0.015em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </div>
           </SidebarContent>
 
           {/* ── Footer: Full-Width Gleaming Gold Rail (Matches Top Rail) + Sculpted Hardware Tiles ── */}
@@ -2427,7 +2649,7 @@ const PAGE_LIST = [
   { id: "PG-044", name: "Post-Meeting Review", path: "/post-meeting-review" },
   { id: "PG-046", name: "Agreements Engine", path: "/agreements" },
   { id: "PG-047", name: "Payment Receipt Experience", path: "/settings?section=receipts" },
-  { id: "PG-050", name: "Payment Station (POS)", path: "/payment-station" },
+  { id: "PG-050", name: "Register (POS)", path: "/payment-station" },
 ];
 
 function GoToPageModal({ open, onClose }: { open: boolean; onClose: () => void }) {

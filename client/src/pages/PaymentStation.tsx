@@ -492,8 +492,8 @@ function PaymentStationTerminal({ stripeMounted }: { stripeMounted: boolean }) {
 
   /**
    * Choreographs Payment Paid hardware audio & visuals:
-   * t = 0ms   -> Vintage brass cash register "CHA-CHING!" + green display wave
-   * t = 340ms -> Thermal receipt printer motor + paper feed emergence
+   * t = 0ms   -> Selected CC0 cash register "CHA-CHING!" + green display wave
+   * t = 480ms -> Locked Epson POS impact receipt printer burst + paper feed emergence
    */
   const triggerPaymentPaidEffects = useCallback(() => {
     cancelPendingPaidPrint();
@@ -502,7 +502,7 @@ function PaymentStationTerminal({ stripeMounted }: { stripeMounted: boolean }) {
     paidPrintTimerRef.current = setTimeout(() => {
       paidPrintTimerRef.current = null;
       triggerReceiptPaperFeed();
-    }, 340);
+    }, 480);
   }, [cancelPendingPaidPrint, triggerReceiptPaperFeed]);
 
   const ensurePreviewSavedMethods = useCallback(() => {

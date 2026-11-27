@@ -8,7 +8,7 @@ import {
   CornerDownLeft,
   CreditCard,
   RefreshCw,
-  Volume2,
+  XCircle,
   Heart,
   UserSearch,
   WifiOff,
@@ -16,14 +16,11 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import {
-  getSavedManagerKeyChimeStyle,
-  getSavedPrinterSoundStyle,
-  playManagerKeyPong,
-  PRINTER_SOUND_OPTIONS,
-  setSavedManagerKeyChimeStyle,
-  setSavedPrinterSoundStyle,
-  type ManagerKeyChimeStyle,
-  type PrinterSoundStyle,
+  DECLINED_SOUND_OPTIONS,
+  getSavedDeclinedSoundStyle,
+  playCardDeclinedSound,
+  setSavedDeclinedSoundStyle,
+  type DeclinedSoundStyle,
 } from "./posSounds";
 
 export type ManagerKeyMode = "locked" | "pin" | "unlocked";
@@ -193,23 +190,14 @@ export function ManagerKeyPanel({
   onHidePanelToForm,
   onLockManager,
 }: ManagerKeyPanelProps) {
-  const [chimeStyle, setChimeStyle] = useState<ManagerKeyChimeStyle>(() =>
-    getSavedManagerKeyChimeStyle()
-  );
-  const [printerStyle, setPrinterStyle] = useState<PrinterSoundStyle>(() =>
-    getSavedPrinterSoundStyle()
+  const [declinedStyle, setDeclinedStyle] = useState<DeclinedSoundStyle>(() =>
+    getSavedDeclinedSoundStyle()
   );
 
-  const handleSelectChime = (next: ManagerKeyChimeStyle) => {
-    setChimeStyle(next);
-    setSavedManagerKeyChimeStyle(next);
-    playManagerKeyPong(next);
-  };
-
-  const handleSelectPrinterSound = (next: PrinterSoundStyle) => {
-    setPrinterStyle(next);
-    setSavedPrinterSoundStyle(next);
-    onTriggerPaperFeed();
+  const handleSelectDeclined = (next: DeclinedSoundStyle) => {
+    setDeclinedStyle(next);
+    setSavedDeclinedSoundStyle(next);
+    playCardDeclinedSound(next);
   };
 
   if (mode === "pin") {
@@ -368,27 +356,28 @@ export function ManagerKeyPanel({
         })}
       </div>
 
-      {/* Real Recorded Receipt Printer Sound Picker (5 CC0 options — click any to audition & select) */}
+      {/* Modern POS Card Declined Picker (Epson, Ding-Pong & Vintage Cha-Ching Locked) */}
       <div className="pt-1 border-t border-white/10 space-y-1">
+        {/* Card Declined Sound Picker (5 Modern & Luxury POS Terminal Decline Options) */}
         <div
           role="group"
-          aria-label="Receipt printer sound selection"
-          className="flex items-center gap-0.5 rounded-[6px] bg-[#061128] border border-[#CFA657]/35 p-[1.5px]"
+          aria-label="Card declined sound selection"
+          className="flex items-center gap-0.5 rounded-[6px] bg-[#061128] border border-rose-400/35 p-[1.5px]"
         >
-          <Printer className="h-2.5 w-2.5 text-[#DFBE77] mx-1 shrink-0" />
+          <XCircle className="h-2.5 w-2.5 text-rose-300 mx-1 shrink-0" />
           <div className="grid grid-cols-5 gap-0.5 flex-1">
-            {PRINTER_SOUND_OPTIONS.map((opt) => {
-              const active = printerStyle === opt.id;
+            {DECLINED_SOUND_OPTIONS.map((opt) => {
+              const active = declinedStyle === opt.id;
               return (
                 <button
                   key={opt.id}
                   type="button"
-                  data-testid={`pos-printer-sound-${opt.id}`}
-                  onClick={() => handleSelectPrinterSound(opt.id)}
+                  data-testid={`pos-declined-sound-${opt.id}`}
+                  onClick={() => handleSelectDeclined(opt.id)}
                   title={opt.title}
-                  className={`h-[18px] px-1 rounded-[4px] text-[9px] font-semibold transition-colors cursor-pointer whitespace-nowrap truncate ${
+                  className={`h-[18px] px-0.5 rounded-[4px] text-[8.5px] font-semibold transition-colors cursor-pointer whitespace-nowrap truncate ${
                     active
-                      ? "bg-[#DFBE77] text-[#081224]"
+                      ? "bg-rose-400 text-[#23060B]"
                       : "text-[#B8C9E8] hover:text-white hover:bg-[#13264D]"
                   }`}
                 >
@@ -399,39 +388,14 @@ export function ManagerKeyPanel({
           </div>
         </div>
 
-        {/* Key Access Sound Audition & Station Utilities Row */}
-        <div className="flex items-center justify-between gap-1">
+        {/* Locked Audio Badge & Station Utilities Row */}
+        <div className="flex items-center justify-between gap-1 pt-0.5">
           <div
-            role="group"
-            aria-label="Key unlock elevator chime sound"
-            className="inline-flex items-center gap-0.5 rounded-[6px] bg-[#061128] border border-[#CFA657]/35 p-[1.5px]"
+            className="inline-flex items-center gap-1 px-1.5 h-[19px] rounded-[5px] bg-[#061128]/90 border border-[#CFA657]/30 text-[8.5px] font-medium text-[#DFBE77]/90 whitespace-nowrap"
+            title="Locked: Epson receipt printer · Ding-Pong settings key · Vintage cha-ching"
           >
-            <Volume2 className="h-2.5 w-2.5 text-[#DFBE77] mx-0.5 shrink-0" />
-            {(
-              [
-                { id: "otis_pong", label: "Otis" },
-                { id: "elevator_two_tone", label: "Ding-Pong" },
-                { id: "deep_pong", label: "Deep" },
-              ] as const
-            ).map((opt) => {
-              const active = chimeStyle === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  data-testid={`pos-chime-${opt.id}`}
-                  onClick={() => handleSelectChime(opt.id)}
-                  title={`Preview & select ${opt.label} elevator chime`}
-                  className={`h-[17px] px-1.5 rounded-[4px] text-[9px] font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-                    active
-                      ? "bg-[#DFBE77] text-[#081224]"
-                      : "text-[#B8C9E8] hover:text-white hover:bg-[#13264D]"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
+            <Lock className="h-2.5 w-2.5 text-[#DFBE77] shrink-0" />
+            <span>Epson · Ding-Pong · Vintage</span>
           </div>
 
           <div className="inline-flex items-center gap-1 shrink-0">
@@ -439,11 +403,11 @@ export function ManagerKeyPanel({
               type="button"
               data-testid="pos-preview-feed-paper"
               onClick={onTriggerPaperFeed}
-              title="Replay selected thermal printer sound & paper feed"
+              title="Replay locked Epson receipt printer sound & paper feed"
               className="h-[19px] px-1.5 rounded-[5px] bg-[#091834] hover:bg-[#12284f] border border-[#5B72A3]/35 text-[9px] text-[#C8D6F0] inline-flex items-center gap-1 cursor-pointer"
             >
               <Printer className="h-2.5 w-2.5 text-[#DFBE77]" />
-              <span>Test</span>
+              <span>Epson</span>
             </button>
             <button
               type="button"

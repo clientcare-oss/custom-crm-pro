@@ -1,116 +1,102 @@
 /**
- * Synthesized luxury hardware audio feedback for Waypoint Payment Station (PG-050).
- * Uses zero external audio files — generated cleanly via Web Audio API with
- * stereo room-reverb convolution and safe graceful fallback.
+ * Luxury hardware audio feedback for Waypoint Register (PG-050):
+ * - Receipt Printer Sound: LOCKED to Epson POS impact receipt burst (CC0 real recording)
+ * - Settings / Manager Key Access Sound: LOCKED to Ding-Pong two-tone elevator chime
+ * - Payment Paid ("Cha-Ching") Sound: LOCKED to Vintage public-domain cash register cha-ching
+ * - Card Declined Sound: 5 authentic, modern luxury POS decline sounds (Tap Fail, Chip POS, Soft Deny, Terminal, POS Low)
  */
 
-export type ManagerKeyChimeStyle = "otis_pong" | "elevator_two_tone" | "deep_pong";
-export type PrinterSoundStyle =
-  | "thermal_cut"
-  | "epson_pos"
-  | "retail_till"
-  | "drawer_print"
-  | "retro_matrix";
+export type DeclinedSoundStyle =
+  | "pos_low_loud"
+  | "deep_ehh"
+  | "classic_pos"
+  | "firm_triple"
+  | "heavy_low";
 
-export interface PrinterSoundOption {
-  id: PrinterSoundStyle;
+export interface PosAudioSampleOption<T extends string = string> {
+  id: T;
   label: string;
   title: string;
-  url: string;
-  offsetSec: number;
-  durationSec: number;
-  gain: number;
+  url?: string;
+  offsetSec?: number;
+  durationSec?: number;
+  gain?: number;
 }
 
 /**
- * Curated CC0 (Public Domain) real recorded receipt printer audio samples.
- * Every clip is studio-clean with zero background voices or chatter.
+ * LOCKED receipt printer sound: Classic Epson POS impact receipt printer burst (CC0).
  */
-export const PRINTER_SOUND_OPTIONS: PrinterSoundOption[] = [
+export const LOCKED_RECEIPT_PRINTER_SOUND: Required<PosAudioSampleOption<"epson_pos">> = {
+  id: "epson_pos",
+  label: "Epson",
+  title: "Classic Epson POS impact receipt printer burst (locked)",
+  url: "/assets/pos/sounds/printer-epson-pos.mp3",
+  offsetSec: 0.05,
+  durationSec: 1.45,
+  gain: 0.72,
+};
+
+/**
+ * LOCKED payment paid ("Cha-Ching!") sound: Instant public-domain vintage brass cash register.
+ */
+export const LOCKED_CHACHING_SOUND: Required<PosAudioSampleOption<"vintage">> = {
+  id: "vintage",
+  label: "Vintage",
+  title: "Instant iconic public-domain 'CHA-CHING!' brass cash register bell (locked)",
+  url: "/assets/pos/sounds/chaching-wiki.mp3",
+  offsetSec: 0.23,
+  durationSec: 1.75,
+  gain: 0.65,
+};
+
+/**
+ * 5 Loud, authoritative retail POS card-declined variations in the warm "POS Low" family.
+ */
+export const DECLINED_SOUND_OPTIONS: PosAudioSampleOption<DeclinedSoundStyle>[] = [
   {
-    id: "thermal_cut",
-    label: "Thermal",
-    title: "Modern thermal receipt print & auto-cutter snip (real recording)",
-    url: "/assets/pos/sounds/printer-thermal-cut.mp3",
-    offsetSec: 0,
-    durationSec: 1.57,
-    gain: 0.95,
+    id: "pos_low_loud",
+    label: "POS Loud",
+    title: "Your POS Low double refusal boosted loud, warm & full-bodied (204 Hz → 174 Hz)",
   },
   {
-    id: "epson_pos",
-    label: "Epson",
-    title: "Classic Epson POS impact receipt printer burst (real recording)",
-    url: "/assets/pos/sounds/printer-epson-pos.mp3",
-    offsetSec: 0.05,
-    durationSec: 1.45,
-    gain: 0.72,
+    id: "deep_ehh",
+    label: "Deep Ehh",
+    title: "Deeper, heavier brass-register double 'EHH — EHH' (165 Hz → 138 Hz)",
   },
   {
-    id: "retail_till",
-    label: "Till",
-    title: "Compact retail thermal receipt motor feed (real recording)",
-    url: "/assets/pos/sounds/printer-retail-till.mp3",
-    offsetSec: 0.04,
-    durationSec: 1.4,
-    gain: 0.9,
+    id: "classic_pos",
+    label: "Classic",
+    title: "Punchy retail card-terminal double 'EHH — EHH' with crisp speaker presence (225 Hz → 198 Hz)",
   },
   {
-    id: "drawer_print",
-    label: "Drawer",
-    title: "Cash register drawer & thermal receipt feed (real recording)",
-    url: "/assets/pos/sounds/printer-drawer-print.mp3",
-    offsetSec: 0,
-    durationSec: 1.9,
-    gain: 0.85,
+    id: "firm_triple",
+    label: "Triple",
+    title: "Authoritative 3-pulse rapid POS card-declined buzz ('ehh-ehh-ehh')",
   },
   {
-    id: "retro_matrix",
-    label: "Matrix",
-    title: "Vintage dot-matrix receipt printer chatter (real recording)",
-    url: "/assets/pos/sounds/printer-retro-matrix.mp3",
-    offsetSec: 0.1,
-    durationSec: 1.25,
-    gain: 0.65,
+    id: "heavy_low",
+    label: "Heavy",
+    title: "Bold descending low terminal buzz-drop with firm resonant finish (188 Hz → 142 Hz)",
   },
 ];
 
-const CHIME_STORAGE_KEY = "waypoint_pos_manager_chime_style";
-const PRINTER_SOUND_STORAGE_KEY = "waypoint_pos_printer_sound_style";
+const DECLINED_STORAGE_KEY = "waypoint_pos_declined_sound_style_v3";
 
-export function getSavedPrinterSoundStyle(): PrinterSoundStyle {
+export function getSavedDeclinedSoundStyle(): DeclinedSoundStyle {
   try {
-    if (typeof window === "undefined") return "thermal_cut";
-    const raw = window.localStorage.getItem(PRINTER_SOUND_STORAGE_KEY);
-    if (PRINTER_SOUND_OPTIONS.some((o) => o.id === raw)) {
-      return raw as PrinterSoundStyle;
-    }
-  } catch {}
-  return "thermal_cut";
-}
-
-export function setSavedPrinterSoundStyle(style: PrinterSoundStyle): void {
-  try {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(PRINTER_SOUND_STORAGE_KEY, style);
-    }
-  } catch {}
-}
-
-export function getSavedManagerKeyChimeStyle(): ManagerKeyChimeStyle {
-  try {
-    if (typeof window === "undefined") return "otis_pong";
-    const raw = window.localStorage.getItem(CHIME_STORAGE_KEY);
-    if (raw === "otis_pong" || raw === "elevator_two_tone" || raw === "deep_pong") {
-      return raw;
+    if (typeof window === "undefined") return "pos_low_loud";
+    const raw = window.localStorage.getItem(DECLINED_STORAGE_KEY);
+    if (DECLINED_SOUND_OPTIONS.some((o) => o.id === raw)) {
+      return raw as DeclinedSoundStyle;
     }
   } catch { }
-  return "otis_pong";
+  return "pos_low_loud";
 }
 
-export function setSavedManagerKeyChimeStyle(style: ManagerKeyChimeStyle): void {
+export function setSavedDeclinedSoundStyle(style: DeclinedSoundStyle): void {
   try {
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(CHIME_STORAGE_KEY, style);
+      window.localStorage.setItem(DECLINED_STORAGE_KEY, style);
     }
   } catch { }
 }
@@ -129,8 +115,7 @@ function createResumedAudioContext(): AudioContext | null {
 }
 
 /**
- * Generates a smooth stereo warm marble-lobby room impulse response for Web Audio ConvolverNode
- * so elevator chimes sound naturally spacious and authentic instead of dry/electronic.
+ * Generates a smooth stereo warm marble-lobby room impulse response for Web Audio ConvolverNode.
  */
 function createLobbyReverbBuffer(
   ctx: AudioContext,
@@ -146,9 +131,7 @@ function createLobbyReverbBuffer(
     for (let i = 0; i < length; i++) {
       const t = i / length;
       const white = Math.random() * 2 - 1;
-      // Gentle single-pole low-pass smoothing for warm lobby reflections (never metallic/harsh)
       lp = lp * 0.72 + white * 0.28;
-      // Soft early-reflection pre-fade + smooth exponential tail
       const attack = Math.min(1, i / (rate * 0.012));
       channelData[i] = lp * attack * Math.pow(1 - t, decayRate);
     }
@@ -157,8 +140,7 @@ function createLobbyReverbBuffer(
 }
 
 /**
- * Triggers one authentic hollow-tube elevator chime strike (soft rubber plunger + pure
- * resonator tube bloom + ultra-subtle acoustic beating + clean fast-fading octave sheen).
+ * Triggers one authentic hollow-tube resonator strike (used by locked Ding-Pong and Soft Deny).
  */
 function scheduleElevatorTubeStrike(
   ctx: AudioContext,
@@ -170,12 +152,10 @@ function scheduleElevatorTubeStrike(
 ): void {
   const noteBus = ctx.createGain();
   noteBus.gain.setValueAtTime(0.0001, startTime);
-  // 16ms hollow-resonator tube bloom (key signature of a real elevator chime vs. a sharp digital beep)
   noteBus.gain.linearRampToValueAtTime(gainLevel, startTime + 0.016);
   noteBus.gain.exponentialRampToValueAtTime(0.0006, startTime + sustainSec);
   noteBus.connect(destination);
 
-  // 1. Pure warm resonator fundamental
   const fundA = ctx.createOscillator();
   const fundAGain = ctx.createGain();
   fundA.type = "sine";
@@ -184,7 +164,6 @@ function scheduleElevatorTubeStrike(
   fundA.connect(fundAGain);
   fundAGain.connect(noteBus);
 
-  // 2. Whisper-detuned acoustic shimmer twin (~0.85 Hz slow natural lobby beat)
   const fundB = ctx.createOscillator();
   const fundBGain = ctx.createGain();
   fundB.type = "sine";
@@ -193,7 +172,6 @@ function scheduleElevatorTubeStrike(
   fundB.connect(fundBGain);
   fundBGain.connect(noteBus);
 
-  // 3. Soft hollow-tube lower octave warmth for the round "PONG" vowel body
   const sub = ctx.createOscillator();
   const subGain = ctx.createGain();
   sub.type = "sine";
@@ -203,7 +181,6 @@ function scheduleElevatorTubeStrike(
   sub.connect(subGain);
   subGain.connect(noteBus);
 
-  // 4. Clean brief 2x chime sheen (fades rapidly so tone stays glassy-pure, never organ-like)
   const oct = ctx.createOscillator();
   const octGain = ctx.createGain();
   oct.type = "sine";
@@ -213,7 +190,6 @@ function scheduleElevatorTubeStrike(
   oct.connect(octGain);
   octGain.connect(noteBus);
 
-  // 5. Soft rubber-tipped solenoid plunger tap (low-mid thump, zero harsh hiss)
   const tapLen = Math.floor(ctx.sampleRate * 0.014);
   const tapBuf = ctx.createBuffer(1, tapLen, ctx.sampleRate);
   const tapData = tapBuf.getChannelData(0);
@@ -272,26 +248,23 @@ function scheduleBrassKeyClick(ctx: AudioContext, destination: AudioNode, startT
 }
 
 /**
- * Plays the realistic elevator-door access "pong" chime when the Manager Key turns 90°
- * on a valid 4-digit unlock code. Uses genuine ConvolverNode lobby reverb and pure
- * resonator-tube acoustics.
+ * LOCKED Settings / Manager Key Access Sound:
+ * Classic luxury two-tone elevator "DING — PONG" (B5 -> G5 descending major 3rd)
+ * preceded by a crisp brass key-tumbler click as the key turns 90°.
  */
-export function playManagerKeyPong(styleOverride?: ManagerKeyChimeStyle): void {
+export function playManagerKeyPong(): void {
   try {
     const ctx = createResumedAudioContext();
     if (!ctx) return;
 
-    const style = styleOverride ?? getSavedManagerKeyChimeStyle();
     const now = ctx.currentTime;
 
-    // Gentle warm output low-pass filter
     const warmOut = ctx.createBiquadFilter();
     warmOut.type = "lowpass";
     warmOut.frequency.setValueAtTime(3600, now);
     warmOut.Q.setValueAtTime(0.6, now);
     warmOut.connect(ctx.destination);
 
-    // Dry + Stereo Marble-Lobby Wet Reverb Bus
     const dryGain = ctx.createGain();
     dryGain.gain.setValueAtTime(0.74, now);
     dryGain.connect(warmOut);
@@ -308,20 +281,9 @@ export function playManagerKeyPong(styleOverride?: ManagerKeyChimeStyle): void {
     chimeBus.connect(dryGain);
     chimeBus.connect(convolver);
 
-    // Tiny physical brass key tumbler click as the key snaps 90°
     scheduleBrassKeyClick(ctx, dryGain, now);
-
-    if (style === "elevator_two_tone") {
-      // Classic luxury hotel elevator door "DING — PONG" (B5 -> G5 descending major 3rd)
-      scheduleElevatorTubeStrike(ctx, chimeBus, now + 0.045, 987.77, 1.35, 0.36);
-      scheduleElevatorTubeStrike(ctx, chimeBus, now + 0.285, 783.99, 2.05, 0.44);
-    } else if (style === "deep_pong") {
-      // Rich low resonant brass elevator "POOOONG" (D5 hollow bar)
-      scheduleElevatorTubeStrike(ctx, chimeBus, now + 0.045, 587.33, 2.25, 0.48);
-    } else {
-      // Default: Classic Otis single-tone elevator arrival "PONG" (G5 pure hollow resonator)
-      scheduleElevatorTubeStrike(ctx, chimeBus, now + 0.045, 783.99, 2.1, 0.46);
-    }
+    scheduleElevatorTubeStrike(ctx, chimeBus, now + 0.045, 987.77, 1.35, 0.36);
+    scheduleElevatorTubeStrike(ctx, chimeBus, now + 0.285, 783.99, 2.05, 0.44);
 
     setTimeout(() => {
       ctx.close().catch(() => { });
@@ -331,349 +293,456 @@ export function playManagerKeyPong(styleOverride?: ManagerKeyChimeStyle): void {
   }
 }
 
-let sharedPrinterAudioCtx: AudioContext | null = null;
-let activePrinterSource: AudioBufferSourceNode | null = null;
-const decodedPrinterBufferCache = new Map<string, Promise<AudioBuffer | null>>();
+// ── Shared Decoded Sample Engine (Zero-Overlap Auditioning + Instant Replay Cache) ──
 
-function getSharedPrinterAudioContext(): AudioContext | null {
+type SampleChannel = "printer" | "chaching" | "declined";
+
+let sharedSampleAudioCtx: AudioContext | null = null;
+const activeChannelSources: Partial<Record<SampleChannel, AudioBufferSourceNode | null>> = {};
+const activeSynthContexts: Partial<Record<SampleChannel, AudioContext | null>> = {};
+const decodedSampleCache = new Map<string, Promise<AudioBuffer | null>>();
+
+function stopChannelPlayback(channel: SampleChannel): void {
+  const prevSrc = activeChannelSources[channel];
+  if (prevSrc) {
+    try {
+      prevSrc.stop();
+    } catch { }
+    activeChannelSources[channel] = null;
+  }
+  const prevCtx = activeSynthContexts[channel];
+  if (prevCtx) {
+    try {
+      void prevCtx.close();
+    } catch { }
+    activeSynthContexts[channel] = null;
+  }
+}
+
+function getSharedSampleAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
-  if (!sharedPrinterAudioCtx || sharedPrinterAudioCtx.state === "closed") {
+  if (!sharedSampleAudioCtx || sharedSampleAudioCtx.state === "closed") {
     const AudioCtx =
       window.AudioContext ||
       (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtx) return null;
-    sharedPrinterAudioCtx = new AudioCtx();
+    sharedSampleAudioCtx = new AudioCtx();
   }
-  if (sharedPrinterAudioCtx.state === "suspended") {
-    void sharedPrinterAudioCtx.resume();
+  if (sharedSampleAudioCtx.state === "suspended") {
+    void sharedSampleAudioCtx.resume();
   }
-  return sharedPrinterAudioCtx;
+  return sharedSampleAudioCtx;
 }
 
-function loadPrinterAudioBuffer(ctx: AudioContext, url: string): Promise<AudioBuffer | null> {
-  const cached = decodedPrinterBufferCache.get(url);
+function loadSampleAudioBuffer(ctx: AudioContext, url: string): Promise<AudioBuffer | null> {
+  const cached = decodedSampleCache.get(url);
   if (cached) return cached;
 
   const promise = fetch(url)
     .then((res) => (res.ok ? res.arrayBuffer() : Promise.reject(new Error(`HTTP ${res.status}`))))
     .then((arr) => ctx.decodeAudioData(arr))
     .catch(() => {
-      decodedPrinterBufferCache.delete(url);
+      decodedSampleCache.delete(url);
       return null;
     });
 
-  decodedPrinterBufferCache.set(url, promise);
+  decodedSampleCache.set(url, promise);
   return promise;
 }
 
-/**
- * Plays the selected real recorded CC0 thermal/POS receipt printer audio sample
- * with clean slice timing, smooth fade-out, and zero overlapping when auditioning.
- */
-export function playReceiptPaperFeedSound(styleOverride?: PrinterSoundStyle): void {
+function playCuratedAudioSample(
+  channel: SampleChannel,
+  opt: PosAudioSampleOption,
+  fallbackSynth?: () => void
+): void {
+  if (!opt.url) {
+    fallbackSynth?.();
+    return;
+  }
   try {
-    const style = styleOverride ?? getSavedPrinterSoundStyle();
-    const opt =
-      PRINTER_SOUND_OPTIONS.find((o) => o.id === style) ?? PRINTER_SOUND_OPTIONS[0];
-
-    const ctx = getSharedPrinterAudioContext();
+    stopChannelPlayback(channel);
+    const ctx = getSharedSampleAudioContext();
     if (!ctx) {
       if (typeof Audio !== "undefined") {
         const el = new Audio(opt.url);
-        el.volume = Math.min(1, opt.gain);
-        void el.play().catch(() => {});
+        el.volume = Math.min(1, Math.max(0.1, opt.gain ?? 0.8));
+        void el.play().catch(() => {
+          fallbackSynth?.();
+        });
+      } else {
+        fallbackSynth?.();
       }
       return;
     }
 
-    // Stop any prior audition immediately so rapid clicking between options sounds razor-clean
-    if (activePrinterSource) {
-      try {
-        activePrinterSource.stop();
-      } catch {}
-      activePrinterSource = null;
-    }
-
-    void loadPrinterAudioBuffer(ctx, opt.url).then((buffer) => {
-      if (!buffer) return;
+    void loadSampleAudioBuffer(ctx, opt.url).then((buffer) => {
+      if (!buffer) {
+        fallbackSynth?.();
+        return;
+      }
       if (ctx.state === "suspended") {
         void ctx.resume();
       }
       const now = ctx.currentTime;
-      const offset = Math.min(opt.offsetSec, Math.max(0, buffer.duration - 0.1));
-      const playDur = Math.min(opt.durationSec, Math.max(0.1, buffer.duration - offset));
+      const offset = Math.min(opt.offsetSec ?? 0, Math.max(0, buffer.duration - 0.05));
+      const playDur = Math.min(
+        opt.durationSec ?? buffer.duration,
+        Math.max(0.05, buffer.duration - offset)
+      );
 
       const src = ctx.createBufferSource();
       src.buffer = buffer;
 
       const gain = ctx.createGain();
+      const targetGain = Math.max(0.05, opt.gain ?? 0.8);
+      const attack = Math.min(0.01, playDur * 0.14);
+      const fadeDur = Math.min(0.06, playDur * 0.22);
+
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.linearRampToValueAtTime(opt.gain, now + 0.014);
-      const fadeStart = now + Math.max(0.05, playDur - 0.065);
-      gain.gain.setValueAtTime(opt.gain, fadeStart);
+      gain.gain.linearRampToValueAtTime(targetGain, now + attack);
+      const fadeStart = now + Math.max(attack + 0.01, playDur - fadeDur);
+      gain.gain.setValueAtTime(targetGain, fadeStart);
       gain.gain.exponentialRampToValueAtTime(0.0008, now + playDur);
 
-      src.connect(gain);
-      gain.connect(ctx.destination);
-      activePrinterSource = src;
+      if (targetGain > 1.0) {
+        const limiter = ctx.createDynamicsCompressor();
+        limiter.threshold.setValueAtTime(-3, now);
+        limiter.knee.setValueAtTime(6, now);
+        limiter.ratio.setValueAtTime(12, now);
+        limiter.attack.setValueAtTime(0.002, now);
+        limiter.release.setValueAtTime(0.08, now);
+        src.connect(gain);
+        gain.connect(limiter);
+        limiter.connect(ctx.destination);
+      } else {
+        src.connect(gain);
+        gain.connect(ctx.destination);
+      }
+
+      activeChannelSources[channel] = src;
       src.onended = () => {
-        if (activePrinterSource === src) {
-          activePrinterSource = null;
+        if (activeChannelSources[channel] === src) {
+          activeChannelSources[channel] = null;
         }
       };
       src.start(now, offset, playDur + 0.02);
     });
   } catch {
-    // Audio playback is best-effort; never block receipt updates
+    fallbackSynth?.();
   }
 }
 
 /**
- * Schedules one crisp POS card-terminal decline buzz pulse ("ehh") using a detuned
- * sawtooth/square piezo pair shaped through a warm nasal vowel-formant filter.
+ * LOCKED Receipt Paper Feed Sound:
+ * Plays the real recorded CC0 Epson POS impact receipt printer burst.
  */
-function scheduleDeclineBuzzPulse(
-  ctx: AudioContext,
-  destination: AudioNode,
-  startTime: number,
-  durationSec: number,
-  freqHz: number,
-  gainLevel = 0.28
-): void {
-  const bus = ctx.createGain();
-  bus.gain.setValueAtTime(0.0001, startTime);
-  bus.gain.linearRampToValueAtTime(gainLevel, startTime + 0.007);
-  bus.gain.setValueAtTime(gainLevel * 0.96, startTime + Math.max(0.02, durationSec - 0.02));
-  bus.gain.exponentialRampToValueAtTime(0.0008, startTime + durationSec);
-  bus.connect(destination);
-
-  // Primary buzzy reed/piezo sawtooth
-  const saw = ctx.createOscillator();
-  saw.type = "sawtooth";
-  saw.frequency.setValueAtTime(freqHz, startTime);
-  saw.frequency.linearRampToValueAtTime(freqHz * 0.97, startTime + durationSec);
-  const sawGain = ctx.createGain();
-  sawGain.gain.setValueAtTime(0.68, startTime);
-  saw.connect(sawGain);
-  sawGain.connect(bus);
-
-  // Slightly detuned square twin for unmistakable POS buzzer "ehh" grit
-  const sq = ctx.createOscillator();
-  sq.type = "square";
-  sq.frequency.setValueAtTime(freqHz - 1.6, startTime);
-  sq.frequency.linearRampToValueAtTime((freqHz - 1.6) * 0.97, startTime + durationSec);
-  const sqGain = ctx.createGain();
-  sqGain.gain.setValueAtTime(0.32, startTime);
-  sq.connect(sqGain);
-  sqGain.connect(bus);
-
-  const stopAt = startTime + durationSec + 0.015;
-  saw.start(startTime);
-  sq.start(startTime);
-  saw.stop(stopAt);
-  sq.stop(stopAt);
+export function playReceiptPaperFeedSound(): void {
+  playCuratedAudioSample("printer", LOCKED_RECEIPT_PRINTER_SOUND);
 }
 
-/**
- * Plays the classic two-pulse POS terminal card-declined sound ("ehh — ehh"):
- * two crisp, warm-filtered downward buzzes with a clean gap in between.
- */
-export function playCardDeclinedSound(): void {
+// ── Bespoke Zero-Rattle Studio Brass "Ting-CHING!" ──
+
+function playStudioZeroRattleChaChing(): void {
   try {
+    stopChannelPlayback("chaching");
     const ctx = createResumedAudioContext();
     if (!ctx) return;
+    activeSynthContexts.chaching = ctx;
 
     const now = ctx.currentTime;
-
-    // Compact terminal speaker + "ehh" nasal vowel formant EQ (clear, never shrill/harsh)
-    const hp = ctx.createBiquadFilter();
-    hp.type = "highpass";
-    hp.frequency.setValueAtTime(145, now);
-
-    const formant = ctx.createBiquadFilter();
-    formant.type = "peaking";
-    formant.frequency.setValueAtTime(670, now);
-    formant.Q.setValueAtTime(1.55, now);
-    formant.gain.setValueAtTime(5.2, now);
-
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.setValueAtTime(1620, now);
-    lp.Q.setValueAtTime(0.85, now);
-
-    const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(0.36, now);
-
-    hp.connect(formant);
-    formant.connect(lp);
-    lp.connect(masterGain);
-    masterGain.connect(ctx.destination);
-
-    // Pulse 1: first short "ehh" (218 Hz, 132ms)
-    scheduleDeclineBuzzPulse(ctx, hp, now, 0.132, 218, 0.3);
-    // Clean 66ms gap -> Pulse 2: slightly lower, firmer second "ehh" (196 Hz, 185ms)
-    scheduleDeclineBuzzPulse(ctx, hp, now + 0.198, 0.185, 196, 0.32);
-
-    setTimeout(() => {
-      ctx.close().catch(() => { });
-    }, 650);
-  } catch {
-    // Audio playback is best-effort; never block decline UI
-  }
-}
-
-/**
- * Plays a crisp metallic coin/latch micro-clink inside the cash drawer for the "CHA-" onset.
- */
-function scheduleCoinClink(
-  ctx: AudioContext,
-  destination: AudioNode,
-  startTime: number,
-  freqHz: number,
-  gainLevel: number
-): void {
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(freqHz, startTime);
-  g.gain.setValueAtTime(0.0001, startTime);
-  g.gain.linearRampToValueAtTime(gainLevel, startTime + 0.003);
-  g.gain.exponentialRampToValueAtTime(0.0006, startTime + 0.095);
-  osc.connect(g);
-  g.connect(destination);
-  osc.start(startTime);
-  osc.stop(startTime + 0.11);
-}
-
-/**
- * Plays a lush vintage brass cash-register "CHA-CHING!" sound (~1.55s) on payment success:
- * 1) Crisp brass drawer latch release + metallic slide + subtle coin-tray clinks ("CHA-")
- * 2) Bright inharmonic brass dome bell strike with warm room shimmer ("-CHING!")
- */
-export function playPaymentPaidChaChingSound(): void {
-  try {
-    const ctx = createResumedAudioContext();
-    if (!ctx) return;
-
-    const now = ctx.currentTime;
-    const sampleRate = ctx.sampleRate;
-
     const masterOut = ctx.createGain();
-    masterOut.gain.setValueAtTime(0.42, now);
+    masterOut.gain.setValueAtTime(0.46, now);
     masterOut.connect(ctx.destination);
 
-    // Subtle warm boutique room reverb so the brass dome bell rings naturally
-    const dryBus = ctx.createGain();
-    dryBus.gain.setValueAtTime(0.8, now);
-    dryBus.connect(masterOut);
+    const dry = ctx.createGain();
+    dry.gain.setValueAtTime(0.78, now);
+    dry.connect(masterOut);
 
     const convolver = ctx.createConvolver();
-    convolver.buffer = createLobbyReverbBuffer(ctx, 1.35, 3.6);
-    const wetBus = ctx.createGain();
-    wetBus.gain.setValueAtTime(0.26, now);
-    convolver.connect(wetBus);
-    wetBus.connect(masterOut);
+    convolver.buffer = createLobbyReverbBuffer(ctx, 1.4, 3.5);
+    const wet = ctx.createGain();
+    wet.gain.setValueAtTime(0.28, now);
+    convolver.connect(wet);
+    wet.connect(masterOut);
 
-    const bellBus = ctx.createGain();
-    bellBus.gain.setValueAtTime(1.0, now);
-    bellBus.connect(dryBus);
-    bellBus.connect(convolver);
+    const bus = ctx.createGain();
+    bus.connect(dry);
+    bus.connect(convolver);
 
-    // ── Part 1 (0.00s -> 0.11s): Mechanical brass latch + drawer slide + coin tray ("CHA-") ──
-    scheduleBrassKeyClick(ctx, dryBus, now);
-
-    // Short metallic cash-drawer roller slide burst
-    const slideLen = Math.floor(sampleRate * 0.095);
-    const slideBuf = ctx.createBuffer(1, slideLen, sampleRate);
-    const slideData = slideBuf.getChannelData(0);
-    for (let i = 0; i < slideLen; i++) {
-      const p = i / slideLen;
-      const env = Math.sin(Math.PI * Math.min(1, p * 1.15)) * (1 - p * 0.45);
-      slideData[i] = (Math.random() * 2 - 1) * env;
-    }
-    const slideSrc = ctx.createBufferSource();
-    slideSrc.buffer = slideBuf;
-    const slideBp = ctx.createBiquadFilter();
-    slideBp.type = "bandpass";
-    slideBp.frequency.setValueAtTime(2850, now);
-    slideBp.frequency.linearRampToValueAtTime(4200, now + 0.095);
-    slideBp.Q.setValueAtTime(1.5, now);
-    const slideGain = ctx.createGain();
-    slideGain.gain.setValueAtTime(0.24, now);
-    slideSrc.connect(slideBp);
-    slideBp.connect(slideGain);
-    slideGain.connect(dryBus);
-    slideSrc.start(now + 0.008);
-
-    // Warm wood/brass drawer stop thump
-    const drawerThump = ctx.createOscillator();
-    drawerThump.type = "triangle";
-    drawerThump.frequency.setValueAtTime(210, now + 0.01);
-    drawerThump.frequency.exponentialRampToValueAtTime(88, now + 0.085);
-    const thumpGain = ctx.createGain();
-    thumpGain.gain.setValueAtTime(0.24, now + 0.01);
-    thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-    drawerThump.connect(thumpGain);
-    thumpGain.connect(dryBus);
-    drawerThump.start(now + 0.01);
-    drawerThump.stop(now + 0.095);
-
-    // Subtle staggered brass coin-cup clinks leading into the bell
-    scheduleCoinClink(ctx, bellBus, now + 0.022, 4186, 0.09);
-    scheduleCoinClink(ctx, bellBus, now + 0.048, 5274, 0.11);
-    scheduleCoinClink(ctx, bellBus, now + 0.072, 3520, 0.08);
-    scheduleCoinClink(ctx, bellBus, now + 0.092, 6272, 0.09);
-
-    // ── Part 2 (0.112s -> 1.55s): Iconic Vintage Brass Cash-Register Dome Bell ("-CHING!") ──
-    const bellStart = now + 0.112;
-
-    // Tiny crisp bronze striker impact transient
-    const strikeLen = Math.floor(sampleRate * 0.01);
-    const strikeBuf = ctx.createBuffer(1, strikeLen, sampleRate);
-    const strikeData = strikeBuf.getChannelData(0);
-    for (let i = 0; i < strikeLen; i++) {
-      strikeData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (strikeLen * 0.16));
-    }
-    const strikeSrc = ctx.createBufferSource();
-    strikeSrc.buffer = strikeBuf;
-    const strikeHp = ctx.createBiquadFilter();
-    strikeHp.type = "highpass";
-    strikeHp.frequency.setValueAtTime(3200, bellStart);
-    const strikeGain = ctx.createGain();
-    strikeGain.gain.setValueAtTime(0.28, bellStart);
-    strikeSrc.connect(strikeHp);
-    strikeHp.connect(strikeGain);
-    strikeGain.connect(bellBus);
-    strikeSrc.start(bellStart);
-
-    // Real metallic bell partials (fundamental + acoustic shimmer twin + 2.756x + 5.404x brass modes)
-    const bellPartials: Array<{ freq: number; gain: number; decay: number }> = [
-      { freq: 1318.5, gain: 0.36, decay: 1.38 }, // E6 bright brass bell body
-      { freq: 1321.4, gain: 0.2, decay: 1.28 },  // Shimmer twin (~2.9 Hz classic bell beat)
-      { freq: 2637.0, gain: 0.16, decay: 0.88 }, // Octave ring
-      { freq: 3633.8, gain: 0.22, decay: 0.68 }, // Authentic 2.756x dome bell overtone
-      { freq: 5274.0, gain: 0.1, decay: 0.42 },  // Sparkling upper brass sheen
-      { freq: 7125.0, gain: 0.06, decay: 0.24 }, // Crisp metallic strike gleam
-    ];
-
-    for (const p of bellPartials) {
+    // Two sparkling micro silver-coin glints ("cha-") — zero low rattle
+    for (const [offset, freq, gainVal] of [
+      [0.0, 3520, 0.14],
+      [0.042, 4698.6, 0.16],
+    ] as const) {
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(p.freq, bellStart);
-      g.gain.setValueAtTime(0.0001, bellStart);
-      g.gain.linearRampToValueAtTime(p.gain, bellStart + 0.004);
-      g.gain.exponentialRampToValueAtTime(0.0006, bellStart + p.decay);
+      osc.frequency.setValueAtTime(freq, now + offset);
+      g.gain.setValueAtTime(0.0001, now + offset);
+      g.gain.linearRampToValueAtTime(gainVal, now + offset + 0.003);
+      g.gain.exponentialRampToValueAtTime(0.0006, now + offset + 0.085);
       osc.connect(g);
-      g.connect(bellBus);
+      g.connect(bus);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.1);
+    }
+
+    // Immediate singing brass cash-register dome bell ("-CHING!") at t = 0.078s
+    const bellStart = now + 0.078;
+    const partials: Array<[number, number, number]> = [
+      [1318.5, 0.4, 1.42],  // E6 bright brass body
+      [1321.1, 0.22, 1.32], // Acoustic shimmer twin
+      [2637.0, 0.18, 0.92], // Clean octave sparkle
+      [3633.8, 0.24, 0.68], // Classic 2.756x dome bell harmonic
+      [5274.0, 0.12, 0.42], // Upper metallic sheen
+      [7125.0, 0.06, 0.22], // Striker gleam
+    ];
+    for (const [freq, gainVal, decay] of partials) {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, bellStart);
+      g.gain.setValueAtTime(0.0001, bellStart);
+      g.gain.linearRampToValueAtTime(gainVal, bellStart + 0.0035);
+      g.gain.exponentialRampToValueAtTime(0.0006, bellStart + decay);
+      osc.connect(g);
+      g.connect(bus);
       osc.start(bellStart);
-      osc.stop(bellStart + p.decay + 0.03);
+      osc.stop(bellStart + decay + 0.04);
     }
 
     setTimeout(() => {
+      if (activeSynthContexts.chaching === ctx) activeSynthContexts.chaching = null;
       ctx.close().catch(() => { });
-    }, 1850);
-  } catch {
-    // Audio playback is best-effort; never block payment confirmation
-  }
+    }, 1750);
+  } catch { }
+}
+
+/**
+ * LOCKED Payment Paid ("Cha-Ching!") Sound:
+ * Plays the instant public-domain Vintage brass cash register cha-ching.
+ */
+export function playPaymentPaidChaChingSound(): void {
+  playCuratedAudioSample("chaching", LOCKED_CHACHING_SOUND, playStudioZeroRattleChaChing);
+}
+
+// ── 5 Loud, Bold "POS Low" Family Card-Declined Engines ──
+
+interface PosDeclinePulseSpec {
+  offset: number;
+  freq: number;
+  endRatio: number;
+  dur: number;
+  gain?: number;
+}
+
+interface PosDeclineVoiceProfile {
+  pulses: PosDeclinePulseSpec[];
+  hpHz: number;
+  formantHz: number;
+  formantGainDb: number;
+  lpHz: number;
+  masterGain: number;
+  sawMix: number;
+  squareMix: number;
+  subTriMix: number;
+  detuneHz: number;
+  clickOnset?: boolean;
+}
+
+const POS_DECLINE_PROFILES: Record<DeclinedSoundStyle, PosDeclineVoiceProfile> = {
+  // 1. POS Loud: Exact POS Low voice boosted loud, warm & full-bodied
+  pos_low_loud: {
+    pulses: [
+      { offset: 0.0, freq: 204, endRatio: 0.96, dur: 0.135, gain: 0.96 },
+      { offset: 0.195, freq: 174, endRatio: 0.95, dur: 0.195, gain: 1.0 },
+    ],
+    hpHz: 110,
+    formantHz: 720,
+    formantGainDb: 5.5,
+    lpHz: 1320,
+    masterGain: 0.82,
+    sawMix: 0.58,
+    squareMix: 0.16,
+    subTriMix: 0.42,
+    detuneHz: 1.4,
+  },
+  // 2. Deep Ehh: Heavier, deeper brass-register double "EHH — EHH"
+  deep_ehh: {
+    pulses: [
+      { offset: 0.0, freq: 165, endRatio: 0.95, dur: 0.148, gain: 0.96 },
+      { offset: 0.212, freq: 138, endRatio: 0.94, dur: 0.22, gain: 1.0 },
+    ],
+    hpHz: 85,
+    formantHz: 610,
+    formantGainDb: 6.2,
+    lpHz: 1180,
+    masterGain: 0.88,
+    sawMix: 0.62,
+    squareMix: 0.18,
+    subTriMix: 0.48,
+    detuneHz: 1.8,
+  },
+  // 3. Classic: Punchy retail card-reader "EHH — EHH" with clear speaker bite
+  classic_pos: {
+    pulses: [
+      { offset: 0.0, freq: 226, endRatio: 0.97, dur: 0.13, gain: 0.95 },
+      { offset: 0.19, freq: 196, endRatio: 0.96, dur: 0.195, gain: 1.0 },
+    ],
+    hpHz: 135,
+    formantHz: 800,
+    formantGainDb: 6.0,
+    lpHz: 1680,
+    masterGain: 0.78,
+    sawMix: 0.54,
+    squareMix: 0.34,
+    subTriMix: 0.26,
+    detuneHz: 1.6,
+  },
+  // 4. Triple: Rapid 3-pulse authoritative POS decline ("ehh-ehh-ehh")
+  firm_triple: {
+    pulses: [
+      { offset: 0.0, freq: 212, endRatio: 0.98, dur: 0.098, gain: 0.92 },
+      { offset: 0.148, freq: 194, endRatio: 0.97, dur: 0.098, gain: 0.96 },
+      { offset: 0.296, freq: 170, endRatio: 0.94, dur: 0.175, gain: 1.0 },
+    ],
+    hpHz: 115,
+    formantHz: 740,
+    formantGainDb: 5.4,
+    lpHz: 1420,
+    masterGain: 0.82,
+    sawMix: 0.56,
+    squareMix: 0.24,
+    subTriMix: 0.36,
+    detuneHz: 1.5,
+  },
+  // 5. Heavy: Bold resonant low buzz-drop with subtle mechanical lock refusal click
+  heavy_low: {
+    pulses: [
+      { offset: 0.014, freq: 188, endRatio: 0.95, dur: 0.15, gain: 0.96 },
+      { offset: 0.225, freq: 142, endRatio: 0.92, dur: 0.255, gain: 1.0 },
+    ],
+    hpHz: 90,
+    formantHz: 650,
+    formantGainDb: 6.0,
+    lpHz: 1260,
+    masterGain: 0.86,
+    sawMix: 0.6,
+    squareMix: 0.22,
+    subTriMix: 0.45,
+    detuneHz: 2.1,
+    clickOnset: true,
+  },
+};
+
+function playPosDeclineProfile(profile: PosDeclineVoiceProfile): void {
+  try {
+    stopChannelPlayback("declined");
+    const ctx = createResumedAudioContext();
+    if (!ctx) return;
+    activeSynthContexts.declined = ctx;
+    const now = ctx.currentTime;
+
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(profile.hpHz, now);
+
+    // Warm nasal POS speaker formant boost so low tones cut clearly on any speaker
+    const formant = ctx.createBiquadFilter();
+    formant.type = "peaking";
+    formant.frequency.setValueAtTime(profile.formantHz, now);
+    formant.Q.setValueAtTime(1.4, now);
+    formant.gain.setValueAtTime(profile.formantGainDb, now);
+
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(profile.lpHz, now);
+    lp.Q.setValueAtTime(0.85, now);
+
+    // Clean brickwall limiter for loud, punchy output with zero digital clipping
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.setValueAtTime(-2.5, now);
+    limiter.knee.setValueAtTime(6, now);
+    limiter.ratio.setValueAtTime(12, now);
+    limiter.attack.setValueAtTime(0.002, now);
+    limiter.release.setValueAtTime(0.07, now);
+
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(profile.masterGain, now);
+
+    hp.connect(formant);
+    formant.connect(lp);
+    lp.connect(master);
+    master.connect(limiter);
+    limiter.connect(ctx.destination);
+
+    if (profile.clickOnset) {
+      scheduleBrassKeyClick(ctx, limiter, now);
+    }
+
+    let maxEnd = 0;
+    for (const p of profile.pulses) {
+      const start = now + p.offset;
+      const pulseGain = p.gain ?? 1.0;
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.0001, start);
+      env.gain.linearRampToValueAtTime(pulseGain, start + 0.008);
+      env.gain.setValueAtTime(pulseGain * 0.94, start + Math.max(0.02, p.dur - 0.022));
+      env.gain.exponentialRampToValueAtTime(0.0008, start + p.dur);
+      env.connect(hp);
+
+      // 1. Primary warm reed sawtooth
+      const saw = ctx.createOscillator();
+      saw.type = "sawtooth";
+      saw.frequency.setValueAtTime(p.freq, start);
+      saw.frequency.linearRampToValueAtTime(p.freq * p.endRatio, start + p.dur);
+      const gSaw = ctx.createGain();
+      gSaw.gain.setValueAtTime(profile.sawMix, start);
+      saw.connect(gSaw);
+      gSaw.connect(env);
+
+      // 2. Slightly detuned square twin for bold POS terminal texture
+      const sq = ctx.createOscillator();
+      sq.type = "square";
+      sq.frequency.setValueAtTime(p.freq - profile.detuneHz, start);
+      sq.frequency.linearRampToValueAtTime((p.freq - profile.detuneHz) * p.endRatio, start + p.dur);
+      const gSq = ctx.createGain();
+      gSq.gain.setValueAtTime(profile.squareMix, start);
+      sq.connect(gSq);
+      gSq.connect(env);
+
+      // 3. Lower-octave triangle chest body so it sounds big and loud
+      const sub = ctx.createOscillator();
+      sub.type = "triangle";
+      sub.frequency.setValueAtTime(p.freq * 0.5, start);
+      sub.frequency.linearRampToValueAtTime(p.freq * 0.5 * p.endRatio, start + p.dur);
+      const gSub = ctx.createGain();
+      gSub.gain.setValueAtTime(profile.subTriMix, start);
+      sub.connect(gSub);
+      gSub.connect(env);
+
+      const stopAt = start + p.dur + 0.02;
+      saw.start(start);
+      sq.start(start);
+      sub.start(start);
+      saw.stop(stopAt);
+      sq.stop(stopAt);
+      sub.stop(stopAt);
+      maxEnd = Math.max(maxEnd, p.offset + p.dur);
+    }
+
+    setTimeout(() => {
+      if (activeSynthContexts.declined === ctx) activeSynthContexts.declined = null;
+      ctx.close().catch(() => { });
+    }, Math.round((maxEnd + 0.25) * 1000));
+  } catch { }
+}
+
+/**
+ * Plays the selected bold POS Low family card-declined sound.
+ */
+export function playCardDeclinedSound(styleOverride?: DeclinedSoundStyle): void {
+  const style = styleOverride ?? getSavedDeclinedSoundStyle();
+  const profile = POS_DECLINE_PROFILES[style] ?? POS_DECLINE_PROFILES.pos_low_loud;
+  playPosDeclineProfile(profile);
 }

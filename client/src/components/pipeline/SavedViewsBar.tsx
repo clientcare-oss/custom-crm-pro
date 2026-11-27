@@ -143,9 +143,9 @@ export function SavedViewsBar({
       const tabRect = tabEl.getBoundingClientRect();
       if (tabRect.width <= 0) return null;
       return {
-        x: Math.round((tabRect.left - rowRect.left - 2) * 100) / 100,
-        y: Math.round((tabRect.bottom - rowRect.top - 1) * 100) / 100,
-        w: Math.round((tabRect.width + 4) * 100) / 100,
+        x: Math.round(tabRect.left - rowRect.left - 2),
+        y: Math.round(tabRect.bottom - rowRect.top - 1),
+        w: Math.round(tabRect.width + 4),
       };
     };
 
@@ -179,9 +179,9 @@ export function SavedViewsBar({
       const startGeom =
         curRect.width > 0
           ? {
-              x: Math.round((curRect.left - rowRect.left) * 100) / 100,
-              y: Math.round((curRect.top - rowRect.top) * 100) / 100,
-              w: Math.round(curRect.width * 100) / 100,
+              x: Math.round(curRect.left - rowRect.left),
+              y: Math.round(curRect.top - rowRect.top),
+              w: Math.round(curRect.width),
             }
           : prevGeom;
 

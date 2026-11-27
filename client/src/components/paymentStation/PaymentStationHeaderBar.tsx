@@ -633,17 +633,17 @@ export function PaymentStationHeaderBar({
 
               <div className="flex flex-col items-center">
                 <h1
-                  className="text-[23px] sm:text-[26px] lg:text-[24px] xl:text-[29px] leading-none tracking-[-0.012em] text-[#FCF9F1] font-bold whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.88)]"
+                  className="text-[24px] sm:text-[27px] lg:text-[26px] xl:text-[31px] leading-none tracking-[0.015em] text-[#FCF9F1] font-bold whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.88)]"
                   style={{ fontFamily: HEADING_SERIF_FONT }}
                 >
-                  Payment Station
+                  Register
                 </h1>
                 {/* Sculptural 3D Golden 4-Point Nautical Star & Tapered Brass Flourish */}
                 <svg
                   aria-hidden="true"
                   viewBox="0 0 210 16"
-                  className="w-full h-[13px] mt-[1px] overflow-visible"
-                  preserveAspectRatio="none"
+                  className="w-[152px] xl:w-[168px] h-[13px] mt-[2px] overflow-visible"
+                  preserveAspectRatio="xMidYMid meet"
                 >
                   <defs>
                     <linearGradient id="posCenterRuleLeft" x1="0%" y1="0%" x2="100%" y2="0%">

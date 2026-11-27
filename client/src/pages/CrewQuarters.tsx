@@ -372,14 +372,15 @@ export default function CrewQuarters() {
         <CrewQuartersAnimatedHeader />
 
         {/* ── Main UI Deck (All UI Below the Header Window) ── */}
-        <div className="relative z-10 px-4 sm:px-6 lg:px-8 pt-6 pb-8 space-y-6 max-w-[1540px] mx-auto w-full flex-1">
+        <div className="adm-home-deck relative z-10 px-4 sm:px-6 lg:px-8 pb-8 space-y-6 max-w-[1540px] mx-auto w-full flex-1">
+          <div className="adm-home-above-fold">
           {/* ── Top Header & Personalized Welcome Banner (Sculpted Pebbled Navy Leather & Platinum-Champagne Bevel) ── */}
-          <div className="adm-hero-card overflow-hidden rounded-[22px] px-6 sm:px-9 py-6 sm:py-7">
+          <div className="adm-hero-card adm-home-hero overflow-hidden rounded-[22px] px-6 sm:px-9">
             <div aria-hidden="true" className="adm-rim-glint-top" />
             <div aria-hidden="true" className="adm-rim-glint-bottom" />
 
-            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              <div className="space-y-3.5">
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6">
+              <div className="adm-home-hero-stack">
                 {/* Crew Quarters Pill · On Duty · Page ID */}
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <div className="adm-crew-pill inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[#F6E2AE] text-[11px] font-bold tracking-[0.14em] uppercase">
@@ -399,13 +400,13 @@ export default function CrewQuarters() {
 
                 {/* Personalized Welcome Headline */}
                 <div>
-                  <h1 className="text-3xl sm:text-[42px] leading-[1.12] font-serif text-[#F8F6F0] font-medium tracking-[0.005em] drop-shadow-[0_3px_12px_rgba(0,0,0,0.82)]">
+                  <h1 className="adm-home-hero-title font-serif text-[#F8F6F0] font-medium tracking-[0.005em] drop-shadow-[0_3px_12px_rgba(0,0,0,0.82)]">
                     {timeGreeting},{" "}
                     <span className="font-serif italic font-bold text-[#F5DC93] drop-shadow-[0_2px_10px_rgba(245,220,147,0.2)]">
                       {firstName}!
                     </span>
                   </h1>
-                  <div className="flex items-center gap-2.5 mt-2.5">
+                  <div className="adm-home-hero-sub flex items-center gap-2.5">
                     <WaypointWaveIcon className="w-8 h-2.5 text-[#E0BC6D] shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]" />
                     <p className="text-xs sm:text-[13.5px] text-[#D4DFEE] font-normal tracking-[0.012em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.75)]">
                       Same Mission. Stronger Together. Here&apos;s what&apos;s on deck today.
@@ -415,7 +416,7 @@ export default function CrewQuarters() {
               </div>
 
               {/* Right-Aligned Sculpted Obsidian-Navy & Gleaming Gold Date Capsule */}
-              <div className="adm-date-capsule overflow-hidden flex items-center gap-3.5 rounded-[16px] px-4 py-3 shrink-0 self-start lg:self-center">
+              <div className="adm-date-capsule adm-home-date-capsule overflow-hidden flex items-center gap-3.5 rounded-[16px] px-4 shrink-0 self-start lg:self-center">
                 <div aria-hidden="true" className="adm-rim-glint-top" />
                 <div aria-hidden="true" className="adm-rim-glint-bottom" />
                 <div className="adm-icon-tile relative z-10 p-2 rounded-[10px] text-[#EBC878] shrink-0">
@@ -446,25 +447,25 @@ export default function CrewQuarters() {
           </div>
 
           {/* ── Top Operational Metric Blocks (6 Sculpted Pebbled-Leather & Platinum-Champagne Plaques) ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 xl:gap-4">
             {/* Card 1: New Leads */}
             <div
               onClick={() => setLocation("/leads")}
-              className="adm-metric-card group cursor-pointer overflow-hidden rounded-[18px] px-4 py-4 flex flex-col justify-between min-h-[164px] sm:min-h-[172px]"
+              className="adm-metric-card adm-home-kpi-card group cursor-pointer overflow-hidden rounded-[18px] px-4 flex flex-col justify-between"
             >
               <div aria-hidden="true" className="adm-rim-glint-top" />
               <div aria-hidden="true" className="adm-rim-glint-bottom" />
               <div className="relative z-10 flex items-center justify-between w-full">
-                <div className="adm-icon-tile w-9 h-9 rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                <div className="adm-icon-tile adm-home-kpi-icon rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
                   <UserPlus className="w-4 h-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
                 </div>
               </div>
-              <div className="flex-1 flex items-center justify-center my-1.5 relative z-10">
-                <div className="text-[44px] sm:text-[48px] font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
+              <div className="flex-1 flex items-center justify-center my-1 relative z-10">
+                <div className="adm-home-kpi-num font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
                   {newLeadsCount}
                 </div>
               </div>
-              <div className="relative z-10 text-center text-[12.5px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+              <div className="relative z-10 text-center text-[12px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 New Leads
               </div>
             </div>
@@ -472,21 +473,21 @@ export default function CrewQuarters() {
             {/* Card 2: Meetings Today */}
             <div
               onClick={() => setLocation("/calendar?view=day&date=today&scope=my")}
-              className="adm-metric-card group cursor-pointer overflow-hidden rounded-[18px] px-4 py-4 flex flex-col justify-between min-h-[164px] sm:min-h-[172px]"
+              className="adm-metric-card adm-home-kpi-card group cursor-pointer overflow-hidden rounded-[18px] px-4 flex flex-col justify-between"
             >
               <div aria-hidden="true" className="adm-rim-glint-top" />
               <div aria-hidden="true" className="adm-rim-glint-bottom" />
               <div className="relative z-10 flex items-center justify-between w-full">
-                <div className="adm-icon-tile w-9 h-9 rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                <div className="adm-icon-tile adm-home-kpi-icon rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
                   <Calendar className="w-4 h-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
                 </div>
               </div>
-              <div className="flex-1 flex items-center justify-center my-1.5 relative z-10">
-                <div className="text-[44px] sm:text-[48px] font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
+              <div className="flex-1 flex items-center justify-center my-1 relative z-10">
+                <div className="adm-home-kpi-num font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
                   {todayAppointments.length || 2}
                 </div>
               </div>
-              <div className="relative z-10 text-center text-[12.5px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+              <div className="relative z-10 text-center text-[12px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 Meetings Today
               </div>
             </div>
@@ -494,12 +495,12 @@ export default function CrewQuarters() {
             {/* Card 3: Client Emails */}
             <div
               onClick={() => setLocation("/messages")}
-              className="adm-metric-card group cursor-pointer overflow-hidden rounded-[18px] px-4 py-4 flex flex-col justify-between min-h-[164px] sm:min-h-[172px]"
+              className="adm-metric-card adm-home-kpi-card group cursor-pointer overflow-hidden rounded-[18px] px-4 flex flex-col justify-between"
             >
               <div aria-hidden="true" className="adm-rim-glint-top" />
               <div aria-hidden="true" className="adm-rim-glint-bottom" />
               <div className="relative z-10 flex items-center justify-between w-full">
-                <div className="adm-icon-tile w-9 h-9 rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                <div className="adm-icon-tile adm-home-kpi-icon rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
                   <Mail className="w-4 h-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
                 </div>
                 {clientMessagesCount > 0 && (
@@ -509,12 +510,12 @@ export default function CrewQuarters() {
                   </span>
                 )}
               </div>
-              <div className="flex-1 flex items-center justify-center my-1.5 relative z-10">
-                <div className="text-[44px] sm:text-[48px] font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
+              <div className="flex-1 flex items-center justify-center my-1 relative z-10">
+                <div className="adm-home-kpi-num font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
                   {clientMessagesCount}
                 </div>
               </div>
-              <div className="relative z-10 text-center text-[12.5px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+              <div className="relative z-10 text-center text-[12px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 Client Emails
               </div>
             </div>
@@ -522,21 +523,21 @@ export default function CrewQuarters() {
             {/* Card 4: Tasks Due */}
             <div
               onClick={() => handleTabChange("tasks")}
-              className="adm-metric-card group cursor-pointer overflow-hidden rounded-[18px] px-4 py-4 flex flex-col justify-between min-h-[164px] sm:min-h-[172px]"
+              className="adm-metric-card adm-home-kpi-card group cursor-pointer overflow-hidden rounded-[18px] px-4 flex flex-col justify-between"
             >
               <div aria-hidden="true" className="adm-rim-glint-top" />
               <div aria-hidden="true" className="adm-rim-glint-bottom" />
               <div className="relative z-10 flex items-center justify-between w-full">
-                <div className="adm-icon-tile w-9 h-9 rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                <div className="adm-icon-tile adm-home-kpi-icon rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
                   <CheckSquare className="w-4 h-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
                 </div>
               </div>
-              <div className="flex-1 flex items-center justify-center my-1.5 relative z-10">
-                <div className="text-[44px] sm:text-[48px] font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
+              <div className="flex-1 flex items-center justify-center my-1 relative z-10">
+                <div className="adm-home-kpi-num font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
                   {openTasks.length || 4}
                 </div>
               </div>
-              <div className="relative z-10 text-center text-[12.5px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+              <div className="relative z-10 text-center text-[12px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 Tasks Due
               </div>
             </div>
@@ -544,12 +545,12 @@ export default function CrewQuarters() {
             {/* Card 5: Crew Messages */}
             <div
               onClick={() => handleTabChange("messages")}
-              className="adm-metric-card group cursor-pointer overflow-hidden rounded-[18px] px-4 py-4 flex flex-col justify-between min-h-[164px] sm:min-h-[172px]"
+              className="adm-metric-card adm-home-kpi-card group cursor-pointer overflow-hidden rounded-[18px] px-4 flex flex-col justify-between"
             >
               <div aria-hidden="true" className="adm-rim-glint-top" />
               <div aria-hidden="true" className="adm-rim-glint-bottom" />
               <div className="relative z-10 flex items-center justify-between w-full">
-                <div className="adm-icon-tile w-9 h-9 rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                <div className="adm-icon-tile adm-home-kpi-icon rounded-[11px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
                   <MessageSquare className="w-4 h-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
                 </div>
                 {crewUnreadTotal > 0 && (
@@ -559,35 +560,36 @@ export default function CrewQuarters() {
                   </span>
                 )}
               </div>
-              <div className="flex-1 flex items-center justify-center my-1.5 relative z-10">
-                <div className="text-[44px] sm:text-[48px] font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
+              <div className="flex-1 flex items-center justify-center my-1 relative z-10">
+                <div className="adm-home-kpi-num font-serif font-extrabold text-[#FAF6EC] leading-none tracking-tight tabular-nums drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
                   {crewUnreadTotal}
                 </div>
               </div>
-              <div className="relative z-10 text-center text-[12.5px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+              <div className="relative z-10 text-center text-[12px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 Crew Messages
               </div>
             </div>
 
             {/* Card 6: Waypoint Motto Tile — Sculpted Calfskin Leather + Contours + Full-Width Editorial Motto */}
             <div
-              className="adm-metric-card adm-metric-card-motto col-span-1 overflow-hidden rounded-[18px] px-3 py-4 flex items-center justify-center min-h-[164px] sm:min-h-[172px]"
+              className="adm-metric-card adm-metric-card-motto adm-home-kpi-card col-span-1 overflow-hidden rounded-[18px] px-3 flex items-center justify-center"
               style={{ containerType: "inline-size" }}
             >
               <div aria-hidden="true" className="adm-rim-glint-top" />
               <div aria-hidden="true" className="adm-rim-glint-bottom" />
               <div className="relative z-10 w-full flex flex-col items-end text-right select-none">
                 <div
-                  className="w-full font-serif font-bold tracking-[0.09em] text-[#F9F6EE] leading-[1.32] drop-shadow-[0_3px_10px_rgba(0,0,0,0.88)]"
-                  style={{ fontSize: "clamp(12px, 12.4cqi, 26px)" }}
+                  className="w-full font-serif font-bold tracking-[0.09em] text-[#F9F6EE] leading-[1.26] drop-shadow-[0_3px_10px_rgba(0,0,0,0.88)]"
+                  style={{ fontSize: "clamp(12px, 11.8cqi, 24px)" }}
                 >
                   <div>ADVOCACY</div>
                   <div>CHANGES</div>
                   <div>LIVES</div>
                 </div>
-                <div className="w-[48%] max-w-[92px] h-[3.5px] bg-gradient-to-r from-[#b5893a] via-[#fff2c2] to-[#c99e4d] rounded-full mt-3 shadow-[0_2px_10px_rgba(0,0,0,0.88),0_0_12px_rgba(242,208,128,0.58)]" />
+                <div className="adm-home-motto-bar w-[48%] max-w-[92px] h-[3.5px] bg-gradient-to-r from-[#b5893a] via-[#fff2c2] to-[#c99e4d] rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.88),0_0_12px_rgba(242,208,128,0.58)]" />
               </div>
             </div>
+          </div>
           </div>
 
           {/* ── Internal Tab Navigation Bar: Double Bar (Team Operations + Employee Self-Service) ── */}
