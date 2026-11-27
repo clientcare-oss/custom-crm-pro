@@ -1,5 +1,9 @@
 import React from "react";
 
+/**
+ * Clean, unmistakable standalone coastal lighthouse icon (Crew Quarters).
+ * Spaced generously so strokes remain crisp under the 3D gold brass sidebar emboss filter.
+ */
 export function LighthouseCottageIcon({
   className = "h-4 w-4",
   size,
@@ -11,45 +15,37 @@ export function LighthouseCottageIcon({
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.9"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       style={size ? { width: size, height: size } : undefined}
       {...props}
     >
-      {/* ── Lighthouse Lantern Cap & Roof ── */}
-      <path d="M5.5 5.5L7.5 2.5L9.5 5.5Z" fill="currentColor" fillOpacity="0.2" />
-      {/* Lantern Housing */}
-      <path d="M5.5 5.5H9.5V8H5.5Z" />
-      {/* Gallery Balcony Walkway */}
-      <path d="M4 8H11" strokeWidth="2" />
-      
-      {/* Lantern Beam Rays */}
-      <path d="M3 4L1.5 3" strokeOpacity="0.8" />
-      <path d="M3 6L1 6.5" strokeOpacity="0.8" />
-      <path d="M12 4L13.5 3" strokeOpacity="0.8" />
+      {/* ── Beacon Light Beams (left & right) ── */}
+      <line x1="2.2" y1="4.8" x2="5.4" y2="6" />
+      <line x1="2.2" y1="8.8" x2="5.4" y2="7.6" />
+      <line x1="21.8" y1="4.8" x2="18.6" y2="6" />
+      <line x1="21.8" y1="8.8" x2="18.6" y2="7.6" />
 
-      {/* ── Tapered Lighthouse Tower Body ── */}
-      <path d="M5 8L3.5 20H11L9.5 8" />
-      {/* Tower Windows */}
-      <line x1="7.5" y1="11" x2="7.5" y2="12.5" />
-      <line x1="7.5" y1="15" x2="7.5" y2="16.5" />
+      {/* ── Pointed Cupola Dome Roof ── */}
+      <path d="M8.8 5.2L12 2.2L15.2 5.2Z" />
 
-      {/* ── Attached Keeper's Cottage ── */}
-      {/* Cottage Gabled Roof */}
-      <path d="M9.5 12.5L16 8.5L22 12.5" strokeWidth="2" />
-      {/* Chimney */}
-      <path d="M18.5 10V7H20V11" />
-      {/* Cottage Walls */}
-      <path d="M10.5 13.5V20H21V13" />
-      {/* Cottage Window */}
-      <rect x="16.5" y="14" width="2.8" height="2.8" rx="0.5" fill="currentColor" fillOpacity="0.15" />
-      {/* Cottage Door */}
-      <path d="M12.5 20V16H14.5V20" />
+      {/* ── Glass Lantern Room ── */}
+      <path d="M9.2 5.2V9.2M14.8 5.2V9.2" />
 
-      {/* ── Shoreline & Wave Baseline ── */}
-      <path d="M1.5 21.5C4.5 20.8 7.5 21.8 11.5 21C15 20.5 18.5 21.8 22.5 21" strokeWidth="1.6" />
+      {/* ── Signature Gallery Balcony Deck Overhang ── */}
+      <line x1="6.8" y1="9.2" x2="17.2" y2="9.2" />
+
+      {/* ── Classic Tapered Lighthouse Tower ── */}
+      <path d="M8.6 9.2L6.6 21.2M15.4 9.2L17.4 21.2" />
+
+      {/* ── Bold Lighthouse Horizontal Bands ── */}
+      <line x1="7.9" y1="13.4" x2="16.1" y2="13.4" />
+      <line x1="7.2" y1="17.4" x2="16.8" y2="17.4" />
+
+      {/* ── Solid Grounded Base ── */}
+      <line x1="4" y1="21.2" x2="20" y2="21.2" />
     </svg>
   );
 }

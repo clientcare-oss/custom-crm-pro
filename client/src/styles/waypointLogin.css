@@ -103,6 +103,15 @@
   filter: drop-shadow(4px 8px 9px rgba(10, 7, 3, 0.5));
 }
 
+/* Official Waypoint Advocates circular emblem sitting naturally on the warm lamp-lit parchment */
+.wp-login-brand-logo {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  user-select: none;
+  filter: drop-shadow(0 3px 6px rgba(34, 21, 8, 0.36)) contrast(1.03);
+}
+
 /* Typography calibrated to match the museum-grade antique parchment reference */
 .wp-login-brand-title {
   font-family: "Playfair Display", Georgia, serif;
@@ -319,13 +328,18 @@
 @media (max-height: 790px) {
   .wp-login-plaque-anchor {
     width: min(392px, calc(100vw - 32px));
-    margin-top: clamp(102px, 15.2vh, 118px);
-    margin-bottom: 12px;
+    margin-top: clamp(96px, 14.2vh, 112px);
+    margin-bottom: 10px;
     transform: translateX(clamp(0px, 1.4vw, 18px));
   }
 
   .wp-login-plaque {
-    padding: 13px 28px 13px;
+    padding: 11px 28px 11px;
+  }
+
+  .wp-login-brand-logo {
+    width: 64px;
+    height: 64px;
   }
 
   .wp-login-ivy-overlay {
@@ -335,27 +349,27 @@
   }
 
   .wp-login-brand-title {
-    font-size: 21px;
+    font-size: 20px;
   }
 
   .wp-login-heading {
-    font-size: 25px;
+    font-size: 24px;
   }
 
   .wp-login-copy {
     font-size: 11.5px;
-    line-height: 1.35;
+    line-height: 1.32;
   }
 
   .wp-login-input-wrap {
-    height: 36px;
+    height: 35px;
   }
 
   .wp-login-leather-btn {
-    height: 44px;
+    height: 43px;
   }
 
   .wp-login-oauth-btn {
-    height: 35px;
+    height: 34px;
   }
 }

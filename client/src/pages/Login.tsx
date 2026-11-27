@@ -7,7 +7,6 @@ import ScopedErrorBoundary from "@/components/ScopedErrorBoundary";
 import {
   AppleInkIcon,
   EngravedCompassDivider,
-  EngravedLighthouseMark,
   EngravedSuspensionBridge,
   GoogleInkIcon,
   MicrosoftInkIcon,
@@ -394,10 +393,14 @@ function WaypointLoginContent() {
             className="wp-login-ivy-overlay"
           />
 
-          {/* Brand Emblem & Masthead */}
-          <header className="relative z-10 flex flex-col items-center text-center pt-0.5">
-            <EngravedLighthouseMark className="w-[70px] h-[44px] sm:w-[78px] sm:h-[49px]" />
-            <h1 className="wp-login-brand-title mt-0.5">
+          {/* Official Waypoint Advocates Crest & Masthead */}
+          <header className="relative z-10 flex flex-col items-center text-center">
+            <img
+              src="/waypoint-logo.png"
+              alt="Waypoint Advocates"
+              className="wp-login-brand-logo"
+            />
+            <h1 className="wp-login-brand-title mt-1">
               Waypoint Advocates<sup className="wp-login-tm">™</sup>
             </h1>
             <p className="wp-login-brand-subtitle mt-0.5">
@@ -406,7 +409,7 @@ function WaypointLoginContent() {
           </header>
 
           {/* Engraved Compass Rose Divider */}
-          <EngravedCompassDivider className="relative z-10 my-2 sm:my-2.5" />
+          <EngravedCompassDivider className="relative z-10 my-2" />
 
           {/* Main Form View */}
           {mode === "sign-in" && (
