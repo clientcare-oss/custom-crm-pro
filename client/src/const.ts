@@ -5,9 +5,9 @@ export const getLoginUrl = () => {
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
   const appId = import.meta.env.VITE_APP_ID;
 
-  // In local dev without OAuth configured, return a safe fallback
+  // Route unauthenticated users to the branded Waypoint CRM login screen
   if (!oauthPortalUrl) {
-    return "#";
+    return "/login";
   }
 
   const redirectUri = `${window.location.origin}/api/oauth/callback`;

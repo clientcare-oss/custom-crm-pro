@@ -6,8 +6,10 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { AuthenticateWithRedirectCallback } from "@clerk/react";
 import DashboardLayout from "./components/DashboardLayout";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import Contacts from "./pages/Contacts";
@@ -106,6 +108,18 @@ function CaseCompassRedirect() {
   return null;
 }
 
+function SsoCallbackPage() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-[#06101e] text-[#F5E0AC]">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-[#D6AE5E]" />
+        <p className="font-serif text-sm tracking-wide">Completing sign-in…</p>
+      </div>
+      <AuthenticateWithRedirectCallback signInFallbackRedirectUrl="/" signUpFallbackRedirectUrl="/" />
+    </div>
+  );
+}
+
 function Router() {
   // First Mate standalone pop-out window & The Studio Audience window: mount immediately without CRM shell
   if (
@@ -149,7 +163,13 @@ function Router() {
   const [location] = useLocation();
   const { isLocked, isStartScreenOpen } = useWorkspaceLock();
 
+  const isAuthScreenRoute =
+    location === "/login" ||
+    location === "/sign-in" ||
+    location.startsWith("/sso-callback");
+
   const isPublicRoute =
+    isAuthScreenRoute ||
     normalizedPathname === "/" ||
     isPlacesRoute ||
     normalizedPathname === "/portal" ||
@@ -168,6 +188,17 @@ function Router() {
   const initialLoadCompleted = useRef(false);
   if (!loading && user) {
     initialLoadCompleted.current = true;
+  }
+
+  // Always allow direct viewing & authentication on /login, /sign-in, and /sso-callback without CRM shell
+  if (isAuthScreenRoute) {
+    return (
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route path="/sign-in" component={Login} />
+        <Route path="/sso-callback" component={SsoCallbackPage} />
+      </Switch>
+    );
   }
 
   if (loading && !initialLoadCompleted.current && !isPublicRoute) {
@@ -369,10 +400,14 @@ function Router() {
     );
   }
 
-  // Public routes
+  // Public routes (unauthenticated CRM visitors see the photorealistic Waypoint Login screen)
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={Login} />
+      <Route path="/login" component={Login} />
+      <Route path="/sign-in" component={Login} />
+      <Route path="/sso-callback" component={SsoCallbackPage} />
+      <Route path="/welcome" component={Home} />
       <Route path="/get-started">{() => { window.location.replace('/form/public-intake' + window.location.search); return null; }}</Route>
       <Route path="/intake">{() => { window.location.replace('/form/public-intake' + window.location.search); return null; }}</Route>
       <Route path="/form/:slug" component={DynamicForm} />
@@ -393,7 +428,8 @@ function Router() {
       <Route path="/places" component={WaypointPlaces} />
       <Route path="/first-mate/popout" component={FirstMatePopout} />
       <Route path="/404" component={NotFound} />
-      <Route component={NotFound} />
+      {/* Any protected CRM path while signed out renders the Waypoint Login screen */}
+      <Route component={Login} />
     </Switch>
   );
 }

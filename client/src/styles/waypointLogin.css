@@ -1,0 +1,361 @@
+/* ============================================================================
+ * Waypoint Advocates — Photorealistic Study & Aged Parchment CRM Login Styles
+ * ============================================================================ */
+
+.wp-login-stage {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #06101e;
+  font-family: "Libre Baskerville", Georgia, serif;
+}
+
+/* Full-bleed photorealistic study desk photograph */
+.wp-login-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("/assets/login/waypoint-desk-scene.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+/* Warm downward cone of overhead brass lamplight + cinematic peripheral vignette */
+.wp-login-lighting {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 34% 26% at 50% 13%,
+      rgba(255, 206, 114, 0.24) 0%,
+      rgba(255, 174, 72, 0.08) 48%,
+      rgba(0, 0, 0, 0) 78%
+    ),
+    radial-gradient(
+      ellipse 88% 85% at 50% 50%,
+      rgba(0, 0, 0, 0) 56%,
+      rgba(4, 10, 20, 0.34) 100%
+    );
+}
+
+/* Center positioning wrapper — sits cleanly beneath the brass banker lamp
+   inside the open study bay between the IDEA/IEP/504/FBA/BIP books and kraft checklist */
+.wp-login-plaque-anchor {
+  position: relative;
+  z-index: 10;
+  width: min(436px, calc(100vw - 32px));
+  /* Push down cleanly below the brass banker lamp dome & nudge slightly right so IDEA/IEP/504/FBA/BIP stay 100% unclipped */
+  margin-top: clamp(114px, 15.2vh, 148px);
+  margin-bottom: clamp(18px, 3vh, 36px);
+  transform: translateX(clamp(0px, 1.5vw, 24px));
+}
+
+/* Ambient contact shadow cast by the heavy parchment plaque onto the desk & wall */
+.wp-login-plaque {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  background-image: url("/assets/login/parchment-plaque.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  padding: clamp(20px, 2.5vh, 27px) clamp(30px, 3.2vw, 40px) clamp(18px, 2.2vh, 24px);
+  color: #1c140d;
+  filter: drop-shadow(0 28px 42px rgba(4, 9, 18, 0.84))
+    drop-shadow(0 8px 16px rgba(0, 0, 0, 0.68));
+}
+
+/* Subtle top golden lamp kiss on the top bevel edge */
+.wp-login-plaque::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 54% 16% at 50% 0%,
+    rgba(255, 224, 152, 0.22) 0%,
+    rgba(255, 208, 122, 0.05) 55%,
+    transparent 100%
+  );
+  mix-blend-mode: screen;
+}
+
+/* Photorealistic backlit trailing green ivy leaves seamlessly continuing from window vines onto top-left corner */
+.wp-login-ivy-overlay {
+  position: absolute;
+  top: -22px;
+  left: -34px;
+  width: 98px;
+  height: auto;
+  z-index: 30;
+  pointer-events: none;
+  user-select: none;
+  transform: rotate(3deg);
+  filter: drop-shadow(4px 8px 9px rgba(10, 7, 3, 0.5));
+}
+
+/* Typography calibrated to match the museum-grade antique parchment reference */
+.wp-login-brand-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(22px, 2.2vw, 26.5px);
+  line-height: 1.08;
+  letter-spacing: -0.012em;
+  color: #17100a;
+  text-shadow: 0 1px 0 rgba(255, 244, 222, 0.35);
+}
+
+.wp-login-tm {
+  font-size: 0.36em;
+  font-weight: 700;
+  vertical-align: top;
+  position: relative;
+  top: 0.14em;
+  margin-left: 1px;
+}
+
+.wp-login-brand-subtitle {
+  font-family: "Plus Jakarta Sans", "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: clamp(9.5px, 0.9vw, 10.75px);
+  letter-spacing: 0.145em;
+  text-transform: uppercase;
+  color: #261a10;
+}
+
+.wp-login-heading {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(27px, 2.8vw, 33px);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  color: #16100a;
+  text-shadow: 0 1px 0 rgba(255, 245, 224, 0.32);
+}
+
+.wp-login-copy {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-style: italic;
+  font-size: clamp(12px, 1.1vw, 13.5px);
+  line-height: 1.44;
+  color: #2f2216;
+}
+
+/* Parchment-blended inset text inputs with crisp dark-sepia engraved borders */
+.wp-login-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 43px;
+  border-radius: 6px;
+  border: 1px solid rgba(72, 52, 31, 0.68);
+  background: linear-gradient(
+    180deg,
+    rgba(241, 222, 187, 0.38) 0%,
+    rgba(227, 200, 156, 0.28) 100%
+  );
+  box-shadow:
+    inset 0 1px 3px rgba(56, 37, 17, 0.16),
+    0 1px 0 rgba(255, 244, 220, 0.38);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+
+.wp-login-input-wrap:hover {
+  border-color: rgba(54, 37, 20, 0.86);
+}
+
+.wp-login-input-wrap:focus-within {
+  border-color: #26180c;
+  background: rgba(249, 236, 209, 0.56);
+  box-shadow:
+    inset 0 1px 3px rgba(56, 37, 17, 0.18),
+    0 0 0 2px rgba(173, 126, 48, 0.34);
+}
+
+.wp-login-input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 13.5px;
+  color: #19120b;
+  padding-right: 12px;
+}
+
+.wp-login-input::placeholder {
+  color: #3d2d1d;
+  opacity: 0.88;
+}
+
+/* Remove harsh browser autofill yellow/blue background so parchment shines through */
+.wp-login-input:-webkit-autofill,
+.wp-login-input:-webkit-autofill:hover,
+.wp-login-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #19120b;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Antique square ink checkbox */
+.wp-login-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 2.5px;
+  border: 1.25px solid rgba(55, 38, 21, 0.82);
+  background: rgba(244, 227, 194, 0.42);
+  box-shadow: inset 0 1px 2px rgba(52, 34, 16, 0.16);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 140ms ease;
+}
+
+.wp-login-checkbox:checked {
+  background: #142640;
+  border-color: #142640;
+}
+
+.wp-login-checkbox:checked::after {
+  content: "";
+  width: 4.5px;
+  height: 8.5px;
+  border: solid #f5dfa9;
+  border-width: 0 1.8px 1.8px 0;
+  transform: rotate(42deg) translate(-0.5px, -1px);
+}
+
+/* Ornate notched-corner navy calfskin leather & brass CTA drop shadow + micro-interactions */
+.wp-login-leather-btn {
+  filter: drop-shadow(0 5px 8px rgba(38, 24, 10, 0.46))
+    drop-shadow(0 2px 3px rgba(15, 9, 4, 0.45));
+  transition:
+    transform 130ms ease,
+    filter 150ms ease;
+}
+
+.wp-login-leather-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: drop-shadow(0 7px 12px rgba(38, 24, 10, 0.56))
+    drop-shadow(0 2px 4px rgba(18, 11, 4, 0.52))
+    brightness(1.06);
+}
+
+.wp-login-leather-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  filter: drop-shadow(0 2px 4px rgba(38, 24, 10, 0.52)) brightness(0.97);
+}
+
+/* Tactile embossed antique-parchment OAuth & SSO buttons */
+.wp-login-oauth-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 41px;
+  border-radius: 6px;
+  border: 1px solid rgba(86, 61, 35, 0.58);
+  background: linear-gradient(
+    180deg,
+    rgba(241, 219, 179, 0.62) 0%,
+    rgba(220, 189, 138, 0.52) 100%
+  );
+  color: #18110a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 246, 224, 0.62),
+    inset 0 -1px 2px rgba(96, 67, 35, 0.22),
+    0 2.5px 5px rgba(52, 34, 14, 0.26);
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.wp-login-oauth-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(62, 42, 22, 0.85);
+  background: linear-gradient(
+    180deg,
+    rgba(248, 229, 193, 0.8) 0%,
+    rgba(229, 201, 153, 0.7) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 249, 232, 0.78),
+    0 4px 8px rgba(48, 30, 12, 0.32);
+}
+
+.wp-login-oauth-btn:active:not(:disabled) {
+  transform: translateY(0.5px);
+  box-shadow:
+    inset 0 1px 3px rgba(58, 38, 16, 0.28),
+    0 1px 2px rgba(48, 30, 12, 0.22);
+}
+
+.wp-login-oauth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Compact vertical scaling on shorter laptop screens (e.g., 1280x720) so entire plaque + overhead lamp stay cleanly in view with zero scrollbar */
+@media (max-height: 790px) {
+  .wp-login-plaque-anchor {
+    width: min(392px, calc(100vw - 32px));
+    margin-top: clamp(102px, 15.2vh, 118px);
+    margin-bottom: 12px;
+    transform: translateX(clamp(0px, 1.4vw, 18px));
+  }
+
+  .wp-login-plaque {
+    padding: 13px 28px 13px;
+  }
+
+  .wp-login-ivy-overlay {
+    width: 82px;
+    top: -18px;
+    left: -28px;
+  }
+
+  .wp-login-brand-title {
+    font-size: 21px;
+  }
+
+  .wp-login-heading {
+    font-size: 25px;
+  }
+
+  .wp-login-copy {
+    font-size: 11.5px;
+    line-height: 1.35;
+  }
+
+  .wp-login-input-wrap {
+    height: 36px;
+  }
+
+  .wp-login-leather-btn {
+    height: 44px;
+  }
+
+  .wp-login-oauth-btn {
+    height: 35px;
+  }
+}

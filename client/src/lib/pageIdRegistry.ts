@@ -8,6 +8,9 @@ export interface PageIdInfo {
 // ─── Static Exact Route Mappings ─────────────────────────────────────────────
 export const PAGE_IDS: Record<string, PageIdInfo> = {
   // Core Admin & Advocacy Suite
+  "/login":                           { id: "PG-051", name: "Waypoint CRM Login", category: "Core", description: "Photorealistic study & aged parchment authentication portal for Waypoint Advocates staff" },
+  "/sign-in":                         { id: "PG-051", name: "Waypoint CRM Login", category: "Core", description: "Photorealistic study & aged parchment authentication portal for Waypoint Advocates staff" },
+  "/sso-callback":                    { id: "PG-051", name: "Waypoint CRM SSO Callback", category: "Core", description: "OAuth and Enterprise SSO callback completion route" },
   "/start":                           { id: "PG-000", name: "Waypoint Start Screen & Privacy Lock", category: "Core", description: "Private launch screen, customizable quick navigation, and 4-digit PIN privacy lock" },
   "/":                                { id: "PG-038", name: "Crew Quarters", category: "Core", description: "Personal employee home base and operational station" },
   "/crew-quarters":                   { id: "PG-038", name: "Crew Quarters", category: "Core", description: "Personal employee home base and operational station" },

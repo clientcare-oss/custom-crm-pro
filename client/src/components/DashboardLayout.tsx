@@ -38,6 +38,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, startTransition, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
+import Login from "@/pages/Login";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -553,24 +554,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (loading && !initialAuthDone.current) return <DashboardLayoutSkeleton />;
 
   if (!user && !initialAuthDone.current) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0d1b2a]">
-        <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
-          <img src={LOGO_URL} alt="Waypoint Advocates" className="w-24 h-24 object-contain" />
-          <div className="flex flex-col items-center gap-4 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight text-white">Sign in to continue</h1>
-            <p className="text-sm text-white/60">Access to this dashboard requires authentication.</p>
-          </div>
-          <Button
-            onClick={() => { window.location.href = getLoginUrl(); }}
-            size="lg"
-            className="w-full bg-amber-500 hover:bg-amber-400 text-[#0d1b2a] font-semibold shadow-lg"
-          >
-            Sign in
-          </Button>
-        </div>
-      </div>
-    );
+    return <Login />;
   }
 
   return (
@@ -1873,12 +1857,12 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
 
             {!isCollapsed ? (
               <div className="relative w-full flex flex-col items-center justify-center pt-1 pb-0">
-                {/* Clean Borderless Light/Dark Mode Toggle at top left */}
+                {/* Circle Light/Dark Mode Medallion at top left (brass ring + clean solid crescent moon) */}
                 <button
                   onClick={toggleTheme}
-                  className={`absolute top-0 left-0 w-9 h-9 rounded-full flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer z-20 border-0 shadow-none ${isLight
-                    ? "bg-white/90 text-slate-700 hover:bg-white"
-                    : "bg-transparent text-[#E6CE94] hover:bg-white/[0.06] hover:text-[#FFF2CC]"
+                  className={`absolute top-0 left-0 w-9 h-9 rounded-full flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer z-20 ${isLight
+                    ? "border border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500 shadow-md"
+                    : "adm-moon-medallion text-[#E6CE94] hover:brightness-115"
                     }`}
                   title={isLight ? "Switch to dark mode" : "Switch to light mode"}
                   aria-label="Toggle theme"
@@ -1890,10 +1874,10 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                       : "translate-y-6 -rotate-90 scale-50 opacity-0"
                       }`}
                   />
-                  {/* Moon Icon (clean solid crescent, no gold ring or border) */}
+                  {/* Moon Icon (clean solid crescent with no outline border) */}
                   <Moon
                     strokeWidth={0}
-                    className={`absolute h-[19px] w-[19px] fill-current drop-shadow-[0_2px_6px_rgba(0,0,0,0.75)] transition-all duration-[300ms] ease-in-out transform ${!isLight
+                    className={`absolute h-[18px] w-[18px] fill-current drop-shadow-[0_1px_4px_rgba(0,0,0,0.75)] transition-all duration-[300ms] ease-in-out transform ${!isLight
                       ? "translate-y-0 rotate-0 scale-100 opacity-100"
                       : "-translate-y-6 rotate-90 scale-50 opacity-0"
                       }`}
@@ -2199,9 +2183,9 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 </button>
                 <button
                   onClick={toggleTheme}
-                  className={`relative w-7 h-7 rounded-full border-0 flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer ${isLight
-                    ? "bg-white/90 text-slate-700 hover:bg-white shadow-sm"
-                    : "bg-transparent hover:bg-white/[0.06] text-[#E6CE94] hover:text-[#FFF2CC]"
+                  className={`relative w-7 h-7 rounded-full flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer ${isLight
+                    ? "border border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 shadow-sm"
+                    : "adm-moon-medallion text-[#E6CE94] hover:brightness-115"
                     }`}
                   title={isLight ? "Switch to dark mode" : "Switch to light mode"}
                   aria-label="Toggle theme"
