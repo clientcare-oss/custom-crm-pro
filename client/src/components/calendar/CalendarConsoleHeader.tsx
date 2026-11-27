@@ -236,7 +236,7 @@ export default function CalendarConsoleHeader({
       {/* ── OVERLAPPING SHELF & HANGING SUNLIT IVY CANOPY (z-30 vines drape organically over outer Rows 1–2) ── */}
       <div className="wp-cal-canopy-overlay">
         <img
-          src="/assets/calendar/calendar-shelf-canopy.png?v=3"
+          src="/assets/calendar/calendar-shelf-canopy.png?v=4"
           alt="Waypoint Calendar Study Mantel Shelf with Himalayan Salt Lamp, Vintage Books, Ornate Brass Calendar Plaque, Antique Compass, and Hanging Ivy"
           width={1376}
           height={375}

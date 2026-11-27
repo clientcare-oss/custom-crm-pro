@@ -25,6 +25,7 @@ import {
   classifyBlockOrbCategory,
   formatParchmentPillLabel,
 } from "./calendar/calendarCategoryHelpers";
+import { resolveDayHolidayOverlay } from "@shared/calendarHolidays";
 
 import type { OperationalBlock } from "../../../drizzle/schema";
 
@@ -85,31 +86,6 @@ function matchAdvocate(nameA?: string | null, nameB?: string | null): boolean {
 
 function formatDateKey(y: number, m: number, d: number): string {
   return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-}
-
-/** Delicate warm autumn-leaf watermark SVG for Thanksgiving / autumn holiday parchment cells */
-function ParchmentAutumnLeaves() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 80 60"
-      className="pointer-events-none absolute top-0.5 right-0.5 w-16 h-12 opacity-60"
-      fill="none"
-    >
-      <path
-        d="M54 8 C58 14, 65 14, 72 11 C67 18, 69 25, 76 28 C67 29, 63 34, 64 42 C58 36, 52 37, 47 43 C48 35, 44 30, 36 29 C44 25, 46 19, 43 12 C49 15, 52 13, 54 8 Z"
-        fill="#B65424"
-        fillOpacity="0.65"
-      />
-      <path
-        d="M28 4 C32 10, 39 10, 44 8 C40 14, 42 19, 47 22 C39 23, 36 27, 37 33 C32 28, 27 29, 23 33 C24 27, 21 23, 15 22 C21 19, 23 14, 21 9 C25 11, 27 9, 28 4 Z"
-        fill="#CC7A28"
-        fillOpacity="0.58"
-      />
-      <path d="M55 15 L53 45" stroke="#6E3012" strokeWidth="1.1" strokeOpacity="0.55" />
-      <path d="M30 11 L29 34" stroke="#7A4414" strokeWidth="0.9" strokeOpacity="0.5" />
-    </svg>
-  );
 }
 
 export default function CalendarView({
@@ -360,50 +336,116 @@ export default function CalendarView({
       );
       const regularBlocks = dayBlocks.filter((b) => b !== allDayNoticeBlock);
 
-      const isAutumnHoliday =
-        allDayNoticeBlock &&
-        /thanksgiving|autumn|fall/i.test(`${allDayNoticeBlock.title} ${allDayNoticeBlock.blockType}`);
+      // Edge-to-edge Holiday / Office Closed Artwork Overlay (dynamic yearly calculation + closure block matching)
+      const holidayOverlay = resolveDayHolidayOverlay(year, dateStr, allDayNoticeBlock);
+      const hasScheduledItems = dayAppointments.length > 0 || regularBlocks.length > 0;
+      const isDarkHolidayArt = Boolean(holidayOverlay && !hasScheduledItems && holidayOverlay.artwork.tone === "dark");
+      const isDarkDateCorner = Boolean(
+        holidayOverlay &&
+          !hasScheduledItems &&
+          (holidayOverlay.artwork.dateNumTone || holidayOverlay.artwork.tone) === "dark"
+      );
+      const isRightAlignedTitle = holidayOverlay?.artwork.titleAlign === "right";
+
+      const dayNumClass = isToday
+        ? "wp-cal-day-num-today"
+        : isDarkDateCorner
+        ? "wp-cal-day-num-dark"
+        : holidayOverlay
+        ? "wp-cal-day-num-light"
+        : "wp-cal-day-num";
 
       cells.push(
         <div
           key={`day-${day}`}
-          className={`wp-cal-parchment-cell min-h-[82px] px-1.5 pt-1.5 pb-1.5 cursor-pointer flex flex-col ${
-            isToday ? "wp-cal-parchment-cell-today" : ""
+          className={`wp-cal-parchment-cell min-h-[88px] px-1.5 pt-1.5 pb-1.5 cursor-pointer flex flex-col ${
+            isToday && !holidayOverlay ? "wp-cal-parchment-cell-today" : ""
           }`}
           onClick={() => onDateClick?.(new Date(year, month, day))}
         >
-          {isAutumnHoliday && <ParchmentAutumnLeaves />}
+          {/* 100% Edge-to-Edge Borderless Seasonal Illustration (Zero gold trim / zero inner card / auto-softened when booked) */}
+          {holidayOverlay && (
+            <>
+              <img
+                src={holidayOverlay.artwork.imagePath}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                style={{ objectPosition: holidayOverlay.artwork.objectPosition || "center bottom" }}
+                className={`wp-cal-holiday-art ${hasScheduledItems ? "wp-cal-holiday-art-soft" : ""}`}
+              />
+              {hasScheduledItems ? (
+                <div aria-hidden="true" className="wp-cal-holiday-scrim-booked" />
+              ) : isDarkHolidayArt ? (
+                <div aria-hidden="true" className="wp-cal-holiday-scrim-dark" />
+              ) : null}
+            </>
+          )}
 
-          {/* Day Number Row */}
-          <div className="relative z-10 flex items-center justify-between mb-1 px-0.5">
-            <span className={isToday ? "wp-cal-day-num-today" : "wp-cal-day-num"}>{day}</span>
+          {/* Upper-Left Date Number Row (+ compact live holiday label when appointments occupy the cell) */}
+          <div className="relative z-10 flex items-center justify-between gap-1 mb-1 px-0.5">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className={`${dayNumClass} shrink-0`}>{day}</span>
+              {holidayOverlay && hasScheduledItems && (
+                <span
+                  className="wp-cal-holiday-inline-label truncate"
+                  title={holidayOverlay.displayLabel}
+                >
+                  {holidayOverlay.displayLabel}
+                </span>
+              )}
+            </div>
             {dayAppointments.some((a) => a.status === "Needs Coverage") && (
               <span
-                className="w-2 h-2 rounded-full bg-rose-600 shadow-[0_0_6px_rgba(225,29,72,0.8)] animate-pulse"
+                className="w-2 h-2 rounded-full bg-rose-600 shadow-[0_0_6px_rgba(225,29,72,0.8)] animate-pulse shrink-0"
                 title="Needs Coverage"
               />
             )}
           </div>
 
-          {/* Centered Italic Sepia Holiday / Office Closed Notice directly on Parchment */}
-          {allDayNoticeBlock && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onOperationalBlockClick?.(allDayNoticeBlock);
-              }}
-              className="relative z-10 flex-1 flex items-center justify-center text-center px-1 py-1 cursor-pointer group"
-              title={`${allDayNoticeBlock.title} — Click for details`}
-            >
-              <span className="font-serif italic text-[14px] leading-snug text-[#27190C] group-hover:text-[#000000] transition-colors drop-shadow-[0_1px_0_rgba(255,248,232,0.7)]">
-                {allDayNoticeBlock.title}
-              </span>
-            </button>
+          {/* Live Holiday / Office Closed Title overlaid cleanly over empty seasonal illustration */}
+          {holidayOverlay && !hasScheduledItems && (
+            allDayNoticeBlock ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOperationalBlockClick?.(allDayNoticeBlock);
+                }}
+                className={`relative z-10 flex items-start pt-0.5 cursor-pointer group ${
+                  isRightAlignedTitle ? "justify-end text-right pr-2 pl-10" : "justify-center text-center px-1"
+                }`}
+                title={`${holidayOverlay.displayLabel} — Click for details`}
+              >
+                <span
+                  className={
+                    isDarkHolidayArt
+                      ? "wp-cal-holiday-title-dark group-hover:brightness-110 transition-all"
+                      : "wp-cal-holiday-title-light group-hover:brightness-90 transition-all"
+                  }
+                >
+                  {holidayOverlay.displayLabel}
+                </span>
+              </button>
+            ) : (
+              <div
+                className={`relative z-10 flex items-start pt-0.5 pointer-events-none ${
+                  isRightAlignedTitle ? "justify-end text-right pr-2 pl-10" : "justify-center text-center px-1"
+                }`}
+              >
+                <span
+                  className={
+                    isDarkHolidayArt ? "wp-cal-holiday-title-dark" : "wp-cal-holiday-title-light"
+                  }
+                >
+                  {holidayOverlay.displayLabel}
+                </span>
+              </div>
+            )
           )}
 
-          {/* Glossy 3D Beveled Enamel Event Pills on Parchment */}
-          <div className="relative z-10 space-y-[4px] overflow-hidden">
+          {/* Glossy 3D Beveled Enamel Event Pills on Top of Artwork (z-20, 100% clickable & crisp) */}
+          <div className="relative z-20 space-y-[4px] overflow-hidden">
             {regularBlocks.slice(0, 2).map((block) => {
               const catKey = classifyBlockOrbCategory(block);
               const catDef = CALENDAR_ORB_CATEGORY_MAP[catKey];
