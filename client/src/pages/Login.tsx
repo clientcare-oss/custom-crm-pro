@@ -409,14 +409,14 @@ function WaypointLoginContent() {
           </header>
 
           {/* Engraved Compass Rose Divider */}
-          <EngravedCompassDivider className="relative z-10 my-2" />
+          <EngravedCompassDivider className="relative z-10 my-1.5" />
 
           {/* Main Form View */}
           {mode === "sign-in" && (
             <div className="relative z-10">
-              <div className="text-center mb-4">
+              <div className="text-center mb-3">
                 <h2 className="wp-login-heading">Welcome Back</h2>
-                <p className="wp-login-copy mt-1.5 max-w-[330px] mx-auto">
+                <p className="wp-login-copy mt-1 max-w-[330px] mx-auto">
                   Access your workspace, case tools, records, and client communications.
                 </p>
               </div>
@@ -528,7 +528,7 @@ function WaypointLoginContent() {
               </form>
 
               {/* "or" Divider */}
-              <div className="flex items-center gap-3 my-3.5" aria-hidden="true">
+              <div className="flex items-center gap-3 my-2.5" aria-hidden="true">
                 <div
                   className="h-[1px] flex-1"
                   style={{
@@ -792,9 +792,9 @@ function WaypointLoginContent() {
           )}
 
           {/* Engraved Suspension Bridge & Tagline Footer */}
-          <footer className="relative z-10 flex flex-col items-center mt-2.5 sm:mt-3.5">
-            <EngravedSuspensionBridge className="w-[205px] sm:w-[232px] h-[34px] sm:h-[37px]" />
-            <p className="font-serif text-[12px] sm:text-[13.5px] text-[#1C140C] text-center mt-0.5 tracking-[0.005em]">
+          <footer className="relative z-10 flex flex-col items-center mt-2 sm:mt-2.5">
+            <EngravedSuspensionBridge className="w-[196px] sm:w-[224px] h-[30px] sm:h-[34px]" />
+            <p className="font-serif text-[12px] sm:text-[13px] text-[#1C140C] text-center mt-0.5 tracking-[0.005em]">
               Guided by Knowledge. Driven by Advocacy.
             </p>
           </footer>
