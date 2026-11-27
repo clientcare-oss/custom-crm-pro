@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import CopilotUtilityCapsule from "@/components/CopilotUtilityCapsule";
-import { LayoutDashboard, Banknote, CreditCard, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, FileBox, Archive, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, CircleUserRound, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, CreditCard, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, FileBox, Archive, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, CircleUserRound, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, VolumeX, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
 import {
   getStoredEmployees,
   checkEmployeeModuleAccess,
@@ -59,11 +59,13 @@ import { Label } from "@/components/ui/label";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { LighthouseCottageIcon } from "@/components/ui/LighthouseCottageIcon";
+import { WorkstationLighthouseIcon } from "@/components/ui/WorkstationLighthouseIcon";
 import { CashRegisterIcon } from "@/components/ui/CashRegisterIcon";
 import { MarineRadarIcon } from "@/components/ui/MarineRadarIcon";
 import { getTestUnreadState } from "@/lib/testUnreadHelper";
 import { broadcastPageId } from "@/lib/pageIdRegistry";
 import { useWorkspaceLock } from "@/contexts/WorkspaceLockContext";
+import { useObservatoryRadio } from "@/contexts/ObservatoryRadioContext";
 import "@/styles/admiraltyBridge.css";
 
 const LOGO_URL = "/waypoint-logo.png";
@@ -374,10 +376,17 @@ export function buildMasterNavItems(projectLabelPlural: string, projectIcon: Rea
   return [
     {
       id: "home",
-      icon: LighthouseCottageIcon,
-      label: "Home",
+      icon: LayoutDashboard,
+      label: "Dashboard",
       path: "/",
       isActive: (loc) => loc === "/" || loc === "/crew-quarters" || loc === "/dashboard" || loc === "/company/dashboard",
+    },
+    {
+      id: "my-workstation",
+      icon: WorkstationLighthouseIcon,
+      label: "My Workstation",
+      path: "/my-workstation",
+      isActive: (loc) => loc === "/my-workstation" || loc.startsWith("/my-workstation/") || loc === "/workstation",
     },
     {
       id: "call-center",
@@ -588,7 +597,8 @@ function isStudentContact(c: any) {
 const SEARCHABLE_DIRECTORY: SearchDirectoryItem[] = [
   // Modules
   { id: "mod-start", name: "Start Screen & Privacy Lock", category: "module", path: "/start", badge: "PG-000", keywords: ["start", "start screen", "privacy", "lock", "lock workspace", "pin", "private workspace", "launch"], icon: Lock },
-  { id: "mod-crew", name: "Crew Quarters", category: "module", path: "/", badge: "PG-038", keywords: ["home", "dashboard", "personal", "employee", "my work"], icon: LighthouseCottageIcon as any },
+  { id: "mod-crew", name: "Dashboard (Crew Quarters)", category: "module", path: "/", badge: "PG-038", keywords: ["home", "dashboard", "personal", "employee", "my work", "crew quarters"], icon: LayoutDashboard },
+  { id: "mod-workstation", name: "My Workstation", category: "module", path: "/my-workstation", badge: "PG-052", keywords: ["my workstation", "workstation", "observatory", "focus radio", "ambiance", "time clock", "shift", "lighthouse"], icon: WorkstationLighthouseIcon as any },
   { id: "mod-call", name: "Call Center", category: "module", path: "/call-center", badge: "PG-018", keywords: ["calls", "logs", "phone", "dialer", "voice", "caller id", "quo"], icon: Headset },
   { id: "mod-leads", name: "Lead Center", category: "module", path: "/leads", badge: "PG-003", keywords: ["leads", "prospects", "intake", "pipeline", "discovery call", "forms"], icon: TrendingUp },
   { id: "mod-calendar", name: "Calendar & Appointments", category: "module", path: "/calendar", badge: "PG-007", keywords: ["schedule", "appointments", "sessions", "coverage", "booking"], icon: Calendar },
@@ -631,6 +641,7 @@ type DashboardLayoutContentProps = {
 function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
   const { openStartScreen, lockWorkspace } = useWorkspaceLock();
+  const observatoryRadio = useObservatoryRadio();
   const { theme, toggleTheme } = useTheme();
   const isLight = theme === "blue";
   const { data: logoData } = trpc.system.getCompanyLogo.useQuery();
@@ -1840,6 +1851,46 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                           <Search className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
                         </button>
 
+                        {/* Observatory Focus Radio Quick Controls — ONLY rendered while radio is actively playing */}
+                        {observatoryRadio.isPlaying && (
+                          <div
+                            data-testid="sidebar-radio-controls"
+                            className="flex items-center justify-center gap-1.5"
+                          >
+                            <button
+                              type="button"
+                              onClick={observatoryRadio.stopRadio}
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-[#F5CF76] hover:text-rose-300 hover:bg-white/[0.08] transition-all cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] group"
+                              aria-label="Stop Focus Radio"
+                              title={`Stop ${observatoryRadio.activeStation.crtTitle}`}
+                            >
+                              <Square className="h-2.5 w-2.5 fill-current group-hover:scale-110 transition-transform" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={observatoryRadio.toggleMute}
+                              className={cn(
+                                "w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/[0.08] transition-all cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] group",
+                                observatoryRadio.isMuted
+                                  ? "text-[#9bb0cf]/70 hover:text-[#F8D279]"
+                                  : "text-[#F5CF76] hover:text-[#FFF3CC]"
+                              )}
+                              aria-label={observatoryRadio.isMuted ? "Unmute Focus Radio" : "Mute Focus Radio"}
+                              title={
+                                observatoryRadio.isMuted
+                                  ? `Unmute ${observatoryRadio.activeStation.crtTitle}`
+                                  : `Mute ${observatoryRadio.activeStation.crtTitle}`
+                              }
+                            >
+                              {observatoryRadio.isMuted ? (
+                                <VolumeX className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                              ) : (
+                                <Volume2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                              )}
+                            </button>
+                          </div>
+                        )}
+
                         {/* Messages Icon Button (right, aligned under collapse button) */}
                         <button
                           type="button"
@@ -2157,8 +2208,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 {navItems.map((item) => {
                   const isActive = activeNavId === item.id;
                   const IconComponent = item.icon;
-                  const isHomeIcon = item.id === "home";
-                  const isCustomBrassIcon = isHomeIcon || item.id === "payment-station";
+                  const isCustomBrassIcon = item.id === "my-workstation" || item.id === "payment-station";
                   return (
                     <SidebarMenuItem
                       key={item.id}
@@ -2373,7 +2423,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           location === "/bill-guardian" || location.startsWith("/bill-guardian") ||
           location === "/payment-station" || location.startsWith("/payment-station") || location === "/payments" || location === "/pos"
         ) && "bg-[#000820]",
-        (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/") || location === "/workflows" || location.startsWith("/workflows")) && "h-svh max-h-svh min-h-0 overflow-hidden"
+        (location === "/tools/waypoint-places" || location.startsWith("/tools/waypoint-places/") || location === "/waypoint-places" || location.startsWith("/waypoint-places/") || location === "/workflows" || location.startsWith("/workflows") || location === "/my-workstation" || location.startsWith("/my-workstation/") || location === "/workstation" || location.startsWith("/workstation/")) && "h-svh max-h-svh min-h-0 overflow-hidden"
       )}>
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40 shrink-0">
@@ -2398,6 +2448,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             (location.startsWith("/call-center") || location.startsWith("/call-logs")) && "p-0 bg-[#07162B]",
             (location === "/calendar" || location.startsWith("/calendar") || location === "/appointments" || location.startsWith("/appointments")) && "p-0 bg-[#07162B]",
             (location === "/" || location.startsWith("/crew-quarters")) && "p-0 bg-[#040d1d]",
+            (location === "/my-workstation" || location.startsWith("/my-workstation/") || location === "/workstation" || location.startsWith("/workstation/")) && "!p-0 bg-[#040B16] flex flex-col w-full h-full min-h-0 overflow-hidden",
             (location === "/knowledge-base" || location.startsWith("/knowledge-base") || location === "/walkthroughs" || location.startsWith("/walkthroughs")) && "p-0 bg-[#07162B]",
             (location === "/leads" || location.startsWith("/leads") || location === "/lead-forms" || location.startsWith("/lead-forms")) && "p-0 bg-[#000820]",
             (location === "/advocacy-pipeline" || location.startsWith("/advocacy-pipeline") || location === "/pipeline" || location.startsWith("/pipeline")) && "p-0 bg-[#000820]",

@@ -77,7 +77,9 @@ import DiscoveryWorksheetBuilder from "./pages/DiscoveryWorksheetBuilder";
 import FirstMate from "./pages/FirstMate";
 import FirstMatePopout from "./pages/FirstMatePopout";
 import { ActiveCallProvider } from "./contexts/ActiveCallContext";
+import { ObservatoryRadioProvider } from "./contexts/ObservatoryRadioContext";
 import CrewQuarters from "./pages/CrewQuarters";
+import MyWorkstation from "./pages/MyWorkstation";
 import Metrics from "./pages/Metrics";
 import AdvocacyPipeline from "./pages/AdvocacyPipeline";
 import MeetingWorkspace from "./pages/MeetingWorkspace";
@@ -269,6 +271,8 @@ function Router() {
             <Switch>
               <Route path="/start" component={CrewQuarters} />
               <Route path="/" component={CrewQuarters} />
+              <Route path="/my-workstation" component={MyWorkstation} />
+              <Route path="/workstation" component={MyWorkstation} />
           <Route path="/crew-quarters" component={CrewQuarters} />
           <Route path="/crew-messages" component={CrewQuarters} />
           <Route path="/crew-quarters/messages" component={CrewQuarters} />
@@ -460,14 +464,16 @@ function App() {
         <TerminologyProvider>
           <FirstMateProvider>
             <ActiveCallProvider>
-              <WorkspaceLockProvider>
-                <TooltipProvider>
-                  <AutoTruncateTooltip />
-                  <Toaster />
-                  <Router />
-                  <GlobalOverlaysWhenUnlocked />
-                </TooltipProvider>
-              </WorkspaceLockProvider>
+              <ObservatoryRadioProvider>
+                <WorkspaceLockProvider>
+                  <TooltipProvider>
+                    <AutoTruncateTooltip />
+                    <Toaster />
+                    <Router />
+                    <GlobalOverlaysWhenUnlocked />
+                  </TooltipProvider>
+                </WorkspaceLockProvider>
+              </ObservatoryRadioProvider>
             </ActiveCallProvider>
           </FirstMateProvider>
         </TerminologyProvider>
