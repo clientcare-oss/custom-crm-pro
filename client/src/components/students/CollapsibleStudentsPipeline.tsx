@@ -925,16 +925,11 @@ export function CollapsibleStudentsPipeline({
                 <button
                   type="button"
                   onClick={onToggleOpen}
-                  className="group inline-flex items-center gap-3 text-left cursor-pointer focus:outline-hidden"
+                  className="adm-pipe-pill inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[9px] text-xs font-serif font-semibold text-[#F4EFE4] hover:text-[#FFF4D4] cursor-pointer focus:outline-hidden"
                   title="Close Pipeline"
                 >
-                  <span className="text-[22px] sm:text-[24px] font-serif font-bold text-[#FAF6EC] group-hover:text-[#FFE7A6] tracking-tight leading-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)] transition-colors">
-                    Pipeline
-                  </span>
-                  <span className="adm-pipe-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-[9px] text-[12px] font-serif font-medium text-[#F4EFE4] group-hover:text-[#FFF5D6]">
-                    <span>Close Pipeline</span>
-                    <ChevronUp className="h-3.5 w-3.5 text-[#E8C574]" />
-                  </span>
+                  <span>Close Pipeline</span>
+                  <ChevronUp className="h-3.5 w-3.5 text-[#E8C574]" />
                 </button>
               </div>
 

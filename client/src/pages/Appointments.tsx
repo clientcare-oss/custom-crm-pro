@@ -37,6 +37,8 @@ import type { OperationalBlock } from "../../../drizzle/schema";
 import { WaypointWaveIcon } from "@/components/portal/WaypointWavyBackdrop";
 import { cn } from "@/lib/utils";
 import "@/styles/admiraltyBridge.css";
+import "@/styles/calendarRealistic.css";
+import type { CalendarOrbCategoryKey } from "@/components/calendar/calendarCategoryHelpers";
 import {
   formatDualTimes,
   SIX_CORE_ZONES,
@@ -101,7 +103,7 @@ export default function Appointments() {
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
   const urlViewParam = searchParams.get("view") as CalendarViewMode | null;
   const initialView: CalendarViewMode =
-    urlViewParam === "day" || urlViewParam === "week" || urlViewParam === "month"
+    urlViewParam === "day" || urlViewParam === "week" || urlViewParam === "month" || urlViewParam === "agenda"
       ? urlViewParam
       : "month";
   const initialScope = (searchParams.get("scope") as CalendarScope) || "my";
@@ -139,6 +141,7 @@ export default function Appointments() {
   };
   const [scope, setScope] = useState<CalendarScope>(initialScope);
   const [selectedAdvocateFilter, setSelectedAdvocateFilter] = useState<string>(initialFilter);
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<CalendarOrbCategoryKey | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [reassignApt, setReassignApt] = useState<any | null>(null);
   const [showStaffStatusModal, setShowStaffStatusModal] = useState<boolean>(false);
@@ -847,8 +850,8 @@ export default function Appointments() {
 
   return (
     <ScopedErrorBoundary moduleName="Appointments & Calendar">
-      <div className="adm-bridge-canvas min-h-screen flex flex-col text-[#FAF6EC]">
-        {/* ── Admiralty Top Header Console (bumps flush to sidebar left, top-0, and right) ── */}
+      <div className="wp-cal-canvas min-h-screen flex flex-col text-[#FAF6EC]">
+        {/* ── Photorealistic Top Mantel Shelf + Admiralty Controls Deck ── */}
         <CalendarConsoleHeader
           currentDate={selectedDate}
           onDateChange={setSelectedDate}
@@ -871,8 +874,8 @@ export default function Appointments() {
             }
           }}
           stats={{
-            appointmentsCount: todayAppointmentsCount || 5,
-            weekAppointmentsCount: thisWeekAppointmentsCount || 10,
+            appointmentsCount: todayAppointmentsCount,
+            weekAppointmentsCount: thisWeekAppointmentsCount,
             holdsCount: (unifiedData?.holdEvents || []).length || 3,
             callbacksCount: 1,
             tasksCount: 2,
@@ -880,11 +883,7 @@ export default function Appointments() {
           }}
           viewMode={viewMode}
           onViewModeChange={(mode) => {
-            if (mode === "agenda") {
-              setViewMode("day");
-            } else {
-              handleViewModeChange(mode);
-            }
+            handleViewModeChange(mode);
           }}
           scope={scope}
           onScopeChange={setScope}
@@ -899,6 +898,8 @@ export default function Appointments() {
           onToggleShowCanceled={setShowCanceled}
           isLegendOpen={isScheduleKeyOpen}
           onToggleLegend={() => setIsScheduleKeyOpen((prev) => !prev)}
+          activeCategoryFilter={activeCategoryFilter}
+          onCategoryFilterChange={setActiveCategoryFilter}
           onScheduleClick={() => handleOpenSchedule()}
           onProposeHoldsClick={() => handleOpenSchedule(selectedDate, undefined, "PROPOSED_HOLDS")}
           onOpenClosuresClick={() => handleOpenSchedule(selectedDate, undefined, "OFFICE_CLOSURE")}
@@ -916,11 +917,10 @@ export default function Appointments() {
           }}
         />
 
-        {/* ── Under-Header Body Area: Seamless Admiralty Bridge Canvas ── */}
+        {/* ── Under-Header Body Area: Aligned Flush With Controls Deck ── */}
         <div className="w-full flex-1 relative z-10">
           <div className="w-full min-h-full">
-            {/* ── Main Workspace Body (Aligned flush with Header Controls Deck) ── */}
-            <div className="px-3 sm:px-5 lg:px-7 pt-3 pb-8 space-y-4 max-w-[1600px] mx-auto">
+            <div className="px-6 sm:px-10 lg:px-14 pt-1 pb-8 space-y-5 max-w-[1460px] mx-auto">
 
         {/* ── Slide-Out Appointment Detail Drawer (PG-007) ── */}
         <AppointmentDetailDrawer
@@ -1323,6 +1323,7 @@ export default function Appointments() {
               loggedInAdvocateName={user?.name || "Byron Honea"}
               staffList={staffList}
               layerFilters={layerFilters}
+              activeCategoryFilter={activeCategoryFilter}
               hideHeaderAndControls={true}
             />
           </div>

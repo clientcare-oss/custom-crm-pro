@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
+  AlertCircle,
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
@@ -9,7 +9,6 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { formatDualTimes } from "@shared/timezones";
 import TodaysAppointmentsTable, { CalendarAppointment } from "./calendar/TodaysAppointmentsTable";
 import CalendarDayTimeline from "./calendar/CalendarDayTimeline";
 import CalendarWeekView from "./calendar/CalendarWeekView";
@@ -19,10 +18,17 @@ import {
   formatWaypointCalendarEvent,
   sortAppointmentsChronologically,
 } from "./calendar/CalendarPatternStyles";
+import {
+  CalendarOrbCategoryKey,
+  CALENDAR_ORB_CATEGORY_MAP,
+  classifyAppointmentOrbCategory,
+  classifyBlockOrbCategory,
+  formatParchmentPillLabel,
+} from "./calendar/calendarCategoryHelpers";
 
 import type { OperationalBlock } from "../../../drizzle/schema";
 
-export type CalendarViewMode = "day" | "week" | "month";
+export type CalendarViewMode = "day" | "week" | "month" | "agenda";
 export type CalendarScope = "my" | "all";
 
 export interface CalendarLayerFilters {
@@ -46,25 +52,18 @@ interface CalendarViewProps {
   onScheduleClick?: () => void;
   onManageStaffClick?: () => void;
   onOperationalBlockClick?: (block: OperationalBlock) => void;
-  // Controlled or uncontrolled view mode
   viewMode?: CalendarViewMode;
   onViewModeChange?: (mode: CalendarViewMode) => void;
-  // Controlled or uncontrolled scope
   scope?: CalendarScope;
   onScopeChange?: (scope: CalendarScope) => void;
-  // Selected Advocate filter (for All Staff mode)
   selectedAdvocateFilter?: string;
   onAdvocateFilterChange?: (advocate: string) => void;
-  // Controlled or uncontrolled current date
   currentDate?: Date;
   onDateChange?: (date: Date) => void;
-  // Logged-in advocate identity
   loggedInAdvocateName?: string;
-  // Staff list for filter
   staffList?: { id: string; name: string; status: string }[];
-  // Layer filters
   layerFilters?: CalendarLayerFilters;
-  // Hide built-in header & controls when using CalendarConsoleHeader & CalendarControlCommandBar
+  activeCategoryFilter?: CalendarOrbCategoryKey | null;
   hideHeaderAndControls?: boolean;
 }
 
@@ -84,6 +83,35 @@ function matchAdvocate(nameA?: string | null, nameB?: string | null): boolean {
   return a.split(" ")[0] === b.split(" ")[0];
 }
 
+function formatDateKey(y: number, m: number, d: number): string {
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+/** Delicate warm autumn-leaf watermark SVG for Thanksgiving / autumn holiday parchment cells */
+function ParchmentAutumnLeaves() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 80 60"
+      className="pointer-events-none absolute top-0.5 right-0.5 w-16 h-12 opacity-60"
+      fill="none"
+    >
+      <path
+        d="M54 8 C58 14, 65 14, 72 11 C67 18, 69 25, 76 28 C67 29, 63 34, 64 42 C58 36, 52 37, 47 43 C48 35, 44 30, 36 29 C44 25, 46 19, 43 12 C49 15, 52 13, 54 8 Z"
+        fill="#B65424"
+        fillOpacity="0.65"
+      />
+      <path
+        d="M28 4 C32 10, 39 10, 44 8 C40 14, 42 19, 47 22 C39 23, 36 27, 37 33 C32 28, 27 29, 23 33 C24 27, 21 23, 15 22 C21 19, 23 14, 21 9 C25 11, 27 9, 28 4 Z"
+        fill="#CC7A28"
+        fillOpacity="0.58"
+      />
+      <path d="M55 15 L53 45" stroke="#6E3012" strokeWidth="1.1" strokeOpacity="0.55" />
+      <path d="M30 11 L29 34" stroke="#7A4414" strokeWidth="0.9" strokeOpacity="0.5" />
+    </svg>
+  );
+}
+
 export default function CalendarView({
   appointments,
   operationalBlocks = [],
@@ -92,7 +120,6 @@ export default function CalendarView({
   onEventClick,
   onReassignClick,
   onScheduleClick,
-  onManageStaffClick,
   onOperationalBlockClick,
   viewMode: controlledViewMode,
   onViewModeChange,
@@ -114,9 +141,9 @@ export default function CalendarView({
     showInternalEvents: true,
     showProtectedWork: true,
   },
+  activeCategoryFilter = null,
   hideHeaderAndControls = false,
 }: CalendarViewProps) {
-  // Local state fallbacks if not controlled from parent
   const [internalViewMode, setInternalViewMode] = useState<CalendarViewMode>("month");
   const [internalScope, setInternalScope] = useState<CalendarScope>("my");
   const [internalFilter, setInternalFilter] = useState<string>("all");
@@ -175,37 +202,48 @@ export default function CalendarView({
   };
 
   const selectedDateStr = useMemo(() => {
-    return new Date(currentDate).toISOString().split("T")[0];
+    return formatDateKey(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
   }, [currentDate]);
 
-  // Today's appointments for the logged-in advocate (for Meetings Today badge)
   const myMeetingsTodayCount = useMemo(() => {
     return appointments.filter((apt) => {
-      const d = new Date(apt.startTime).toISOString().split("T")[0];
-      const isToday = d === selectedDateStr;
+      const dt = new Date(apt.startTime);
+      const d = formatDateKey(dt.getFullYear(), dt.getMonth(), dt.getDate());
       const adv = apt.assignedAdvocateName || "Byron Honea";
-      return isToday && apt.status !== "Cancelled" && matchAdvocate(adv, loggedInAdvocateName);
+      return d === selectedDateStr && apt.status !== "Cancelled" && matchAdvocate(adv, loggedInAdvocateName);
     }).length;
   }, [appointments, selectedDateStr, loggedInAdvocateName]);
 
-  // Filter appointments according to Scope (My Calendar vs All Staff) and optional advocate filter
   const filteredAppointments = useMemo(() => {
     return appointments.filter((apt) => {
+      const isHold = Boolean((apt as any).isHold);
+      if (isHold && !layerFilters.showProposedHolds) return false;
+      if (!isHold && !layerFilters.showAppointments) return false;
+
       const advocate = apt.assignedAdvocateName || "Byron Honea";
-
       if (scope === "my") {
-        return matchAdvocate(advocate, loggedInAdvocateName);
-      } else {
-        // All Staff mode
-        if (filterAdvocate && filterAdvocate !== "all") {
-          return matchAdvocate(advocate, filterAdvocate);
-        }
-        return true;
+        if (!matchAdvocate(advocate, loggedInAdvocateName)) return false;
+      } else if (filterAdvocate && filterAdvocate !== "all") {
+        if (!matchAdvocate(advocate, filterAdvocate)) return false;
       }
-    });
-  }, [appointments, scope, filterAdvocate, loggedInAdvocateName]);
 
-  // Date label formatting
+      if (activeCategoryFilter) {
+        const cat = classifyAppointmentOrbCategory(apt as any);
+        if (cat !== activeCategoryFilter) return false;
+      }
+
+      return true;
+    });
+  }, [
+    appointments,
+    scope,
+    filterAdvocate,
+    loggedInAdvocateName,
+    layerFilters.showAppointments,
+    layerFilters.showProposedHolds,
+    activeCategoryFilter,
+  ]);
+
   const formattedHeaderDate = useMemo(() => {
     return currentDate.toLocaleDateString("en-US", {
       weekday: "long",
@@ -220,17 +258,19 @@ export default function CalendarView({
     return `${pad(currentDate.getMonth() + 1)}/${pad(currentDate.getDate())}/${currentDate.getFullYear()}`;
   }, [currentDate]);
 
-  // Month grid calculations
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
-  const todayStr = new Date().toISOString().split("T")[0];
+  const prevMonthDaysCount = new Date(year, month, 0).getDate();
+  const nowObj = new Date();
+  const todayStr = formatDateKey(nowObj.getFullYear(), nowObj.getMonth(), nowObj.getDate());
 
   const appointmentsByDate = useMemo(() => {
     const map: Record<string, CalendarAppointment[]> = {};
     filteredAppointments.forEach((apt) => {
-      const date = new Date(apt.startTime).toISOString().split("T")[0];
+      const dt = new Date(apt.startTime);
+      const date = formatDateKey(dt.getFullYear(), dt.getMonth(), dt.getDate());
       if (!map[date]) map[date] = [];
       map[date].push(apt);
     });
@@ -240,13 +280,11 @@ export default function CalendarView({
     return map;
   }, [filteredAppointments]);
 
-  // Operational blocks mapped by date
   const operationalBlocksByDate = useMemo(() => {
     const map: Record<string, OperationalBlock[]> = {};
     operationalBlocks.forEach((block) => {
-      if (block.isArchived) return false;
+      if (block.isArchived) return;
 
-      // Scope match
       if (block.scope !== "ENTIRE_COMPANY") {
         if (scope === "my") {
           if (!block.targetStaffNames || !matchAdvocate(block.targetStaffNames, loggedInAdvocateName)) {
@@ -259,7 +297,6 @@ export default function CalendarView({
         }
       }
 
-      // Visual layer filters
       const bt = block.blockType.toLowerCase();
       if ((bt.includes("closure") || bt.includes("closed") || block.scope === "ENTIRE_COMPANY") && !layerFilters.showClosures) {
         return;
@@ -276,200 +313,211 @@ export default function CalendarView({
         return;
       }
 
-      const dStr = new Date(block.startTime).toISOString().split("T")[0];
+      const dt = new Date(block.startTime);
+      const dStr = formatDateKey(dt.getFullYear(), dt.getMonth(), dt.getDate());
       if (!map[dStr]) map[dStr] = [];
       map[dStr].push(block);
     });
     return map;
   }, [operationalBlocks, scope, filterAdvocate, loggedInAdvocateName, layerFilters]);
 
-  const monthGridDays: React.ReactNode[] = [];
-  for (let i = 0; i < firstDayOfMonth; i++) {
-    monthGridDays.push(
-      <div key={`empty-${i}`} className="min-h-[7rem] adm-cal-cell-empty" />
-    );
-  }
+  // Build complete 5-week or 6-week antique parchment calendar cells (including previous & next month edge days)
+  const monthGridCells = useMemo(() => {
+    const cells: React.ReactNode[] = [];
+    const totalOccupied = firstDayOfMonth + daysInMonth;
+    const totalCells = totalOccupied <= 35 ? 35 : 42;
+    const trailingCount = totalCells - totalOccupied;
 
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const dayAppointments = appointmentsByDate[dateStr] || [];
-    const dayBlocks = operationalBlocksByDate[dateStr] || [];
-    const isToday = dateStr === todayStr;
-
-    // Check for all-day closure on this day
-    const allDayClosure = dayBlocks.find(
-      (b) =>
-        b.isAllDay &&
-        (b.scope === "ENTIRE_COMPANY" ||
-          b.blockType.toLowerCase().includes("closed") ||
-          b.blockType.toLowerCase().includes("holiday"))
-    );
-
-    const cellBackground = isToday
-      ? "adm-cal-cell adm-cal-cell-today"
-      : "adm-cal-cell";
-    let cellStyle: React.CSSProperties = {};
-
-    if (allDayClosure) {
-      const pKey = detectItemPatternKey({
-        blockType: allDayClosure.blockType,
-        title: allDayClosure.title,
-        isClosure: true,
-      });
-      cellStyle = {
-        background: CALENDAR_PATTERNS[pKey].fabricBackground,
-      };
+    // 1. Previous Month Leading Days (muted sepia numerals on parchment)
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      const prevDay = prevMonthDaysCount - firstDayOfMonth + 1 + i;
+      const cellDate = new Date(year, month - 1, prevDay);
+      cells.push(
+        <div
+          key={`prev-${prevDay}`}
+          onClick={() => setCurrentDate(cellDate)}
+          className="wp-cal-parchment-cell wp-cal-parchment-cell-outside min-h-[82px] px-2 pt-1.5 pb-1.5 cursor-pointer"
+          title={`Go to ${cellDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+        >
+          <span className="wp-cal-day-num-outside">{prevDay}</span>
+        </div>
+      );
     }
 
-    monthGridDays.push(
-      <div
-        key={day}
-        style={cellStyle}
-        className={`min-h-[7rem] px-[2px] pt-1.5 pb-1 cursor-pointer ${cellBackground}`}
-        onClick={() => {
-          const clickedDate = new Date(year, month, day);
-          onDateClick?.(clickedDate);
-        }}
-      >
-        <div className="flex items-center justify-between mb-1 px-1.5">
-          <span
-            className={`text-xs font-mono font-bold ${
-              isToday
-                ? "adm-cal-pill-active px-2 py-0.5 rounded-md font-extrabold text-[11px]"
-                : "text-[#E9E1D2] drop-shadow-sm font-semibold"
-            }`}
-          >
-            {day}
-          </span>
-          {allDayClosure ? (
-            <span
-              className="text-[9px] font-mono px-1 rounded-[5px] bg-rose-950 text-rose-300 border border-rose-600/60 font-bold"
-              title="Office Closed"
+    // 2. Active Month Days on Antique Weathered Parchment
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = formatDateKey(year, month, day);
+      const dayAppointments = appointmentsByDate[dateStr] || [];
+      const dayBlocks = operationalBlocksByDate[dateStr] || [];
+      const isToday = dateStr === todayStr;
+
+      const allDayNoticeBlock = dayBlocks.find(
+        (b) =>
+          b.isAllDay &&
+          (b.scope === "ENTIRE_COMPANY" ||
+            b.blockType.toLowerCase().includes("closed") ||
+            b.blockType.toLowerCase().includes("holiday"))
+      );
+      const regularBlocks = dayBlocks.filter((b) => b !== allDayNoticeBlock);
+
+      const isAutumnHoliday =
+        allDayNoticeBlock &&
+        /thanksgiving|autumn|fall/i.test(`${allDayNoticeBlock.title} ${allDayNoticeBlock.blockType}`);
+
+      cells.push(
+        <div
+          key={`day-${day}`}
+          className={`wp-cal-parchment-cell min-h-[82px] px-1.5 pt-1.5 pb-1.5 cursor-pointer flex flex-col ${
+            isToday ? "wp-cal-parchment-cell-today" : ""
+          }`}
+          onClick={() => onDateClick?.(new Date(year, month, day))}
+        >
+          {isAutumnHoliday && <ParchmentAutumnLeaves />}
+
+          {/* Day Number Row */}
+          <div className="relative z-10 flex items-center justify-between mb-1 px-0.5">
+            <span className={isToday ? "wp-cal-day-num-today" : "wp-cal-day-num"}>{day}</span>
+            {dayAppointments.some((a) => a.status === "Needs Coverage") && (
+              <span
+                className="w-2 h-2 rounded-full bg-rose-600 shadow-[0_0_6px_rgba(225,29,72,0.8)] animate-pulse"
+                title="Needs Coverage"
+              />
+            )}
+          </div>
+
+          {/* Centered Italic Sepia Holiday / Office Closed Notice directly on Parchment */}
+          {allDayNoticeBlock && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOperationalBlockClick?.(allDayNoticeBlock);
+              }}
+              className="relative z-10 flex-1 flex items-center justify-center text-center px-1 py-1 cursor-pointer group"
+              title={`${allDayNoticeBlock.title} — Click for details`}
             >
-              CLOSED
-            </span>
-          ) : dayAppointments.some((a) => a.status === "Needs Coverage") ? (
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" title="Needs Coverage" />
-          ) : null}
-        </div>
-
-        <div className="space-y-[3px] overflow-hidden">
-          {/* Operational Blocks in Month Cell */}
-          {dayBlocks.slice(0, 2).map((block) => {
-            const pKey = detectItemPatternKey({
-              blockType: block.blockType,
-              title: block.title,
-              isClosure: block.scope === "ENTIRE_COMPANY" || block.blockType.toLowerCase().includes("closed"),
-            });
-            const pDef = CALENDAR_PATTERNS[pKey];
-
-            return (
-              <div
-                key={`month-block-${block.id}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOperationalBlockClick?.(block);
-                }}
-                style={{ background: pDef.inlineBackground }}
-                className={`text-[9px] px-1 py-[2px] rounded-[4px] cursor-pointer hover:opacity-90 transition-all border ${pDef.borderClass}`}
-              >
-                <div className="font-serif font-bold truncate leading-[1.15] text-[#FFE394]">
-                  {pDef.patternSymbol} {block.title}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Client Appointments in Month Cell — Exact Waypoint aesthetic, ordered: Time -> Student -> Session Type -> Advocate */}
-          {dayAppointments.slice(0, 4).map((apt) => {
-            const isNeedsCoverage = apt.status === "Needs Coverage";
-            const advocateName = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
-            const patternKey = detectItemPatternKey(apt as any);
-            const patternDef = CALENDAR_PATTERNS[patternKey];
-            const fmtEvt = formatWaypointCalendarEvent(apt, loggedInAdvocateName);
-
-            return (
-              <div
-                key={apt.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEventClick?.(apt);
-                }}
-                style={{ background: patternDef.inlineBackground }}
-                className={`text-[10px] px-1 py-[2px] rounded-[4px] cursor-pointer hover:opacity-90 transition-all border !border-l-[5px] ${
-                  isNeedsCoverage
-                    ? "border-rose-600/80 shadow-sm shadow-rose-950"
-                    : patternDef.borderClass
-                }`}
-                title={`${fmtEvt.startTimeLabel} ${fmtEvt.studentLabel || "Student"} — ${fmtEvt.sessionTypeFull} (${advocateName})`}
-              >
-                <div
-                  className={`font-serif font-bold truncate leading-[1.1] ${
-                    patternKey === "confirmed" ? "text-white" : "text-[#FFF4D4]"
-                  }`}
-                >
-                  <span className="font-mono text-[#FFE394] mr-1">{fmtEvt.startTimeLabel}</span>
-                  <span>{fmtEvt.studentLabel || fmtEvt.sessionTypeFull}</span>
-                </div>
-                <div className="flex items-center justify-between gap-1 text-[9px] leading-[1.1] mt-[1px]">
-                  <span
-                    className={`truncate min-w-0 flex-1 ${
-                      patternKey === "confirmed" ? "text-emerald-100" : "text-[#C6B697]"
-                    }`}
-                  >
-                    {fmtEvt.sessionTypeFull}
-                  </span>
-                  <span
-                    className={`font-semibold shrink-0 ${
-                      patternKey === "confirmed" ? "text-emerald-300" : "text-[#FFE394]"
-                    }`}
-                  >
-                    {advocateName}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-
-          {dayAppointments.length > 4 && (
-            <div className="flex items-center gap-1 pt-0.5">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOverflowDrawerDateStr(dateStr);
-                }}
-                className="flex-1 flex items-center justify-between text-[9px] font-mono font-bold px-1.5 py-[2px] rounded-[5px] bg-[#061121]/95 border border-[#8a7052]/70 text-[#ECC97B] hover:bg-[#112540] hover:border-[#d8c4a0]/85 transition-all cursor-pointer"
-              >
-                <span>+{dayAppointments.length - 4} more</span>
-                <ChevronRight className="w-2.5 h-2.5 text-[#ECC97B]" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentDate(new Date(year, month, day));
-                  setViewMode("day");
-                }}
-                className="text-[9px] font-mono font-semibold px-1.5 py-[2px] rounded-[5px] bg-[#040d1a] border border-[#6c563c]/70 text-[#D4DFEE] hover:text-[#FAF6EC] hover:border-[#b89f7d]/70 transition-all cursor-pointer shrink-0"
-                title="Open Day View"
-              >
-                Day →
-              </button>
-            </div>
+              <span className="font-serif italic text-[14px] leading-snug text-[#27190C] group-hover:text-[#000000] transition-colors drop-shadow-[0_1px_0_rgba(255,248,232,0.7)]">
+                {allDayNoticeBlock.title}
+              </span>
+            </button>
           )}
+
+          {/* Glossy 3D Beveled Enamel Event Pills on Parchment */}
+          <div className="relative z-10 space-y-[4px] overflow-hidden">
+            {regularBlocks.slice(0, 2).map((block) => {
+              const catKey = classifyBlockOrbCategory(block);
+              const catDef = CALENDAR_ORB_CATEGORY_MAP[catKey];
+              return (
+                <button
+                  key={`month-block-${block.id}`}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOperationalBlockClick?.(block);
+                  }}
+                  className={`wp-cal-evt-pill ${catDef.pillClass} text-left`}
+                  title={block.title}
+                >
+                  {catDef.showAlertIcon && (
+                    <AlertCircle className="h-3 w-3 shrink-0 fill-white text-[#9E1D24]" />
+                  )}
+                  <span className="truncate">{block.title}</span>
+                </button>
+              );
+            })}
+
+            {dayAppointments.slice(0, 3).map((apt) => {
+              const catKey = classifyAppointmentOrbCategory(apt as any);
+              const catDef = CALENDAR_ORB_CATEGORY_MAP[catKey];
+              const fmtEvt = formatWaypointCalendarEvent(apt, loggedInAdvocateName);
+              const pillText = formatParchmentPillLabel(apt as any, loggedInAdvocateName);
+              const advocateFirst = (apt.assignedAdvocateName || "Byron Honea").split(" ")[0];
+
+              return (
+                <button
+                  key={apt.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEventClick?.(apt);
+                  }}
+                  className={`wp-cal-evt-pill ${catDef.pillClass} text-left`}
+                  title={`${fmtEvt.startTimeLabel} ${fmtEvt.studentLabel || "Student"} — ${fmtEvt.sessionTypeFull} (${advocateFirst})`}
+                >
+                  {catDef.showAlertIcon && (
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0 fill-white text-[#9E1D24]" />
+                  )}
+                  <span className="truncate">{pillText}</span>
+                </button>
+              );
+            })}
+
+            {dayAppointments.length > 3 && (
+              <div className="flex items-center gap-1 pt-0.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOverflowDrawerDateStr(dateStr);
+                  }}
+                  className="flex-1 flex items-center justify-between text-[10px] font-serif font-bold px-2 py-[2px] rounded-[5px] bg-[#2a1c0f]/85 border border-[#6e4d26]/80 text-[#FAF0D7] hover:bg-[#1b1108] transition-all cursor-pointer shadow-sm"
+                >
+                  <span>+{dayAppointments.length - 3} more</span>
+                  <ChevronRight className="w-2.5 h-2.5 text-[#ECC97B]" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
+
+    // 3. Next Month Trailing Days (muted sepia numerals on parchment, matching reference bottom row 1..5)
+    for (let t = 1; t <= trailingCount; t++) {
+      const cellDate = new Date(year, month + 1, t);
+      cells.push(
+        <div
+          key={`next-${t}`}
+          onClick={() => setCurrentDate(cellDate)}
+          className="wp-cal-parchment-cell wp-cal-parchment-cell-outside min-h-[82px] px-2 pt-1.5 pb-1.5 cursor-pointer"
+          title={`Go to ${cellDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+        >
+          <span className="wp-cal-day-num-outside">{t}</span>
+        </div>
+      );
+    }
+
+    return cells;
+  }, [
+    year,
+    month,
+    firstDayOfMonth,
+    daysInMonth,
+    prevMonthDaysCount,
+    appointmentsByDate,
+    operationalBlocksByDate,
+    todayStr,
+    loggedInAdvocateName,
+    onDateClick,
+    onEventClick,
+    onOperationalBlockClick,
+  ]);
+
+  // Agenda View grouped appointments for the active month
+  const agendaGroups = useMemo(() => {
+    const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}-`;
+    const entries = Object.entries(appointmentsByDate)
+      .filter(([dateKey]) => dateKey.startsWith(monthPrefix))
+      .sort(([a], [b]) => a.localeCompare(b));
+    return entries;
+  }, [appointmentsByDate, year, month]);
 
   return (
     <div className="space-y-4">
-      {/* ── TOP SECTION (Meetings Today Card + Header + Schedule Button) ── */}
+      {/* ── OPTIONAL STANDALONE HEADER (Hidden when mounted under CalendarConsoleHeader) ── */}
       {!hideHeaderAndControls && (
         <>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Left: Meetings Today Badge matching reference */}
             <div
               onClick={() => {
                 setViewMode("day");
@@ -494,7 +542,6 @@ export default function CalendarView({
               </div>
             </div>
 
-            {/* Center: Title & Subtitle */}
             <div className="flex-1 md:px-4">
               <h1 className="text-2xl font-serif font-bold text-[#FFF4D4] tracking-tight leading-tight">
                 {formattedHeaderDate}
@@ -504,91 +551,33 @@ export default function CalendarView({
               </p>
             </div>
 
-            {/* Right: + Schedule Appointment Button */}
             <div>
               <Button
                 onClick={() => onScheduleClick?.()}
-                className="bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] hover:from-[#FFE394] hover:to-[#DFBE77] text-[#07162B] font-bold text-sm h-10 px-4 rounded-[5px] shadow-[0_3px_10px_rgba(0,0,0,0.8)] border border-[#FFE394]/50 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                className="wp-cal-pill-brass font-bold text-sm h-10 px-4 rounded-full flex items-center gap-1.5 cursor-pointer"
               >
-                <Plus className="w-4 h-4 text-[#07162B] stroke-[3]" />
+                <Plus className="w-4 h-4 stroke-[3]" />
                 <span>Schedule Appointment</span>
               </Button>
             </div>
           </div>
 
-          {/* ── CONTROLS ROW (Day|Week|Month + My Calendar|All Staff + Advocate + Date) ── */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90">
             <div className="flex flex-wrap items-center gap-3">
-              {/* Day | Week | Month */}
               <div className="flex items-center p-0.5 rounded-[5px] bg-[#020A17] border border-[#3A2C18]">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("day")}
-                  className={`px-4 py-1.5 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
-                    viewMode === "day"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
-                      : "text-[#C6B697] hover:text-[#FFF4D4]"
-                  }`}
-                >
-                  Day
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("week")}
-                  className={`px-4 py-1.5 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
-                    viewMode === "week"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
-                      : "text-[#C6B697] hover:text-[#FFF4D4]"
-                  }`}
-                >
-                  Week
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("month")}
-                  className={`px-4 py-1.5 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
-                    viewMode === "month"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
-                      : "text-[#C6B697] hover:text-[#FFF4D4]"
-                  }`}
-                >
-                  Month
-                </button>
+                {(["day", "week", "month"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setViewMode(m)}
+                    className={`px-4 py-1.5 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
+                      viewMode === m ? "wp-cal-pill-brass" : "text-[#C6B697] hover:text-[#FFF4D4]"
+                    }`}
+                  >
+                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                  </button>
+                ))}
               </div>
-
-              {/* My Calendar | All Staff */}
-              <div className="flex items-center p-0.5 rounded-[5px] bg-[#020A17] border border-[#3A2C18]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setScope("my");
-                    setTableTab("my");
-                  }}
-                  className={`px-4 py-1.5 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
-                    scope === "my"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
-                      : "text-[#C6B697] hover:text-[#FFF4D4]"
-                  }`}
-                >
-                  My Calendar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setScope("all");
-                    setTableTab("all");
-                  }}
-                  className={`px-4 py-1.5 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
-                    scope === "all"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] border border-[#FFE394]/50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
-                      : "text-[#C6B697] hover:text-[#FFF4D4]"
-                  }`}
-                >
-                  All Staff
-                </button>
-              </div>
-
-              {/* Advocate Filter Dropdown */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[#A69371] font-medium">Advocate</span>
                 <select
@@ -605,8 +594,6 @@ export default function CalendarView({
                 </select>
               </div>
             </div>
-
-            {/* Right: Date selector matching reference */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-[#A69371] font-medium">Date</span>
               <div className="flex items-center gap-2 h-8 px-3 rounded-[5px] bg-[#020A17] border border-[#3A2C18] text-[#FFE394] text-xs font-mono">
@@ -618,10 +605,9 @@ export default function CalendarView({
         </>
       )}
 
-      {/* ── VIEWS CONTENT ── */}
+      {/* ── DAY VIEW ── */}
       {viewMode === "day" && (
         <div className="space-y-4">
-          {/* Today's Appointments Table directly above timeline */}
           <TodaysAppointmentsTable
             appointments={appointments}
             selectedDate={currentDate}
@@ -631,8 +617,6 @@ export default function CalendarView({
             activeTab={tableTab}
             onTabChange={setTableTab}
           />
-
-          {/* Detailed Timeline */}
           <CalendarDayTimeline
             appointments={filteredAppointments}
             operationalBlocks={operationalBlocks}
@@ -651,6 +635,7 @@ export default function CalendarView({
         </div>
       )}
 
+      {/* ── WEEK VIEW ── */}
       {viewMode === "week" && (
         <CalendarWeekView
           appointments={filteredAppointments}
@@ -672,62 +657,135 @@ export default function CalendarView({
         />
       )}
 
-      {viewMode === "month" && (
-        <div className="adm-panel-card rounded-[20px] overflow-hidden">
-          <div aria-hidden="true" className="adm-rim-glint-top" />
-          <div aria-hidden="true" className="adm-rim-glint-bottom" />
-          <div className="p-4 space-y-3">
-            {/* ── Month Header Bar on Large Calendar with Back & Next Month Buttons on Either Side ── */}
-            <div className="adm-cal-subbar flex items-center justify-between px-3.5 py-2.5 rounded-[14px]">
-              <button
-                type="button"
-                onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-                className="adm-cal-pill inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-serif font-bold text-[#E8DEC8] hover:text-[#FAF6EC] cursor-pointer active:scale-95"
-                title="Previous Month"
-              >
-                <ChevronLeft className="h-4 w-4 text-[#ECC97B]" />
-                <span className="hidden sm:inline">Prev Month</span>
-              </button>
-
-              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#FAF6EC] tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] select-none">
-                {currentDate.toLocaleDateString("en-US", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </h2>
-
-              <button
-                type="button"
-                onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-                className="adm-cal-pill inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-serif font-bold text-[#E8DEC8] hover:text-[#FAF6EC] cursor-pointer active:scale-95"
-                title="Next Month"
-              >
-                <span className="hidden sm:inline">Next Month</span>
-                <ChevronRight className="h-4 w-4 text-[#ECC97B]" />
-              </button>
-            </div>
-
-            <div className="adm-cal-grid-frame grid grid-cols-7 gap-0 rounded-[14px] overflow-hidden">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                <div
-                  key={d}
-                  className="adm-cal-dow text-center text-[11px] font-serif font-bold py-2.5 last:border-r-0 uppercase tracking-[0.14em]"
-                >
-                  {d}
-                </div>
-              ))}
-              {monthGridDays}
+      {/* ── AGENDA VIEW (Antique Brass-Framed Parchment Chronological Schedule) ── */}
+      {viewMode === "agenda" && (
+        <div>
+          <div className="wp-cal-brass-frame">
+            <div className="wp-cal-brass-inner">
+              <div className="wp-cal-parchment-dow px-5 py-3 flex items-center justify-between">
+                <span>
+                  Monthly Agenda —{" "}
+                  {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                </span>
+                <span className="text-[11px] font-mono tracking-normal text-[#DFBE77] normal-case">
+                  {agendaGroups.reduce((sum, [, list]) => sum + list.length, 0)} scheduled
+                </span>
+              </div>
+              <div className="wp-cal-parchment-body divide-y divide-[#5c3e22]/40 min-h-[420px]">
+                {agendaGroups.length === 0 ? (
+                  <div className="py-16 text-center font-serif italic text-[#4a321a] text-base">
+                    No appointments scheduled for this month.
+                  </div>
+                ) : (
+                  agendaGroups.map(([dateKey, apts]) => {
+                    const [yy, mm, dd] = dateKey.split("-").map(Number);
+                    const dateObj = new Date(yy, (mm || 1) - 1, dd || 1);
+                    return (
+                      <div key={dateKey} className="p-4 flex flex-col sm:flex-row sm:items-start gap-3">
+                        <div className="sm:w-44 shrink-0">
+                          <div className="font-serif font-bold text-[#1F140A] text-base">
+                            {dateObj.toLocaleDateString("en-US", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </div>
+                          <div className="text-[11px] font-mono text-[#6B4A28]">
+                            {apts.length} {apts.length === 1 ? "session" : "sessions"}
+                          </div>
+                        </div>
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {apts.map((apt) => {
+                            const catKey = classifyAppointmentOrbCategory(apt as any);
+                            const catDef = CALENDAR_ORB_CATEGORY_MAP[catKey];
+                            const fmtEvt = formatWaypointCalendarEvent(apt, loggedInAdvocateName);
+                            return (
+                              <button
+                                key={apt.id}
+                                type="button"
+                                onClick={() => onEventClick?.(apt)}
+                                className={`wp-cal-evt-pill ${catDef.pillClass} py-2 px-3 justify-between text-left`}
+                              >
+                                <span className="flex items-center gap-1.5 truncate">
+                                  {catDef.showAlertIcon && (
+                                    <AlertCircle className="h-3.5 w-3.5 shrink-0 fill-white text-[#9E1D24]" />
+                                  )}
+                                  <span className="truncate">
+                                    {formatParchmentPillLabel(apt as any, loggedInAdvocateName)}
+                                  </span>
+                                </span>
+                                <span className="text-[10px] opacity-90 shrink-0 ml-2">
+                                  {fmtEvt.advocateFirstName}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </div>
+          <div className="wp-cal-desk-sill mx-2" aria-hidden="true" />
         </div>
       )}
 
-      {/* ── Right Slide-Out Drawer for Day Overflow (>4 Appointments) ── */}
+      {/* ── MONTH VIEW: PHOTOREALISTIC ANTIQUE BRASS-FRAMED WEATHERED PARCHMENT GRID ── */}
+      {viewMode === "month" && (
+        <div>
+          <div className="wp-cal-brass-frame">
+            <div className="wp-cal-brass-inner">
+              {/* Optional inner month stepper ONLY if rendered standalone without CalendarConsoleHeader */}
+              {!hideHeaderAndControls && (
+                <div className="adm-cal-subbar flex items-center justify-between px-4 py-2.5 border-b border-[#593e1d]">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
+                    className="wp-cal-pill-navy inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-serif font-bold cursor-pointer"
+                  >
+                    <ChevronLeft className="h-4 w-4 text-[#ECC97B]" />
+                    <span>Prev</span>
+                  </button>
+                  <h2 className="font-serif text-lg font-bold text-[#FAF6EC]">
+                    {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
+                    className="wp-cal-pill-navy inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-serif font-bold cursor-pointer"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="h-4 w-4 text-[#ECC97B]" />
+                  </button>
+                </div>
+              )}
+
+              {/* Deep Obsidian-Navy Serif Weekday Header Strip (SUN – SAT) */}
+              <div className="grid grid-cols-7">
+                {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
+                  <div key={d} className="wp-cal-parchment-dow text-center py-2.5 select-none">
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              {/* Continuous Weathered Antique Parchment 7-Column Grid */}
+              <div className="wp-cal-parchment-body grid grid-cols-7">{monthGridCells}</div>
+            </div>
+          </div>
+          {/* Warm Polished Mahogany Desk Surface Reflection Beneath Frame */}
+          <div className="wp-cal-desk-sill mx-2" aria-hidden="true" />
+        </div>
+      )}
+
+      {/* ── Right Slide-Out Drawer for Day Overflow (>3 Appointments) ── */}
       {isOverflowRendered && (overflowDrawerDateStr || cachedOverflowDateStr) && (() => {
         const activeDateStr = overflowDrawerDateStr || cachedOverflowDateStr!;
-        const drawerApts = (appointmentsByDate[activeDateStr] || []).slice().sort(
-          (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-        );
+        const drawerApts = (appointmentsByDate[activeDateStr] || [])
+          .slice()
+          .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
         const [yNum, mNum, dNum] = activeDateStr.split("-").map(Number);
         const drawerDateObj = new Date(yNum, (mNum || 1) - 1, dNum || 1);
         const drawerDateLabel = drawerDateObj.toLocaleDateString("en-US", {
@@ -802,7 +860,9 @@ export default function CalendarView({
                             patternKey === "confirmed" ? "text-white" : "text-[#FAF6EC]"
                           }`}
                         >
-                          <span className="font-mono text-[#FFE394] mr-1.5">{fmtEvt.startTimeLabel}</span>
+                          <span className="font-mono text-[#FFE394] mr-1.5">
+                            {fmtEvt.startTimeLabel}
+                          </span>
                           {fmtEvt.studentLabel || "Student"}
                         </span>
                         <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-black/30 text-[#FFE394] shrink-0 flex items-center gap-1">
@@ -839,7 +899,7 @@ export default function CalendarView({
                     setCurrentDate(drawerDateObj);
                     setViewMode("day");
                   }}
-                  className="adm-cal-pill-active flex-1 font-bold text-xs h-9 rounded-lg cursor-pointer"
+                  className="wp-cal-pill-brass flex-1 font-bold text-xs h-9 rounded-full cursor-pointer"
                 >
                   Open Full Day Timeline →
                 </Button>
@@ -849,7 +909,7 @@ export default function CalendarView({
                     setOverflowDrawerDateStr(null);
                     onDateClick?.(drawerDateObj);
                   }}
-                  className="adm-cal-pill text-[#E8DEC8] hover:text-[#FAF6EC] text-xs h-9 px-3 rounded-lg cursor-pointer"
+                  className="wp-cal-pill-navy text-[#E8DEC8] hover:text-[#FAF6EC] text-xs h-9 px-3 rounded-full cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 mr-1 text-[#ECC97B]" />
                   Schedule

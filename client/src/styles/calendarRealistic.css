@@ -1,0 +1,591 @@
+/* ============================================================================
+ * Waypoint Calendar — Photorealistic Study Mantel, Carved Mahogany Rail,
+ * Hanging Riveted Parchment Plaque & Antique Brass-Framed Parchment Grid
+ * ============================================================================ */
+
+/* ── 1. STUDY WALL CANVAS & AMBIENT WARM MANTEL GLOW ── */
+.wp-cal-canvas {
+  position: relative;
+  background-color: #061221;
+  background-image:
+    /* Warm amber ambient wash spilling down from the Himalayan salt lamp (left) & brass compass (right) */
+    radial-gradient(ellipse 30% 18% at 17% 14%, rgba(236, 152, 54, 0.14) 0%, transparent 72%),
+    radial-gradient(ellipse 28% 18% at 83% 14%, rgba(226, 174, 82, 0.12) 0%, transparent 72%),
+    /* Soft deep teal-navy study wall pool */
+    radial-gradient(ellipse 75% 45% at 50% 34%, rgba(20, 44, 72, 0.42) 0%, rgba(9, 22, 38, 0.22) 56%, transparent 100%),
+    linear-gradient(180deg, #061322 0%, #091a2e 28%, #071424 72%, #050d18 100%);
+}
+
+.wp-cal-canvas::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("/assets/calendar/calendar-wall-texture.jpg");
+  background-size: 960px auto;
+  background-repeat: repeat;
+  mix-blend-mode: soft-light;
+  opacity: 0.34;
+}
+
+/* ── 2. TOP SHELF & HANGING SUNLIT IVY CANOPY (z-30 vines drape over outer controls) ── */
+.wp-cal-canopy-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  pointer-events: none;
+  user-select: none;
+}
+
+.wp-cal-canopy-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  user-select: none;
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.72));
+}
+
+/* Exact vertical spacer matching shelf_y / W = 177 / 1376 of calendar-shelf-canopy.png */
+.wp-cal-shelf-spacer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1376 / 177;
+  min-height: 76px;
+}
+
+/* Subtle warm cast shadow directly beneath the mahogany mantel shelf */
+.wp-cal-shelf-cast-shadow {
+  position: relative;
+  height: 10px;
+  margin-top: -2px;
+  pointer-events: none;
+  z-index: 15;
+  background: linear-gradient(180deg, rgba(2, 6, 12, 0.78) 0%, rgba(2, 6, 12, 0.32) 48%, transparent 100%);
+}
+
+/* ── 3. SCULPTED ANTIQUE-BRASS & BEVELED OBSIDIAN-NAVY PILLS ── */
+.wp-cal-pill-brass {
+  position: relative;
+  border: 1.5px solid #f7dfa3;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 6%, rgba(255, 251, 232, 0.45) 0%, transparent 65%),
+    linear-gradient(180deg, #f1d38d 0%, #d8ad58 34%, #b98937 72%, #9a6e25 92%, #b78939 100%);
+  color: #160f05;
+  text-shadow: 0 1px 0 rgba(255, 244, 206, 0.56);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.78),
+    0 2px 4px rgba(0, 0, 0, 0.9),
+    0 0 14px rgba(226, 178, 88, 0.22),
+    inset 0 1.5px 1px rgba(255, 252, 236, 0.72),
+    inset 0 -2px 3px rgba(68, 42, 10, 0.62);
+  transition: filter 150ms ease, transform 130ms ease, box-shadow 150ms ease;
+}
+
+.wp-cal-pill-brass:hover {
+  filter: brightness(1.07);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.85),
+    0 0 18px rgba(242, 198, 106, 0.34),
+    inset 0 1.5px 1px rgba(255, 253, 240, 0.82),
+    inset 0 -2px 3px rgba(68, 42, 10, 0.56);
+}
+
+.wp-cal-pill-brass:active {
+  transform: scale(0.985);
+}
+
+.wp-cal-pill-navy {
+  position: relative;
+  border: 1.5px solid transparent;
+  background:
+    radial-gradient(ellipse 90% 64% at 50% -4%, rgba(54, 90, 134, 0.38) 0%, transparent 72%) padding-box,
+    linear-gradient(180deg, #10233a 0%, #0a182b 52%, #06101e 100%) padding-box,
+    linear-gradient(180deg,
+      rgba(246, 223, 168, 0.92) 0%,
+      rgba(182, 142, 76, 0.88) 28%,
+      rgba(104, 77, 36, 0.88) 68%,
+      rgba(218, 180, 108, 0.88) 100%) border-box;
+  color: #f6eedb;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.88);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.78),
+    0 2px 4px rgba(0, 0, 0, 0.92),
+    inset 0 0 0 1px rgba(2, 7, 15, 0.82),
+    inset 0 1px 2px rgba(255, 244, 210, 0.16);
+  transition: filter 150ms ease, transform 130ms ease, box-shadow 150ms ease;
+}
+
+.wp-cal-pill-navy:hover {
+  filter: brightness(1.13);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.86),
+    0 0 14px rgba(212, 174, 102, 0.2),
+    inset 0 0 0 1px rgba(2, 7, 15, 0.74),
+    inset 0 1px 2px rgba(255, 246, 218, 0.24);
+}
+
+/* Nested brushed-brass scope badge inside Filter & Views capsule */
+.wp-cal-nested-brass {
+  border: 1px solid rgba(255, 242, 200, 0.72);
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 8%, rgba(255, 250, 232, 0.42) 0%, transparent 64%),
+    linear-gradient(180deg, #f1d48f 0%, #d8ad5a 42%, #b58535 88%, #c79744 100%);
+  color: #160f05;
+  text-shadow: 0 1px 0 rgba(255, 242, 204, 0.5);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 252, 238, 0.7),
+    inset 0 -1px 2px rgba(68, 42, 10, 0.5);
+}
+
+/* ── 4. ROW 2: THREE WIDE SCULPTED KPI CAPSULES ── */
+.wp-cal-kpi-capsule {
+  position: relative;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  min-height: 70px;
+  background:
+    radial-gradient(ellipse 84% 72% at 54% -12%, rgba(62, 100, 146, 0.48) 0%, rgba(22, 44, 74, 0.22) 48%, transparent 100%) padding-box,
+    linear-gradient(180deg, #11253e 0%, #0b1a2e 50%, #071120 100%) padding-box,
+    linear-gradient(180deg,
+      rgba(250, 228, 174, 0.94) 0%,
+      rgba(182, 142, 76, 0.92) 22%,
+      rgba(102, 76, 36, 0.92) 64%,
+      rgba(214, 178, 110, 0.9) 100%) border-box;
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.84),
+    0 4px 10px rgba(0, 0, 0, 0.92),
+    inset 0 0 0 1.25px rgba(2, 7, 15, 0.86),
+    inset 0 2px 12px rgba(246, 222, 168, 0.1),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.58);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), filter 180ms ease, box-shadow 180ms ease;
+}
+
+.wp-cal-kpi-capsule::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background-image: url("/assets/admiralty/pebbled-leather.png");
+  background-size: 300px 300px;
+  mix-blend-mode: soft-light;
+  opacity: 0.42;
+}
+
+.wp-cal-kpi-capsule::after {
+  content: "";
+  position: absolute;
+  top: -0.5px;
+  left: 8%;
+  right: 8%;
+  height: 1.5px;
+  pointer-events: none;
+  z-index: 4;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 246, 214, 0.86) 50%, transparent 100%);
+}
+
+.wp-cal-kpi-capsule:hover {
+  transform: translateY(-1.5px);
+  filter: brightness(1.08);
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.9),
+    0 0 18px rgba(218, 178, 104, 0.2),
+    inset 0 0 0 1.25px rgba(2, 7, 15, 0.8),
+    inset 0 2px 14px rgba(255, 236, 186, 0.16);
+}
+
+/* Circular recessed antique-brass ring icon medallion inside each KPI capsule */
+.wp-cal-kpi-ring {
+  position: relative;
+  border: 1.5px solid transparent;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(44, 72, 108, 0.42) 0%, #071323 70%, #040b16 100%) padding-box,
+    linear-gradient(145deg,
+      rgba(250, 228, 174, 0.92) 0%,
+      rgba(162, 126, 66, 0.84) 46%,
+      rgba(92, 68, 32, 0.84) 74%,
+      rgba(222, 184, 114, 0.9) 100%) border-box;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.82),
+    inset 0 0 0 1.5px rgba(3, 9, 18, 0.82),
+    inset 0 2px 6px rgba(0, 0, 0, 0.65);
+}
+
+/* Warm luminous amber indicator beacon on Tentative Holds KPI */
+.wp-cal-amber-beacon {
+  background: radial-gradient(circle at 38% 35%, #fff9e2 0%, #ffd970 38%, #e89b1e 78%, #b36606 100%);
+  box-shadow:
+    0 0 10px 3px rgba(255, 206, 84, 0.72),
+    0 0 22px 6px rgba(245, 158, 11, 0.36);
+}
+
+/* ── 5. ROW 3: CARVED MAHOGANY WOOD DATE RAIL & HANGING 3-SLICE PARCHMENT MONTH PLAQUE ── */
+.wp-cal-wood-rail {
+  position: relative;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(180deg, rgba(255, 224, 170, 0.14) 0%, rgba(0, 0, 0, 0.08) 46%, rgba(0, 0, 0, 0.42) 100%) padding-box,
+    url("/assets/calendar/calendar-wood-rail.jpg") center / cover no-repeat padding-box,
+    linear-gradient(180deg,
+      rgba(242, 212, 148, 0.92) 0%,
+      rgba(164, 124, 64, 0.94) 24%,
+      rgba(94, 66, 30, 0.95) 66%,
+      rgba(206, 166, 98, 0.92) 100%) border-box;
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.86),
+    0 3px 8px rgba(0, 0, 0, 0.92),
+    inset 0 0 0 1.5px rgba(22, 11, 4, 0.88),
+    inset 0 2px 5px rgba(255, 224, 168, 0.18),
+    inset 0 -3px 8px rgba(10, 4, 1, 0.72);
+}
+
+/* 3-Slice Hanging Aged-Parchment Month Plaque (Hooks cleanly onto the top brass rim of the mahogany rail!) */
+.wp-cal-month-plaque {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  min-width: 288px;
+  padding: 10px 54px 0 54px;
+  margin-top: -16px;
+  margin-bottom: -6px;
+  cursor: pointer;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.8));
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.wp-cal-month-plaque:hover {
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.9)) brightness(1.04);
+  transform: translateY(-0.5px);
+}
+
+.wp-cal-month-plaque-layers {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Left slice ratio = 294 / 470 = 0.6255 -> at height 60px, width = 38px */
+.wp-cal-month-plaque-left {
+  width: 38px;
+  height: 100%;
+  flex-shrink: 0;
+  background: url("/assets/calendar/month-plaque-left.png") left top / 100% 100% no-repeat;
+}
+
+.wp-cal-month-plaque-mid {
+  flex: 1 1 auto;
+  height: 100%;
+  background: url("/assets/calendar/month-plaque-mid.png") center top / 100% 100% no-repeat;
+}
+
+/* Right slice ratio = 295 / 470 = 0.6277 -> at height 60px, width = 38px */
+.wp-cal-month-plaque-right {
+  width: 38px;
+  height: 100%;
+  flex-shrink: 0;
+  background: url("/assets/calendar/month-plaque-right.png") right top / 100% 100% no-repeat;
+}
+
+.wp-cal-month-plaque-label {
+  position: relative;
+  z-index: 2;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #1f140a;
+  text-shadow: 0 1px 0 rgba(255, 248, 230, 0.65);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* Unified Day | Week | Month | Agenda track on mahogany rail */
+.wp-cal-view-track {
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(180deg, #0c1b30 0%, #06101e 100%) padding-box,
+    linear-gradient(180deg,
+      rgba(244, 218, 160, 0.88) 0%,
+      rgba(154, 118, 60, 0.88) 46%,
+      rgba(210, 174, 106, 0.86) 100%) border-box;
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.82),
+    inset 0 0 0 1px rgba(2, 7, 15, 0.85),
+    inset 0 2px 5px rgba(0, 0, 0, 0.65);
+}
+
+/* ── 6. ROW 4: GLOSSY 3D SPHERICAL GLASS/ENAMEL ORB LEGEND MARKERS ── */
+.wp-cal-orb {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.78),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.48),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.55);
+}
+
+.wp-cal-orb-blue {
+  background: radial-gradient(circle at 34% 28%, #b8e1ff 0%, #4298f5 32%, #1b5ec7 68%, #0d2f70 100%);
+}
+
+.wp-cal-orb-green {
+  background: radial-gradient(circle at 34% 28%, #c7ffd0 0%, #48c958 32%, #1c852b 68%, #0d4517 100%);
+}
+
+.wp-cal-orb-amber {
+  background: radial-gradient(circle at 34% 28%, #fff6c2 0%, #f9c432 34%, #d6850c 70%, #7d4504 100%);
+}
+
+.wp-cal-orb-purple {
+  background: radial-gradient(circle at 34% 28%, #ebd0ff 0%, #a25cf0 32%, #6828b8 68%, #351069 100%);
+}
+
+.wp-cal-orb-red {
+  background: radial-gradient(circle at 34% 28%, #ffc6ca 0%, #eb444c 32%, #aa1821 68%, #5c080e 100%);
+}
+
+.wp-cal-orb-silver {
+  background: radial-gradient(circle at 34% 28%, #ffffff 0%, #d2dce8 36%, #8e9cad 72%, #4a5564 100%);
+}
+
+/* ── 7. ANTIQUE BRASS-FRAMED WEATHERED PARCHMENT MONTH CALENDAR GRID ── */
+.wp-cal-brass-frame {
+  position: relative;
+  border-radius: 16px;
+  padding: 5px;
+  background: linear-gradient(145deg,
+    #f5d996 0%,
+    #c69a4d 14%,
+    #7e5b27 32%,
+    #e5c072 52%,
+    #6d4d20 74%,
+    #d2a858 90%,
+    #f6de9e 100%);
+  box-shadow:
+    0 22px 46px rgba(0, 0, 0, 0.9),
+    0 8px 18px rgba(0, 0, 0, 0.94),
+    0 0 28px rgba(210, 164, 82, 0.14),
+    inset 0 1px 1px rgba(255, 250, 232, 0.68),
+    inset 0 -1.5px 2px rgba(48, 30, 8, 0.82);
+}
+
+.wp-cal-brass-inner {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid #2b1a09;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.55),
+    0 1px 0 rgba(255, 240, 198, 0.36);
+}
+
+/* Deep Obsidian-Navy Serif Weekday Header Strip (SUN – SAT) */
+.wp-cal-parchment-dow {
+  background:
+    radial-gradient(ellipse 80% 120% at 50% 0%, rgba(44, 78, 120, 0.38) 0%, transparent 74%),
+    linear-gradient(180deg, #10233b 0%, #091627 62%, #06101d 100%);
+  border-bottom: 2px solid #593e1d;
+  color: #f6e7c4;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.92);
+}
+
+/* Continuous Antique Weathered Parchment Paper Grid Surface */
+.wp-cal-parchment-body {
+  position: relative;
+  background-color: #e6d1ab;
+  background-image: url("/assets/calendar/calendar-parchment-sheet.jpg");
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Individual Day Cell on Parchment */
+.wp-cal-parchment-cell {
+  position: relative;
+  border-right: 1px solid rgba(92, 62, 34, 0.54);
+  border-bottom: 1px solid rgba(92, 62, 34, 0.54);
+  background: transparent;
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.wp-cal-parchment-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.wp-cal-parchment-cell:hover {
+  background-color: rgba(255, 247, 224, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(138, 94, 38, 0.34);
+}
+
+/* Leading / Trailing Out-of-Month Day Cells */
+.wp-cal-parchment-cell-outside {
+  background-color: rgba(110, 74, 38, 0.11);
+}
+
+.wp-cal-parchment-cell-outside:hover {
+  background-color: rgba(110, 74, 38, 0.17);
+}
+
+/* Highlighted Today Cell on Parchment */
+.wp-cal-parchment-cell-today {
+  background: radial-gradient(ellipse 90% 80% at 24% 16%, rgba(255, 244, 198, 0.42) 0%, rgba(214, 158, 56, 0.11) 70%, transparent 100%);
+  box-shadow: inset 0 0 0 2px rgba(178, 124, 38, 0.72);
+}
+
+.wp-cal-day-num {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  color: #1f140a;
+  text-shadow: 0 1px 0 rgba(255, 248, 232, 0.55);
+}
+
+.wp-cal-day-num-outside {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  color: rgba(102, 72, 42, 0.56);
+}
+
+.wp-cal-day-num-today {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff8e6;
+  background: linear-gradient(180deg, #1b3659 0%, #0b1b30 100%);
+  border: 1.25px solid #d7ae5b;
+  box-shadow: 0 2px 6px rgba(24, 14, 4, 0.45);
+}
+
+/* ── 8. GLOSSY 3D BEVELED ENAMEL EVENT PILLS ON PARCHMENT ── */
+.wp-cal-evt-pill {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  border-radius: 6px;
+  padding: 3.5px 7px;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  box-shadow:
+    0 2px 5px rgba(38, 22, 8, 0.42),
+    0 1px 1px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.45),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.34);
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+
+.wp-cal-evt-pill::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 46%;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.04) 100%);
+}
+
+.wp-cal-evt-pill:hover {
+  filter: brightness(1.08);
+  transform: translateY(-0.5px);
+  box-shadow:
+    0 4px 8px rgba(38, 22, 8, 0.52),
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.55),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.34);
+}
+
+/* Sapphire Blue — IEP & 504 Meetings */
+.wp-cal-evt-blue {
+  background: linear-gradient(180deg, #3c86ec 0%, #2461bf 52%, #174591 100%);
+  border: 1px solid #153c7e;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(6, 20, 48, 0.72);
+}
+
+/* Emerald Green — 1:1 Advocacy / Parent Sessions / Confirmed */
+.wp-cal-evt-green {
+  background: linear-gradient(180deg, #4ba84d 0%, #2e8034 52%, #1f5e24 100%);
+  border: 1px solid #194d1e;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(6, 32, 10, 0.72);
+}
+
+/* Warm Amber-Gold — Discovery Call / Parent Call / Tentative Hold (Dark Espresso Text!) */
+.wp-cal-evt-amber {
+  background: linear-gradient(180deg, #fbd660 0%, #e5aa2b 52%, #bf8010 100%);
+  border: 1px solid #96620a;
+  color: #1f1304;
+  text-shadow: 0 1px 0 rgba(255, 246, 204, 0.52);
+}
+
+/* Royal Amethyst Purple — Team Meeting / Staff Check-In / Case Review / Internal */
+.wp-cal-evt-purple {
+  background: linear-gradient(180deg, #8e55d6 0%, #6832ae 52%, #4c2087 100%);
+  border: 1px solid #3c166e;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(22, 6, 48, 0.72);
+}
+
+/* Crimson Ruby — Deadlines / Records Due / Needs Coverage / Blackout */
+.wp-cal-evt-red {
+  background: linear-gradient(180deg, #d03a41 0%, #a21e26 52%, #781016 100%);
+  border: 1px solid #5e0b10;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(48, 4, 8, 0.76);
+}
+
+/* Pearl Slate / Silver — Other / Buffer / PTO */
+.wp-cal-evt-silver {
+  background: linear-gradient(180deg, #8292a6 0%, #5a6a7e 52%, #3f4c5e 100%);
+  border: 1px solid #2e3847;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(10, 16, 26, 0.72);
+}
+
+/* Warm Polished Mahogany Desk Sill Beneath the Brass Calendar Frame */
+.wp-cal-desk-sill {
+  height: 16px;
+  margin-top: -4px;
+  border-radius: 0 0 14px 14px;
+  background:
+    linear-gradient(180deg, rgba(248, 206, 122, 0.24) 0%, rgba(0, 0, 0, 0.14) 35%, rgba(0, 0, 0, 0.72) 100%),
+    url("/assets/calendar/calendar-wood-rail.jpg") center / cover no-repeat;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 224, 162, 0.32);
+}
