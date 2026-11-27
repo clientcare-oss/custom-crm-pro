@@ -50,6 +50,7 @@ import SmsComposerDialog from "@/components/quo/SmsComposerDialog";
 import { DoNotServeChannelGuard } from "@/components/do-not-serve/DoNotServeChannelGuard";
 import { DNS_THEME, hasUnresolvedMatch } from "@/components/do-not-serve/doNotServeStyles";
 import { FileBox } from "lucide-react";
+import "@/styles/admiraltyBridge.css";
 
 export default function UnassignedCallLogs() {
   const [, setLocation] = useLocation();
@@ -565,7 +566,7 @@ export default function UnassignedCallLogs() {
 
   return (
     <ScopedErrorBoundary moduleName="Call Center">
-      <div className="min-h-screen bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4] pb-8 relative overflow-x-hidden">
+      <div className="adm-bridge-canvas min-h-screen text-[#FAF6EC] pb-10 relative overflow-x-hidden">
         {/* ─── OVERLAPPING SHELF & VINES CANOPY ─── */}
         {/* Bumps flush to sidebar, right bar, and top bar. Transparent lower area and vines physically overlap the boxes below it */}
         <div className="absolute top-0 left-0 right-0 pointer-events-none z-30 select-none">
@@ -635,24 +636,26 @@ export default function UnassignedCallLogs() {
 
           {/* Interactive Selected Number Block Live Drawer */}
           {activeStatFilter !== "all" && (
-            <div className="bg-[#05142B]/95 border border-[#C5A059]/70 rounded-2xl p-4 shadow-[0_8px_24px_rgba(0,0,0,0.9),0_0_16px_rgba(197,160,89,0.2)] animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="flex items-center justify-between gap-3 pb-3 border-b border-[#3A2C18]">
+            <div className="adm-panel-card rounded-[20px] p-4 sm:p-5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-[#8a7052]/40">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-[#020A17] border border-[#C5A059]/50 flex items-center justify-center text-[#FFE394]">
+                  <div className="adm-icon-tile w-8 h-8 rounded-[10px] flex items-center justify-center text-[#ECC97B]">
                     {activeStatFilter === "calls" ? (
                       <Phone className="h-3.5 w-3.5" />
                     ) : activeStatFilter === "missed" ? (
-                      <PhoneMissed className="h-3.5 w-3.5 text-rose-400" />
+                      <PhoneMissed className="h-3.5 w-3.5 text-rose-300" />
                     ) : activeStatFilter === "voicemails" ? (
-                      <Voicemail className="h-3.5 w-3.5 text-[#FFE394]" />
+                      <Voicemail className="h-3.5 w-3.5 text-[#ECC97B]" />
                     ) : activeStatFilter === "scheduled" ? (
-                      <CalendarCheck className="h-3.5 w-3.5 text-[#C5A059]" />
+                      <CalendarCheck className="h-3.5 w-3.5 text-[#ECC97B]" />
                     ) : (
-                      <AlertCircle className="h-3.5 w-3.5 text-rose-400" />
+                      <AlertCircle className="h-3.5 w-3.5 text-rose-300" />
                     )}
                   </div>
                   <div>
-                    <h3 className="text-sm font-serif font-bold text-[#FFF4D4]">
+                    <h3 className="text-sm font-serif font-bold text-[#FAF6EC]">
                       {activeStatFilter === "calls"
                         ? `${callsBlockLabel} (${callsTodayCount})`
                         : activeStatFilter === "missed"
@@ -663,7 +666,7 @@ export default function UnassignedCallLogs() {
                         ? `Scheduled Calls (${scheduledCount})`
                         : `Needs Attention Queue (${needsAttentionCount})`}
                     </h3>
-                    <p className="text-[11px] text-[#C6B697]">
+                    <p className="text-[11px] text-[#C6D4E6]">
                       Click any record below to call back in Quo, send an SMS, or load into the Call Workspace.
                     </p>
                   </div>
@@ -677,7 +680,7 @@ export default function UnassignedCallLogs() {
                         const el = document.getElementById("live-quo-feed-section");
                         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
                       }}
-                      className="h-7 px-2.5 text-[11px] border-[#3A2C18] bg-[#020A17] text-[#FFE394] hover:bg-[#07162B] rounded-lg cursor-pointer"
+                      className="adm-cal-pill h-7 px-2.5 text-[11px] text-[#ECC97B] hover:text-[#FAF6EC] rounded-lg cursor-pointer"
                     >
                       Jump to Full Feed
                     </Button>
@@ -685,7 +688,7 @@ export default function UnassignedCallLogs() {
                   <button
                     type="button"
                     onClick={() => setActiveStatFilter("all")}
-                    className="p-1.5 rounded-lg bg-[#020A17] border border-[#3A2C18] text-[#C6B697] hover:text-white cursor-pointer"
+                    className="adm-cal-pill p-1.5 rounded-lg text-[#C6D4E6] hover:text-[#FAF6EC] cursor-pointer"
                     title="Close filtered block view"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -1047,17 +1050,19 @@ export default function UnassignedCallLogs() {
       />
 
       {/* Operational Call Workspace Bar & Toggle Button */}
-      <div className="flex items-center justify-between gap-4 flex-wrap bg-[#05142B]/95 border border-[#3A2C18] rounded-2xl p-4 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
+      <div className="adm-cal-toolbar flex items-center justify-between gap-4 flex-wrap rounded-[18px] p-4 overflow-hidden">
+        <div aria-hidden="true" className="adm-rim-glint-top" />
+        <div aria-hidden="true" className="adm-rim-glint-bottom" />
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#020A17] border border-[#C5A059]/40 flex items-center justify-center text-[#FFE394] flex-shrink-0 shadow-inner">
-            <PhoneCall className="h-5 w-5" />
+          <div className="adm-icon-tile w-10 h-10 rounded-[12px] flex items-center justify-center text-[#ECC97B] flex-shrink-0">
+            <PhoneCall className="h-5 w-5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-serif text-sm font-bold text-[#FFF4D4] tracking-tight">OPERATIONAL WORKSPACE</span>
+              <span className="font-serif text-sm font-bold text-[#FAF6EC] tracking-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">OPERATIONAL WORKSPACE</span>
               <PageIdBadge id="PG-018" variant="inline" />
               {call.isActive && (
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 px-2 py-0.5 rounded-full font-bold">
                   Active Session
                 </span>
               )}
@@ -1079,7 +1084,7 @@ export default function UnassignedCallLogs() {
                 onResolved={() => refetchLogs()}
               />
             </div>
-            <p className="text-xs text-[#C6B697] mt-0.5">
+            <p className="text-xs text-[#C6D4E6] mt-0.5">
               {showCallWorkspace
                 ? "Interactive caller identification, live SOP guidance, and call wrap-up actions."
                 : "Operational call workspace is minimized. Click 'Show Call Workspace' to open."}
@@ -1093,9 +1098,9 @@ export default function UnassignedCallLogs() {
               size="sm"
               variant="ghost"
               onClick={() => setShowFirstMateAssist(!showFirstMateAssist)}
-              className="text-xs text-[#C5A059] hover:text-[#FFF4D4] hover:bg-[#07162B] border border-transparent hover:border-[#3A2C18] rounded-xl transition-colors cursor-pointer"
+              className="adm-cal-pill text-xs text-[#ECC97B] hover:text-[#FAF6EC] rounded-xl cursor-pointer"
             >
-              <Sparkles className="h-3.5 w-3.5 mr-1.5 text-[#FFE394]" />
+              <Sparkles className="h-3.5 w-3.5 mr-1.5 text-[#ECC97B]" />
               {showFirstMateAssist ? "Hide First Mate Live Assist" : "Show First Mate Live Assist"}
             </Button>
           )}
@@ -1113,8 +1118,8 @@ export default function UnassignedCallLogs() {
               }
             }}
             className={showCallWorkspace
-              ? "border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] font-bold text-xs px-4 py-2 rounded-xl gap-1.5 cursor-pointer shadow-md transition-colors"
-              : "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs px-4 py-2 rounded-xl border border-[#FFE394]/50 shadow-[0_3px_10px_rgba(0,0,0,0.8)] gap-1.5 cursor-pointer hover:brightness-110 transition-all"
+              ? "adm-cal-pill text-[#E8DEC8] hover:text-[#FAF6EC] font-bold text-xs px-4 py-2 rounded-xl gap-1.5 cursor-pointer"
+              : "adm-cal-pill-active font-bold text-xs px-4 py-2 rounded-xl gap-1.5 cursor-pointer"
             }
           >
             {showCallWorkspace ? (

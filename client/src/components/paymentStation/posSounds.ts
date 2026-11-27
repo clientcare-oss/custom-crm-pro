@@ -3,15 +3,21 @@
  * - Receipt Printer Sound: LOCKED to Epson POS impact receipt burst (CC0 real recording)
  * - Settings / Manager Key Access Sound: LOCKED to Ding-Pong two-tone elevator chime
  * - Payment Paid ("Cha-Ching") Sound: LOCKED to Vintage public-domain cash register cha-ching
- * - Card Declined Sound: 5 authentic, modern luxury POS decline sounds (Tap Fail, Chip POS, Soft Deny, Terminal, POS Low)
+ * - Card Declined Sound: LOCKED to Feud X TV game-show wrong-answer strike buzzer
  */
 
-export type DeclinedSoundStyle =
-  | "pos_low_loud"
-  | "deep_ehh"
-  | "classic_pos"
-  | "firm_triple"
-  | "heavy_low";
+export interface PosAudioSampleHit {
+  /** Start delay in seconds from trigger time */
+  atSec: number;
+  /** Trim offset in seconds inside the audio file */
+  offsetSec: number;
+  /** Play duration in seconds */
+  durationSec: number;
+  /** Playback rate (e.g. 1.0 for first "EH", 0.92 for deeper second "EH") */
+  playbackRate?: number;
+  /** Per-hit gain multiplier */
+  gain?: number;
+}
 
 export interface PosAudioSampleOption<T extends string = string> {
   id: T;
@@ -21,12 +27,15 @@ export interface PosAudioSampleOption<T extends string = string> {
   offsetSec?: number;
   durationSec?: number;
   gain?: number;
+  hits?: PosAudioSampleHit[];
 }
 
 /**
  * LOCKED receipt printer sound: Classic Epson POS impact receipt printer burst (CC0).
  */
-export const LOCKED_RECEIPT_PRINTER_SOUND: Required<PosAudioSampleOption<"epson_pos">> = {
+export const LOCKED_RECEIPT_PRINTER_SOUND: Required<
+  Pick<PosAudioSampleOption<"epson_pos">, "id" | "label" | "title" | "url" | "offsetSec" | "durationSec" | "gain">
+> = {
   id: "epson_pos",
   label: "Epson",
   title: "Classic Epson POS impact receipt printer burst (locked)",
@@ -39,7 +48,9 @@ export const LOCKED_RECEIPT_PRINTER_SOUND: Required<PosAudioSampleOption<"epson_
 /**
  * LOCKED payment paid ("Cha-Ching!") sound: Instant public-domain vintage brass cash register.
  */
-export const LOCKED_CHACHING_SOUND: Required<PosAudioSampleOption<"vintage">> = {
+export const LOCKED_CHACHING_SOUND: Required<
+  Pick<PosAudioSampleOption<"vintage">, "id" | "label" | "title" | "url" | "offsetSec" | "durationSec" | "gain">
+> = {
   id: "vintage",
   label: "Vintage",
   title: "Instant iconic public-domain 'CHA-CHING!' brass cash register bell (locked)",
@@ -50,56 +61,19 @@ export const LOCKED_CHACHING_SOUND: Required<PosAudioSampleOption<"vintage">> = 
 };
 
 /**
- * 5 Loud, authoritative retail POS card-declined variations in the warm "POS Low" family.
+ * LOCKED card declined sound: Punchy classic TV game-show "Feud X" wrong-answer strike buzzer.
  */
-export const DECLINED_SOUND_OPTIONS: PosAudioSampleOption<DeclinedSoundStyle>[] = [
-  {
-    id: "pos_low_loud",
-    label: "POS Loud",
-    title: "Your POS Low double refusal boosted loud, warm & full-bodied (204 Hz → 174 Hz)",
-  },
-  {
-    id: "deep_ehh",
-    label: "Deep Ehh",
-    title: "Deeper, heavier brass-register double 'EHH — EHH' (165 Hz → 138 Hz)",
-  },
-  {
-    id: "classic_pos",
-    label: "Classic",
-    title: "Punchy retail card-terminal double 'EHH — EHH' with crisp speaker presence (225 Hz → 198 Hz)",
-  },
-  {
-    id: "firm_triple",
-    label: "Triple",
-    title: "Authoritative 3-pulse rapid POS card-declined buzz ('ehh-ehh-ehh')",
-  },
-  {
-    id: "heavy_low",
-    label: "Heavy",
-    title: "Bold descending low terminal buzz-drop with firm resonant finish (188 Hz → 142 Hz)",
-  },
-];
-
-const DECLINED_STORAGE_KEY = "waypoint_pos_declined_sound_style_v3";
-
-export function getSavedDeclinedSoundStyle(): DeclinedSoundStyle {
-  try {
-    if (typeof window === "undefined") return "pos_low_loud";
-    const raw = window.localStorage.getItem(DECLINED_STORAGE_KEY);
-    if (DECLINED_SOUND_OPTIONS.some((o) => o.id === raw)) {
-      return raw as DeclinedSoundStyle;
-    }
-  } catch { }
-  return "pos_low_loud";
-}
-
-export function setSavedDeclinedSoundStyle(style: DeclinedSoundStyle): void {
-  try {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(DECLINED_STORAGE_KEY, style);
-    }
-  } catch { }
-}
+export const LOCKED_DECLINED_SOUND: Required<
+  Pick<PosAudioSampleOption<"feud_x">, "id" | "label" | "title" | "url" | "offsetSec" | "durationSec" | "gain">
+> = {
+  id: "feud_x",
+  label: "Feud X",
+  title: "Punchy, tight classic TV game-show wrong-answer 'EHHHH!' buzzer (locked)",
+  url: "/assets/pos/sounds/declined-feud-x.mp3",
+  offsetSec: 0.072,
+  durationSec: 0.62,
+  gain: 0.92,
+};
 
 function createResumedAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -298,17 +272,19 @@ export function playManagerKeyPong(): void {
 type SampleChannel = "printer" | "chaching" | "declined";
 
 let sharedSampleAudioCtx: AudioContext | null = null;
-const activeChannelSources: Partial<Record<SampleChannel, AudioBufferSourceNode | null>> = {};
+const activeChannelSources: Partial<Record<SampleChannel, AudioBufferSourceNode[]>> = {};
 const activeSynthContexts: Partial<Record<SampleChannel, AudioContext | null>> = {};
 const decodedSampleCache = new Map<string, Promise<AudioBuffer | null>>();
 
 function stopChannelPlayback(channel: SampleChannel): void {
-  const prevSrc = activeChannelSources[channel];
-  if (prevSrc) {
-    try {
-      prevSrc.stop();
-    } catch { }
-    activeChannelSources[channel] = null;
+  const prevList = activeChannelSources[channel];
+  if (prevList && prevList.length > 0) {
+    for (const prevSrc of prevList) {
+      try {
+        prevSrc.stop();
+      } catch { }
+    }
+    activeChannelSources[channel] = [];
   }
   const prevCtx = activeSynthContexts[channel];
   if (prevCtx) {
@@ -384,48 +360,71 @@ function playCuratedAudioSample(
         void ctx.resume();
       }
       const now = ctx.currentTime;
-      const offset = Math.min(opt.offsetSec ?? 0, Math.max(0, buffer.duration - 0.05));
-      const playDur = Math.min(
-        opt.durationSec ?? buffer.duration,
-        Math.max(0.05, buffer.duration - offset)
-      );
+      const baseGain = Math.max(0.05, opt.gain ?? 0.8);
 
-      const src = ctx.createBufferSource();
-      src.buffer = buffer;
+      const hits: PosAudioSampleHit[] =
+        opt.hits && opt.hits.length > 0
+          ? opt.hits
+          : [
+              {
+                atSec: 0,
+                offsetSec: opt.offsetSec ?? 0,
+                durationSec: opt.durationSec ?? buffer.duration,
+                playbackRate: 1.0,
+                gain: 1.0,
+              },
+            ];
 
-      const gain = ctx.createGain();
-      const targetGain = Math.max(0.05, opt.gain ?? 0.8);
-      const attack = Math.min(0.01, playDur * 0.14);
-      const fadeDur = Math.min(0.06, playDur * 0.22);
-
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.linearRampToValueAtTime(targetGain, now + attack);
-      const fadeStart = now + Math.max(attack + 0.01, playDur - fadeDur);
-      gain.gain.setValueAtTime(targetGain, fadeStart);
-      gain.gain.exponentialRampToValueAtTime(0.0008, now + playDur);
-
-      if (targetGain > 1.0) {
+      let outNode: AudioNode = ctx.destination;
+      if (baseGain > 0.98) {
         const limiter = ctx.createDynamicsCompressor();
-        limiter.threshold.setValueAtTime(-3, now);
+        limiter.threshold.setValueAtTime(-2.5, now);
         limiter.knee.setValueAtTime(6, now);
         limiter.ratio.setValueAtTime(12, now);
         limiter.attack.setValueAtTime(0.002, now);
-        limiter.release.setValueAtTime(0.08, now);
-        src.connect(gain);
-        gain.connect(limiter);
+        limiter.release.setValueAtTime(0.07, now);
         limiter.connect(ctx.destination);
-      } else {
-        src.connect(gain);
-        gain.connect(ctx.destination);
+        outNode = limiter;
       }
 
-      activeChannelSources[channel] = src;
-      src.onended = () => {
-        if (activeChannelSources[channel] === src) {
-          activeChannelSources[channel] = null;
-        }
-      };
-      src.start(now, offset, playDur + 0.02);
+      const started: AudioBufferSourceNode[] = [];
+      for (const hit of hits) {
+        const startAt = now + Math.max(0, hit.atSec);
+        const rate = Math.max(0.5, Math.min(2.0, hit.playbackRate ?? 1.0));
+        const offset = Math.min(hit.offsetSec ?? 0, Math.max(0, buffer.duration - 0.04));
+        const maxSourceDur = Math.max(0.04, (buffer.duration - offset) / rate);
+        const playDur = Math.min(hit.durationSec, maxSourceDur);
+
+        const src = ctx.createBufferSource();
+        src.buffer = buffer;
+        src.playbackRate.setValueAtTime(rate, startAt);
+
+        const gain = ctx.createGain();
+        const targetGain = Math.max(0.05, baseGain * (hit.gain ?? 1.0));
+        const attack = Math.min(0.006, playDur * 0.12);
+        const fadeDur = Math.min(0.028, playDur * 0.22);
+
+        gain.gain.setValueAtTime(0.0001, startAt);
+        gain.gain.linearRampToValueAtTime(targetGain, startAt + attack);
+        const fadeStart = startAt + Math.max(attack + 0.01, playDur - fadeDur);
+        gain.gain.setValueAtTime(targetGain, fadeStart);
+        gain.gain.exponentialRampToValueAtTime(0.0008, startAt + playDur);
+
+        src.connect(gain);
+        gain.connect(outNode);
+        started.push(src);
+
+        src.onended = () => {
+          const list = activeChannelSources[channel];
+          if (list) {
+            const idx = list.indexOf(src);
+            if (idx >= 0) list.splice(idx, 1);
+          }
+        };
+        src.start(startAt, offset, playDur * rate + 0.02);
+      }
+
+      activeChannelSources[channel] = started;
     });
   } catch {
     fallbackSynth?.();
@@ -526,116 +525,9 @@ export function playPaymentPaidChaChingSound(): void {
   playCuratedAudioSample("chaching", LOCKED_CHACHING_SOUND, playStudioZeroRattleChaChing);
 }
 
-// ── 5 Loud, Bold "POS Low" Family Card-Declined Engines ──
+// ── Offline Fallback Game-Show "EH — EH!" Buzzer Synth ──
 
-interface PosDeclinePulseSpec {
-  offset: number;
-  freq: number;
-  endRatio: number;
-  dur: number;
-  gain?: number;
-}
-
-interface PosDeclineVoiceProfile {
-  pulses: PosDeclinePulseSpec[];
-  hpHz: number;
-  formantHz: number;
-  formantGainDb: number;
-  lpHz: number;
-  masterGain: number;
-  sawMix: number;
-  squareMix: number;
-  subTriMix: number;
-  detuneHz: number;
-  clickOnset?: boolean;
-}
-
-const POS_DECLINE_PROFILES: Record<DeclinedSoundStyle, PosDeclineVoiceProfile> = {
-  // 1. POS Loud: Exact POS Low voice boosted loud, warm & full-bodied
-  pos_low_loud: {
-    pulses: [
-      { offset: 0.0, freq: 204, endRatio: 0.96, dur: 0.135, gain: 0.96 },
-      { offset: 0.195, freq: 174, endRatio: 0.95, dur: 0.195, gain: 1.0 },
-    ],
-    hpHz: 110,
-    formantHz: 720,
-    formantGainDb: 5.5,
-    lpHz: 1320,
-    masterGain: 0.82,
-    sawMix: 0.58,
-    squareMix: 0.16,
-    subTriMix: 0.42,
-    detuneHz: 1.4,
-  },
-  // 2. Deep Ehh: Heavier, deeper brass-register double "EHH — EHH"
-  deep_ehh: {
-    pulses: [
-      { offset: 0.0, freq: 165, endRatio: 0.95, dur: 0.148, gain: 0.96 },
-      { offset: 0.212, freq: 138, endRatio: 0.94, dur: 0.22, gain: 1.0 },
-    ],
-    hpHz: 85,
-    formantHz: 610,
-    formantGainDb: 6.2,
-    lpHz: 1180,
-    masterGain: 0.88,
-    sawMix: 0.62,
-    squareMix: 0.18,
-    subTriMix: 0.48,
-    detuneHz: 1.8,
-  },
-  // 3. Classic: Punchy retail card-reader "EHH — EHH" with clear speaker bite
-  classic_pos: {
-    pulses: [
-      { offset: 0.0, freq: 226, endRatio: 0.97, dur: 0.13, gain: 0.95 },
-      { offset: 0.19, freq: 196, endRatio: 0.96, dur: 0.195, gain: 1.0 },
-    ],
-    hpHz: 135,
-    formantHz: 800,
-    formantGainDb: 6.0,
-    lpHz: 1680,
-    masterGain: 0.78,
-    sawMix: 0.54,
-    squareMix: 0.34,
-    subTriMix: 0.26,
-    detuneHz: 1.6,
-  },
-  // 4. Triple: Rapid 3-pulse authoritative POS decline ("ehh-ehh-ehh")
-  firm_triple: {
-    pulses: [
-      { offset: 0.0, freq: 212, endRatio: 0.98, dur: 0.098, gain: 0.92 },
-      { offset: 0.148, freq: 194, endRatio: 0.97, dur: 0.098, gain: 0.96 },
-      { offset: 0.296, freq: 170, endRatio: 0.94, dur: 0.175, gain: 1.0 },
-    ],
-    hpHz: 115,
-    formantHz: 740,
-    formantGainDb: 5.4,
-    lpHz: 1420,
-    masterGain: 0.82,
-    sawMix: 0.56,
-    squareMix: 0.24,
-    subTriMix: 0.36,
-    detuneHz: 1.5,
-  },
-  // 5. Heavy: Bold resonant low buzz-drop with subtle mechanical lock refusal click
-  heavy_low: {
-    pulses: [
-      { offset: 0.014, freq: 188, endRatio: 0.95, dur: 0.15, gain: 0.96 },
-      { offset: 0.225, freq: 142, endRatio: 0.92, dur: 0.255, gain: 1.0 },
-    ],
-    hpHz: 90,
-    formantHz: 650,
-    formantGainDb: 6.0,
-    lpHz: 1260,
-    masterGain: 0.86,
-    sawMix: 0.6,
-    squareMix: 0.22,
-    subTriMix: 0.45,
-    detuneHz: 2.1,
-    clickOnset: true,
-  },
-};
-
-function playPosDeclineProfile(profile: PosDeclineVoiceProfile): void {
+function playFallbackGameShowBuzzer(): void {
   try {
     stopChannelPlayback("declined");
     const ctx = createResumedAudioContext();
@@ -643,106 +535,53 @@ function playPosDeclineProfile(profile: PosDeclineVoiceProfile): void {
     activeSynthContexts.declined = ctx;
     const now = ctx.currentTime;
 
-    const hp = ctx.createBiquadFilter();
-    hp.type = "highpass";
-    hp.frequency.setValueAtTime(profile.hpHz, now);
-
-    // Warm nasal POS speaker formant boost so low tones cut clearly on any speaker
-    const formant = ctx.createBiquadFilter();
-    formant.type = "peaking";
-    formant.frequency.setValueAtTime(profile.formantHz, now);
-    formant.Q.setValueAtTime(1.4, now);
-    formant.gain.setValueAtTime(profile.formantGainDb, now);
-
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.setValueAtTime(profile.lpHz, now);
-    lp.Q.setValueAtTime(0.85, now);
-
-    // Clean brickwall limiter for loud, punchy output with zero digital clipping
-    const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.setValueAtTime(-2.5, now);
-    limiter.knee.setValueAtTime(6, now);
-    limiter.ratio.setValueAtTime(12, now);
-    limiter.attack.setValueAtTime(0.002, now);
-    limiter.release.setValueAtTime(0.07, now);
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.setValueAtTime(640, now);
+    bp.Q.setValueAtTime(1.1, now);
 
     const master = ctx.createGain();
-    master.gain.setValueAtTime(profile.masterGain, now);
+    master.gain.setValueAtTime(0.75, now);
+    bp.connect(master);
+    master.connect(ctx.destination);
 
-    hp.connect(formant);
-    formant.connect(lp);
-    lp.connect(master);
-    master.connect(limiter);
-    limiter.connect(ctx.destination);
-
-    if (profile.clickOnset) {
-      scheduleBrassKeyClick(ctx, limiter, now);
-    }
-
-    let maxEnd = 0;
-    for (const p of profile.pulses) {
-      const start = now + p.offset;
-      const pulseGain = p.gain ?? 1.0;
+    const hits: Array<[number, number, number]> = [
+      [0.0, 142, 0.17],
+      [0.22, 128, 0.28],
+    ];
+    for (const [offset, baseHz, dur] of hits) {
+      const start = now + offset;
       const env = ctx.createGain();
       env.gain.setValueAtTime(0.0001, start);
-      env.gain.linearRampToValueAtTime(pulseGain, start + 0.008);
-      env.gain.setValueAtTime(pulseGain * 0.94, start + Math.max(0.02, p.dur - 0.022));
-      env.gain.exponentialRampToValueAtTime(0.0008, start + p.dur);
-      env.connect(hp);
+      env.gain.linearRampToValueAtTime(1.0, start + 0.006);
+      env.gain.setValueAtTime(0.95, start + dur - 0.02);
+      env.gain.exponentialRampToValueAtTime(0.0008, start + dur);
+      env.connect(bp);
 
-      // 1. Primary warm reed sawtooth
-      const saw = ctx.createOscillator();
-      saw.type = "sawtooth";
-      saw.frequency.setValueAtTime(p.freq, start);
-      saw.frequency.linearRampToValueAtTime(p.freq * p.endRatio, start + p.dur);
-      const gSaw = ctx.createGain();
-      gSaw.gain.setValueAtTime(profile.sawMix, start);
-      saw.connect(gSaw);
-      gSaw.connect(env);
-
-      // 2. Slightly detuned square twin for bold POS terminal texture
-      const sq = ctx.createOscillator();
-      sq.type = "square";
-      sq.frequency.setValueAtTime(p.freq - profile.detuneHz, start);
-      sq.frequency.linearRampToValueAtTime((p.freq - profile.detuneHz) * p.endRatio, start + p.dur);
-      const gSq = ctx.createGain();
-      gSq.gain.setValueAtTime(profile.squareMix, start);
-      sq.connect(gSq);
-      gSq.connect(env);
-
-      // 3. Lower-octave triangle chest body so it sounds big and loud
-      const sub = ctx.createOscillator();
-      sub.type = "triangle";
-      sub.frequency.setValueAtTime(p.freq * 0.5, start);
-      sub.frequency.linearRampToValueAtTime(p.freq * 0.5 * p.endRatio, start + p.dur);
-      const gSub = ctx.createGain();
-      gSub.gain.setValueAtTime(profile.subTriMix, start);
-      sub.connect(gSub);
-      gSub.connect(env);
-
-      const stopAt = start + p.dur + 0.02;
-      saw.start(start);
-      sq.start(start);
-      sub.start(start);
-      saw.stop(stopAt);
-      sq.stop(stopAt);
-      sub.stop(stopAt);
-      maxEnd = Math.max(maxEnd, p.offset + p.dur);
+      for (const ratio of [1.0, 1.06, 1.49]) {
+        const osc = ctx.createOscillator();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(baseHz * ratio, start);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.35, start);
+        osc.connect(g);
+        g.connect(env);
+        osc.start(start);
+        osc.stop(start + dur + 0.02);
+      }
     }
 
     setTimeout(() => {
       if (activeSynthContexts.declined === ctx) activeSynthContexts.declined = null;
       ctx.close().catch(() => { });
-    }, Math.round((maxEnd + 0.25) * 1000));
+    }, 800);
   } catch { }
 }
 
 /**
- * Plays the selected bold POS Low family card-declined sound.
+ * LOCKED Card Declined Sound:
+ * Plays the punchy TV game-show "Feud X" wrong-answer buzzer.
  */
-export function playCardDeclinedSound(styleOverride?: DeclinedSoundStyle): void {
-  const style = styleOverride ?? getSavedDeclinedSoundStyle();
-  const profile = POS_DECLINE_PROFILES[style] ?? POS_DECLINE_PROFILES.pos_low_loud;
-  playPosDeclineProfile(profile);
+export function playCardDeclinedSound(): void {
+  playCuratedAudioSample("declined", LOCKED_DECLINED_SOUND, playFallbackGameShowBuzzer);
 }

@@ -128,10 +128,12 @@ export default function TodaysAppointmentsTable({
   const displayList = tab === "my" ? myAppointments : dayAppointments;
 
   return (
-    <div className="rounded-[5px] border border-[#3A2C18] bg-[#05142B]/90 p-4 sm:p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)]">
-      {/* Header: Title + Inline Tabs exactly matching reference */}
-      <div className="flex flex-wrap items-center gap-6 pb-4 border-b border-[#3A2C18]/60">
-        <h2 className="text-xl font-serif font-bold text-[#FFF4D4] tracking-wide">
+    <div className="adm-panel-card rounded-[20px] p-4 sm:p-5 overflow-hidden">
+      <div aria-hidden="true" className="adm-rim-glint-top" />
+      <div aria-hidden="true" className="adm-rim-glint-bottom" />
+      {/* Header: Title + Inline Tabs */}
+      <div className="flex flex-wrap items-center gap-6 pb-4 border-b border-[#8a7052]/40">
+        <h2 className="text-xl font-serif font-bold text-[#FAF6EC] tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
           Today's Appointments
         </h2>
 
@@ -139,45 +141,41 @@ export default function TodaysAppointmentsTable({
           <button
             type="button"
             onClick={() => setTab("my")}
-            className={`text-sm font-semibold transition-all relative pb-1 cursor-pointer ${
+            className={`text-sm font-semibold transition-all relative pb-1.5 cursor-pointer ${
               tab === "my"
-                ? "text-[#FFE394]"
-                : "text-[#A69371] hover:text-[#FFF4D4]"
+                ? "text-[#FAF6EC]"
+                : "text-[#9FB1C8] hover:text-[#FAF6EC]"
             }`}
           >
             My Appointments ({myAppointments.length})
-            {tab === "my" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C5A059] rounded-full shadow-[0_0_8px_#C5A059]" />
-            )}
+            {tab === "my" && <span className="adm-pipe-tab-glow" />}
           </button>
 
           <button
             type="button"
             onClick={() => setTab("all")}
-            className={`text-sm font-semibold transition-all relative pb-1 cursor-pointer ${
+            className={`text-sm font-semibold transition-all relative pb-1.5 cursor-pointer ${
               tab === "all"
-                ? "text-[#FFE394]"
-                : "text-[#A69371] hover:text-[#FFF4D4]"
+                ? "text-[#FAF6EC]"
+                : "text-[#9FB1C8] hover:text-[#FAF6EC]"
             }`}
           >
             All Appointments ({dayAppointments.length})
-            {tab === "all" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C5A059] rounded-full shadow-[0_0_8px_#C5A059]" />
-            )}
+            {tab === "all" && <span className="adm-pipe-tab-glow" />}
           </button>
         </div>
       </div>
 
-      {/* Table matching reference */}
+      {/* Table matching Admiralty realistic kit */}
       {displayList.length === 0 ? (
-        <div className="py-10 text-center text-[#A69371] text-sm">
+        <div className="py-10 text-center text-[#9FB1C8] text-sm">
           No {tab === "my" ? "personal" : "team"} appointments scheduled for this day.
         </div>
       ) : (
         <div className="overflow-x-auto mt-2">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-[#3A2C18]/60 text-[#C6B697] font-semibold text-[11px] font-mono uppercase tracking-wider">
+              <tr className="border-b border-[#8a7052]/40 text-[#E9CFA0] font-semibold text-[11px] font-mono uppercase tracking-wider">
                 <th className="py-3 px-3">Time</th>
                 <th className="py-3 px-3">Student</th>
                 <th className="py-3 px-3">Meeting</th>
@@ -186,7 +184,7 @@ export default function TodaysAppointmentsTable({
                 <th className="py-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#3A2C18]/40 font-medium text-[#FFF4D4]">
+            <tbody className="divide-y divide-[#8a7052]/25 font-medium text-[#FAF6EC]">
               {displayList.map((apt) => {
                 const startTimeFormatted = new Date(apt.startTime).toLocaleTimeString("en-US", {
                   hour: "numeric",
@@ -201,10 +199,10 @@ export default function TodaysAppointmentsTable({
                   <tr
                     key={apt.id}
                     onClick={() => onEventClick(apt)}
-                    className="hover:bg-[#07162B]/80 transition-colors cursor-pointer group"
+                    className="hover:bg-[#11243e]/65 transition-colors cursor-pointer group"
                   >
                     {/* Time */}
-                    <td className="py-3 px-3 whitespace-nowrap font-mono font-semibold text-[#FFE394]">
+                    <td className="py-3 px-3 whitespace-nowrap font-mono font-semibold text-[#ECC97B]">
                       {startTimeFormatted}
                     </td>
 
@@ -212,34 +210,34 @@ export default function TodaysAppointmentsTable({
                     <td className="py-3 px-3 whitespace-nowrap">
                       <div className="flex items-center gap-2.5">
                         <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 font-serif border border-[#3A2C18] ${bg}`}
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 font-serif border border-[#8a7052]/65 ${bg}`}
                         >
                           {initials}
                         </div>
-                        <span className="font-serif font-bold text-[#FFF4D4]">{studentName}</span>
+                        <span className="font-serif font-bold text-[#FAF6EC]">{studentName}</span>
                       </div>
                     </td>
 
                     {/* Meeting */}
-                    <td className="py-3 px-3 whitespace-nowrap text-[#D8C7A5] font-normal">
+                    <td className="py-3 px-3 whitespace-nowrap text-[#D4DFEE] font-normal">
                       {apt.title}
                     </td>
 
                     {/* Advocate */}
-                    <td className="py-3 px-3 whitespace-nowrap text-[#C6B697] font-normal">
+                    <td className="py-3 px-3 whitespace-nowrap text-[#B8C7DC] font-normal">
                       {advocateDisplay}
                     </td>
 
                     {/* Status Pill */}
                     <td className="py-3 px-3 whitespace-nowrap">
                       {isNeedsCoverage ? (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[5px] border border-rose-500/40 bg-rose-950/60 text-rose-300 font-semibold text-xs font-mono">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-rose-500/45 bg-rose-950/65 text-rose-300 font-semibold text-xs font-mono">
                           <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                           <span>Needs Coverage</span>
                         </div>
                       ) : (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[5px] border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 font-semibold text-xs font-mono">
-                          <div className="w-3.5 h-3.5 rounded-[3px] bg-emerald-500 flex items-center justify-center text-slate-950">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-emerald-500/35 bg-emerald-500/15 text-emerald-300 font-semibold text-xs font-mono">
+                          <div className="w-3.5 h-3.5 rounded-[4px] bg-emerald-500 flex items-center justify-center text-slate-950">
                             <Check className="w-2.5 h-2.5 stroke-[3]" />
                           </div>
                           <span>Confirmed</span>
@@ -254,9 +252,9 @@ export default function TodaysAppointmentsTable({
                           <button
                             type="button"
                             onClick={() => onReassignClick(apt)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[5px] border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] font-semibold text-xs transition-colors cursor-pointer"
+                            className="adm-cal-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[#E8DEC8] hover:text-[#FAF6EC] font-semibold text-xs cursor-pointer"
                           >
-                            <Users className="w-3.5 h-3.5 text-[#C5A059]" />
+                            <Users className="w-3.5 h-3.5 text-[#ECC97B]" />
                             <span>Reassign</span>
                           </button>
                         )}
@@ -264,9 +262,9 @@ export default function TodaysAppointmentsTable({
                         <button
                           type="button"
                           onClick={() => onEventClick(apt)}
-                          className="h-7 w-8 rounded-[5px] border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] flex items-center justify-center transition-colors cursor-pointer"
+                          className="adm-cal-pill h-7 w-8 rounded-lg text-[#D4DFEE] hover:text-[#FAF6EC] flex items-center justify-center cursor-pointer"
                         >
-                          <MoreHorizontal className="w-4 h-4 text-[#A69371]" />
+                          <MoreHorizontal className="w-4 h-4 text-[#ECC97B]" />
                         </button>
                       </div>
                     </td>

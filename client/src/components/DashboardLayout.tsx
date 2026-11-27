@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import CopilotUtilityCapsule from "@/components/CopilotUtilityCapsule";
-import { LayoutDashboard, Banknote, CreditCard, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, FileBox, Archive, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Banknote, CreditCard, LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen, Users, GraduationCap, Briefcase, FileText, FileSignature, FileBox, Archive, Calendar, CalendarClock, TrendingUp, ScrollText, Settings, Compass, FolderOpen, BookOpen, Star, Heart, Target, ClipboardList, Layers, CheckSquare, Sun, Moon, Wrench, LayoutTemplate, Zap, Plug, GitBranch, ListChecks, Phone, UserCheck, CircleUserRound, Brain, Sparkles, LayoutGrid, Video, Minimize2, Maximize2, Square, Volume2, Monitor, Shield, ChevronDown, ChevronRight, ChevronsUpDown, Search, X, Bug, Headphones, Radar, Headset, Workflow, HandHeart, Receipt, BarChart3, Landmark, DollarSign, Globe, Globe2, MessageSquare, Bell, Activity, Lock, Home, Contact, type LucideIcon } from "lucide-react";
 import {
   getStoredEmployees,
   checkEmployeeModuleAccess,
@@ -1464,12 +1464,13 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
     });
     ro.observe(menuEl);
     return () => ro.disconnect();
-  }, [activeNavId, isCollapsed, navItems.length]);
+  }, [activeNavId, isCollapsed, navItems.length, navViewportHeight]);
 
-  // Lock sidebar scroll viewport to an exact integer number of full items (zero half-cut items at top or bottom)
+  // Lock sidebar scroll viewport to an exact integer number of full items while filling cleanly down to the footer rail
   const navItemsKey = navItems.map((item) => item.id).join("|");
   const navItemIdsRef = useRef<string[]>([]);
   navItemIdsRef.current = navItems.map((item) => item.id);
+  const [navIsScrollable, setNavIsScrollable] = useState(false);
 
   useLayoutEffect(() => {
     const slotEl = navSlotRef.current;
@@ -1478,32 +1479,50 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
 
     const recalcViewport = () => {
       const ids = navItemIdsRef.current;
-      const firstId = ids[0];
-      const secondId = ids[1];
-      const firstEl = firstId ? navItemRefs.current[firstId] : null;
-      const secondEl = secondId ? navItemRefs.current[secondId] : null;
-
-      const measuredItemH = firstEl ? Math.round(firstEl.getBoundingClientRect().height) : 0;
-      const itemH = measuredItemH > 0 ? measuredItemH : isCollapsed ? 32 : 46;
-      const measuredPitch =
-        firstEl && secondEl ? Math.round(secondEl.offsetTop - firstEl.offsetTop) : 0;
-      const pitch = measuredPitch >= itemH ? measuredPitch : itemH + 6;
-      const gap = Math.max(0, pitch - itemH);
-      const pad = gap / 2;
+      const totalRows = ids.length;
+      if (totalRows <= 0) return;
 
       const slotStyle = getComputedStyle(slotEl);
       const padTop = parseFloat(slotStyle.paddingTop) || 0;
       const padBottom = parseFloat(slotStyle.paddingBottom) || 0;
       const availH = Math.floor(slotEl.clientHeight - padTop - padBottom);
-      if (availH <= 0 || pitch <= 0) return;
+      if (availH <= 0) return;
 
-      const totalRows = ids.length;
-      const visibleRows = Math.max(1, Math.min(totalRows, Math.floor(availH / pitch)));
+      const nominalGap = 6; // Always even so pad = gap / 2 is an exact integer (3px)
+      const nominalItemH = isCollapsed ? 34 : 46;
+      const nominalPitch = nominalItemH + nominalGap;
+
+      const allFit = totalRows * nominalPitch <= availH;
+      let visibleRows: number;
+      let pitch: number;
+
+      if (allFit) {
+        visibleRows = totalRows;
+        pitch = nominalPitch;
+      } else {
+        // Round to nearest integer row count so we never leave an empty ~40-51px hidden-row void above the footer bar
+        visibleRows = Math.max(1, Math.min(totalRows, Math.round(availH / nominalPitch)));
+        const maxPitch = isCollapsed ? 40 : 54;
+        const minPitch = isCollapsed ? 32 : 44;
+        pitch = Math.max(minPitch, Math.min(maxPitch, Math.floor(availH / visibleRows)));
+        // Safety check: guarantee visibleRows * pitch never exceeds availH
+        while (visibleRows > 1 && visibleRows * pitch > availH) {
+          visibleRows -= 1;
+          pitch = Math.max(minPitch, Math.min(maxPitch, Math.floor(availH / visibleRows)));
+        }
+      }
+
+      const gap = nominalGap;
+      const itemH = pitch - gap;
+      const pad = gap / 2;
       const snappedHeight = visibleRows * pitch;
 
       navMetricsRef.current = { pitch, visibleRows, totalRows, pad };
+      scrollEl.style.setProperty("--adm-nav-item-h", `${itemH}px`);
+      scrollEl.style.setProperty("--adm-nav-gap", `${gap}px`);
       scrollEl.style.setProperty("--adm-nav-pad", `${pad}px`);
       scrollEl.style.height = `${snappedHeight}px`;
+      setNavIsScrollable(!allFit);
       setNavViewportHeight((prev) => (prev === snappedHeight ? prev : snappedHeight));
 
       const maxRow = Math.max(0, totalRows - visibleRows);
@@ -1522,7 +1541,6 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
       recalcViewport();
     });
     ro.observe(slotEl);
-    if (navMenuRef.current) ro.observe(navMenuRef.current);
     return () => ro.disconnect();
   }, [navItemsKey, isCollapsed]);
 
@@ -1855,12 +1873,12 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
 
             {!isCollapsed ? (
               <div className="relative w-full flex flex-col items-center justify-center pt-1 pb-0">
-                {/* Circle Light/Dark Mode Medallion at top left */}
+                {/* Clean Borderless Light/Dark Mode Toggle at top left */}
                 <button
                   onClick={toggleTheme}
-                  className={`absolute top-0 left-0 w-9 h-9 rounded-full flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer z-20 ${isLight
-                    ? "border border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500 shadow-md"
-                    : "adm-moon-medallion text-[#f5d888] hover:brightness-115"
+                  className={`absolute top-0 left-0 w-9 h-9 rounded-full flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer z-20 border-0 shadow-none ${isLight
+                    ? "bg-white/90 text-slate-700 hover:bg-white"
+                    : "bg-transparent text-[#E6CE94] hover:bg-white/[0.06] hover:text-[#FFF2CC]"
                     }`}
                   title={isLight ? "Switch to dark mode" : "Switch to light mode"}
                   aria-label="Toggle theme"
@@ -1872,10 +1890,10 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                       : "translate-y-6 -rotate-90 scale-50 opacity-0"
                       }`}
                   />
-                  {/* Moon Icon (sets and rotates in dark mode) */}
+                  {/* Moon Icon (clean solid crescent, no gold ring or border) */}
                   <Moon
-                    strokeWidth={2.15}
-                    className={`adm-brass-icon absolute h-[18px] w-[18px] fill-[#f5d88a]/25 transition-all duration-[300ms] ease-in-out transform ${!isLight
+                    strokeWidth={0}
+                    className={`absolute h-[19px] w-[19px] fill-current drop-shadow-[0_2px_6px_rgba(0,0,0,0.75)] transition-all duration-[300ms] ease-in-out transform ${!isLight
                       ? "translate-y-0 rotate-0 scale-100 opacity-100"
                       : "-translate-y-6 rotate-90 scale-50 opacity-0"
                       }`}
@@ -2181,9 +2199,9 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 </button>
                 <button
                   onClick={toggleTheme}
-                  className={`relative w-7 h-7 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer shadow-md ${isLight
-                    ? "border-amber-500/50 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500"
-                    : "border-[#F5B544]/70 hover:border-[#F5B544] bg-[#07152B] hover:bg-[#0C1F3D] text-[#F5B544] shadow-amber-500/10"
+                  className={`relative w-7 h-7 rounded-full border-0 flex items-center justify-center overflow-hidden transition-all duration-[300ms] ease-in-out cursor-pointer ${isLight
+                    ? "bg-white/90 text-slate-700 hover:bg-white shadow-sm"
+                    : "bg-transparent hover:bg-white/[0.06] text-[#E6CE94] hover:text-[#FFF2CC]"
                     }`}
                   title={isLight ? "Switch to dark mode" : "Switch to light mode"}
                   aria-label="Toggle theme"
@@ -2195,7 +2213,8 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                       }`}
                   />
                   <Moon
-                    className={`absolute h-3.5 w-3.5 text-amber-300 transition-all duration-[300ms] ease-in-out transform ${!isLight
+                    strokeWidth={0}
+                    className={`absolute h-4 w-4 fill-current drop-shadow-[0_1px_4px_rgba(0,0,0,0.75)] transition-all duration-[300ms] ease-in-out transform ${!isLight
                       ? "translate-y-0 rotate-0 scale-100 opacity-100"
                       : "-translate-y-6 rotate-90 scale-50 opacity-0"
                       }`}
@@ -2211,7 +2230,10 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
           {/* ── Nav items: Row-Locked Scroll Viewport + Smooth Monorail Sliding Leather-and-Brass Switch ── */}
           <SidebarContent
             ref={navSlotRef}
-            className="bg-transparent px-0 pt-[9px] pb-[9px] overflow-hidden flex flex-col justify-start"
+            className={cn(
+              "bg-transparent px-0 py-[5px] overflow-hidden flex flex-col",
+              navIsScrollable ? "justify-center" : "justify-start pt-[9px]"
+            )}
           >
             <div
               ref={navScrollRef}
@@ -2219,7 +2241,15 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
               className="adm-sidebar-nav-scroll w-full px-3.5 shrink-0"
               style={navViewportHeight !== null ? { height: `${navViewportHeight}px` } : undefined}
             >
-              <SidebarMenu ref={navMenuRef} className="relative gap-[6px] py-[3px]">
+              <SidebarMenu
+                ref={navMenuRef}
+                className="relative"
+                style={{
+                  gap: "var(--adm-nav-gap, 6px)",
+                  paddingTop: "var(--adm-nav-pad, 3px)",
+                  paddingBottom: "var(--adm-nav-pad, 3px)",
+                }}
+              >
                 {/* Floating Sculpted 3D Monorail Slider Carriage (120fps Web Animations API GPU glide) */}
                 <li
                   ref={monorailRef}
@@ -2245,6 +2275,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                         isActive={isActive}
                         onClick={() => handleNavItemSelect(item.id, item.path)}
                         tooltip={item.label}
+                        style={!isCollapsed ? { height: "var(--adm-nav-item-h, 46px)" } : undefined}
                         className={cn(
                           "h-[46px] w-full px-3.5 rounded-[13px] text-[14.5px] cursor-pointer transition-colors duration-250 flex items-center gap-3.5 select-none [&>svg]:!size-[22px] border border-transparent",
                           isCustomBrassIcon && "[&>svg]:!size-[24px]",
@@ -2271,26 +2302,29 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
             </div>
           </SidebarContent>
 
-          {/* ── Footer: Full-Width Gleaming Gold Rail (Matches Top Rail) + Sculpted Hardware Tiles ── */}
-          <SidebarFooter className="relative bg-transparent border-t-0 px-2.5 pt-3 pb-3">
+          {/* ── Footer: Full-Width Gleaming Gold Rail + Compact Profile Pill Above Mini Hardware Buttons ── */}
+          <SidebarFooter className="relative bg-transparent border-t-0 px-2.5 pt-2.5 pb-2.5">
             <div aria-hidden="true" className="adm-sidebar-footer-rule" />
-            <div className="flex items-center gap-1.5 w-full">
+            <div className="flex flex-col gap-1.5 w-full">
+              {/* Top Row: Compact Profile Pill (always readable even on narrow sidebars) */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="adm-sidebar-util-btn flex items-center h-8 rounded-[9px] flex-1 text-left overflow-hidden focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] cursor-pointer group">
-                    {/* Left Star compartment */}
-                    <div className="h-full px-2 flex items-center justify-center border-r border-[#d4bc88]/25 bg-[#050d1a]/55 group-hover:bg-[#0a1930]/80 transition-colors shrink-0">
-                      <Star strokeWidth={2.1} className="adm-brass-icon h-4 w-4 fill-[#E8C678]/15 shrink-0" />
+                  <button
+                    title="Profile & Account"
+                    data-testid="sidebar-profile-btn"
+                    className="adm-sidebar-util-btn flex items-center h-7 w-full rounded-[8px] text-left overflow-hidden focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4AF37] cursor-pointer group group-data-[collapsible=icon]:justify-center"
+                  >
+                    {/* Left Brass Profile Icon Compartment */}
+                    <div className="h-full px-2 flex items-center justify-center border-r border-[#d4bc88]/25 bg-[#050d1a]/55 group-hover:bg-[#0a1930]/80 transition-colors shrink-0 group-data-[collapsible=icon]:border-r-0 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:bg-transparent">
+                      <CircleUserRound strokeWidth={2.05} className="adm-brass-icon h-3.5 w-3.5 shrink-0" />
                     </div>
 
                     {/* Employee Name & Up/Down Chevron */}
-                    <div className="flex-1 flex items-center justify-between px-1.5 min-w-0 relative group-data-[collapsible=icon]:hidden">
-                      <div className="flex items-center gap-1 min-w-0 py-0.5">
-                        <span className="text-[11.5px] font-serif font-semibold text-[#F8F3E6] tracking-wide truncate group-hover:text-white transition-colors">
-                          {user?.name || currentEmployee?.name || "Byron Honea"}
-                        </span>
-                      </div>
-                      <ChevronsUpDown className="h-3 w-3 text-[#CBB582] group-hover:text-[#FFF0BE] shrink-0 ml-0.5 transition-colors" />
+                    <div className="flex-1 flex items-center justify-between px-2 min-w-0 relative group-data-[collapsible=icon]:hidden">
+                      <span className="text-[11px] font-serif font-semibold text-[#F8F3E6] tracking-wide truncate group-hover:text-white transition-colors">
+                        {user?.name || currentEmployee?.name || "Byron Honea"}
+                      </span>
+                      <ChevronsUpDown className="h-3 w-3 text-[#CBB582] group-hover:text-[#FFF0BE] shrink-0 ml-1 transition-colors" />
                     </div>
                   </button>
                 </DropdownMenuTrigger>
@@ -2337,30 +2371,50 @@ function DashboardLayoutContent({ children, setSidebarWidth }: DashboardLayoutCo
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <button
-                onClick={() => openStartScreen()}
-                title="Open Waypoint Start Screen"
-                data-testid="sidebar-start-screen-btn"
-                className="adm-sidebar-util-btn h-8 w-8 rounded-[9px] flex items-center justify-center shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
-              >
-                <Lock strokeWidth={2.1} className="adm-brass-icon h-4 w-4" />
-              </button>
+              {/* Bottom Row: Compact Mini Utility Hardware Buttons (Start Screen Lock, Register, Issue Reporter, Go to Page) */}
+              <div className="grid grid-cols-4 gap-1.5 w-full group-data-[collapsible=icon]:hidden">
+                <button
+                  onClick={() => openStartScreen()}
+                  title="Open Waypoint Start Screen"
+                  data-testid="sidebar-start-screen-btn"
+                  className="adm-sidebar-util-btn h-[26px] rounded-[7px] flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
+                >
+                  <Lock strokeWidth={2.05} className="adm-brass-icon h-3.5 w-3.5" />
+                </button>
 
-              <button
-                onClick={() => setIssueReporterOpen(true)}
-                title="Report Issue / Linear Backlog (⌥+F)"
-                className="adm-sidebar-util-btn h-8 w-8 rounded-[9px] flex items-center justify-center shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
-              >
-                <Bug strokeWidth={2.1} className="adm-brass-icon h-4 w-4" />
-              </button>
+                <button
+                  onClick={() => handleNavItemSelect("payment-station", "/payment-station")}
+                  title="Open Register"
+                  data-testid="sidebar-register-mini-btn"
+                  className={cn(
+                    "adm-sidebar-util-btn h-[26px] rounded-[7px] flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer",
+                    activeNavId === "payment-station" && "ring-1 ring-[#F2CD80]/75"
+                  )}
+                >
+                  <CashRegisterIcon
+                    className={cn(
+                      "h-4 w-4 adm-brass-icon-home",
+                      activeNavId === "payment-station" ? "adm-brass-icon-active" : "adm-brass-icon"
+                    )}
+                  />
+                </button>
 
-              <button
-                onClick={() => setGoToPageOpen(true)}
-                title="Go to Page"
-                className="adm-sidebar-util-btn h-8 w-8 rounded-[9px] flex items-center justify-center shrink-0 group-data-[collapsible=icon]:hidden focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
-              >
-                <Compass strokeWidth={2.1} className="adm-brass-icon h-4 w-4" />
-              </button>
+                <button
+                  onClick={() => setIssueReporterOpen(true)}
+                  title="Report Issue / Linear Backlog (⌥+F)"
+                  className="adm-sidebar-util-btn h-[26px] rounded-[7px] flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
+                >
+                  <Bug strokeWidth={2.05} className="adm-brass-icon h-3.5 w-3.5" />
+                </button>
+
+                <button
+                  onClick={() => setGoToPageOpen(true)}
+                  title="Go to Page"
+                  className="adm-sidebar-util-btn h-[26px] rounded-[7px] flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
+                >
+                  <Compass strokeWidth={2.05} className="adm-brass-icon h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
           </SidebarFooter>
         </Sidebar>

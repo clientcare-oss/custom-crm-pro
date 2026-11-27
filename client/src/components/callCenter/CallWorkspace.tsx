@@ -61,11 +61,13 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
   return (
     <div id="call-workspace" className="space-y-6 scroll-mt-6 select-none">
       {/* Top Banner: Call Workspace Workflow Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-[#1E335C] bg-[#05102B]/95 p-6 shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
+      <div className="adm-hero-card relative overflow-hidden rounded-[20px] p-6">
+        <div aria-hidden="true" className="adm-rim-glint-top" />
+        <div aria-hidden="true" className="adm-rim-glint-bottom" />
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              <Badge className="bg-[#030A1C] text-[#D8B979] border border-[#243B67] text-xs px-3 py-1 font-bold">
+              <Badge className="bg-[#061121] text-[#ECC97B] border border-[#8a7052]/65 text-xs px-3 py-1 font-bold">
                 OPERATIONAL WORKSPACE
               </Badge>
               <PageIdBadge id="PG-018" />
@@ -74,18 +76,18 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
                   size="sm"
                   variant="ghost"
                   onClick={onCloseWorkspace}
-                  className="h-6 px-2 text-xs text-[#93A8C8] hover:text-white hover:bg-[#07162B] rounded-lg ml-2 cursor-pointer"
+                  className="adm-cal-pill h-7 px-2.5 text-xs text-[#D4DFEE] hover:text-[#FAF6EC] rounded-lg ml-2 cursor-pointer"
                 >
-                  <ChevronUp className="h-3.5 w-3.5 mr-1" />
+                  <ChevronUp className="h-3.5 w-3.5 mr-1 text-[#ECC97B]" />
                   Hide Workspace
                 </Button>
               )}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight flex items-center gap-3">
-              <PhoneCall className="h-7 w-7 text-[#D8B979]" />
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#FAF6EC] tracking-tight flex items-center gap-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">
+              <PhoneCall className="h-7 w-7 text-[#ECC97B]" />
               <span>CALL WORKSPACE</span>
             </h1>
-            <p className="text-sm text-[#93A8C8] mt-1 max-w-2xl leading-relaxed">
+            <p className="text-sm text-[#C6D4E6] mt-1 max-w-2xl leading-relaxed">
               Identify the caller, log communication, create a New Service Inquiry, or open an existing family’s record directly in the Lead Center.
             </p>
           </div>
@@ -124,15 +126,17 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
       )}
 
       {/* PERSISTENT GENERAL CALL NOTES SECTION */}
-      <Card className="p-5 rounded-2xl border border-[#1E335C] bg-[#05102B]/90 shadow-xl space-y-3">
+      <div className="adm-panel-card p-5 rounded-[20px] space-y-3 overflow-hidden">
+        <div aria-hidden="true" className="adm-rim-glint-top" />
+        <div aria-hidden="true" className="adm-rim-glint-bottom" />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileEdit className="h-4 w-4 text-[#D8B979]" />
-            <h3 className="text-sm font-serif font-bold text-white tracking-tight">
+            <FileEdit className="h-4 w-4 text-[#ECC97B]" />
+            <h3 className="text-sm font-serif font-bold text-[#FAF6EC] tracking-tight">
               General Call Notes
             </h3>
           </div>
-          <span className="text-xs text-[#93A8C8]">Auto-saved to active session</span>
+          <span className="text-xs text-[#9FB1C8]">Auto-saved to active session</span>
         </div>
 
         <textarea
@@ -140,9 +144,9 @@ export const CallWorkspace: React.FC<CallWorkspaceProps> = ({
           value={call.generalNotes || ""}
           onChange={(e) => setGeneralNotes(e.target.value)}
           placeholder="Document general conversation notes, parent comments, or advocate recommendations here..."
-          className="w-full text-xs rounded-xl bg-[#030A1C] border border-[#1E335C] p-3 text-white placeholder:text-[#64748B] focus:outline-hidden focus:border-[#D8B979] resize-y"
+          className="adm-input-field w-full text-xs rounded-xl p-3 placeholder:text-[#9FB1C8]/65 focus:outline-hidden resize-y"
         />
-      </Card>
+      </div>
 
       {/* UNIVERSAL WRAP UP CALL SECTION */}
       <WrapUpCallSection />

@@ -198,7 +198,9 @@ export default function CalendarDayTimeline({
   }, [dayOperationalBlocks]);
 
   return (
-    <div className="rounded-xl border-2 border-[#5B4323] bg-gradient-to-b from-[#091E3B]/95 via-[#071933]/95 to-[#06152B]/95 shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_30px_rgba(197,160,89,0.08),inset_0_1px_2px_rgba(255,255,255,0.12)] p-4 sm:p-5 relative overflow-hidden backdrop-blur-md">
+    <div className="adm-panel-card rounded-[20px] p-4 sm:p-5 relative overflow-hidden">
+      <div aria-hidden="true" className="adm-rim-glint-top" />
+      <div aria-hidden="true" className="adm-rim-glint-bottom" />
       {/* ── ALL-DAY CLOSURE / HOLIDAY FULL-WIDTH BANNER ── */}
       {allDayClosure && (
         <div
@@ -307,12 +309,12 @@ export default function CalendarDayTimeline({
                 style={{
                   background: slotBackground,
                 }}
-                className={`flex-1 min-h-[50px] border-t border-[#3A2C18]/60 pt-2 space-y-2 rounded-[5px] transition-all p-2 ${
+                className={`flex-1 min-h-[50px] border-t border-[#8a7052]/35 pt-2 space-y-2 rounded-xl transition-all p-2 ${
                   hasOperationalBlock
-                    ? "border-l-2 border-l-[#C5A059]/50 shadow-inner"
+                    ? "border-l-2 border-l-[#ECC97B]/55 shadow-inner"
                     : hourApts.length === 0
-                    ? "bg-[#0A2140]/40 hover:bg-[#12396B]/50 cursor-pointer"
-                    : "bg-[#0A2140]/30"
+                    ? "bg-[#09182c]/55 hover:bg-[#132c4f]/65 cursor-pointer"
+                    : "bg-[#09182c]/35"
                 }`}
               >
                 {/* 1. OPERATIONAL AVAILABILITY BLOCKS (Rendered first as the base fabric banners) */}
@@ -506,9 +508,9 @@ export default function CalendarDayTimeline({
                         <button
                           type="button"
                           onClick={() => onEventClick(apt)}
-                          className="h-7 w-8 rounded-[5px] border border-[#3A2C18] bg-[#020A17] hover:bg-[#07162B] text-[#D8C7A5] hover:text-[#FFF4D4] flex items-center justify-center transition-colors cursor-pointer"
+                          className="adm-cal-pill h-7 w-8 rounded-lg text-[#D4DFEE] hover:text-[#FAF6EC] flex items-center justify-center cursor-pointer"
                         >
-                          <MoreHorizontal className="w-4 h-4 text-[#A69371]" />
+                          <MoreHorizontal className="w-4 h-4 text-[#ECC97B]" />
                         </button>
                       </div>
                     </div>
@@ -517,7 +519,7 @@ export default function CalendarDayTimeline({
 
                 {/* If open slot, render a subtle prompt if no blocks & no apts */}
                 {hourApts.length === 0 && !hasOperationalBlock && (
-                  <div className="py-2 text-center text-[#A69371]/50 text-xs font-mono hover:text-[#FFE394]/70 transition-colors">
+                  <div className="py-2 text-center text-[#94A8C4]/55 text-xs font-mono hover:text-[#ECC97B]/85 transition-colors">
                     + Available for client scheduling
                   </div>
                 )}

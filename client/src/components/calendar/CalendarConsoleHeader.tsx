@@ -234,56 +234,54 @@ export default function CalendarConsoleHeader({
       : selectedAdvocateFilter;
 
   return (
-    <header
-      className="relative w-full border-b-2 border-[#5B4323] shadow-[0_14px_34px_rgba(0,0,0,0.85)] overflow-hidden bg-[#041022] select-none"
-      style={{
-        backgroundImage: "url('/images/calendar-body-wood.png')",
-        backgroundRepeat: "repeat-y",
-        backgroundSize: "100% auto",
-        backgroundPosition: "top center",
-      }}
-    >
-      {/* ── Top Shelf Canopy Artwork (Natural 16:9 width-locked at top; excess bottom planks clipped automatically by header height) ── */}
-      <img
-        src="/images/calendar-header-shelf.png"
-        alt="PG-007 Appointments & Calendar Shelf Canopy"
-        width={1024}
-        height={576}
-        className="w-full h-auto absolute top-0 left-0 right-0 object-cover object-top block select-none pointer-events-none"
-      />
-
-      {/* ── 1. TOP SHELF CANOPY ZONE (Matches exact 27.2% shelf rail height of the 16:9 image) ── */}
-      <div
-        className="relative w-full z-20 pointer-events-auto min-h-[100px] sm:min-h-[118px]"
-        style={{ aspectRatio: "16 / 2.45" }}
-      >
-        {/* Centered Title inside the carved gold-leaf wooden plaque */}
-        <div
-          className="absolute flex flex-col items-center justify-center text-center px-4"
-          style={{
-            top: "49%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "33.6%",
-            minWidth: "260px",
-            maxWidth: "420px",
-          }}
-        >
-          <h1 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-tight text-[#FFF4D4] drop-shadow-[0_4px_14px_rgba(0,0,0,0.95)] leading-tight select-none">
-            Calendar
-          </h1>
-          <p className="hidden sm:block text-[11px] sm:text-xs font-serif italic text-[#FFE394]/90 tracking-wide mt-0.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] select-none truncate max-w-full">
-            Schedule smarter. Protect your time.
-          </p>
-        </div>
+    <header className="relative w-full select-none">
+      {/* ── OVERLAPPING SHELF & HANGING VINES CANOPY (Brought to front z-30 so hanging leaves physically drape over the brass mantel & controls below) ── */}
+      <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none select-none">
+        <img
+          src="/images/calendar-header-shelf-overlay.png?v=1"
+          alt="PG-007 Appointments & Calendar Shelf Canopy"
+          width={1024}
+          height={245}
+          className="w-full h-auto block select-none drop-shadow-[0_10px_18px_rgba(0,0,0,0.72)]"
+        />
       </div>
 
-      {/* ── 2. UNIFIED CONTROLS DECK (Compact full-width 3-tier deck with collapsible Mini Calendar & Schedule Key) ── */}
-      <div className="relative z-10 max-w-[1600px] w-full mx-auto px-3 sm:px-5 lg:px-7 pt-1 pb-3">
-        <div className="flex flex-col gap-2">
+      {/* ── 1. TOP SHELF TITLE PLAQUE ZONE (Matches exact 149/1024 shelf rail height) + 3D BRUSHED-BRASS MANTEL SILL BELOW ── */}
+      <div className="relative w-full">
+        <div
+          className="relative w-full z-40 pointer-events-none min-h-[86px] sm:min-h-[104px]"
+          style={{ aspectRatio: "1024 / 149" }}
+        >
+          {/* Centered Title inside the carved gold-leaf wooden plaque */}
+          <div
+            className="absolute flex flex-col items-center justify-center text-center px-4"
+            style={{
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "33.6%",
+              minWidth: "260px",
+              maxWidth: "420px",
+            }}
+          >
+            <h1 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-tight text-[#FAF6EC] drop-shadow-[0_4px_14px_rgba(0,0,0,0.95)] leading-tight select-none">
+              Calendar
+            </h1>
+            <p className="hidden sm:block text-[11px] sm:text-xs font-serif italic text-[#E9CFA0]/95 tracking-wide mt-0.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] select-none truncate max-w-full">
+              Schedule smarter. Protect your time.
+            </p>
+          </div>
+        </div>
+        {/* 3D Brushed-Brass Mantel sits cleanly beneath the z-30 hanging vines so leaves drape right over the brass edge */}
+        <div aria-hidden="true" className="adm-brass-mantel relative z-20" />
+      </div>
+
+      {/* ── 2. UNIFIED ADMIRALTY REALISTIC CONTROLS DECK (Sits cleanly on Admiralty Bridge Canvas below Brass Mantel, framed by z-30 hanging vines) ── */}
+      <div className="relative z-10 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-3.5 pb-1.5">
+        <div className="flex flex-col gap-3">
           {/* ── TIER 1: Navigation Pill Strip & Primary Schedule Trigger ── */}
           <div className="flex items-center justify-between gap-2.5 flex-wrap shrink-0">
-            <div className="flex items-center gap-2 overflow-x-auto max-w-full scrollbar-none">
+            <div className="flex items-center gap-2 overflow-x-auto max-w-full scrollbar-none py-0.5">
               {/* Primary View: Calendar */}
               <button
                 type="button"
@@ -293,13 +291,13 @@ export default function CalendarConsoleHeader({
                   onAdvocateFilterChange?.("all");
                 }}
                 className={cn(
-                  "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                  "flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap active:scale-[0.98]",
                   activeNavTab === "calendar" && scope === "all"
-                    ? "border border-[#FFE394]/80 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                    : "border border-[#C5A059]/35 bg-[#071A36]/92 text-[#EAD8B1] hover:bg-[#0C254A] hover:text-[#FFF4D4] hover:border-[#C5A059]/70 shadow-sm backdrop-blur-sm"
+                    ? "adm-cal-pill-active"
+                    : "adm-cal-pill text-[#E2D5BC] hover:text-[#FAF6EC]"
                 )}
               >
-                <CalendarIcon className="h-3.5 w-3.5" />
+                <CalendarIcon className={cn("h-3.5 w-3.5", activeNavTab === "calendar" && scope === "all" ? "text-[#071528]" : "text-[#ECC97B]")} />
                 <span>Calendar</span>
               </button>
 
@@ -310,14 +308,14 @@ export default function CalendarConsoleHeader({
                   onNavTabChange(activeNavTab === "session-types" ? "calendar" : "session-types");
                 }}
                 className={cn(
-                  "flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap",
+                  "flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap active:scale-[0.98]",
                   activeNavTab === "session-types"
-                    ? "border border-[#FFE394]/80 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                    : "border border-[#C5A059]/35 bg-[#071A36]/92 text-[#EAD8B1] hover:bg-[#0C254A] hover:text-[#FFF4D4] hover:border-[#C5A059]/70 shadow-sm backdrop-blur-sm"
+                    ? "adm-cal-pill-active"
+                    : "adm-cal-pill text-[#E2D5BC] hover:text-[#FAF6EC]"
                 )}
                 title="Configure Session Types & Durations (1:1 Advocate 1 hr, IEP 3 hrs, etc.)"
               >
-                <Clock className="h-3.5 w-3.5" />
+                <Clock className={cn("h-3.5 w-3.5", activeNavTab === "session-types" ? "text-[#071528]" : "text-[#ECC97B]")} />
                 <span>Session Types</span>
               </button>
 
@@ -326,10 +324,10 @@ export default function CalendarConsoleHeader({
                 <button
                   type="button"
                   onClick={() => onNavTabChange("calendar")}
-                  className="flex items-center gap-1.5 rounded-xl border border-[#FFE394]/80 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] px-3.5 py-1.5 text-xs font-serif font-bold text-[#07162B] shadow-md transition-all cursor-pointer whitespace-nowrap"
+                  className="adm-cal-pill-active flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap"
                   title="Click to return to Calendar"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-[#07162B]" />
+                  <Sparkles className="h-3.5 w-3.5 text-[#071528]" />
                   <span>Schedule Dispatch</span>
                   <span className="ml-1 text-[10px] opacity-75">✕</span>
                 </button>
@@ -341,16 +339,23 @@ export default function CalendarConsoleHeader({
                   <button
                     type="button"
                     className={cn(
-                      "flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap shadow-sm backdrop-blur-sm",
+                      "flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-serif font-bold transition-all cursor-pointer whitespace-nowrap active:scale-[0.98]",
                       scope === "my" || activeNavTab === "requests" || activeNavTab === "availability" || activeNavTab === "closures"
-                        ? "border border-[#FFE394]/80 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-[0_4px_14px_rgba(0,0,0,0.65)]"
-                        : "border border-[#C5A059]/35 bg-[#071A36]/92 text-[#EAD8B1] hover:bg-[#0C254A] hover:text-[#FFF4D4] hover:border-[#C5A059]/70"
+                        ? "adm-cal-pill-active"
+                        : "adm-cal-pill text-[#E2D5BC] hover:text-[#FAF6EC]"
                     )}
                   >
-                    <Filter className="h-3.5 w-3.5 text-[#C5A059]" />
+                    <Filter
+                      className={cn(
+                        "h-3.5 w-3.5",
+                        scope === "my" || activeNavTab === "requests" || activeNavTab === "availability" || activeNavTab === "closures"
+                          ? "text-[#071528]"
+                          : "text-[#ECC97B]"
+                      )}
+                    />
                     <span>Filter & Views</span>
                     {scope === "my" && (
-                      <span className="rounded bg-[#07162B]/90 px-1.5 py-0.5 text-[9px] font-mono text-[#FFE394] font-semibold border border-[#C5A059]/40">
+                      <span className="rounded-md bg-[#071528]/92 px-1.5 py-0.5 text-[9px] font-mono text-[#E9CFA0] font-semibold border border-[#947a5c]/60">
                         My Schedule
                       </span>
                     )}
@@ -359,9 +364,9 @@ export default function CalendarConsoleHeader({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="w-64 bg-[#071A36] border border-[#C5A059]/45 text-[#FFF4D4] shadow-2xl rounded-xl p-2 space-y-1"
+                  className="adm-cal-dropdown w-64 text-[#FAF6EC] rounded-xl p-2 space-y-1"
                 >
-                  <div className="text-[10px] font-mono text-[#FFE394] uppercase tracking-wider px-2 py-1 font-bold border-b border-white/10">
+                  <div className="text-[10px] font-mono text-[#E9CFA0] uppercase tracking-wider px-2 py-1 font-bold border-b border-white/10">
                     Schedule Scope Filter
                   </div>
                   <DropdownMenuItem
@@ -373,11 +378,11 @@ export default function CalendarConsoleHeader({
                     className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center justify-between p-2 rounded-lg"
                   >
                     <div className="flex items-center gap-2">
-                      <Users className="h-3.5 w-3.5 text-[#C5A059]" />
+                      <Users className="h-3.5 w-3.5 text-[#ECC97B]" />
                       <span>Team Schedule (All Staff)</span>
                     </div>
                     {scope === "all" && activeNavTab === "calendar" && (
-                      <Check className="h-3.5 w-3.5 text-[#FFE394]" />
+                      <Check className="h-3.5 w-3.5 text-[#ECC97B]" />
                     )}
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -388,15 +393,15 @@ export default function CalendarConsoleHeader({
                     className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center justify-between p-2 rounded-lg"
                   >
                     <div className="flex items-center gap-2">
-                      <CalendarIcon className="h-3.5 w-3.5 text-[#C5A059]" />
+                      <CalendarIcon className="h-3.5 w-3.5 text-[#ECC97B]" />
                       <span>My Schedule (Byron)</span>
                     </div>
                     {scope === "my" && activeNavTab === "calendar" && (
-                      <Check className="h-3.5 w-3.5 text-[#FFE394]" />
+                      <Check className="h-3.5 w-3.5 text-[#ECC97B]" />
                     )}
                   </DropdownMenuItem>
 
-                  <div className="text-[10px] font-mono text-[#FFE394] uppercase tracking-wider px-2 pt-2 pb-1 font-bold border-t border-b border-white/10 mt-1">
+                  <div className="text-[10px] font-mono text-[#E9CFA0] uppercase tracking-wider px-2 pt-2 pb-1 font-bold border-t border-b border-white/10 mt-1">
                     Desks & Consoles
                   </div>
                   <DropdownMenuItem
@@ -404,11 +409,11 @@ export default function CalendarConsoleHeader({
                     className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center justify-between p-2 rounded-lg"
                   >
                     <div className="flex items-center gap-2">
-                      <Sparkles className="h-3.5 w-3.5 text-[#DFBE77]" />
+                      <Sparkles className="h-3.5 w-3.5 text-[#ECC97B]" />
                       <span>Schedule Dispatch Desk</span>
                     </div>
                     {activeNavTab === "dispatch" && (
-                      <Check className="h-3.5 w-3.5 text-[#FFE394]" />
+                      <Check className="h-3.5 w-3.5 text-[#ECC97B]" />
                     )}
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -416,11 +421,11 @@ export default function CalendarConsoleHeader({
                     className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center justify-between p-2 rounded-lg"
                   >
                     <div className="flex items-center gap-2">
-                      <Clock className="h-3.5 w-3.5 text-[#C5A059]" />
+                      <Clock className="h-3.5 w-3.5 text-[#ECC97B]" />
                       <span>Session Types (PG-008)</span>
                     </div>
                     {activeNavTab === "session-types" && (
-                      <Check className="h-3.5 w-3.5 text-[#FFE394]" />
+                      <Check className="h-3.5 w-3.5 text-[#ECC97B]" />
                     )}
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -432,7 +437,7 @@ export default function CalendarConsoleHeader({
                     className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center justify-between p-2 rounded-lg"
                   >
                     <div className="flex items-center gap-2">
-                      <Briefcase className="h-3.5 w-3.5 text-[#C5A059]" />
+                      <Briefcase className="h-3.5 w-3.5 text-[#ECC97B]" />
                       <span>Scheduling Requests</span>
                     </div>
                     <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-mono font-extrabold text-white shadow-sm">
@@ -440,7 +445,7 @@ export default function CalendarConsoleHeader({
                     </span>
                   </DropdownMenuItem>
 
-                  <div className="text-[10px] font-mono text-[#FFE394] uppercase tracking-wider px-2 pt-2 pb-1 font-bold border-t border-b border-white/10 mt-1">
+                  <div className="text-[10px] font-mono text-[#E9CFA0] uppercase tracking-wider px-2 pt-2 pb-1 font-bold border-t border-b border-white/10 mt-1">
                     Operations & Working Hours
                   </div>
                   <DropdownMenuItem
@@ -473,7 +478,7 @@ export default function CalendarConsoleHeader({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-2 rounded-xl border border-[#FFE394]/80 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] px-4 py-1.5 text-xs font-bold text-[#07162B] shadow-[0_4px_16px_rgba(0,0,0,0.7),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all hover:brightness-110 active:scale-95 cursor-pointer"
+                    className="adm-cal-pill-active inline-flex items-center gap-2 rounded-xl px-4 py-1.5 text-xs font-bold active:scale-95 cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5 stroke-[3]" />
                     <span>Schedule</span>
@@ -482,13 +487,13 @@ export default function CalendarConsoleHeader({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-56 bg-[#071A36] border border-[#C5A059]/50 text-[#FFF4D4] shadow-2xl rounded-xl p-1"
+                  className="adm-cal-dropdown w-56 text-[#FAF6EC] rounded-xl p-1"
                 >
                   <DropdownMenuItem
                     onClick={() => (onQuickAction ? onQuickAction("NEW_MEETING") : onScheduleClick())}
                     className="cursor-pointer text-xs font-medium focus:bg-white/10 flex items-center gap-2 p-2 rounded-lg"
                   >
-                    <CalendarIcon className="h-3.5 w-3.5 text-amber-400" />
+                    <CalendarIcon className="h-3.5 w-3.5 text-[#ECC97B]" />
                     <span>New Appointment</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -524,23 +529,27 @@ export default function CalendarConsoleHeader({
             </div>
           </div>
 
-          {/* ── TIER 2: 5 Admiralty KPI Cards (Full Width, Clean: Icon + Number + Title only) ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+          {/* ── TIER 2: 5 Sculpted Realistic Admiralty KPI Plaques (Oil-Rubbed Antique Brass + Pebbled Navy Calfskin) ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {/* Card 1: Today */}
             <button
               type="button"
               onClick={handleToday}
-              className="rounded-xl border border-[#C5A059]/35 bg-[#071A36]/92 backdrop-blur-md px-3 py-2 shadow-[0_6px_18px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.08)] hover:border-[#FFE394]/75 hover:bg-[#0B2347] transition-all flex flex-col justify-center text-left cursor-pointer group select-none active:scale-[0.98]"
+              className="adm-metric-card adm-cal-kpi group cursor-pointer overflow-hidden rounded-[18px] px-4 py-3 flex flex-col justify-between text-left select-none active:scale-[0.98]"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#1E40AF] to-[#2563EB] text-white shadow-md border border-blue-400/40 group-hover:scale-105 transition-transform">
-                  <CalendarIcon className="h-4 w-4" />
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="relative z-10 flex items-center justify-between w-full">
+                <div className="adm-icon-tile h-8 w-8 rounded-[10px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                  <CalendarIcon className="h-4 w-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
                 </div>
-                <div className="font-serif text-xl sm:text-2xl font-bold leading-none text-[#FFF4D4]">
+              </div>
+              <div className="relative z-10 flex-1 flex items-center justify-center my-0.5">
+                <div className="font-serif text-[32px] sm:text-[36px] font-extrabold leading-none tracking-tight tabular-nums text-[#FAF6EC] drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
                   {stats.appointmentsCount || 5}
                 </div>
               </div>
-              <div className="text-[11px] sm:text-xs text-[#C6B697] font-medium tracking-wide mt-1.5 truncate group-hover:text-[#FFF4D4] transition-colors">
+              <div className="relative z-10 w-full text-center text-[12px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 Today
               </div>
             </button>
@@ -549,17 +558,21 @@ export default function CalendarConsoleHeader({
             <button
               type="button"
               onClick={() => onViewModeChange?.("week")}
-              className="rounded-xl border border-[#C5A059]/35 bg-[#071A36]/92 backdrop-blur-md px-3 py-2 shadow-[0_6px_18px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.08)] hover:border-[#FFE394]/75 hover:bg-[#0B2347] transition-all flex flex-col justify-center text-left cursor-pointer group select-none active:scale-[0.98]"
+              className="adm-metric-card adm-cal-kpi group cursor-pointer overflow-hidden rounded-[18px] px-4 py-3 flex flex-col justify-between text-left select-none active:scale-[0.98]"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#B45309] to-[#D97706] text-white shadow-md border border-amber-400/40 group-hover:scale-105 transition-transform">
-                  <CalendarIcon className="h-4 w-4" />
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="relative z-10 flex items-center justify-between w-full">
+                <div className="adm-icon-tile h-8 w-8 rounded-[10px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                  <Layers className="h-4 w-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
                 </div>
-                <div className="font-serif text-xl sm:text-2xl font-bold leading-none text-[#FFF4D4]">
+              </div>
+              <div className="relative z-10 flex-1 flex items-center justify-center my-0.5">
+                <div className="font-serif text-[32px] sm:text-[36px] font-extrabold leading-none tracking-tight tabular-nums text-[#FAF6EC] drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
                   {stats.weekAppointmentsCount || 10}
                 </div>
               </div>
-              <div className="text-[11px] sm:text-xs text-[#C6B697] font-medium tracking-wide mt-1.5 truncate group-hover:text-[#FFF4D4] transition-colors">
+              <div className="relative z-10 w-full text-center text-[12px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 This Week
               </div>
             </button>
@@ -568,17 +581,27 @@ export default function CalendarConsoleHeader({
             <button
               type="button"
               onClick={onProposeHoldsClick}
-              className="rounded-xl border border-[#C5A059]/35 bg-[#071A36]/92 backdrop-blur-md px-3 py-2 shadow-[0_6px_18px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.08)] hover:border-[#FFE394]/75 hover:bg-[#0B2347] transition-all flex flex-col justify-center text-left cursor-pointer group select-none active:scale-[0.98]"
+              className="adm-metric-card adm-cal-kpi group cursor-pointer overflow-hidden rounded-[18px] px-4 py-3 flex flex-col justify-between text-left select-none active:scale-[0.98]"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#78350F] to-[#92400E] text-[#FFE394] shadow-md border border-[#C5A059]/45 group-hover:scale-105 transition-transform">
-                  <Hourglass className="h-4 w-4" />
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="relative z-10 flex items-center justify-between w-full">
+                <div className="adm-icon-tile h-8 w-8 rounded-[10px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                  <Hourglass className="h-4 w-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
                 </div>
-                <div className="font-serif text-xl sm:text-2xl font-bold leading-none text-amber-300">
+                {(stats.holdsCount || 3) > 0 && (
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#DFBE77] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FFE394]" />
+                  </span>
+                )}
+              </div>
+              <div className="relative z-10 flex-1 flex items-center justify-center my-0.5">
+                <div className="font-serif text-[32px] sm:text-[36px] font-extrabold leading-none tracking-tight tabular-nums text-[#FAF6EC] drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
                   {stats.holdsCount || 3}
                 </div>
               </div>
-              <div className="text-[11px] sm:text-xs text-[#C6B697] font-medium tracking-wide mt-1.5 truncate group-hover:text-[#FFE394] transition-colors">
+              <div className="relative z-10 w-full text-center text-[12px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 Tentative Holds
               </div>
             </button>
@@ -587,17 +610,21 @@ export default function CalendarConsoleHeader({
             <button
               type="button"
               onClick={() => (onQuickAction ? onQuickAction("PARENT_CALL") : onScheduleClick())}
-              className="rounded-xl border border-[#C5A059]/35 bg-[#071A36]/92 backdrop-blur-md px-3 py-2 shadow-[0_6px_18px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.08)] hover:border-[#FFE394]/75 hover:bg-[#0B2347] transition-all flex flex-col justify-center text-left cursor-pointer group select-none active:scale-[0.98]"
+              className="adm-metric-card adm-cal-kpi group cursor-pointer overflow-hidden rounded-[18px] px-4 py-3 flex flex-col justify-between text-left select-none active:scale-[0.98]"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#065F46] to-[#059669] text-[#6EE7B7] shadow-md border border-emerald-400/40 group-hover:scale-105 transition-transform">
-                  <Phone className="h-4 w-4" />
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="relative z-10 flex items-center justify-between w-full">
+                <div className="adm-icon-tile h-8 w-8 rounded-[10px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                  <Phone className="h-4 w-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
                 </div>
-                <div className="font-serif text-xl sm:text-2xl font-bold leading-none text-emerald-300">
+              </div>
+              <div className="relative z-10 flex-1 flex items-center justify-center my-0.5">
+                <div className="font-serif text-[32px] sm:text-[36px] font-extrabold leading-none tracking-tight tabular-nums text-[#FAF6EC] drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
                   {stats.callbacksCount || 2}
                 </div>
               </div>
-              <div className="text-[11px] sm:text-xs text-[#C6B697] font-medium tracking-wide mt-1.5 truncate group-hover:text-emerald-200 transition-colors">
+              <div className="relative z-10 w-full text-center text-[12px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 Callbacks
               </div>
             </button>
@@ -609,30 +636,36 @@ export default function CalendarConsoleHeader({
                 const el = document.getElementById("bottom-console-anchor");
                 if (el) el.scrollIntoView({ behavior: "smooth" });
               }}
-              className="rounded-xl border border-[#C5A059]/35 bg-[#071A36]/92 backdrop-blur-md px-3 py-2 shadow-[0_6px_18px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.08)] hover:border-[#FFE394]/75 hover:bg-[#0B2347] transition-all flex flex-col justify-center text-left cursor-pointer group select-none active:scale-[0.98]"
+              className="adm-metric-card adm-cal-kpi group cursor-pointer overflow-hidden rounded-[18px] px-4 py-3 flex flex-col justify-between text-left select-none active:scale-[0.98]"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#4C1D95] to-[#6D28D9] text-[#C4B5FD] shadow-md border border-purple-400/40 group-hover:scale-105 transition-transform">
-                  <CheckSquare className="h-4 w-4" />
+              <div aria-hidden="true" className="adm-rim-glint-top" />
+              <div aria-hidden="true" className="adm-rim-glint-bottom" />
+              <div className="relative z-10 flex items-center justify-between w-full">
+                <div className="adm-icon-tile h-8 w-8 rounded-[10px] flex items-center justify-center text-[#ECC97B] shrink-0 group-hover:scale-105 transition-transform">
+                  <CheckSquare className="h-4 w-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]" />
                 </div>
-                <div className="font-serif text-xl sm:text-2xl font-bold leading-none text-purple-300">
+              </div>
+              <div className="relative z-10 flex-1 flex items-center justify-center my-0.5">
+                <div className="font-serif text-[32px] sm:text-[36px] font-extrabold leading-none tracking-tight tabular-nums text-[#FAF6EC] drop-shadow-[0_4px_10px_rgba(0,0,0,0.82)]">
                   {stats.tasksCount || 4}
                 </div>
               </div>
-              <div className="text-[11px] sm:text-xs text-[#C6B697] font-medium tracking-wide mt-1.5 truncate group-hover:text-purple-200 transition-colors">
+              <div className="relative z-10 w-full text-center text-[12px] sm:text-[13px] font-normal text-[#D4DFEE] group-hover:text-[#FFF5DC] transition-colors tracking-[0.015em] whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 Tasks Due
               </div>
             </button>
           </div>
 
-          {/* ── TIER 3: Single-Line Unified Date, View Mode, Collapsible Key & Mini-Calendar Command Bar ── */}
-          <div className="rounded-xl border border-[#C5A059]/35 bg-[#071A36]/92 backdrop-blur-md px-3 py-1.5 shadow-[0_6px_18px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.08)] flex items-center justify-between gap-2.5 flex-wrap shrink-0">
+          {/* ── TIER 3: Sculpted Leather & Antique Brass Command Bar ── */}
+          <div className="adm-cal-toolbar rounded-[16px] px-3.5 py-2 overflow-hidden flex items-center justify-between gap-2.5 flex-wrap shrink-0">
+            <div aria-hidden="true" className="adm-rim-glint-top" />
+            <div aria-hidden="true" className="adm-rim-glint-bottom" />
             {/* Left Group: Today Jump + Stepper Chevrons + Date Range + Collapsible Mini Calendar Trigger */}
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleToday}
-                className="px-2.5 py-1 rounded-lg border border-[#C5A059]/40 bg-[#041022]/90 text-xs font-semibold text-[#EAD8B1] hover:text-[#FFF4D4] hover:border-[#FFE394]/70 transition-all cursor-pointer shadow-sm active:scale-95"
+                className="adm-cal-pill px-3 py-1 rounded-lg text-xs font-semibold text-[#E8DEC8] hover:text-[#FAF6EC] cursor-pointer active:scale-95"
               >
                 Today
               </button>
@@ -640,7 +673,7 @@ export default function CalendarConsoleHeader({
                 <button
                   type="button"
                   onClick={handlePrevStep}
-                  className="h-7 w-7 rounded-lg border border-[#C5A059]/40 bg-[#041022]/90 text-[#EAD8B1] hover:text-[#FFF4D4] hover:border-[#FFE394]/70 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
+                  className="adm-cal-pill h-7 w-7 rounded-lg text-[#ECC97B] hover:text-[#FAF6EC] flex items-center justify-center cursor-pointer active:scale-95"
                   title="Previous"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
@@ -648,55 +681,55 @@ export default function CalendarConsoleHeader({
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="h-7 w-7 rounded-lg border border-[#C5A059]/40 bg-[#041022]/90 text-[#EAD8B1] hover:text-[#FFF4D4] hover:border-[#FFE394]/70 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
+                  className="adm-cal-pill h-7 w-7 rounded-lg text-[#ECC97B] hover:text-[#FAF6EC] flex items-center justify-center cursor-pointer active:scale-95"
                   title="Next"
                 >
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
-              <div className="font-serif text-sm sm:text-base font-bold text-[#FFF4D4] px-1 whitespace-nowrap drop-shadow-sm">
+              <div className="font-serif text-sm sm:text-base font-bold text-[#FAF6EC] px-1.5 whitespace-nowrap drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
                 {formattedRangeLabel}
               </div>
 
-              {/* Collapsible Mini-Calendar Popover Dropdown (Takes 0 vertical header room when collapsed) */}
+              {/* Collapsible Mini-Calendar Popover Dropdown */}
               <DropdownMenu open={isMiniCalOpen} onOpenChange={setIsMiniCalOpen}>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
                     className={cn(
-                      "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer shadow-sm",
+                      "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
                       isMiniCalOpen
-                        ? "border-[#FFE394]/80 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold"
-                        : "border-[#C5A059]/40 bg-[#041022]/90 text-[#EAD8B1] hover:text-[#FFF4D4] hover:border-[#FFE394]/70"
+                        ? "adm-cal-pill-active font-bold"
+                        : "adm-cal-pill text-[#E8DEC8] hover:text-[#FAF6EC]"
                     )}
                     title="Toggle Mini Month Calendar"
                   >
-                    <CalendarIcon className="h-3.5 w-3.5" />
+                    <CalendarIcon className={cn("h-3.5 w-3.5", isMiniCalOpen ? "text-[#071528]" : "text-[#ECC97B]")} />
                     <span className="hidden sm:inline">Mini Cal</span>
                     <ChevronDown className={cn("h-3 w-3 transition-transform", isMiniCalOpen && "rotate-180")} />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="w-[260px] bg-[#071A36] border border-[#C5A059]/60 text-[#FFF4D4] shadow-2xl rounded-xl p-2.5 z-50"
+                  className="adm-cal-dropdown w-[264px] text-[#FAF6EC] rounded-xl p-2.5 z-50"
                 >
                   {/* Calendar Widget Month Header */}
-                  <div className="flex items-center justify-between pb-1.5 border-b border-[#C5A059]/25">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#8a7052]/35">
                     <button
                       type="button"
                       onClick={handlePrevMiniMonth}
-                      className="h-6 w-6 rounded-md border border-[#C5A059]/35 bg-[#041022]/90 text-[#EAD8B1] hover:text-[#FFF4D4] hover:border-[#FFE394]/70 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
+                      className="adm-cal-pill h-6 w-6 rounded-md text-[#ECC97B] hover:text-[#FAF6EC] flex items-center justify-center cursor-pointer active:scale-95"
                       title="Previous Month"
                     >
                       <ChevronLeft className="h-3 w-3" />
                     </button>
-                    <div className="font-serif text-xs font-bold text-[#FFF4D4] tracking-wider drop-shadow-sm">
+                    <div className="font-serif text-xs font-bold text-[#FAF6EC] tracking-wider drop-shadow-sm">
                       {miniMonthYearLabel}
                     </div>
                     <button
                       type="button"
                       onClick={handleNextMiniMonth}
-                      className="h-6 w-6 rounded-md border border-[#C5A059]/35 bg-[#041022]/90 text-[#EAD8B1] hover:text-[#FFF4D4] hover:border-[#FFE394]/70 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
+                      className="adm-cal-pill h-6 w-6 rounded-md text-[#ECC97B] hover:text-[#FAF6EC] flex items-center justify-center cursor-pointer active:scale-95"
                       title="Next Month"
                     >
                       <ChevronRight className="h-3 w-3" />
@@ -704,7 +737,7 @@ export default function CalendarConsoleHeader({
                   </div>
 
                   {/* Weekday headers */}
-                  <div className="grid grid-cols-7 gap-1 text-center text-[9px] font-mono font-semibold text-[#C6B697] py-1">
+                  <div className="grid grid-cols-7 gap-1 text-center text-[9px] font-mono font-semibold text-[#C6B697] py-1.5">
                     <span>Su</span>
                     <span>Mo</span>
                     <span>Tu</span>
@@ -733,10 +766,10 @@ export default function CalendarConsoleHeader({
                           className={cn(
                             "h-6 w-6 rounded text-[11px] font-mono font-medium flex items-center justify-center transition-all cursor-pointer mx-auto",
                             item.isSelected
-                              ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md scale-105"
+                              ? "adm-cal-pill-active font-bold scale-105"
                               : item.isCurrent
-                              ? "border border-[#FFE394] text-[#FFE394] font-bold hover:bg-[#FFE394]/15"
-                              : "text-[#FFF4D4]/85 hover:bg-white/10 hover:text-white"
+                              ? "border border-[#ECC97B] text-[#ECC97B] font-bold hover:bg-[#ECC97B]/15"
+                              : "text-[#E8DEC8]/90 hover:bg-white/10 hover:text-white"
                           )}
                         >
                           {item.day}
@@ -751,15 +784,15 @@ export default function CalendarConsoleHeader({
             {/* Right Group: View Mode Segmented Switch + Advocate Dropdown + Collapsible Key Toggle + Layer Settings */}
             <div className="flex items-center gap-2 flex-wrap">
               {/* View Mode Buttons */}
-              <div className="flex items-center p-0.5 rounded-lg bg-[#041022]/95 border border-[#C5A059]/35">
+              <div className="adm-cal-segment-track flex items-center p-0.5 rounded-xl">
                 <button
                   type="button"
                   onClick={() => onViewModeChange?.("day")}
                   className={cn(
-                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                    "px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer",
                     viewMode === "day"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-sm"
-                      : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5"
+                      ? "adm-cal-pill-active font-bold"
+                      : "text-[#CFDCEF] hover:text-[#FAF6EC] hover:bg-white/[0.05]"
                   )}
                 >
                   Day
@@ -768,10 +801,10 @@ export default function CalendarConsoleHeader({
                   type="button"
                   onClick={() => onViewModeChange?.("week")}
                   className={cn(
-                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                    "px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer",
                     viewMode === "week"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-sm"
-                      : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5"
+                      ? "adm-cal-pill-active font-bold"
+                      : "text-[#CFDCEF] hover:text-[#FAF6EC] hover:bg-white/[0.05]"
                   )}
                 >
                   Week
@@ -780,10 +813,10 @@ export default function CalendarConsoleHeader({
                   type="button"
                   onClick={() => onViewModeChange?.("month")}
                   className={cn(
-                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                    "px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer",
                     viewMode === "month"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-sm"
-                      : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5"
+                      ? "adm-cal-pill-active font-bold"
+                      : "text-[#CFDCEF] hover:text-[#FAF6EC] hover:bg-white/[0.05]"
                   )}
                 >
                   Month
@@ -792,10 +825,10 @@ export default function CalendarConsoleHeader({
                   type="button"
                   onClick={() => onViewModeChange?.("agenda")}
                   className={cn(
-                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                    "px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer",
                     viewMode === "agenda"
-                      ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-sm"
-                      : "text-[#C6B697] hover:text-[#FFF4D4] hover:bg-white/5"
+                      ? "adm-cal-pill-active font-bold"
+                      : "text-[#CFDCEF] hover:text-[#FAF6EC] hover:bg-white/[0.05]"
                   )}
                 >
                   Agenda
@@ -807,15 +840,15 @@ export default function CalendarConsoleHeader({
                 value={normalizedAdvocateValue}
                 onValueChange={(val) => onAdvocateFilterChange?.(val)}
               >
-                <SelectTrigger className="h-7 text-xs bg-[#041022]/90 border-[#C5A059]/40 text-[#FFF4D4] hover:border-[#FFE394]/70 rounded-lg px-2.5 min-w-[135px] font-medium shadow-sm">
+                <SelectTrigger className="adm-cal-pill h-7 text-xs text-[#FAF6EC] rounded-lg px-2.5 min-w-[138px] font-medium">
                   <div className="flex items-center gap-1.5 truncate">
-                    <Users className="h-3 w-3 text-[#DFBE77] shrink-0" />
+                    <Users className="h-3 w-3 text-[#ECC97B] shrink-0" />
                     <span className="truncate">
                       {normalizedAdvocateValue === "all" ? "All Advocates" : normalizedAdvocateValue}
                     </span>
                   </div>
                 </SelectTrigger>
-                <SelectContent className="bg-[#071A36] border-[#C5A059]/60 text-[#FFF4D4]">
+                <SelectContent className="adm-cal-dropdown text-[#FAF6EC] rounded-xl">
                   <SelectItem value="all">All Advocates</SelectItem>
                   {advocateList.map((adv) => (
                     <SelectItem key={adv.id} value={adv.name}>
@@ -831,10 +864,10 @@ export default function CalendarConsoleHeader({
                   type="button"
                   onClick={onToggleLegend}
                   className={cn(
-                    "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg border text-xs font-medium transition-all cursor-pointer shadow-sm",
+                    "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
                     isLegendOpen
-                      ? "border-[#FFE394]/80 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold"
-                      : "border-[#C5A059]/40 bg-[#041022]/90 text-[#EAD8B1] hover:text-[#FFF4D4] hover:border-[#FFE394]/70"
+                      ? "adm-cal-pill-active font-bold"
+                      : "adm-cal-pill text-[#E8DEC8] hover:text-[#FAF6EC]"
                   )}
                   title={isLegendOpen ? "Collapse Schedule Key" : "Expand Schedule Key"}
                 >
@@ -853,7 +886,7 @@ export default function CalendarConsoleHeader({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="h-7 w-7 rounded-lg border border-[#C5A059]/40 bg-[#041022]/90 text-[#EAD8B1] hover:text-[#FFF4D4] hover:border-[#FFE394]/70 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
+                    className="adm-cal-pill h-7 w-7 rounded-lg text-[#ECC97B] hover:text-[#FAF6EC] flex items-center justify-center cursor-pointer active:scale-95"
                     title="Calendar Layer Filters"
                   >
                     <Settings className="h-3.5 w-3.5" />
@@ -861,9 +894,9 @@ export default function CalendarConsoleHeader({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-56 bg-[#071A36] border border-[#C5A059]/60 text-[#FFF4D4] shadow-2xl rounded-xl p-2 space-y-1"
+                  className="adm-cal-dropdown w-56 text-[#FAF6EC] rounded-xl p-2 space-y-1"
                 >
-                  <div className="text-[10px] font-mono text-[#FFE394] uppercase tracking-wider px-2 py-1 font-bold border-b border-white/10">
+                  <div className="text-[10px] font-mono text-[#E9CFA0] uppercase tracking-wider px-2 py-1 font-bold border-b border-white/10">
                     Layer Display Filters
                   </div>
                   {layerFilters && onLayerFiltersChange && (
@@ -941,7 +974,7 @@ export default function CalendarConsoleHeader({
                           className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded hover:bg-white/10 transition-colors text-left"
                         >
                           <span>Show Weekends</span>
-                          {showWeekends && <Check className="h-3.5 w-3.5 text-[#C5A059]" />}
+                          {showWeekends && <Check className="h-3.5 w-3.5 text-[#ECC97B]" />}
                         </button>
                       )}
                       {onToggleShowCanceled && (
@@ -951,7 +984,7 @@ export default function CalendarConsoleHeader({
                           className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded hover:bg-white/10 transition-colors text-left"
                         >
                           <span>Show Canceled</span>
-                          {showCanceled && <Check className="h-3.5 w-3.5 text-[#C5A059]" />}
+                          {showCanceled && <Check className="h-3.5 w-3.5 text-[#ECC97B]" />}
                         </button>
                       )}
                     </>

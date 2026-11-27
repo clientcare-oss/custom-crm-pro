@@ -36,6 +36,7 @@ import PageIdBadge from "@/components/PageIdBadge";
 import type { OperationalBlock } from "../../../drizzle/schema";
 import { WaypointWaveIcon } from "@/components/portal/WaypointWavyBackdrop";
 import { cn } from "@/lib/utils";
+import "@/styles/admiraltyBridge.css";
 import {
   formatDualTimes,
   SIX_CORE_ZONES,
@@ -846,7 +847,7 @@ export default function Appointments() {
 
   return (
     <ScopedErrorBoundary moduleName="Appointments & Calendar">
-      <div className="min-h-screen flex flex-col bg-[#07162B] [background:radial-gradient(ellipse_at_50%_0%,_#102B4E_0%,_#07162B_55%,_#030D1A_100%)] text-[#FFF4D4]">
+      <div className="adm-bridge-canvas min-h-screen flex flex-col text-[#FAF6EC]">
         {/* ── Admiralty Top Header Console (bumps flush to sidebar left, top-0, and right) ── */}
         <CalendarConsoleHeader
           currentDate={selectedDate}
@@ -915,20 +916,11 @@ export default function Appointments() {
           }}
         />
 
-        {/* ── Under-Header Body Area: Continuous Dark Blue Wood Shiplap Background (Touching Left, Right, & Bottom) ── */}
-        <div
-          className="w-full flex-1 relative bg-[#07162B]"
-          style={{
-            backgroundImage: "url('/images/calendar-body-wood.png')",
-            backgroundRepeat: "repeat-y",
-            backgroundSize: "100% auto",
-            backgroundPosition: "top center",
-          }}
-        >
-          {/* Refined luminous overlay so calendar grids & cards maintain maximum visual legibility and brightness */}
-          <div className="w-full min-h-full bg-gradient-to-b from-[#07162B]/10 via-transparent to-[#07162B]/20">
-            {/* ── Main Workspace Body (Aligned flush with Header Controls Deck & minimal vertical gap) ── */}
-            <div className="px-3 sm:px-5 lg:px-7 pt-3 pb-6 space-y-3 max-w-[1600px] mx-auto">
+        {/* ── Under-Header Body Area: Seamless Admiralty Bridge Canvas ── */}
+        <div className="w-full flex-1 relative z-10">
+          <div className="w-full min-h-full">
+            {/* ── Main Workspace Body (Aligned flush with Header Controls Deck) ── */}
+            <div className="px-3 sm:px-5 lg:px-7 pt-3 pb-8 space-y-4 max-w-[1600px] mx-auto">
 
         {/* ── Slide-Out Appointment Detail Drawer (PG-007) ── */}
         <AppointmentDetailDrawer
@@ -1444,127 +1436,133 @@ export default function Appointments() {
       />
 
       {/* ── Availability Management ── */}
-      <Card className="bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-xl">
-        <CardHeader className="border-b border-[#3A2C18]/60 pb-4">
-          <CardTitle className="font-serif text-[#FFF4D4] text-xl font-normal">Your Availability</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <p className="text-sm text-[#C6B697] mb-4">Set your available hours for client bookings</p>
-          <div className="space-y-3">
-            {DAYS.map((day, index) => {
-              const dayAvail = (availability as any[]).find((a: any) => a.dayOfWeek === index);
-              const isAvailable = dayAvail?.isAvailable ?? (index >= 1 && index <= 5);
-              const startTime = dayAvail?.startTime ?? "09:00";
-              const endTime = dayAvail?.endTime ?? "17:00";
-              return (
-                <div key={day} className="flex items-center gap-4 p-3 rounded-lg border border-[#3A2C18]/70 bg-[#020A17]/80">
-                  <div className="w-28">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isAvailable}
-                        onChange={(e) => {
-                          const updated = DAYS.map((_, i) => {
-                            const existing = (availability as any[]).find((a: any) => a.dayOfWeek === i);
-                            if (i === index) {
-                              return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: e.target.checked };
-                            }
-                            return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: existing?.isAvailable ?? (i >= 1 && i <= 5) };
-                          });
-                          updateAvailabilityMutation.mutate(updated);
-                        }}
-                        className="rounded border-[#3A2C18] bg-[#07162B] text-[#C5A059] focus:ring-[#C5A059]"
-                      />
-                      <span className="text-sm font-medium text-[#FFF4D4]">{day}</span>
-                    </label>
-                  </div>
-                  {isAvailable && (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="time"
-                        defaultValue={startTime}
-                        onBlur={(e) => {
-                          const updated = DAYS.map((_, i) => {
-                            const existing = (availability as any[]).find((a: any) => a.dayOfWeek === i);
-                            if (i === index) {
-                              return { dayOfWeek: i, startTime: e.target.value, endTime: existing?.endTime ?? "17:00", isAvailable: true };
-                            }
-                            return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: existing?.isAvailable ?? (i >= 1 && i <= 5) };
-                          });
-                          updateAvailabilityMutation.mutate(updated);
-                        }}
-                        className="rounded-md border border-[#3A2C18] bg-[#07162B] px-2 py-1 text-sm text-[#FFF4D4] focus:border-[#C5A059]"
-                      />
-                      <span className="text-sm text-[#C6B697]">to</span>
-                      <input
-                        type="time"
-                        defaultValue={endTime}
-                        onBlur={(e) => {
-                          const updated = DAYS.map((_, i) => {
-                            const existing = (availability as any[]).find((a: any) => a.dayOfWeek === i);
-                            if (i === index) {
-                              return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: e.target.value, isAvailable: true };
-                            }
-                            return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: existing?.isAvailable ?? (i >= 1 && i <= 5) };
-                          });
-                          updateAvailabilityMutation.mutate(updated);
-                        }}
-                        className="rounded-md border border-[#3A2C18] bg-[#07162B] px-2 py-1 text-sm text-[#FFF4D4] focus:border-[#C5A059]"
-                      />
-                    </div>
-                  )}
-                  {!isAvailable && (
-                    <span className="text-sm text-[#A69371] italic">Unavailable</span>
-                  )}
+      <div className="adm-panel-card rounded-[20px] overflow-hidden p-5 sm:p-6">
+        <div aria-hidden="true" className="adm-rim-glint-top" />
+        <div aria-hidden="true" className="adm-rim-glint-bottom" />
+        <div className="border-b border-[#8a7052]/40 pb-4 mb-4">
+          <h3 className="font-serif text-[#FAF6EC] text-xl font-bold tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+            Your Availability
+          </h3>
+          <p className="text-sm text-[#B8C7DC] mt-1">
+            Set your available hours for client bookings
+          </p>
+        </div>
+        <div className="space-y-2.5">
+          {DAYS.map((day, index) => {
+            const dayAvail = (availability as any[]).find((a: any) => a.dayOfWeek === index);
+            const isAvailable = dayAvail?.isAvailable ?? (index >= 1 && index <= 5);
+            const startTime = dayAvail?.startTime ?? "09:00";
+            const endTime = dayAvail?.endTime ?? "17:00";
+            return (
+              <div key={day} className="adm-inset-row flex items-center gap-4 p-3 rounded-[12px]">
+                <div className="w-28">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isAvailable}
+                      onChange={(e) => {
+                        const updated = DAYS.map((_, i) => {
+                          const existing = (availability as any[]).find((a: any) => a.dayOfWeek === i);
+                          if (i === index) {
+                            return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: e.target.checked };
+                          }
+                          return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: existing?.isAvailable ?? (i >= 1 && i <= 5) };
+                        });
+                        updateAvailabilityMutation.mutate(updated);
+                      }}
+                      className="rounded border-[#8a7052] bg-[#07162B] text-[#ECC97B] focus:ring-[#ECC97B]"
+                    />
+                    <span className="text-sm font-medium text-[#FAF6EC]">{day}</span>
+                  </label>
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                {isAvailable && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      defaultValue={startTime}
+                      onBlur={(e) => {
+                        const updated = DAYS.map((_, i) => {
+                          const existing = (availability as any[]).find((a: any) => a.dayOfWeek === i);
+                          if (i === index) {
+                            return { dayOfWeek: i, startTime: e.target.value, endTime: existing?.endTime ?? "17:00", isAvailable: true };
+                          }
+                          return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: existing?.isAvailable ?? (i >= 1 && i <= 5) };
+                        });
+                        updateAvailabilityMutation.mutate(updated);
+                      }}
+                      className="rounded-lg border border-[#8a7052]/55 bg-[#061224] px-2.5 py-1 text-sm text-[#FAF6EC] focus:border-[#ECC97B] focus:outline-none"
+                    />
+                    <span className="text-sm text-[#9FB1C8]">to</span>
+                    <input
+                      type="time"
+                      defaultValue={endTime}
+                      onBlur={(e) => {
+                        const updated = DAYS.map((_, i) => {
+                          const existing = (availability as any[]).find((a: any) => a.dayOfWeek === i);
+                          if (i === index) {
+                            return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: e.target.value, isAvailable: true };
+                          }
+                          return { dayOfWeek: i, startTime: existing?.startTime ?? "09:00", endTime: existing?.endTime ?? "17:00", isAvailable: existing?.isAvailable ?? (i >= 1 && i <= 5) };
+                        });
+                        updateAvailabilityMutation.mutate(updated);
+                      }}
+                      className="rounded-lg border border-[#8a7052]/55 bg-[#061224] px-2.5 py-1 text-sm text-[#FAF6EC] focus:border-[#ECC97B] focus:outline-none"
+                    />
+                  </div>
+                )}
+                {!isAvailable && (
+                  <span className="text-sm text-[#8FA3BC] italic">Unavailable</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ── Past Appointments ── */}
       {pastAppointments.length > 0 && (
-        <Card className="bg-[#05142B]/90 border border-[#3A2C18] shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] rounded-xl">
-          <CardHeader className="border-b border-[#3A2C18]/60 pb-3">
-            <CardTitle className="font-serif text-[#A69371] text-lg font-normal">Past & Cancelled</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-3">
-            <div className="space-y-2">
-              {pastAppointments.slice(0, 10).map((apt: Appointment) => (
-                <div
-                  key={apt.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-[#3A2C18]/60 bg-[#020A17]/60 opacity-80 cursor-pointer hover:opacity-100 hover:border-[#C5A059]/50 hover:bg-[#07162B]/60 transition-all"
-                  onClick={() => setSelectedApt(apt)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="font-medium text-sm text-[#FFF4D4]">{apt.title}</p>
-                        {apt.meetingType && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#05142B] text-[#C6B697] border border-[#3A2C18]">
-                            {apt.meetingType}
-                          </span>
-                        )}
-                        {apt.videoLink && <Video className="h-3 w-3 text-blue-400" />}
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-xs text-[#A69371]">
-                          {new Date(apt.startTime).toLocaleDateString()}
-                        </p>
-                        {apt.parentName && <span className="text-xs text-[#A69371]">{apt.parentName}</span>}
-                        {apt.studentName && <span className="text-xs text-[#A69371]">· {apt.studentName}</span>}
-                      </div>
+        <div className="adm-panel-card rounded-[20px] overflow-hidden p-5 sm:p-6">
+          <div aria-hidden="true" className="adm-rim-glint-top" />
+          <div aria-hidden="true" className="adm-rim-glint-bottom" />
+          <div className="border-b border-[#8a7052]/40 pb-3 mb-3.5">
+            <h3 className="font-serif text-[#D4DFEE] text-lg font-bold tracking-wide">
+              Past & Cancelled
+            </h3>
+          </div>
+          <div className="space-y-2">
+            {pastAppointments.slice(0, 10).map((apt: Appointment) => (
+              <div
+                key={apt.id}
+                className="adm-inset-row flex items-center justify-between p-3 rounded-[12px] opacity-85 cursor-pointer hover:opacity-100"
+                onClick={() => setSelectedApt(apt)}
+              >
+                <div className="flex items-center gap-3">
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="font-serif font-semibold text-sm text-[#FAF6EC]">{apt.title}</p>
+                      {apt.meetingType && (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#081527] text-[#E9CFA0] border border-[#8a7052]/50">
+                          {apt.meetingType}
+                        </span>
+                      )}
+                      {apt.videoLink && <Video className="h-3 w-3 text-cyan-400" />}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                      <p className="text-xs text-[#9FB1C8]">
+                        {new Date(apt.startTime).toLocaleDateString()}
+                      </p>
+                      {apt.parentName && <span className="text-xs text-[#9FB1C8]">{apt.parentName}</span>}
+                      {apt.studentName && <span className="text-xs text-[#9FB1C8]">· {apt.studentName}</span>}
                     </div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(apt.status)}`}>
-                    {apt.status}
-                  </span>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(apt.status)}`}>
+                  {apt.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* ⚠️ SERVICE LIMIT WARNING DIALOG (Section 10) */}

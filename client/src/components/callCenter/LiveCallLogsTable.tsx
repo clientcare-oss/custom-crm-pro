@@ -301,24 +301,26 @@ export function LiveCallLogsTable({
   };
 
   return (
-    <div className="bg-[#05142B]/95 border border-[#3A2C18] rounded-2xl p-5 shadow-[0_8px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.06)] space-y-4">
+    <div className="adm-panel-card rounded-[20px] p-5 space-y-4 overflow-hidden">
+      <div aria-hidden="true" className="adm-rim-glint-top" />
+      <div aria-hidden="true" className="adm-rim-glint-bottom" />
       {/* Header Bar */}
-      <div className="flex items-center justify-between gap-4 flex-wrap pb-3 border-b border-[#3A2C18]/60">
+      <div className="flex items-center justify-between gap-4 flex-wrap pb-3 border-b border-[#8a7052]/40">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#020A17] border border-[#C5A059]/40 flex items-center justify-center text-[#FFE394] shadow-inner">
-            <Radio className="h-5 w-5 animate-pulse text-[#FFE394]" />
+          <div className="adm-icon-tile w-10 h-10 rounded-[12px] flex items-center justify-center text-[#ECC97B]">
+            <Radio className="h-5 w-5 animate-pulse text-[#ECC97B]" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-serif text-base font-bold text-[#FFF4D4] tracking-tight">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-serif text-base font-bold text-[#FAF6EC] tracking-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
                 Live Quo Webhook & Call Log Feed
               </h3>
               <PageIdBadge id="PG-018" variant="inline" />
-              <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] px-2 py-0.5 font-bold">
+              <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/35 text-[10px] px-2 py-0.5 font-bold">
                 ● Live Sync Active
               </Badge>
             </div>
-            <p className="text-xs text-[#C6B697]">
+            <p className="text-xs text-[#C6D4E6]">
               Real-time inbound/outbound calls, AI meeting summaries, full transcripts, voicemails, and SMS messages.
             </p>
           </div>
@@ -331,9 +333,9 @@ export function LiveCallLogsTable({
               variant="outline"
               onClick={onRefresh}
               disabled={isLoading}
-              className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] h-8 px-3 rounded-xl text-xs gap-1.5 cursor-pointer shadow-sm"
+              className="adm-cal-pill text-[#E8DEC8] hover:text-[#FAF6EC] h-8 px-3 rounded-xl text-xs gap-1.5 cursor-pointer"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin text-[#FFE394]" : ""}`} />
+              <RefreshCw className={`h-3.5 w-3.5 text-[#ECC97B] ${isLoading ? "animate-spin" : ""}`} />
               <span>Refresh</span>
             </Button>
           )}
@@ -343,7 +345,7 @@ export function LiveCallLogsTable({
               size="sm"
               variant="outline"
               onClick={onOpenSettings}
-              className="border border-[#3A2C18] bg-[#020A17] text-[#FFE394] hover:bg-[#07162B] hover:text-[#FFF4D4] h-8 px-3 rounded-xl text-xs cursor-pointer shadow-sm"
+              className="adm-cal-pill text-[#ECC97B] hover:text-[#FAF6EC] h-8 px-3 rounded-xl text-xs cursor-pointer"
             >
               Quo Settings
             </Button>
@@ -358,8 +360,8 @@ export function LiveCallLogsTable({
             onClick={() => handleSelectFilter("all")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               filter === "all"
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
-                : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
+                ? "adm-cal-pill-active font-bold"
+                : "adm-cal-pill text-[#D4DFEE] hover:text-[#FAF6EC]"
             }`}
           >
             All Logs ({logs.length})
@@ -368,8 +370,8 @@ export function LiveCallLogsTable({
             onClick={() => handleSelectFilter("calls")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
               filter === "calls"
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
-                : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
+                ? "adm-cal-pill-active font-bold"
+                : "adm-cal-pill text-[#D4DFEE] hover:text-[#FAF6EC]"
             }`}
           >
             <Phone className="w-3 h-3" />
@@ -379,8 +381,8 @@ export function LiveCallLogsTable({
             onClick={() => handleSelectFilter("sms")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
               filter === "sms"
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
-                : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
+                ? "adm-cal-pill-active font-bold"
+                : "adm-cal-pill text-[#D4DFEE] hover:text-[#FAF6EC]"
             }`}
           >
             <MessageSquare className="w-3 h-3" />
@@ -390,8 +392,8 @@ export function LiveCallLogsTable({
             onClick={() => handleSelectFilter("inbound")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               filter === "inbound"
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
-                : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
+                ? "adm-cal-pill-active font-bold"
+                : "adm-cal-pill text-[#D4DFEE] hover:text-[#FAF6EC]"
             }`}
           >
             Inbound / Ringing
@@ -400,8 +402,8 @@ export function LiveCallLogsTable({
             onClick={() => handleSelectFilter("completed")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               filter === "completed"
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
-                : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
+                ? "adm-cal-pill-active font-bold"
+                : "adm-cal-pill text-[#D4DFEE] hover:text-[#FAF6EC]"
             }`}
           >
             Completed Calls
@@ -410,8 +412,8 @@ export function LiveCallLogsTable({
             onClick={() => handleSelectFilter("missed")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               filter === "missed"
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
-                : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
+                ? "adm-cal-pill-active font-bold"
+                : "adm-cal-pill text-[#D4DFEE] hover:text-[#FAF6EC]"
             }`}
           >
             Missed ({missedCount})
@@ -420,8 +422,8 @@ export function LiveCallLogsTable({
             onClick={() => handleSelectFilter("voicemail")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               filter === "voicemail"
-                ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shadow-md"
-                : "bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4] border border-[#3A2C18]/60"
+                ? "adm-cal-pill-active font-bold"
+                : "adm-cal-pill text-[#D4DFEE] hover:text-[#FAF6EC]"
             }`}
           >
             Voicemails ({voicemailCount})
@@ -430,24 +432,24 @@ export function LiveCallLogsTable({
 
         {/* Search */}
         <div className="relative min-w-[220px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#C6B697]" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#ECC97B]" />
           <input
             type="text"
             placeholder="Search transcripts, summaries, messages..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#020A17] border border-[#3A2C18] rounded-lg text-[#FFF4D4] placeholder:text-[#C6B697]/50 focus:outline-none focus:border-[#C5A059]"
+            className="adm-input-field w-full pl-8 pr-3 py-1.5 text-xs rounded-lg placeholder:text-[#9FB1C8]/65 focus:outline-none"
           />
         </div>
       </div>
 
       {/* Call & Text Logs Table */}
       {filteredLogs.length === 0 ? (
-        <div className="bg-[#020A17]/80 border border-[#3A2C18]/60 rounded-xl p-8 text-center space-y-3">
-          <MessageSquare className="h-8 w-8 text-[#C6B697]/40 mx-auto" />
+        <div className="adm-inset-row rounded-xl p-8 text-center space-y-3">
+          <MessageSquare className="h-8 w-8 text-[#ECC97B]/45 mx-auto" />
           <div className="space-y-1">
-            <h4 className="font-serif text-sm font-bold text-[#FFF4D4]">No Communications Found</h4>
-            <p className="text-xs text-[#C6B697] max-w-md mx-auto">
+            <h4 className="font-serif text-sm font-bold text-[#FAF6EC]">No Communications Found</h4>
+            <p className="text-xs text-[#C6D4E6] max-w-md mx-auto">
               {searchQuery
                 ? `No logs match "${searchQuery}". Try a different term or clear the search.`
                 : "No calls or text messages recorded under this filter yet. Send a test SMS or make a call to your Quo business number to see it appear here in real time."}
@@ -455,9 +457,9 @@ export function LiveCallLogsTable({
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-[#3A2C18]/60">
+        <div className="adm-cal-grid-frame overflow-x-auto rounded-[14px]">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#020A17] border-b border-[#3A2C18] text-[#C6B697] font-semibold">
+            <thead className="adm-cal-dow font-semibold">
               <tr>
                 <th className="py-2.5 px-3">Status & Type</th>
                 <th className="py-2.5 px-3">From (Caller/Sender)</th>
@@ -468,7 +470,7 @@ export function LiveCallLogsTable({
                 <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#3A2C18]/40 bg-[#05142B]/60">
+            <tbody className="divide-y divide-[#8a7052]/25 bg-[#081527]/75">
               {filteredLogs.map((log) => {
                 const isRinging = log.eventType === "call.ringing";
                 const isSms = Boolean(log.smsBody || (log.eventType || "").startsWith("message."));
@@ -480,8 +482,8 @@ export function LiveCallLogsTable({
                 return (
                   <tr
                     key={log.id}
-                    className={`hover:bg-[#07162B] transition-colors ${
-                      isRinging ? "bg-amber-500/5 border-l-2 border-l-amber-400" : ""
+                    className={`hover:bg-[#112642]/75 transition-colors ${
+                      isRinging ? "bg-amber-500/8 border-l-2 border-l-amber-400" : ""
                     }`}
                   >
                     {/* Event & Status */}

@@ -48,14 +48,14 @@ export function CallCenterHeader({
           className="flex items-center gap-3 sm:gap-3.5"
           style={{ paddingLeft: "calc(100% * 68 / 1024)" }}
         >
-          {/* Rounded Dark Tile with Glowing Headset */}
-          <div className="w-11 h-11 sm:w-12 sm:h-12 md:w-[50px] md:h-[50px] rounded-2xl bg-[#030914]/95 border border-[#8C6418]/60 flex items-center justify-center text-[#F5D88A] shadow-xl shadow-black/85 shrink-0">
-            <Headset className="h-6 w-6 sm:h-6.5 sm:w-6.5 md:h-7 md:w-7 text-[#F5D88A] drop-shadow-[0_0_8px_rgba(245,216,138,0.6)]" />
+          {/* Sculpted Admiralty Brass & Leather Headset Tile */}
+          <div className="adm-icon-tile w-11 h-11 sm:w-12 sm:h-12 md:w-[50px] md:h-[50px] rounded-2xl flex items-center justify-center text-[#ECC97B] shrink-0">
+            <Headset className="h-6 w-6 sm:h-6.5 sm:w-6.5 md:h-7 md:w-7 text-[#ECC97B] drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-              <h1 className="text-2xl sm:text-3xl md:text-[34px] font-serif font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] whitespace-nowrap leading-none tracking-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-[34px] font-serif font-bold text-[#FAF6EC] drop-shadow-[0_3px_10px_rgba(0,0,0,0.95)] whitespace-nowrap leading-none tracking-tight">
                 Call Center
               </h1>
               <PageIdBadge id="PG-018" />
@@ -71,7 +71,7 @@ export function CallCenterHeader({
           </div>
         </div>
 
-        {/* Right Controls: Minimalist wall-floating controls */}
+        {/* Right Controls: Machined Admiralty brass-and-leather controls */}
         <div className="flex items-center justify-end gap-2 shrink-0">
           {onRefresh && (
             <Button
@@ -79,10 +79,10 @@ export function CallCenterHeader({
               size="sm"
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="text-[#D8C7A5] hover:text-[#FFF4D4] hover:bg-[#07162B]/80 border border-[#8C6418]/40 bg-[#020A17]/60 h-7 w-7 p-0 rounded-lg shrink-0 cursor-pointer shadow-sm"
+              className="adm-cal-pill text-[#ECC97B] hover:text-[#FAF6EC] h-8 w-8 p-0 rounded-lg shrink-0 cursor-pointer"
               title="Refresh logs & status"
             >
-              <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin text-[#C5A059]" : ""}`} />
+              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin text-[#FFE394]" : ""}`} />
             </Button>
           )}
 
@@ -96,13 +96,13 @@ export function CallCenterHeader({
           )}
 
           {/* Employee Profile Pill */}
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[#020A17]/70 border border-[#8C6418]/40 shadow-xs whitespace-nowrap h-7">
-            <Avatar className="h-4.5 w-4.5 rounded-full border border-[#FFE394]/50 bg-gradient-to-br from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold shrink-0">
-              <AvatarFallback className="bg-transparent text-[#07162B] text-[9px] font-bold">
+          <div className="adm-crew-pill flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl whitespace-nowrap h-8">
+            <Avatar className="h-5 w-5 rounded-full border border-[#e7ca88]/60 bg-gradient-to-br from-[#e7ca88] via-[#c8a258] to-[#9b7939] text-[#071528] font-bold shrink-0">
+              <AvatarFallback className="bg-transparent text-[#071528] text-[9px] font-bold">
                 {userInit}
               </AvatarFallback>
             </Avatar>
-            <span className="text-[11px] font-medium text-[#FFF4D4] whitespace-nowrap">
+            <span className="text-[11px] font-semibold text-[#FAF6EC] whitespace-nowrap">
               {userName}
             </span>
           </div>

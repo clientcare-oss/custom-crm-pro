@@ -383,16 +383,18 @@ export default function CalendarWeekView({
   }, [filteredAppointments, operationalBlocks, weekDays]);
 
   return (
-    <div className="w-full rounded-xl border-2 border-[#5B4323] bg-gradient-to-b from-[#091E3B]/95 via-[#071933]/95 to-[#06152B]/95 shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_30px_rgba(197,160,89,0.08),inset_0_1px_2px_rgba(255,255,255,0.12)] overflow-hidden backdrop-blur-md">
-      {/* ── TOP NAV BAR (Arrows, October 4–10, 2026, View Controls) ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-[#5B4323]/80 bg-gradient-to-r from-[#0C2548] to-[#081B34]">
+    <div className="adm-panel-card w-full rounded-[20px] overflow-hidden">
+      <div aria-hidden="true" className="adm-rim-glint-top" />
+      <div aria-hidden="true" className="adm-rim-glint-bottom" />
+      {/* ── TOP NAV BAR (Arrows, Week Range, View Controls) ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-[#8a7052]/45 bg-gradient-to-r from-[#122640]/90 via-[#0e1f36]/90 to-[#0a182b]/90">
         {/* Left: Previous / Next & Range Title */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center p-0.5 rounded-[5px] border border-[#3A2C18] bg-[#05142B]">
+          <div className="adm-cal-segment-track flex items-center p-0.5 rounded-lg">
             <button
               type="button"
               onClick={handlePrevWeek}
-              className="p-1 text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#102B4E] rounded-[3px] transition-colors cursor-pointer"
+              className="p-1 text-[#ECC97B] hover:text-[#FAF6EC] hover:bg-white/[0.06] rounded-md transition-colors cursor-pointer"
               title="Previous Week"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -400,14 +402,14 @@ export default function CalendarWeekView({
             <button
               type="button"
               onClick={handleNextWeek}
-              className="p-1 text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#102B4E] rounded-[3px] transition-colors cursor-pointer"
+              className="p-1 text-[#ECC97B] hover:text-[#FAF6EC] hover:bg-white/[0.06] rounded-md transition-colors cursor-pointer"
               title="Next Week"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          <h2 className="font-serif text-base sm:text-lg font-bold text-[#FFF4D4] tracking-tight">
+          <h2 className="font-serif text-base sm:text-lg font-bold text-[#FAF6EC] tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
             {weekRangeLabel}
           </h2>
         </div>
@@ -415,15 +417,15 @@ export default function CalendarWeekView({
         {/* Right: Toggle Buttons & Settings */}
         <div className="flex items-center gap-2">
           {/* Week View / List View */}
-          <div className="flex items-center p-0.5 rounded-[5px] border border-[#3A2C18] bg-[#020A17]">
+          <div className="adm-cal-segment-track flex items-center p-0.5 rounded-xl">
             <button
               type="button"
               onClick={() => setSubView("week")}
               className={cn(
-                "px-3 py-1 rounded-[3px] text-xs font-bold transition-all cursor-pointer",
+                "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
                 subView === "week"
-                  ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm border border-[#FFE394]/50"
-                  : "text-[#C6B697] hover:text-[#FFF4D4]"
+                  ? "adm-cal-pill-active"
+                  : "text-[#CFDCEF] hover:text-[#FAF6EC]"
               )}
             >
               Week View
@@ -432,10 +434,10 @@ export default function CalendarWeekView({
               type="button"
               onClick={() => setSubView("list")}
               className={cn(
-                "px-3 py-1 rounded-[3px] text-xs font-bold transition-all cursor-pointer",
+                "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
                 subView === "list"
-                  ? "bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] shadow-sm border border-[#FFE394]/50"
-                  : "text-[#C6B697] hover:text-[#FFF4D4]"
+                  ? "adm-cal-pill-active"
+                  : "text-[#CFDCEF] hover:text-[#FAF6EC]"
               )}
             >
               List View
@@ -447,10 +449,10 @@ export default function CalendarWeekView({
             type="button"
             onClick={() => setShowUnassigned(!showUnassigned)}
             className={cn(
-              "px-3 py-1.5 rounded-[5px] text-xs font-medium border transition-colors cursor-pointer",
+              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
               showUnassigned
-                ? "border-[#DFBE77] bg-[#102B4E] text-[#FFE394]"
-                : "border-[#3A2C18] bg-[#020A17] text-[#C6B697] hover:text-[#FFF4D4]"
+                ? "adm-cal-pill-active font-bold"
+                : "adm-cal-pill text-[#E8DEC8] hover:text-[#FAF6EC]"
             )}
           >
             Show Unassigned
@@ -459,7 +461,7 @@ export default function CalendarWeekView({
           {/* Settings button */}
           <button
             type="button"
-            className="p-1.5 rounded-[5px] border border-[#3A2C18] bg-[#020A17] text-[#A69371] hover:text-[#FFF4D4] hover:bg-[#07162B] transition-colors cursor-pointer"
+            className="adm-cal-pill p-1.5 rounded-lg text-[#ECC97B] hover:text-[#FAF6EC] cursor-pointer"
             title="Calendar Settings"
           >
             <Settings className="h-4 w-4" />
@@ -471,9 +473,9 @@ export default function CalendarWeekView({
       <div className="w-full overflow-x-auto select-none">
         <div className="min-w-[900px]">
           {/* Day Headers Row */}
-          <div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-[#5B4323]">
+          <div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-[#8a7052]/55">
             {/* Empty corner for time column */}
-            <div className="border-r border-[#5B4323]/60 bg-[#071830]" />
+            <div className="border-r border-[#8a7052]/40 bg-[#081527]" />
 
             {/* 7 Days: Sun 4, Mon 5, Tue 6, etc. */}
             {weekDays.map((day, idx) => {
@@ -491,21 +493,21 @@ export default function CalendarWeekView({
                   key={idx}
                   onClick={() => onDayClick(day)}
                   className={cn(
-                    "flex flex-col items-center justify-center py-2.5 px-1 border-r border-[#5B4323]/60 cursor-pointer transition-all hover:bg-[#12396B]/60",
-                    isToday ? "bg-gradient-to-b from-[#12396B] to-[#0D2C54]" : "bg-gradient-to-b from-[#0F2D54] to-[#0A2242]"
+                    "adm-cal-dow flex flex-col items-center justify-center py-2.5 px-1 cursor-pointer transition-all hover:brightness-115",
+                    isToday && "!bg-gradient-to-b !from-[#1a385f] !to-[#102744]"
                   )}
                 >
-                  <span className="text-[11px] font-mono font-bold text-[#FFE394] uppercase">
+                  <span className="text-[11px] font-mono font-bold text-[#E9CFA0] uppercase">
                     {dayName}
                   </span>
 
                   {/* Day Number Badge */}
                   {isSelectedDay ? (
-                    <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs shadow-md">
+                    <div className="adm-cal-pill-active mt-0.5 flex h-7 w-7 items-center justify-center rounded-full font-bold text-xs">
                       {dayNum}
                     </div>
                   ) : (
-                    <span className="mt-0.5 text-sm font-serif font-bold text-[#FFF4D4]">
+                    <span className="mt-0.5 text-sm font-serif font-bold text-[#FAF6EC]">
                       {dayNum}
                     </span>
                   )}
@@ -517,12 +519,12 @@ export default function CalendarWeekView({
           {/* Time Rows and Event Grid Container */}
           <div className="relative grid grid-cols-[70px_repeat(7,1fr)]">
             {/* Left Y-axis Time Labels */}
-            <div className="border-r border-[#5B4323]/70 bg-[#071830] text-right pr-2 select-none">
+            <div className="border-r border-[#8a7052]/45 bg-[#071324] text-right pr-2 select-none">
               {HOURS.map((hour) => (
                 <div
                   key={hour}
                   style={{ height: `${HOUR_HEIGHT}px` }}
-                  className="relative -top-2.5 text-[11px] font-mono text-[#FFE394]/90 font-semibold tracking-tight"
+                  className="relative -top-2.5 text-[11px] font-mono text-[#E9CFA0]/90 font-semibold tracking-tight"
                 >
                   {formatHourLabel(hour)}
                 </div>
@@ -539,8 +541,8 @@ export default function CalendarWeekView({
                 <div
                   key={dayIdx}
                   className={cn(
-                    "relative border-r border-[#3A2C18]/60",
-                    isToday ? "bg-[#103362]/35" : "bg-[#0A2140]/80"
+                    "relative border-r border-[#8a7052]/30",
+                    isToday ? "bg-[#122b4d]/50" : "bg-[#09182c]/85"
                   )}
                 >
                   {/* Horizontal Hour Lines & Clickable Slot Targets */}
@@ -549,7 +551,7 @@ export default function CalendarWeekView({
                       key={hour}
                       style={{ height: `${HOUR_HEIGHT}px` }}
                       onClick={() => onSlotClick?.(day, `${hour}:00`)}
-                      className="border-b border-[#3A2C18]/50 hover:bg-[#143B6E]/40 transition-colors cursor-pointer"
+                      className="border-b border-[#8a7052]/25 hover:bg-[#17355c]/45 transition-colors cursor-pointer"
                     />
                   ))}
 

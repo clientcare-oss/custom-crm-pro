@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Lock,
   Printer,
@@ -8,20 +8,12 @@ import {
   CornerDownLeft,
   CreditCard,
   RefreshCw,
-  XCircle,
   Heart,
   UserSearch,
   WifiOff,
   Link2,
   ShieldAlert,
 } from "lucide-react";
-import {
-  DECLINED_SOUND_OPTIONS,
-  getSavedDeclinedSoundStyle,
-  playCardDeclinedSound,
-  setSavedDeclinedSoundStyle,
-  type DeclinedSoundStyle,
-} from "./posSounds";
 
 export type ManagerKeyMode = "locked" | "pin" | "unlocked";
 
@@ -190,16 +182,6 @@ export function ManagerKeyPanel({
   onHidePanelToForm,
   onLockManager,
 }: ManagerKeyPanelProps) {
-  const [declinedStyle, setDeclinedStyle] = useState<DeclinedSoundStyle>(() =>
-    getSavedDeclinedSoundStyle()
-  );
-
-  const handleSelectDeclined = (next: DeclinedSoundStyle) => {
-    setDeclinedStyle(next);
-    setSavedDeclinedSoundStyle(next);
-    playCardDeclinedSound(next);
-  };
-
   if (mode === "pin") {
     return (
       <div
@@ -356,46 +338,15 @@ export function ManagerKeyPanel({
         })}
       </div>
 
-      {/* Modern POS Card Declined Picker (Epson, Ding-Pong & Vintage Cha-Ching Locked) */}
-      <div className="pt-1 border-t border-white/10 space-y-1">
-        {/* Card Declined Sound Picker (5 Modern & Luxury POS Terminal Decline Options) */}
-        <div
-          role="group"
-          aria-label="Card declined sound selection"
-          className="flex items-center gap-0.5 rounded-[6px] bg-[#061128] border border-rose-400/35 p-[1.5px]"
-        >
-          <XCircle className="h-2.5 w-2.5 text-rose-300 mx-1 shrink-0" />
-          <div className="grid grid-cols-5 gap-0.5 flex-1">
-            {DECLINED_SOUND_OPTIONS.map((opt) => {
-              const active = declinedStyle === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  data-testid={`pos-declined-sound-${opt.id}`}
-                  onClick={() => handleSelectDeclined(opt.id)}
-                  title={opt.title}
-                  className={`h-[18px] px-0.5 rounded-[4px] text-[8.5px] font-semibold transition-colors cursor-pointer whitespace-nowrap truncate ${
-                    active
-                      ? "bg-rose-400 text-[#23060B]"
-                      : "text-[#B8C9E8] hover:text-white hover:bg-[#13264D]"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Locked Audio Badge & Station Utilities Row */}
+      {/* Locked Audio Suite & Station Utilities Row (All 4 Register Sounds Locked) */}
+      <div className="pt-1 border-t border-white/10">
         <div className="flex items-center justify-between gap-1 pt-0.5">
           <div
-            className="inline-flex items-center gap-1 px-1.5 h-[19px] rounded-[5px] bg-[#061128]/90 border border-[#CFA657]/30 text-[8.5px] font-medium text-[#DFBE77]/90 whitespace-nowrap"
-            title="Locked: Epson receipt printer · Ding-Pong settings key · Vintage cha-ching"
+            className="inline-flex items-center gap-1 px-1.5 h-[19px] rounded-[5px] bg-[#061128]/90 border border-[#CFA657]/30 text-[8.5px] font-medium text-[#DFBE77]/90 whitespace-nowrap truncate"
+            title="Locked: Epson receipt printer · Ding-Pong settings key · Vintage cha-ching · Feud X card declined"
           >
             <Lock className="h-2.5 w-2.5 text-[#DFBE77] shrink-0" />
-            <span>Epson · Ding-Pong · Vintage</span>
+            <span className="truncate">Epson · Ding-Pong · Vintage · Feud X</span>
           </div>
 
           <div className="inline-flex items-center gap-1 shrink-0">

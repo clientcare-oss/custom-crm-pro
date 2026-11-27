@@ -99,15 +99,17 @@ export default function CalendarScheduleLegendBar({
   return (
     <div
       className={cn(
-        "w-full overflow-x-auto rounded-xl border border-[#C5A059]/35 bg-[#071A36]/92 px-3.5 py-2 shadow-[0_6px_18px_rgba(0,0,0,0.75),inset_0_1px_1px_rgba(255,255,255,0.08)] scrollbar-thin scrollbar-thumb-[#3A2C18] scrollbar-track-transparent",
+        "adm-cal-toolbar w-full overflow-x-auto rounded-[16px] px-4 py-2.5 overflow-hidden scrollbar-thin scrollbar-thumb-[#6c563c] scrollbar-track-transparent",
         className
       )}
     >
+      <div aria-hidden="true" className="adm-rim-glint-top" />
+      <div aria-hidden="true" className="adm-rim-glint-bottom" />
       <div className="flex items-center justify-between gap-4 min-w-max">
         <div className="flex items-center gap-4">
           {/* Legend Title */}
-          <div className="flex items-center gap-2 pr-2 border-r border-[#C5A059]/30 shrink-0">
-            <span className="text-xs font-serif font-bold text-[#FFE394] tracking-wide">
+          <div className="flex items-center gap-2 pr-3 border-r border-[#8a7052]/40 shrink-0">
+            <span className="text-xs font-serif font-bold text-[#E9CFA0] tracking-wide">
               Schedule Key
             </span>
           </div>
@@ -119,12 +121,12 @@ export default function CalendarScheduleLegendBar({
                 key={item.key}
                 type="button"
                 onClick={() => onSelectPattern?.(item.key)}
-                className="inline-flex items-center gap-1.5 text-xs text-[#C6B697] hover:text-[#FFF4D4] transition-colors cursor-pointer group"
+                className="inline-flex items-center gap-1.5 text-xs text-[#D4DFEE] hover:text-[#FAF6EC] transition-colors cursor-pointer group"
               >
                 <span
                   style={item.style}
                   className={cn(
-                    "h-2.5 w-3.5 rounded-[2px] shrink-0 group-hover:scale-110 transition-transform",
+                    "h-2.5 w-3.5 rounded-[3px] shrink-0 group-hover:scale-110 transition-transform",
                     item.swatchClass
                   )}
                 />
@@ -139,10 +141,10 @@ export default function CalendarScheduleLegendBar({
         <button
           type="button"
           onClick={handleToggle}
-          className="inline-flex items-center gap-1 rounded-md border border-[#C5A059]/35 bg-[#041022]/90 px-2 py-0.5 text-[10px] font-semibold text-[#EAD8B1] hover:text-[#FFF4D4] hover:border-[#FFE394]/70 transition-all cursor-pointer shrink-0"
+          className="adm-cal-pill inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 text-[10px] font-semibold text-[#E8DEC8] hover:text-[#FAF6EC] cursor-pointer shrink-0"
         >
           <span>Collapse</span>
-          <ChevronUp className="h-3 w-3" />
+          <ChevronUp className="h-3 w-3 text-[#ECC97B]" />
         </button>
       </div>
     </div>

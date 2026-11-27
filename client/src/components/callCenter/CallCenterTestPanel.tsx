@@ -185,10 +185,10 @@ export function CallCenterTestPanel({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 rounded-xl text-slate-400 hover:text-amber-300 hover:bg-amber-400/10 transition-colors"
+            className="adm-cal-pill h-8 w-8 p-0 rounded-lg text-[#ECC97B] hover:text-[#FAF6EC] cursor-pointer"
             title="Call Center Developer & Test Controls"
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-3.5 w-3.5" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
@@ -196,7 +196,7 @@ export function CallCenterTestPanel({
           align="end"
           sideOffset={8}
           collisionPadding={16}
-          className="w-80 max-w-[calc(100vw-2rem)] bg-[#061830] border-2 border-amber-400/40 text-slate-100 p-4 rounded-2xl shadow-2xl space-y-3 z-50"
+          className="adm-cal-dropdown w-80 max-w-[calc(100vw-2rem)] text-[#FAF6EC] p-4 rounded-2xl space-y-3 z-50"
         >
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div className="flex items-center gap-1.5 font-bold text-xs text-amber-300 tracking-wider uppercase">

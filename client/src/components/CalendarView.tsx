@@ -286,7 +286,7 @@ export default function CalendarView({
   const monthGridDays: React.ReactNode[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) {
     monthGridDays.push(
-      <div key={`empty-${i}`} className="min-h-[7rem] border-b border-r border-[#3A2C18]/50 bg-[#051427]/60" />
+      <div key={`empty-${i}`} className="min-h-[7rem] adm-cal-cell-empty" />
     );
   }
 
@@ -305,9 +305,9 @@ export default function CalendarView({
           b.blockType.toLowerCase().includes("holiday"))
     );
 
-    let cellBackground = isToday
-      ? "bg-gradient-to-br from-[#12396B]/90 via-[#0E2F59]/85 to-[#0A2344]/90 border-2 border-[#FFE394] shadow-[inset_0_0_20px_rgba(255,227,148,0.15)]"
-      : "bg-[#0A2140]/90 hover:bg-[#10315C]/95 transition-all";
+    const cellBackground = isToday
+      ? "adm-cal-cell adm-cal-cell-today"
+      : "adm-cal-cell";
     let cellStyle: React.CSSProperties = {};
 
     if (allDayClosure) {
@@ -325,7 +325,7 @@ export default function CalendarView({
       <div
         key={day}
         style={cellStyle}
-        className={`min-h-[7rem] border-b border-r border-[#3A2C18]/60 px-[1px] pt-1.5 pb-1 transition-all cursor-pointer ${cellBackground}`}
+        className={`min-h-[7rem] px-[2px] pt-1.5 pb-1 cursor-pointer ${cellBackground}`}
         onClick={() => {
           const clickedDate = new Date(year, month, day);
           onDateClick?.(clickedDate);
@@ -335,8 +335,8 @@ export default function CalendarView({
           <span
             className={`text-xs font-mono font-bold ${
               isToday
-                ? "text-[#07162B] bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] px-1.5 py-0.5 rounded-[4px] shadow-sm font-extrabold"
-                : "text-[#FFF4D4] drop-shadow-sm font-semibold"
+                ? "adm-cal-pill-active px-2 py-0.5 rounded-md font-extrabold text-[11px]"
+                : "text-[#E9E1D2] drop-shadow-sm font-semibold"
             }`}
           >
             {day}
@@ -439,10 +439,10 @@ export default function CalendarView({
                   e.stopPropagation();
                   setOverflowDrawerDateStr(dateStr);
                 }}
-                className="flex-1 flex items-center justify-between text-[9px] font-mono font-bold px-1.5 py-[2px] rounded-[4px] bg-[#05142B]/95 border border-[#C5A059]/60 text-[#FFE394] hover:bg-[#102B4E] hover:border-[#FFE394] transition-all cursor-pointer"
+                className="flex-1 flex items-center justify-between text-[9px] font-mono font-bold px-1.5 py-[2px] rounded-[5px] bg-[#061121]/95 border border-[#8a7052]/70 text-[#ECC97B] hover:bg-[#112540] hover:border-[#d8c4a0]/85 transition-all cursor-pointer"
               >
                 <span>+{dayAppointments.length - 4} more</span>
-                <ChevronRight className="w-2.5 h-2.5 text-[#C5A059]" />
+                <ChevronRight className="w-2.5 h-2.5 text-[#ECC97B]" />
               </button>
               <button
                 type="button"
@@ -451,7 +451,7 @@ export default function CalendarView({
                   setCurrentDate(new Date(year, month, day));
                   setViewMode("day");
                 }}
-                className="text-[9px] font-mono font-semibold px-1.5 py-[2px] rounded-[4px] bg-[#020A17] border border-[#3A2C18] text-[#C6B697] hover:text-[#FFF4D4] hover:border-[#C5A059]/60 transition-all cursor-pointer shrink-0"
+                className="text-[9px] font-mono font-semibold px-1.5 py-[2px] rounded-[5px] bg-[#040d1a] border border-[#6c563c]/70 text-[#D4DFEE] hover:text-[#FAF6EC] hover:border-[#b89f7d]/70 transition-all cursor-pointer shrink-0"
                 title="Open Day View"
               >
                 Day →
@@ -673,21 +673,23 @@ export default function CalendarView({
       )}
 
       {viewMode === "month" && (
-        <Card className="rounded-xl border-2 border-[#5B4323] bg-gradient-to-b from-[#091E3B]/95 via-[#071933]/95 to-[#06152B]/95 shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_30px_rgba(197,160,89,0.08),inset_0_1px_2px_rgba(255,255,255,0.12)] overflow-hidden backdrop-blur-md">
-          <CardContent className="p-3.5 space-y-2.5">
+        <div className="adm-panel-card rounded-[20px] overflow-hidden">
+          <div aria-hidden="true" className="adm-rim-glint-top" />
+          <div aria-hidden="true" className="adm-rim-glint-bottom" />
+          <div className="p-4 space-y-3">
             {/* ── Month Header Bar on Large Calendar with Back & Next Month Buttons on Either Side ── */}
-            <div className="flex items-center justify-between px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#0A2242] via-[#10315C] to-[#0A2242] border border-[#C5A059]/45 shadow-[0_4px_14px_rgba(0,0,0,0.55),inset_0_1px_1px_rgba(255,255,255,0.08)]">
+            <div className="adm-cal-subbar flex items-center justify-between px-3.5 py-2.5 rounded-[14px]">
               <button
                 type="button"
                 onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[#C5A059]/45 bg-[#05142B]/90 text-xs font-serif font-bold text-[#EAD8B1] hover:text-[#FFF4D4] hover:bg-[#0C254A] hover:border-[#FFE394]/80 transition-all cursor-pointer shadow-sm active:scale-95"
+                className="adm-cal-pill inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-serif font-bold text-[#E8DEC8] hover:text-[#FAF6EC] cursor-pointer active:scale-95"
                 title="Previous Month"
               >
-                <ChevronLeft className="h-4 w-4 text-[#DFBE77]" />
+                <ChevronLeft className="h-4 w-4 text-[#ECC97B]" />
                 <span className="hidden sm:inline">Prev Month</span>
               </button>
 
-              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#FFF4D4] tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] select-none">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#FAF6EC] tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] select-none">
                 {currentDate.toLocaleDateString("en-US", {
                   month: "long",
                   year: "numeric",
@@ -697,27 +699,27 @@ export default function CalendarView({
               <button
                 type="button"
                 onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[#C5A059]/45 bg-[#05142B]/90 text-xs font-serif font-bold text-[#EAD8B1] hover:text-[#FFF4D4] hover:bg-[#0C254A] hover:border-[#FFE394]/80 transition-all cursor-pointer shadow-sm active:scale-95"
+                className="adm-cal-pill inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-serif font-bold text-[#E8DEC8] hover:text-[#FAF6EC] cursor-pointer active:scale-95"
                 title="Next Month"
               >
                 <span className="hidden sm:inline">Next Month</span>
-                <ChevronRight className="h-4 w-4 text-[#DFBE77]" />
+                <ChevronRight className="h-4 w-4 text-[#ECC97B]" />
               </button>
             </div>
 
-            <div className="grid grid-cols-7 gap-0 rounded-lg overflow-hidden border border-[#5B4323]/80 shadow-md">
+            <div className="adm-cal-grid-frame grid grid-cols-7 gap-0 rounded-[14px] overflow-hidden">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                 <div
                   key={d}
-                  className="text-center text-xs font-serif font-bold text-[#FFE394] py-2.5 bg-gradient-to-b from-[#0F2D54] to-[#0A2242] border-b border-r last:border-r-0 border-[#5B4323]/70 uppercase tracking-widest shadow-sm"
+                  className="adm-cal-dow text-center text-[11px] font-serif font-bold py-2.5 last:border-r-0 uppercase tracking-[0.14em]"
                 >
                   {d}
                 </div>
               ))}
               {monthGridDays}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* ── Right Slide-Out Drawer for Day Overflow (>4 Appointments) ── */}
@@ -738,7 +740,7 @@ export default function CalendarView({
         return (
           <>
             <div
-              className={`fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px] transition-opacity duration-300 motion-reduce:transition-none ${
+              className={`fixed inset-0 z-40 bg-black/55 backdrop-blur-[3px] transition-opacity duration-300 motion-reduce:transition-none ${
                 isOverflowAnimatedOpen ? "opacity-100" : "opacity-0 pointer-events-none"
               }`}
               onClick={() => setOverflowDrawerDateStr(null)}
@@ -748,27 +750,27 @@ export default function CalendarView({
               role="dialog"
               aria-modal="true"
               aria-label={`Appointments for ${drawerDateLabel}`}
-              className={`fixed top-0 right-0 bottom-0 z-50 h-full w-full sm:w-[400px] max-w-full flex flex-col bg-[#05142B] border-l border-[#3A2C18] shadow-[-16px_0_48px_rgba(0,0,0,0.85)] transform transition-transform duration-300 ease-out motion-reduce:transition-none ${
+              className={`fixed top-0 right-0 bottom-0 z-50 h-full w-full sm:w-[400px] max-w-full flex flex-col bg-gradient-to-b from-[#0f2139] via-[#091628] to-[#050d1a] border-l-2 border-[#8a7052]/75 shadow-[-18px_0_48px_rgba(0,0,0,0.9)] transform transition-transform duration-300 ease-out motion-reduce:transition-none ${
                 isOverflowAnimatedOpen ? "translate-x-0" : "translate-x-full"
               }`}
             >
-              <div className="h-1.5 w-full shrink-0 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B]" />
-              <div className="shrink-0 p-4 border-b border-[#3A2C18]/70 bg-[#07162B] flex items-center justify-between gap-2">
+              <div className="h-1.5 w-full shrink-0 bg-gradient-to-r from-[#8a7052] via-[#e2ccac] to-[#6c563c]" />
+              <div className="shrink-0 p-4 border-b border-[#8a7052]/40 bg-[#081527]/90 flex items-center justify-between gap-2">
                 <div>
-                  <div className="text-[11px] font-mono uppercase tracking-widest text-[#C5A059] font-bold">
+                  <div className="text-[11px] font-mono uppercase tracking-widest text-[#ECC97B] font-bold">
                     {drawerApts.length} Appointments Scheduled
                   </div>
-                  <h2 className="text-lg font-serif font-bold text-[#FFF4D4] leading-tight mt-0.5">
+                  <h2 className="text-lg font-serif font-bold text-[#FAF6EC] leading-tight mt-0.5">
                     {drawerDateLabel}
                   </h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => setOverflowDrawerDateStr(null)}
-                  className="p-1.5 rounded-lg text-[#C6B697] hover:text-[#FFF4D4] hover:bg-[#020A17] transition-colors cursor-pointer"
+                  className="adm-cal-pill p-1.5 rounded-lg text-[#D4DFEE] hover:text-[#FAF6EC] cursor-pointer"
                   aria-label="Close day appointments drawer"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
@@ -797,28 +799,28 @@ export default function CalendarView({
                       <div className="flex items-center justify-between gap-2">
                         <span
                           className={`font-serif text-sm font-bold truncate leading-tight ${
-                            patternKey === "confirmed" ? "text-white" : "text-[#FFF4D4]"
+                            patternKey === "confirmed" ? "text-white" : "text-[#FAF6EC]"
                           }`}
                         >
                           <span className="font-mono text-[#FFE394] mr-1.5">{fmtEvt.startTimeLabel}</span>
                           {fmtEvt.studentLabel || "Student"}
                         </span>
                         <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-black/30 text-[#FFE394] shrink-0 flex items-center gap-1">
-                          <Clock className="w-2.5 h-2.5 text-[#C5A059]" />
+                          <Clock className="w-2.5 h-2.5 text-[#ECC97B]" />
                           {fmtEvt.timeRangeLabel}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-2 text-xs mt-1">
                         <span
                           className={`truncate font-medium ${
-                            patternKey === "confirmed" ? "text-emerald-100" : "text-[#C6B697]"
+                            patternKey === "confirmed" ? "text-emerald-100" : "text-[#D4DFEE]"
                           }`}
                         >
                           {fmtEvt.sessionTypeFull}
                         </span>
                         <span
                           className={`font-semibold shrink-0 ${
-                            patternKey === "confirmed" ? "text-emerald-300" : "text-[#FFE394]"
+                            patternKey === "confirmed" ? "text-emerald-300" : "text-[#ECC97B]"
                           }`}
                         >
                           {advocateName}
@@ -829,7 +831,7 @@ export default function CalendarView({
                 })}
               </div>
 
-              <div className="shrink-0 p-3.5 border-t border-[#3A2C18]/70 bg-[#07162B] flex items-center gap-2">
+              <div className="shrink-0 p-3.5 border-t border-[#8a7052]/40 bg-[#071324] flex items-center gap-2">
                 <Button
                   type="button"
                   onClick={() => {
@@ -837,7 +839,7 @@ export default function CalendarView({
                     setCurrentDate(drawerDateObj);
                     setViewMode("day");
                   }}
-                  className="flex-1 bg-gradient-to-r from-[#DFBE77] via-[#C5A059] to-[#9E7D3B] text-[#07162B] font-bold text-xs h-9 rounded-[5px] border border-[#FFE394]/50 shadow-md cursor-pointer"
+                  className="adm-cal-pill-active flex-1 font-bold text-xs h-9 rounded-lg cursor-pointer"
                 >
                   Open Full Day Timeline →
                 </Button>
@@ -847,9 +849,9 @@ export default function CalendarView({
                     setOverflowDrawerDateStr(null);
                     onDateClick?.(drawerDateObj);
                   }}
-                  className="border border-[#3A2C18] bg-[#020A17] text-[#D8C7A5] hover:bg-[#07162B] hover:text-[#FFF4D4] text-xs h-9 px-3 rounded-[5px] cursor-pointer"
+                  className="adm-cal-pill text-[#E8DEC8] hover:text-[#FAF6EC] text-xs h-9 px-3 rounded-lg cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  <Plus className="w-3.5 h-3.5 mr-1 text-[#ECC97B]" />
                   Schedule
                 </Button>
               </div>
