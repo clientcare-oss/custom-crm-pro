@@ -1,4 +1,3 @@
-import express from "express";
 import type { Express, Request as ExpressRequest, Response as ExpressResponse } from "express";
 import fs from "fs";
 import path from "path";
@@ -74,6 +73,21 @@ function decodeHeaderValue(raw: string | string[] | null | undefined): string {
   }
 }
 
+async function readRawRequestBuffer(req: ExpressRequest, maxBytes: number): Promise<Buffer> {
+  if (Buffer.isBuffer(req.body)) return req.body;
+  const chunks: Buffer[] = [];
+  let total = 0;
+  for await (const chunk of req) {
+    const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    total += buf.length;
+    if (total > maxBytes) {
+      throw new Error("Audio file exceeds 120MB upload limit.");
+    }
+    chunks.push(buf);
+  }
+  return Buffer.concat(chunks, total);
+}
+
 /** Express routes for local dev & Node server */
 export function registerRadioUploadRoutes(app: Express) {
   app.post("/api/radio/presign", async (req: ExpressRequest, res: ExpressResponse) => {
@@ -115,7 +129,6 @@ export function registerRadioUploadRoutes(app: Express) {
 
   app.post(
     "/api/radio/upload",
-    express.raw({ type: () => true, limit: "120mb" }),
     async (req: ExpressRequest, res: ExpressResponse) => {
       try {
         const ctx = await createContext({ req, res } as any);
@@ -141,7 +154,7 @@ export function registerRadioUploadRoutes(app: Express) {
           return res.status(400).json({ error: "Only MP3 and WAV audio files are supported." });
         }
 
-        const buffer = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || "");
+        const buffer = await readRawRequestBuffer(req, MAX_AUDIO_BYTES);
         if (!buffer || buffer.length === 0) {
           return res.status(400).json({ error: "No audio file payload received." });
         }
