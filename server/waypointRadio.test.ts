@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   WAYPOINT_RADIO_STATIONS,
   WAYPOINT_AMBIENT_CATEGORIES,
+  WAYPOINT_AMBIENT_PRESETS,
   ALL_WAYPOINT_RADIO_FOLDERS,
   DEFAULT_WAYPOINT_RADIO_SETTINGS,
   isOfficialRadioStationId,
@@ -96,5 +97,13 @@ describe("Waypoint Radio official station & audio library configuration", () => 
       "Coffee Shop",
       "Thunder",
     ]);
+    for (const cat of WAYPOINT_AMBIENT_CATEGORIES) {
+      expect(WAYPOINT_AMBIENT_PRESETS[cat.id]).toHaveLength(5);
+      expect(
+        WAYPOINT_AMBIENT_PRESETS[cat.id].some(
+          (p) => p.id === DEFAULT_WAYPOINT_RADIO_SETTINGS.ambientPresetByCategory[cat.id]
+        )
+      ).toBe(true);
+    }
   });
 });

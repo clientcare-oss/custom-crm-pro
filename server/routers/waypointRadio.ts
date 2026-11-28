@@ -114,6 +114,10 @@ async function loadRadioSettings(): Promise<WaypointRadioSettings> {
         ...DEFAULT_WAYPOINT_RADIO_SETTINGS.ambientDefaultVolumes,
         ...(parsed?.ambientDefaultVolumes || {}),
       },
+      ambientPresetByCategory: {
+        ...DEFAULT_WAYPOINT_RADIO_SETTINGS.ambientPresetByCategory,
+        ...(parsed?.ambientPresetByCategory || {}),
+      },
     };
   } catch {
     return { ...DEFAULT_WAYPOINT_RADIO_SETTINGS };
@@ -431,6 +435,16 @@ export const waypointRadioRouter = router({
             thunder: z.number().min(0).max(1),
           })
           .optional(),
+        ambientPresetByCategory: z
+          .object({
+            fan: z.string().min(1).max(60),
+            "rain-shower": z.string().min(1).max(60),
+            ocean: z.string().min(1).max(60),
+            train: z.string().min(1).max(60),
+            "coffee-shop": z.string().min(1).max(60),
+            thunder: z.string().min(1).max(60),
+          })
+          .optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -442,6 +456,10 @@ export const waypointRadioRouter = router({
         ambientDefaultVolumes: {
           ...current.ambientDefaultVolumes,
           ...(input.ambientDefaultVolumes || {}),
+        },
+        ambientPresetByCategory: {
+          ...current.ambientPresetByCategory,
+          ...(input.ambientPresetByCategory || {}),
         },
       };
 

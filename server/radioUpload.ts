@@ -39,7 +39,9 @@ function sanitizeAudioFileName(
   const base = trimmed
     .slice(0, lastDot)
     .replace(/[^a-zA-Z0-9 _.-]/g, "_")
+    .replace(/\.{2,}/g, ".")
     .replace(/\s+/g, " ")
+    .replace(/[. ]+$/g, "")
     .trim()
     .slice(0, 120);
   if (!base) return null;

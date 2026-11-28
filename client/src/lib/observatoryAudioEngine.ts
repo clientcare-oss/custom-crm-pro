@@ -11,9 +11,9 @@
  *    - Prevents multiple stations from playing simultaneously (except during intentional crossfade).
  *    - Respects employee Repeat ON / Repeat OFF preference cleanly.
  * 2. Zero ambient hum when silent & 6 independent seamless ambient channels:
- *    - Fan, Rain, Ocean, Train on Tracks (No Horn), Crickets (Tree icon), Thunder.
- *    - Uses uploaded seamless-crossfaded Ambient Sound MP3/WAV files when available, falling back
- *      to bespoke equal-power crossfaded stereo soundscapes (zero loop seam, zero horn on train).
+ *    - Fan, Rain, Ocean, Train on Tracks (No Horn), Coffee Shop (Mug icon), Thunder.
+ *    - Each channel supports 5 selectable built-in acoustic presets (hot-swapped live!) OR
+ *      custom uploaded MP3/WAV files with equal-power loop crossfading.
  */
 
 import {
@@ -26,26 +26,25 @@ import {
   type WaypointRadioTrack,
 } from "@shared/waypointRadio";
 import {
-  createSeamlessNoiseBuffer,
-  createTrainOnTracksBuffer,
-  createCoffeeShopBuffer,
-  createThunderBuffer,
+  createBuiltInAmbientSpec,
+  connectAmbientSpecChain,
   makeSeamlessLoopBuffer,
+  type BuiltInAmbientSpec,
 } from "./ambientSoundGenerators";
 
-export { makeSeamlessLoopBuffer };
+export { makeSeamlessLoopBuffer, createBuiltInAmbientSpec, connectAmbientSpecChain };
 
 export type FocusStationId = RadioStationId;
 export type FocusStationConfig = RadioStationDefinition;
 export const FOCUS_STATIONS = WAYPOINT_RADIO_STATIONS;
 
 export interface AmbianceLevels {
-  fan: number;        // Slider 1 — Steady Fan (Waypoint Radio/Ambient Sounds/Fan)
-  rain: number;       // Slider 2 — Rain Shower (Waypoint Radio/Ambient Sounds/Rain Shower)
-  ocean: number;      // Slider 3 — Ocean Waves (Waypoint Radio/Ambient Sounds/Ocean)
-  train: number;      // Slider 4 — Train on Tracks, No Horn (Waypoint Radio/Ambient Sounds/Train)
-  coffeeShop: number; // Slider 5 — Coffee Shop Café Ambience [Coffee Mug Icon] (Waypoint Radio/Ambient Sounds/Coffee Shop)
-  thunder: number;    // Slider 6 — Rolling Thunder (Waypoint Radio/Ambient Sounds/Thunder)
+  fan: number;
+  rain: number;
+  ocean: number;
+  train: number;
+  coffeeShop: number;
+  thunder: number;
 }
 
 export type AmbianceChannelKey = keyof AmbianceLevels;
@@ -66,15 +65,6 @@ const CHANNEL_TO_CATEGORY: Record<AmbianceChannelKey, AmbientCategoryId> = {
   train: "train",
   coffeeShop: "coffee-shop",
   thunder: "thunder",
-};
-
-const AMBIANCE_SYNTH_SCALE: Record<AmbianceChannelKey, number> = {
-  fan: 0.34,
-  rain: 0.24,
-  ocean: 0.32,
-  train: 0.36,
-  coffeeShop: 0.44,
-  thunder: 0.58,
 };
 
 export interface PlaybackStatusSnapshot {
@@ -112,8 +102,13 @@ export class ObservatoryAudioEngine {
   private announcementEl: HTMLAudioElement | null = null;
   private announcementSource: MediaElementAudioSourceNode | null = null;
 
-  // Built-in seamless ambient nodes
+  // Built-in preset ambient nodes (lazily created & live hot-swappable!)
+  private synthAmbianceSources = emptyChannelMap<AudioBufferSourceNode | null>(null);
   private synthAmbianceGains = emptyChannelMap<GainNode | null>(null);
+  private synthAmbianceScales = emptyChannelMap<number>(0.4);
+  private activePresetIds = emptyChannelMap<string>("");
+  private builtInSpecCache = new Map<string, BuiltInAmbientSpec>();
+
   // Custom uploaded seamless ambient audio buffer players
   private customAmbianceSources = emptyChannelMap<AudioBufferSourceNode | null>(null);
   private customAmbianceGains = emptyChannelMap<GainNode | null>(null);
@@ -164,7 +159,6 @@ export class ObservatoryAudioEngine {
     });
   }
 
-  /** Returns strictly ordered enabled music tracks for an official station (NEVER randomized) */
   public getStationMusicPlaylist(stationId: RadioStationId): WaypointRadioTrack[] {
     return this.allTracks
       .filter((t) => t.kind === "music" && t.stationId === stationId && t.enabled)
@@ -194,7 +188,15 @@ export class ObservatoryAudioEngine {
     return items.length > 0 ? items[items.length - 1].fileUrl : null;
   }
 
-  /** Sync live track catalog and playback settings WITHOUT interrupting currently playing audio */
+  private getConfiguredPresetId(channel: AmbianceChannelKey): string {
+    const cat = CHANNEL_TO_CATEGORY[channel];
+    return (
+      this.settings.ambientPresetByCategory?.[cat] ||
+      DEFAULT_WAYPOINT_RADIO_SETTINGS.ambientPresetByCategory[cat]
+    );
+  }
+
+  /** Sync live track catalog and playback/ambient preset settings WITHOUT interrupting music */
   public syncLibrary(tracks: WaypointRadioTrack[], settings: WaypointRadioSettings) {
     this.allTracks = tracks;
     this.settings = settings;
@@ -213,12 +215,19 @@ export class ObservatoryAudioEngine {
     }
 
     (Object.keys(CHANNEL_TO_CATEGORY) as AmbianceChannelKey[]).forEach((ch) => {
-      const nextUrl = this.getLatestEnabledAmbientUrl(CHANNEL_TO_CATEGORY[ch]);
-      if (nextUrl !== this.customAmbianceUrls[ch]) {
+      const cat = CHANNEL_TO_CATEGORY[ch];
+      const nextUrl = this.getLatestEnabledAmbientUrl(cat);
+      const urlChanged = nextUrl !== this.customAmbianceUrls[ch];
+      if (urlChanged) {
         this.customAmbianceUrls[ch] = nextUrl;
         if (this.levels[ch] > 0) {
           void this.refreshAmbientChannelPlayback(ch);
         }
+      }
+
+      const desiredPreset = this.getConfiguredPresetId(ch);
+      if (!this.customAmbianceUrls[ch] && this.activePresetIds[ch] && this.activePresetIds[ch] !== desiredPreset) {
+        this.rebuildBuiltInChannel(ch, desiredPreset);
       }
     });
 
@@ -241,7 +250,6 @@ export class ObservatoryAudioEngine {
     master.connect(ctx.destination);
     this.masterGain = master;
 
-    // Consistent perceived volume loudness leveler on Music Bus
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -16;
     comp.knee.value = 18;
@@ -256,7 +264,6 @@ export class ObservatoryAudioEngine {
     musicMaster.connect(master);
     this.musicMasterGain = musicMaster;
 
-    // Independent Announcement / Voiceover / Commercial Bus (NEVER faded)
     const annGain = ctx.createGain();
     annGain.gain.value = this.settings.announcementVolume;
     annGain.connect(master);
@@ -270,11 +277,48 @@ export class ObservatoryAudioEngine {
     this.announcementEl = annEl;
     this.announcementSource = annSource;
 
-    // Dual alternating music decks for smooth crossfades
     this.decks = [this.createDeck(ctx, comp), this.createDeck(ctx, comp)];
+  }
 
-    // Built-in seamless stereo soundscapes (Fan, Rain, Ocean, Train [No Horn], Crickets, Thunder)
-    this.initBuiltInAmbientChannels(ctx, master);
+  /** Lazily creates or live-swaps the built-in preset soundscape for a single ambient slider */
+  private rebuildBuiltInChannel(channel: AmbianceChannelKey, presetId: string) {
+    if (!this.ctx || !this.masterGain) return;
+
+    // Gracefully stop previous built-in source for this channel
+    if (this.synthAmbianceSources[channel]) {
+      try {
+        this.synthAmbianceSources[channel]!.stop();
+        this.synthAmbianceSources[channel]!.disconnect();
+      } catch {
+        // ignore
+      }
+      this.synthAmbianceSources[channel] = null;
+    }
+    if (this.synthAmbianceGains[channel]) {
+      try {
+        this.synthAmbianceGains[channel]!.disconnect();
+      } catch {
+        // ignore
+      }
+      this.synthAmbianceGains[channel] = null;
+    }
+
+    const cat = CHANNEL_TO_CATEGORY[channel];
+    const cacheKey = `${cat}:${presetId}`;
+    let spec = this.builtInSpecCache.get(cacheKey);
+    if (!spec) {
+      spec = createBuiltInAmbientSpec(this.ctx, cat, presetId);
+      this.builtInSpecCache.set(cacheKey, spec);
+    }
+
+    const targetGain = this.customAmbianceUrls[channel] ? 0 : this.levels[channel] * spec.scale;
+    const { source, gain } = connectAmbientSpecChain(this.ctx, spec, this.masterGain, 0);
+    gain.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.14);
+
+    this.synthAmbianceSources[channel] = source;
+    this.synthAmbianceGains[channel] = gain;
+    this.synthAmbianceScales[channel] = spec.scale;
+    this.activePresetIds[channel] = presetId;
   }
 
   private createDeck(ctx: AudioContext, dest: AudioNode): MusicDeck {
@@ -341,122 +385,6 @@ export class ObservatoryAudioEngine {
     return deck;
   }
 
-  private initBuiltInAmbientChannels(ctx: AudioContext, master: GainNode) {
-    // 1. Steady Box/Ceiling Fan Airflow (17s seamless brown/pink warmth — zero gusty wind)
-    const fanSrc = ctx.createBufferSource();
-    fanSrc.buffer = createSeamlessNoiseBuffer(ctx, 17, "brown", 2.5);
-    fanSrc.loop = true;
-    const fanLp = ctx.createBiquadFilter();
-    fanLp.type = "lowpass";
-    fanLp.frequency.value = 520;
-    const fanBody = ctx.createBiquadFilter();
-    fanBody.type = "peaking";
-    fanBody.frequency.value = 135;
-    fanBody.Q.value = 0.85;
-    fanBody.gain.value = 4.5;
-    const fanGain = ctx.createGain();
-    fanGain.gain.value = 0;
-    fanSrc.connect(fanLp);
-    fanLp.connect(fanBody);
-    fanBody.connect(fanGain);
-    fanGain.connect(master);
-    fanSrc.start();
-    this.synthAmbianceGains.fan = fanGain;
-
-    // 2. Rain Shower (13s seamless gentle rainfall)
-    const rainSrc = ctx.createBufferSource();
-    rainSrc.buffer = createSeamlessNoiseBuffer(ctx, 13, "pink", 2.5);
-    rainSrc.loop = true;
-    const rainHp = ctx.createBiquadFilter();
-    rainHp.type = "highpass";
-    rainHp.frequency.value = 340;
-    const rainLp = ctx.createBiquadFilter();
-    rainLp.type = "lowpass";
-    rainLp.frequency.value = 3400;
-    const rainGain = ctx.createGain();
-    rainGain.gain.value = 0;
-    rainSrc.connect(rainHp);
-    rainHp.connect(rainLp);
-    rainLp.connect(rainGain);
-    rainGain.connect(master);
-    rainSrc.start();
-    this.synthAmbianceGains.rain = rainGain;
-
-    // 3. Ocean Waves (19s seamless surf with slow rolling swell LFO)
-    const oceanSrc = ctx.createBufferSource();
-    oceanSrc.buffer = createSeamlessNoiseBuffer(ctx, 19, "brown", 3.0);
-    oceanSrc.loop = true;
-    const oceanFilter = ctx.createBiquadFilter();
-    oceanFilter.type = "lowpass";
-    oceanFilter.frequency.value = 380;
-    const oceanSwell = ctx.createGain();
-    oceanSwell.gain.value = 0.56;
-    const oceanLfo = ctx.createOscillator();
-    oceanLfo.frequency.value = 0.089;
-    const oceanLfoDepth = ctx.createGain();
-    oceanLfoDepth.gain.value = 0.28;
-    oceanLfo.connect(oceanLfoDepth);
-    oceanLfoDepth.connect(oceanSwell.gain);
-    const oceanGain = ctx.createGain();
-    oceanGain.gain.value = 0;
-    oceanSrc.connect(oceanFilter);
-    oceanFilter.connect(oceanSwell);
-    oceanSwell.connect(oceanGain);
-    oceanGain.connect(master);
-    oceanSrc.start();
-    oceanLfo.start();
-    this.synthAmbianceGains.ocean = oceanGain;
-
-    // 4. Train on Tracks — Strictly NO Horn (16s seamless rhythmic rail-joint cadence)
-    const trainSrc = ctx.createBufferSource();
-    trainSrc.buffer = createTrainOnTracksBuffer(ctx);
-    trainSrc.loop = true;
-    const trainLp = ctx.createBiquadFilter();
-    trainLp.type = "lowpass";
-    trainLp.frequency.value = 1450;
-    const trainGain = ctx.createGain();
-    trainGain.gain.value = 0;
-    trainSrc.connect(trainLp);
-    trainLp.connect(trainGain);
-    trainGain.connect(master);
-    trainSrc.start();
-    this.synthAmbianceGains.train = trainGain;
-
-    // 5. Coffee Shop / Ambient Café — Coffee Mug Icon (23s seamless warm café murmur & porcelain clinks)
-    const cafeSrc = ctx.createBufferSource();
-    cafeSrc.buffer = createCoffeeShopBuffer(ctx);
-    cafeSrc.loop = true;
-    const cafeHp = ctx.createBiquadFilter();
-    cafeHp.type = "highpass";
-    cafeHp.frequency.value = 180;
-    const cafeLp = ctx.createBiquadFilter();
-    cafeLp.type = "lowpass";
-    cafeLp.frequency.value = 3400;
-    const cafeGain = ctx.createGain();
-    cafeGain.gain.value = 0;
-    cafeSrc.connect(cafeHp);
-    cafeHp.connect(cafeLp);
-    cafeLp.connect(cafeGain);
-    cafeGain.connect(master);
-    cafeSrc.start();
-    this.synthAmbianceGains.coffeeShop = cafeGain;
-
-    // 6. Rolling Distant Thunder (29s seamless prime-length storm swells)
-    const thunderSrc = ctx.createBufferSource();
-    thunderSrc.buffer = createThunderBuffer(ctx);
-    thunderSrc.loop = true;
-    const thunderLp = ctx.createBiquadFilter();
-    thunderLp.type = "lowpass";
-    thunderLp.frequency.value = 240;
-    const thunderGain = ctx.createGain();
-    thunderGain.gain.value = 0;
-    thunderSrc.connect(thunderLp);
-    thunderLp.connect(thunderGain);
-    thunderGain.connect(master);
-    thunderSrc.start();
-    this.synthAmbianceGains.thunder = thunderGain;
-  }
-
   private wakeContext() {
     this.ensureContext();
     if (!this.ctx || !this.masterGain) return;
@@ -485,7 +413,6 @@ export class ObservatoryAudioEngine {
         return;
       }
       const el = this.announcementEl;
-      // NEVER fade or crossfade spoken announcements or commercials
       if (this.ctx && this.announcementGain) {
         const now = this.ctx.currentTime;
         this.announcementGain.gain.cancelScheduledValues(now);
@@ -596,9 +523,7 @@ export class ObservatoryAudioEngine {
       prevDeck.gain.gain.linearRampToValueAtTime(0, now + fadeOutSec);
       const oldEl = prevDeck.el;
       window.setTimeout(() => {
-        if (this.decks[this.activeDeckIdx] !== prevDeck) {
-          oldEl.pause();
-        }
+        if (this.decks[this.activeDeckIdx] !== prevDeck) oldEl.pause();
       }, Math.round((fadeOutSec + 0.15) * 1000));
     }
 
@@ -698,15 +623,21 @@ export class ObservatoryAudioEngine {
       if (this.customAmbianceGains[channel]) {
         this.customAmbianceGains[channel]!.gain.setTargetAtTime(0, now, 0.1);
       }
-      const synth = this.synthAmbianceGains[channel];
-      if (synth) {
-        synth.gain.setTargetAtTime(level * AMBIANCE_SYNTH_SCALE[channel], now, 0.12);
+      if (level > 0 && !this.synthAmbianceSources[channel]) {
+        this.rebuildBuiltInChannel(channel, this.getConfiguredPresetId(channel));
+      } else if (this.synthAmbianceGains[channel]) {
+        this.synthAmbianceGains[channel]!.gain.setTargetAtTime(
+          level * this.synthAmbianceScales[channel],
+          now,
+          0.12
+        );
       }
       return;
     }
 
-    const synth = this.synthAmbianceGains[channel];
-    if (synth) synth.gain.setTargetAtTime(0, now, 0.12);
+    if (this.synthAmbianceGains[channel]) {
+      this.synthAmbianceGains[channel]!.gain.setTargetAtTime(0, now, 0.12);
+    }
 
     try {
       let buf = this.decodedAmbientCache.get(url);
@@ -734,10 +665,8 @@ export class ObservatoryAudioEngine {
       this.customAmbianceSources[channel] = src;
       gain.gain.setTargetAtTime(this.levels[channel] * 0.75, this.ctx.currentTime, 0.15);
     } catch (err) {
-      console.warn(`[WaypointRadio] Failed to decode custom ambience ${url}, using built-in loop:`, err);
-      if (synth && this.ctx) {
-        synth.gain.setTargetAtTime(this.levels[channel] * AMBIANCE_SYNTH_SCALE[channel], this.ctx.currentTime, 0.12);
-      }
+      console.warn(`[WaypointRadio] Failed to decode custom ambience ${url}, using built-in preset:`, err);
+      this.rebuildBuiltInChannel(channel, this.getConfiguredPresetId(channel));
     }
   }
 
@@ -755,13 +684,18 @@ export class ObservatoryAudioEngine {
         } else if (this.customAmbianceGains[channel]) {
           this.customAmbianceGains[channel]!.gain.setTargetAtTime(clamped * 0.75, now, 0.12);
         }
-        const synth = this.synthAmbianceGains[channel];
-        if (synth) synth.gain.setTargetAtTime(0, now, 0.1);
+        this.synthAmbianceGains[channel]?.gain.setTargetAtTime(0, now, 0.1);
       } else {
-        const synth = this.synthAmbianceGains[channel];
-        if (synth) {
-          synth.gain.cancelScheduledValues(now);
-          synth.gain.setTargetAtTime(clamped * AMBIANCE_SYNTH_SCALE[channel], now, 0.12);
+        const desiredPreset = this.getConfiguredPresetId(channel);
+        if (clamped > 0 && (!this.synthAmbianceSources[channel] || this.activePresetIds[channel] !== desiredPreset)) {
+          this.rebuildBuiltInChannel(channel, desiredPreset);
+        } else if (this.synthAmbianceGains[channel]) {
+          this.synthAmbianceGains[channel]!.gain.cancelScheduledValues(now);
+          this.synthAmbianceGains[channel]!.gain.setTargetAtTime(
+            clamped * this.synthAmbianceScales[channel],
+            now,
+            0.12
+          );
         }
       }
     }
@@ -820,10 +754,12 @@ export class ObservatoryAudioEngine {
     (Object.keys(this.customAmbianceSources) as AmbianceChannelKey[]).forEach((ch) => {
       try {
         this.customAmbianceSources[ch]?.stop();
+        this.synthAmbianceSources[ch]?.stop();
       } catch {
         // ignore
       }
       this.customAmbianceSources[ch] = null;
+      this.synthAmbianceSources[ch] = null;
     });
     if (this.ctx) {
       void this.ctx.close();

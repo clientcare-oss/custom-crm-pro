@@ -491,7 +491,7 @@ export function ObservatoryMetalLabels() {
         className="wp-ws-metal-engraved"
         style={{
           left: "47.2%",
-          top: "34.4%",
+          top: "34.65%",
           width: "13.2%",
           height: "3.7%",
           fontSize: "1.34cqw",
@@ -516,15 +516,16 @@ export function ObservatoryMetalLabels() {
         AMBIANCE CONTROLS
       </div>
 
-      {/* 4. STATION SELECT — Razor-Sharp Curved Gold SVG Arc Above Rotary Brass Knob */}
+      {/* 4. STATION SELECT — Razor-Sharp Curved Gold SVG Arc Anchored Tightly Above Rotary Brass Knob */}
       <svg
         viewBox="0 0 160 88"
+        preserveAspectRatio="xMidYMax meet"
         className="absolute pointer-events-none overflow-visible"
         style={{
           left: "69.5%",
-          top: "35.8%",
+          top: "37.4%",
           width: "10.7%",
-          height: "11.2%",
+          height: "8.8%",
           filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.96))",
         }}
       >

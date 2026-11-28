@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { Volume2, VolumeX, Clock, Power, Settings, Repeat } from "lucide-react";
+import { Volume2, VolumeX, Power, Settings, Repeat } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -263,7 +263,7 @@ export default function MyWorkstation() {
             }
             aria-label={`Playlist repeat ${repeatEnabled ? "enabled" : "disabled"}`}
           >
-            <Repeat className="w-[0.9cqw] h-[0.9cqw]" />
+            <Repeat className="w-[1.45cqh] h-[1.45cqh]" />
           </button>
 
           {/* ── 2B. CLEAR MASTER RADIO OFF BUTTON (Shuts down Music + All 4 Ambient Sounds) ── */}
@@ -277,7 +277,7 @@ export default function MyWorkstation() {
             aria-label="Turn Focus Radio Off"
           >
             <span className="wp-ws-off-led" aria-hidden="true" />
-            <Power className="w-[0.78cqw] h-[0.78cqw] shrink-0" />
+            <Power className="w-[1.32cqh] h-[1.32cqh] shrink-0" />
             <span>OFF</span>
           </button>
 
@@ -291,7 +291,7 @@ export default function MyWorkstation() {
               title="Waypoint Radio Settings (Admin)"
               aria-label="Open Waypoint Radio Settings"
             >
-              <Settings className="w-[0.92cqw] h-[0.92cqw]" />
+              <Settings className="w-[1.48cqh] h-[1.48cqh]" />
             </button>
           )}
 
@@ -373,17 +373,10 @@ export default function MyWorkstation() {
 
           {/* ── 5. LOWER EMPLOYEE ARRIVAL INTERACTIVE BRASS CARDS ── */}
           {/* Card 1: TIME CLOCK — Opens Employee Time Clock (PG-055) with Live Shift Status */}
-          <div
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             onClick={() => setLocation("/my-workstation/time-clock")}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setLocation("/my-workstation/time-clock");
-              }
-            }}
-            className="wp-ws-arrival-hitbox group"
+            className="wp-ws-arrival-hitbox"
             style={{ left: "7.4%", top: "71.8%", width: "25.8%", height: "19.8%" }}
             title="Open Employee Time Clock (PG-055)"
           >
@@ -416,20 +409,7 @@ export default function MyWorkstation() {
                 <div className="wp-ws-arrival-sub">Begin Your Shift</div>
               )}
             </div>
-            {/* Subtle corner link to full Timesheet log (appears cleanly on hover) */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setLocation("/crew-quarters?tab=timesheet");
-              }}
-              className="absolute right-[3.8%] top-[24%] p-[0.28cqw] rounded-full text-[#C8B282]/80 opacity-0 group-hover:opacity-100 hover:text-[#FFF3CC] hover:bg-white/10 transition-all cursor-pointer"
-              title="Open Full Timesheet & Hours Log (PG-038-TIM)"
-              aria-label="Open Full Timesheet"
-            >
-              <Clock className="w-[0.95cqw] h-[0.95cqw]" />
-            </button>
-          </div>
+          </button>
 
           {/* Card 2: WORKSTATION — Enter Your Workspace (Employee Workstation Zone PG-053) */}
           <button

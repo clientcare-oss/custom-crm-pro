@@ -11,11 +11,15 @@ import {
   CheckCircle2,
   AlertCircle,
   Waves,
+  Check,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import {
   WAYPOINT_AMBIENT_CATEGORIES,
+  WAYPOINT_AMBIENT_PRESETS,
+  DEFAULT_WAYPOINT_RADIO_SETTINGS,
   type AmbientCategoryId,
   type WaypointRadioSettings,
   type WaypointRadioTrack,
@@ -25,7 +29,11 @@ import {
   formatAudioDuration,
   formatAudioFileSize,
 } from "@/lib/radioAudioUpload";
-import { makeSeamlessLoopBuffer } from "@/lib/observatoryAudioEngine";
+import {
+  makeSeamlessLoopBuffer,
+  createBuiltInAmbientSpec,
+  connectAmbientSpecChain,
+} from "@/lib/observatoryAudioEngine";
 
 interface AmbienceTabProps {
   tracks: WaypointRadioTrack[];
@@ -34,20 +42,25 @@ interface AmbienceTabProps {
 }
 
 export function RadioAmbienceTab({ tracks, settings, onLibraryChanged }: AmbienceTabProps) {
-  const [selectedCategory, setSelectedCategory] = useState<AmbientCategoryId>("fan");
+  const [selectedCategory, setSelectedCategory] = useState<AmbientCategoryId>("coffee-shop");
   const [volumes, setVolumes] = useState<Record<AmbientCategoryId, number>>(
     settings.ambientDefaultVolumes
+  );
+  const [selectedPresets, setSelectedPresets] = useState<Record<AmbientCategoryId, string>>(
+    settings.ambientPresetByCategory || DEFAULT_WAYPOINT_RADIO_SETTINGS.ambientPresetByCategory
   );
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [banner, setBanner] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // Seamless Web Audio loop preview state
+  // Seamless Web Audio loop preview state (works for both uploaded custom files AND the 5 built-in presets!)
   const [loopPreviewTrackId, setLoopPreviewTrackId] = useState<number | null>(null);
+  const [previewPresetKey, setPreviewPresetKey] = useState<string | null>(null);
   const [isDecodingLoop, setIsDecodingLoop] = useState(false);
   const loopCtxRef = useRef<AudioContext | null>(null);
   const loopSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const loopGainRef = useRef<GainNode | null>(null);
+  const loopScaleRef = useRef<number>(0.85);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement | null>(null);
@@ -60,6 +73,9 @@ export function RadioAmbienceTab({ tracks, settings, onLibraryChanged }: Ambienc
 
   useEffect(() => {
     setVolumes(settings.ambientDefaultVolumes);
+    setSelectedPresets(
+      settings.ambientPresetByCategory || DEFAULT_WAYPOINT_RADIO_SETTINGS.ambientPresetByCategory
+    );
   }, [settings]);
 
   const stopSeamlessPreview = () => {
@@ -75,6 +91,7 @@ export function RadioAmbienceTab({ tracks, settings, onLibraryChanged }: Ambienc
       loopGainRef.current = null;
     }
     setLoopPreviewTrackId(null);
+    setPreviewPresetKey(null);
     setIsDecodingLoop(false);
   };
 
@@ -86,9 +103,52 @@ export function RadioAmbienceTab({ tracks, settings, onLibraryChanged }: Ambienc
   useEffect(() => {
     if (loopGainRef.current && loopCtxRef.current) {
       const vol = volumes[selectedCategory] ?? 0.55;
-      loopGainRef.current.gain.setTargetAtTime(vol * 0.85, loopCtxRef.current.currentTime, 0.08);
+      loopGainRef.current.gain.setTargetAtTime(
+        vol * loopScaleRef.current,
+        loopCtxRef.current.currentTime,
+        0.08
+      );
     }
   }, [volumes, selectedCategory]);
+
+  const toggleBuiltInPresetPreview = (category: AmbientCategoryId, presetId: string) => {
+    const key = `${category}:${presetId}`;
+    if (previewPresetKey === key) {
+      stopSeamlessPreview();
+      return;
+    }
+    stopSeamlessPreview();
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioCtx();
+      loopCtxRef.current = ctx;
+      const spec = createBuiltInAmbientSpec(ctx, category, presetId);
+      loopScaleRef.current = spec.scale * 1.15;
+      const vol = Math.max(0.25, volumes[category] ?? 0.55);
+      const { source, gain } = connectAmbientSpecChain(ctx, spec, ctx.destination, vol * loopScaleRef.current);
+      loopSourceRef.current = source;
+      loopGainRef.current = gain;
+      setPreviewPresetKey(key);
+    } catch {
+      stopSeamlessPreview();
+      toast.error("Could not start built-in sound preview.");
+    }
+  };
+
+  const handleSelectBuiltInPreset = async (category: AmbientCategoryId, presetId: string) => {
+    const nextPresets = { ...selectedPresets, [category]: presetId };
+    setSelectedPresets(nextPresets);
+    try {
+      await updateSettingsMutation.mutateAsync({
+        ambientPresetByCategory: nextPresets,
+      });
+      onLibraryChanged();
+      const preset = WAYPOINT_AMBIENT_PRESETS[category].find((p) => p.id === presetId);
+      toast.success(`Set ${categoryDef.name} sound to "${preset?.name ?? presetId}".`);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to save ambient sound choice.");
+    }
+  };
 
   const categoryDef = useMemo(
     () => WAYPOINT_AMBIENT_CATEGORIES.find((c) => c.id === selectedCategory) || WAYPOINT_AMBIENT_CATEGORIES[0],
@@ -124,6 +184,7 @@ export function RadioAmbienceTab({ tracks, settings, onLibraryChanged }: Ambienc
       src.buffer = seamlessBuf;
       src.loop = true;
 
+      loopScaleRef.current = 0.85;
       const gain = ctx.createGain();
       gain.gain.value = (volumes[selectedCategory] ?? 0.55) * 0.85;
       src.connect(gain);
@@ -230,11 +291,106 @@ export function RadioAmbienceTab({ tracks, settings, onLibraryChanged }: Ambienc
         })}
       </div>
 
-      {/* 2. Selected Category Controls: Folder, Upload & Default Volume */}
+      {/* 2. Built-In Sound Variations (5 Curated Presets to Audition & Pick Per Channel) */}
+      <div className="rounded-lg bg-[#05102E] border border-[#C5A059]/30 p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#DFBE77]" />
+              <h3 className="font-serif text-base font-semibold text-[#FFF4D4]">
+                {categoryDef.name} — 5 Built-In Sounds to Test
+              </h3>
+            </div>
+            <p className="text-[11px] text-[#9AA9C5] mt-0.5">
+              Click <span className="text-[#DFBE77]">Test</span> to preview any variation in seamless stereo, then click <span className="text-[#DFBE77]">Use Sound</span> to assign it to the radio slider.
+              {categoryTracks.length > 0 && " (Your uploaded custom audio below overrides built-in presets while enabled.)"}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          {WAYPOINT_AMBIENT_PRESETS[selectedCategory].map((preset, idx) => {
+            const activePreset =
+              selectedPresets[selectedCategory] ||
+              DEFAULT_WAYPOINT_RADIO_SETTINGS.ambientPresetByCategory[selectedCategory];
+            const isSelected = activePreset === preset.id;
+            const isTesting = previewPresetKey === `${selectedCategory}:${preset.id}`;
+
+            return (
+              <div
+                key={preset.id}
+                className={`flex flex-wrap items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg border transition-colors ${
+                  isSelected
+                    ? "bg-[#0D1E42] border-[#C5A059] text-[#FFF4D4]"
+                    : "bg-[#030B24] border-[#C5A059]/20 text-[#D8E2F4] hover:border-[#C5A059]/45"
+                }`}
+              >
+                <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                  <span className="font-mono text-xs font-bold text-[#C5A059] mt-0.5 shrink-0">
+                    0{idx + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold text-[#FFF4D4]">{preset.name}</div>
+                    <div className="text-[11px] text-[#9AA9C5]">{preset.description}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => toggleBuiltInPresetPreview(selectedCategory, preset.id)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold border transition-colors cursor-pointer ${
+                      isTesting
+                        ? "bg-[#C5A059] border-[#FFE394] text-[#050D24]"
+                        : "bg-[#000820] border-[#C5A059]/40 text-[#DFBE77] hover:border-[#DFBE77]"
+                    }`}
+                  >
+                    {isTesting ? (
+                      <>
+                        <Square className="w-3 h-3 fill-current" />
+                        Stop
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3 h-3 fill-current" />
+                        Test
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isSelected || updateSettingsMutation.isPending}
+                    onClick={() => void handleSelectBuiltInPreset(selectedCategory, preset.id)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold border transition-colors ${
+                      isSelected
+                        ? "bg-emerald-950/60 border-emerald-500/50 text-emerald-300 cursor-default"
+                        : "bg-[#0A1A3D] border-[#C5A059]/35 text-[#F4EBD6] hover:border-[#DFBE77] cursor-pointer"
+                    }`}
+                  >
+                    {isSelected ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        Active
+                      </>
+                    ) : (
+                      "Use Sound"
+                    )}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. Selected Category Custom Upload & Default Volume */}
       <div className="rounded-lg bg-[#05102E] border border-[#C5A059]/25 p-4 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-serif text-base font-semibold text-[#FFF4D4]">{categoryDef.name}</h3>
+            <h3 className="font-serif text-sm font-semibold text-[#FFF4D4]">
+              Custom {categoryDef.name} Audio Override (Optional)
+            </h3>
             <p className="text-xs font-mono text-[#8B9BB8]">Folder: {categoryDef.folder}/</p>
           </div>
           <div>

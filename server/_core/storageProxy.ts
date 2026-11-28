@@ -35,7 +35,8 @@ export async function authorizeStorageKeyAccess(
   key: string
 ): Promise<{ status: 200 | 401 | 403; message?: string }> {
   const cleanKey = String(key || "").replace(/^\/+/, "");
-  if (!cleanKey || cleanKey.includes("..")) {
+  const hasTraversalSegment = cleanKey.split(/[\\/]/).some((seg) => seg === "..");
+  if (!cleanKey || hasTraversalSegment) {
     return { status: 403, message: "Invalid storage key" };
   }
 
@@ -171,10 +172,16 @@ export async function authorizeStorageKeyAccess(
 
 export function registerStorageProxy(app: Express) {
   const handler = async (req: any, res: any) => {
-    const key = (req.params as Record<string, string>)[0];
-    if (!key) {
+    const rawKey = (req.params as Record<string, string>)[0];
+    if (!rawKey) {
       res.status(400).send("Missing storage key");
       return;
+    }
+    let key = rawKey;
+    try {
+      key = decodeURIComponent(rawKey);
+    } catch {
+      key = rawKey;
     }
 
     const authResult = await authorizeStorageKeyAccess(req, res, key);
@@ -184,9 +191,14 @@ export function registerStorageProxy(app: Express) {
     }
 
     try {
-      // 0. Check local disk in uploads/
-      const localFilePath = path.resolve(process.cwd(), "uploads", key);
-      if (fs.existsSync(localFilePath) && fs.statSync(localFilePath).isFile()) {
+      // 0. Check local disk in uploads/ (strictly confined inside uploads directory)
+      const uploadsRoot = path.resolve(process.cwd(), "uploads");
+      const localFilePath = path.resolve(uploadsRoot, key);
+      if (
+        localFilePath.startsWith(uploadsRoot + path.sep) &&
+        fs.existsSync(localFilePath) &&
+        fs.statSync(localFilePath).isFile()
+      ) {
         const ext = path.extname(localFilePath).toLowerCase();
         const mimeTypes: Record<string, string> = {
           ".pdf": "application/pdf",

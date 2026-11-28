@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ArrowRightLeft, AlertTriangle, Play, Square } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -14,74 +15,189 @@ interface MoveToStationButtonProps {
   onMoved: () => void;
 }
 
-/** Compact inline control to reassign any song or announcement to one of the 5 official stations */
+/** Compact inline control to reassign any song or announcement to any official station or category (portal-rendered so never clipped) */
 export function MoveToStationButton({ track, onMoved }: MoveToStationButtonProps) {
   const [open, setOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number }>({
+    top: 0,
+    right: 0,
+  });
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const moveMutation = trpc.waypointRadio.moveTrack.useMutation();
 
-  const handleMoveTo = async (targetStationId: RadioStationId) => {
+  const updateMenuPosition = () => {
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const estimatedMenuHeight = 320;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const rightOffset = Math.max(12, window.innerWidth - rect.right);
+    if (spaceBelow < estimatedMenuHeight && rect.top > spaceBelow) {
+      setMenuPos({
+        bottom: window.innerHeight - rect.top + 6,
+        right: rightOffset,
+      });
+    } else {
+      setMenuPos({
+        top: rect.bottom + 6,
+        right: rightOffset,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    updateMenuPosition();
+    const onPointerDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    const onScrollOrResize = () => updateMenuPosition();
+
+    window.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onScrollOrResize);
+    window.addEventListener("scroll", onScrollOrResize, true);
+    return () => {
+      window.removeEventListener("mousedown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onScrollOrResize);
+      window.removeEventListener("scroll", onScrollOrResize, true);
+    };
+  }, [open]);
+
+  const handleMoveTo = async (
+    targetStationId: RadioStationId | null,
+    targetKind?: "music" | "announcement" | "commercial" | "general_announcement"
+  ) => {
     setOpen(false);
-    if (track.stationId === targetStationId) return;
+    if (track.stationId === targetStationId && (!targetKind || targetKind === track.kind)) return;
     const dest = WAYPOINT_RADIO_STATIONS.find((s) => s.id === targetStationId);
     try {
       await moveMutation.mutateAsync({
         id: track.id,
         targetStationId,
+        targetKind,
       });
       onMoved();
-      toast.success(
-        `Moved "${track.title}" to ${dest?.name ?? targetStationId} (${dest?.frequency ?? ""}).`
-      );
+      const destLabel =
+        targetKind === "commercial"
+          ? "Commercials"
+          : targetKind === "general_announcement"
+            ? "General Announcements"
+            : `${dest?.name ?? targetStationId} (${
+                (targetKind || track.kind) === "announcement" ? "Announcements" : "Music"
+              })`;
+      toast.success(`Moved "${track.title}" to ${destLabel}.`);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to move audio to station.");
+      toast.error(err?.message || "Failed to move audio.");
     }
   };
 
   return (
     <div className="relative">
       <button
+        ref={btnRef}
         type="button"
         disabled={moveMutation.isPending}
         onClick={() => setOpen((v) => !v)}
-        className="p-1.5 rounded text-[#9AA9C5] hover:text-[#DFBE77] hover:bg-white/5 cursor-pointer"
-        title="Move audio to another official station"
+        className={`p-1.5 rounded transition-colors cursor-pointer ${
+          open
+            ? "text-[#FFF4D4] bg-[#C5A059]/25"
+            : "text-[#9AA9C5] hover:text-[#DFBE77] hover:bg-white/5"
+        }`}
+        title="Move audio to another station or category"
       >
         <ArrowRightLeft className="w-3.5 h-3.5" />
       </button>
 
-      {open && (
-        <div
-          className="absolute right-0 top-full mt-1 z-30 w-52 rounded-lg bg-[#040E2A] border border-[#C5A059]/45 shadow-[0_12px_32px_rgba(0,0,0,0.9)] py-1"
-          onMouseLeave={() => setOpen(false)}
-        >
-          <div className="px-2.5 py-1 text-[10px] uppercase tracking-wider font-semibold text-[#C5A059] border-b border-[#C5A059]/20">
-            Move to Official Station
-          </div>
-          {WAYPOINT_RADIO_STATIONS.map((st) => {
-            const isCurrent = track.stationId === st.id;
-            return (
-              <button
-                key={st.id}
-                type="button"
-                disabled={isCurrent}
-                onClick={() => void handleMoveTo(st.id)}
-                className={`w-full px-2.5 py-1.5 text-left text-xs flex items-center justify-between transition-colors ${
-                  isCurrent
-                    ? "text-[#7A8AA8] bg-white/[0.03] cursor-default"
-                    : "text-[#F4EBD6] hover:bg-[#0D1E42] hover:text-[#FFF4D4] cursor-pointer"
-                }`}
-              >
-                <span className="truncate font-medium">
-                  0{st.order} · {st.name}
-                </span>
-                <span className="text-[10px] font-mono text-[#DFBE77] ml-2 shrink-0">
-                  {st.shortFrequency}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {open &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: "fixed",
+              top: menuPos.top,
+              bottom: menuPos.bottom,
+              right: menuPos.right,
+            }}
+            className="z-[160] w-60 max-h-[80vh] overflow-y-auto rounded-lg bg-[#040E2A] border border-[#C5A059]/55 shadow-[0_18px_48px_rgba(0,0,0,0.95)] py-1.5 text-[#F4EBD6]"
+          >
+            <div className="px-3 py-1 text-[10px] uppercase tracking-wider font-semibold text-[#C5A059] border-b border-[#C5A059]/20">
+              Move to Official Station
+            </div>
+            {WAYPOINT_RADIO_STATIONS.map((st) => {
+              const isCurrent = track.stationId === st.id;
+              return (
+                <button
+                  key={st.id}
+                  type="button"
+                  disabled={isCurrent}
+                  onClick={() => void handleMoveTo(st.id)}
+                  className={`w-full px-3 py-1.5 text-left text-xs flex items-center justify-between transition-colors ${
+                    isCurrent
+                      ? "text-[#7A8AA8] bg-white/[0.03] cursor-default"
+                      : "text-[#F4EBD6] hover:bg-[#0D1E42] hover:text-[#FFF4D4] cursor-pointer"
+                  }`}
+                >
+                  <span className="truncate font-medium">
+                    0{st.order} · {st.name}
+                  </span>
+                  <span className="text-[10px] font-mono text-[#DFBE77] ml-2 shrink-0">
+                    {st.shortFrequency}
+                  </span>
+                </button>
+              );
+            })}
+
+            {(track.kind === "music" || track.kind === "announcement") && track.stationId && (
+              <>
+                <div className="px-3 py-1 mt-1 text-[10px] uppercase tracking-wider font-semibold text-[#C5A059] border-t border-b border-[#C5A059]/20">
+                  Switch Category
+                </div>
+                {track.kind === "music" ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void handleMoveTo(track.stationId as RadioStationId, "announcement")
+                    }
+                    className="w-full px-3 py-1.5 text-left text-xs font-medium text-[#F5D88B] hover:bg-[#0D1E42] cursor-pointer"
+                  >
+                    Move to Station Announcements
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void handleMoveTo(track.stationId as RadioStationId, "music")}
+                    className="w-full px-3 py-1.5 text-left text-xs font-medium text-[#F5D88B] hover:bg-[#0D1E42] cursor-pointer"
+                  >
+                    Move to Station Music
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => void handleMoveTo(null, "general_announcement")}
+                  className="w-full px-3 py-1.5 text-left text-xs text-[#D5E0F5] hover:bg-[#0D1E42] cursor-pointer"
+                >
+                  Move to General Announcements
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleMoveTo(null, "commercial")}
+                  className="w-full px-3 py-1.5 text-left text-xs text-[#D5E0F5] hover:bg-[#0D1E42] cursor-pointer"
+                >
+                  Move to Commercials
+                </button>
+              </>
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

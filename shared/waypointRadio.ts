@@ -153,6 +153,12 @@ export interface AmbientCategoryDefinition {
   folder: string;
 }
 
+export interface AmbientPresetOption {
+  id: string;
+  name: string;
+  description: string;
+}
+
 export const WAYPOINT_AMBIENT_CATEGORIES: AmbientCategoryDefinition[] = [
   { id: "fan", name: "Fan", folder: "Waypoint Radio/Ambient Sounds/Fan" },
   { id: "rain-shower", name: "Rain", folder: "Waypoint Radio/Ambient Sounds/Rain Shower" },
@@ -161,6 +167,51 @@ export const WAYPOINT_AMBIENT_CATEGORIES: AmbientCategoryDefinition[] = [
   { id: "coffee-shop", name: "Coffee Shop", folder: "Waypoint Radio/Ambient Sounds/Coffee Shop" },
   { id: "thunder", name: "Thunder", folder: "Waypoint Radio/Ambient Sounds/Thunder" },
 ];
+
+export const WAYPOINT_AMBIENT_PRESETS: Record<AmbientCategoryId, AmbientPresetOption[]> = {
+  fan: [
+    { id: "box-fan", name: "Classic Box Fan", description: "Steady, velvety low-mid bedroom box fan airflow." },
+    { id: "ceiling-fan", name: "Slow Ceiling Fan", description: "Wide airy overhead breeze with gentle rhythmic blade whoosh." },
+    { id: "desk-fan", name: "Crisp Desk Fan", description: "Lighter, brighter compact metal desk fan for crisp focus." },
+    { id: "oscillating-fan", name: "Oscillating Stand Fan", description: "Soft airflow sweeping gently left-to-right across stereo." },
+    { id: "heavy-air-purifier", name: "Deep Air Purifier", description: "Ultra-deep, smooth brown-noise HEPA rumble with zero hiss." },
+  ],
+  "rain-shower": [
+    { id: "gentle-shower", name: "Steady Rain Shower", description: "Balanced continuous soft outdoor rainfall." },
+    { id: "rain-on-roof", name: "Rain on Cabin Roof", description: "Warm resonant patter of rain tapping a sheltered wooden roof." },
+    { id: "window-drizzle", name: "Soft Window Drizzle", description: "Delicate light mist and fine raindrops against glass." },
+    { id: "heavy-downpour", name: "Cozy Heavy Downpour", description: "Full, lush rainstorm masking for deep concentration." },
+    { id: "rain-in-leaves", name: "Forest Canopy Rain", description: "Soft organic rain pattering gently through leafy trees." },
+  ],
+  ocean: [
+    { id: "calm-shoreline", name: "Calm Night Shoreline", description: "Gentle curling waves with long silky receding foam wash." },
+    { id: "deep-swell", name: "Slow Deep Ocean Swell", description: "Unhurried heavy 15-second coastal rollers with warm bass undertow." },
+    { id: "lively-surf", name: "Breezy Coastal Surf", description: "Crisper rolling beach breakers with bright frothy surf." },
+    { id: "harbor-lapping", name: "Quiet Harbor Lapping", description: "Soft small waves gently lapping against a wooden pier." },
+    { id: "distant-cliffs", name: "Distant Cliffside Surf", description: "Muffled deep ocean roar heard from a cozy lighthouse room." },
+  ],
+  train: [
+    { id: "luxury-sleeper", name: "Slow Luxury Sleeper", description: "Unhurried 2.2s cushioned Pullman rail cadence (no horn)." },
+    { id: "night-express", name: "Steady Night Express", description: "Classic 1.55s smooth sleeper-car rail rhythm (no horn)." },
+    { id: "ultra-slow-freight", name: "Ultra-Slow Coastal Glide", description: "Lazy, hypnotic 3.0s coasting cadence with pillowed rail joints." },
+    { id: "wooden-carriage", name: "Vintage Wooden Carriage", description: "Warm hollow wood-car acoustics with gentle carriage sway." },
+    { id: "rainy-sleeper", name: "Rainy Night Train Cabin", description: "Slow sleeper train blended with soft rain on the cabin window." },
+  ],
+  "coffee-shop": [
+    { id: "cozy-corner", name: "Quiet Corner Table", description: "Hushed boutique café murmur with warm wood-room acoustics and rare soft cup clinks." },
+    { id: "morning-espresso", name: "Morning Espresso Bar", description: "Lively artisanal coffee bar with chatter, porcelain saucer clinks, spoon stirs, and milk steamer." },
+    { id: "rainy-window", name: "Rainy Café Window", description: "Sheltered cozy coffeehouse murmur paired with gentle rain tapping outside the glass." },
+    { id: "late-night-bistro", name: "Late-Night Quiet Bistro", description: "Sparse, intimate low-key evening café murmur with soft glassy clinks for deep focus." },
+    { id: "fireplace-cafe", name: "Hearthside Coffeehouse", description: "Warm rustic café ambience blended with gentle fireplace crackles and occasional mug stirs." },
+  ],
+  thunder: [
+    { id: "distant-rolling", name: "Distant Rolling Storm", description: "Balanced horizon thunderclaps with warm cloud-valley echoes." },
+    { id: "deep-rumble", name: "Deep Sub-Bass Rumble", description: "Ultra-warm sleepy low-frequency far-off storm grumbles, zero sharp cracks." },
+    { id: "approaching-storm", name: "Approaching Squall", description: "Richer mid-low sky cracks followed by wide booming stereo echoes." },
+    { id: "sparse-far-thunder", name: "Far-Off Quiet Thunder", description: "Occasional, widely spaced gentle distant sky rumbles." },
+    { id: "storm-with-rain", name: "Thunder & Shelter Rain", description: "Rolling distant thunder layered seamlessly with a gentle rain curtain." },
+  ],
+};
 
 export const ALL_WAYPOINT_RADIO_FOLDERS: string[] = [
   ...WAYPOINT_RADIO_STATIONS.flatMap((s) => [s.musicFolder, s.announcementsFolder]),
@@ -201,6 +252,7 @@ export interface WaypointRadioSettings {
   announcementEveryNSongs: number; // 0 = disabled
   commercialEveryNSongs: number;   // 0 = disabled
   ambientDefaultVolumes: Record<AmbientCategoryId, number>;
+  ambientPresetByCategory: Record<AmbientCategoryId, string>;
 }
 
 export const DEFAULT_WAYPOINT_RADIO_SETTINGS: WaypointRadioSettings = {
@@ -219,6 +271,14 @@ export const DEFAULT_WAYPOINT_RADIO_SETTINGS: WaypointRadioSettings = {
     train: 0.5,
     "coffee-shop": 0.5,
     thunder: 0.55,
+  },
+  ambientPresetByCategory: {
+    fan: "box-fan",
+    "rain-shower": "gentle-shower",
+    ocean: "calm-shoreline",
+    train: "luxury-sleeper",
+    "coffee-shop": "cozy-corner",
+    thunder: "distant-rolling",
   },
 };
 
