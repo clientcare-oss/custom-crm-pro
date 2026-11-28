@@ -29,19 +29,31 @@ export async function loadContactByIdSafe(contactId: number): Promise<any | null
   if (inMemoryContacts.has(contactId)) {
     return inMemoryContacts.get(contactId) || null;
   }
-  const rows = await _execDnsSelectInternal(
-    `SELECT * FROM contacts WHERE id = ? LIMIT 1`,
-    [contactId]
-  );
-  return rows[0] || null;
+  try {
+    const rows = await _execDnsSelectInternal(
+      `SELECT * FROM contacts WHERE id = ? LIMIT 1`,
+      [contactId]
+    );
+    return rows[0] || null;
+  } catch (err: any) {
+    const msg = String(err?.message || err || "");
+    if (msg.includes("no such table")) return null;
+    throw err;
+  }
 }
 
 export async function loadHouseholdContactsSafe(anchorContactId: number): Promise<any[]> {
   if (!anchorContactId || anchorContactId <= 0) return [];
-  const dbRows = await _execDnsSelectInternal(
-    `SELECT * FROM contacts WHERE id = ? OR parentContactId = ?`,
-    [anchorContactId, anchorContactId]
-  );
+  let dbRows: any[] = [];
+  try {
+    dbRows = await _execDnsSelectInternal(
+      `SELECT * FROM contacts WHERE id = ? OR parentContactId = ?`,
+      [anchorContactId, anchorContactId]
+    );
+  } catch (err: any) {
+    const msg = String(err?.message || err || "");
+    if (!msg.includes("no such table")) throw err;
+  }
   const byId = new Map<number, any>();
   for (const r of dbRows) {
     byId.set(Number(r.id), r);
