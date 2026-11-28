@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import {
   ObservatoryAudioEngine,
   FOCUS_STATIONS,
@@ -6,38 +8,75 @@ import {
   type FocusStationId,
   type FocusStationConfig,
   type AmbianceLevels,
+  type PlaybackStatusSnapshot,
 } from "@/lib/observatoryAudioEngine";
+import {
+  DEFAULT_WAYPOINT_RADIO_SETTINGS,
+  type WaypointRadioSettings,
+  type WaypointRadioTrack,
+} from "@shared/waypointRadio";
 
-const STATION_STORAGE_KEY = "waypoint_workstation_station";
+const STATION_STORAGE_KEY = "waypoint_radio_station_v3";
+const REPEAT_STORAGE_KEY = "waypoint_radio_repeat_pref_v1";
 
 interface ObservatoryRadioContextValue {
   stationId: FocusStationId;
   activeStation: FocusStationConfig;
-  /** True only if a custom music track is actively playing on the selected station */
   isMusicPlaying: boolean;
-  /** True if any of the 4 bottom ambient noise sliders is above 0 */
   hasActiveAmbiance: boolean;
-  /** True if ANY real audio (ambient sound or custom station music) is currently playing */
   isPlaying: boolean;
   isMuted: boolean;
+  repeatEnabled: boolean;
   ambiance: AmbianceLevels;
-  /** Select a top music station — never touches ambient sliders and never plays a hum */
+  currentTrack: WaypointRadioTrack | null;
+  currentTrackIndex: number;
+  activeStationTrackCount: number;
+  isPlayingAnnouncement: boolean;
+  activeAnnouncementTitle: string | null;
+  tracks: WaypointRadioTrack[];
+  settings: WaypointRadioSettings;
+  isRadioAdmin: boolean;
+  refetchLibrary: () => void;
   selectStation: (nextId: FocusStationId, autoStart?: boolean) => void;
-  /** Step to next/previous music station — never touches ambient sliders */
   stepStation: (delta: number) => void;
-  /** Toggle custom station music if configured */
   toggleMusic: () => void;
-  /** Turn the ENTIRE radio cleanly OFF (stops music AND zeroes all 4 ambient sliders) */
+  toggleRepeat: () => void;
   stopRadio: () => void;
-  /** Mute/unmute master output without losing your active mix */
   toggleMute: () => void;
-  /** Adjust a single bottom ambient channel independently */
   setAmbianceChannel: (channel: keyof AmbianceLevels, val: number) => void;
 }
 
 const ObservatoryRadioContext = createContext<ObservatoryRadioContextValue | null>(null);
 
 export function ObservatoryRadioProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const isStaff = Boolean(user && user.role !== "client");
+
+  const { data: libraryData, refetch: refetchLibraryQuery } = trpc.waypointRadio.getLibrary.useQuery(
+    undefined,
+    {
+      enabled: isStaff,
+      refetchOnWindowFocus: false,
+      staleTime: 15000,
+    }
+  );
+
+  const tracks = useMemo<WaypointRadioTrack[]>(
+    () => libraryData?.tracks ?? [],
+    [libraryData?.tracks]
+  );
+  const settings = useMemo<WaypointRadioSettings>(
+    () => libraryData?.settings ?? DEFAULT_WAYPOINT_RADIO_SETTINGS,
+    [libraryData?.settings]
+  );
+  const isClientAdmin = Boolean(
+    user &&
+      Number(user.id) !== 9060031 &&
+      (user as any).openId !== "katkins-admin-openid" &&
+      (user.role === "admin" || Number(user.id) === 1)
+  );
+  const isRadioAdmin = Boolean(libraryData?.isAdmin || isClientAdmin);
+
   const [stationId, setStationId] = useState<FocusStationId>(() => {
     try {
       const saved = localStorage.getItem(STATION_STORAGE_KEY) as FocusStationId | null;
@@ -45,7 +84,18 @@ export function ObservatoryRadioProvider({ children }: { children: React.ReactNo
     } catch {
       // ignore storage failures
     }
-    return "focus";
+    return FOCUS_STATIONS[0].id;
+  });
+
+  const [repeatEnabled, setRepeatEnabled] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem(REPEAT_STORAGE_KEY);
+      if (saved === "true") return true;
+      if (saved === "false") return false;
+    } catch {
+      // ignore
+    }
+    return true;
   });
 
   const activeStation = useMemo(
@@ -54,14 +104,29 @@ export function ObservatoryRadioProvider({ children }: { children: React.ReactNo
   );
 
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState<WaypointRadioTrack | null>(null);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [isPlayingAnnouncement, setIsPlayingAnnouncement] = useState(false);
+  const [activeAnnouncementTitle, setActiveAnnouncementTitle] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [ambiance, setAmbiance] = useState<AmbianceLevels>(() => ({ ...EMPTY_AMBIANCE }));
 
   const hasActiveAmbiance = useMemo(
-    () => ambiance.wind > 0.02 || ambiance.rain > 0.02 || ambiance.ocean > 0.02 || ambiance.forest > 0.02,
+    () =>
+      ambiance.fan > 0.02 ||
+      ambiance.rain > 0.02 ||
+      ambiance.ocean > 0.02 ||
+      ambiance.train > 0.02 ||
+      ambiance.coffeeShop > 0.02 ||
+      ambiance.thunder > 0.02,
     [ambiance]
   );
   const isPlaying = isMusicPlaying || hasActiveAmbiance;
+
+  const activeStationTrackCount = useMemo(
+    () => tracks.filter((t) => t.kind === "music" && t.stationId === stationId && t.enabled).length,
+    [tracks, stationId]
+  );
 
   const engineRef = useRef<ObservatoryAudioEngine | null>(null);
   const isMusicPlayingRef = useRef(isMusicPlaying);
@@ -73,10 +138,34 @@ export function ObservatoryRadioProvider({ children }: { children: React.ReactNo
 
   const getEngine = useCallback(() => {
     if (!engineRef.current) {
-      engineRef.current = new ObservatoryAudioEngine();
+      const eng = new ObservatoryAudioEngine();
+      eng.setRepeat(repeatEnabled);
+      eng.syncLibrary(tracks, settings);
+      eng.setStatusListener((snap: PlaybackStatusSnapshot) => {
+        setIsMusicPlaying(snap.isMusicPlaying);
+        setCurrentTrack(snap.currentTrack);
+        setCurrentTrackIndex(snap.currentTrackIndex);
+        setIsPlayingAnnouncement(snap.isPlayingAnnouncement);
+        setActiveAnnouncementTitle(snap.activeAnnouncementTitle);
+      });
+      engineRef.current = eng;
     }
     return engineRef.current;
-  }, []);
+  }, [repeatEnabled, tracks, settings]);
+
+  // Keep engine synced live whenever library tracks or playback settings change
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.syncLibrary(tracks, settings);
+    }
+  }, [tracks, settings]);
+
+  // Keep repeat preference synced with engine & employee localStorage
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setRepeat(repeatEnabled);
+    }
+  }, [repeatEnabled]);
 
   useEffect(() => {
     return () => {
@@ -90,6 +179,7 @@ export function ObservatoryRadioProvider({ children }: { children: React.ReactNo
       const st = FOCUS_STATIONS.find((s) => s.id === nextId);
       if (!st) return;
 
+      // Clicking the already-playing station pill toggles music cleanly without touching ambient sliders
       if (nextId === stationId && isMusicPlayingRef.current && autoStart) {
         engineRef.current?.stopMusic();
         setIsMusicPlaying(false);
@@ -104,8 +194,9 @@ export function ObservatoryRadioProvider({ children }: { children: React.ReactNo
       }
 
       const eng = getEngine();
+      eng.syncLibrary(tracks, settings);
       if (autoStart) {
-        const started = eng.startStationMusic(nextId);
+        const started = eng.startStationMusic(nextId, 0);
         if (started && isMutedRef.current) {
           eng.setMuted(false);
           setIsMuted(false);
@@ -113,7 +204,7 @@ export function ObservatoryRadioProvider({ children }: { children: React.ReactNo
         setIsMusicPlaying(started);
       }
     },
-    [getEngine, stationId]
+    [getEngine, stationId, tracks, settings]
   );
 
   const stepStation = useCallback(
@@ -128,26 +219,45 @@ export function ObservatoryRadioProvider({ children }: { children: React.ReactNo
         // ignore
       }
       const eng = getEngine();
-      const started = eng.startStationMusic(nextSt.id);
+      eng.syncLibrary(tracks, settings);
+      const started = eng.startStationMusic(nextSt.id, 0);
+      if (started && isMutedRef.current) {
+        eng.setMuted(false);
+        setIsMuted(false);
+      }
       setIsMusicPlaying(started);
     },
-    [stationId, getEngine]
+    [stationId, getEngine, tracks, settings]
   );
 
   const toggleMusic = useCallback(() => {
     const eng = getEngine();
+    eng.syncLibrary(tracks, settings);
     if (isMusicPlayingRef.current) {
       eng.stopMusic();
       setIsMusicPlaying(false);
     } else {
-      const started = eng.startStationMusic(stationId);
+      const started = eng.startStationMusic(stationId, 0);
       if (started && isMutedRef.current) {
         eng.setMuted(false);
         setIsMuted(false);
       }
       setIsMusicPlaying(started);
     }
-  }, [getEngine, stationId]);
+  }, [getEngine, stationId, tracks, settings]);
+
+  const toggleRepeat = useCallback(() => {
+    setRepeatEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(REPEAT_STORAGE_KEY, String(next));
+      } catch {
+        // ignore
+      }
+      engineRef.current?.setRepeat(next);
+      return next;
+    });
+  }, []);
 
   const stopRadio = useCallback(() => {
     engineRef.current?.stopAll();
@@ -170,14 +280,19 @@ export function ObservatoryRadioProvider({ children }: { children: React.ReactNo
       const cleanVal = val < 0.03 ? 0 : Math.min(1, val);
       setAmbiance((prev) => ({ ...prev, [channel]: cleanVal }));
       const eng = getEngine();
+      eng.syncLibrary(tracks, settings);
       if (cleanVal > 0 && isMutedRef.current) {
         eng.setMuted(false);
         setIsMuted(false);
       }
       eng.setAmbianceLevel(channel, cleanVal);
     },
-    [getEngine]
+    [getEngine, tracks, settings]
   );
+
+  const refetchLibrary = useCallback(() => {
+    void refetchLibraryQuery();
+  }, [refetchLibraryQuery]);
 
   const value = useMemo<ObservatoryRadioContextValue>(
     () => ({
@@ -187,10 +302,21 @@ export function ObservatoryRadioProvider({ children }: { children: React.ReactNo
       hasActiveAmbiance,
       isPlaying,
       isMuted,
+      repeatEnabled,
       ambiance,
+      currentTrack,
+      currentTrackIndex,
+      activeStationTrackCount,
+      isPlayingAnnouncement,
+      activeAnnouncementTitle,
+      tracks,
+      settings,
+      isRadioAdmin,
+      refetchLibrary,
       selectStation,
       stepStation,
       toggleMusic,
+      toggleRepeat,
       stopRadio,
       toggleMute,
       setAmbianceChannel,
@@ -202,10 +328,21 @@ export function ObservatoryRadioProvider({ children }: { children: React.ReactNo
       hasActiveAmbiance,
       isPlaying,
       isMuted,
+      repeatEnabled,
       ambiance,
+      currentTrack,
+      currentTrackIndex,
+      activeStationTrackCount,
+      isPlayingAnnouncement,
+      activeAnnouncementTitle,
+      tracks,
+      settings,
+      isRadioAdmin,
+      refetchLibrary,
       selectStation,
       stepStation,
       toggleMusic,
+      toggleRepeat,
       stopRadio,
       toggleMute,
       setAmbianceChannel,

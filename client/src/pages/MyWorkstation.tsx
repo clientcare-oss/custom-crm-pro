@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { Volume2, VolumeX, Clock, Power } from "lucide-react";
+import { Volume2, VolumeX, Clock, Power, Settings, Repeat } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -12,23 +12,21 @@ import {
   ObservatoryAmbientAnimations,
   ObservatoryMetalLabels,
 } from "@/components/workstation/ObservatoryConsoleParts";
-import { FOCUS_STATIONS } from "@/lib/observatoryAudioEngine";
+import { WaypointRadioSettingsModal } from "@/components/workstation/WaypointRadioSettingsModal";
+import { FOCUS_STATIONS, type FocusStationId } from "@/lib/observatoryAudioEngine";
 import { useObservatoryRadio } from "@/contexts/ObservatoryRadioContext";
+import {
+  loadTimeClockState,
+  computeLiveTotals,
+  formatHMS,
+  type TimeClockDayState,
+} from "@/lib/employeeTimeClock";
 import "@/styles/workstationObservatory.css";
-
-const SHIFT_STORAGE_KEY = "waypoint_workstation_shift_start";
-
-function formatElapsedShift(startMs: number, nowMs: number): string {
-  const totalSec = Math.max(0, Math.floor((nowMs - startMs) / 1000));
-  const hrs = Math.floor(totalSec / 3600);
-  const mins = Math.floor((totalSec % 3600) / 60);
-  const secs = totalSec % 60;
-  return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-}
 
 export default function MyWorkstation() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const [radioSettingsOpen, setRadioSettingsOpen] = useState(false);
 
   // Live unread messaging counts for the MESSAGING arrival card
   const { data: crewStats } = trpc.crewMessages.getOverviewStats.useQuery(undefined, {
@@ -45,57 +43,109 @@ export default function MyWorkstation() {
     hasActiveAmbiance,
     isPlaying,
     isMuted,
+    repeatEnabled,
     ambiance,
+    currentTrack,
+    currentTrackIndex,
+    activeStationTrackCount,
+    isPlayingAnnouncement,
+    activeAnnouncementTitle,
+    tracks,
+    settings,
+    isRadioAdmin,
     selectStation,
     stepStation,
     toggleMusic,
+    toggleRepeat,
     stopRadio,
     setAmbianceChannel,
   } = useObservatoryRadio();
 
-  // Shift Time Clock state (persisted in localStorage)
-  const [shiftStartMs, setShiftStartMs] = useState<number | null>(() => {
-    try {
-      const raw = localStorage.getItem(SHIFT_STORAGE_KEY);
-      if (raw) {
-        const parsed = Number(raw);
-        if (!Number.isNaN(parsed) && parsed > 0) return parsed;
-      }
-    } catch {
-      // ignore
+  // Sequential incandescent dial lamp relay: previous station fades OFF completely (250ms), THEN next lights UP
+  const [litStationId, setLitStationId] = useState<FocusStationId | null>(stationId);
+  const prevStationRef = useRef<FocusStationId>(stationId);
+  const lampTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (prevStationRef.current === stationId) return;
+    prevStationRef.current = stationId;
+    if (lampTimerRef.current !== null) {
+      window.clearTimeout(lampTimerRef.current);
+      lampTimerRef.current = null;
     }
-    return null;
-  });
+    // Step 1: extinguish current station lamp cleanly
+    setLitStationId(null);
+    // Step 2: once faded off, warm up and illuminate the newly selected station lamp
+    lampTimerRef.current = window.setTimeout(() => {
+      setLitStationId(stationId);
+      lampTimerRef.current = null;
+    }, 260);
+
+    return () => {
+      if (lampTimerRef.current !== null) {
+        window.clearTimeout(lampTimerRef.current);
+        lampTimerRef.current = null;
+      }
+    };
+  }, [stationId]);
+
+  const handleSelectStation = (nextId: FocusStationId) => {
+    const stationTrackCount = tracks.filter(
+      (t) => t.kind === "music" && t.stationId === nextId && t.enabled
+    ).length;
+    selectStation(nextId, true);
+    if (stationTrackCount === 0) {
+      const target = FOCUS_STATIONS.find((s) => s.id === nextId);
+      toast.info(
+        isRadioAdmin
+          ? `${target?.name ?? "Station"} selected — upload songs via the radio settings gear to start playback.`
+          : `${target?.name ?? "Station"} has no songs uploaded yet.`
+      );
+    }
+  };
+
+  const handleToggleCrtMusic = () => {
+    if (!isMusicPlaying && activeStationTrackCount === 0) {
+      toast.info(
+        isRadioAdmin
+          ? `No songs uploaded to ${activeStation.name} yet — click the radio settings gear to upload music.`
+          : `No songs uploaded to ${activeStation.name} yet.`
+      );
+      return;
+    }
+    toggleMusic();
+  };
+
+  // Synced live Employee Time Clock state (from PG-055 Employee Time Clock)
+  const [timeClockState, setTimeClockState] = useState<TimeClockDayState>(() => loadTimeClockState());
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
-    if (!shiftStartMs) return;
+    const syncClock = () => setTimeClockState(loadTimeClockState());
+    window.addEventListener("waypoint-time-clock-updated", syncClock);
+    window.addEventListener("storage", syncClock);
+    return () => {
+      window.removeEventListener("waypoint-time-clock-updated", syncClock);
+      window.removeEventListener("storage", syncClock);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (timeClockState.status === "clocked_out") return;
     const id = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => window.clearInterval(id);
-  }, [shiftStartMs]);
+  }, [timeClockState.status]);
 
-  const handleToggleTimeClock = () => {
-    if (shiftStartMs) {
-      const elapsed = formatElapsedShift(shiftStartMs, Date.now());
-      setShiftStartMs(null);
-      try {
-        localStorage.removeItem(SHIFT_STORAGE_KEY);
-      } catch {
-        // ignore
-      }
-      toast.success(`Shift clocked out — ${elapsed} logged to your workstation.`);
-    } else {
-      const start = Date.now();
-      setShiftStartMs(start);
-      setNowMs(start);
-      try {
-        localStorage.setItem(SHIFT_STORAGE_KEY, String(start));
-      } catch {
-        // ignore
-      }
-      toast.success("Clocked in — welcome to your Waypoint Observatory Workstation!");
-    }
-  };
+  const timeClockTotals = computeLiveTotals(timeClockState, nowMs);
+  const isShiftActive = timeClockState.status !== "clocked_out";
+
+  const crtSubtitle = isPlayingAnnouncement && activeAnnouncementTitle
+    ? `${activeStation.frequency} · ${activeAnnouncementTitle}`
+    : isMusicPlaying && currentTrack
+      ? `${activeStation.frequency} · ${currentTrackIndex + 1}/${Math.max(1, activeStationTrackCount)} · ${currentTrack.title}`
+      : hasActiveAmbiance
+        ? `${activeStation.frequency} · AMBIANCE LOOP`
+        : activeStation.frequency;
 
   return (
     <ScopedErrorBoundary moduleName="My Workstation">
@@ -115,15 +165,15 @@ export default function MyWorkstation() {
           {/* ── Razor-Sharp Retina Engraved Brass Plaque Labels ── */}
           <ObservatoryMetalLabels />
 
-          {/* ── 1. INTERACTIVE CRT MONITOR (Click to Play / Stop Top Music Station) ── */}
+          {/* ── 1. INTERACTIVE CRT MONITOR (Click to Play / Stop Sequential Station Playlist) ── */}
           <button
             type="button"
-            onClick={toggleMusic}
+            onClick={handleToggleCrtMusic}
             className="wp-ws-crt-zone group"
             title={isMusicPlaying ? "Stop Station Music" : `Start ${activeStation.crtTitle}`}
             aria-label={`Focus Radio CRT — ${activeStation.crtTitle}. Click to ${isMusicPlaying ? "stop" : "play"} music.`}
           >
-            {/* Subtle ON AIR / Audio status indicator (shows live EQ when playing, mute hint on hover) */}
+            {/* Subtle ON AIR / Audio status indicator */}
             <div className="absolute top-[0.65cqw] right-[0.85cqw] flex items-center gap-[0.3cqw] z-10">
               {isPlaying && !isMuted ? (
                 <>
@@ -147,38 +197,47 @@ export default function MyWorkstation() {
 
             <CrtObservatoryLighthouse isPlaying={isPlaying && !isMuted} />
 
-            <div className="relative z-10 font-serif italic text-[1.72cqw] leading-tight text-[#FAF4E4] drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)] mt-[0.15cqw]">
+            <div className="relative z-10 font-serif italic text-[1.58cqw] leading-tight text-[#FAF4E4] drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)] mt-[0.15cqw]">
               {activeStation.crtTitle}
             </div>
 
-            <div className="relative z-10 font-serif text-[0.62cqw] tracking-[0.16em] uppercase text-[#C9DCF5]/90 mt-[0.35cqw] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
-              {isMusicPlaying
-                ? activeStation.crtSub
-                : hasActiveAmbiance
-                  ? "AMBIANCE · SEAMLESS LOOP"
-                  : activeStation.crtSub}
+            <div className="relative z-10 max-w-full truncate px-[0.3cqw] font-serif text-[0.58cqw] tracking-[0.13em] uppercase text-[#C9DCF5]/90 mt-[0.35cqw] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+              {crtSubtitle}
             </div>
           </button>
 
-          {/* ── 2. UPPER-RIGHT TUNING DIAL (Music Stations Only — Independent of Ambient Sliders) ── */}
-          <div className="wp-ws-dial-zone" role="tablist" aria-label="Focus Radio Music Stations">
-            <div className="flex items-center justify-between gap-[0.3cqw] px-[0.2cqw]">
+          {/* ── 2. UPPER-RIGHT TUNING DIAL (5 Waypoint Radio Stations — Sequential Glow Lamps) ── */}
+          <div className="wp-ws-dial-zone" role="tablist" aria-label="Waypoint Radio Stations">
+            <div className="flex items-center justify-between gap-[0.12cqw] px-[0.1cqw]">
               {FOCUS_STATIONS.map((st) => {
                 const isSelected = st.id === stationId;
+                const isLit = st.id === litStationId;
                 return (
                   <button
                     key={st.id}
                     type="button"
                     role="tab"
                     aria-selected={isSelected}
-                    onClick={() => selectStation(st.id, true)}
-                    className={`wp-ws-station-btn ${isSelected ? "wp-ws-station-btn-active" : ""}`}
-                    title={`Select ${st.label} station (ready for custom music)`}
+                    onClick={() => handleSelectStation(st.id)}
+                    className={`wp-ws-station-btn ${isLit ? "wp-ws-station-btn-active" : ""}`}
+                    title={`${st.name} (${st.frequency}) — sequential station playlist`}
                   >
-                    {st.label}
+                    <span className="relative z-10">{st.dialLabel}</span>
                   </button>
                 );
               })}
+            </div>
+
+            {/* Subtle Official FM Frequency Markers Aligned Above the Tuning Ruler */}
+            <div className="wp-ws-dial-freqs" aria-hidden="true">
+              {FOCUS_STATIONS.map((st) => (
+                <span
+                  key={st.id}
+                  className={st.id === litStationId ? "wp-ws-dial-freq-active" : ""}
+                >
+                  {st.shortFrequency}
+                </span>
+              ))}
             </div>
 
             {/* Gliding Glowing Amber Frequency Needle along the physical ruler line */}
@@ -188,6 +247,24 @@ export default function MyWorkstation() {
               aria-hidden="true"
             />
           </div>
+
+          {/* ── 2A. UNDERSTATED RECESSED PLAYLIST REPEAT TOGGLE (Remembers Employee Preference) ── */}
+          <button
+            type="button"
+            onClick={toggleRepeat}
+            data-testid="workstation-radio-repeat-btn"
+            aria-pressed={repeatEnabled}
+            className={`wp-ws-recessed-icon-btn wp-ws-repeat-btn ${repeatEnabled ? "wp-ws-recessed-icon-btn-active" : ""
+              }`}
+            title={
+              repeatEnabled
+                ? "Playlist Repeat: ON (loops back to song #1 after final song)"
+                : "Playlist Repeat: OFF (stops after final song)"
+            }
+            aria-label={`Playlist repeat ${repeatEnabled ? "enabled" : "disabled"}`}
+          >
+            <Repeat className="w-[0.9cqw] h-[0.9cqw]" />
+          </button>
 
           {/* ── 2B. CLEAR MASTER RADIO OFF BUTTON (Shuts down Music + All 4 Ambient Sounds) ── */}
           <button
@@ -204,6 +281,20 @@ export default function MyWorkstation() {
             <span>OFF</span>
           </button>
 
+          {/* ── 2C. UNDERSTATED ADMIN-ONLY RECESSED BRUSHED-BRASS SETTINGS GEAR ── */}
+          {isRadioAdmin && (
+            <button
+              type="button"
+              onClick={() => setRadioSettingsOpen(true)}
+              data-testid="workstation-radio-settings-gear"
+              className="wp-ws-recessed-icon-btn wp-ws-gear-btn"
+              title="Waypoint Radio Settings (Admin)"
+              aria-label="Open Waypoint Radio Settings"
+            >
+              <Settings className="w-[0.92cqw] h-[0.92cqw]" />
+            </button>
+          )}
+
           {/* ── 3. ROTARY BRASS STATION SELECT KNOB + LEFT/RIGHT STEPPERS ── */}
           <button
             type="button"
@@ -217,8 +308,8 @@ export default function MyWorkstation() {
             type="button"
             onClick={() => stepStation(1)}
             className="wp-ws-knob-btn"
-            title={`Station Select: ${activeStation.label} (click to tune next)`}
-            aria-label={`Station Select knob — current station ${activeStation.label}`}
+            title={`Station Select: ${activeStation.name} (click to tune next)`}
+            aria-label={`Station Select knob — current station ${activeStation.name}`}
           >
             <span
               className="wp-ws-knob-indicator"
@@ -234,49 +325,67 @@ export default function MyWorkstation() {
             aria-label="Next Focus Radio station"
           />
 
-          {/* ── 4. FOUR DRAGGABLE ILLUMINATED BRASS VERTICAL AMBIANCE SLIDERS ── */}
+          {/* ── 4. SIX DRAGGABLE ILLUMINATED BRASS VERTICAL AMBIANCE SLIDERS ── */}
           <div className="wp-ws-sliders-zone">
             <AmbianceVerticalSlider
-              label="Wind"
-              value={ambiance.wind}
-              icon={<AmbianceGlyph type="wind" />}
-              onChange={(v) => setAmbianceChannel("wind", v)}
+              label="Fan"
+              value={ambiance.fan}
+              defaultOnValue={settings.ambientDefaultVolumes.fan}
+              icon={<AmbianceGlyph type="fan" />}
+              onChange={(v) => setAmbianceChannel("fan", v)}
             />
             <AmbianceVerticalSlider
               label="Rain"
               value={ambiance.rain}
+              defaultOnValue={settings.ambientDefaultVolumes["rain-shower"]}
               icon={<AmbianceGlyph type="rain" />}
               onChange={(v) => setAmbianceChannel("rain", v)}
             />
             <AmbianceVerticalSlider
-              label="Ocean Waves"
+              label="Ocean"
               value={ambiance.ocean}
+              defaultOnValue={settings.ambientDefaultVolumes.ocean}
               icon={<AmbianceGlyph type="ocean" />}
               onChange={(v) => setAmbianceChannel("ocean", v)}
             />
             <AmbianceVerticalSlider
-              label="Forest Night"
-              value={ambiance.forest}
-              icon={<AmbianceGlyph type="forest" />}
-              onChange={(v) => setAmbianceChannel("forest", v)}
+              label="Train on Tracks (No Horn)"
+              value={ambiance.train}
+              defaultOnValue={settings.ambientDefaultVolumes.train}
+              icon={<AmbianceGlyph type="train" />}
+              onChange={(v) => setAmbianceChannel("train", v)}
+            />
+            <AmbianceVerticalSlider
+              label="Coffee Shop"
+              value={ambiance.coffeeShop}
+              defaultOnValue={settings.ambientDefaultVolumes["coffee-shop"]}
+              icon={<AmbianceGlyph type="coffeeShop" />}
+              onChange={(v) => setAmbianceChannel("coffeeShop", v)}
+            />
+            <AmbianceVerticalSlider
+              label="Thunder"
+              value={ambiance.thunder}
+              defaultOnValue={settings.ambientDefaultVolumes.thunder}
+              icon={<AmbianceGlyph type="thunder" />}
+              onChange={(v) => setAmbianceChannel("thunder", v)}
             />
           </div>
 
           {/* ── 5. LOWER EMPLOYEE ARRIVAL INTERACTIVE BRASS CARDS ── */}
-          {/* Card 1: TIME CLOCK — Live Shift Clock-In / Clock-Out + Timesheet Link */}
+          {/* Card 1: TIME CLOCK — Opens Employee Time Clock (PG-055) with Live Shift Status */}
           <div
             role="button"
             tabIndex={0}
-            onClick={handleToggleTimeClock}
+            onClick={() => setLocation("/my-workstation/time-clock")}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                handleToggleTimeClock();
+                setLocation("/my-workstation/time-clock");
               }
             }}
             className="wp-ws-arrival-hitbox group"
             style={{ left: "7.4%", top: "71.8%", width: "25.8%", height: "19.8%" }}
-            title={shiftStartMs ? "Click to Clock Out of Shift" : "Click to Begin Your Shift"}
+            title="Open Employee Time Clock (PG-055)"
           >
             <div
               className="wp-ws-arrival-plate"
@@ -287,11 +396,20 @@ export default function MyWorkstation() {
                 <br />
                 CLOCK
               </div>
-              {shiftStartMs ? (
+              {isShiftActive ? (
                 <div className="flex items-center gap-[0.3cqw] mt-[0.35cqw]">
-                  <span className="inline-block w-[0.45cqw] h-[0.45cqw] rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-                  <span className="font-mono text-[0.82cqw] font-bold text-[#9BF5C8] drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]">
-                    {formatElapsedShift(shiftStartMs, nowMs)}
+                  <span
+                    className={`inline-block w-[0.45cqw] h-[0.45cqw] rounded-full ${timeClockState.status === "working"
+                      ? "bg-emerald-400 shadow-[0_0_8px_#34d399]"
+                      : "bg-amber-400 shadow-[0_0_8px_#fbbf24]"
+                      }`}
+                  />
+                  <span className="font-mono text-[0.78cqw] font-bold text-[#9BF5C8] drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]">
+                    {timeClockState.status === "on_break"
+                      ? `Break · ${formatHMS(timeClockTotals.currentSegmentMs)}`
+                      : timeClockState.status === "on_lunch"
+                        ? `Lunch · ${formatHMS(timeClockTotals.currentSegmentMs)}`
+                        : formatHMS(timeClockTotals.workedMs)}
                   </span>
                 </div>
               ) : (
@@ -313,13 +431,13 @@ export default function MyWorkstation() {
             </button>
           </div>
 
-          {/* Card 2: WORKSTATION — Enter Your Workspace (Student Workspaces PG-004) */}
+          {/* Card 2: WORKSTATION — Enter Your Workspace (Employee Workstation Zone PG-053) */}
           <button
             type="button"
-            onClick={() => setLocation("/students")}
+            onClick={() => setLocation("/my-workstation/zone")}
             className="wp-ws-arrival-hitbox"
             style={{ left: "36.2%", top: "74.0%", width: "27.5%", height: "16.5%" }}
-            title="Enter Your Workspace (Student Workspaces)"
+            title="Enter Your Employee Workstation Zone (PG-053)"
           >
             <div
               className="wp-ws-arrival-plate"
@@ -355,6 +473,12 @@ export default function MyWorkstation() {
           </button>
         </div>
       </div>
+
+      {/* Admin-Only In-Place Waypoint Radio Settings Pop-Up Modal (Never Interrupts Playback) */}
+      <WaypointRadioSettingsModal
+        open={radioSettingsOpen}
+        onClose={() => setRadioSettingsOpen(false)}
+      />
     </ScopedErrorBoundary>
   );
 }

@@ -73,6 +73,10 @@ export async function authorizeStorageKeyAccess(
     }
 
     if (staffAccess.isStaff) {
+      // All active staff members are permitted to stream Waypoint Radio audio library files
+      if (cleanKey.startsWith("Waypoint Radio/")) {
+        return { status: 200 };
+      }
       const filesLevel = checkBackendCaseAccess(staffAccess, "files");
       if (filesLevel === "none") {
         return {
@@ -191,6 +195,8 @@ export function registerStorageProxy(app: Express) {
           ".jpeg": "image/jpeg",
           ".webp": "image/webp",
           ".txt": "text/plain",
+          ".mp3": "audio/mpeg",
+          ".wav": "audio/wav",
         };
         res.set("Content-Type", mimeTypes[ext] || "application/octet-stream");
         res.set("Access-Control-Allow-Origin", "*");

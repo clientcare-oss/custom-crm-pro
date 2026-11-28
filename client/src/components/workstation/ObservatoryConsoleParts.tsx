@@ -3,22 +3,25 @@ import type { AmbianceLevels } from "@/lib/observatoryAudioEngine";
 
 /** Custom crisp Observatory Ambiance glyphs matching the photorealistic hardware console */
 export function AmbianceGlyph({ type }: { type: keyof AmbianceLevels }) {
-  const cls = "w-[1.82cqw] h-[1.82cqw]";
-  if (type === "wind") {
+  const cls = "w-[1.52cqw] h-[1.52cqw]";
+  if (type === "fan") {
     return (
       <svg
         viewBox="0 0 28 24"
         className={cls}
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.95"
+        strokeWidth="1.65"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
       >
-        <path d="M4 8.5h13.5a2.6 2.6 0 1 0-2.1-4.1" />
-        <path d="M2.5 13h19a2.8 2.8 0 1 1-2.2 4.5" />
-        <path d="M6 17.5h8.2a2.1 2.1 0 1 1-1.7 3.3" />
+        <circle cx="14" cy="12" r="9.4" strokeOpacity="0.65" strokeWidth="1.35" />
+        <path d="M14 12c-0.3-3.6 1.4-6.8 4.1-6.5 2.1 0.2 1.8 3.7-4.1 6.5Z" fill="currentColor" stroke="none" />
+        <path d="M14 12c3.6-0.3 6.8 1.4 6.5 4.1-0.2 2.1-3.7 1.8-6.5-4.1Z" fill="currentColor" stroke="none" />
+        <path d="M14 12c0.3 3.6-1.4 6.8-4.1 6.5-2.1-0.2-1.8-3.7 4.1-6.5Z" fill="currentColor" stroke="none" />
+        <path d="M14 12c-3.6 0.3-6.8-1.4-6.5-4.1 0.2-2.1 3.7-1.8 6.5 4.1Z" fill="currentColor" stroke="none" />
+        <circle cx="14" cy="12" r="2.1" fill="#0B1018" stroke="currentColor" strokeWidth="1.4" />
       </svg>
     );
   }
@@ -54,12 +57,58 @@ export function AmbianceGlyph({ type }: { type: keyof AmbianceLevels }) {
       </svg>
     );
   }
+  if (type === "train") {
+    return (
+      <svg
+        viewBox="0 0 28 24"
+        className={cls}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.65"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="7" y="3.2" width="14" height="12.6" rx="2.8" />
+        <line x1="7.5" y1="9.6" x2="20.5" y2="9.6" />
+        <circle cx="10.5" cy="12.8" r="1.15" fill="currentColor" stroke="none" />
+        <circle cx="17.5" cy="12.8" r="1.15" fill="currentColor" stroke="none" />
+        <line x1="10.2" y1="16.2" x2="6.4" y2="21.4" strokeWidth="1.8" />
+        <line x1="17.8" y1="16.2" x2="21.6" y2="21.4" strokeWidth="1.8" />
+        <line x1="8.1" y1="19.2" x2="19.9" y2="19.2" strokeWidth="1.5" />
+        <line x1="6.4" y1="21.4" x2="21.6" y2="21.4" strokeWidth="1.5" />
+      </svg>
+    );
+  }
+  if (type === "thunder") {
+    return (
+      <svg viewBox="0 0 28 24" className={cls} fill="none" aria-hidden="true">
+        <path
+          d="M8.2 13.4h11.8a3.8 3.8 0 0 0 .5-7.55 5.2 5.2 0 0 0-10.0-1.3A4.0 4.0 0 0 0 8.2 13.4Z"
+          fill="currentColor"
+        />
+        <polygon points="14.6,12.8 10.6,18.2 13.8,18.2 12.2,23.0 18.2,16.4 14.9,16.4" fill="#FFE082" />
+      </svg>
+    );
+  }
+  // Coffee Shop — Steaming Coffee Mug icon for ambient café sounds
   return (
-    <svg viewBox="0 0 28 24" className={cls} fill="currentColor" aria-hidden="true">
-      <path d="M10.5 3.2 5.4 10.6h2.4L4.4 16.4h3.2L6.8 18.8h7.4l-.8-2.4h3.2l-3.4-5.8h2.4L10.5 3.2Z" />
-      <rect x="9.6" y="18.5" width="1.8" height="3.2" rx="0.4" />
-      <path d="M19.2 6.8 15.6 12.4h1.7l-2.3 4.3h2.1l-.5 2.1h5.2l-.5-2.1h2.1l-2.3-4.3h1.7L19.2 6.8Z" />
-      <rect x="18.4" y="18.5" width="1.6" height="3.2" rx="0.4" />
+    <svg
+      viewBox="0 0 28 24"
+      className={cls}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9.6 5.6c0-1.2 1.1-1.6 1.1-2.8" strokeWidth="1.5" />
+      <path d="M13.6 5.6c0-1.2 1.1-1.6 1.1-2.8" strokeWidth="1.5" />
+      <path d="M17.4 5.6c0-1.2 1.1-1.6 1.1-2.8" strokeWidth="1.5" />
+      <path d="M5.5 8.5h13.2v6.2a5.5 5.5 0 0 1-5.5 5.5H11a5.5 5.5 0 0 1-5.5-5.5V8.5Z" fill="currentColor" stroke="none" />
+      <path d="M18.7 10.2h2.4a2.6 2.6 0 0 1 0 5.2h-2.4" strokeWidth="1.9" />
+      <line x1="4.5" y1="21.4" x2="20.2" y2="21.4" strokeWidth="1.7" />
     </svg>
   );
 }
@@ -106,10 +155,17 @@ interface AmbianceSliderProps {
   label: string;
   value: number;
   icon: React.ReactNode;
+  defaultOnValue?: number;
   onChange: (val: number) => void;
 }
 
-export function AmbianceVerticalSlider({ label, value, icon, onChange }: AmbianceSliderProps) {
+export function AmbianceVerticalSlider({
+  label,
+  value,
+  icon,
+  defaultOnValue = 0.6,
+  onChange,
+}: AmbianceSliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
 
@@ -151,7 +207,7 @@ export function AmbianceVerticalSlider({ label, value, icon, onChange }: Ambianc
     <div className="wp-ws-slider-col">
       <button
         type="button"
-        onClick={() => onChange(value > 0.05 ? 0 : 0.6)}
+        onClick={() => onChange(value > 0.05 ? 0 : Math.max(0.15, Math.min(1, defaultOnValue)))}
         className="wp-ws-slider-icon-btn"
         title={`${label}: ${pct}% (click to mute/unmute)`}
         aria-label={`Toggle ${label} ambiance`}

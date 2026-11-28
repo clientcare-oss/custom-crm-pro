@@ -78,6 +78,7 @@ import { mycoRouter } from "./routers/myco";
 import { waypointPlacesRouter } from "./routers/waypointPlaces";
 import { studioRouter } from "./routers/studio";
 import { paymentStationRouter } from "./routers/paymentStation";
+import { waypointRadioRouter } from "./routers/waypointRadio";
 
 export const appRouter = router({
   paymentStation: paymentStationRouter,
@@ -160,6 +161,7 @@ export const appRouter = router({
   giving: givingRouter,
   stateLaw: stateLawLibraryRouter,
   federalLaw: federalLawRouter,
+  waypointRadio: waypointRadioRouter,
 });
 
 export type AppRouter = typeof appRouter;

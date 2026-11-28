@@ -1,0 +1,409 @@
+/* ============================================================================
+ * Waypoint Employee Time Clock (PG-055) — Vintage Mechanical Time Recorder,
+ * Split-Flap Display, Animated Lighthouse Punch Card & Live Shift Clipboards
+ * ============================================================================ */
+
+.wp-tc-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  background: #040b16;
+  user-select: none;
+}
+
+.wp-tc-stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+  overflow: hidden;
+}
+
+.wp-tc-backdrop-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Subtle Ambient Ship's Lantern Warm Breathing Glow (Left Hanging Lantern) ── */
+@keyframes wpTcLanternBreathe {
+  0%, 100% {
+    opacity: 0.46;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.78;
+    transform: scale(1.06);
+  }
+}
+
+.wp-tc-lantern-glow {
+  position: absolute;
+  left: 1.4%;
+  top: 25.5%;
+  width: 11.5%;
+  height: 22.5%;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    circle at 50% 48%,
+    rgba(255, 226, 134, 0.52) 0%,
+    rgba(245, 162, 42, 0.24) 42%,
+    transparent 74%
+  );
+  animation: wpTcLanternBreathe 4.4s ease-in-out infinite;
+}
+
+/* ── Quiet Top Navigation & Utility Pills (Preserves Full-Bleed Vintage Scene) ── */
+.wp-tc-nav-pill {
+  position: absolute;
+  top: 2.2%;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.36cqw;
+  padding: 0.36cqw 0.78cqw;
+  border-radius: 9999px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 0.82cqw;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #f4e2b8;
+  background: linear-gradient(180deg, rgba(13, 22, 39, 0.88) 0%, rgba(5, 11, 23, 0.94) 100%);
+  border: 1px solid rgba(197, 160, 89, 0.42);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 240, 198, 0.16);
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.wp-tc-nav-pill:hover {
+  border-color: rgba(242, 206, 126, 0.85);
+  color: #fff8e2;
+  background: linear-gradient(180deg, rgba(20, 34, 60, 0.94) 0%, rgba(9, 18, 36, 0.96) 100%);
+}
+
+/* ── CLIPBOARD HEADERS & PARCHMENT ROWS (Left: My Shift | Right: My Time Today) ── */
+.wp-tc-clip-header {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5cqw;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.54cqw;
+  letter-spacing: 0.02em;
+  color: #f8ecd2;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.95);
+  pointer-events: none;
+}
+
+.wp-tc-clip-body {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.5cqw 0.7cqw;
+  font-family: "Playfair Display", Georgia, serif;
+  color: #1c1208;
+}
+
+.wp-tc-shift-row {
+  display: flex;
+  align-items: center;
+  gap: 0.62cqw;
+  padding: 0.34cqw 0.2cqw;
+  font-size: 1.06cqw;
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 1.15;
+  color: #1f1307;
+  text-shadow: 0 1px 0 rgba(255, 244, 212, 0.5);
+}
+
+.wp-tc-time-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45cqw;
+  padding: 0.48cqw 0.25cqw;
+  font-size: 1.14cqw;
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 1.15;
+  color: #1e1207;
+  text-shadow: 0 1px 0 rgba(255, 244, 212, 0.5);
+}
+
+.wp-tc-time-val {
+  font-family: "Playfair Display", Georgia, serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-weight: 800;
+  color: #170d04;
+}
+
+/* ── CENTER MECHANICAL SPLIT-FLAP CLOCK DISPLAY ── */
+.wp-tc-flap-zone {
+  position: absolute;
+  left: 38.0%;
+  top: 22.8%;
+  width: 24.4%;
+  height: 11.7%;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65cqw;
+  padding: 0.2cqw 0.45cqw;
+}
+
+.wp-tc-flap-pair {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 39%;
+  height: 100%;
+  border-radius: 0.42cqw;
+  background: transparent;
+  overflow: hidden;
+}
+
+/* Mechanical center horizontal split-flap hinge line */
+.wp-tc-flap-pair::after {
+  content: "";
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+@keyframes wpTcFlapTick {
+  0% {
+    transform: rotateX(-55deg) scaleY(0.86);
+    opacity: 0.55;
+  }
+  100% {
+    transform: rotateX(0deg) scaleY(1);
+    opacity: 1;
+  }
+}
+
+.wp-tc-flap-digits {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-weight: 800;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-size: 3.72cqw;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  color: #f6efe0;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+  animation: wpTcFlapTick 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wp-tc-flap-period {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.54cqw;
+  letter-spacing: 0.05em;
+  color: #efe3c8;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+  min-width: 2.8cqw;
+  text-align: center;
+}
+
+/* ── FOUR TACTILE RIVETED BRASS MECHANICAL PUNCH BUTTONS (2x2 Grid) ── */
+.wp-tc-buttons-grid {
+  position: absolute;
+  left: 36.4%;
+  top: 36.8%;
+  width: 26.7%;
+  height: 21.4%;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 0.92cqw 0.92cqw;
+}
+
+.wp-tc-brass-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.52cqw;
+  padding: 0.4cqw 0.55cqw;
+  border-radius: 0.42cqw;
+  cursor: pointer;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 800;
+  font-size: 1.1cqw;
+  line-height: 1.06;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #1f1204;
+  background: transparent;
+  border: 1.5px solid transparent;
+  text-shadow: 0 1px 0 rgba(255, 243, 206, 0.55);
+  transition:
+    transform 90ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease,
+    background 220ms ease,
+    opacity 180ms ease;
+}
+
+.wp-tc-brass-btn:hover:not(:disabled) {
+  background: rgba(255, 224, 134, 0.14);
+  border-color: rgba(255, 228, 146, 0.55);
+  box-shadow:
+    inset 0 0 12px rgba(255, 232, 160, 0.3),
+    0 0 14px rgba(245, 180, 62, 0.32);
+}
+
+.wp-tc-brass-btn:active:not(:disabled) {
+  transform: translateY(1.5px) scale(0.985);
+}
+
+.wp-tc-brass-btn:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+/* Warm Illuminated Golden Hardware Glow (Active / Recommended Primary Action) */
+.wp-tc-brass-btn-lit {
+  background: radial-gradient(
+    ellipse 95% 90% at 50% 48%,
+    rgba(255, 238, 174, 0.42) 0%,
+    rgba(246, 182, 60, 0.24) 68%,
+    rgba(218, 138, 22, 0.12) 100%
+  );
+  border-color: rgba(255, 232, 152, 0.92);
+  box-shadow:
+    inset 0 0 14px rgba(255, 246, 202, 0.65),
+    0 0 18px rgba(255, 198, 72, 0.78),
+    0 0 34px rgba(245, 158, 11, 0.46);
+  color: #1c1002;
+}
+
+/* ── GREEN PHOSPHOR DOT-MATRIX VFD STATUS DISPLAY ── */
+.wp-tc-vfd-screen {
+  position: absolute;
+  left: 39.2%;
+  top: 59.8%;
+  width: 21.3%;
+  height: 6.2%;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.6cqw;
+  border-radius: 0.28cqw;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(rgba(52, 245, 138, 0.08) 1px, transparent 1px) 0 0 / 4px 4px,
+    linear-gradient(180deg, rgba(6, 22, 16, 0.86) 0%, rgba(4, 14, 10, 0.92) 100%);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.92);
+}
+
+.wp-tc-vfd-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 800;
+  font-size: 1.38cqw;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #4eff9b;
+  text-shadow:
+    0 0 8px rgba(68, 255, 148, 0.95),
+    0 0 18px rgba(16, 185, 129, 0.62);
+}
+
+.wp-tc-vfd-text-amber {
+  color: #ffd66b;
+  text-shadow:
+    0 0 8px rgba(255, 208, 86, 0.92),
+    0 0 16px rgba(245, 158, 11, 0.58);
+}
+
+/* ── ANIMATED MECHANICAL PAPER TIME CARD SLOT ── */
+.wp-tc-card-slot-mask {
+  position: absolute;
+  left: 39.4%;
+  top: 73.6%;
+  width: 20.8%;
+  height: 14.0%;
+  z-index: 6;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  pointer-events: auto;
+}
+
+@keyframes wpTcCardPunchAnim {
+  0% {
+    transform: translateY(0%);
+  }
+  32% {
+    transform: translateY(-76%);
+  }
+  56% {
+    transform: translateY(-76%) scale(0.992);
+  }
+  64% {
+    transform: translateY(-73%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+.wp-tc-punch-card {
+  position: relative;
+  width: 86%;
+  height: 86%;
+  margin-top: 0.2cqw;
+  border-radius: 0 0 0.24cqw 0.24cqw;
+  cursor: pointer;
+  clip-path: polygon(4% 0%, 96% 0%, 100% 100%, 0% 100%);
+  background: linear-gradient(180deg, #d7bc83 0%, #ebd39f 16%, #f3dfae 70%, #e4ca90 100%);
+  box-shadow:
+    inset 0 6px 10px rgba(34, 20, 6, 0.45),
+    0 5px 14px rgba(0, 0, 0, 0.78);
+  padding: 0.45cqw 0.95cqw 0.35cqw;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: filter 160ms ease;
+}
+
+.wp-tc-punch-card:hover {
+  filter: brightness(1.05);
+}
+
+.wp-tc-punch-card-stamping {
+  animation: wpTcCardPunchAnim 920ms cubic-bezier(0.32, 0.08, 0.24, 1);
+}

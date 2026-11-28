@@ -1,0 +1,411 @@
+/* ============================================================================
+ * Waypoint Harbor Radar · Task Operations (PG-054)
+ * Photorealistic Task Radar Bridge, 4 Concentric Effort Rings, Live Task Ships,
+ * Harbor Status Parchment Filter Board & Task Harbor View Selector
+ * ============================================================================ */
+
+.wp-hr-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  background: #040b16;
+  user-select: none;
+}
+
+.wp-hr-stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+  overflow: hidden;
+}
+
+.wp-hr-backdrop-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes wpHrRadarSweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wpHrShipBob {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0px);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-2.2px);
+  }
+}
+
+@keyframes wpHrTargetRingPulse {
+  0%, 100% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* ── TOP HEADER TITLE PLAQUE & 4 HARDWARE BUTTONS ── */
+.wp-hr-title-plaque {
+  position: absolute;
+  left: 41.2%;
+  top: 0.4%;
+  width: 24.8%;
+  height: 10.2%;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.wp-hr-main-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 2.65cqw;
+  line-height: 1.02;
+  letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #fff6d6 0%, #f1c86b 50%, #c88d30 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.95));
+}
+
+.wp-hr-main-sub {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.12cqw;
+  letter-spacing: 0.06em;
+  color: #f0dfb9;
+  margin-top: 0.1cqw;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.96);
+}
+
+.wp-hr-top-btn {
+  position: absolute;
+  top: 0.8%;
+  width: 5.5%;
+  height: 9.2%;
+  z-index: 9;
+  border-radius: 9999px;
+  cursor: pointer;
+  background: transparent;
+  transition: box-shadow 160ms ease, background 160ms ease;
+}
+
+.wp-hr-top-btn:hover {
+  background: radial-gradient(circle, rgba(255, 224, 138, 0.16) 0%, transparent 72%);
+  box-shadow: 0 0 18px rgba(251, 198, 88, 0.45);
+}
+
+.wp-hr-bell-badge {
+  position: absolute;
+  top: -2%;
+  right: 2%;
+  min-width: 1.55cqw;
+  height: 1.55cqw;
+  padding: 0 0.28cqw;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 0.88cqw;
+  color: #ffffff;
+  background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+  border: 1.5px solid rgba(255, 232, 180, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 10px rgba(239, 68, 68, 0.72);
+  pointer-events: none;
+}
+
+/* ── LEFT HANGING PARCHMENT BOARD — HARBOR STATUS ── */
+.wp-hr-status-board {
+  position: absolute;
+  left: 9.4%;
+  top: 34.8%;
+  width: 18.6%;
+  height: 36.2%;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.45cqw 0.82cqw 0.65cqw;
+}
+
+.wp-hr-status-heading {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.56cqw;
+  line-height: 1.08;
+  color: #1e1106;
+  text-align: center;
+  padding-bottom: 0.42cqw;
+  border-bottom: 1.5px solid rgba(64, 40, 18, 0.44);
+  text-shadow: 0 1px 0 rgba(255, 246, 224, 0.6);
+}
+
+.wp-hr-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35cqw;
+  width: 100%;
+  padding: 0.28cqw 0.35cqw;
+  border-radius: 0.38cqw;
+  border-bottom: 1px solid rgba(72, 46, 22, 0.24);
+  cursor: pointer;
+  background: transparent;
+  transition: background 140ms ease, transform 120ms ease, box-shadow 140ms ease;
+}
+
+.wp-hr-status-row:last-child {
+  border-bottom: none;
+}
+
+.wp-hr-status-row:hover {
+  background: rgba(94, 58, 22, 0.14);
+  transform: translateX(1px);
+}
+
+.wp-hr-status-row-active {
+  background: rgba(146, 86, 20, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(120, 62, 12, 0.55);
+}
+
+.wp-hr-status-label {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.12cqw;
+  line-height: 1.1;
+  color: #211307;
+  white-space: nowrap;
+}
+
+.wp-hr-status-count {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 800;
+  font-size: 1.38cqw;
+  line-height: 1;
+  color: #1e1106;
+  min-width: 1.8cqw;
+  text-align: right;
+}
+
+/* ── GIANT CENTRAL CIRCULAR RADAR SCOPE ── */
+.wp-hr-radar-circle {
+  position: absolute;
+  left: 31.2%;
+  top: 11.4%;
+  width: 41.6%;
+  height: 67.8%;
+  z-index: 6;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.wp-hr-radar-sweep {
+  position: absolute;
+  inset: -4%;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 304deg,
+    rgba(20, 184, 166, 0.06) 326deg,
+    rgba(45, 212, 191, 0.42) 354deg,
+    rgba(167, 243, 208, 0.85) 360deg
+  );
+  animation: wpHrRadarSweep 7.6s linear infinite;
+}
+
+.wp-hr-cardinal {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.18cqw;
+  line-height: 1;
+  color: #99f6e4;
+  text-shadow: 0 0 8px rgba(45, 212, 191, 0.9), 0 1px 4px rgba(0, 0, 0, 0.96);
+}
+
+.wp-hr-ring-tag {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  padding: 0.16cqw 0.82cqw;
+  border-radius: 0.45cqw;
+  cursor: pointer;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 600;
+  font-size: 0.94cqw;
+  line-height: 1.15;
+  white-space: nowrap;
+  color: #f6e4ba;
+  background: linear-gradient(180deg, rgba(46, 30, 14, 0.94) 0%, rgba(22, 14, 7, 0.96) 100%);
+  border: 1px solid rgba(212, 170, 86, 0.65);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.88), inset 0 1px 0 rgba(255, 236, 184, 0.3);
+  transition: all 150ms ease;
+}
+
+.wp-hr-ring-tag:hover,
+.wp-hr-ring-tag-active {
+  color: #fffaf0;
+  border-color: #fde68a;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.55), 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.wp-hr-ship-btn {
+  position: absolute;
+  z-index: 12;
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+  width: 11.2%;
+  aspect-ratio: 1.28 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: wpHrShipBob 4.2s ease-in-out infinite;
+  transition: filter 150ms ease, opacity 200ms ease;
+}
+
+.wp-hr-ship-btn:hover {
+  z-index: 20;
+  filter: brightness(1.18) drop-shadow(0 0 10px rgba(254, 240, 138, 0.78));
+}
+
+.wp-hr-ship-target-ring {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 108%;
+  height: 108%;
+  border-radius: 9999px;
+  border: 1.5px dashed rgba(253, 224, 71, 0.92);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.55);
+  pointer-events: none;
+  animation: wpHrTargetRingPulse 2.2s ease-in-out infinite;
+}
+
+/* ── RIGHT PANEL — TASK HARBOR (5 VIEW MODES) ── */
+.wp-hr-harbor-title {
+  position: absolute;
+  left: 82.6%;
+  top: 19.8%;
+  width: 15.6%;
+  height: 6.2%;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  pointer-events: none;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.56cqw;
+  color: #f8e5b6;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.96);
+}
+
+.wp-hr-harbor-btn {
+  position: absolute;
+  left: 78.2%;
+  width: 19.6%;
+  height: 6.6%;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  padding-left: 5.0cqw;
+  padding-right: 0.7cqw;
+  border-radius: 0.65cqw;
+  cursor: pointer;
+  background: transparent;
+  border: 1.5px solid transparent;
+  transition: all 160ms ease;
+}
+
+.wp-hr-harbor-btn:hover:not(.wp-hr-harbor-btn-active) {
+  background: rgba(255, 214, 114, 0.08);
+  border-color: rgba(212, 175, 55, 0.42);
+}
+
+.wp-hr-harbor-btn-active {
+  background: linear-gradient(90deg, rgba(245, 180, 56, 0.22) 0%, rgba(196, 134, 34, 0.14) 100%);
+  border-color: #fbbf24;
+  box-shadow:
+    0 0 16px rgba(245, 158, 11, 0.52),
+    inset 0 0 12px rgba(253, 224, 71, 0.22);
+}
+
+.wp-hr-harbor-btn-label {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.22cqw;
+  color: #f4e4c1;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.96);
+  white-space: nowrap;
+}
+
+.wp-hr-harbor-btn-active .wp-hr-harbor-btn-label {
+  color: #fff9e6;
+  text-shadow: 0 0 10px rgba(253, 224, 71, 0.55), 0 1px 4px rgba(0, 0, 0, 0.96);
+}
+
+/* ── BOTTOM 5 CAST-BRASS NAVIGATION BUTTONS ── */
+.wp-hr-console-btn {
+  position: absolute;
+  top: 82.4%;
+  height: 14.2%;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 1.6cqw;
+  border-radius: 0.85cqw;
+  cursor: pointer;
+  background: transparent;
+  transition: background 180ms ease, filter 180ms ease;
+}
+
+.wp-hr-console-btn:hover {
+  background: radial-gradient(ellipse 80% 72% at 50% 48%, rgba(255, 214, 114, 0.16) 0%, transparent 74%);
+  filter: brightness(1.08);
+}
+
+.wp-hr-console-label {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.22cqw;
+  line-height: 1.1;
+  color: #f8ecd0;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.98), 0 0 12px rgba(248, 206, 112, 0.3);
+  white-space: nowrap;
+}

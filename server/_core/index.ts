@@ -15,6 +15,7 @@ import { registerImageUploadRoutes } from "../imageUpload";
 import { registerVoyageWebhookRoutes } from "../voyageWebhook";
 import { registerMycoWebhookRoutes } from "../mycoWebhook";
 import { registerWaypointPlacesRoutes } from "../waypointPlacesRoutes";
+import { registerRadioUploadRoutes } from "../radioUpload";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -57,6 +58,7 @@ async function startServer() {
   registerVoyageWebhookRoutes(app);
   registerMycoWebhookRoutes(app);
   registerWaypointPlacesRoutes(app);
+  registerRadioUploadRoutes(app);
   registerRestApiRoutes(app);
   registerOAuthRoutes(app);
   // tRPC API

@@ -11,6 +11,7 @@ import { getR2SignedDownloadUrl, getR2SignedUploadUrl } from "./_core/r2Client";
 import { handleQuoWebhookRequest } from "./quoWebhook";
 import { handleMycoWebhookRequest } from "./mycoWebhook";
 import { handleWaypointPlacesWorkerRequest } from "./waypointPlacesRoutes";
+import { handleRadioWorkerRequest } from "./radioUpload";
 
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
@@ -111,6 +112,12 @@ export default {
     if (cleanPath.startsWith("/api/places/")) {
       const placesRes = await handleWaypointPlacesWorkerRequest(request);
       if (placesRes) return placesRes;
+    }
+
+    // 2e. Handle Waypoint Radio Admin Presign & Audio Upload Endpoints
+    if (cleanPath === "/api/radio/presign" || cleanPath === "/api/radio/upload") {
+      const radioRes = await handleRadioWorkerRequest(request);
+      if (radioRes) return radioRes;
     }
 
     // 3. Handle AssemblyAI Temporary Token Endpoint for First Mate

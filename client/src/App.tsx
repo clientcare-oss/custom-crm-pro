@@ -80,6 +80,9 @@ import { ActiveCallProvider } from "./contexts/ActiveCallContext";
 import { ObservatoryRadioProvider } from "./contexts/ObservatoryRadioContext";
 import CrewQuarters from "./pages/CrewQuarters";
 import MyWorkstation from "./pages/MyWorkstation";
+import EmployeeWorkstationZone from "./pages/EmployeeWorkstationZone";
+import HarborRadarPage from "./pages/HarborRadarPage";
+import EmployeeTimeClockPage from "./pages/EmployeeTimeClockPage";
 import Metrics from "./pages/Metrics";
 import AdvocacyPipeline from "./pages/AdvocacyPipeline";
 import MeetingWorkspace from "./pages/MeetingWorkspace";
@@ -271,6 +274,12 @@ function Router() {
             <Switch>
               <Route path="/start" component={CrewQuarters} />
               <Route path="/" component={CrewQuarters} />
+              <Route path="/my-workstation/time-clock" component={EmployeeTimeClockPage} />
+              <Route path="/workstation/time-clock" component={EmployeeTimeClockPage} />
+              <Route path="/my-workstation/radar" component={HarborRadarPage} />
+              <Route path="/workstation/radar" component={HarborRadarPage} />
+              <Route path="/my-workstation/zone" component={EmployeeWorkstationZone} />
+              <Route path="/workstation/zone" component={EmployeeWorkstationZone} />
               <Route path="/my-workstation" component={MyWorkstation} />
               <Route path="/workstation" component={MyWorkstation} />
           <Route path="/crew-quarters" component={CrewQuarters} />
